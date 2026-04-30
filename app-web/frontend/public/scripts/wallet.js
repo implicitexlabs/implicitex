@@ -97,25 +97,7 @@ async function requestSwitchToPolygon() {
     // No alert needed—user will see MetaMask switch, modal updates after
   } catch (switchError) {
     if (switchError.code === 4902) {
-      try {
-        await window.ethereum.request({
-          method: 'wallet_addEthereumChain',
-          params: [{
-            chainId: POLYGON_CHAIN_ID,
-            chainName: 'Polygon Mainnet',
-            rpcUrls: ['https://polygon-rpc.com/'],
-            nativeCurrency: {
-              name: 'MATIC',
-              symbol: 'MATIC',
-              decimals: 18
-            },
-            blockExplorerUrls: ['https://polygonscan.com/']
-          }]
-        });
-        alert("Polygon added and switched!");
-      } catch (addError) {
-        alert("Could not add Polygon network.");
-      }
+      alert("This wallet does not have Polygon configured. Network setup is not configured in this build.");
     } else {
       alert("Switching failed or was rejected.");
     }
