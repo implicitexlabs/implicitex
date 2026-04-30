@@ -264,7 +264,7 @@ window.openSendModal = function () {
     } else {
       return `
         <div style="text-align:center;">
-          <h2>Review Transfer</h2>
+          <h2>Review Demo Transfer</h2>
           <div style="font-size:1.07em;margin-bottom:1.2em;">
             You are sending <b>${amountValue} USDC</b> to<br>
             <span style="font-family:var(--font-mono);color:var(--color-light-gray);word-break:break-all;">${maskAddress(recipientValue)}</span>
@@ -274,7 +274,7 @@ window.openSendModal = function () {
             <span>Estimated gas fees (see above for details).</span>
           </div>
           <div style="margin-top:1em;">
-            <span style="font-weight:600;color:#f5c000;">Total deducted: ${(parseFloat(amountValue)+parseFloat(amountValue)*0.01).toFixed(2)} USDC + gas fees</span>
+            <span style="font-weight:600;color:#f5c000;">Demo estimate: ${(parseFloat(amountValue)+parseFloat(amountValue)*0.01).toFixed(2)} USDC + gas fees</span>
           </div>
         </div>
       `;
@@ -284,7 +284,7 @@ window.openSendModal = function () {
   function openModalAndSetup() {
     openModal({
       content: renderModalContent(),
-      confirmText: inConfirmStep ? "Send Transfer" : "Continue",
+      confirmText: inConfirmStep ? "Complete Demo" : "Continue",
       cancelText: "Cancel",
       disableConfirm: (!inConfirmStep && !(validRecipient && validAmount)),
       onConfirm: () => {
@@ -295,7 +295,7 @@ window.openSendModal = function () {
           closeModal();
           setTimeout(() => {
             openModal({
-              content: `<h2>Transaction Submitted!</h2><p>Sent ${amountValue} USDC to ${maskAddress(recipientValue)}.<br>Fee: ${(parseFloat(amountValue)*0.01).toFixed(2)} USDC.</p>`,
+              content: `<h2>Demo Complete</h2><p>No on-chain transfer was executed in this build.<br>Demo amount: ${amountValue} USDC to ${maskAddress(recipientValue)}.<br>Demo fee: ${(parseFloat(amountValue)*0.01).toFixed(2)} USDC.</p>`,
               confirmText: "OK",
               cancelText: "",
               disableConfirm: false,

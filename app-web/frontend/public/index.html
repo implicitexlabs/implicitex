@@ -82,6 +82,16 @@
           <label class="modal-label">Amount</label>
           <div class="output-field">48.00 USDC</div>
         </div>
+        <div class="demo-transfer-cta">
+          <button
+            type="button"
+            class="button btn-send"
+            onclick="if (window.openSendModal) { window.openSendModal(); } else { console.warn('openSendModal is not available.'); }"
+          >
+            Open Demo Transfer
+          </button>
+          <p class="demo-transfer-note">Demo only — no USDC will be sent from this build.</p>
+        </div>
       </section>
 
       <!-- MODULE C -->
