@@ -1,0 +1,82 @@
+/* * {
+  outline: 1px solid red !important;
+}
+
+/* ===================== */
+/* === HEADER CUSTOM === */
+/* ===================== */
+
+/* === Logo Responsiveness === */
+.header-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  cursor: pointer;
+}
+.header-logo .wordmark {
+  display: block;
+}
+@media (max-width: 600px) {
+  .header-logo .wordmark {
+    display: none; /* Hide wordmark on mobile */
+  }
+}
+
+/* === Wallet Button Container === */
+.wallet-connection {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  min-width: 160px;
+  gap: 0.4rem;
+}
+
+/* === Wallet Button States === */
+.wallet-button {
+  font-family: var(--font-menu);
+  font-weight: 700;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  padding: 0.6rem 1.25rem;
+  border: 2px solid var(--Brand02); /* Default: gray */
+  background: transparent;
+  color: var(--Brand05);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: border-color 0.25s ease, background 0.2s ease, color 0.2s ease;
+}
+
+.wallet-button:hover,
+.wallet-button:focus {
+  background: rgba(0,0,0,0.04);
+  outline: none;
+}
+
+/* Dynamic State Borders */
+.wallet-default { border-color: var(--); }    /* Gray */
+.wallet-connected { border-color: #30B886; }         /* Green */
+.wallet-error { border-color: var(--red); }          /* Red */
+
+/* === Wallet Hint Text === */
+.hint-text {
+  font-size: var(--fs-xs);
+  font-family: var(--font-mono);
+  color: var(--Brand02);
+  opacity: 0.95;
+  min-height: 1.1rem;
+  text-align: right;
+  padding-right: 0.2rem;
+  transition: opacity 0.3s ease-in-out;
+}
+.hint-text.mono-style {
+  font-family: var(--font-mono);
+}
+
+/* === Divider Line Under Header === */
+.header-divider {
+  width: 100%;
+  height: 1px;
+  background: rgba(0,0,0,0.05);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}

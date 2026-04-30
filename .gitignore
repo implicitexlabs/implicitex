@@ -1,0 +1,30 @@
+# Local private materials
+.private/
+
+# OS / editor noise
+.DS_Store
+
+# Node / JS dependencies and build output
+node_modules/
+dist/
+build/
+coverage/
+
+# Contract and tool artifacts
+artifacts/
+cache/
+.deps/
+
+# Environment and secrets
+.env
+.env.*
+
+# Python cache / environments
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+implicitex_local_quarantine_*

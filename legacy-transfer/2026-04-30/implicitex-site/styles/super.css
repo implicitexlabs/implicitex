@@ -1,0 +1,63 @@
+:root {
+  --brand-color-01: #FBF9F0; /*  */
+  --brand-color-02: #C0CFC0; /*  */
+  --brand-color-03: #64B5B6; /*  */
+  --brand-color-04: #006A6E; /*  */
+  --brand-color-05: #002C41; /*  */
+}
+   /* ============================= */
+/* === SUPER CONTAINER CORE ==== */
+/* ============================= */
+
+.super-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    border: 3px solid var(--brand-color-03);
+    padding: 1rem;
+    box-sizing: border-box;
+    background-color: #002c41; /* Same as modal body */
+    overflow: hidden;
+  }
+  
+  .super-header,
+  .super-footer {
+    text-align: center;
+    font-family: var(--font-ui);
+    font-size: 1.2rem;
+    padding: 1rem 0;
+    border-top: 1px solid var(--);
+    border-bottom: 1px solid var(--brand-color-03);
+    background: rgba(255, 255, 255, 0.02);
+  }
+  
+  .modular-wrap {
+    display: flex;
+    flex: 1;
+    gap: 1rem;
+    margin: 1.5rem 0;
+    flex-wrap: nowrap;
+  }
+  
+  /* Individual modules */
+  .module {
+    flex: 1 1 0;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--brand-color-03);
+    border-radius: var(--radius-md);
+    font-family: var(--font-ui);
+    overflow: auto;
+  }
+  
+  /* Responsive stack for mobile */
+  @media (max-width: 768px) {
+    .modular-wrap {
+      flex-direction: column;
+    }
+  
+    .mod-a { order: 1; }
+    .mod-b { order: 2; }
+    .mod-c { order: 3; }
+  }
+  

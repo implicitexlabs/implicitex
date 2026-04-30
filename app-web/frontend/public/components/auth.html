@@ -1,0 +1,59 @@
+<!-- auth.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset "UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ImplicitEx Auth</title>
+</head>
+<body>
+    <h1>Sign Up</h1>
+    <form id="Signup-form"></form>
+        <input type="email" id="email" placeholder="Email"required />
+        <input type="password" id="password" placeholder="Password" required />
+        <button type="submit"> Sign Up</button>
+    </form>
+
+    <script type="module">
+        // Firebase setup
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10/12/2/firebase-auth.js";
+        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        const firebaseConfig = {
+// Production config note: inject runtime keys via safe deployment config; do not hardcode secrets.
+            apiKey: "__INJECT_AT_DEPLOY_TIME__",
+            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT_ID.appspot.com",
+            messagingSenderId: "YOUR_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        document.getElementById("signup-form") .addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const email = document.getElementById ("email").value;
+            const password = document.getElemenetById ("password").value;
+
+            try {
+                const userCredential = await createUseWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+
+                // Create Firestore document
+                await setDoc(doc(db, "users", user.uid), {
+                    email: user.email,
+                    createdAt: new Date().tISOString()
+                });
+
+                alert ("Sign-up succesful!");
+            }   catch (error) {
+                alert("Error: " + error.message);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,121 @@
+/* theme.css — sitewide design tokens */
+
+:root {
+/* Primary Brand Color Palette */
+
+--brand-color-01: #FBF9F0; /*  */
+--brand-color-02: #C0CFC0; /*  */
+--brand-color-03: #64B5B6; /*  */
+--brand-color-04: #006A6E; /*  */
+--brand-color-05: #002C41; /*  */
+
+
+/* Secondary Brand Color Palette  */
+/* --color-1: #1D1714;
+/*    --color-2: #524B4B;
+/*    --color-3: #E2E0DF;
+/*    --color-4: #f2f7e2; 
+/*    --color-5: #98918F;   
+
+  /* Input/Output Status */
+  --color-success: #6fd46f;   /* green for success/confirmation */
+  --color-warning: #FFD35C;   /* yellow for warning */
+  --color-error:   #FF4D4D;   /* red for error/bad */
+
+  /* Accent (optional, if used as call-to-action etc) */
+  --color-accent: #FFD35C;
+
+  /* Typography — font families (all generic) */
+  --font-main: 'Space Grotesk', Arial, sans-serif;
+  --font-alt: 'Orbitron', Arial, sans-serif;
+  --font-mono: 'DM Mono', 'Fira Mono', 'IBM Plex Mono', 'Consolas', monospace;
+
+  /* Font Sizes (generic, in rem) */
+  --fs-xxs:   0.5rem;
+  --fs-xs:   0.75rem;
+  --fs-sm:   0.875rem;
+  --fs-base: 1rem;
+  --fs-md:   1.125rem;
+  --fs-lg:   1.25rem;
+  --fs-xl:   1.5rem;
+  --fs-xxl:  2rem;
+
+  /* Font Weights (CSS values, can alias if you want) */
+  --fw-light:   300;
+  --fw-regular: 400;
+  --fw-medium:  500;
+  --fw-bold:    700;
+
+  /* Spacing (vertical/horizontal) */
+  --space-xs:   0.25rem;
+  --space-sm:   0.5rem;
+  --space-md:   1rem;
+  --space-lg:   2rem;
+  --space-xl:   4rem;
+
+  /* Borders */
+  --border-radius-xs:  2px;
+  --border-radius-sm:  4px;
+  --border-radius-md:  8px;
+  --border-radius-lg:  16px;
+  --border-width-thin: 1px;
+  --border-width-base: 2px;
+  --border-width-thick:3px;
+
+  /* Shadows */
+  --shadow-1: 0 1px 3px rgba(0,0,0,0.12);
+  --shadow-2: 0 4px 12px rgba(0,0,0,0.16);
+
+  /* Opacity tokens */
+  --opacity-90: 0.90;
+  --opacity-75: 0.75;
+  --opacity-50: 0.50;
+  --opacity-25: 0.25;
+}
+
+/* Example base usage */
+body {
+  background: var(--color-1);
+  color: var(--color-5);
+  font-family: var(--font-main);
+  font-size: var(--fs-base);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-alt);
+  font-weight: var(--fw-bold);
+}
+
+a {
+  color: var(--color-accent);
+  text-decoration: none;
+}
+
+a:hover, a:focus {
+  opacity: var(--opacity-75);
+}
+
+/* Use color and radius tokens for buttons */
+.button, .cta-button {
+  background: var(--brand-color-05);
+  color: var(--brand-color-04);
+  border: var(--border-width-thin) solid var(--brand-color-03);
+  border-radius: var(--border-radius-md);
+  font-size: var(--fs-base);
+  font-family: var(--font-alt);
+  padding: var(--space-sm) var(--space-md);
+  transition: background 0.16s, border-color 0.16s, color 0.16s;
+}
+
+.button:hover, .cta-button:hover {
+  background: var(--brand-color-05);
+  color: var(--brand-color-04);
+  border-color: var(--brand-color-03);
+}
+
+/* Example for status */
+.status-success { color: var(--color-success);}
+.status-error   { color: var(--color-error);}
+.status-warning { color: var(--color-warning);}
+
+/* ...add more utilities as needed */

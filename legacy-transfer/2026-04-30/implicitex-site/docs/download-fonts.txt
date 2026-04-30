@@ -1,0 +1,138 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>ImplicitEx – Peer-to-Peer USDC Transfers with Low Fees</title>
+    <meta name="description" content="Send USDC peer-to-peer with a transparent 1% fee using ImplicitEx.">
+
+    <!-- Google Fonts: Unified UI + Hero with font-display: swap -->
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=Orbitron:wght@700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://implicitex.com">
+    <meta property="og:title" content="ImplicitEx - Peer-to-Peer USDC Transfers">
+    <meta property="og:description" content="Transfer USDC wallet-to-wallet with ImplicitEx. Transparent 1% service fee. Simple. Secure. Powered by Web3.">
+    <meta property="og:image" content="https://www.implicitex.com/assets/social-card.jpg">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="ImplicitEx - Peer-to-Peer USDC Transfers">
+    <meta name="twitter:description" content="Wallet-to-wallet USDC transactions with a clear, simple 1% fee. Secure. Fast. Transparent.">
+    <meta name="twitter:image" content="https://implicitex.com/assets/social-card.jpg">
+
+    <!-- SEO / Browser / Device Metadata -->
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://implicitex.com/" />
+
+    <!-- Icons -->
+    <link rel="icon" href="/assets/icons/favicon.ico" type="image/x-icon">
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/assets/icons/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="styles/main.css" />
+    <link rel="stylesheet" href="styles/header.css" />
+    <link rel="stylesheet" href="styles/footer.css" />
+    <link rel="stylesheet" href="styles/modal.css" />
+    <link rel="stylesheet" href="styles/wallet.css" />
+
+    <!-- Ethers.js with SRI -->
+    <script defer src="https://cdn.jsdelivr.net/npm/ethers@6.10.0/dist/ethers.umd.min.js" integrity="sha384-+WjS2QCCz2b+q4J3OtI3F0i2+2N1xT4yN7f2v0jU0zT7F0i2+2N1xT4yN7f2v0j"></script>
+  </head>
+  <!-- Rest of the HTML remains unchanged -->
+</html>
+```
+
+### Explanation of Changes
+- **Removed `<style>` Block**: The `@font-face` rules were removed since they lacked `src` and were redundant with the Google Fonts `<link>`.
+- **Optimized Google Fonts**: The `<link>` URL already includes the necessary font weights (`Space Grotesk: 400,600,700`, `Orbitron: 700`, `DM Mono: 400,500`). Adding `&display=swap` to the URL ensures fonts load with `font-display: swap`, preventing render-blocking and aligning with the style guide’s performance goals.
+- **No Other Changes**: The rest of the `<head>` section (metadata, CSS, scripts) remains unchanged, as they were correctly configured in the previous version.
+
+### Alternative Approach (If Self-Hosting Fonts)
+If you prefer to self-host fonts to reduce reliance on Google Fonts (aligning with the style guide’s “Low-Gatekeeper Policy”), you can download the font files and define `@font-face` correctly. Here’s an example for `main.css`:
+
+<xaiArtifact artifact_id="70628c86-e920-4e6e-871f-17e624b316f2" artifact_version_id="dabafa20-94cf-4057-8a8d-97acb2cb1023" title="main.css" contentType="text/css">
+```css
+@font-face {
+  font-family: 'Space Grotesk';
+  src: url('/assets/fonts/SpaceGrotesk-Regular.woff2') format('woff2'),
+       url('/assets/fonts/SpaceGrotesk-Regular.woff') format('woff');
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Space Grotesk';
+  src: url('/assets/fonts/SpaceGrotesk-SemiBold.woff2') format('woff2'),
+       url('/assets/fonts/SpaceGrotesk-SemiBold.woff') format('woff');
+  font-weight: 600;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Space Grotesk';
+  src: url('/assets/fonts/SpaceGrotesk-Bold.woff2') format('woff2'),
+       url('/assets/fonts/SpaceGrotesk-Bold.woff') format('woff');
+  font-weight: 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Orbitron';
+  src: url('/assets/fonts/Orbitron-Bold.woff2') format('woff2'),
+       url('/assets/fonts/Orbitron-Bold.woff') format('woff');
+  font-weight: 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'DM Mono';
+  src: url('/assets/fonts/DMMono-Regular.woff2') format('woff2'),
+       url('/assets/fonts/DMMono-Regular.woff') format('woff');
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'DM Mono';
+  src: url('/assets/fonts/DMMono-Medium.woff2') format('woff2'),
+       url('/assets/fonts/DMMono-Medium.woff') format('woff');
+  font-weight: 500;
+  font-display: swap;
+}
+
+/* Example design tokens */
+:root {
+  --text-primary: #F5F7FA;
+  --text-secondary: #6699A1;
+  --background: #1A1A1A;
+}
+
+body {
+  font-family: 'Space Grotesk', sans-serif;
+  background: var(--background);
+  color: var(--text-primary);
+}
+```
+
+In this case, you’d:
+1. Download the font files from Google Fonts or a similar source.
+2. Store them in `/assets/fonts/`.
+3. Update the `<head>` to remove the Google Fonts `<link>` and rely on `main.css` for font loading.
+4. Ensure `woff2` and `woff` formats are used for broad browser compatibility.
+
+### Recommendation
+For the MVP, stick with the Google Fonts `<link>` with `&display=swap` (as shown in the updated HTML) to minimize setup time and align with the “Lean & Auditable” principle. Self-hosting fonts can be considered post-MVP to reduce external dependencies, especially for Phase 2 when scaling to creator tooling and DAO features.
+
+### Teach-Back (Per Style Guide)
+**Concept**: The `font-display: swap` property ensures text is displayed with a fallback font while custom fonts load, improving perceived performance. The `src` property in `@font-face` specifies the font file’s location, required for self-hosted fonts but not for Google Fonts loaded via `<link>`.
+
+**Please summarize**: In 1–2 sentences, explain why removing the `@font-face` rules and using `&display=swap` in the Google Fonts URL resolves the error and supports ImplicitEx’s performance goals.
+
+### Banking Analogy (Per Style Guide)
+Fixing the font error is like a bank ensuring its ATM displays a temporary balance while fetching real-time data, preventing delays (like `font-display: swap` avoids render-blocking). Removing redundant `@font-face` is like streamlining bank paperwork by relying on a single, secure transaction system (Google Fonts `<link>`).
+
+Let me know if you want to pursue self-hosted fonts, need the full updated `index.html`, or require assistance with `main.css` or other files!

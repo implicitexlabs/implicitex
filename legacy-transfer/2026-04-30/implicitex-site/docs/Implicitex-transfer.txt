@@ -1,0 +1,52 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+
+interface ISubscription {
+    function isSubscribed(address user) external view returns (bool);
+}
+
+interface IERC20 {
+    function transferFrom(address from, address to, uint256 value) external returns (bool);
+    function transfer(address to, uint256 value) external returns (bool);
+}
+
+contract ImplicitExTransfer is ReentrancyGuard, Ownable {
+    address public usdcAddress;
+    address public implicitExAddress; // Receives fees
+    address public subscriptionContract;
+    uint256 public constant STANDARD_FEE = 100; // 1% (basis points)
+    uint256 public constant SUBSCRIBER_FEE = 50; // 0.5% (basis points)
+
+    event TransferProcessed(address indexed sender, address indexed recipient, uint256 amount, uint256 fee);
+
+    constructor(address _usdcAddress, address _implicitExAddress, address _subscriptionContract) Ownable(msg.sender) {
+        usdcAddress = _usdcAddress;
+        implicitExAddress = _implicitExAddress;
+        subscriptionContract = _subscriptionContract;
+    }
+
+    function transfer(address recipient, uint256 amount) external nonReentrant {
+        require(amount > 0, "Amount must be positive");
+        require(recipient != address(0), "Invalid recipient");
+
+        bool isSubscribed = ISubscription(subscriptionContract).isSubscribed(msg.sender);
+        uint256 feeRate = isSubscribed ? SUBSCRIBER_FEE : STANDARD_FEE;
+        uint256 fee = (amount * feeRate) / 10000; // Basis points
+        uint256 total = amount + fee;
+
+        require(IERC20(usdcAddress).transferFrom(msg.sender, recipient, amount), "Recipient transfer failed");
+        require(IERC20(usdcAddress).transferFrom(msg.sender, implicitExAddress, fee), "Fee transfer failed");
+
+        emit TransferProcessed(msg.sender, recipient, amount, fee);
+    }
+
+    // Emergency pause (upgradable in Phase 2)
+    bool public paused;
+    modifier whenNotPaused() {
+        require(!paused, "Contract paused");
+        _;
+    }
+}
