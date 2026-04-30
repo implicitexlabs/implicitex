@@ -18,6 +18,7 @@ cache/
 # Environment and secrets
 .env
 .env.*
+!.env.example
 
 # Python cache / environments
 __pycache__/
