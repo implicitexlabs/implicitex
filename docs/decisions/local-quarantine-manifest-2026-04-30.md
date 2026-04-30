@@ -22,3 +22,4 @@ This manifest is redacted and lists only paths and category labels.
 - `legacy-transfer/2026-04-30/quarantined-runtime-js/gas-estimator.js` | POSSIBLE_PROVIDER, POSSIBLE_RPC_URL
 - `legacy-transfer/2026-04-30/quarantined-runtime-js/wallet-1.js` | PLACEHOLDER_CONTRACT, POSSIBLE_PROVIDER, POSSIBLE_RPC_URL
 - `legacy-transfer/2026-04-30/quarantined-runtime-js/wallet-email.js` | POSSIBLE_PROVIDER, POSSIBLE_RPC_URL
+- `app-web/frontend/public/components/auth.html` | ACTIVE_RUNTIME_REMOVAL, POSSIBLE_API_KEY, SECRET_WORD_ONLY
