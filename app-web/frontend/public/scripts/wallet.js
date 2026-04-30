@@ -83,21 +83,43 @@ if (typeof window.ethereum !== 'undefined' && window.ethereum.on) {
   });
 }
 
+// ===================== CHAIN CONFIG =====================
+
+// Reads window.ImplicitExChains (set by /config/chains.js if loaded).
+// Falls back to a disabled state if the config file is absent or malformed.
+function getChainConfig() {
+  if (window.ImplicitExChains && typeof window.ImplicitExChains === 'object') {
+    return window.ImplicitExChains;
+  }
+  return { transfersEnabled: false, supportedChains: {} };
+}
+
 // ===================== NETWORK SWITCHING =====================
 
-const POLYGON_CHAIN_ID = "0x89"; // Polygon mainnet (hex)
+const POLYGON_CHAIN_ID = "0x89"; // Polygon mainnet (hex) — fallback only
 
 async function requestSwitchToPolygon() {
   if (!window.ethereum) return alert("No wallet detected");
+
+  const config = getChainConfig();
+  const chainIds = Object.keys(config.supportedChains);
+  if (chainIds.length === 0) {
+    alert("No supported networks are configured in this build. Network switching is not available.");
+    return;
+  }
+
+  // Use the first supported chain from config; fall back to hardcoded Polygon.
+  const targetChainId = chainIds[0] || POLYGON_CHAIN_ID;
+
   try {
     await window.ethereum.request({
       method: 'wallet_switchEthereumChain',
-      params: [{ chainId: POLYGON_CHAIN_ID }]
+      params: [{ chainId: targetChainId }]
     });
     // No alert needed—user will see MetaMask switch, modal updates after
   } catch (switchError) {
     if (switchError.code === 4902) {
-      alert("This wallet does not have Polygon configured. Network setup is not configured in this build.");
+      alert("This wallet does not have the required network configured.");
     } else {
       alert("Switching failed or was rejected.");
     }
@@ -120,17 +142,15 @@ async function estimateGas(recipient, amount) {
     const signer = await provider.getSigner();
     const network = await provider.getNetwork();
 
-    let USDC_ADDRESS, gasUnit;
-    if (network.chainId === 1) {
-      USDC_ADDRESS = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"; // Ethereum USDC
-      gasUnit = "ETH";
-    } else if (network.chainId === 137) {
-      USDC_ADDRESS = "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174"; // Polygon USDC
-      gasUnit = "MATIC";
-    } else {
+    // Resolve USDC address from chain config; bail if this chain is not configured.
+    const chainHex = '0x' + network.chainId.toString(16);
+    const chainEntry = getChainConfig().supportedChains[chainHex];
+    if (!chainEntry || !chainEntry.usdcAddress) {
       gasEl.textContent = '—';
       return;
     }
+    const USDC_ADDRESS = chainEntry.usdcAddress;
+    const gasUnit = chainEntry.name || chainHex;
 
     const ERC20_ABI = [
       "function transfer(address to, uint256 value) public returns (bool)",
@@ -225,9 +245,17 @@ window.openSendModal = function () {
       </div>
     `;
 
+    const transfersEnabled = getChainConfig().transfersEnabled;
+    const disabledBanner = !transfersEnabled
+      ? `<div style="background:#2a1f00;border:1px solid #f5c000;border-radius:var(--radius-standard);padding:8px 12px;font-size:0.93em;color:#f5c000;margin-bottom:0.4em;">
+          Live transfers are not yet enabled in this build. This is a demo only.
+        </div>`
+      : '';
+
     if (!inConfirmStep) {
       return `
         <form id="send-usdc-form" autocomplete="off" style="display:flex;flex-direction:column;gap:1.13em;">
+          ${disabledBanner}
           <div>
             <label style="font-weight:600;">Address</label>
             <div id="user-address-display" class="modal-address${fullAddressShown ? ' expanded' : ''}" tabindex="0">
