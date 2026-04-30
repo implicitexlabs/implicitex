@@ -115,7 +115,9 @@ describe("ImplicitExTransfer", function () {
 
     await expect(
       transferContract.connect(sender).setTreasury(other.address)
-    ).to.be.revertedWith("OWNER_ONLY");
+    )
+      .to.be.revertedWithCustomError(transferContract, "OwnableUnauthorizedAccount")
+      .withArgs(sender.address);
   });
 
   it("owner can pause/unpause and emits events", async function () {
@@ -172,6 +174,34 @@ describe("ImplicitExTransfer", function () {
     const { transferContract } = await deployFixture();
 
     await expect(transferContract.setTransferPrecision(0)).to.be.revertedWith("PRECISION_ZERO");
+  });
+
+  it("transferOwnership is two-step: pending owner must accept", async function () {
+    const { transferContract, owner, other } = await deployFixture();
+
+    await expect(transferContract.transferOwnership(other.address))
+      .to.emit(transferContract, "OwnershipTransferStarted")
+      .withArgs(owner.address, other.address);
+
+    expect(await transferContract.owner()).to.equal(owner.address);
+    expect(await transferContract.pendingOwner()).to.equal(other.address);
+
+    await expect(transferContract.connect(other).acceptOwnership())
+      .to.emit(transferContract, "OwnershipTransferred")
+      .withArgs(owner.address, other.address);
+
+    expect(await transferContract.owner()).to.equal(other.address);
+    expect(await transferContract.pendingOwner()).to.equal(ethers.ZeroAddress);
+  });
+
+  it("only pending owner can accept ownership", async function () {
+    const { transferContract, sender, other } = await deployFixture();
+
+    await transferContract.transferOwnership(other.address);
+
+    await expect(transferContract.connect(sender).acceptOwnership())
+      .to.be.revertedWithCustomError(transferContract, "OwnableUnauthorizedAccount")
+      .withArgs(sender.address);
   });
 
   it("transferWithFee happy path transfers amount to recipient and fee to treasury", async function () {
@@ -272,7 +302,7 @@ describe("ImplicitExTransfer", function () {
 
     await expect(
       transferContract.connect(sender).transferWithFee(recipient.address, amount)
-    ).to.be.revertedWith("PAUSED");
+    ).to.be.revertedWithCustomError(transferContract, "EnforcedPause");
   });
 
   it("transferWithFee reverts when transferFrom fails", async function () {
@@ -284,7 +314,9 @@ describe("ImplicitExTransfer", function () {
 
     await expect(
       transferContract.connect(sender).transferWithFee(recipient.address, amount)
-    ).to.be.revertedWith("TRANSFER_FROM_FAILED");
+    )
+      .to.be.revertedWithCustomError(transferContract, "SafeERC20FailedOperation")
+      .withArgs(await usdc.getAddress());
   });
 
   it("transferWithFee reverts when recipient transfer fails", async function () {
@@ -296,7 +328,9 @@ describe("ImplicitExTransfer", function () {
 
     await expect(
       transferContract.connect(sender).transferWithFee(recipient.address, amount)
-    ).to.be.revertedWith("RECIPIENT_TRANSFER_FAILED");
+    )
+      .to.be.revertedWithCustomError(transferContract, "SafeERC20FailedOperation")
+      .withArgs(await usdc.getAddress());
   });
 
   it("transferWithFee reverts when fee transfer fails", async function () {
@@ -308,6 +342,8 @@ describe("ImplicitExTransfer", function () {
 
     await expect(
       transferContract.connect(sender).transferWithFee(recipient.address, amount)
-    ).to.be.revertedWith("FEE_TRANSFER_FAILED");
+    )
+      .to.be.revertedWithCustomError(transferContract, "SafeERC20FailedOperation")
+      .withArgs(await usdc.getAddress());
   });
 });

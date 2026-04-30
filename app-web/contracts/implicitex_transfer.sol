@@ -1,23 +1,23 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-interface IERC20 {
-    function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
-    function transfer(address recipient, uint256 amount) external returns (bool);
-}
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
+import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-contract ImplicitExTransfer {
+contract ImplicitExTransfer is Ownable2Step, Pausable, ReentrancyGuard {
+    using SafeERC20 for IERC20;
+
     IERC20 public immutable usdc;
-    address public owner;
     address public treasury;
 
     uint16 public feeBasisPoints;
     uint16 public constant MAX_FEE_BPS = 1000; // 10.00%
     uint256 public minTransferAmount;
     uint256 public transferPrecision;
-
-    bool public paused;
-    bool private entered;
 
     event TransferExecuted(
         address indexed sender,
@@ -30,26 +30,6 @@ contract ImplicitExTransfer {
     event FeeUpdated(uint16 previousFeeBps, uint16 newFeeBps);
     event MinTransferUpdated(uint256 previousMinTransfer, uint256 newMinTransfer);
     event PrecisionUpdated(uint256 previousPrecision, uint256 newPrecision);
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-    event Paused(address indexed by);
-    event Unpaused(address indexed by);
-
-    modifier onlyOwner() {
-        require(msg.sender == owner, "OWNER_ONLY");
-        _;
-    }
-
-    modifier whenNotPaused() {
-        require(!paused, "PAUSED");
-        _;
-    }
-
-    modifier nonReentrant() {
-        require(!entered, "REENTRANCY");
-        entered = true;
-        _;
-        entered = false;
-    }
 
     constructor(
         address usdcAddress,
@@ -57,20 +37,17 @@ contract ImplicitExTransfer {
         uint16 initialFeeBps,
         uint256 initialMinTransfer,
         uint256 initialPrecision
-    ) {
+    ) Ownable(msg.sender) {
         require(usdcAddress != address(0), "USDC_ZERO_ADDRESS");
         require(treasuryAddress != address(0), "TREASURY_ZERO_ADDRESS");
         require(initialFeeBps <= MAX_FEE_BPS, "FEE_TOO_HIGH");
         require(initialPrecision > 0, "PRECISION_ZERO");
 
         usdc = IERC20(usdcAddress);
-        owner = msg.sender;
         treasury = treasuryAddress;
         feeBasisPoints = initialFeeBps;
         minTransferAmount = initialMinTransfer;
         transferPrecision = initialPrecision;
-
-        emit OwnershipTransferred(address(0), msg.sender);
     }
 
     function transferWithFee(address recipient, uint256 amount)
@@ -85,10 +62,10 @@ contract ImplicitExTransfer {
         uint256 fee = (amount * feeBasisPoints) / 10000;
         uint256 totalDebit = amount + fee;
 
-        require(usdc.transferFrom(msg.sender, address(this), totalDebit), "TRANSFER_FROM_FAILED");
-        require(usdc.transfer(recipient, amount), "RECIPIENT_TRANSFER_FAILED");
+        usdc.safeTransferFrom(msg.sender, address(this), totalDebit);
+        usdc.safeTransfer(recipient, amount);
         if (fee > 0) {
-            require(usdc.transfer(treasury, fee), "FEE_TRANSFER_FAILED");
+            usdc.safeTransfer(treasury, fee);
         }
 
         emit TransferExecuted(msg.sender, recipient, amount, fee, totalDebit);
@@ -121,22 +98,11 @@ contract ImplicitExTransfer {
         emit PrecisionUpdated(previous, newPrecision);
     }
 
-    function transferOwnership(address newOwner) external onlyOwner {
-        require(newOwner != address(0), "OWNER_ZERO_ADDRESS");
-        address previous = owner;
-        owner = newOwner;
-        emit OwnershipTransferred(previous, newOwner);
-    }
-
     function pause() external onlyOwner {
-        require(!paused, "ALREADY_PAUSED");
-        paused = true;
-        emit Paused(msg.sender);
+        _pause();
     }
 
     function unpause() external onlyOwner {
-        require(paused, "NOT_PAUSED");
-        paused = false;
-        emit Unpaused(msg.sender);
+        _unpause();
     }
 }
