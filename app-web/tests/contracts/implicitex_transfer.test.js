@@ -120,6 +120,46 @@ describe("ImplicitExTransfer", function () {
       .withArgs(sender.address);
   });
 
+  it("non-owner cannot setFeeBasisPoints", async function () {
+    const { transferContract, sender } = await deployFixture();
+
+    await expect(transferContract.connect(sender).setFeeBasisPoints(200))
+      .to.be.revertedWithCustomError(transferContract, "OwnableUnauthorizedAccount")
+      .withArgs(sender.address);
+  });
+
+  it("non-owner cannot setMinTransferAmount", async function () {
+    const { transferContract, sender } = await deployFixture();
+
+    await expect(transferContract.connect(sender).setMinTransferAmount(10))
+      .to.be.revertedWithCustomError(transferContract, "OwnableUnauthorizedAccount")
+      .withArgs(sender.address);
+  });
+
+  it("non-owner cannot setTransferPrecision", async function () {
+    const { transferContract, sender } = await deployFixture();
+
+    await expect(transferContract.connect(sender).setTransferPrecision(10))
+      .to.be.revertedWithCustomError(transferContract, "OwnableUnauthorizedAccount")
+      .withArgs(sender.address);
+  });
+
+  it("non-owner cannot pause", async function () {
+    const { transferContract, sender } = await deployFixture();
+
+    await expect(transferContract.connect(sender).pause())
+      .to.be.revertedWithCustomError(transferContract, "OwnableUnauthorizedAccount")
+      .withArgs(sender.address);
+  });
+
+  it("non-owner cannot unpause", async function () {
+    const { transferContract, sender } = await deployFixture();
+
+    await expect(transferContract.connect(sender).unpause())
+      .to.be.revertedWithCustomError(transferContract, "OwnableUnauthorizedAccount")
+      .withArgs(sender.address);
+  });
+
   it("owner can pause/unpause and emits events", async function () {
     const { transferContract, owner } = await deployFixture();
 
@@ -176,7 +216,15 @@ describe("ImplicitExTransfer", function () {
     await expect(transferContract.setTransferPrecision(0)).to.be.revertedWith("PRECISION_ZERO");
   });
 
-  it("transferOwnership is two-step: pending owner must accept", async function () {
+  it("non-owner cannot initiate ownership transfer", async function () {
+    const { transferContract, sender, other } = await deployFixture();
+
+    await expect(transferContract.connect(sender).transferOwnership(other.address))
+      .to.be.revertedWithCustomError(transferContract, "OwnableUnauthorizedAccount")
+      .withArgs(sender.address);
+  });
+
+  it("transferOwnership is two-step: pending owner tracked and old owner stays until acceptance", async function () {
     const { transferContract, owner, other } = await deployFixture();
 
     await expect(transferContract.transferOwnership(other.address))
@@ -185,16 +233,9 @@ describe("ImplicitExTransfer", function () {
 
     expect(await transferContract.owner()).to.equal(owner.address);
     expect(await transferContract.pendingOwner()).to.equal(other.address);
-
-    await expect(transferContract.connect(other).acceptOwnership())
-      .to.emit(transferContract, "OwnershipTransferred")
-      .withArgs(owner.address, other.address);
-
-    expect(await transferContract.owner()).to.equal(other.address);
-    expect(await transferContract.pendingOwner()).to.equal(ethers.ZeroAddress);
   });
 
-  it("only pending owner can accept ownership", async function () {
+  it("random account cannot accept ownership", async function () {
     const { transferContract, sender, other } = await deployFixture();
 
     await transferContract.transferOwnership(other.address);
@@ -202,6 +243,19 @@ describe("ImplicitExTransfer", function () {
     await expect(transferContract.connect(sender).acceptOwnership())
       .to.be.revertedWithCustomError(transferContract, "OwnableUnauthorizedAccount")
       .withArgs(sender.address);
+  });
+
+  it("pending owner can accept ownership", async function () {
+    const { transferContract, owner, other } = await deployFixture();
+
+    await transferContract.transferOwnership(other.address);
+
+    await expect(transferContract.connect(other).acceptOwnership())
+      .to.emit(transferContract, "OwnershipTransferred")
+      .withArgs(owner.address, other.address);
+
+    expect(await transferContract.owner()).to.equal(other.address);
+    expect(await transferContract.pendingOwner()).to.equal(ethers.ZeroAddress);
   });
 
   it("transferWithFee happy path transfers amount to recipient and fee to treasury", async function () {
@@ -345,5 +399,106 @@ describe("ImplicitExTransfer", function () {
     )
       .to.be.revertedWithCustomError(transferContract, "SafeERC20FailedOperation")
       .withArgs(await usdc.getAddress());
+  });
+
+  it("malicious reentrant token callback attempt cannot reenter transferWithFee", async function () {
+    const [owner, treasury, sender, recipient] = await ethers.getSigners();
+
+    const ReentrantERC20Mock = await ethers.getContractFactory("ReentrantERC20Mock");
+    const reentrantToken = await ReentrantERC20Mock.deploy("Reentrant Mock", "rMOCK", 6);
+    await reentrantToken.waitForDeployment();
+
+    const ImplicitExTransfer = await ethers.getContractFactory("ImplicitExTransfer");
+    const transferContract = await ImplicitExTransfer.deploy(
+      await reentrantToken.getAddress(),
+      treasury.address,
+      100,
+      1,
+      1
+    );
+    await transferContract.waitForDeployment();
+
+    const amount = 100n;
+    const fee = (amount * 100n) / 10000n;
+    const totalDebit = amount + fee;
+
+    await reentrantToken.mint(sender.address, totalDebit * 2n);
+    await reentrantToken.connect(sender).approve(await transferContract.getAddress(), totalDebit * 2n);
+    await reentrantToken.configureReentry(await transferContract.getAddress(), recipient.address, amount);
+    await reentrantToken.setReentryEnabled(true);
+
+    await expect(transferContract.connect(sender).transferWithFee(recipient.address, amount))
+      .to.emit(transferContract, "TransferExecuted")
+      .withArgs(sender.address, recipient.address, amount, fee, totalDebit);
+
+    expect(await reentrantToken.reentryAttempted()).to.equal(true);
+    expect(await reentrantToken.reentrySucceeded()).to.equal(false);
+  });
+
+  it("fee-on-transfer token behavior is unsupported and transferWithFee fails safely", async function () {
+    const [owner, treasury, sender, recipient] = await ethers.getSigners();
+
+    const FeeOnTransferERC20Mock = await ethers.getContractFactory("FeeOnTransferERC20Mock");
+    const feeToken = await FeeOnTransferERC20Mock.deploy("Fee Mock", "fMOCK", 6, 500); // 5%
+    await feeToken.waitForDeployment();
+
+    const ImplicitExTransfer = await ethers.getContractFactory("ImplicitExTransfer");
+    const transferContract = await ImplicitExTransfer.deploy(
+      await feeToken.getAddress(),
+      treasury.address,
+      100,
+      1,
+      1
+    );
+    await transferContract.waitForDeployment();
+
+    const amount = 1000n;
+    const fee = (amount * 100n) / 10000n;
+    const totalDebit = amount + fee;
+
+    await feeToken.mint(sender.address, totalDebit);
+    await feeToken.connect(sender).approve(await transferContract.getAddress(), totalDebit);
+
+    await expect(
+      transferContract.connect(sender).transferWithFee(recipient.address, amount)
+    ).to.be.revertedWith("MOCK_INSUFFICIENT_BALANCE");
+  });
+
+  it("multiple sequential transfers preserve expected balances", async function () {
+    const { transferContract, usdc, sender, recipient, treasury, feeBps } = await deployFixture({ feeBps: 100 });
+
+    const amount1 = 1_000_000n; // 1.0 USDC (6 decimals)
+    const amount2 = 2_500_000n; // 2.5 USDC
+    const fee1 = (amount1 * 100n) / 10000n;
+    const fee2 = (amount2 * 100n) / 10000n;
+    const totalDebit = amount1 + fee1 + amount2 + fee2;
+
+    await usdc.mint(sender.address, totalDebit);
+    await usdc.connect(sender).approve(await transferContract.getAddress(), totalDebit);
+
+    await transferContract.connect(sender).transferWithFee(recipient.address, amount1);
+    await transferContract.connect(sender).transferWithFee(recipient.address, amount2);
+
+    expect(await usdc.balanceOf(sender.address)).to.equal(0n);
+    expect(await usdc.balanceOf(recipient.address)).to.equal(amount1 + amount2);
+    expect(await usdc.balanceOf(treasury.address)).to.equal(fee1 + fee2);
+    expect(await usdc.balanceOf(await transferContract.getAddress())).to.equal(0n);
+  });
+
+  it("pause blocks transferWithFee but owner config updates remain available", async function () {
+    const { transferContract, usdc, sender, recipient, feeBps } = await deployFixture();
+
+    const amount = 100n;
+    await fundAndApprove({ usdc, transferContract, sender, amount, feeBps });
+
+    await transferContract.pause();
+
+    await expect(transferContract.setFeeBasisPoints(200)).to.emit(transferContract, "FeeUpdated");
+    await expect(transferContract.setMinTransferAmount(2)).to.emit(transferContract, "MinTransferUpdated");
+    await expect(transferContract.setTransferPrecision(2)).to.emit(transferContract, "PrecisionUpdated");
+
+    await expect(
+      transferContract.connect(sender).transferWithFee(recipient.address, amount)
+    ).to.be.revertedWithCustomError(transferContract, "EnforcedPause");
   });
 });
