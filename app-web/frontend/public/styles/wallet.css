@@ -288,3 +288,13 @@
     margin-top: 2rem;
     text-align: center;
 }
+
+.demo-transfer-cta {
+    margin-top: 1rem;
+}
+
+.demo-transfer-note {
+    margin-top: 0.55rem;
+    font-size: 0.9rem;
+    color: var(--color-2);
+}
