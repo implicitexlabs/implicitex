@@ -212,20 +212,20 @@ window.openSendModal = function () {
     validRecipient = validateEthAddress(recipientValue);
 
     let addressDisplay = fullAddressShown ? window.userAddress : maskAddress(window.userAddress);
-    let copyNotice = copiedShown ? '<span style="color:#6fd46f;">Copied!</span>' : 'Click to reveal. Double-click to copy.';
+    let copyNotice = copiedShown ? '<span class="status-success">Copied!</span>' : 'Click to reveal. Double-click to copy.';
 
     let recipientValidation = '';
     if (recipientValue.length > 0) {
       if (/^0x[a-fA-F0-9]*$/.test(recipientValue)) {
         if (recipientValue.length === 42) {
           recipientValidation = validateEthAddress(recipientValue)
-            ? '<span style="color:#30b886;">Valid address ✔</span>'
-            : '<span style="color:#FF4D4D;">Invalid address</span>';
+            ? '<span class="status-success">Valid address ✔</span>'
+            : '<span class="status-error">Invalid address</span>';
         } else {
           recipientValidation = '';
         }
       } else {
-        recipientValidation = '<span style="color:#FF4D4D;">Invalid character</span>';
+        recipientValidation = '<span class="status-error">Invalid character</span>';
       }
     }
 
@@ -233,7 +233,7 @@ window.openSendModal = function () {
     if (amountValue && !isNaN(amountValue)) {
       const val = parseFloat(amountValue);
       if (val + (val * 0.01) > currentUsdcBalance) {
-        amountWarning = '<span style="color:#FF4D4D;">Amount exceeds balance.</span>';
+        amountWarning = '<span class="status-error">Amount exceeds balance.</span>';
       }
     }
 
@@ -247,9 +247,7 @@ window.openSendModal = function () {
 
     const transfersEnabled = getChainConfig().transfersEnabled;
     const disabledBanner = !transfersEnabled
-      ? `<div style="background:#2a1f00;border:1px solid #f5c000;border-radius:var(--radius-standard);padding:8px 12px;font-size:0.93em;color:#f5c000;margin-bottom:0.4em;">
-          Live transfers are not yet enabled in this build. This is a demo only.
-        </div>`
+      ? `<div class="config-disabled-banner">Live transfers are not yet enabled in this build. This is a demo only.</div>`
       : '';
 
     if (!inConfirmStep) {
@@ -265,7 +263,7 @@ window.openSendModal = function () {
           </div>
           <div>
             <label style="font-weight:600;">Balance(s)</label>
-            <div style="border:1px solid var(--color-mid-gray);padding:8px 12px;border-radius:var(--radius-standard);background:#171b22;">
+            <div class="output-field">
               USDC: ${currentUsdcBalance} &nbsp;|&nbsp; ETH: ${currentEthBalance}
             </div>
           </div>
@@ -283,7 +281,7 @@ window.openSendModal = function () {
           <div>
             <div style="font-size:0.97em; color:var(--color-light-gray); margin-top:0.2em;">
             <span>Transfer Fee (USDC): <span id="fee-output">${transferFee.toFixed(2)}</span></span><br></div>
-            <span>Transfer Total (USDC): <span id="total-output" style="color:#f5c000;font-size:1.13em;">${transferTotal.toFixed(2)}</span></span>
+            <span>Transfer Total (USDC): <span id="total-output" class="total-highlight">${transferTotal.toFixed(2)}</span></span>
             <div>Estimated Gas (ETH/MATIC): <span id="gas-display">—</span></div>
           </div>
           ${gasSection}
@@ -302,7 +300,7 @@ window.openSendModal = function () {
             <span>Estimated gas fees (see above for details).</span>
           </div>
           <div style="margin-top:1em;">
-            <span style="font-weight:600;color:#f5c000;">Demo estimate: ${(parseFloat(amountValue)+parseFloat(amountValue)*0.01).toFixed(2)} USDC + gas fees</span>
+            <span class="total-highlight">Demo estimate: ${(parseFloat(amountValue)+parseFloat(amountValue)*0.01).toFixed(2)} USDC + gas fees</span>
           </div>
         </div>
       `;
@@ -378,11 +376,11 @@ window.openSendModal = function () {
               if (validateEthAddress(recipientValue)) {
                 recipientInput.classList.add('input-valid');
                 recipientInput.classList.remove('input-invalid');
-                recipientMsg.innerHTML = '<span style="color:#30b886;">Valid address ✔</span>';
+                recipientMsg.innerHTML = '<span class="status-success">Valid address ✔</span>';
               } else {
                 recipientInput.classList.add('input-invalid');
                 recipientInput.classList.remove('input-valid');
-                recipientMsg.innerHTML = '<span style="color:#FF4D4D;">Invalid address</span>';
+                recipientMsg.innerHTML = '<span class="status-error">Invalid address</span>';
               }
             } else {
               recipientInput.classList.remove('input-valid', 'input-invalid');
@@ -391,7 +389,7 @@ window.openSendModal = function () {
           } else {
             recipientInput.classList.remove('input-valid');
             recipientInput.classList.add('input-invalid');
-            recipientMsg.innerHTML = '<span style="color:#FF4D4D;">Invalid character</span>';
+            recipientMsg.innerHTML = '<span class="status-error">Invalid character</span>';
           }
           estimateGas(recipientValue, amountValue);
           if (window.estimateGasBothNetworks) {

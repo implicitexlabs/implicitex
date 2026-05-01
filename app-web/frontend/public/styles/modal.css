@@ -321,6 +321,17 @@ input:invalid ~ .hint {
   padding: 0.22rem;
 }
 
+/* === CONFIG DISABLED BANNER === */
+.config-disabled-banner {
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--border-radius-md);
+  padding: 8px 12px;
+  font-size: 0.93em;
+  color: var(--color-text-secondary);
+  background: var(--color-bg-surface);
+  margin-bottom: 0.4em;
+}
+
 /* === SWITCH NETWORK BUTTON === */
 .switch-network-btn {
   display: inline-block;
