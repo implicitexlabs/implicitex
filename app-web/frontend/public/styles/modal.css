@@ -1,11 +1,4 @@
-/* Base styles */
-body {
-  background: var(--color-1);
-  color: var(--color-5);
-  font-family: var(--font-main);
-  margin: 0;
-  min-height: 100vh;
-}
+/* modal.css — modal, forms, and interactive UI components */
 
 .page-container {
   min-height: 100vh;
@@ -21,11 +14,12 @@ body {
   justify-content: center;
 }
 
+/* === BUTTONS === */
 .cta-button,
 .button {
-  background: var(--color-2);
-  color: var(--color-5);
-  border: 1px solid var(--color-3);
+  background: transparent;
+  color: var(--color-text-primary);
+  border: 1.5px solid var(--color-border-strong);
   border-radius: var(--border-radius-md);
   font-family: var(--font-alt);
   font-size: 1rem;
@@ -43,38 +37,44 @@ body {
 
 .cta-button:disabled,
 .button:disabled {
-  opacity: 0.45;
+  opacity: 0.35;
   cursor: not-allowed;
 }
 
 .cta-button:hover,
 .button:hover {
-  background: var(--color-3);
-  border-color: var(--color-4);
-  color: #fff;
+  background: var(--color-accent);
+  color: var(--color-accent-inverse);
+  border-color: var(--color-accent);
 }
 
-/* Modal Styles */
+/* === MODAL OVERLAY === */
 .modal-overlay {
   position: fixed;
   top: 0; left: 0;
   width: 100vw; height: 100vh;
-  background: rgba(0,0,0,0.85);
+  background: rgba(0, 0, 0, 0.85);
   z-index: 9999;
-  display: flex; align-items: center; justify-content: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
+/* === MODAL === */
 .modal {
-  background: var(--color-2);
-  border-radius: 16px;
+  background: var(--color-bg-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-lg);
   padding: 2em 1.2em;
   min-width: 330px;
   max-width: 95vw;
-  box-shadow: 0 8px 32px 0 #000a, 0 1.5px 3px #2226;
-  color: var(--color-5);
+  box-shadow: var(--shadow-2);
+  color: var(--color-text-primary);
   position: relative;
   font-size: 1.04em;
-  display: flex; flex-direction: column; align-items: stretch;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
   overflow-x: hidden;
 }
 
@@ -103,49 +103,52 @@ body {
 }
 
 #modal-confirm {
-  background: var(--color-2);
-  color: var(--color-5);
-  border: 1.5px solid var(--color-4);
+  background: transparent;
+  color: var(--color-text-primary);
+  border: 1.5px solid var(--color-border-strong);
 }
+
 #modal-confirm:hover {
   background: var(--color-accent);
-  color: #1D1714;
+  color: var(--color-accent-inverse);
   border-color: var(--color-accent);
 }
 
 #modal-cancel {
   background: transparent;
-  color: var(--color-4);
-  border: 1.5px solid var(--color-4);
-}
-#modal-cancel:hover {
-  background: var(--color-4);
-  color: var(--color-2);
+  color: var(--color-text-secondary);
+  border: 1.5px solid var(--color-border);
 }
 
-/* Modal Disclaimer & Microcopy */
+#modal-cancel:hover {
+  background: var(--color-bg-surface);
+  color: var(--color-text-primary);
+  border-color: var(--color-border-strong);
+}
+
+/* === MODAL FOOTER === */
 .modal-disclaimer,
 .modal-footer-copy {
   font-size: var(--fs-xs);
-  color: var(--color-4);
+  color: var(--color-text-muted);
   text-align: center;
-  opacity: 0.7;
   margin-top: 1.2em;
 }
 
 .modal-footer-copy a {
-  color: var(--color-accent);
+  color: var(--color-text-secondary);
   text-decoration: underline;
   font-size: inherit;
-  opacity: 0.82;
 }
 
-input[type="text"], input[type="number"] {
+/* === INPUTS === */
+input[type="text"],
+input[type="number"] {
   width: 100%;
   border-radius: var(--border-radius-md);
-  background: #181b23;
-  border: 1px solid var(--color-3);
-  color: var(--color-5);
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-primary);
   font-family: var(--font-mono);
   font-size: 1.04em;
   padding: 0.53em 0.9em;
@@ -153,27 +156,30 @@ input[type="text"], input[type="number"] {
   margin-bottom: 0.22em;
   outline: none;
   box-sizing: border-box;
+  transition: border-color 0.15s;
 }
 
-input[type="text"]:focus, input[type="number"]:focus {
-  border-color: var(--color-4);
+input[type="text"]:focus,
+input[type="number"]:focus {
+  border-color: var(--color-border-strong);
 }
 
 .input-valid {
-  border: 2px solid #30b886 !important;  /* Green */
-  box-shadow: 0 0 0 1px #30b886 inset;
+  border: 2px solid var(--color-success) !important;
+  box-shadow: 0 0 0 1px var(--color-success) inset;
 }
+
 .input-invalid {
   border: 2px solid var(--color-error) !important;
   box-shadow: 0 0 0 1px var(--color-error) inset;
 }
 
-/* Output and Data Fields */
+/* === OUTPUT AND DATA FIELDS === */
 .output-field,
 .modal-address {
-  background: #171b22;
+  background: var(--color-bg-surface);
   border-radius: var(--border-radius-md);
-  border: 1px solid var(--color-3);
+  border: 1px solid var(--color-border);
   font-family: var(--font-mono);
   font-size: 1.01em;
   padding: 0.54em 0.82em;
@@ -181,7 +187,7 @@ input[type="text"]:focus, input[type="number"]:focus {
   overflow-x: auto;
   max-width: 100%;
   box-sizing: border-box;
-  color: var(--color-4);
+  color: var(--color-text-secondary);
   cursor: pointer;
 }
 
@@ -189,24 +195,24 @@ input[type="text"]:focus, input[type="number"]:focus {
 .output-field.expanded {
   white-space: normal;
   word-break: break-all;
-  color: var(--color-5);
+  color: var(--color-text-primary);
 }
 
-/* --- MODAL LABELS & SUMMARY --- */
+/* === LABELS === */
 .modal-label,
 .summary-label {
   display: block;
   font-family: var(--font-alt);
   font-weight: 600;
   font-size: var(--fs-sm);
-  color: var(--color-4);
+  color: var(--color-text-secondary);
   margin: 1rem 0 0.25rem;
   text-align: left;
   letter-spacing: 0.03em;
 }
 
 .summary-value {
-  color: var(--color-5);
+  color: var(--color-text-primary);
   font-family: var(--font-mono);
   font-size: 1.06em;
   margin: 0 0.18em;
@@ -220,48 +226,48 @@ input[type="text"]:focus, input[type="number"]:focus {
   margin-left: 0.35em;
 }
 
-/* --- GAS ESTIMATE --- */
+/* === GAS ESTIMATE === */
 .gas-estimate-row {
   font-family: var(--font-mono);
   font-size: 1.02em;
-  color: var(--color-4);
+  color: var(--color-text-secondary);
   margin-top: 0.16em;
   margin-bottom: 0.22em;
   display: flex;
   align-items: center;
   gap: 0.6em;
 }
+
 .gas-estimate-row .gas-label {
   font-size: var(--fs-xs);
-  color: var(--color-4);
+  color: var(--color-text-secondary);
   opacity: 0.77;
 }
+
 .gas-estimate-row .gas-value {
   font-size: 1.03em;
-  color: var(--color-5);
+  color: var(--color-text-primary);
   font-family: var(--font-mono);
 }
 
 .gas-estimate-row .gas-unit {
-  color: var(--color-accent);
+  color: var(--color-text-secondary);
   font-size: 0.95em;
   margin-left: 0.2em;
 }
 
 .gas-estimate-row .gas-usd {
-  color: var(--color-4);
+  color: var(--color-text-muted);
   font-size: 0.95em;
   margin-left: 0.25em;
-  opacity: 0.8;
 }
 
-/* --- HINTS & WARNINGS --- */
+/* === HINTS AND WARNINGS === */
 .hint {
   font-size: var(--fs-xs);
   font-family: var(--font-main);
-  color: var(--color-4);
+  color: var(--color-text-secondary);
   margin: 0.32rem 0 0.75rem 0;
-  opacity: 0.9;
   min-height: 1.1rem;
   transition: opacity 0.3s;
 }
@@ -269,17 +275,16 @@ input[type="text"]:focus, input[type="number"]:focus {
 .hint.error,
 input:invalid ~ .hint {
   color: var(--color-error);
-  opacity: 1;
 }
 
-/* Modal Divider */
+/* === DIVIDER === */
 .modal-divider {
   border: none;
-  border-top: 1px solid rgba(255,255,255,0.12);
+  border-top: 1px solid var(--color-border);
   margin: 1.4rem 0;
 }
 
-/* Mobile responsiveness */
+/* === MOBILE === */
 @media (max-width: 500px) {
   .modal {
     min-width: unset;
@@ -292,7 +297,7 @@ input:invalid ~ .hint {
   }
 }
 
-/* -- Brandmark/logo row for modal (optional) -- */
+/* === MODAL BRANDING === */
 .modal-branding {
   margin-top: 2rem;
   text-align: center;
@@ -300,7 +305,7 @@ input:invalid ~ .hint {
   align-items: center;
   justify-content: center;
   gap: 0.75rem;
-  opacity: 0.7;
+  opacity: 0.6;
 }
 
 .modal-logo {
@@ -312,28 +317,29 @@ input:invalid ~ .hint {
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: #ffffff;
+  background: var(--color-accent);
   padding: 0.22rem;
 }
 
+/* === SWITCH NETWORK BUTTON === */
 .switch-network-btn {
   display: inline-block;
   margin-top: 0.6em;
   padding: 0.47em 1.2em;
   font-size: 1em;
   font-family: inherit;
-  border: 1.5px solid var(--color-3);
-  background: rgba(80,80,80,0.13);
-  color: var(--color-4);
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text-secondary);
   border-radius: var(--border-radius-md);
   cursor: pointer;
   transition: background 0.13s, border-color 0.13s, color 0.13s;
-  box-shadow: none;
   outline: none;
 }
+
 .switch-network-btn:hover,
 .switch-network-btn:focus {
-  background: #222;
-  border-color: var(--color-4);
-  color: #fff;
+  background: var(--color-bg-surface);
+  border-color: var(--color-border-strong);
+  color: var(--color-text-primary);
 }
