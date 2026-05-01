@@ -1,28 +1,24 @@
-/* * {
-  outline: 1px solid red !important;
-}
+/* header.css — component-specific header overrides */
 
-/* ===================== */
-/* === HEADER CUSTOM === */
-/* ===================== */
-
-/* === Logo Responsiveness === */
+/* === LOGO === */
 .header-logo {
   display: flex;
   align-items: center;
   gap: 0.6rem;
   cursor: pointer;
 }
+
 .header-logo .wordmark {
   display: block;
 }
+
 @media (max-width: 600px) {
   .header-logo .wordmark {
-    display: none; /* Hide wordmark on mobile */
+    display: none;
   }
 }
 
-/* === Wallet Button Container === */
+/* === WALLET BUTTON CONTAINER === */
 .wallet-connection {
   display: flex;
   flex-direction: column;
@@ -32,16 +28,16 @@
   gap: 0.4rem;
 }
 
-/* === Wallet Button States === */
+/* === WALLET BUTTON === */
 .wallet-button {
   font-family: var(--font-menu);
   font-weight: 700;
   font-size: 0.875rem;
   text-transform: uppercase;
   padding: 0.6rem 1.25rem;
-  border: 2px solid var(--Brand02); /* Default: gray */
+  border: 1.5px solid var(--color-border-strong);
   background: transparent;
-  color: var(--Brand05);
+  color: var(--color-text-primary);
   border-radius: var(--radius-md);
   cursor: pointer;
   transition: border-color 0.25s ease, background 0.2s ease, color 0.2s ease;
@@ -49,34 +45,35 @@
 
 .wallet-button:hover,
 .wallet-button:focus {
-  background: rgba(0,0,0,0.04);
+  background: var(--color-bg-surface);
+  border-color: var(--color-accent);
   outline: none;
 }
 
-/* Dynamic State Borders */
-.wallet-default { border-color: var(--); }    /* Gray */
-.wallet-connected { border-color: #30B886; }         /* Green */
-.wallet-error { border-color: var(--red); }          /* Red */
+/* Dynamic state borders */
+.wallet-default   { border-color: var(--color-border-strong); }
+.wallet-connected { border-color: var(--color-success); }
+.wallet-error     { border-color: var(--color-error); }
 
-/* === Wallet Hint Text === */
+/* === HINT TEXT === */
 .hint-text {
   font-size: var(--fs-xs);
   font-family: var(--font-mono);
-  color: var(--Brand02);
+  color: var(--color-text-secondary);
   opacity: 0.95;
   min-height: 1.1rem;
   text-align: right;
   padding-right: 0.2rem;
   transition: opacity 0.3s ease-in-out;
 }
+
 .hint-text.mono-style {
   font-family: var(--font-mono);
 }
 
-/* === Divider Line Under Header === */
+/* === DIVIDER === */
 .header-divider {
   width: 100%;
   height: 1px;
-  background: rgba(0,0,0,0.05);
-  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  background: var(--color-border);
 }

@@ -1,37 +1,65 @@
-/* theme.css — sitewide design tokens */
+/* theme.css — sitewide design tokens
+ *
+ * Dark theme is the default.
+ * Apply data-theme="light" to <html> for light mode.
+ * A theme-toggle script can set this attribute at runtime.
+ *
+ * Token naming:
+ *   --color-bg           page background
+ *   --color-bg-surface   slightly elevated (modules, cards)
+ *   --color-bg-raised    further elevated (modals, dropdowns)
+ *   --color-border       subtle dividers and outlines
+ *   --color-border-strong  more visible borders (focused inputs, active states)
+ *   --color-text-primary   body text
+ *   --color-text-secondary muted/secondary text
+ *   --color-text-muted     placeholder / disabled text
+ *   --color-accent         primary interactive color (buttons, links)
+ *   --color-accent-inverse text on --color-accent backgrounds
+ */
+
+/* ===================== */
+/* === DARK (default) === */
+/* ===================== */
 
 :root {
-/* Primary Brand Color Palette */
+  /* Background layers */
+  --color-bg:             #000000;
+  --color-bg-surface:     #111111;
+  --color-bg-raised:      #1c1c1c;
 
---brand-color-01: #FBF9F0; /*  */
---brand-color-02: #C0CFC0; /*  */
---brand-color-03: #64B5B6; /*  */
---brand-color-04: #006A6E; /*  */
---brand-color-05: #002C41; /*  */
+  /* Borders */
+  --color-border:         rgba(255, 255, 255, 0.12);
+  --color-border-strong:  rgba(255, 255, 255, 0.30);
 
+  /* Text */
+  --color-text-primary:   #ffffff;
+  --color-text-secondary: #aaaaaa;
+  --color-text-muted:     #555555;
 
-/* Secondary Brand Color Palette  */
-/* --color-1: #1D1714;
-/*    --color-2: #524B4B;
-/*    --color-3: #E2E0DF;
-/*    --color-4: #f2f7e2; 
-/*    --color-5: #98918F;   
+  /* Accent */
+  --color-accent:         #ffffff;
+  --color-accent-inverse: #000000;
 
-  /* Input/Output Status */
-  --color-success: #6fd46f;   /* green for success/confirmation */
-  --color-warning: #FFD35C;   /* yellow for warning */
-  --color-error:   #FF4D4D;   /* red for error/bad */
+  /* Aliases used in legacy component CSS — map to semantic tokens above */
+  --color-mid-gray:   rgba(255, 255, 255, 0.18);
+  --color-light-gray: rgba(255, 255, 255, 0.35);
 
-  /* Accent (optional, if used as call-to-action etc) */
-  --color-accent: #FFD35C;
+  /* Status — functional; kept across themes */
+  --color-success: #22cc66;
+  --color-warning: #f0b429;
+  --color-error:   #ff3b3b;
 
-  /* Typography — font families (all generic) */
+  /* ===================== */
+  /* === TYPOGRAPHY ======= */
+  /* ===================== */
+
   --font-main: 'Space Grotesk', Arial, sans-serif;
-  --font-alt: 'Orbitron', Arial, sans-serif;
+  --font-alt:  'Orbitron', Arial, sans-serif;
   --font-mono: 'DM Mono', 'Fira Mono', 'IBM Plex Mono', 'Consolas', monospace;
+  --font-menu: var(--font-main);
+  --font-ui:   var(--font-main);
 
-  /* Font Sizes (generic, in rem) */
-  --fs-xxs:   0.5rem;
+  --fs-xxs:  0.5rem;
   --fs-xs:   0.75rem;
   --fs-sm:   0.875rem;
   --fs-base: 1rem;
@@ -40,82 +68,124 @@
   --fs-xl:   1.5rem;
   --fs-xxl:  2rem;
 
-  /* Font Weights (CSS values, can alias if you want) */
   --fw-light:   300;
   --fw-regular: 400;
   --fw-medium:  500;
   --fw-bold:    700;
 
-  /* Spacing (vertical/horizontal) */
-  --space-xs:   0.25rem;
-  --space-sm:   0.5rem;
-  --space-md:   1rem;
-  --space-lg:   2rem;
-  --space-xl:   4rem;
+  /* ===================== */
+  /* === SPACING ========== */
+  /* ===================== */
 
-  /* Borders */
-  --border-radius-xs:  2px;
-  --border-radius-sm:  4px;
-  --border-radius-md:  8px;
-  --border-radius-lg:  16px;
-  --border-width-thin: 1px;
-  --border-width-base: 2px;
-  --border-width-thick:3px;
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 2rem;
+  --space-xl: 4rem;
 
-  /* Shadows */
-  --shadow-1: 0 1px 3px rgba(0,0,0,0.12);
-  --shadow-2: 0 4px 12px rgba(0,0,0,0.16);
+  /* ===================== */
+  /* === BORDERS ========== */
+  /* ===================== */
 
-  /* Opacity tokens */
+  --radius-xs:       2px;
+  --radius-sm:       4px;
+  --radius-standard: 8px;
+  --radius-md:       8px;
+  --radius-lg:       16px;
+
+  /* Legacy aliases */
+  --border-radius-xs:   2px;
+  --border-radius-sm:   4px;
+  --border-radius-md:   8px;
+  --border-radius-lg:   16px;
+  --border-width-thin:  1px;
+  --border-width-base:  2px;
+  --border-width-thick: 3px;
+
+  /* ===================== */
+  /* === SHADOWS ========== */
+  /* ===================== */
+
+  --shadow-1: 0 1px 4px rgba(0, 0, 0, 0.5);
+  --shadow-2: 0 4px 20px rgba(0, 0, 0, 0.7);
+
+  /* ===================== */
+  /* === OPACITY ========== */
+  /* ===================== */
+
   --opacity-90: 0.90;
   --opacity-75: 0.75;
   --opacity-50: 0.50;
   --opacity-25: 0.25;
 }
 
-/* Example base usage */
+/* ======================= */
+/* === LIGHT THEME ======== */
+/* ======================= */
+
+[data-theme="light"] {
+  --color-bg:             #ffffff;
+  --color-bg-surface:     #f2f2f2;
+  --color-bg-raised:      #e5e5e5;
+
+  --color-border:         rgba(0, 0, 0, 0.12);
+  --color-border-strong:  rgba(0, 0, 0, 0.30);
+
+  --color-text-primary:   #000000;
+  --color-text-secondary: #555555;
+  --color-text-muted:     #aaaaaa;
+
+  --color-accent:         #000000;
+  --color-accent-inverse: #ffffff;
+
+  --color-mid-gray:   rgba(0, 0, 0, 0.18);
+  --color-light-gray: rgba(0, 0, 0, 0.35);
+
+  --shadow-1: 0 1px 4px rgba(0, 0, 0, 0.10);
+  --shadow-2: 0 4px 16px rgba(0, 0, 0, 0.14);
+}
+
+/* ======================= */
+/* === BASE STYLES ======== */
+/* ======================= */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 body {
-  background: var(--color-1);
-  color: var(--color-5);
+  background: var(--color-bg);
+  color: var(--color-text-primary);
   font-family: var(--font-main);
   font-size: var(--fs-base);
+  margin: 0;
+  min-height: 100vh;
+  transition: background 0.2s ease, color 0.2s ease;
 }
 
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-alt);
   font-weight: var(--fw-bold);
+  margin: 0 0 0.5em;
 }
 
 a {
-  color: var(--color-accent);
+  color: var(--color-text-secondary);
   text-decoration: none;
+  transition: color 0.15s ease;
 }
 
-a:hover, a:focus {
-  opacity: var(--opacity-75);
+a:hover,
+a:focus {
+  color: var(--color-text-primary);
 }
 
-/* Use color and radius tokens for buttons */
-.button, .cta-button {
-  background: var(--brand-color-05);
-  color: var(--brand-color-04);
-  border: var(--border-width-thin) solid var(--brand-color-03);
-  border-radius: var(--border-radius-md);
-  font-size: var(--fs-base);
-  font-family: var(--font-alt);
-  padding: var(--space-sm) var(--space-md);
-  transition: background 0.16s, border-color 0.16s, color 0.16s;
-}
+/* ======================= */
+/* === STATUS UTILITIES === */
+/* ======================= */
 
-.button:hover, .cta-button:hover {
-  background: var(--brand-color-05);
-  color: var(--brand-color-04);
-  border-color: var(--brand-color-03);
-}
-
-/* Example for status */
-.status-success { color: var(--color-success);}
-.status-error   { color: var(--color-error);}
-.status-warning { color: var(--color-warning);}
-
-/* ...add more utilities as needed */
+.status-success { color: var(--color-success); }
+.status-error   { color: var(--color-error); }
+.status-warning { color: var(--color-warning); }
