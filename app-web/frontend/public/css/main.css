@@ -88,13 +88,24 @@ body {
   text-decoration: none;
 }
 
-.logo-mark {
-  width: 26px;
-  height: 26px;
-  background: var(--white);
+/* Brandmark and wordmark — inline SVGs, fill set directly on paths.
+   Light theme rule inverts all SVG shapes to dark automatically.
+   Wordmark hidden on mobile. */
+.brandmark {
+  display: block;
   flex-shrink: 0;
-  mask: url("/assets/brandmark.svg") center / contain no-repeat;
-  -webkit-mask: url("/assets/brandmark.svg") center / contain no-repeat;
+}
+
+.wordmark {
+  display: block;
+  flex-shrink: 0;
+}
+
+[data-theme="light"] .brandmark path,
+[data-theme="light"] .wordmark path,
+[data-theme="light"] .wordmark polygon,
+[data-theme="light"] .wordmark rect {
+  fill: #080808;
 }
 
 .logo-word {
@@ -350,7 +361,7 @@ body {
   50% { opacity: 1; }
 }
 
-/* ---- Modules ---- */
+/* ---- How It Works ---- */
 .how-it-works {
   max-width: 1040px;
   margin: 0 auto;
@@ -446,6 +457,7 @@ body {
   transform: translateY(0);
 }
 
+/* ---- Modules ---- */
 .modules {
   max-width: 1040px;
   margin: 0 auto;
@@ -456,7 +468,6 @@ body {
   background: var(--border);
 }
 
-/* hidden attr used for accessibility — JS removes it */
 .modules[hidden] { display: none; }
 
 .mod {
@@ -499,7 +510,6 @@ body {
 }
 
 .tx-field:last-of-type { border-bottom: 1px solid var(--border); }
-
 .tx-field::placeholder { color: var(--muted); }
 .tx-field:focus { border-color: var(--border-2); }
 
@@ -706,6 +716,10 @@ footer {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.75rem;
+  }
+
+  .wordmark {
+    display: none;
   }
 }
 
