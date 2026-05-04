@@ -197,15 +197,17 @@
   function renderHeroGas(tiers) {
     if (!els.gasHeroVal) return;
 
-    const labels = [
-      ['Std', tiers.standard],
-      ['Fast', tiers.fast],
-      ['Rapid', tiers.rapid],
+    const values = [
+      formatGwei(tiers.standard),
+      '|',
+      formatGwei(tiers.fast),
+      '|',
+      formatGwei(tiers.rapid),
     ];
 
-    els.gasHeroVal.replaceChildren(...labels.map(([label, value]) => {
+    els.gasHeroVal.replaceChildren(...values.map(value => {
       const span = document.createElement('span');
-      span.textContent = `${label} ${formatGwei(value)}`;
+      span.textContent = value;
       return span;
     }));
   }
@@ -248,7 +250,7 @@
 
         if (els.gweiDisplay) {
           els.gweiDisplay.textContent =
-            `Std ${formatGwei(tiers.standard)} · Fast ${formatGwei(tiers.fast)} · Rapid ${formatGwei(tiers.rapid)} Gwei`;
+            `${formatGwei(tiers.standard)} | ${formatGwei(tiers.fast)} | ${formatGwei(tiers.rapid)} Gwei`;
         }
         if (els.blockDisplay) {
           els.blockDisplay.textContent = tiers.blockNumber ? tiers.blockNumber.toLocaleString() : 'Pending';

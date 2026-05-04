@@ -26,6 +26,9 @@
         <span class="wallet-dot" aria-hidden="true"></span>
         <span class="wallet-addr" id="walletAddr"></span>
       </div>
+      <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch to light theme" aria-pressed="false">
+        Theme
+      </button>
       <button class="connect-btn" id="connectBtn" onclick="IX.connect()">
         Connect Wallet
       </button>
@@ -58,9 +61,11 @@
       <div class="stat-sep" aria-hidden="true"></div>
       <a class="stat-item stat-link stat-gas" href="https://polygonscan.com/gastracker" target="_blank" rel="noopener" aria-label="View live Polygon gas prices on PolygonScan">
         <span class="stat-val gas-tiers" id="gasHeroVal">
-          <span>Std —</span>
-          <span>Fast —</span>
-          <span>Rapid —</span>
+          <span>—</span>
+          <span>|</span>
+          <span>—</span>
+          <span>|</span>
+          <span>—</span>
         </span>
         <span class="stat-label">Gwei</span>
       </a>
