@@ -257,48 +257,6 @@ body {
   animation: fadeUp 0.7s 0.55s both;
 }
 
-.cta-row {
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-  flex-wrap: wrap;
-  animation: fadeUp 0.7s 0.7s both;
-}
-
-.scroll-cue {
-  width: 34px;
-  height: 34px;
-  background: transparent;
-  border: 1px solid var(--border-2);
-  border-radius: 50%;
-  cursor: pointer;
-  position: relative;
-  transition: border-color 0.12s;
-}
-
-.scroll-cue::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 46%;
-  width: 8px;
-  height: 8px;
-  border-right: 1px solid var(--dim);
-  border-bottom: 1px solid var(--dim);
-  transform: translate(-50%, -50%) rotate(45deg);
-  transition: border-color 0.12s;
-}
-
-.scroll-cue:hover,
-.scroll-cue:focus-visible {
-  border-color: var(--dim);
-}
-
-.scroll-cue:hover::after,
-.scroll-cue:focus-visible::after {
-  border-color: var(--white);
-}
-
 /* Stat strip */
 .stat-strip {
   display: flex;
