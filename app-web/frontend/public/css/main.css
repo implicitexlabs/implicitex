@@ -272,11 +272,15 @@ body {
   display: flex;
   gap: 2.5rem;
   align-items: center;
+  justify-content: center;
   white-space: nowrap;
   animation: fadeUp 0.7s 0.7s both;
 }
 
-.stat-item { text-align: center; }
+.stat-item {
+  text-align: center;
+  width: 108px;
+}
 
 .stat-val {
   font-family: var(--display);
@@ -527,6 +531,10 @@ footer {
   .stat-strip {
     gap: 1.25rem;
     font-size: 13px;
+  }
+
+  .stat-item {
+    width: 72px;
   }
 
   footer {
