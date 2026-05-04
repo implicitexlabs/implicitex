@@ -8,6 +8,12 @@ public demo shell to Amoy testnet wiring and, later, production readiness.
 No stage authorizes the next stage automatically. Each stage needs explicit
 evidence and a clean working tree before proceeding.
 
+Strategic decision context:
+
+```text
+docs/operations/strategic-decision-framework-2026-05-04.md
+```
+
 ## Forbidden In This Documentation Lane
 
 This document does not authorize:
