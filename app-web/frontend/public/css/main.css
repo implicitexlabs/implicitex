@@ -265,23 +265,38 @@ body {
   animation: fadeUp 0.7s 0.7s both;
 }
 
-.btn-ghost {
-  font-family: var(--mono);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--dim);
+.scroll-cue {
+  width: 34px;
+  height: 34px;
   background: transparent;
   border: 1px solid var(--border-2);
-  padding: 13px 28px;
+  border-radius: 50%;
   cursor: pointer;
-  transition: border-color 0.12s, color 0.12s;
+  position: relative;
+  transition: border-color 0.12s;
 }
 
-.btn-ghost:hover {
+.scroll-cue::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  width: 8px;
+  height: 8px;
+  border-right: 1px solid var(--dim);
+  border-bottom: 1px solid var(--dim);
+  transform: translate(-50%, -50%) rotate(45deg);
+  transition: border-color 0.12s;
+}
+
+.scroll-cue:hover,
+.scroll-cue:focus-visible {
   border-color: var(--dim);
-  color: var(--white);
+}
+
+.scroll-cue:hover::after,
+.scroll-cue:focus-visible::after {
+  border-color: var(--white);
 }
 
 /* Stat strip */
