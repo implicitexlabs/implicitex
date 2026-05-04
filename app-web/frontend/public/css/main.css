@@ -265,27 +265,23 @@ body {
   animation: fadeUp 0.7s 0.7s both;
 }
 
-.hero-connect-btn {
+.btn-ghost {
   font-family: var(--mono);
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--bg);
-  background: var(--white);
-  border: none;
+  color: var(--dim);
+  background: transparent;
+  border: 1px solid var(--border-2);
   padding: 13px 28px;
   cursor: pointer;
-  transition: background 0.12s;
+  transition: border-color 0.12s, color 0.12s;
 }
 
-.hero-connect-btn:hover { background: var(--button-hover); }
-
-.hero-connect-btn.connected {
-  background: transparent;
-  color: var(--muted);
-  border: 1px solid var(--border);
-  cursor: default;
+.btn-ghost:hover {
+  border-color: var(--dim);
+  color: var(--white);
 }
 
 /* Stat strip */
