@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Non-custodial USDC transfers on Polygon. Transparent 1% flat fee. Demo shell only until testnet signoff.">
+  <meta name="description" content="Non-custodial USDC transfers on Polygon. Transparent 1% flat fee. Your keys, your funds, your transaction.">
   <meta property="og:title" content="ImplicitEx — Send USDC. No intermediaries.">
   <meta property="og:description" content="Peer-to-peer USDC transfers on Polygon. Non-custodial. 1% flat fee.">
   <meta property="og:type" content="website">
@@ -29,6 +29,7 @@
       <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch to light theme" aria-pressed="false">
         Theme
       </button>
+      <span class="nav-status">Testnet prep</span>
       <button class="connect-btn" id="connectBtn" onclick="IX.connect()">
         Connect Wallet
       </button>
@@ -40,39 +41,38 @@
     <canvas id="worldCanvas" aria-hidden="true"></canvas>
     <div class="hero-inner">
       <h1 class="headline">Send USDC.<br>No intermediaries.</h1>
+      <div class="stat-strip" aria-label="Key statistics">
+        <div class="stat-item">
+          <span class="stat-val">1%</span>
+          <span class="stat-label">Flat fee</span>
+        </div>
+        <div class="stat-sep" aria-hidden="true"></div>
+        <div class="stat-item">
+          <span class="stat-val">USDC</span>
+          <span class="stat-label">Polygon</span>
+        </div>
+        <div class="stat-sep" aria-hidden="true"></div>
+        <a class="stat-item stat-link stat-gas" href="https://polygonscan.com/gastracker" target="_blank" rel="noopener" aria-label="View live Polygon gas prices on PolygonScan">
+          <span class="stat-val gas-tiers gas-live" id="gasHeroVal">
+            <span>—</span>
+            <span>|</span>
+            <span>—</span>
+            <span>|</span>
+            <span>—</span>
+          </span>
+          <span class="stat-label">Gwei</span>
+        </a>
+        <div class="stat-sep" aria-hidden="true"></div>
+        <div class="stat-item">
+          <span class="stat-val">Wallet</span>
+          <span class="stat-label">Non-custodial</span>
+        </div>
+      </div>
       <p class="subline">
-        Peer-to-peer USDC transfers on Polygon. Transparent 1% flat fee.
-        Demo shell only until testnet signoff.
+        Peer-to-peer USDC transfers on Polygon. Your keys, your funds, your transaction.
       </p>
       <div class="cta-row">
-        <button class="btn-ghost" onclick="IX.scrollToModules()">How it works</button>
-      </div>
-    </div>
-    <div class="stat-strip" aria-label="Key statistics">
-      <div class="stat-item">
-        <span class="stat-val">1%</span>
-        <span class="stat-label">Flat fee</span>
-      </div>
-      <div class="stat-sep" aria-hidden="true"></div>
-      <div class="stat-item">
-        <span class="stat-val">USDC</span>
-        <span class="stat-label">Polygon</span>
-      </div>
-      <div class="stat-sep" aria-hidden="true"></div>
-      <a class="stat-item stat-link stat-gas" href="https://polygonscan.com/gastracker" target="_blank" rel="noopener" aria-label="View live Polygon gas prices on PolygonScan">
-        <span class="stat-val gas-tiers" id="gasHeroVal">
-          <span>—</span>
-          <span>|</span>
-          <span>—</span>
-          <span>|</span>
-          <span>—</span>
-        </span>
-        <span class="stat-label">Gwei</span>
-      </a>
-      <div class="stat-sep" aria-hidden="true"></div>
-      <div class="stat-item">
-        <span class="stat-val">Wallet</span>
-        <span class="stat-label">Non-custodial</span>
+        <button class="hero-connect-btn" id="heroConnectBtn" onclick="IX.connect()">Connect Wallet</button>
       </div>
     </div>
   </section>

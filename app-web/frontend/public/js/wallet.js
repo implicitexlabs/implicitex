@@ -40,6 +40,7 @@
     blockDisplay:document.getElementById('blockDisplay'),
     gasHeroVal:  document.getElementById('gasHeroVal'),
     networkBadge:document.getElementById('networkBadge'),
+    heroConnectBtn: document.getElementById('heroConnectBtn'),
   };
 
   // ----------------------------------------------------------------
@@ -94,6 +95,10 @@
     if (els.connectBtn) {
       els.connectBtn.textContent = short;
       els.connectBtn.classList.add('connected');
+    }
+    if (els.heroConnectBtn) {
+      els.heroConnectBtn.textContent = short;
+      els.heroConnectBtn.classList.add('connected');
     }
 
     if (els.networkBadge) {
@@ -293,6 +298,10 @@
         if (els.connectBtn) {
           els.connectBtn.textContent = 'Connect Wallet';
           els.connectBtn.classList.remove('connected');
+        }
+        if (els.heroConnectBtn) {
+          els.heroConnectBtn.textContent = 'Connect Wallet';
+          els.heroConnectBtn.classList.remove('connected');
         }
         if (els.modules) els.modules.setAttribute('hidden', '');
         return;

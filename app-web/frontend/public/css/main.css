@@ -154,6 +154,17 @@ body {
   color: var(--muted);
 }
 
+.nav-status {
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  padding: 8px 12px;
+}
+
 .connect-btn {
   font-family: var(--mono);
   font-size: 10px;
@@ -242,8 +253,8 @@ body {
   line-height: 1.75;
   color: var(--dim);
   max-width: 420px;
-  margin: 0 auto 2.25rem;
-  animation: fadeUp 0.7s 0.4s both;
+  margin: 0 auto 1.8rem;
+  animation: fadeUp 0.7s 0.55s both;
 }
 
 .cta-row {
@@ -251,41 +262,41 @@ body {
   gap: 10px;
   justify-content: center;
   flex-wrap: wrap;
-  animation: fadeUp 0.7s 0.55s both;
+  animation: fadeUp 0.7s 0.7s both;
 }
 
-.btn-ghost {
+.hero-connect-btn {
   font-family: var(--mono);
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--dim);
-  background: transparent;
-  border: 1px solid var(--border-2);
+  color: var(--bg);
+  background: var(--white);
+  border: none;
   padding: 13px 28px;
   cursor: pointer;
-  transition: border-color 0.12s, color 0.12s;
+  transition: background 0.12s;
 }
 
-.btn-ghost:hover {
-  border-color: var(--dim);
-  color: var(--white);
+.hero-connect-btn:hover { background: var(--button-hover); }
+
+.hero-connect-btn.connected {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  cursor: default;
 }
 
 /* Stat strip */
 .stat-strip {
-  position: absolute;
-  bottom: 2rem;
-  left: 0;
-  right: 0;
-  z-index: 2;
   display: flex;
   gap: 2.5rem;
   align-items: center;
   justify-content: center;
   white-space: nowrap;
-  animation: statFadeUp 0.7s 0.7s both;
+  margin: 0 auto 1.5rem;
+  animation: fadeUp 0.7s 0.4s both;
 }
 
 .stat-item {
@@ -341,6 +352,10 @@ body {
   white-space: nowrap;
 }
 
+.gas-live {
+  animation: gasPulse 2.4s ease-in-out infinite;
+}
+
 .stat-label {
   font-family: var(--mono);
   font-size: 10px;
@@ -365,9 +380,9 @@ body {
   to   { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes statFadeUp {
-  from { opacity: 0; translate: 0 14px; }
-  to   { opacity: 1; translate: 0 0; }
+@keyframes gasPulse {
+  0%, 100% { opacity: 0.72; }
+  50% { opacity: 1; }
 }
 
 /* ---- Modules ---- */
