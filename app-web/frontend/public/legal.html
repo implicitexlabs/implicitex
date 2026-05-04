@@ -4,58 +4,275 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ImplicitEx — Legal</title>
-  <meta name="description" content="Draft legal notes for the ImplicitEx testnet-mode public shell.">
+  <meta name="description" content="Legal, risk, and platform-use information for ImplicitEx.">
   <link rel="canonical" href="https://implicitex.com/legal.html">
   <link rel="stylesheet" href="css/main.css">
   <style>
-    .page-shell {
-      max-width: 760px;
+    .policy-shell {
+      max-width: 860px;
       margin: 0 auto;
-      padding: calc(var(--nav-h) + 4rem) 1.5rem 5rem;
+      padding: calc(var(--nav-h) + 4.5rem) 1.5rem 5rem;
     }
 
-    .page-shell h1 {
-      font-family: var(--display);
-      font-size: clamp(28px, 4vw, 44px);
-      line-height: 1.15;
+    .policy-eyebrow,
+    .updated {
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    .policy-eyebrow {
+      margin-bottom: 0.9rem;
+    }
+
+    .updated {
       margin-bottom: 1.5rem;
     }
 
-    .page-shell p {
+    .policy-shell h1,
+    .policy-shell h2 {
+      font-family: var(--display);
+      line-height: 1.15;
+    }
+
+    .policy-shell h1 {
+      font-size: clamp(30px, 5vw, 52px);
+      margin-bottom: 0.7rem;
+    }
+
+    .policy-shell h2 {
+      font-size: clamp(16px, 2vw, 22px);
+      margin: 2.35rem 0 1rem;
+    }
+
+    .policy-shell p {
       color: var(--dim);
       font-weight: 700;
       line-height: 1.75;
       margin-bottom: 1rem;
     }
 
-    .page-link {
+    .policy-shell a {
       color: var(--white);
+    }
+
+    .back {
+      display: inline-block;
       font-family: var(--mono);
       font-size: 10px;
       font-weight: 700;
       letter-spacing: 0.14em;
+      margin-top: 1.5rem;
       text-transform: uppercase;
     }
   </style>
 </head>
 <body>
-  <main class="page-shell">
+  <nav id="nav">
+    <a href="/" class="logo" aria-label="ImplicitEx home">
+      <div class="logo-mark-placeholder" id="logoMark" aria-hidden="true"></div>
+      <span class="logo-word">implicit<em>ex</em></span>
+    </a>
+    <div class="nav-right">
+      <div class="wallet-pill" id="walletPill" aria-live="polite">
+        <span class="wallet-dot" aria-hidden="true"></span>
+        <span class="wallet-addr" id="walletAddr"></span>
+      </div>
+      <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch to light theme" aria-pressed="false">
+        Theme
+      </button>
+      <span class="nav-status">Testnet mode</span>
+      <button class="connect-btn" id="connectBtn" onclick="IX.connect()">
+        Connect Wallet
+      </button>
+    </div>
+  </nav>
+
+  <main class="policy-shell">
+    <p class="policy-eyebrow">ImplicitEx</p>
+
     <h1>Legal</h1>
+
+    <p class="updated">Last updated: May 4, 2026</p>
+
     <p>
-      This is a placeholder legal page for the ImplicitEx testnet-mode public
-      shell. It should be replaced with reviewed terms before live transfers are
-      enabled.
+      This page provides important legal, risk, and platform-use information for
+      ImplicitEx. It is intended to help users understand the current status of
+      the platform, the nature of non-custodial wallet-to-wallet transactions,
+      and the responsibilities that remain with each user.
     </p>
+
+    <h2>Current Platform Status</h2>
+
     <p>
-      ImplicitEx is designed as a non-custodial interface. Users remain
-      responsible for wallet security, network selection, recipient addresses,
-      token approvals, and transaction decisions.
+      The current ImplicitEx public site is a demo shell. Live transfer execution
+      is disabled until testnet validation, transaction-flow review,
+      negative-path testing, and production readiness gates are completed.
     </p>
+
     <p>
-      Blockchain transactions may be irreversible. Do not use live funds until
-      the production readiness gate is complete.
+      Any demo, preview, estimate, interface state, or example shown on the site
+      should not be interpreted as confirmation that a live blockchain transaction
+      has occurred unless the user signs a transaction in their wallet and the
+      transaction is confirmed on the relevant blockchain network.
     </p>
-    <a class="page-link" href="/">Return home</a>
+
+    <h2>Non-Custodial Platform</h2>
+
+    <p>
+      ImplicitEx is designed as a non-custodial platform. ImplicitEx does not
+      take custody of user funds, does not hold private keys, does not store seed
+      phrases, and does not control user wallets.
+    </p>
+
+    <p>
+      Users interact through their own wallet software. Users are responsible for
+      protecting their wallet, private keys, seed phrases, devices, browser
+      extensions, approvals, and transaction decisions.
+    </p>
+
+    <h2>No Bank, Broker, Exchange, or Custodian Relationship</h2>
+
+    <p>
+      ImplicitEx is not a bank, broker, exchange, money transmitter, investment
+      adviser, wallet provider, asset custodian, or wallet recovery service.
+      ImplicitEx does not provide deposit accounts, insured accounts, brokerage
+      services, investment advice, tax advice, legal advice, or financial
+      planning.
+    </p>
+
+    <p>
+      Nothing on this site should be interpreted as a recommendation to buy,
+      sell, hold, transfer, or use any digital asset.
+    </p>
+
+    <h2>Transaction Responsibility</h2>
+
+    <p>
+      Blockchain transactions may be irreversible. Users are responsible for
+      reviewing all transaction details before authorizing a wallet signature,
+      including the recipient address, token, amount, network, approval request,
+      fee, and transaction confirmation.
+    </p>
+
+    <p>
+      Sending funds to the wrong address, using the wrong network, approving a
+      malicious contract, using a compromised wallet, or interacting with an
+      unsupported asset may result in permanent loss.
+    </p>
+
+    <h2>Platform Fee</h2>
+
+    <p>
+      ImplicitEx uses a flat 1% platform fee for wallet-to-wallet USDC transfers.
+      The fee should be shown before submission and separated from the amount
+      being sent. When live execution is enabled, the fee will be routed
+      according to the applicable smart contract logic.
+    </p>
+
+    <p>
+      Users should review the fee, transfer amount, and total transaction details
+      before authorizing any wallet action.
+    </p>
+
+    <h2>Network and Gas Fees</h2>
+
+    <p>
+      Blockchain networks may charge gas or network fees. These fees are
+      separate from the ImplicitEx platform fee and are paid to the relevant
+      blockchain network, validator, sequencer, or infrastructure participants,
+      not to ImplicitEx.
+    </p>
+
+    <p>
+      Gas fees may vary based on network conditions and may still be incurred if
+      a transaction fails, is rejected by the network, or is reverted after
+      submission.
+    </p>
+
+    <h2>No Guarantee of Availability or Outcome</h2>
+
+    <p>
+      ImplicitEx is provided on an "as available" basis. We do not guarantee
+      that the site, interface, smart contracts, wallet connections, RPC
+      providers, third-party services, block explorers, or blockchain networks
+      will always be available, accurate, uninterrupted, or error-free.
+    </p>
+
+    <p>
+      We do not guarantee that any transaction will be completed, confirmed
+      within a specific time, accepted by a wallet, accepted by a network, or
+      recoverable after submission.
+    </p>
+
+    <h2>Third-Party Services</h2>
+
+    <p>
+      ImplicitEx may rely on third-party infrastructure, including wallet
+      providers, blockchain networks, RPC providers, hosting services, analytics
+      tools, block explorers, and other technical services. ImplicitEx does not
+      control those third-party services and is not responsible for their
+      actions, downtime, errors, policies, fees, or security practices.
+    </p>
+
+    <h2>User Conduct</h2>
+
+    <p>
+      Users are responsible for complying with applicable laws and regulations in
+      their jurisdiction. Users may not use ImplicitEx for fraud, theft, evasion,
+      sanctions violations, money laundering, exploitation, or any unlawful
+      activity.
+    </p>
+
+    <h2>Changes to the Platform</h2>
+
+    <p>
+      ImplicitEx may update, pause, disable, modify, or discontinue parts of the
+      platform as development continues, especially during testnet validation,
+      security review, and production readiness work.
+    </p>
+
+    <h2>Developer and Operator</h2>
+
+    <p>
+      ImplicitEx is developed by Aden Media Group LLC as part of a broader effort
+      to build practical, transparent software systems for digital commerce,
+      creators, merchants, and everyday users.
+    </p>
+
+    <p>
+      Learn more about Aden Media Group at
+      <a href="https://adenmediagroup.com" rel="noopener noreferrer">adenmediagroup.com</a>.
+    </p>
+
+    <h2>Contact</h2>
+
+    <p>
+      For questions, contact
+      <a href="mailto:info@implicitex.com">info@implicitex.com</a>.
+    </p>
+
+    <a class="back" href="/">Return to ImplicitEx</a>
   </main>
+
+  <footer>
+    <span class="f-copy">© 2026 Aden Media Group LLC</span>
+    <nav class="f-links" aria-label="Footer links">
+      <a href="/about.html">About</a>
+      <a href="/privacy.html">Privacy</a>
+      <a href="/legal.html">Legal</a>
+      <a href="https://twitter.com/implicitex" target="_blank" rel="noopener">Twitter</a>
+      <a href="https://github.com/adenmediagroup" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://discord.gg/implicitex" target="_blank" rel="noopener">Discord</a>
+    </nav>
+    <span class="f-net" id="networkBadge">Demo shell</span>
+  </footer>
+
+  <script src="config/chains.js"></script>
+  <script src="js/wallet.js"></script>
+  <script src="js/app.js"></script>
 </body>
 </html>

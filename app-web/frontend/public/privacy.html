@@ -4,58 +4,330 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ImplicitEx — Privacy</title>
-  <meta name="description" content="Draft privacy notes for the ImplicitEx testnet-mode public shell.">
+  <meta name="description" content="Privacy policy for the ImplicitEx public demo shell and planned non-custodial transfer platform.">
   <link rel="canonical" href="https://implicitex.com/privacy.html">
   <link rel="stylesheet" href="css/main.css">
   <style>
-    .page-shell {
-      max-width: 760px;
+    .policy-shell {
+      max-width: 860px;
       margin: 0 auto;
-      padding: calc(var(--nav-h) + 4rem) 1.5rem 5rem;
+      padding: calc(var(--nav-h) + 4.5rem) 1.5rem 5rem;
     }
 
-    .page-shell h1 {
-      font-family: var(--display);
-      font-size: clamp(28px, 4vw, 44px);
-      line-height: 1.15;
+    .policy-eyebrow,
+    .updated {
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    .policy-eyebrow {
+      margin-bottom: 0.9rem;
+    }
+
+    .updated {
       margin-bottom: 1.5rem;
     }
 
-    .page-shell p {
+    .policy-shell h1,
+    .policy-shell h2 {
+      font-family: var(--display);
+      line-height: 1.15;
+    }
+
+    .policy-shell h1 {
+      font-size: clamp(30px, 5vw, 52px);
+      margin-bottom: 0.7rem;
+    }
+
+    .policy-shell h2 {
+      font-size: clamp(16px, 2vw, 22px);
+      margin: 2.35rem 0 1rem;
+    }
+
+    .policy-shell p,
+    .policy-shell li {
       color: var(--dim);
       font-weight: 700;
       line-height: 1.75;
+    }
+
+    .policy-shell p {
       margin-bottom: 1rem;
     }
 
-    .page-link {
+    .policy-shell ul {
+      margin: 0 0 1rem 1.25rem;
+    }
+
+    .policy-shell a {
       color: var(--white);
+    }
+
+    .back {
+      display: inline-block;
       font-family: var(--mono);
       font-size: 10px;
       font-weight: 700;
       letter-spacing: 0.14em;
+      margin-top: 1.5rem;
       text-transform: uppercase;
     }
   </style>
 </head>
 <body>
-  <main class="page-shell">
+  <nav id="nav">
+    <a href="/" class="logo" aria-label="ImplicitEx home">
+      <div class="logo-mark-placeholder" id="logoMark" aria-hidden="true"></div>
+      <span class="logo-word">implicit<em>ex</em></span>
+    </a>
+    <div class="nav-right">
+      <div class="wallet-pill" id="walletPill" aria-live="polite">
+        <span class="wallet-dot" aria-hidden="true"></span>
+        <span class="wallet-addr" id="walletAddr"></span>
+      </div>
+      <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch to light theme" aria-pressed="false">
+        Theme
+      </button>
+      <span class="nav-status">Testnet mode</span>
+      <button class="connect-btn" id="connectBtn" onclick="IX.connect()">
+        Connect Wallet
+      </button>
+    </div>
+  </nav>
+
+  <main class="policy-shell">
+    <p class="policy-eyebrow">ImplicitEx</p>
+
     <h1>Privacy</h1>
+
+    <p class="updated">Last updated: May 4, 2026</p>
+
     <p>
-      This is a placeholder privacy page for the ImplicitEx testnet-mode public
-      shell. It should be replaced with a reviewed privacy policy before live
-      transfers are enabled.
+      This Privacy Policy explains how ImplicitEx handles information in
+      connection with the current public demo shell and the planned
+      non-custodial wallet-to-wallet USDC transfer platform.
     </p>
+
     <p>
-      The current public shell does not execute live transfers. Wallet
-      connection, when used, is initiated through the user's browser wallet
-      provider.
+      ImplicitEx is built around a minimal-data posture. The platform is designed
+      to avoid unnecessary account creation, unnecessary identity collection, and
+      custody of user funds.
     </p>
+
+    <h2>Current Platform Status</h2>
+
     <p>
-      ImplicitEx should never ask for seed phrases, private keys, or wallet
-      recovery material.
+      The current ImplicitEx public site is a demo shell. Live transfer execution
+      is disabled while testnet validation and production readiness work are in
+      progress.
     </p>
-    <a class="page-link" href="/">Return home</a>
+
+    <h2>Information We Do Not Collect</h2>
+
+    <p>
+      ImplicitEx does not ask for, collect, or store wallet seed phrases, private
+      keys, recovery phrases, or wallet passwords. Users should never share that
+      information with ImplicitEx or with anyone claiming to provide support.
+    </p>
+
+    <p>
+      ImplicitEx does not currently require users to create a traditional account
+      to view the public site or use the demo shell.
+    </p>
+
+    <h2>Information You May Provide</h2>
+
+    <p>
+      You may provide information voluntarily if you contact us by email, submit
+      a form, request support, join a waitlist, or otherwise communicate with us.
+      This may include your name, email address, message content, business
+      information, or other information you choose to provide.
+    </p>
+
+    <h2>Wallet and Blockchain Information</h2>
+
+    <p>
+      If you connect a wallet, your browser wallet provider may share your public
+      wallet address with the site. A public wallet address is not the same as a
+      private key, but it may be associated with public blockchain activity.
+    </p>
+
+    <p>
+      When live transfer execution is enabled, blockchain transactions may be
+      publicly visible on the relevant network. Public blockchain data may
+      include wallet addresses, token transfers, approval events, transaction
+      hashes, contract interactions, timestamps, gas usage, and fee-related
+      activity.
+    </p>
+
+    <p>
+      Public blockchain data is not controlled by ImplicitEx and may remain
+      visible even if you stop using the site.
+    </p>
+
+    <h2>Technical Information</h2>
+
+    <p>
+      Like most websites, ImplicitEx and its service providers may process basic
+      technical information needed to operate, secure, and improve the site. This
+      may include browser type, device type, pages visited, referring URLs,
+      general location derived from network information, timestamps, error logs,
+      and other diagnostic information.
+    </p>
+
+    <p>
+      We aim to use technical information in a limited and practical way: to keep
+      the site functional, identify errors, prevent abuse, improve performance,
+      and understand whether public pages are working as intended.
+    </p>
+
+    <h2>How We Use Information</h2>
+
+    <p>We may use information to:</p>
+
+    <ul>
+      <li>Operate and maintain the site.</li>
+      <li>Respond to questions or support requests.</li>
+      <li>Improve user experience and platform reliability.</li>
+      <li>Debug errors and monitor security issues.</li>
+      <li>Document testnet and production readiness.</li>
+      <li>Comply with legal, regulatory, or security obligations.</li>
+    </ul>
+
+    <h2>How We Share Information</h2>
+
+    <p>
+      We do not sell private keys, seed phrases, or wallet recovery information
+      because we do not collect that information.
+    </p>
+
+    <p>
+      We may share limited information with service providers that help us
+      operate the site, such as hosting providers, analytics tools, email
+      providers, security tools, infrastructure providers, or professional
+      advisers. These providers may process information only as needed to provide
+      their services.
+    </p>
+
+    <p>
+      We may also disclose information if required to comply with law, protect
+      the platform, prevent abuse, respond to lawful requests, or protect the
+      rights, safety, and security of users, Aden Media Group LLC, or others.
+    </p>
+
+    <h2>Third-Party Wallets, Networks, and Services</h2>
+
+    <p>
+      ImplicitEx may interact with third-party wallet software, blockchain
+      networks, RPC providers, block explorers, hosting providers, analytics
+      tools, and other infrastructure. These services may have their own privacy
+      policies, terms, logs, and data practices.
+    </p>
+
+    <p>
+      Users should review the privacy and security practices of their wallet
+      provider, browser, device, and any blockchain network or third-party
+      service they choose to use.
+    </p>
+
+    <h2>Cookies and Analytics</h2>
+
+    <p>
+      ImplicitEx may use cookies, local storage, analytics tools, or similar
+      technologies to support basic site functionality, remember interface
+      preferences, understand traffic patterns, and improve the public site.
+    </p>
+
+    <p>
+      We aim to avoid unnecessary tracking and unnecessary identity collection.
+      If more advanced analytics, account systems, or communication tools are
+      added in the future, this policy should be updated to reflect those
+      changes.
+    </p>
+
+    <h2>Data Security</h2>
+
+    <p>
+      We take reasonable steps to protect information handled through the site,
+      but no website, wallet, blockchain network, software system, or internet
+      transmission can be guaranteed to be completely secure.
+    </p>
+
+    <p>
+      Users remain responsible for securing their own wallets, devices,
+      passwords, private keys, seed phrases, browser extensions, and transaction
+      approvals.
+    </p>
+
+    <h2>Data Retention</h2>
+
+    <p>
+      We aim to retain information only as long as reasonably necessary for the
+      purposes described in this policy, unless a longer period is required for
+      legal, security, operational, or recordkeeping reasons.
+    </p>
+
+    <p>
+      Public blockchain data is maintained by blockchain networks and cannot be
+      deleted or modified by ImplicitEx.
+    </p>
+
+    <h2>Children</h2>
+
+    <p>
+      ImplicitEx is not intended for children. We do not knowingly collect
+      personal information from children. If you believe a child has provided
+      information to us, contact us so we can review and address the issue.
+    </p>
+
+    <h2>Changes to This Policy</h2>
+
+    <p>
+      We may update this Privacy Policy as ImplicitEx develops, especially as the
+      platform moves from demo shell to testnet validation and, later, production
+      readiness. Updates will be reflected by changing the "Last updated" date.
+    </p>
+
+    <h2>Developer and Operator</h2>
+
+    <p>
+      ImplicitEx is developed by Aden Media Group LLC.
+    </p>
+
+    <p>
+      Learn more about Aden Media Group at
+      <a href="https://adenmediagroup.com" rel="noopener noreferrer">adenmediagroup.com</a>.
+    </p>
+
+    <h2>Contact</h2>
+
+    <p>
+      For privacy questions, contact
+      <a href="mailto:info@implicitex.com">info@implicitex.com</a>.
+    </p>
+
+    <a class="back" href="/">Return to ImplicitEx</a>
   </main>
+
+  <footer>
+    <span class="f-copy">© 2026 Aden Media Group LLC</span>
+    <nav class="f-links" aria-label="Footer links">
+      <a href="/about.html">About</a>
+      <a href="/privacy.html">Privacy</a>
+      <a href="/legal.html">Legal</a>
+      <a href="https://twitter.com/implicitex" target="_blank" rel="noopener">Twitter</a>
+      <a href="https://github.com/adenmediagroup" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://discord.gg/implicitex" target="_blank" rel="noopener">Discord</a>
+    </nav>
+    <span class="f-net" id="networkBadge">Demo shell</span>
+  </footer>
+
+  <script src="config/chains.js"></script>
+  <script src="js/wallet.js"></script>
+  <script src="js/app.js"></script>
 </body>
 </html>
