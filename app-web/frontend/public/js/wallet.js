@@ -32,6 +32,7 @@
     walletPill:  document.getElementById('walletPill'),
     walletAddr:  document.getElementById('walletAddr'),
     modules:     document.getElementById('modules'),
+    howItWorks:  document.getElementById('howItWorks'),
     txStatus:    document.getElementById('txStatus'),
     txBtn:       document.getElementById('txBtn'),
     feeDisplay:  document.getElementById('feeDisplay'),
@@ -276,6 +277,12 @@
     }
   }
 
+  function scrollToHowItWorks() {
+    if (els.howItWorks) {
+      els.howItWorks.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
   function chainLabel(chainId) {
     if (!chainId) return 'Wallet connected';
     const chainConfig = window.IX_CHAINS && window.IX_CHAINS[chainId];
@@ -316,6 +323,7 @@
     connect,
     submitTransfer,
     scrollToModules,
+    scrollToHowItWorks,
     getState: () => ({ ...state }),
   };
 

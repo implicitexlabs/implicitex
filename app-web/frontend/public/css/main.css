@@ -382,6 +382,54 @@ body {
 }
 
 /* ---- Modules ---- */
+.how-it-works {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 4rem 1.5rem 0;
+}
+
+.section-kicker {
+  font-family: var(--display);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--white);
+  margin-bottom: 1.25rem;
+  text-align: center;
+}
+
+.flow-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: var(--border);
+}
+
+.flow-step {
+  background: var(--surface);
+  min-height: 132px;
+  padding: 1.5rem;
+}
+
+.flow-num {
+  display: block;
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 0.85rem;
+}
+
+.flow-step p {
+  color: var(--dim);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.6;
+}
+
 .modules {
   max-width: 1040px;
   margin: 0 auto;
@@ -592,6 +640,10 @@ footer {
 
 /* ---- Responsive ---- */
 @media (max-width: 768px) {
+  .flow-grid {
+    grid-template-columns: 1fr;
+  }
+
   .modules {
     grid-template-columns: 1fr;
     padding: 2rem 1rem;
