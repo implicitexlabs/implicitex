@@ -222,7 +222,7 @@ body {
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  padding: calc(var(--nav-h) + 7vh) 0 5vh;
+  padding: calc(var(--nav-h) + 7vh + 100px) 0 5vh;
 }
 
 #worldCanvas {
@@ -623,7 +623,7 @@ footer {
 /* ---- Responsive ---- */
 @media (max-width: 768px) {
   .hero {
-    padding: calc(var(--nav-h) + 4rem) 0 2.5rem;
+    padding: calc(var(--nav-h) + 4rem + 64px) 0 2.5rem;
   }
 
   .how-it-works {
