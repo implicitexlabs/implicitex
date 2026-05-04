@@ -674,8 +674,8 @@ footer {
 
   .reveal-copy {
     opacity: 0;
-    transform: translateY(16px);
-    transition: opacity 0.7s ease, transform 0.7s ease;
+    transform: translateY(6px);
+    transition: opacity 0.95s ease, transform 0.95s ease;
   }
 
   .reveal-copy.is-visible {
