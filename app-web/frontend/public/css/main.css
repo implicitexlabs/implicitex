@@ -208,6 +208,11 @@ body {
   border-color: var(--border-2);
 }
 
+.landing-main {
+  min-height: calc(100vh - var(--nav-h));
+  padding-bottom: clamp(4rem, 12vh, 9rem);
+}
+
 /* ---- Hero ---- */
 .hero {
   position: relative;
