@@ -266,15 +266,15 @@ body {
 .stat-strip {
   position: absolute;
   bottom: 2rem;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 0;
+  right: 0;
   z-index: 2;
   display: flex;
   gap: 2.5rem;
   align-items: center;
   justify-content: center;
   white-space: nowrap;
-  animation: fadeUp 0.7s 0.7s both;
+  animation: statFadeUp 0.7s 0.7s both;
 }
 
 .stat-item {
@@ -310,6 +310,11 @@ body {
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(14px); }
   to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes statFadeUp {
+  from { opacity: 0; translate: 0 14px; }
+  to   { opacity: 1; translate: 0 0; }
 }
 
 /* ---- Modules ---- */
