@@ -190,6 +190,7 @@ async function estimateGas(recipient, amount) {
 // ===================== SEND MODAL LOGIC =====================
 
 window.openSendModal = function () {
+  const DEMO_FEE_RATE = 0.025;
   let fullAddressShown = false;
   let copiedShown = false;
   let currentUsdcBalance = 100; // Demo value
@@ -206,7 +207,7 @@ window.openSendModal = function () {
   }
 
   function renderModalContent() {
-    const transferFee = amountValue && !isNaN(amountValue) ? (parseFloat(amountValue) * 0.01) : 0;
+    const transferFee = amountValue && !isNaN(amountValue) ? (parseFloat(amountValue) * DEMO_FEE_RATE) : 0;
     const transferTotal = amountValue && !isNaN(amountValue) ? (parseFloat(amountValue) + transferFee) : 0;
     validAmount = !!amountValue && !isNaN(amountValue) && parseFloat(amountValue) > 0 && parseFloat(amountValue) + transferFee <= currentUsdcBalance;
     validRecipient = validateEthAddress(recipientValue);
@@ -232,7 +233,7 @@ window.openSendModal = function () {
     let amountWarning = '';
     if (amountValue && !isNaN(amountValue)) {
       const val = parseFloat(amountValue);
-      if (val + (val * 0.01) > currentUsdcBalance) {
+      if (val + (val * DEMO_FEE_RATE) > currentUsdcBalance) {
         amountWarning = '<span class="status-error">Amount exceeds balance.</span>';
       }
     }
@@ -296,11 +297,11 @@ window.openSendModal = function () {
             <span style="font-family:var(--font-mono);color:var(--color-light-gray);word-break:break-all;">${maskAddress(recipientValue)}</span>
           </div>
           <div style="margin:0.6em 0 0.2em 0;">
-            <span>1% platform fee: <b>${(parseFloat(amountValue) * 0.01).toFixed(2)} USDC</b></span><br>
+            <span>2.5% additive platform fee: <b>${(parseFloat(amountValue) * DEMO_FEE_RATE).toFixed(2)} USDC</b></span><br>
             <span>Estimated gas fees (see above for details).</span>
           </div>
           <div style="margin-top:1em;">
-            <span class="total-highlight">Demo estimate: ${(parseFloat(amountValue)+parseFloat(amountValue)*0.01).toFixed(2)} USDC + gas fees</span>
+            <span class="total-highlight">Demo estimate: ${(parseFloat(amountValue)+parseFloat(amountValue)*DEMO_FEE_RATE).toFixed(2)} USDC + gas fees</span>
           </div>
         </div>
       `;
@@ -321,7 +322,7 @@ window.openSendModal = function () {
           closeModal();
           setTimeout(() => {
             openModal({
-              content: `<h2>Demo Complete</h2><p>No on-chain transfer was executed in this build.<br>Demo amount: ${amountValue} USDC to ${maskAddress(recipientValue)}.<br>Demo fee: ${(parseFloat(amountValue)*0.01).toFixed(2)} USDC.</p>`,
+              content: `<h2>Demo Complete</h2><p>No on-chain transfer was executed in this build.<br>Demo amount: ${amountValue} USDC to ${maskAddress(recipientValue)}.<br>Demo fee: ${(parseFloat(amountValue)*DEMO_FEE_RATE).toFixed(2)} USDC.</p>`,
               confirmText: "OK",
               cancelText: "",
               disableConfirm: false,
@@ -416,7 +417,7 @@ window.openSendModal = function () {
         amountInput.addEventListener('input', (e) => {
           amountValue = e.target.value;
           const val = parseFloat(amountValue);
-          const fee = isNaN(val) ? 0 : val * 0.01;
+          const fee = isNaN(val) ? 0 : val * DEMO_FEE_RATE;
           const total = isNaN(val) ? 0 : val + fee;
           feeOutput.textContent = fee.toFixed(2);
           totalOutput.textContent = total.toFixed(2);

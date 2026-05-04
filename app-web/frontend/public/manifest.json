@@ -1,11 +1,11 @@
 {
     "name": "ImplicitEx",
     "short_name": "ImplicitEx",
-    "description": "Send USDC wallet-to-wallet with a transparent 1% fee. Fast, secure, peer-to-peer Web3 payments.",
+    "description": "Send USDC wallet-to-wallet with a transparent 2.5% additive platform fee. Fast, secure, peer-to-peer Web3 payments.",
     "start_url": "/",
     "display": "standalone",
-    "background-color": "#0D1A2C",
-    "theme-color": "30B886",
+    "background_color": "#0D1A2C",
+    "theme_color": "#30B886",
     "orientation": "portrait",
     "icons": [
         {

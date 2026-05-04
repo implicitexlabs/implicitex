@@ -6,17 +6,17 @@
   <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <title>ImplicitEx – Peer-to-Peer USDC Transfers with Low Fees</title>
-    <meta name="description" content="Send USDC peer-to-peer with a transparent 1% fee using ImplicitEx.">
+    <title>ImplicitEx - Peer-to-Peer USDC Transfers</title>
+    <meta name="description" content="Send USDC peer-to-peer with a transparent 2.5% additive platform fee using ImplicitEx.">
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=Orbitron:wght@700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://implicitex.com">
     <meta property="og:title" content="ImplicitEx - Peer-to-Peer USDC Transfers">
-    <meta property="og:description" content="Transfer USDC wallet-to-wallet with ImplicitEx. Transparent 1% service fee. Simple. Secure. Powered by Web3.">
+    <meta property="og:description" content="Transfer USDC wallet-to-wallet with ImplicitEx. Transparent 2.5% additive platform fee. Simple. Secure. Powered by Web3.">
     <meta property="og:image" content="https://www.implicitex.com/assets/social-card.jpg">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="ImplicitEx - Peer-to-Peer USDC Transfers">
-    <meta name="twitter:description" content="Wallet-to-wallet USDC transactions with a clear, simple 1% fee. Secure. Fast. Transparent.">
+    <meta name="twitter:description" content="Wallet-to-wallet USDC transactions with a clear 2.5% additive platform fee. Secure. Fast. Transparent.">
     <meta name="twitter:image" content="https://implicitex.com/assets/social-card.jpg">
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="https://implicitex.com/" />
@@ -34,10 +34,8 @@
     <link rel="stylesheet" href="styles/modal.css" />
     <link rel="stylesheet" href="styles/wallet.css" />
     <link rel="stylesheet" href="styles/super.css" />
-  </head>
-
-  <!-- Ethers.js (for wallet interaction) -->
-  <script src="https://cdn.jsdelivr.net/npm/ethers@6.10.0/dist/ethers.umd.min.js"></script>
+    <!-- Ethers.js (for wallet interaction) -->
+    <script src="https://cdn.jsdelivr.net/npm/ethers@6.10.0/dist/ethers.umd.min.js"></script>
 </head>
 
 <body>
@@ -64,25 +62,23 @@
     </script>
 
     <div class="modular-wrap">
-      <!-- MODULE A -->
       <section class="module mod-a">
-        <h2>Module A: Gas Oracle</h2>
+        <h2>Platform Status</h2>
         <div class="modal-output-block">
-          <label class="modal-label">Current Gas</label>
-          <div class="output-field">28 Gwei</div>
-          <label class="modal-label">Est. TX Cost</label>
-          <div class="output-field">$0.24</div>
+          <label class="modal-label">Mode</label>
+          <div class="output-field">Demo only</div>
+          <label class="modal-label">Live Transfers</label>
+          <div class="output-field">Disabled until testnet signoff</div>
         </div>
       </section>
 
-      <!-- MODULE B -->
       <section class="module mod-b">
-        <h2>Module B: Transfer Preview</h2>
+        <h2>USDC Transfer Preview</h2>
         <div class="modal-output-block">
-          <label class="modal-label">Recipient</label>
-          <div class="output-field">0xABCD...1234</div>
-          <label class="modal-label">Amount</label>
-          <div class="output-field">48.00 USDC</div>
+          <label class="modal-label">Network</label>
+          <div class="output-field">Polygon Amoy planned</div>
+          <label class="modal-label">Platform Fee</label>
+          <div class="output-field">2.5% additive fee</div>
         </div>
         <div class="demo-transfer-cta">
           <button
@@ -96,19 +92,17 @@
         </div>
       </section>
 
-      <!-- MODULE C -->
       <section class="module mod-c">
-        <h2>Module C: Wallet Status</h2>
+        <h2>Wallet Status</h2>
         <div class="modal-output-block">
-          <label class="modal-label">Address</label>
-          <div class="output-field">0x9eF...Fa79</div>
+          <label class="modal-label">Connection</label>
+          <div class="output-field">Use Connect Wallet</div>
           <label class="modal-label">USDC Balance</label>
-          <div class="output-field">172.44</div>
-          <label class="modal-label">ETH Balance</label>
-          <div class="output-field">0.043</div>
+          <div class="output-field">Shown after production wiring</div>
         </div>
       </section>
     </div>
+    <div id="footer-placeholder"></div>
     <script>
       fetch('components/footer/footer.html')
   .then(res => {
@@ -125,9 +119,8 @@
     document.getElementById('footer-placeholder').innerHTML =
       '<div style="color:red;">Failed to load footer: ' + err.message + '</div>';
     console.error(err);
-  });
+    });
     </script>
-    <div id="footer-placeholder"></div>
   </div>
 
   <!-- Modal (if used globally) -->

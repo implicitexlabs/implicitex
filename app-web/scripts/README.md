@@ -31,7 +31,7 @@ Set these locally before running. **Never commit these values to the repo.**
 |---|---|
 | `IMPLICITEX_USDC_ADDRESS` | USDC token contract address on the target network |
 | `IMPLICITEX_TREASURY_ADDRESS` | Address that receives fee payments |
-| `IMPLICITEX_INITIAL_FEE_BPS` | Fee in basis points (e.g. `100` = 1%; max `1000`) |
+| `IMPLICITEX_INITIAL_FEE_BPS` | Fee in basis points (e.g. `250` = 2.5%; max `1000`) |
 | `IMPLICITEX_MIN_TRANSFER_AMOUNT` | Minimum transfer in USDC atomic units (6 decimals) |
 | `IMPLICITEX_TRANSFER_PRECISION` | Transfer precision divisor in atomic units |
 
