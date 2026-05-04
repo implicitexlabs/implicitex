@@ -253,6 +253,31 @@ body {
   width: 108px;
 }
 
+.stat-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.stat-link .stat-val,
+.stat-link .stat-label {
+  transition: color 0.12s;
+}
+
+.stat-link:hover .stat-val,
+.stat-link:focus-visible .stat-val {
+  color: var(--white);
+}
+
+.stat-link:hover .stat-label,
+.stat-link:focus-visible .stat-label {
+  color: var(--dim);
+}
+
+.stat-link:focus-visible {
+  outline: 1px solid var(--dim);
+  outline-offset: 8px;
+}
+
 .stat-val {
   font-family: var(--display);
   font-size: 17px;
