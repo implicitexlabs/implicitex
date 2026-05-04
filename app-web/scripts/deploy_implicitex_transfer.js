@@ -10,7 +10,7 @@
  * Required environment variables (set locally; never commit to repo):
  *   IMPLICITEX_USDC_ADDRESS          — USDC token contract address on target network
  *   IMPLICITEX_TREASURY_ADDRESS      — address that receives fee payments
- *   IMPLICITEX_INITIAL_FEE_BPS       — fee in basis points (e.g. 250 = 2.5%; max 1000 = 10%)
+ *   IMPLICITEX_INITIAL_FEE_BPS       — fee in basis points (e.g. 100 = 1%; max 1000 = 10%)
  *   IMPLICITEX_MIN_TRANSFER_AMOUNT   — minimum transfer amount in USDC atomic units (6 decimals)
  *   IMPLICITEX_TRANSFER_PRECISION    — transfer precision divisor in atomic units
  *

@@ -21,7 +21,7 @@
 const { ethers } = require("hardhat");
 
 // Synthetic local values — not real addresses, not production values.
-const SYNTHETIC_FEE_BPS         = 250;   // 2.5%
+const SYNTHETIC_FEE_BPS         = 100;   // 1%
 const SYNTHETIC_MIN_TRANSFER    = 1_000_000; // 1 USDC (6 decimals)
 const SYNTHETIC_PRECISION       = 1_000_000; // 1 USDC granularity
 
@@ -75,7 +75,7 @@ async function main() {
 
   const checks = [
     ["owner == deployer",         onChainOwner.toLowerCase()       === deployer.address.toLowerCase()],
-    ["feeBps == 250",             Number(onChainFeeBps)            === SYNTHETIC_FEE_BPS],
+    ["feeBps == 100",             Number(onChainFeeBps)            === SYNTHETIC_FEE_BPS],
     ["minTransfer == 1000000",    Number(onChainMinTransfer)       === SYNTHETIC_MIN_TRANSFER],
     ["precision == 1000000",      Number(onChainPrecision)         === SYNTHETIC_PRECISION],
     ["treasury == treasury signer", onChainTreasury.toLowerCase() === treasury.address.toLowerCase()],

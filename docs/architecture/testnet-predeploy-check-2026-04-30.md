@@ -12,7 +12,7 @@ in-memory network. It:
 
 1. Deployed `MockERC20` as a local USDC stand-in
 2. Deployed `ImplicitExTransfer` using synthetic constructor values:
-   - `feeBasisPoints`: 250 (2.5%)
+   - `feeBasisPoints`: 100 (1%)
    - `minTransferAmount`: 1,000,000 (1 USDC, 6 decimals)
    - `transferPrecision`: 1,000,000
    - `usdcAddress`: MockERC20 deployed above
@@ -22,7 +22,7 @@ in-memory network. It:
 | Check | Result |
 |---|---|
 | `owner == deployer` | PASS |
-| `feeBps == 250` | PASS |
+| `feeBps == 100` | PASS |
 | `minTransfer == 1000000` | PASS |
 | `precision == 1000000` | PASS |
 | `treasury == treasury signer` | PASS |

@@ -49,7 +49,7 @@ here — the deploy script enforces the fee cap):
 
 | Variable | Suggested testnet value |
 |---|---|
-| `IMPLICITEX_INITIAL_FEE_BPS` | `250` (2.5%) |
+| `IMPLICITEX_INITIAL_FEE_BPS` | `100` (1%) |
 | `IMPLICITEX_MIN_TRANSFER_AMOUNT` | `1000000` (1 USDC, 6 decimals) |
 | `IMPLICITEX_TRANSFER_PRECISION` | `1000000` (1 USDC granularity) |
 

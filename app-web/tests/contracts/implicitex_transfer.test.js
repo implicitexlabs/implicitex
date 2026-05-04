@@ -10,7 +10,7 @@ describe("ImplicitExTransfer", function () {
     await usdc.waitForDeployment();
 
     const ImplicitExTransfer = await ethers.getContractFactory("ImplicitExTransfer");
-    const feeBps = overrides.feeBps ?? 250; // 2.5%
+    const feeBps = overrides.feeBps ?? 100; // 1%
     const minTransfer = overrides.minTransfer ?? 1n;
     const precision = overrides.precision ?? 1n;
 
@@ -177,11 +177,11 @@ describe("ImplicitExTransfer", function () {
   it("setFeeBasisPoints owner success and emits event", async function () {
     const { transferContract } = await deployFixture();
 
-    await expect(transferContract.setFeeBasisPoints(300))
+    await expect(transferContract.setFeeBasisPoints(250))
       .to.emit(transferContract, "FeeUpdated")
-      .withArgs(250, 300);
+      .withArgs(100, 250);
 
-    expect(await transferContract.feeBasisPoints()).to.equal(300);
+    expect(await transferContract.feeBasisPoints()).to.equal(250);
   });
 
   it("setFeeBasisPoints rejects above MAX_FEE_BPS", async function () {

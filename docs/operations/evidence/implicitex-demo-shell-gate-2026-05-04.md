@@ -20,6 +20,12 @@ Evidence is based on `main` through:
 
 These commits were pushed to `origin/main` on 2026-05-04.
 
+Superseding fee decision:
+
+```text
+2026-05-04: launch fee model changed from 2.5% additive to 1% flat.
+```
+
 ## Gate Checked
 
 Relevant gate:
@@ -75,8 +81,8 @@ The public shell, demo modal, deploy docs, runbook, and local predeploy check ar
 aligned to:
 
 ```text
-2.5% additive platform fee
-250 basis points
+1% flat platform fee
+100 basis points
 ```
 
 ## Discovery Files Present

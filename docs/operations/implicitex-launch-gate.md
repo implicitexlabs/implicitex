@@ -25,7 +25,7 @@ The demo shell gate passes when:
 
 - Public shell truthfully states current mode.
 - Live transfers are visibly disabled.
-- 2.5% additive fee language is consistent.
+- 1% flat fee language is consistent.
 - About, Terms, Privacy, Legal, News, and Contact destinations resolve.
 - `robots.txt` exists.
 - `sitemap.xml` exists.

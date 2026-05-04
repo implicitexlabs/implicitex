@@ -19,7 +19,7 @@ The public site must provide:
 - Working footer destinations for About, Terms, Privacy, Legal, News, and
   Contact.
 - A visible and honest platform status: demo, testnet, or live.
-- Clear disclosure of the planned 2.5% additive platform fee.
+- Clear disclosure of the planned 1% flat platform fee.
 - Non-custodial language: ImplicitEx does not take custody of user private keys.
 - Clear risk language for wallet responsibility and irreversible transactions.
 - No broken local public page, asset, manifest, sitemap, or same-domain social

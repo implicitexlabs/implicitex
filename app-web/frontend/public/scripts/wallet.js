@@ -190,7 +190,7 @@ async function estimateGas(recipient, amount) {
 // ===================== SEND MODAL LOGIC =====================
 
 window.openSendModal = function () {
-  const DEMO_FEE_RATE = 0.025;
+  const DEMO_FEE_RATE = 0.01;
   let fullAddressShown = false;
   let copiedShown = false;
   let currentUsdcBalance = 100; // Demo value
@@ -297,7 +297,7 @@ window.openSendModal = function () {
             <span style="font-family:var(--font-mono);color:var(--color-light-gray);word-break:break-all;">${maskAddress(recipientValue)}</span>
           </div>
           <div style="margin:0.6em 0 0.2em 0;">
-            <span>2.5% additive platform fee: <b>${(parseFloat(amountValue) * DEMO_FEE_RATE).toFixed(2)} USDC</b></span><br>
+            <span>1% flat platform fee: <b>${(parseFloat(amountValue) * DEMO_FEE_RATE).toFixed(2)} USDC</b></span><br>
             <span>Estimated gas fees (see above for details).</span>
           </div>
           <div style="margin-top:1em;">

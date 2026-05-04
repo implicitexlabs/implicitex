@@ -71,7 +71,7 @@ Treasury address: PENDING
 Treasury differs from deployer: PENDING
 USDC test token address: PENDING
 Source used to verify USDC address: PENDING
-Fee bps: 250
+Fee bps: 100
 Min transfer: PENDING
 Transfer precision: PENDING
 Required env vars present locally: no
@@ -111,7 +111,7 @@ reviewed locally:
 - `IMPLICITEX_RPC_URL_AMOY`
 - `IMPLICITEX_USDC_ADDRESS`
 - `IMPLICITEX_TREASURY_ADDRESS`
-- `IMPLICITEX_INITIAL_FEE_BPS=250`
+- `IMPLICITEX_INITIAL_FEE_BPS=100`
 - `IMPLICITEX_MIN_TRANSFER_AMOUNT`
 - `IMPLICITEX_TRANSFER_PRECISION`
 
@@ -135,7 +135,7 @@ Required observed results:
 ```text
 npm test: 36 passing
 npx hardhat compile: Nothing to compile
-local_predeploy_check: PASS all checks, feeBps == 250
+local_predeploy_check: PASS all checks, feeBps == 100
 npm run check:static: Static public check passed (62 local references checked)
 ```
 
