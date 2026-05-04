@@ -10,6 +10,7 @@
   const COLS = 88;
   const ROWS = 44;
   const LAND_THRESHOLD = 0.045;
+  const LAND_RGB = '126,126,122';
 
   const canvas = document.getElementById('worldCanvas');
   if (!canvas) return;
@@ -91,7 +92,7 @@
         const land = score > LAND_THRESHOLD && !coastalDropout;
 
         mapRow.push(land ? 1 : 0);
-        alphaRow.push(land ? 0.10 + hash2(c + 17, r + 31) * 0.23 : 0);
+        alphaRow.push(land ? 0.055 + hash2(c + 17, r + 31) * 0.125 : 0);
       }
 
       map.push(mapRow);
@@ -115,7 +116,7 @@
     for (let r = 0; r < ROWS; r++) {
       for (let c = 0; c < COLS; c++) {
         if (!map[r][c]) continue;
-        ctx.fillStyle = `rgba(200,200,198,${alphas[r][c].toFixed(3)})`;
+        ctx.fillStyle = `rgba(${LAND_RGB},${alphas[r][c].toFixed(3)})`;
         ctx.fillRect(ox + c * cell, oy + r * cell, size, size);
       }
     }
@@ -125,7 +126,7 @@
     for (let r = 0; r < ROWS; r++) {
       for (let c = 0; c < COLS; c++) {
         if (map[r][c] && Math.random() < 0.004) {
-          alphas[r][c] = 0.08 + Math.random() * 0.30;
+          alphas[r][c] = 0.045 + Math.random() * 0.155;
         }
       }
     }
