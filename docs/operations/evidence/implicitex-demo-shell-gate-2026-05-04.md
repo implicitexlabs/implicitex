@@ -15,7 +15,7 @@ Evidence is based on `main` through:
 ```text
 7ea4c0d Add ImplicitEx launch gate contracts
 6f7aacc Add public discovery shell and static target check
-4efae7c Align public shell with 2.5 percent demo baseline
+4efae7c Align public shell with initial demo baseline (superseded)
 ```
 
 These commits were pushed to `origin/main` on 2026-05-04.
@@ -23,7 +23,7 @@ These commits were pushed to `origin/main` on 2026-05-04.
 Superseding fee decision:
 
 ```text
-2026-05-04: launch fee model changed from 2.5% additive to 1% flat.
+2026-05-04: launch fee model locked to 1% flat / 100 basis points.
 ```
 
 ## Gate Checked
