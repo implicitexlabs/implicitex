@@ -74,12 +74,49 @@ Source used to verify USDC address: PENDING
 Fee bps: 250
 Min transfer: PENDING
 Transfer precision: PENDING
-Required env vars present locally: PENDING
+Required env vars present locally: no
 Secrets committed: no
 Deployer has Amoy MATIC: PENDING
-Predeploy checks run: PENDING
+Predeploy checks run: pass for local-only checks
 Deploy authorization: not granted
 ```
+
+## Local Env Name Check
+
+The local `app-web/.env` file contains the expected variable names, but the
+required deployment values are empty as of this record.
+
+Observed status:
+
+```text
+ETHERSCAN_API_KEY: empty
+IMPLICITEX_DEPLOYER_KEY: empty
+IMPLICITEX_INITIAL_FEE_BPS: empty
+IMPLICITEX_MIN_TRANSFER_AMOUNT: empty
+IMPLICITEX_RPC_URL_AMOY: empty
+IMPLICITEX_RPC_URL_POLYGON: empty
+IMPLICITEX_TRANSFER_PRECISION: empty
+IMPLICITEX_TREASURY_ADDRESS: empty
+IMPLICITEX_USDC_ADDRESS: empty
+```
+
+No private key, RPC URL, API key, or secret value was printed or committed.
+
+## Current Blockers
+
+Amoy deployment preparation is blocked until the following are supplied and
+reviewed locally:
+
+- `IMPLICITEX_DEPLOYER_KEY`
+- `IMPLICITEX_RPC_URL_AMOY`
+- `IMPLICITEX_USDC_ADDRESS`
+- `IMPLICITEX_TREASURY_ADDRESS`
+- `IMPLICITEX_INITIAL_FEE_BPS=250`
+- `IMPLICITEX_MIN_TRANSFER_AMOUNT`
+- `IMPLICITEX_TRANSFER_PRECISION`
+
+After values are supplied, derive and record only public addresses and boolean
+checks. Never print or commit the private key or RPC URL.
 
 ## Required Predeploy Checks
 
@@ -97,9 +134,9 @@ Required observed results:
 
 ```text
 npm test: 36 passing
-npx hardhat compile: no errors
-local_predeploy_check: PASS all checks
-npm run check:static: pass
+npx hardhat compile: Nothing to compile
+local_predeploy_check: PASS all checks, feeBps == 250
+npm run check:static: Static public check passed (62 local references checked)
 ```
 
 ## Deployment Stop Conditions
