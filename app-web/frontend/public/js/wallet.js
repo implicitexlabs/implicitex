@@ -18,9 +18,11 @@
     provider:  null,
     signer:    null,
     chainId:   null,
+    networkPollTimer: null,
   };
 
   const DEMO_FEE_RATE = 0.01;
+  const POLYGON_GAS_STATION_URL = 'https://gasstation.polygon.technology/v2';
 
   // ----------------------------------------------------------------
   // DOM refs
@@ -178,22 +180,88 @@
 
   // ----------------------------------------------------------------
   // Network data polling (gas / block)
-  // Stub: replace with real Polygon RPC or python backend endpoint
   // ----------------------------------------------------------------
-  function pollNetworkData() {
-    function update() {
-      // TODO (production): fetch from your Python backend or directly
-      // from Polygon RPC: eth_gasPrice, eth_blockNumber
-      const gwei  = 28 + Math.floor(Math.random() * 65);
-      const block = 0;
+  function formatGwei(value) {
+    const n = Number(value);
+    if (!Number.isFinite(n)) return '—';
+    if (n >= 100) return Math.round(n).toString();
+    if (n >= 10) return n.toFixed(1);
+    return n.toFixed(2);
+  }
 
-      if (els.gweiDisplay)  els.gweiDisplay.textContent  = gwei + ' Gwei';
-      if (els.blockDisplay) els.blockDisplay.textContent = block ? block.toLocaleString() : 'Pending RPC';
-      if (els.gasHeroVal)   els.gasHeroVal.textContent   = gwei;
+  function readGasTier(data, tier) {
+    const entry = data && data[tier];
+    return Number(entry && (entry.maxFee ?? entry.maxPriorityFee));
+  }
+
+  function renderHeroGas(tiers) {
+    if (!els.gasHeroVal) return;
+
+    const labels = [
+      ['Std', tiers.standard],
+      ['Fast', tiers.fast],
+      ['Rapid', tiers.rapid],
+    ];
+
+    els.gasHeroVal.replaceChildren(...labels.map(([label, value]) => {
+      const span = document.createElement('span');
+      span.textContent = `${label} ${formatGwei(value)}`;
+      return span;
+    }));
+  }
+
+  async function fetchGasData() {
+    const res = await fetch(POLYGON_GAS_STATION_URL, {
+      method: 'GET',
+      headers: { Accept: 'application/json' },
+      cache: 'no-store',
+    });
+
+    if (!res.ok) {
+      throw new Error(`Gas station returned ${res.status}`);
+    }
+
+    const data = await res.json();
+    const standard = readGasTier(data, 'standard');
+    const fast = readGasTier(data, 'fast');
+    const spread = Number.isFinite(standard) && Number.isFinite(fast)
+      ? Math.max(1, fast - standard)
+      : 1;
+
+    return {
+      standard,
+      fast,
+      // Polygon Gas Station exposes standard and fast. Rapid is a display
+      // premium over fast until a dedicated rapid oracle is wired.
+      rapid: Number.isFinite(fast) ? fast + Math.max(1, spread * 0.5) : NaN,
+      blockNumber: Number(data && data.blockNumber),
+    };
+  }
+
+  function pollNetworkData() {
+    if (state.networkPollTimer) return;
+
+    async function update() {
+      try {
+        const tiers = await fetchGasData();
+        renderHeroGas(tiers);
+
+        if (els.gweiDisplay) {
+          els.gweiDisplay.textContent =
+            `Std ${formatGwei(tiers.standard)} · Fast ${formatGwei(tiers.fast)} · Rapid ${formatGwei(tiers.rapid)} Gwei`;
+        }
+        if (els.blockDisplay) {
+          els.blockDisplay.textContent = tiers.blockNumber ? tiers.blockNumber.toLocaleString() : 'Pending';
+        }
+      } catch (err) {
+        renderHeroGas({ standard: NaN, fast: NaN, rapid: NaN });
+        if (els.gweiDisplay) els.gweiDisplay.textContent = 'Unavailable';
+        if (els.blockDisplay) els.blockDisplay.textContent = 'Pending';
+      }
     }
 
     update();
-    setInterval(update, 9000);
+    state.networkPollTimer = setInterval(update, 30000);
   }
 
   // ----------------------------------------------------------------
@@ -237,6 +305,8 @@
       if (els.networkBadge) els.networkBadge.textContent = chainLabel(state.chainId);
     });
   }
+
+  pollNetworkData();
 
   // ----------------------------------------------------------------
   // Public API on window.IX

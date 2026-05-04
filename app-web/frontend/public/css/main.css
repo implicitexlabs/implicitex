@@ -253,6 +253,10 @@ body {
   width: 108px;
 }
 
+.stat-gas {
+  width: 190px;
+}
+
 .stat-link {
   color: inherit;
   text-decoration: none;
@@ -284,6 +288,15 @@ body {
   font-weight: 700;
   color: var(--white);
   display: block;
+}
+
+.gas-tiers {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  font-size: 12px;
+  line-height: 1.2;
+  white-space: nowrap;
 }
 
 .stat-label {
@@ -536,6 +549,15 @@ footer {
 
   .stat-item {
     width: 72px;
+  }
+
+  .stat-gas {
+    width: 144px;
+  }
+
+  .gas-tiers {
+    gap: 7px;
+    font-size: 10px;
   }
 
   footer {
