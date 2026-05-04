@@ -1,38 +1,61 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ImplicitEx Privacy</title>
-  <meta name="description" content="ImplicitEx privacy posture for the current demo shell and planned non-custodial transfer platform.">
+  <title>ImplicitEx — Privacy</title>
+  <meta name="description" content="Draft privacy notes for the ImplicitEx testnet-mode public shell.">
   <link rel="canonical" href="https://implicitex.com/privacy.html">
-  <link rel="stylesheet" href="/styles/theme.css">
+  <link rel="stylesheet" href="css/main.css">
   <style>
-    main { max-width: 760px; margin: 0 auto; padding: 5rem 1.5rem; line-height: 1.65; }
-    .eyebrow { color: var(--color-text-secondary); font-family: var(--font-mono); font-size: var(--fs-sm); }
-    .back { display: inline-block; margin-top: 2rem; }
+    .page-shell {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: calc(var(--nav-h) + 4rem) 1.5rem 5rem;
+    }
+
+    .page-shell h1 {
+      font-family: var(--display);
+      font-size: clamp(28px, 4vw, 44px);
+      line-height: 1.15;
+      margin-bottom: 1.5rem;
+    }
+
+    .page-shell p {
+      color: var(--dim);
+      font-weight: 700;
+      line-height: 1.75;
+      margin-bottom: 1rem;
+    }
+
+    .page-link {
+      color: var(--white);
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
   </style>
 </head>
 <body>
-  <main>
-    <p class="eyebrow">ImplicitEx</p>
+  <main class="page-shell">
     <h1>Privacy</h1>
     <p>
-      The current ImplicitEx public shell is demo-only and does not execute live
-      transfers. Wallet connection, when used, is initiated through the user's
-      browser wallet provider.
+      This is a placeholder privacy page for the ImplicitEx testnet-mode public
+      shell. It should be replaced with a reviewed privacy policy before live
+      transfers are enabled.
     </p>
     <p>
-      ImplicitEx does not require custody of private keys. Users should never
-      share seed phrases, private keys, or wallet recovery material with
-      ImplicitEx or anyone claiming to provide support.
+      The current public shell does not execute live transfers. Wallet
+      connection, when used, is initiated through the user's browser wallet
+      provider.
     </p>
     <p>
-      Public blockchain transactions are visible on their respective networks.
-      Wallet addresses, transaction hashes, token transfers, fees, and contract
-      interactions may be publicly observable after live execution is enabled.
+      ImplicitEx should never ask for seed phrases, private keys, or wallet
+      recovery material.
     </p>
-    <a class="back" href="/">Return to ImplicitEx</a>
+    <a class="page-link" href="/">Return home</a>
   </main>
 </body>
 </html>

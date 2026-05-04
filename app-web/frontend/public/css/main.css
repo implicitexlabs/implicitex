@@ -389,6 +389,17 @@ body {
   padding: 1.5rem;
 }
 
+.flow-step summary {
+  cursor: pointer;
+  list-style: none;
+  position: relative;
+  padding-right: 1.4rem;
+}
+
+.flow-step summary::-webkit-details-marker {
+  display: none;
+}
+
 .flow-num {
   display: block;
   font-family: var(--mono);
@@ -405,6 +416,37 @@ body {
   font-size: 13px;
   font-weight: 700;
   line-height: 1.6;
+}
+
+.flow-toggle {
+  position: absolute;
+  right: 0;
+  top: 0.1rem;
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 6px solid var(--muted);
+  transition: transform 0.16s ease, border-top-color 0.12s;
+}
+
+.flow-step:hover .flow-toggle,
+.flow-step:focus-within .flow-toggle {
+  border-top-color: var(--white);
+}
+
+.flow-step[open] .flow-toggle {
+  transform: rotate(180deg);
+}
+
+.flow-more {
+  border-top: 1px solid var(--border);
+  color: var(--dim);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.65;
+  margin-top: 1rem;
+  padding-top: 1rem;
 }
 
 .reveal-copy {

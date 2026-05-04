@@ -79,18 +79,40 @@
   <section class="how-it-works" id="howItWorks" aria-labelledby="howItWorksTitle">
     <div class="section-kicker reveal-copy" id="howItWorksTitle">How it works</div>
     <div class="flow-grid">
-      <div class="flow-step reveal-copy">
-        <span class="flow-num">01 — Connect</span>
-        <p>Your wallet, your keys. No account required.</p>
-      </div>
-      <div class="flow-step reveal-copy">
-        <span class="flow-num">02 — Send</span>
-        <p>Enter a recipient address and USDC amount. Review the 1% fee before confirming.</p>
-      </div>
-      <div class="flow-step reveal-copy">
-        <span class="flow-num">03 — Confirm</span>
-        <p>Approve and transfer in two on-chain steps. Receipt link provided on completion.</p>
-      </div>
+      <details class="flow-step reveal-copy">
+        <summary>
+          <span class="flow-num">01 — Connect</span>
+          <p>Your wallet, your keys. No account required.</p>
+          <span class="flow-toggle" aria-hidden="true"></span>
+        </summary>
+        <div class="flow-more">
+          ImplicitEx connects through your browser wallet. The platform does not
+          ask for an email account, password, seed phrase, or private key.
+        </div>
+      </details>
+      <details class="flow-step reveal-copy">
+        <summary>
+          <span class="flow-num">02 — Send</span>
+          <p>Enter a recipient address and USDC amount. Review the 1% fee before confirming.</p>
+          <span class="flow-toggle" aria-hidden="true"></span>
+        </summary>
+        <div class="flow-more">
+          The transfer preview shows the recipient, USDC amount, platform fee,
+          and estimated gas context before any wallet confirmation is requested.
+        </div>
+      </details>
+      <details class="flow-step reveal-copy">
+        <summary>
+          <span class="flow-num">03 — Confirm</span>
+          <p>Approve and transfer in two on-chain steps. Receipt link provided on completion.</p>
+          <span class="flow-toggle" aria-hidden="true"></span>
+        </summary>
+        <div class="flow-more">
+          Token approval and transfer execution are separate wallet actions.
+          When live transfers are enabled, completed transactions will include
+          a network explorer receipt link.
+        </div>
+      </details>
     </div>
   </section>
 
