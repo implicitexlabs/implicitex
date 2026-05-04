@@ -185,16 +185,6 @@ body {
   max-width: 640px;
 }
 
-.eyebrow {
-  font-family: var(--mono);
-  font-size: 9px;
-  letter-spacing: 0.24em;
-  text-transform: uppercase;
-  color: var(--muted);
-  margin-bottom: 1.5rem;
-  animation: fadeUp 0.7s 0.1s both;
-}
-
 .headline {
   font-family: var(--display);
   font-size: clamp(24px, 3.5vw, 44px);
@@ -292,8 +282,8 @@ body {
 
 .stat-label {
   font-family: var(--mono);
-  font-size: 9px;
-  letter-spacing: 0.18em;
+  font-size: 10px;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--muted);
   display: block;
