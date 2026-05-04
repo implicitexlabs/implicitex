@@ -88,21 +88,13 @@ body {
   text-decoration: none;
 }
 
-/* Square logomark slot — swap for <img> or <svg> */
-.logo-mark-placeholder {
-  width: 26px;
-  height: 26px;
-  border: 1px solid var(--border-2);
-  background: var(--surface-2);
-  flex-shrink: 0;
-}
-
-/* When using an actual logomark image */
 .logo-mark {
   width: 26px;
   height: 26px;
-  display: block;
+  background: var(--white);
   flex-shrink: 0;
+  mask: url("/assets/brandmark.svg") center / contain no-repeat;
+  -webkit-mask: url("/assets/brandmark.svg") center / contain no-repeat;
 }
 
 .logo-word {
