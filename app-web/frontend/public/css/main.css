@@ -214,25 +214,6 @@ body {
   animation: fadeUp 0.7s 0.55s both;
 }
 
-.btn-primary {
-  font-family: var(--mono);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--bg);
-  background: var(--white);
-  border: 1px solid var(--white);
-  padding: 13px 28px;
-  cursor: pointer;
-  transition: background 0.12s, border-color 0.12s;
-}
-
-.btn-primary:hover {
-  background: #d8d8d6;
-  border-color: #d8d8d6;
-}
-
 .btn-ghost {
   font-family: var(--mono);
   font-size: 10px;
