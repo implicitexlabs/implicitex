@@ -105,6 +105,61 @@
     setStatus(message);
   }
 
+  function isConfiguredChain(chainId) {
+    return !!(chainId && window.IX_CHAINS && window.IX_CHAINS[chainId]);
+  }
+
+  function showTransferModules(shouldScroll) {
+    if (!els.modules) return;
+
+    els.modules.removeAttribute('hidden');
+    if (shouldScroll) {
+      setTimeout(() => {
+        els.modules.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 280);
+    }
+  }
+
+  function hideTransferModules() {
+    if (els.modules) els.modules.setAttribute('hidden', '');
+  }
+
+  function applyConnectedPresentation(options = {}) {
+    const shouldScroll = options.shouldScroll === true;
+    const short = shortAddr(state.address);
+
+    if (els.walletAddr) els.walletAddr.textContent = short;
+    if (els.walletPill) els.walletPill.classList.add('visible');
+    if (els.connectBtn) {
+      els.connectBtn.disabled = false;
+      els.connectBtn.textContent = short;
+      els.connectBtn.classList.add('connected');
+    }
+    setNavStatus('Wallet connected');
+    if (els.networkBadge) {
+      els.networkBadge.textContent = chainLabel(state.chainId);
+    }
+    showTransferModules(shouldScroll);
+  }
+
+  function applyWrongNetworkPresentation() {
+    const short = shortAddr(state.address);
+
+    if (els.walletAddr) els.walletAddr.textContent = short;
+    if (els.walletPill) els.walletPill.classList.add('visible');
+    if (els.connectBtn) {
+      els.connectBtn.disabled = false;
+      els.connectBtn.textContent = 'Wrong Network';
+      els.connectBtn.classList.add('connected');
+    }
+    setNavStatus('Wrong network');
+    if (els.networkBadge) {
+      els.networkBadge.textContent = chainLabel(state.chainId);
+    }
+    hideTransferModules();
+    setStatus('Switch to Polygon or Polygon Amoy to continue.');
+  }
+
   // ----------------------------------------------------------------
   // Connect wallet
   // ----------------------------------------------------------------
@@ -145,26 +200,10 @@
   }
 
   function onConnected() {
-    const short = shortAddr(state.address);
-
-    // Update nav
-    if (els.walletAddr)  els.walletAddr.textContent = short;
-    if (els.walletPill)  els.walletPill.classList.add('visible');
-    if (els.connectBtn) {
-      els.connectBtn.textContent = short;
-      els.connectBtn.classList.add('connected');
-    }
-    setNavStatus('Wallet connected');
-    if (els.networkBadge) {
-      els.networkBadge.textContent = chainLabel(state.chainId);
-    }
-
-    // Reveal modules
-    if (els.modules) {
-      els.modules.removeAttribute('hidden');
-      setTimeout(() => {
-        els.modules.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 280);
+    if (isConfiguredChain(state.chainId)) {
+      applyConnectedPresentation({ shouldScroll: true });
+    } else {
+      applyWrongNetworkPresentation();
     }
 
     // Start gas polling
@@ -538,6 +577,8 @@
   function scrollToModules() {
     if (!state.connected) {
       connect();
+    } else if (!isConfiguredChain(state.chainId)) {
+      applyWrongNetworkPresentation();
     } else if (els.modules) {
       els.modules.scrollIntoView({ behavior: 'smooth' });
     }
@@ -570,8 +611,16 @@
 
     window.ethereum.on('chainChanged', chainHex => {
       state.chainId = parseInt(chainHex, 16);
-      if (els.networkBadge) els.networkBadge.textContent = chainLabel(state.chainId);
-      refreshUsdcBalance();
+      if (!state.connected) {
+        if (els.networkBadge) els.networkBadge.textContent = chainLabel(state.chainId);
+        return;
+      }
+      if (isConfiguredChain(state.chainId)) {
+        applyConnectedPresentation();
+        refreshUsdcBalance();
+      } else {
+        applyWrongNetworkPresentation();
+      }
     });
   }
 
