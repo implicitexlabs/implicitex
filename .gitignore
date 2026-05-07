@@ -32,3 +32,6 @@ implicitex_local_quarantine_*
 
 # Firebase local cache
 .firebase/
+
+# Firebase local cache
+.firebase/
