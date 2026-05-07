@@ -238,6 +238,9 @@ ready.
       receipt view.
 - [ ] Confirm launch copy clearly says transfers are testnet/demo until live
       enablement is approved.
+- [ ] Confirm `CONNECT WALLET` opens a wallet-provider modal and never asks the
+      user to type their own wallet address as the connect action.
+- [ ] Confirm recipient address entry remains a separate transfer-form field.
 
 ## Limit Increase Checklist
 
@@ -305,5 +308,6 @@ Before increasing to 1,000 USDC:
 ## Related Documents
 
 - `system/ARENA_MAP.md`
+- `system/WALLET_CONNECT_UX.md`
 - `docs/operations/implicitex-launch-gate.md`
 - `docs/decisions/implicitex-foundation-checkpoint-2026-04-30.md`
