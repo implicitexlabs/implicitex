@@ -279,7 +279,7 @@ body {
 .stat-strip {
   display: flex;
   gap: 2.5rem;
-  align-items: center;
+  align-items: stretch;
   justify-content: center;
   white-space: nowrap;
   margin: 0 auto 1.5rem;
@@ -287,6 +287,9 @@ body {
 }
 
 .stat-item {
+  display: grid;
+  grid-template-rows: 24px 14px;
+  align-items: center;
   text-align: center;
   width: 108px;
 }
@@ -326,16 +329,18 @@ body {
   font-family: var(--display);
   font-size: 17px;
   font-weight: 700;
+  line-height: 1;
   color: var(--white);
   display: block;
 }
 
 .gas-tiers {
   display: flex;
+  align-items: center;
   justify-content: center;
   gap: 8px;
   font-size: 17px;
-  line-height: 1.2;
+  line-height: 1;
   white-space: nowrap;
 }
 
@@ -351,7 +356,7 @@ body {
   text-transform: uppercase;
   color: var(--white);
   display: block;
-  margin-top: 3px;
+  line-height: 1;
   transition: color 0.12s;
 }
 
