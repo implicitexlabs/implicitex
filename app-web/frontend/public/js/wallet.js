@@ -18,6 +18,7 @@
     provider:  null,
     signer:    null,
     chainId:   null,
+    connecting: false,
     networkPollTimer: null,
   };
 
@@ -55,6 +56,7 @@
     blockDisplay:document.getElementById('blockDisplay'),
     gasHeroVal:  document.getElementById('gasHeroVal'),
     networkBadge:document.getElementById('networkBadge'),
+    navStatus:   document.querySelector('.nav-status'),
   };
 
   // ----------------------------------------------------------------
@@ -68,21 +70,59 @@
     if (els.txStatus) els.txStatus.textContent = msg;
   }
 
+  function setNavStatus(msg) {
+    if (els.navStatus) els.navStatus.textContent = msg;
+  }
+
+  function setConnectPending(isPending) {
+    state.connecting = isPending;
+    if (!els.connectBtn) return;
+
+    els.connectBtn.disabled = isPending;
+    if (isPending) {
+      els.connectBtn.textContent = 'Connecting...';
+    }
+  }
+
+  function resetConnectButton() {
+    if (!els.connectBtn) return;
+
+    els.connectBtn.disabled = false;
+    els.connectBtn.textContent = 'Connect Wallet';
+    els.connectBtn.classList.remove('connected');
+  }
+
+  function handleConnectFailure(message) {
+    state.connected = false;
+    state.address = null;
+    state.provider = null;
+    state.signer = null;
+    state.chainId = null;
+    state.connecting = false;
+
+    resetConnectButton();
+    setNavStatus(message);
+    setStatus(message);
+  }
+
   // ----------------------------------------------------------------
   // Connect wallet
   // ----------------------------------------------------------------
   async function connect() {
-    if (state.connected) return;
+    if (state.connected || state.connecting) return;
 
     if (!window.ethereum || !window.ethereum.request) {
-      setStatus('No injected wallet detected. Install MetaMask or another EIP-1193 wallet.');
+      handleConnectFailure('No wallet detected');
       return;
     }
+
+    setNavStatus('Connecting wallet');
+    setConnectPending(true);
 
     try {
       const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
       if (!accounts || !accounts[0]) {
-        setStatus('No wallet account returned.');
+        handleConnectFailure('No wallet account returned');
         return;
       }
 
@@ -93,10 +133,14 @@
       const chainHex = await window.ethereum.request({ method: 'eth_chainId' });
       state.chainId = parseInt(chainHex, 16);
     } catch (err) {
-      setStatus(err && err.message ? err.message : 'Wallet connection rejected.');
+      const rejected = err && (err.code === 4001 ||
+        (err.info && err.info.error && err.info.error.code === 4001));
+      handleConnectFailure(rejected ? 'Wallet connection rejected' : 'Wallet connection failed');
       return;
     }
 
+    state.connecting = false;
+    if (els.connectBtn) els.connectBtn.disabled = false;
     onConnected();
   }
 
@@ -110,6 +154,7 @@
       els.connectBtn.textContent = short;
       els.connectBtn.classList.add('connected');
     }
+    setNavStatus('Wallet connected');
     if (els.networkBadge) {
       els.networkBadge.textContent = chainLabel(state.chainId);
     }
@@ -512,9 +557,9 @@
         if (els.walletPill) els.walletPill.classList.remove('visible');
         if (els.walletAddr) els.walletAddr.textContent = '';
         if (els.connectBtn) {
-          els.connectBtn.textContent = 'Connect Wallet';
-          els.connectBtn.classList.remove('connected');
+          resetConnectButton();
         }
+        setNavStatus('Testnet prep');
         if (els.modules) els.modules.setAttribute('hidden', '');
         return;
       }
