@@ -304,5 +304,6 @@ Before increasing to 1,000 USDC:
 
 ## Related Documents
 
+- `system/ARENA_MAP.md`
 - `docs/operations/implicitex-launch-gate.md`
 - `docs/decisions/implicitex-foundation-checkpoint-2026-04-30.md`
