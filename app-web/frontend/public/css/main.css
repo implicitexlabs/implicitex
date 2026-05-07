@@ -118,7 +118,7 @@ body {
 
 .logo-word em {
   font-style: normal;
-  color: var(--muted);
+  color: var(--white);
 }
 
 .nav-right {
@@ -154,7 +154,7 @@ body {
 .wallet-addr {
   font-family: var(--mono);
   font-size: 10px;
-  color: var(--muted);
+  color: var(--white);
 }
 
 .nav-status {
@@ -163,7 +163,7 @@ body {
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--muted);
+  color: var(--white);
   border: 1px solid var(--border);
   padding: 8px 12px;
 }
@@ -186,7 +186,7 @@ body {
 
 .connect-btn.connected {
   background: transparent;
-  color: var(--muted);
+  color: var(--white);
   border: 1px solid var(--border);
   cursor: default;
 }
@@ -197,7 +197,7 @@ body {
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--muted);
+  color: var(--white);
   background: transparent;
   border: 1px solid var(--border);
   padding: 8px 12px;
@@ -251,6 +251,17 @@ body {
   color: var(--white);
   margin-bottom: 1.1rem;
   animation: fadeUp 0.7s 0.25s both;
+}
+
+.hero-kicker {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--white);
+  margin: -0.35rem auto 1.2rem;
+  animation: fadeUp 0.7s 0.32s both;
 }
 
 .subline {
@@ -323,7 +334,7 @@ body {
   display: flex;
   justify-content: center;
   gap: 8px;
-  font-size: 12px;
+  font-size: 17px;
   line-height: 1.2;
   white-space: nowrap;
 }
@@ -338,7 +349,7 @@ body {
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--muted);
+  color: var(--white);
   display: block;
   margin-top: 3px;
   transition: color 0.12s;
@@ -410,7 +421,7 @@ body {
   font-weight: 700;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--muted);
+  color: var(--white);
   margin-bottom: 0.85rem;
 }
 
@@ -634,11 +645,13 @@ footer {
   font-family: var(--mono);
   font-size: 9px;
   letter-spacing: 0.12em;
-  color: var(--muted);
+  text-transform: uppercase;
+  color: var(--white);
 }
 
 .f-links {
   display: flex;
+  flex-wrap: wrap;
   gap: 1.5rem;
 }
 
@@ -647,19 +660,54 @@ footer {
   font-size: 9px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--muted);
+  color: var(--white);
   text-decoration: none;
   transition: color 0.12s;
 }
 
 .f-links a:hover { color: var(--white); }
 
+.social-icons {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.social-link {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  background: var(--white);
+  transition: opacity 0.12s, transform 0.12s;
+}
+
+.social-link:hover,
+.social-link:focus-visible {
+  opacity: 0.72;
+  transform: translateY(-1px);
+}
+
+.social-link:focus-visible {
+  outline: 1px solid var(--white);
+  outline-offset: 4px;
+}
+
+.social-x {
+  -webkit-mask: url('/assets/icons/social/x.svg') center / contain no-repeat;
+  mask: url('/assets/icons/social/x.svg') center / contain no-repeat;
+}
+
+.social-github {
+  -webkit-mask: url('/assets/icons/social/github.svg') center / contain no-repeat;
+  mask: url('/assets/icons/social/github.svg') center / contain no-repeat;
+}
+
 .f-net {
   font-family: var(--mono);
   font-size: 9px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--muted);
+  color: var(--white);
   border: 1px solid var(--border);
   padding: 4px 10px;
 }
@@ -709,7 +757,7 @@ footer {
 
   .gas-tiers {
     gap: 5px;
-    font-size: 10px;
+    font-size: 17px;
   }
 
   footer {
