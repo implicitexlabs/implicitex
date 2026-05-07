@@ -1,46 +1,212 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>ImplicitEx Terms</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        body {
-            background: #000000;
-            color: #ffffff;
-            font-family: 'Inter', sans-serif;
-            max-width: 800px;
-            margin: 4rem auto;
-            padding: 2rem;
-        }
-        h1 {
-            color: #ffffff;
-        }
-        a { color: #aaaaaa; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ImplicitEx — Terms</title>
+  <meta name="description" content="Terms of use for ImplicitEx.">
+  <link rel="canonical" href="https://implicitex.com/components/terms.html">
+  <link rel="stylesheet" href="../css/main.css">
+  <style>
+    .policy-shell {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 4.5rem 1.5rem 5rem;
+    }
+
+    .policy-eyebrow,
+    .updated {
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    .policy-eyebrow { margin-bottom: 0.9rem; }
+    .updated { margin-bottom: 1.5rem; }
+
+    .policy-shell h1,
+    .policy-shell h2 {
+      font-family: var(--display);
+      line-height: 1.15;
+    }
+
+    .policy-shell h1 {
+      font-size: clamp(30px, 5vw, 52px);
+      margin-bottom: 0.7rem;
+    }
+
+    .policy-shell h2 {
+      font-size: clamp(16px, 2vw, 22px);
+      margin: 2.35rem 0 1rem;
+    }
+
+    .policy-shell p,
+    .policy-shell li {
+      color: var(--dim);
+      font-weight: 700;
+      line-height: 1.75;
+    }
+
+    .policy-shell p { margin-bottom: 1rem; }
+    .policy-shell ul { margin: 0 0 1rem 1.25rem; }
+    .policy-shell a { color: var(--white); }
+
+    .back {
+      display: inline-block;
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      margin-top: 1.5rem;
+      text-transform: uppercase;
+    }
+  </style>
 </head>
 <body>
+  <main class="policy-shell">
+    <p class="policy-eyebrow">ImplicitEx</p>
+
     <h1>Terms</h1>
+
+    <p class="updated">Last updated: May 7, 2026</p>
+
     <p>
-        The current ImplicitEx public shell is demo-only. Live transfers remain
-        disabled until testnet and production readiness gates are complete.
+      These Terms govern use of the ImplicitEx public site, demo shell, testnet
+      preparation tools, and any future non-custodial wallet-to-wallet transfer
+      interface made available by Aden Media Group LLC.
     </p>
+
+    <h2>Current Platform Status</h2>
+
     <p>
-        By using ImplicitEx, you agree that all transfers are final and irreversible.
-        ImplicitEx does not store private keys or mediate ownership. You are fully
-        responsible for verifying recipient addresses and transfer amounts.
+      The current ImplicitEx public shell is demo-only. Live transfers remain
+      disabled until testnet validation, negative-path testing, security review,
+      legal review, and production readiness gates are complete.
     </p>
+
     <p>
-        ImplicitEx, its operators, and affiliates assume no liability for lost funds,
-        mistyped wallet addresses, or incorrect transaction details.
+      Demo screens, estimates, previews, and interface states do not mean that a
+      live blockchain transaction has occurred. A blockchain transaction occurs
+      only when a user signs a wallet transaction and the relevant network
+      accepts and confirms it.
     </p>
+
+    <h2>Non-Custodial Use</h2>
+
     <p>
-        Always double-check recipient addresses and values before confirming.
+      ImplicitEx is designed to be non-custodial. We do not hold user funds, do
+      not control user wallets, do not store seed phrases, and do not have the
+      ability to recover a user's wallet.
     </p>
+
     <p>
-        The planned ImplicitEx launch fee is a transparent 1% flat platform fee
-        applied during a completed contract-routed transfer.
+      Users are responsible for their wallets, devices, private keys, seed
+      phrases, passwords, browser extensions, token approvals, recipient
+      addresses, transaction amounts, and wallet confirmations.
     </p>
-    <p><a href="/">Return to ImplicitEx</a></p>
+
+    <h2>Transaction Risks</h2>
+
+    <p>
+      Blockchain transactions may be irreversible. Sending funds to the wrong
+      address, using the wrong network, approving the wrong contract, signing a
+      malicious request, using unsupported assets, or operating from a
+      compromised device may result in permanent loss.
+    </p>
+
+    <p>
+      Network fees may be charged even if a transaction fails, is rejected, or is
+      reverted. Block explorers, RPC providers, wallets, and network data may be
+      delayed, unavailable, incomplete, or inaccurate.
+    </p>
+
+    <h2>Platform Fee</h2>
+
+    <p>
+      The planned ImplicitEx launch fee is a transparent 1% flat platform fee
+      applied during a completed contract-routed transfer. Users should review
+      the platform fee, network fee, recipient amount, total debit, token,
+      contract, and network before confirming any wallet action.
+    </p>
+
+    <h2>Security and Reliability</h2>
+
+    <p>
+      We work to make ImplicitEx as secure and reliable as practical through
+      staged testing, contract tests, security review, deployment gates, limited
+      launch scope, source verification, role separation, monitoring, and
+      incident-response planning.
+    </p>
+
+    <p>
+      Those efforts reduce risk but do not eliminate it. ImplicitEx is provided
+      on an "as available" and "as is" basis. We do not guarantee that the site,
+      contracts, wallets, blockchain networks, RPC providers, block explorers,
+      or third-party services will be uninterrupted, error-free, secure, or
+      compatible with every user environment.
+    </p>
+
+    <h2>Restricted Jurisdictions and Prohibited Users</h2>
+
+    <p>
+      Users may not use ImplicitEx from restricted jurisdictions, on behalf of
+      restricted persons, or for transactions that violate sanctions, export
+      controls, anti-money-laundering rules, counter-terrorist-financing rules,
+      fraud laws, consumer-protection laws, or any other applicable law.
+    </p>
+
+    <p>
+      Restricted jurisdictions currently include Belarus, Cuba, Iran, North
+      Korea, Russia, Syria, the Crimea region of Ukraine, the Donetsk region of
+      Ukraine, the Kherson region of Ukraine, the Luhansk region of Ukraine, the
+      Zaporizhzhia region of Ukraine, and any other comprehensively sanctioned or
+      embargoed region. The current supported-jurisdiction list is maintained at
+      <a href="/jurisdictions.html">Supported Jurisdictions</a>.
+    </p>
+
+    <h2>Prohibited Conduct</h2>
+
+    <p>You may not use ImplicitEx to:</p>
+
+    <ul>
+      <li>Commit fraud, theft, extortion, exploitation, or deception.</li>
+      <li>Evade sanctions, export controls, or legal restrictions.</li>
+      <li>Facilitate money laundering, terrorist financing, or illicit finance.</li>
+      <li>Attack, disrupt, scrape, reverse engineer, or overload the platform.</li>
+      <li>Misrepresent identity, authorization, location, or transaction purpose.</li>
+    </ul>
+
+    <h2>Limitation of Liability</h2>
+
+    <p>
+      To the maximum extent permitted by law, ImplicitEx, Aden Media Group LLC,
+      and their operators, affiliates, service providers, and contributors are
+      not liable for lost funds, failed transactions, delayed confirmations,
+      wallet compromise, user error, network errors, third-party outages,
+      incorrect transaction details, unavailable services, unsupported
+      jurisdictions, regulatory restrictions, or other damages arising from use
+      of or inability to use the platform.
+    </p>
+
+    <h2>Changes</h2>
+
+    <p>
+      We may update these Terms, pause the platform, disable functionality,
+      change supported jurisdictions, or modify the product as development,
+      security, legal, operational, or compliance needs change.
+    </p>
+
+    <h2>Contact</h2>
+
+    <p>
+      For questions, contact
+      <a href="mailto:info@implicitex.com">info@implicitex.com</a>.
+    </p>
+
+    <a class="back" href="/">Return to ImplicitEx</a>
+  </main>
 </body>
 </html>

@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ImplicitEx — Supported Jurisdictions</title>
+  <meta name="description" content="Supported and restricted jurisdictions for ImplicitEx.">
+  <link rel="canonical" href="https://implicitex.com/jurisdictions.html">
+  <link rel="stylesheet" href="css/main.css">
+  <style>
+    .policy-shell {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: calc(var(--nav-h) + 4.5rem) 1.5rem 5rem;
+    }
+
+    .policy-eyebrow,
+    .updated {
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    .policy-eyebrow { margin-bottom: 0.9rem; }
+    .updated { margin-bottom: 1.5rem; }
+
+    .policy-shell h1,
+    .policy-shell h2,
+    .policy-shell h3 {
+      font-family: var(--display);
+      line-height: 1.15;
+    }
+
+    .policy-shell h1 {
+      font-size: clamp(30px, 5vw, 52px);
+      margin-bottom: 0.7rem;
+    }
+
+    .policy-shell h2 {
+      font-size: clamp(16px, 2vw, 22px);
+      margin: 2.35rem 0 1rem;
+    }
+
+    .policy-shell h3 {
+      font-size: 14px;
+      margin: 1.35rem 0 0.7rem;
+    }
+
+    .policy-shell p,
+    .policy-shell li {
+      color: var(--dim);
+      font-weight: 700;
+      line-height: 1.75;
+    }
+
+    .policy-shell p { margin-bottom: 1rem; }
+    .policy-shell ul { margin: 0 0 1rem 1.25rem; }
+    .policy-shell a { color: var(--white); }
+
+    .jurisdiction-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 1rem;
+      margin: 1rem 0 2rem;
+    }
+
+    .jurisdiction-card {
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.03);
+      padding: 1rem;
+    }
+
+    .jurisdiction-card ul {
+      margin-bottom: 0;
+    }
+
+    .back {
+      display: inline-block;
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      margin-top: 1.5rem;
+      text-transform: uppercase;
+    }
+  </style>
+</head>
+<body>
+  <nav id="nav">
+    <a href="/" class="logo" aria-label="ImplicitEx home">
+      <span class="logo-mark" aria-hidden="true"></span>
+      <span class="logo-word">implicit<em>ex</em></span>
+    </a>
+    <div class="nav-right">
+      <div class="wallet-pill" id="walletPill" aria-live="polite">
+        <span class="wallet-dot" aria-hidden="true"></span>
+        <span class="wallet-addr" id="walletAddr"></span>
+      </div>
+      <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch to light theme" aria-pressed="false">
+        Theme
+      </button>
+      <span class="nav-status">Testnet mode</span>
+      <button class="connect-btn" id="connectBtn" onclick="IX.connect()">
+        Connect Wallet
+      </button>
+    </div>
+  </nav>
+
+  <main class="policy-shell">
+    <p class="policy-eyebrow">ImplicitEx</p>
+
+    <h1>Supported Jurisdictions</h1>
+
+    <p class="updated">Last updated: May 7, 2026</p>
+
+    <p>
+      This page describes where ImplicitEx is intended to be available during
+      MVP planning and where access is restricted. The current public site is a
+      demo shell and testnet-preparation surface. Live transfers remain disabled
+      until the applicable readiness gates are complete.
+    </p>
+
+    <p>
+      Supported and restricted jurisdictions may change at any time based on
+      law, sanctions, infrastructure availability, banking-partner support,
+      blockchain-network support, risk review, or business judgment. Users are
+      responsible for complying with the laws that apply to them.
+    </p>
+
+    <h2>Not Authorized</h2>
+
+    <p>
+      ImplicitEx is not authorized for use by any person or entity that is
+      located in, organized in, ordinarily resident in, controlled from, or
+      acting on behalf of any restricted jurisdiction, sanctioned region, blocked
+      person, or prohibited party.
+    </p>
+
+    <div class="jurisdiction-grid">
+      <section class="jurisdiction-card">
+        <h3>Restricted Countries</h3>
+        <ul>
+          <li>Belarus</li>
+          <li>Cuba</li>
+          <li>Iran</li>
+          <li>North Korea</li>
+          <li>Russia</li>
+          <li>Syria</li>
+        </ul>
+      </section>
+
+      <section class="jurisdiction-card">
+        <h3>Restricted Regions</h3>
+        <ul>
+          <li>Crimea region of Ukraine</li>
+          <li>Donetsk region of Ukraine</li>
+          <li>Kherson region of Ukraine</li>
+          <li>Luhansk region of Ukraine</li>
+          <li>Zaporizhzhia region of Ukraine</li>
+          <li>Any other comprehensively sanctioned or embargoed region</li>
+        </ul>
+      </section>
+
+      <section class="jurisdiction-card">
+        <h3>Restricted Persons</h3>
+        <ul>
+          <li>Any person on an applicable sanctions list</li>
+          <li>Any person owned or controlled by a sanctioned person</li>
+          <li>Any person using the platform for a sanctioned person</li>
+          <li>Any person using the platform to evade sanctions or controls</li>
+        </ul>
+      </section>
+    </div>
+
+    <p>
+      The restricted list is intentionally conservative. It includes
+      territory-wide sanctions and additional jurisdictions that ImplicitEx has
+      chosen not to support for MVP risk-control reasons.
+    </p>
+
+    <h2>Initial MVP Supported Jurisdictions</h2>
+
+    <p>
+      Subject to the restrictions above, ImplicitEx intends to limit MVP
+      availability to the following jurisdictions. If a jurisdiction is not
+      listed here, it should be treated as not supported unless ImplicitEx
+      expressly adds it later.
+    </p>
+
+    <div class="jurisdiction-grid">
+      <section class="jurisdiction-card">
+        <h3>Asia</h3>
+        <ul>
+          <li>Armenia</li>
+          <li>Azerbaijan</li>
+          <li>Bahrain</li>
+          <li>Bangladesh</li>
+          <li>Bhutan</li>
+          <li>Brunei Darussalam</li>
+          <li>Cambodia</li>
+          <li>Georgia</li>
+          <li>Hong Kong</li>
+          <li>Indonesia</li>
+          <li>Israel</li>
+          <li>Japan</li>
+          <li>Jordan</li>
+          <li>Kazakhstan</li>
+          <li>Kuwait</li>
+          <li>Kyrgyzstan</li>
+          <li>Malaysia</li>
+          <li>Mongolia</li>
+          <li>Oman</li>
+          <li>Philippines</li>
+          <li>Republic of Korea</li>
+          <li>Saudi Arabia</li>
+          <li>Singapore</li>
+          <li>Sri Lanka</li>
+          <li>Taiwan</li>
+          <li>Tajikistan</li>
+          <li>Thailand</li>
+          <li>Timor-Leste</li>
+          <li>Turkey</li>
+          <li>United Arab Emirates</li>
+          <li>Uzbekistan</li>
+          <li>Vietnam</li>
+        </ul>
+      </section>
+
+      <section class="jurisdiction-card">
+        <h3>Africa</h3>
+        <ul>
+          <li>Angola</li>
+          <li>Benin</li>
+          <li>Botswana</li>
+          <li>Burkina Faso</li>
+          <li>Burundi</li>
+          <li>Cameroon</li>
+          <li>Chad</li>
+          <li>Egypt</li>
+          <li>Ethiopia</li>
+          <li>The Gambia</li>
+          <li>Ghana</li>
+          <li>Kenya</li>
+          <li>Madagascar</li>
+          <li>Malawi</li>
+          <li>Mauritius</li>
+          <li>Morocco</li>
+          <li>Mozambique</li>
+          <li>Namibia</li>
+          <li>Niger</li>
+          <li>Rwanda</li>
+          <li>Senegal</li>
+          <li>Seychelles</li>
+          <li>South Africa</li>
+          <li>Tanzania</li>
+          <li>Tunisia</li>
+          <li>Zambia</li>
+          <li>Zimbabwe</li>
+        </ul>
+      </section>
+
+      <section class="jurisdiction-card">
+        <h3>Europe</h3>
+        <ul>
+          <li>Andorra</li>
+          <li>Austria</li>
+          <li>Belgium</li>
+          <li>Bosnia and Herzegovina</li>
+          <li>Bulgaria</li>
+          <li>Croatia</li>
+          <li>Cyprus</li>
+          <li>Czechia</li>
+          <li>Denmark</li>
+          <li>Estonia</li>
+          <li>Finland</li>
+          <li>France</li>
+          <li>Germany</li>
+          <li>Gibraltar</li>
+          <li>Greece</li>
+          <li>Guernsey</li>
+          <li>Holy See</li>
+          <li>Hungary</li>
+          <li>Iceland</li>
+          <li>Ireland</li>
+          <li>Isle of Man</li>
+          <li>Italy</li>
+          <li>Jersey</li>
+          <li>Latvia</li>
+          <li>Liechtenstein</li>
+          <li>Lithuania</li>
+          <li>Luxembourg</li>
+          <li>Malta</li>
+          <li>Moldova</li>
+          <li>Monaco</li>
+          <li>Montenegro</li>
+          <li>Netherlands</li>
+          <li>North Macedonia</li>
+          <li>Norway</li>
+          <li>Poland</li>
+          <li>Portugal</li>
+          <li>Romania</li>
+          <li>San Marino</li>
+          <li>Serbia</li>
+          <li>Slovakia</li>
+          <li>Slovenia</li>
+          <li>Spain</li>
+          <li>Sweden</li>
+          <li>Switzerland</li>
+          <li>United Kingdom</li>
+        </ul>
+      </section>
+
+      <section class="jurisdiction-card">
+        <h3>North America</h3>
+        <ul>
+          <li>Anguilla</li>
+          <li>Antigua and Barbuda</li>
+          <li>Aruba</li>
+          <li>The Bahamas</li>
+          <li>Belize</li>
+          <li>Bermuda</li>
+          <li>British Virgin Islands</li>
+          <li>Canada</li>
+          <li>Cayman Islands</li>
+          <li>Costa Rica</li>
+          <li>Curacao</li>
+          <li>Dominica</li>
+          <li>Dominican Republic</li>
+          <li>El Salvador</li>
+          <li>Greenland</li>
+          <li>Grenada</li>
+          <li>Honduras</li>
+          <li>Mexico</li>
+          <li>Montserrat</li>
+          <li>Puerto Rico</li>
+          <li>Saint Barthelemy</li>
+          <li>Saint Lucia</li>
+          <li>Saint Martin</li>
+          <li>Saint Pierre and Miquelon</li>
+          <li>Saint Vincent and the Grenadines</li>
+          <li>Sint Maarten</li>
+          <li>Turks and Caicos Islands</li>
+          <li>United States, excluding Hawaii and New York</li>
+          <li>U.S. Virgin Islands</li>
+        </ul>
+      </section>
+
+      <section class="jurisdiction-card">
+        <h3>South America</h3>
+        <ul>
+          <li>Argentina</li>
+          <li>Brazil</li>
+          <li>Chile</li>
+          <li>Colombia</li>
+          <li>Ecuador</li>
+          <li>French Guiana</li>
+          <li>Guatemala</li>
+          <li>Guyana</li>
+          <li>Paraguay</li>
+          <li>Peru</li>
+          <li>Uruguay</li>
+        </ul>
+      </section>
+
+      <section class="jurisdiction-card">
+        <h3>Oceania</h3>
+        <ul>
+          <li>American Samoa</li>
+          <li>Australia</li>
+          <li>Christmas Island</li>
+          <li>Cocos Islands</li>
+          <li>Cook Islands</li>
+          <li>Federated States of Micronesia</li>
+          <li>Fiji</li>
+          <li>French Polynesia</li>
+          <li>Guam</li>
+          <li>Kiribati</li>
+          <li>Marshall Islands</li>
+          <li>Nauru</li>
+          <li>New Caledonia</li>
+          <li>New Zealand</li>
+          <li>Niue</li>
+          <li>Norfolk Island</li>
+          <li>Northern Mariana Islands</li>
+          <li>Palau</li>
+          <li>Pitcairn</li>
+          <li>Samoa</li>
+          <li>Tokelau</li>
+          <li>Tuvalu</li>
+          <li>Wallis and Futuna</li>
+        </ul>
+      </section>
+    </div>
+
+    <h2>Compliance Review</h2>
+
+    <p>
+      ImplicitEx may block, pause, refuse, or discontinue access where it
+      believes use may violate sanctions, anti-money-laundering rules,
+      counter-terrorist-financing rules, export controls, local law, platform
+      policy, or security requirements.
+    </p>
+
+    <p>
+      This page is not legal advice and does not replace a user's responsibility
+      to understand and follow the laws that apply to their own location,
+      citizenship, organization, wallet, transaction, and counterparty.
+    </p>
+
+    <a class="back" href="/">Return to ImplicitEx</a>
+  </main>
+
+  <footer>
+    <span class="f-copy">CONNECT@IMPLICITEX.COM</span>
+    <nav class="f-links" aria-label="Footer links">
+      <a href="/about.html">About</a>
+      <a href="/components/terms.html">Terms</a>
+      <a href="/privacy.html">Privacy</a>
+      <a href="/legal.html">Legal</a>
+      <a href="/jurisdictions.html">Jurisdictions</a>
+      <a href="/news.html">News</a>
+      <a href="mailto:connect@implicitex.com">Contact</a>
+    </nav>
+    <nav class="social-icons" aria-label="Social links">
+      <a class="social-link social-x" href="https://x.com/implicitex" target="_blank" rel="noopener" aria-label="ImplicitEx on X"></a>
+      <a class="social-link social-github" href="https://github.com/implicitexlabs" target="_blank" rel="noopener" aria-label="ImplicitEx Labs on GitHub"></a>
+    </nav>
+    <span class="f-net" id="networkBadge">Demo shell</span>
+  </footer>
+
+  <script src="config/chains.js"></script>
+  <script src="js/wallet.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
