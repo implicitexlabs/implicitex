@@ -29,3 +29,6 @@ venv/
 .mypy_cache/
 .ruff_cache/
 implicitex_local_quarantine_*
+
+# Firebase local cache
+.firebase/
