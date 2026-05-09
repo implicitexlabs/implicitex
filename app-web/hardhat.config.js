@@ -36,7 +36,13 @@ module.exports = {
     artifacts: "./artifacts"
   },
   networks,
+  // hardhat-verify v2 requires a keyed apiKey object for multi-chain support.
+  // A flat string only matches Ethereum mainnet. polygonAmoy uses
+  // api-amoy.polygonscan.com — obtain a free key at polygonscan.com.
   etherscan: {
-    apiKey: etherscanApiKey || ""
+    apiKey: {
+      polygonAmoy: etherscanApiKey || "",
+      polygon:     etherscanApiKey || ""
+    }
   }
 };

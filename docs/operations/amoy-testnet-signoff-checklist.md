@@ -63,6 +63,50 @@ Deploy fails → stop. Do not update chains.js. Diagnose error before retrying.
 
 ---
 
+## Step 1b — Fill and Commit Deploy Artifact
+
+Copy the artifact template and fill every field from Step 1 output:
+
+```bash
+cp docs/operations/deployments/TEMPLATE-deploy-artifact.md \
+   docs/operations/deployments/amoy-$(date +%Y-%m-%d).md
+# edit the new file — fill contract address, tx hash, block number,
+# constructor args, wallet roles, on-chain state
+```
+
+Update `scripts/verify_args.js` with real treasury address, min transfer,
+and precision values. The USDC address is already set.
+
+Run source verification:
+
+```bash
+cd app-web
+CONTRACT_ADDRESS=<address from Step 1> npx hardhat verify \
+  --network polygon-amoy \
+  --constructor-args scripts/verify_args.js \
+  $CONTRACT_ADDRESS
+```
+
+Evidence:
+
+```text
+Artifact file:            [ ] docs/operations/deployments/amoy-<date>.md
+verify_args.js updated:   [ ] treasury, min transfer, precision filled
+Block number:             [                    ]
+Verification command:     [ ] ran without error
+Explorer verify link:     [                    ]
+Source visible on explorer:[ ] yes
+ABI visible on explorer:  [ ] yes
+Artifact committed:       [ ] yes (no secrets in file)
+verify_args.js committed: [ ] yes (no secrets in file)
+```
+
+Verification fails → record error in artifact. Do not proceed to Step 2
+until source is confirmed visible on the explorer or error is documented
+with a resolution plan.
+
+---
+
 ## Step 2 — Insert Contract Address Only
 
 Edit `app-web/frontend/public/config/chains.js`, chain 80002:
@@ -294,6 +338,8 @@ Stage 5 (Production Readiness Gate).
 Do not proceed past any step if:
 
 - Deploy tx reverted or contract address is missing.
+- Source verification failed and no resolution is documented.
+- Explorer does not show matching source and ABI before Step 2.
 - UI still shows "Contract not deployed" after Step 2 commit.
 - Button submits a transaction while `transfersEnabled` is false.
 - Recipient delta does not match expected amount.
@@ -302,3 +348,4 @@ Do not proceed past any step if:
 - Pause test does not block the transfer.
 - Any negative-path test shows silent success.
 - Working tree is not clean after either chains.js commit.
+- Deploy artifact file was not committed before chains.js was updated.
