@@ -734,12 +734,14 @@
 
   // ----------------------------------------------------------------
   // Public API on window.IX
+  // Extend rather than replace — receipt-store.js and companion.js
+  // register their own namespaces on window.IX before and after this runs.
   // ----------------------------------------------------------------
-  window.IX = {
+  window.IX = Object.assign(window.IX || {}, {
     connect,
     submitTransfer,
     scrollToModules,
     getState: () => ({ ...state }),
-  };
+  });
 
 })();
