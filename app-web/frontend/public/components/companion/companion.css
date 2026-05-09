@@ -1,0 +1,168 @@
+/*
+  companion.css — Transaction Companion Tray
+  Inherits design tokens from main.css (--mono, --surface, --border, etc.)
+  Do not introduce new color values. Monochrome only.
+*/
+
+/* ---- Tray container ---- */
+.companion {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100; /* above page content, below wallet modals */
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+}
+
+/* ---- Collapsed bar ---- */
+.companion-bar {
+  height: 40px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 2rem;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.12s;
+}
+
+.companion-bar:hover {
+  background: var(--surface-2);
+}
+
+.companion-bar:focus-visible {
+  outline: 1px solid var(--border-2);
+  outline-offset: -1px;
+}
+
+/* Pulse dot — same treatment as .wallet-dot */
+.companion-indicator {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--muted);
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+
+.companion.is-open .companion-indicator,
+.companion.is-active .companion-indicator {
+  background: var(--white);
+  animation: blink 2.5s ease-in-out infinite;
+}
+
+/* Status line — var(--muted) keeps it ambient; present but not read unless sought */
+.companion-status {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.10em;
+  color: var(--muted);
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Chevron toggle — points UP when collapsed (tap to expand upward) */
+.companion-toggle {
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-bottom: 5px solid var(--muted);
+  flex-shrink: 0;
+  transition: transform 0.18s ease-out, border-bottom-color 0.12s;
+}
+
+.companion-bar:hover .companion-toggle,
+.companion-bar:focus-visible .companion-toggle {
+  border-bottom-color: var(--dim);
+}
+
+/* Rotate to point DOWN when open (tap to collapse) */
+.companion.is-open .companion-toggle {
+  transform: rotate(180deg);
+  border-bottom-color: var(--white);
+}
+
+/* ---- Detail panel — expands upward ---- */
+.companion-detail {
+  max-height: 0;
+  overflow: hidden;
+  /* ease-out: mechanical extension — quick start, decelerates to rest.
+     Not ease (soft/app-like). Not linear (abrupt). Not slow (theatrical). */
+  transition: max-height 0.18s ease-out;
+  border-top: 0px solid var(--border);
+}
+
+.companion.is-open .companion-detail {
+  max-height: 300px;
+  border-top-width: 1px;
+}
+
+/* ---- Detail body ---- */
+.companion-body {
+  padding: 1rem 2rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Data rows — same pattern as .data-row in main.css */
+.companion-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.companion-row:last-child {
+  border-bottom: none;
+}
+
+.companion-k {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.companion-v {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--white);
+  text-align: right;
+  padding-left: 1rem;
+}
+
+/* Next-step action value — slightly dimmer, not a call to action */
+.companion-action {
+  color: var(--dim);
+  font-size: 10px;
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 768px) {
+  .companion-bar {
+    padding: 0 1rem;
+  }
+
+  .companion-body {
+    padding: 0.75rem 1rem 1rem;
+  }
+}
+
+/* ---- Reduced motion ---- */
+@media (prefers-reduced-motion: reduce) {
+  .companion-detail {
+    transition: none;
+  }
+
+  .companion-toggle {
+    transition: none;
+  }
+}

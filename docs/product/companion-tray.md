@@ -37,6 +37,18 @@ Its identity is defined as much by what it does not do as by what it does.
 - Expand upward on user interaction or on high-priority state change
 - Return to collapsed state when the transaction resolves
 
+## Idle-State Philosophy
+
+In idle state, the companion is **present but not read unless sought.**
+
+This is a deliberate position between invisible (unhelpful) and readable-at-a-glance
+(too loud). The collapsed bar anchors the interface without asserting itself.
+It communicates continuity — the instrument is operational — without demanding
+attention or signaling that something needs to be done.
+
+Implementation: idle status text at `var(--muted)`, not `var(--dim)`.
+The distinction matters: `--dim` asks to be read; `--muted` is peripheral context.
+
 ---
 
 ## Layout Behavior

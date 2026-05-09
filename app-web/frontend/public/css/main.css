@@ -211,9 +211,12 @@ body {
   border-color: var(--border-2);
 }
 
+/* --companion-h: height of collapsed companion tray */
+:root { --companion-h: 40px; }
+
 .landing-main {
   min-height: calc(100vh - var(--nav-h));
-  padding-bottom: clamp(4rem, 12vh, 9rem);
+  padding-bottom: calc(clamp(4rem, 12vh, 9rem) + var(--companion-h));
 }
 
 /* ---- Hero ---- */
@@ -341,7 +344,20 @@ body {
   gap: 8px;
   font-size: 17px;
   line-height: 1;
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
+}
+
+.gas-tier-value {
+  display: inline-block;
+  width: 4ch;
+  text-align: center;
+}
+
+.gas-tier-sep {
+  display: inline-block;
+  width: 1ch;
+  text-align: center;
 }
 
 .gas-live {
