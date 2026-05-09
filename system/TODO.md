@@ -1,6 +1,17 @@
 # ImplicitEx TODO
 
-Last updated: 2026-05-07
+Last updated: 2026-05-09
+
+## Session Checkpoint — 2026-05-09
+
+**Blocked:** Amoy deployment needs additional test POL. Deployer wallet has 0.1 POL, deploy requires ~0.151 POL. Alchemy faucet rate-limited (12h). Try Chainlink faucet at `https://faucets.chain.link/polygon-amoy` next.
+
+**Frontend pre-live UX is committed and ready for contract address insertion after deploy.** Commits locked:
+- `f148d05` Improve pre-live wallet transfer states
+- `1b59701` Fix companion contrast and remove tagline copy
+- `f4d8a81` Document Firebase hosting setup
+
+**After deploy:** set `contractAddress` in `chains.js` chain 80002, then separately set `transfersEnabled: true` after testnet signoff checklist passes.
 
 ## Current Objective
 
