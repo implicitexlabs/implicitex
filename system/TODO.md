@@ -11,7 +11,9 @@ Last updated: 2026-05-09
 - `1b59701` Fix companion contrast and remove tagline copy
 - `f4d8a81` Document Firebase hosting setup
 
-**After deploy:** set `contractAddress` in `chains.js` chain 80002, then separately set `transfersEnabled: true` after testnet signoff checklist passes.
+**After deploy — two separate steps, do not combine:**
+1. Set `contractAddress` in `frontend/public/config/chains.js` chain 80002 only. Commit. Verify UI shows contract address in Network module and button changes from "Contract not deployed" to "Preview Transfer".
+2. Only after testnet signoff checklist passes: set `transfersEnabled: true` for chain 80002. Commit separately. This is the live-transfer gate — do not set it speculatively.
 
 ## Current Objective
 
