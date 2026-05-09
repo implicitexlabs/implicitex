@@ -211,12 +211,9 @@ body {
   border-color: var(--border-2);
 }
 
-/* --companion-h: height of collapsed companion tray */
-:root { --companion-h: 40px; }
-
 .landing-main {
   min-height: calc(100vh - var(--nav-h));
-  padding-bottom: calc(clamp(4rem, 12vh, 9rem) + var(--companion-h));
+  padding-bottom: clamp(4rem, 12vh, 9rem);
 }
 
 /* ---- Hero ---- */
@@ -710,7 +707,7 @@ body {
 /* ---- Footer ---- */
 footer {
   border-top: 1px solid var(--border);
-  padding: 1.5rem 2rem calc(var(--companion-h) + 1.5rem);
+  padding: 1.5rem 2rem;
   display: flex;
   align-items: center;
   justify-content: space-between;

@@ -6,13 +6,9 @@
 
 /* ---- Tray container ---- */
 .companion {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 100; /* above page content, below wallet modals */
   background: var(--surface);
   border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
 }
 
 /* ---- Collapsed bar ---- */
@@ -65,29 +61,29 @@
   text-overflow: ellipsis;
 }
 
-/* Chevron toggle — points UP when collapsed (tap to expand upward) */
+/* Chevron toggle — points DOWN when collapsed (tap to expand below) */
 .companion-toggle {
   width: 0;
   height: 0;
   border-left: 4px solid transparent;
   border-right: 4px solid transparent;
-  border-bottom: 5px solid var(--dim);
+  border-top: 5px solid var(--dim);
   flex-shrink: 0;
-  transition: transform 0.18s ease-out, border-bottom-color 0.12s;
+  transition: transform 0.18s ease-out, border-top-color 0.12s;
 }
 
 .companion-bar:hover .companion-toggle,
 .companion-bar:focus-visible .companion-toggle {
-  border-bottom-color: var(--dim);
+  border-top-color: var(--dim);
 }
 
-/* Rotate to point DOWN when open (tap to collapse) */
+/* Rotate to point UP when open (tap to collapse) */
 .companion.is-open .companion-toggle {
   transform: rotate(180deg);
-  border-bottom-color: var(--white);
+  border-top-color: var(--white);
 }
 
-/* ---- Detail panel — expands upward ---- */
+/* ---- Detail panel — expands downward below bar ---- */
 .companion-detail {
   max-height: 0;
   overflow: hidden;

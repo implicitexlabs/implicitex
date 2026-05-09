@@ -271,6 +271,41 @@
 
   </main>
 
+  <!-- Transaction Companion Tray — application status layer, above footer -->
+  <div id="companion" class="companion" role="complementary" aria-label="Transaction status">
+    <div class="companion-bar" id="companionBar" role="button" tabindex="0"
+         aria-expanded="false" aria-controls="companionDetail"
+         aria-label="Transaction status — click to expand">
+      <span class="companion-indicator" aria-hidden="true"></span>
+      <span class="companion-status" id="companionStatus">Ready · No active transaction</span>
+      <span class="companion-toggle" aria-hidden="true"></span>
+    </div>
+    <div class="companion-detail" id="companionDetail" aria-hidden="true">
+      <div class="companion-body">
+        <div class="companion-row">
+          <span class="companion-k">Status</span>
+          <span class="companion-v" id="companionStateVal">Ready</span>
+        </div>
+        <div class="companion-row">
+          <span class="companion-k">Funds Moved</span>
+          <span class="companion-v" id="companionFundsVal">No active transaction</span>
+        </div>
+        <div class="companion-row">
+          <span class="companion-k">Network</span>
+          <span class="companion-v" id="companionNetworkVal">—</span>
+        </div>
+        <div class="companion-row">
+          <span class="companion-k">Last Event</span>
+          <span class="companion-v" id="companionEventVal">—</span>
+        </div>
+        <div class="companion-row">
+          <span class="companion-k">Next Step</span>
+          <span class="companion-v companion-action" id="companionActionVal">Connect wallet to begin.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- FOOTER -->
   <footer>
     <nav class="f-links" aria-label="Footer links">
@@ -296,41 +331,6 @@
   <script src="js/wallet.js"></script>
   <script src="js/feeds.js"></script>
   <script src="js/app.js"></script>
-
-  <!-- Transaction Companion Tray -->
-  <div id="companion" class="companion" role="complementary" aria-label="Transaction status">
-    <div class="companion-detail" id="companionDetail" aria-hidden="true">
-      <div class="companion-body">
-        <div class="companion-row">
-          <span class="companion-k">Status</span>
-          <span class="companion-v" id="companionStateVal">Ready</span>
-        </div>
-        <div class="companion-row">
-          <span class="companion-k">Funds Moved</span>
-          <span class="companion-v" id="companionFundsVal">No active transaction</span>
-        </div>
-        <div class="companion-row">
-          <span class="companion-k">Network</span>
-          <span class="companion-v" id="companionNetworkVal">—</span>
-        </div>
-        <div class="companion-row">
-          <span class="companion-k">Last Event</span>
-          <span class="companion-v" id="companionEventVal">—</span>
-        </div>
-        <div class="companion-row">
-          <span class="companion-k">Next Step</span>
-          <span class="companion-v companion-action" id="companionActionVal">Connect wallet to begin.</span>
-        </div>
-      </div>
-    </div>
-    <div class="companion-bar" id="companionBar" role="button" tabindex="0"
-         aria-expanded="false" aria-controls="companionDetail"
-         aria-label="Transaction status — click to expand">
-      <span class="companion-indicator" aria-hidden="true"></span>
-      <span class="companion-status" id="companionStatus">Ready · No active transaction</span>
-      <span class="companion-toggle" aria-hidden="true"></span>
-    </div>
-  </div>
   <script src="components/companion/companion.js"></script>
   <script src="js/rehydrate.js"></script>
 </body>
