@@ -51,6 +51,36 @@
   }
 
   // ----------------------------------------------------------------
+  // Receipt store helpers — same guard pattern as companionState.
+  //
+  // storeReceipt(detail)         — create active receipt, return {id}
+  // updateReceipt(id, patch)     — patch active receipt by id
+  // resolveReceipt(id, patch)    — patch then move to archive (terminal state)
+  //
+  // wallet.js emits events only. receipt-store.js owns persistence.
+  // ----------------------------------------------------------------
+  function storeReceipt(detail) {
+    if (window.IX && window.IX.receipts) {
+      return window.IX.receipts.create(detail);
+    }
+    return { id: '_noop' }; // storage unavailable — id is a harmless sentinel
+  }
+
+  function updateReceipt(id, patch) {
+    if (window.IX && window.IX.receipts) {
+      window.IX.receipts.update(id, patch);
+    }
+  }
+
+  function resolveReceipt(id, patch) {
+    // update fields first, then archive — always a terminal-state operation
+    updateReceipt(id, patch);
+    if (window.IX && window.IX.receipts) {
+      window.IX.receipts.clearActive();
+    }
+  }
+
+  // ----------------------------------------------------------------
   // DOM refs
   // ----------------------------------------------------------------
   const els = {
@@ -523,8 +553,28 @@
       eventVal:   'Transfer signature requested',
       actionVal:  'Confirm the transfer in your wallet.',
     });
+
+    // Create receipt — tracks this transfer from signature request through resolution.
+    // The receipt represents the transfer transaction only, not the approve step.
+    const { id: receiptId } = storeReceipt({
+      state:       'AWAITING_APPROVAL',
+      hash:        null,
+      amount:      amountStr,
+      fee:         ethers.formatUnits(fee, 6),
+      recipient,
+      sender:      state.address,
+      network:     chainConfig.name,
+      chainId,
+      explorerUrl: null,
+      fundsMoved:  null,
+    });
+
     try {
       const tx = await implicitex.transferWithFee(recipient, rawAmount);
+
+      // Hash is available immediately after broadcast, before confirmation.
+      updateReceipt(receiptId, { state: 'SUBMITTED', hash: tx.hash });
+
       setTxState('pending', 'Transfer submitted — waiting for on-chain confirmation…');
       companionState('SUBMITTED', {
         statusLine: 'Transaction submitted. Awaiting network confirmation…',
@@ -546,6 +596,7 @@
           `View on ${chainConfig.name} explorer</a>`;
       }
       setTxState('idle', null); // status already set above via innerHTML
+      resolveReceipt(receiptId, { state: 'CONFIRMED', fundsMoved: true, explorerUrl: receiptUrl });
       companionState('CONFIRMED', {
         statusLine: 'Transfer confirmed. Funds have moved.',
         stateVal:   'Confirmed',
@@ -562,6 +613,7 @@
       const rejected = err.code === 4001 ||
         (err.info && err.info.error && err.info.error.code === 4001);
       if (rejected) {
+        resolveReceipt(receiptId, { state: 'REJECTED', fundsMoved: false });
         setTxState('idle', 'Transfer rejected in wallet.');
         companionState('REJECTED', {
           statusLine: 'Transfer rejected. Nothing was sent.',
@@ -573,6 +625,7 @@
           autoOpen:   true,
         });
       } else {
+        resolveReceipt(receiptId, { state: 'FAILED', fundsMoved: false });
         setTxState('idle', 'Transfer failed: ' + (err.reason || err.shortMessage || err.message || 'Unknown error'));
         companionState('FAILED', {
           statusLine: 'Transaction failed. Funds were not moved.',
