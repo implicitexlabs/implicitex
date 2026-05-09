@@ -93,11 +93,25 @@
     txBtn:       document.getElementById('txBtn'),
     feeDisplay:  document.getElementById('feeDisplay'),
     amtIn:       document.getElementById('txAmount'),
-    gweiDisplay: document.getElementById('gweiDisplay'),
-    blockDisplay:document.getElementById('blockDisplay'),
-    gasHeroVal:  document.getElementById('gasHeroVal'),
-    networkBadge:document.getElementById('networkBadge'),
-    navStatus:   document.querySelector('.nav-status'),
+    gweiDisplay:        document.getElementById('gweiDisplay'),
+    blockDisplay:       document.getElementById('blockDisplay'),
+    gasHeroVal:         document.getElementById('gasHeroVal'),
+    networkBadge:       document.getElementById('networkBadge'),
+    navStatus:          document.querySelector('.nav-status'),
+    networkNameDisplay: document.getElementById('networkNameDisplay'),
+    contractStatus:     document.getElementById('contractStatus'),
+    networkStatus:      document.getElementById('networkStatus'),
+    usdcBalance:        document.getElementById('usdcBalance'),
+    transferStateNote:  document.getElementById('transferStateNote'),
+    txRecipient:        document.getElementById('txRecipient'),
+    txPreview:          document.getElementById('txPreview'),
+    previewRecipient:   document.getElementById('previewRecipient'),
+    previewAmount:      document.getElementById('previewAmount'),
+    previewFee:         document.getElementById('previewFee'),
+    previewTotal:       document.getElementById('previewTotal'),
+    previewNetwork:     document.getElementById('previewNetwork'),
+    previewContract:    document.getElementById('previewContract'),
+    previewMode:        document.getElementById('previewMode'),
   };
 
   // ----------------------------------------------------------------
@@ -109,6 +123,68 @@
 
   function setStatus(msg) {
     if (els.txStatus) els.txStatus.textContent = msg;
+  }
+
+  // Persistent contextual note below the button — explains the current transfer gate.
+  // Empty string clears it (element is invisible when empty).
+  function setTransferNote(msg) {
+    if (els.transferStateNote) els.transferStateNote.textContent = msg;
+  }
+
+  function resetBalanceDisplay() {
+    if (els.usdcBalance) els.usdcBalance.textContent = '—';
+  }
+
+  function showPreview() {
+    if (els.txPreview) els.txPreview.removeAttribute('hidden');
+  }
+
+  function hidePreview() {
+    if (els.txPreview) els.txPreview.setAttribute('hidden', '');
+  }
+
+  /**
+   * Render or hide the transfer preview panel.
+   * Pure frontend math — no chain calls, no signing, no async.
+   *
+   * Shows when: recipient is a valid 0x address, amount > 0,
+   * wallet connected, and chain is configured.
+   * Hides otherwise.
+   */
+  function updatePreview() {
+    const recipient  = (els.txRecipient && els.txRecipient.value.trim()) || '';
+    const amountStr  = (els.amtIn && els.amtIn.value.trim()) || '';
+    const amountFloat = parseFloat(amountStr);
+
+    const validRecipient = /^0x[0-9a-fA-F]{40}$/.test(recipient);
+    const validAmount    = !isNaN(amountFloat) && amountFloat > 0;
+    const validNetwork   = state.connected && isConfiguredChain(state.chainId);
+
+    if (!validRecipient || !validAmount || !validNetwork) {
+      hidePreview();
+      return;
+    }
+
+    const chainConfig = window.IX_CHAINS[state.chainId];
+    const fee         = calcFee(amountFloat);
+    const total       = amountFloat + fee;
+    const netState    = getNetworkState();
+
+    const modeLabel = netState === 'CONTRACT_UNAVAILABLE' ? 'Preview · Contract not deployed'
+                    : netState === 'TRANSFERS_DISABLED'   ? 'Preview · Transfers disabled'
+                    : 'Live';
+
+    if (els.previewRecipient) els.previewRecipient.textContent = recipient.slice(0, 10) + '…' + recipient.slice(-6);
+    if (els.previewAmount)    els.previewAmount.textContent    = amountFloat.toFixed(2) + ' USDC';
+    if (els.previewFee)       els.previewFee.textContent       = fee.toFixed(6) + ' USDC';
+    if (els.previewTotal)     els.previewTotal.textContent     = total.toFixed(2) + ' USDC';
+    if (els.previewNetwork)   els.previewNetwork.textContent   = chainConfig.name;
+    if (els.previewContract)  els.previewContract.textContent  = chainConfig.contractAddress
+      ? chainConfig.contractAddress.slice(0, 10) + '…'
+      : 'Not deployed';
+    if (els.previewMode)      els.previewMode.textContent      = modeLabel;
+
+    showPreview();
   }
 
   function setNavStatus(msg) {
@@ -150,6 +226,58 @@
     return !!(chainId && window.IX_CHAINS && window.IX_CHAINS[chainId]);
   }
 
+  /**
+   * Classify current connection into one of five named states.
+   * Used to route presentation functions and set button labels.
+   *
+   *   DISCONNECTED        — no wallet connected
+   *   WRONG_NETWORK       — connected but chain not in IX_CHAINS
+   *   CONTRACT_UNAVAILABLE — configured chain, but contractAddress is null
+   *   TRANSFERS_DISABLED  — contract exists, transfersEnabled is false
+   *   READY               — fully live
+   */
+  function getNetworkState() {
+    if (!state.connected) return 'DISCONNECTED';
+    if (!isConfiguredChain(state.chainId)) return 'WRONG_NETWORK';
+    const chainConfig = window.IX_CHAINS[state.chainId];
+    if (!chainConfig.contractAddress) return 'CONTRACT_UNAVAILABLE';
+    if (!chainConfig.transfersEnabled) return 'TRANSFERS_DISABLED';
+    return 'READY';
+  }
+
+  /**
+   * Update the Network module data rows from live chain config.
+   * Called on every connect/chain-change to keep the module in sync.
+   */
+  function updateNetworkModuleRows(chainConfig) {
+    if (els.networkNameDisplay) {
+      els.networkNameDisplay.textContent = chainConfig ? chainConfig.name : '—';
+    }
+    if (els.contractStatus) {
+      els.contractStatus.textContent = (chainConfig && chainConfig.contractAddress)
+        ? chainConfig.contractAddress.slice(0, 10) + '…'
+        : 'Not deployed';
+    }
+    if (els.networkStatus) {
+      const live = chainConfig && chainConfig.transfersEnabled;
+      els.networkStatus.textContent = live ? 'Live' : 'Preview only';
+      els.networkStatus.className = 'data-v ' + (live ? 'status-ok' : 'status-warn');
+    }
+  }
+
+  /**
+   * Return the correct idle label for the transfer button based on current state.
+   * Keeps setTxState() and presentation functions consistent.
+   */
+  function currentButtonLabel() {
+    const netState = getNetworkState();
+    if (netState === 'CONTRACT_UNAVAILABLE') return 'Contract not deployed';
+    const chainConfig = window.IX_CHAINS && window.IX_CHAINS[state.chainId];
+    const live = (window.IX_CONFIG && window.IX_CONFIG.transfersEnabled) &&
+                 (chainConfig && chainConfig.transfersEnabled);
+    return live ? 'Send USDC' : 'Preview Transfer';
+  }
+
   function showTransferModules(shouldScroll) {
     if (!els.modules) return;
 
@@ -168,6 +296,8 @@
   function applyConnectedPresentation(options = {}) {
     const shouldScroll = options.shouldScroll === true;
     const short = shortAddr(state.address);
+    const chainConfig = window.IX_CHAINS && window.IX_CHAINS[state.chainId];
+    const transfersEnabled = chainConfig && chainConfig.transfersEnabled;
 
     if (els.walletAddr) els.walletAddr.textContent = short;
     if (els.walletPill) els.walletPill.classList.add('visible');
@@ -180,15 +310,59 @@
     if (els.networkBadge) {
       els.networkBadge.textContent = chainLabel(state.chainId);
     }
+    if (els.txBtn) {
+      els.txBtn.disabled = false;
+      els.txBtn.textContent = currentButtonLabel();
+    }
+    setTransferNote(transfersEnabled ? '' : 'Preview mode — live transfers not yet enabled.');
+    updateNetworkModuleRows(chainConfig);
     showTransferModules(shouldScroll);
 
     companionState('WALLET_CONNECTED', {
-      statusLine: `Connected · ${chainLabel(state.chainId)}`,
+      statusLine: transfersEnabled
+        ? `Connected · ${chainLabel(state.chainId)}`
+        : `Connected · ${chainLabel(state.chainId)} · Preview mode`,
       stateVal:   'Wallet connected',
       fundsVal:   'No active transaction',
       networkVal: chainLabel(state.chainId),
       eventVal:   `Address: ${shortAddr(state.address)}`,
-      actionVal:  'Enter a recipient address and amount to begin.',
+      actionVal:  transfersEnabled
+        ? 'Enter a recipient address and amount to begin.'
+        : 'Preview mode — enter details to see fee calculation. Live transfers not yet enabled.',
+    });
+  }
+
+  function applyContractUnavailablePresentation(options = {}) {
+    const shouldScroll = options.shouldScroll === true;
+    const short = shortAddr(state.address);
+    const chainConfig = window.IX_CHAINS && window.IX_CHAINS[state.chainId];
+
+    if (els.walletAddr) els.walletAddr.textContent = short;
+    if (els.walletPill) els.walletPill.classList.add('visible');
+    if (els.connectBtn) {
+      els.connectBtn.disabled = false;
+      els.connectBtn.textContent = short;
+      els.connectBtn.classList.add('connected');
+    }
+    setNavStatus('Wallet connected');
+    if (els.networkBadge) {
+      els.networkBadge.textContent = chainLabel(state.chainId);
+    }
+    if (els.txBtn) {
+      els.txBtn.disabled = true;
+      els.txBtn.textContent = 'Contract not deployed';
+    }
+    setTransferNote('Contract not deployed on this network. Transfers unavailable.');
+    updateNetworkModuleRows(chainConfig);
+    showTransferModules(shouldScroll);
+
+    companionState('WALLET_CONNECTED', {
+      statusLine: `Connected · ${chainLabel(state.chainId)} · Contract not deployed`,
+      stateVal:   'Wallet connected',
+      fundsVal:   'No active transaction',
+      networkVal: chainLabel(state.chainId),
+      eventVal:   `Address: ${shortAddr(state.address)}`,
+      actionVal:  'Contract not yet deployed on this network. Transfers unavailable.',
     });
   }
 
@@ -207,6 +381,8 @@
       els.networkBadge.textContent = chainLabel(state.chainId);
     }
     hideTransferModules();
+    setTransferNote('');
+    hidePreview();
     setStatus('Switch to Polygon or Polygon Amoy to continue.');
 
     companionState('WRONG_NETWORK', {
@@ -260,16 +436,19 @@
   }
 
   function onConnected() {
-    if (isConfiguredChain(state.chainId)) {
-      applyConnectedPresentation({ shouldScroll: true });
-    } else {
+    const netState = getNetworkState();
+    if (netState === 'WRONG_NETWORK') {
       applyWrongNetworkPresentation();
+    } else if (netState === 'CONTRACT_UNAVAILABLE') {
+      applyContractUnavailablePresentation({ shouldScroll: true });
+    } else {
+      applyConnectedPresentation({ shouldScroll: true });
     }
 
     // Start gas polling
     pollNetworkData();
 
-    // Populate USDC balance if contract is already configured for this chain.
+    // Populate USDC balance when usdcAddress is configured (even before contract deploy).
     refreshUsdcBalance();
   }
 
@@ -290,7 +469,12 @@
       } else {
         els.feeDisplay.textContent = '—';
       }
+      updatePreview();
     });
+  }
+
+  if (els.txRecipient) {
+    els.txRecipient.addEventListener('input', updatePreview);
   }
 
   // ----------------------------------------------------------------
@@ -317,10 +501,10 @@
    */
   function setTxState(txState, message) {
     if (els.txBtn) {
-      els.txBtn.disabled = txState === 'pending';
-      els.txBtn.textContent = txState === 'pending'
-        ? 'Processing…'
-        : (window.IX_CONFIG && window.IX_CONFIG.transfersEnabled ? 'Send USDC' : 'Preview Transfer');
+      const isPending = txState === 'pending';
+      const isUnavailable = getNetworkState() === 'CONTRACT_UNAVAILABLE';
+      els.txBtn.disabled = isPending || isUnavailable;
+      els.txBtn.textContent = isPending ? 'Processing…' : currentButtonLabel();
     }
     if (message !== null && message !== undefined) {
       setStatus(message);
@@ -340,9 +524,8 @@
       const provider = new ethers.BrowserProvider(window.ethereum);
       const usdc = new ethers.Contract(chainConfig.usdcAddress, ERC20_ABI, provider);
       const bal = await usdc.balanceOf(state.address);
-      const balDisplay = document.getElementById('usdcBalance');
-      if (balDisplay) {
-        balDisplay.textContent = parseFloat(ethers.formatUnits(bal, 6)).toFixed(2) + ' USDC';
+      if (els.usdcBalance) {
+        els.usdcBalance.textContent = parseFloat(ethers.formatUnits(bal, 6)).toFixed(2) + ' USDC';
       }
     } catch (_) {
       // Non-critical — balance display stays at previous value.
@@ -759,6 +942,9 @@
           resetConnectButton();
         }
         setNavStatus('Testnet prep');
+        resetBalanceDisplay();
+        setTransferNote('');
+        hidePreview();
         if (els.modules) els.modules.setAttribute('hidden', '');
         if (window.IX && window.IX.companion) window.IX.companion.reset();
         return;
@@ -774,11 +960,18 @@
         if (els.networkBadge) els.networkBadge.textContent = chainLabel(state.chainId);
         return;
       }
-      if (isConfiguredChain(state.chainId)) {
+      const netState = getNetworkState();
+      if (netState === 'WRONG_NETWORK') {
+        applyWrongNetworkPresentation();
+        resetBalanceDisplay();
+      } else if (netState === 'CONTRACT_UNAVAILABLE') {
+        applyContractUnavailablePresentation();
+        refreshUsdcBalance();
+        updatePreview();
+      } else {
         applyConnectedPresentation();
         refreshUsdcBalance();
-      } else {
-        applyWrongNetworkPresentation();
+        updatePreview();
       }
     });
   }

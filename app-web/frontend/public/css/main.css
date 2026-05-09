@@ -586,6 +586,14 @@ body {
 .tx-btn:hover { background: var(--button-hover); }
 .tx-btn:disabled { background: var(--surface-3); color: var(--muted); cursor: not-allowed; }
 
+.tx-state-note {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--dim);
+  margin-top: 6px;
+  text-align: center;
+}
+
 .tx-status {
   font-family: var(--mono);
   font-size: 10px;
@@ -593,6 +601,54 @@ body {
   min-height: 1.4em;
   margin-top: 8px;
   text-align: center;
+}
+
+.tx-preview {
+  border-top: 1px solid var(--border);
+  margin-top: 14px;
+  padding-top: 12px;
+}
+
+.tx-preview-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.tx-preview .data-row:last-of-type { border-bottom: none; }
+
+.tx-preview-note {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  color: var(--dim);
+  text-align: center;
+  margin-top: 10px;
+}
+
+.fee-explanation {
+  border-top: 1px solid var(--border);
+  margin-top: 14px;
+  padding-top: 12px;
+}
+
+.fee-explanation-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.fee-explanation-body {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--dim);
+  line-height: 1.65;
 }
 
 /* Network data table */
@@ -654,7 +710,7 @@ body {
 /* ---- Footer ---- */
 footer {
   border-top: 1px solid var(--border);
-  padding: 1.5rem 2rem;
+  padding: 1.5rem 2rem calc(var(--companion-h) + 1.5rem);
   display: flex;
   align-items: center;
   justify-content: space-between;

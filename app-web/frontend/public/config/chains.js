@@ -34,7 +34,7 @@ window.IX_CHAINS = {
     name:              'Polygon Amoy (Testnet)',
     rpcUrl:            'https://rpc-amoy.polygon.technology', // public, no key required
     explorerUrl:       'https://amoy.polygonscan.com',
-    usdcAddress:       null,   // Set after testnet deploy
+    usdcAddress:       '0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582', // Circle official testnet USDC
     contractAddress:   null,   // Set after testnet deploy
     feeBasisPoints:    100,
     minTransferUsdc:   1,

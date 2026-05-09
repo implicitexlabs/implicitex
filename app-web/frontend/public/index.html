@@ -168,7 +168,51 @@
         <button class="tx-btn" id="txBtn" onclick="IX.submitTransfer()">
           Preview Transfer
         </button>
+        <p class="tx-state-note" id="transferStateNote"></p>
         <p class="tx-status" id="txStatus" aria-live="assertive"></p>
+      </div>
+
+      <div id="txPreview" class="tx-preview" hidden aria-live="polite" aria-label="Transfer preview">
+        <p class="tx-preview-label">Transfer Preview</p>
+        <div class="data-row">
+          <span class="data-k">Recipient</span>
+          <span class="data-v" id="previewRecipient">—</span>
+        </div>
+        <div class="data-row">
+          <span class="data-k">Amount</span>
+          <span class="data-v" id="previewAmount">—</span>
+        </div>
+        <div class="data-row">
+          <span class="data-k">Fee (1%)</span>
+          <span class="data-v" id="previewFee">—</span>
+        </div>
+        <div class="data-row">
+          <span class="data-k">Total debit</span>
+          <span class="data-v" id="previewTotal">—</span>
+        </div>
+        <div class="data-row">
+          <span class="data-k">Network</span>
+          <span class="data-v" id="previewNetwork">—</span>
+        </div>
+        <div class="data-row">
+          <span class="data-k">Contract</span>
+          <span class="data-v" id="previewContract">—</span>
+        </div>
+        <div class="data-row">
+          <span class="data-k">Mode</span>
+          <span class="data-v" id="previewMode">—</span>
+        </div>
+        <p class="tx-preview-note">Preview only — no funds will move.</p>
+      </div>
+
+      <div class="fee-explanation">
+        <p class="fee-explanation-label">Fee &amp; Routing</p>
+        <p class="fee-explanation-body">
+          ImplicitEx applies a 1% platform fee to completed transfers. The fee is routed by
+          the smart contract to the configured treasury address at execution time — not held
+          or reviewed manually by ImplicitEx. In preview mode, no transaction is submitted
+          and no funds move.
+        </p>
       </div>
     </div>
 
@@ -179,7 +223,7 @@
       <div class="data-table">
         <div class="data-row">
           <span class="data-k">Network</span>
-          <span class="data-v">Polygon Amoy planned</span>
+          <span class="data-v" id="networkNameDisplay">Polygon Amoy planned</span>
         </div>
         <div class="data-row">
           <span class="data-k">Gas price</span>
