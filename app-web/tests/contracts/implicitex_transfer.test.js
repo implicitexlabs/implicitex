@@ -485,6 +485,85 @@ describe("ImplicitExTransfer", function () {
     expect(await usdc.balanceOf(await transferContract.getAddress())).to.equal(0n);
   });
 
+  // ---- M2 fix: initialMinTransfer must be > 0 ----
+
+  it("constructor rejects zero minTransfer", async function () {
+    const [, treasury] = await ethers.getSigners();
+    const MockERC20 = await ethers.getContractFactory("MockERC20");
+    const usdc = await MockERC20.deploy("Mock USDC", "mUSDC", 6);
+    await usdc.waitForDeployment();
+
+    const ImplicitExTransfer = await ethers.getContractFactory("ImplicitExTransfer");
+    await expect(
+      ImplicitExTransfer.deploy(await usdc.getAddress(), treasury.address, 100, 0, 1)
+    ).to.be.revertedWith("MIN_TRANSFER_ZERO");
+  });
+
+  // ---- M1 fix: treasury cannot be set to the contract address ----
+
+  it("setTreasury rejects contract's own address as treasury", async function () {
+    const { transferContract } = await deployFixture();
+    const contractAddr = await transferContract.getAddress();
+
+    await expect(
+      transferContract.setTreasury(contractAddr)
+    ).to.be.revertedWith("TREASURY_IS_CONTRACT");
+  });
+
+  // ---- L3 fix: MAX_FEE_BPS boundary ----
+
+  it("setFeeBasisPoints accepts MAX_FEE_BPS exactly (1000 bps = 10%)", async function () {
+    const { transferContract } = await deployFixture();
+
+    await expect(transferContract.setFeeBasisPoints(1000))
+      .to.emit(transferContract, "FeeUpdated")
+      .withArgs(100, 1000);
+
+    expect(await transferContract.feeBasisPoints()).to.equal(1000);
+  });
+
+  // ---- M3 fix: rescueERC20 ----
+
+  it("rescueERC20 owner can recover a non-USDC token stuck in the contract", async function () {
+    const { transferContract, other } = await deployFixture();
+    const contractAddr = await transferContract.getAddress();
+
+    const MockERC20 = await ethers.getContractFactory("MockERC20");
+    const stuckToken = await MockERC20.deploy("Stuck Token", "STUCK", 18);
+    await stuckToken.waitForDeployment();
+
+    const stuckAmount = ethers.parseUnits("50", 18);
+    await stuckToken.mint(contractAddr, stuckAmount);
+    expect(await stuckToken.balanceOf(contractAddr)).to.equal(stuckAmount);
+
+    await expect(
+      transferContract.rescueERC20(await stuckToken.getAddress(), other.address, stuckAmount)
+    )
+      .to.emit(transferContract, "TokensRescued")
+      .withArgs(await stuckToken.getAddress(), other.address, stuckAmount);
+
+    expect(await stuckToken.balanceOf(other.address)).to.equal(stuckAmount);
+    expect(await stuckToken.balanceOf(contractAddr)).to.equal(0n);
+  });
+
+  it("rescueERC20 cannot rescue the configured USDC transfer token", async function () {
+    const { transferContract, usdc, other } = await deployFixture();
+
+    await expect(
+      transferContract.rescueERC20(await usdc.getAddress(), other.address, 100n)
+    ).to.be.revertedWith("CANNOT_RESCUE_TRANSFER_TOKEN");
+  });
+
+  it("non-owner cannot call rescueERC20", async function () {
+    const { transferContract, sender, other } = await deployFixture();
+
+    await expect(
+      transferContract.connect(sender).rescueERC20(other.address, other.address, 100n)
+    )
+      .to.be.revertedWithCustomError(transferContract, "OwnableUnauthorizedAccount")
+      .withArgs(sender.address);
+  });
+
   it("pause blocks transferWithFee but owner config updates remain available", async function () {
     const { transferContract, usdc, sender, recipient, feeBps } = await deployFixture();
 

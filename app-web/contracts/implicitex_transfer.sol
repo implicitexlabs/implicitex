@@ -30,6 +30,7 @@ contract ImplicitExTransfer is Ownable2Step, Pausable, ReentrancyGuard {
     event FeeUpdated(uint16 previousFeeBps, uint16 newFeeBps);
     event MinTransferUpdated(uint256 previousMinTransfer, uint256 newMinTransfer);
     event PrecisionUpdated(uint256 previousPrecision, uint256 newPrecision);
+    event TokensRescued(address indexed token, address indexed to, uint256 amount);
 
     constructor(
         address usdcAddress,
@@ -40,7 +41,9 @@ contract ImplicitExTransfer is Ownable2Step, Pausable, ReentrancyGuard {
     ) Ownable(msg.sender) {
         require(usdcAddress != address(0), "USDC_ZERO_ADDRESS");
         require(treasuryAddress != address(0), "TREASURY_ZERO_ADDRESS");
+        require(treasuryAddress != address(this), "TREASURY_IS_CONTRACT");
         require(initialFeeBps <= MAX_FEE_BPS, "FEE_TOO_HIGH");
+        require(initialMinTransfer > 0, "MIN_TRANSFER_ZERO");
         require(initialPrecision > 0, "PRECISION_ZERO");
 
         usdc = IERC20(usdcAddress);
@@ -73,6 +76,7 @@ contract ImplicitExTransfer is Ownable2Step, Pausable, ReentrancyGuard {
 
     function setTreasury(address newTreasury) external onlyOwner {
         require(newTreasury != address(0), "TREASURY_ZERO_ADDRESS");
+        require(newTreasury != address(this), "TREASURY_IS_CONTRACT");
         address previous = treasury;
         treasury = newTreasury;
         emit TreasuryUpdated(previous, newTreasury);
@@ -104,5 +108,18 @@ contract ImplicitExTransfer is Ownable2Step, Pausable, ReentrancyGuard {
 
     function unpause() external onlyOwner {
         _unpause();
+    }
+
+    /**
+     * @notice Recover ERC20 tokens accidentally sent to this contract.
+     * @dev Cannot rescue the configured USDC transfer token — that exclusion
+     *      prevents this function from being used to drain the transfer asset.
+     *      Any other token can be recovered by the owner at any time.
+     */
+    function rescueERC20(address token, address to, uint256 amount) external onlyOwner {
+        require(token != address(usdc), "CANNOT_RESCUE_TRANSFER_TOKEN");
+        require(to != address(0), "RESCUE_TO_ZERO");
+        IERC20(token).safeTransfer(to, amount);
+        emit TokensRescued(token, to, amount);
     }
 }
