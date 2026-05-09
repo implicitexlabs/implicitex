@@ -18,7 +18,7 @@ window.IX_CHAINS = {
   // Populate only after production readiness and mainnet deploy signoff.
   137: {
     name:              'Polygon',
-    rpcUrl:            null,
+    rpcUrl:            'https://polygon-rpc.com',   // public, no key required
     explorerUrl:       'https://polygonscan.com',
     usdcAddress:       null,   // Set after deploy
     contractAddress:   null,   // Set after deploy
@@ -32,7 +32,7 @@ window.IX_CHAINS = {
   // Populate after testnet deploy using runbook
   80002: {
     name:              'Polygon Amoy (Testnet)',
-    rpcUrl:            null,
+    rpcUrl:            'https://rpc-amoy.polygon.technology', // public, no key required
     explorerUrl:       'https://amoy.polygonscan.com',
     usdcAddress:       null,   // Set after testnet deploy
     contractAddress:   null,   // Set after testnet deploy
