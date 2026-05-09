@@ -40,6 +40,17 @@
   ];
 
   // ----------------------------------------------------------------
+  // Companion helper — guards against load-order timing.
+  // companion.js registers window.IX.companion after wallet.js runs,
+  // but all calls happen on user interaction, so it is always available by then.
+  // ----------------------------------------------------------------
+  function companionState(stateKey, detail) {
+    if (window.IX && window.IX.companion) {
+      window.IX.companion.setState(stateKey, detail);
+    }
+  }
+
+  // ----------------------------------------------------------------
   // DOM refs
   // ----------------------------------------------------------------
   const els = {
@@ -140,6 +151,15 @@
       els.networkBadge.textContent = chainLabel(state.chainId);
     }
     showTransferModules(shouldScroll);
+
+    companionState('WALLET_CONNECTED', {
+      statusLine: `Connected · ${chainLabel(state.chainId)}`,
+      stateVal:   'Wallet connected',
+      fundsVal:   'No active transaction',
+      networkVal: chainLabel(state.chainId),
+      eventVal:   `Address: ${shortAddr(state.address)}`,
+      actionVal:  'Enter a recipient address and amount to begin.',
+    });
   }
 
   function applyWrongNetworkPresentation() {
@@ -158,6 +178,16 @@
     }
     hideTransferModules();
     setStatus('Switch to Polygon or Polygon Amoy to continue.');
+
+    companionState('WRONG_NETWORK', {
+      statusLine: 'Wrong network · Switch to Polygon or Polygon Amoy',
+      stateVal:   'Wrong network',
+      fundsVal:   'No active transaction',
+      networkVal: chainLabel(state.chainId),
+      eventVal:   'Unsupported network detected',
+      actionVal:  'Switch to Polygon or Polygon Amoy in your wallet.',
+      autoOpen:   true,
+    });
   }
 
   // ----------------------------------------------------------------
@@ -441,6 +471,14 @@
 
     if (allowance < totalDebit) {
       setTxState('pending', 'Waiting for approval in wallet…');
+      companionState('AWAITING_APPROVAL', {
+        statusLine: 'Waiting for USDC approval in wallet…',
+        stateVal:   'Awaiting approval',
+        fundsVal:   'No — not until transfer confirms',
+        networkVal: chainConfig.name,
+        eventVal:   'USDC allowance approval requested',
+        actionVal:  'Approve the USDC allowance in your wallet to continue.',
+      });
       try {
         const approveTx = await usdc.approve(contractAddress, totalDebit);
         setTxState('pending', 'Approval submitted — waiting for confirmation…');
@@ -448,18 +486,54 @@
       } catch (err) {
         const rejected = err.code === 4001 ||
           (err.info && err.info.error && err.info.error.code === 4001);
-        setTxState('idle', rejected
-          ? 'Approval rejected. Transfer cancelled.'
-          : 'Approval failed: ' + (err.shortMessage || err.message || 'Unknown error'));
+        if (rejected) {
+          setTxState('idle', 'Approval rejected. Transfer cancelled.');
+          companionState('REJECTED', {
+            statusLine: 'Approval rejected. Nothing was sent.',
+            stateVal:   'Rejected',
+            fundsVal:   'No — nothing was sent',
+            networkVal: chainConfig.name,
+            eventVal:   'USDC approval rejected in wallet',
+            actionVal:  'Retry when ready.',
+            autoOpen:   true,
+          });
+        } else {
+          setTxState('idle', 'Approval failed: ' + (err.shortMessage || err.message || 'Unknown error'));
+          companionState('FAILED', {
+            statusLine: 'Approval failed. Transfer cancelled.',
+            stateVal:   'Failed',
+            fundsVal:   'No — transfer did not proceed',
+            networkVal: chainConfig.name,
+            eventVal:   err.shortMessage || err.message || 'Unknown error',
+            actionVal:  'Check reason above and retry if appropriate.',
+            autoOpen:   true,
+          });
+        }
         return;
       }
     }
 
     // --- Transfer ---
     setTxState('pending', 'Waiting for transfer confirmation in wallet…');
+    companionState('AWAITING_APPROVAL', {
+      statusLine: 'Waiting for transfer confirmation in wallet…',
+      stateVal:   'Awaiting confirmation',
+      fundsVal:   'No — not until confirmed on-chain',
+      networkVal: chainConfig.name,
+      eventVal:   'Transfer signature requested',
+      actionVal:  'Confirm the transfer in your wallet.',
+    });
     try {
-      const tx      = await implicitex.transferWithFee(recipient, rawAmount);
+      const tx = await implicitex.transferWithFee(recipient, rawAmount);
       setTxState('pending', 'Transfer submitted — waiting for on-chain confirmation…');
+      companionState('SUBMITTED', {
+        statusLine: 'Transaction submitted. Awaiting network confirmation…',
+        stateVal:   'Submitted',
+        fundsVal:   'No — not until confirmed',
+        networkVal: chainConfig.name,
+        eventVal:   'Broadcast to network',
+        actionVal:  'Wait for confirmation. Do not retry.',
+      });
       const receipt = await tx.wait();
 
       const txHash     = receipt.hash;
@@ -472,14 +546,44 @@
           `View on ${chainConfig.name} explorer</a>`;
       }
       setTxState('idle', null); // status already set above via innerHTML
+      companionState('CONFIRMED', {
+        statusLine: 'Transfer confirmed. Funds have moved.',
+        stateVal:   'Confirmed',
+        fundsVal:   'Yes — transfer complete',
+        networkVal: chainConfig.name,
+        eventVal:   txHash,
+        actionVal:  `View on ${chainConfig.name} explorer ↗`,
+        actionHref: receiptUrl,
+        autoOpen:   true,
+      });
 
       refreshUsdcBalance();
     } catch (err) {
       const rejected = err.code === 4001 ||
         (err.info && err.info.error && err.info.error.code === 4001);
-      setTxState('idle', rejected
-        ? 'Transfer rejected in wallet.'
-        : 'Transfer failed: ' + (err.reason || err.shortMessage || err.message || 'Unknown error'));
+      if (rejected) {
+        setTxState('idle', 'Transfer rejected in wallet.');
+        companionState('REJECTED', {
+          statusLine: 'Transfer rejected. Nothing was sent.',
+          stateVal:   'Rejected',
+          fundsVal:   'No — nothing was sent',
+          networkVal: chainConfig.name,
+          eventVal:   'Transfer rejected in wallet',
+          actionVal:  'Retry when ready, or do nothing.',
+          autoOpen:   true,
+        });
+      } else {
+        setTxState('idle', 'Transfer failed: ' + (err.reason || err.shortMessage || err.message || 'Unknown error'));
+        companionState('FAILED', {
+          statusLine: 'Transaction failed. Funds were not moved.',
+          stateVal:   'Failed',
+          fundsVal:   'No — gas may have been consumed',
+          networkVal: chainConfig.name,
+          eventVal:   err.reason || err.shortMessage || err.message || 'Unknown error',
+          actionVal:  'Check reason above. Verify on Polygonscan before retrying.',
+          autoOpen:   true,
+        });
+      }
     }
   }
 
@@ -512,6 +616,7 @@
 
     els.gasHeroVal.replaceChildren(...values.map(value => {
       const span = document.createElement('span');
+      span.className = value === '|' ? 'gas-tier-sep' : 'gas-tier-value';
       span.textContent = value;
       return span;
     }));
@@ -602,6 +707,7 @@
         }
         setNavStatus('Testnet prep');
         if (els.modules) els.modules.setAttribute('hidden', '');
+        if (window.IX && window.IX.companion) window.IX.companion.reset();
         return;
       }
       state.address = accounts[0];

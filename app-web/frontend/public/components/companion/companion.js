@@ -83,16 +83,33 @@
   function setState(state, detail) {
     if (!detail) return;
 
-    if (els.status && detail.statusLine)    els.status.textContent   = detail.statusLine;
-    if (els.stateVal && detail.stateVal)    els.stateVal.textContent = detail.stateVal;
-    if (els.fundsVal && detail.fundsVal)    els.fundsVal.textContent = detail.fundsVal;
+    if (els.status && detail.statusLine)     els.status.textContent    = detail.statusLine;
+    if (els.stateVal && detail.stateVal)     els.stateVal.textContent  = detail.stateVal;
+    if (els.fundsVal && detail.fundsVal)     els.fundsVal.textContent  = detail.fundsVal;
     if (els.networkVal && detail.networkVal) els.networkVal.textContent = detail.networkVal;
-    if (els.eventVal && detail.eventVal)    els.eventVal.textContent = detail.eventVal;
-    if (els.actionVal && detail.actionVal)  els.actionVal.textContent = detail.actionVal;
+    if (els.eventVal && detail.eventVal)     els.eventVal.textContent  = detail.eventVal;
+
+    // actionVal may carry a link (e.g. Polygonscan receipt on CONFIRMED).
+    // actionHref is always from our own chain config + a chain-produced 0x hex — safe.
+    if (els.actionVal && detail.actionVal) {
+      if (detail.actionHref) {
+        const a = document.createElement('a');
+        a.href    = detail.actionHref;
+        a.target  = '_blank';
+        a.rel     = 'noopener';
+        a.textContent = detail.actionVal;
+        a.className   = 'companion-action-link';
+        els.actionVal.textContent = '';
+        els.actionVal.appendChild(a);
+      } else {
+        els.actionVal.textContent = detail.actionVal;
+      }
+    }
 
     els.companion.classList.add('is-active');
 
-    // Auto-open for high-priority states where user most needs context.
+    // Auto-open only for high-priority states where user most needs context:
+    // WRONG_NETWORK, REJECTED, FAILED, CONFIRMED, UNCLEAR.
     if (detail.autoOpen) open();
   }
 

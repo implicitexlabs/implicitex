@@ -145,6 +145,25 @@
   font-size: 10px;
 }
 
+/* Action link — rendered when CONFIRMED provides an explorer receipt URL */
+.companion-action-link {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--dim);
+  text-decoration: none;
+  transition: color 0.12s;
+}
+
+.companion-action-link:hover,
+.companion-action-link:focus-visible {
+  color: var(--white);
+}
+
+.companion-action-link:focus-visible {
+  outline: 1px solid var(--dim);
+  outline-offset: 2px;
+}
+
 /* ---- Responsive ---- */
 @media (max-width: 768px) {
   .companion-bar {
