@@ -130,9 +130,14 @@
 .companion-v {
   font-family: var(--mono);
   font-size: 11px;
-  color: var(--white);
+  color: var(--dim);
   text-align: right;
   padding-left: 1rem;
+  transition: color 0.2s;
+}
+
+.companion.is-active .companion-v {
+  color: var(--white);
 }
 
 /* Next-step action value — slightly dimmer, not a call to action */

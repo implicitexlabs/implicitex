@@ -444,9 +444,9 @@ body {
 }
 
 .flow-step p {
-  color: var(--dim);
+  color: var(--white);
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 400;
   line-height: 1.6;
 }
 
@@ -473,9 +473,9 @@ body {
 
 .flow-more {
   border-top: 1px solid var(--border);
-  color: var(--dim);
+  color: var(--white);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 400;
   line-height: 1.65;
   margin-top: 1rem;
   padding-top: 1rem;

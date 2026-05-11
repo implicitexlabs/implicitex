@@ -27,7 +27,9 @@
 
 "use strict";
 
-const { ethers } = require("hardhat");
+const fs   = require("fs");
+const path = require("path");
+const { ethers, network } = require("hardhat");
 
 // ---------------------------------------------------------------------------
 // Validation helpers
@@ -62,20 +64,29 @@ function requirePositiveInt(name) {
   return value;
 }
 
+function box(lines) {
+  const width = Math.max(...lines.map((l) => l.length)) + 4;
+  const bar   = "═".repeat(width - 2);
+  const pad   = (s) => `║ ${s.padEnd(width - 4)} ║`;
+  return [
+    `╔${bar}╗`,
+    ...lines.map(pad),
+    `╚${bar}╝`,
+  ].join("\n");
+}
+
 // ---------------------------------------------------------------------------
 // Deploy
 // ---------------------------------------------------------------------------
 
 async function main() {
-  console.log("=== ImplicitExTransfer deploy script ===");
-  console.log("Reading required environment variables...");
+  console.log("\n=== ImplicitExTransfer deploy script ===");
+  console.log("Reading required environment variables...\n");
 
-  const usdcAddress = requireAddress("IMPLICITEX_USDC_ADDRESS");
-  const treasuryAddress = requireAddress("IMPLICITEX_TREASURY_ADDRESS");
-  const initialFeeBps = requirePositiveInt("IMPLICITEX_INITIAL_FEE_BPS");
-  const initialMinTransfer = requirePositiveInt(
-    "IMPLICITEX_MIN_TRANSFER_AMOUNT"
-  );
+  const usdcAddress      = requireAddress("IMPLICITEX_USDC_ADDRESS");
+  const treasuryAddress  = requireAddress("IMPLICITEX_TREASURY_ADDRESS");
+  const initialFeeBps    = requirePositiveInt("IMPLICITEX_INITIAL_FEE_BPS");
+  const initialMinTransfer = requirePositiveInt("IMPLICITEX_MIN_TRANSFER_AMOUNT");
   const initialPrecision = requirePositiveInt("IMPLICITEX_TRANSFER_PRECISION");
 
   // Fee cap guard (mirrors MAX_FEE_BPS = 1000 in contract)
@@ -85,20 +96,23 @@ async function main() {
     );
   }
 
-  const [deployer] = await ethers.getSigners();
-  console.log(`\nDeployer: ${deployer.address}`);
-  console.log(
-    `USDC address:    ${usdcAddress.slice(0, 6)}...${usdcAddress.slice(-4)}`
-  );
-  console.log(
-    `Treasury address: ${treasuryAddress.slice(0, 6)}...${treasuryAddress.slice(-4)}`
-  );
-  console.log(`Initial fee bps:  ${initialFeeBps}`);
-  console.log(`Min transfer:     ${initialMinTransfer}`);
-  console.log(`Precision:        ${initialPrecision}`);
+  const [deployer]  = await ethers.getSigners();
+  const chainId     = Number((await ethers.provider.getNetwork()).chainId);
+  const networkName = network.name;
+  const timestamp   = new Date().toISOString();
+  const feePercent  = (initialFeeBps / 100).toFixed(2) + "%";
+
+  console.log(`Network:   ${networkName} (${chainId})`);
+  console.log(`Timestamp: ${timestamp}`);
+  console.log(`Deployer:  ${deployer.address}`);
+  console.log(`Treasury:  ${treasuryAddress}`);
+  console.log(`USDC:      ${usdcAddress}`);
+  console.log(`Fee:       ${initialFeeBps} bps (${feePercent})`);
+  console.log(`Min transfer: ${initialMinTransfer}`);
+  console.log(`Precision:    ${initialPrecision}`);
 
   console.log("\nDeploying ImplicitExTransfer...");
-  const factory = await ethers.getContractFactory("ImplicitExTransfer");
+  const factory  = await ethers.getContractFactory("ImplicitExTransfer");
   const contract = await factory.deploy(
     usdcAddress,
     treasuryAddress,
@@ -109,15 +123,60 @@ async function main() {
 
   await contract.waitForDeployment();
   const deployedAddress = await contract.getAddress();
+  const deployTx        = contract.deploymentTransaction();
 
-  console.log("\n=== Deployment complete ===");
-  console.log(`Contract address: ${deployedAddress}`);
-  console.log(
-    `\nNext steps (see testnet-deploy-artifact-flow-2026-04-30.md):`
-  );
-  console.log(`  1. Verify contract on block explorer`);
-  console.log(`  2. Record address in config/chains.js under supportedChains`);
-  console.log(`  3. Run testnet signoff checklist before setting transfersEnabled: true`);
+  // ---------------------------------------------------------------------------
+  // Success output
+  // ---------------------------------------------------------------------------
+  console.log("\n" + box([
+    "DEPLOYMENT COMPLETE",
+    "",
+    `Network:   ${networkName} (${chainId})`,
+    `Timestamp: ${timestamp}`,
+    "",
+    `Deployer:  ${deployer.address}`,
+    `Treasury:  ${treasuryAddress}`,
+    `USDC:      ${usdcAddress}`,
+    `Fee:       ${feePercent}`,
+    "",
+    `CONTRACT ADDRESS:`,
+    `${deployedAddress}`,
+  ]));
+
+  console.log(`
+Next steps:
+  1. Verify on block explorer
+       npx hardhat verify --network ${networkName} ${deployedAddress} \\
+         ${usdcAddress} ${treasuryAddress} ${initialFeeBps} ${initialMinTransfer} ${initialPrecision}
+  2. Update frontend/public/config/chains.js contractAddress for chainId ${chainId}
+  3. Run testnet signoff checklist before setting transfersEnabled: true
+  4. Save deployments/${networkName}.json (written automatically — see below)
+`);
+
+  // ---------------------------------------------------------------------------
+  // Write deployment manifest
+  // ---------------------------------------------------------------------------
+  const manifest = {
+    network:    networkName,
+    chainId,
+    contract:   "ImplicitExTransfer",
+    address:    deployedAddress,
+    deployer:   deployer.address,
+    usdc:       usdcAddress,
+    treasury:   treasuryAddress,
+    feeBps:     initialFeeBps,
+    minTransfer: initialMinTransfer,
+    precision:  initialPrecision,
+    timestamp,
+    txHash:     deployTx ? deployTx.hash : null,
+  };
+
+  const manifestDir  = path.resolve(__dirname, "../deployments");
+  const manifestPath = path.join(manifestDir, `${networkName}.json`);
+
+  fs.mkdirSync(manifestDir, { recursive: true });
+  fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + "\n");
+  console.log(`Manifest written → deployments/${networkName}.json`);
 }
 
 main().catch((err) => {

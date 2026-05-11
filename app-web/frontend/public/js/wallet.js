@@ -112,6 +112,7 @@
     previewNetwork:     document.getElementById('previewNetwork'),
     previewContract:    document.getElementById('previewContract'),
     previewMode:        document.getElementById('previewMode'),
+    previewNote:        document.getElementById('previewNote'),
   };
 
   // ----------------------------------------------------------------
@@ -183,6 +184,9 @@
       ? chainConfig.contractAddress.slice(0, 10) + '…'
       : 'Not deployed';
     if (els.previewMode)      els.previewMode.textContent      = modeLabel;
+    if (els.previewNote)      els.previewNote.textContent      = (netState === 'READY')
+      ? 'Two wallet confirmations required. Funds will move.'
+      : 'Preview only — no funds will move.';
 
     showPreview();
   }
@@ -314,6 +318,7 @@
       els.txBtn.disabled = false;
       els.txBtn.textContent = currentButtonLabel();
     }
+    setStatus('');
     setTransferNote(transfersEnabled ? '' : 'Preview mode — live transfers not yet enabled.');
     updateNetworkModuleRows(chainConfig);
     showTransferModules(shouldScroll);
@@ -352,6 +357,7 @@
       els.txBtn.disabled = true;
       els.txBtn.textContent = 'Contract not deployed';
     }
+    setStatus('');
     setTransferNote('Contract not deployed on this network. Transfers unavailable.');
     updateNetworkModuleRows(chainConfig);
     showTransferModules(shouldScroll);

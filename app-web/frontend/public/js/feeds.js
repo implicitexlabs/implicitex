@@ -14,7 +14,7 @@
   const STATIC_FEEDS = [
     {
       source: 'Polygon',
-      text:   'Amoy deployment preparation is blocked until local env values are filled.',
+      text:   'ImplicitEx is live on Polygon mainnet. Contract deployed and verified.',
     },
     {
       source: 'Circle',
@@ -22,7 +22,7 @@
     },
     {
       source: 'ImplicitEx',
-      text:   'Demo shell gate passed. Live transfers remain disabled.',
+      text:   'Live transfers enabled. 1% flat fee routed to treasury on execution.',
     },
   ];
 

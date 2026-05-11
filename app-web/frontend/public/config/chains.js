@@ -10,7 +10,7 @@
  */
 
 window.IX_CONFIG = {
-  transfersEnabled: false,
+  transfersEnabled: true,
 };
 
 window.IX_CHAINS = {
@@ -20,12 +20,12 @@ window.IX_CHAINS = {
     name:              'Polygon',
     rpcUrl:            'https://polygon-rpc.com',   // public, no key required
     explorerUrl:       'https://polygonscan.com',
-    usdcAddress:       null,   // Set after deploy
-    contractAddress:   null,   // Set after deploy
+    usdcAddress:       '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359', // Circle native USDC on Polygon PoS
+    contractAddress:   '0x2e4256F0cf732d081994d6ddF6188Ca0aB805930', // deployed 2026-05-11
     feeBasisPoints:    100,    // 1%
     minTransferUsdc:   1,      // $1 USDC minimum
     maxTransferUsdc:   250,    // $250 cap during soft launch
-    transfersEnabled:  false,
+    transfersEnabled:  true,
   },
 
   // Polygon Amoy Testnet (chain ID 80002)
