@@ -762,6 +762,69 @@ body.portal-active #nav {
   line-height: 1.65;
 }
 
+.receipt-history {
+  border-top: 1px solid var(--border);
+  margin-top: 14px;
+  padding-top: 12px;
+}
+
+.receipt-history-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--dim);
+  margin-bottom: 8px;
+}
+
+.receipt-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.receipt-empty,
+.receipt-item {
+  font-family: var(--mono);
+  font-size: 10px;
+  line-height: 1.5;
+  color: var(--dim);
+}
+
+.receipt-item {
+  border: 1px solid var(--border);
+  padding: 8px;
+  background: var(--surface-2);
+}
+
+.receipt-item-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--white);
+  margin-bottom: 4px;
+}
+
+.receipt-state {
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.receipt-meta,
+.receipt-message {
+  color: var(--dim);
+}
+
+.receipt-link {
+  color: var(--white);
+  text-decoration: none;
+}
+
+.receipt-link:hover,
+.receipt-link:focus-visible {
+  text-decoration: underline;
+}
+
 /* Network data table */
 .data-table { display: flex; flex-direction: column; }
 

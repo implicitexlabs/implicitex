@@ -31,6 +31,11 @@ confirm.
 
 | State | Meaning | Funds Moved? | User Action | Companion Message |
 |---|---|---|---|---|
+| `DRAFT` | User has entered possible transfer details, but the app has not validated or requested wallet action. | No | Review details. | "Transfer draft. No wallet action requested." |
+| `READY` | Transfer details validated and exact debit calculated. | No | Continue or edit. | "Transfer ready. No wallet action requested yet." |
+| `AUTHORIZING` | USDC allowance authorization requested or submitted. | No | Confirm authorization or wait for approval confirmation. | "USDC authorization in progress. Funds are not sent yet." |
+| `AUTHORIZED` | Approval confirmed or existing allowance is sufficient. Transfer has not been submitted. | No | Confirm transfer if intended. | "USDC authorization ready. Transfer not submitted yet." |
+| `SUBMITTING` | Transfer confirmation requested in wallet, but no transfer hash is known yet. | Unknown | Do not refresh if wallet is open. | "Transfer confirmation requested. Awaiting wallet or transaction hash." |
 | `SUBMITTED` | Broadcast to network. Not yet included in a block. | No | Wait. Do not retry. | "Transaction submitted. Awaiting network confirmation. No funds have moved yet." |
 | `PENDING` | Seen by network nodes. In mempool, awaiting mining. Only use when provider confirms mempool presence. | No | Wait. Do not retry. | "Transaction pending. The network is working. No funds have moved yet." |
 | `CONFIRMED` | Included in a finalized block. On-chain record exists. | Yes | Review receipt. | "Transfer confirmed. Funds have moved. Receipt available on Polygonscan." |
@@ -45,7 +50,15 @@ confirm.
 ## State Transition Map
 
 ```
-[user initiates transfer]
+[user submits valid transfer details]
+        │
+        ▼
+    READY
+        │
+        ├──► AUTHORIZING → AUTHORIZED
+        │
+        ▼
+    SUBMITTING
         │
         ▼
     SUBMITTED
@@ -92,15 +105,21 @@ reading at a time. Archive access is secondary and intentionally quieter.
 Minimum receipt fields:
 
 ```
-state:          CONFIRMED | FAILED | REJECTED | EXPIRED | REPLACED | UNCLEAR
-timestamp:      ISO 8601, local timezone
-hash:           0x... (if broadcast reached network)
-amount:         USDC (human-readable)
-fee:            USDC (human-readable)
-recipient:      0x... (checksummed)
-network:        chain name
-funds_moved:    true | false | unknown
-explorer_url:   link (if hash exists)
+id
+createdAt
+chainId
+sender
+recipient
+amount
+fee
+totalDebit
+contractAddress
+approvalHash
+transferHash
+state
+fundsMoved
+explorerUrl
+lastKnownMessage
 ```
 
 Receipts persist in localStorage across disconnect and refresh. The interface

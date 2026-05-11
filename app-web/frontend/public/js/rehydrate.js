@@ -21,11 +21,9 @@
 (function () {
   'use strict';
 
-  // Non-terminal states that warrant a chain re-query when a hash is present.
-  const REQUERY_STATES = ['SUBMITTED', 'PENDING', 'UNCLEAR'];
-
   // Terminal states that should have been archived but weren't (e.g. crash mid-resolve).
   const TERMINAL_STATES = ['CONFIRMED', 'FAILED', 'REJECTED', 'EXPIRED', 'REPLACED'];
+  const PRE_BROADCAST_STATES = ['DRAFT', 'READY', 'AUTHORIZING', 'AUTHORIZED'];
 
   // ----------------------------------------------------------------
   // Main rehydration entry point
@@ -42,9 +40,26 @@
       return;
     }
 
-    // No hash means no broadcast reached the network — pre-broadcast interrupted.
-    // Show UNCLEAR: we know an attempt was made but have nothing to re-query.
-    if (!active.hash) {
+    const transferHash = active.transferHash || active.hash;
+
+    // Pre-broadcast receipts are durable local records, but there is no transfer
+    // hash to re-query and no evidence that funds moved.
+    if (!transferHash && PRE_BROADCAST_STATES.includes(active.state)) {
+      showCompanion(active.state, {
+        statusLine: active.lastKnownMessage || 'Transfer attempt saved locally.',
+        stateVal:   active.state,
+        fundsVal:   'No — transfer not broadcast',
+        networkVal: active.network || '—',
+        eventVal:   'Created: ' + formatTime(active.createdAt || active.timestamp),
+        actionVal:  'Review the saved attempt before retrying.',
+        autoOpen:   true,
+      });
+      return;
+    }
+
+    // No transfer hash in a submitting/unknown state means the page lost context
+    // while wallet interaction was in progress. Do not fabricate failure.
+    if (!transferHash) {
       showUnclear(active, 'Transaction was not broadcast. No network record to verify.');
       return;
     }
@@ -79,7 +94,7 @@
     // One re-query attempt — no retries.
     try {
       const provider  = new ethers.JsonRpcProvider(rpcUrl);
-      const txReceipt = await provider.getTransactionReceipt(active.hash);
+      const txReceipt = await provider.getTransactionReceipt(transferHash);
 
       if (txReceipt === null) {
         // Not found: still in mempool, dropped, or RPC sync lag.
@@ -92,13 +107,16 @@
       if (txReceipt.status === 1) {
         // Confirmed on-chain.
         const explorerUrl = chainConfig.explorerUrl
-          ? chainConfig.explorerUrl + '/tx/' + active.hash
+          ? chainConfig.explorerUrl + '/tx/' + transferHash
           : null;
 
         window.IX.receipts.update(active.id, {
           state:       'CONFIRMED',
           fundsMoved:  true,
+          transferHash,
+          hash:        transferHash,
           explorerUrl,
+          lastKnownMessage: 'Transfer confirmed. Funds moved.',
         });
         window.IX.receipts.clearActive();
 
@@ -107,7 +125,7 @@
           stateVal:   'Confirmed',
           fundsVal:   'Yes — transfer complete',
           networkVal: active.network,
-          eventVal:   active.hash,
+          eventVal:   transferHash,
           actionVal:  explorerUrl ? 'View on ' + chainConfig.name + ' explorer \u2197' : 'Transfer confirmed.',
           actionHref: explorerUrl || undefined,
           autoOpen:   true,
@@ -117,7 +135,13 @@
 
       if (txReceipt.status === 0) {
         // Reverted on-chain. Gas was consumed. Funds did not move.
-        window.IX.receipts.update(active.id, { state: 'FAILED', fundsMoved: false });
+        window.IX.receipts.update(active.id, {
+          state: 'FAILED',
+          fundsMoved: false,
+          transferHash,
+          hash: transferHash,
+          lastKnownMessage: 'Transaction reverted on-chain. Funds were not moved.',
+        });
         window.IX.receipts.clearActive();
 
         showCompanion('FAILED', {
@@ -125,7 +149,7 @@
           stateVal:   'Failed',
           fundsVal:   'No — gas may have been consumed',
           networkVal: active.network,
-          eventVal:   active.hash,
+          eventVal:   transferHash,
           actionVal:  'Transaction reverted on-chain. Verify on Polygonscan before retrying.',
           autoOpen:   true,
         });

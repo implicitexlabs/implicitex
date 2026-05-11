@@ -63,19 +63,25 @@ Both keys are namespaced under `ix.receipt` to avoid collisions.
 
 ```json
 {
-  "id":          "string — ISO timestamp at creation, used as stable identifier",
-  "state":       "string — from canonical state vocabulary",
-  "timestamp":   "string — ISO 8601, UTC, moment of first event",
-  "resolvedAt":  "string | null — ISO 8601, UTC, moment of terminal state",
-  "hash":        "string | null — 0x-prefixed tx hash, null until broadcast",
-  "amount":      "string — USDC, human-readable (e.g. '100.000000')",
-  "fee":         "string — USDC, human-readable (e.g. '1.000000')",
-  "recipient":   "string | null — 0x checksummed address",
-  "sender":      "string | null — 0x checksummed address",
-  "network":     "string — chain name (e.g. 'Polygon Amoy')",
-  "chainId":     "number",
-  "explorerUrl": "string | null — full URL to block explorer tx page",
-  "fundsMoved":  "boolean | null — null means unknown (UNCLEAR state)"
+  "id":               "string — unique local identifier",
+  "createdAt":        "string — ISO 8601, UTC, moment the attempt was recorded",
+  "timestamp":        "string — legacy alias for createdAt",
+  "resolvedAt":       "string | null — ISO 8601, UTC, moment of terminal state",
+  "chainId":          "number",
+  "sender":           "string | null — 0x checksummed address",
+  "recipient":        "string | null — 0x checksummed address",
+  "amount":           "string — USDC, human-readable (e.g. '100.000000')",
+  "fee":              "string — USDC, human-readable (e.g. '1.000000')",
+  "totalDebit":       "string — USDC, human-readable amount + fee",
+  "contractAddress":  "string — ImplicitEx transfer contract address",
+  "approvalHash":     "string | null — approval tx hash, if one was broadcast",
+  "transferHash":     "string | null — transfer tx hash, if one was broadcast",
+  "hash":             "string | null — legacy alias for transferHash",
+  "state":            "string — from canonical state vocabulary",
+  "fundsMoved":       "boolean | null — null means unknown or pre-terminal",
+  "explorerUrl":      "string | null — full URL to block explorer tx page",
+  "lastKnownMessage": "string — last factual status message",
+  "network":          "string — chain name (e.g. 'Polygon')"
 }
 ```
 
@@ -92,15 +98,23 @@ Both keys are namespaced under `ix.receipt` to avoid collisions.
 ## Receipt Lifecycle
 
 ```
-[transfer initiated]
+[valid transfer attempt submitted]
         │
         ▼
-   CREATED — receipt written to ix.receipt.active
-   state: AWAITING_APPROVAL, hash: null
+   READY — receipt written to ix.receipt.active
+   state: READY, approvalHash: null, transferHash: null
         │
         ▼
-   BROADCAST — hash populated on network submission
-   state: SUBMITTED
+   AUTHORIZING — approval requested, if allowance is insufficient
+        │
+        ▼
+   AUTHORIZED — approval confirmed or existing allowance sufficient
+        │
+        ▼
+   SUBMITTING — transfer confirmation requested
+        │
+        ▼
+   SUBMITTED — transferHash populated on network submission
         │
         ├──► [re-query: tx found, succeeded]  → CONFIRMED  (fundsMoved: true)
         ├──► [re-query: tx found, reverted]   → FAILED     (fundsMoved: false)
@@ -127,10 +141,11 @@ On every page load, the store module runs before companion state is set.
 1. Read ix.receipt.active
 2. If null → no active receipt, companion stays in idle READY state
 3. If exists and state is terminal → move to archive, companion idle
-4. If exists and state is non-terminal (SUBMITTED, AWAITING_APPROVAL, UNCLEAR):
+4. If exists and state is non-terminal:
    a. Display stored receipt in companion immediately (do not wait for re-query)
-   b. Show state as UNCLEAR with fundsMoved: null
-   c. If hash exists → query chain for receipt status
+   b. If no transferHash exists and state is DRAFT, READY, AUTHORIZING, or AUTHORIZED,
+      show the local state and do not query chain
+   c. If transferHash exists → query chain for receipt status
       - Confirmed on-chain → update to CONFIRMED, fundsMoved: true
       - Reverted on-chain  → update to FAILED, fundsMoved: false
       - Not found          → leave as UNCLEAR, prompt Polygonscan check
@@ -204,17 +219,18 @@ The store will expose a module at `js/receipt-store.js`:
 
 ```javascript
 window.IX.receipts = {
-  begin(detail),        // create active receipt, returns id
-  update(patch),        // update fields on active receipt
-  resolve(state),       // mark terminal, move to archive
+  create(detail),       // create active receipt, returns stored receipt
+  update(id, patch),    // update fields on active receipt when id matches
+  clearActive(),        // move active receipt to archive
   getActive(),          // returns active receipt or null
-  getArchive(),         // returns archived receipts array
-  rehydrate(),          // run on page load — returns active receipt or null
+  listRecent(),         // returns archived receipts array
+  listAll(),            // returns active receipt followed by archive
 }
 ```
 
-`wallet.js` calls `begin()` when a transfer is initiated and `resolve()` when
-a terminal state is reached. The companion reads from `getActive()` on rehydration.
+`wallet.js` calls `create()` after valid transfer details and exact debit are
+computed, then patches the receipt through approval and transfer states. Terminal
+states are archived with `clearActive()`.
 
 ---
 

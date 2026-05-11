@@ -25,6 +25,8 @@
   };
 
   const ARCHIVE_MAX = 20;
+  const RECEIPT_EVENT = 'ix:receipts-changed';
+  const TERMINAL_STATES = ['CONFIRMED', 'FAILED', 'REJECTED', 'EXPIRED', 'REPLACED'];
 
   // ----------------------------------------------------------------
   // Storage primitives — isolated so every caller gets null on error
@@ -53,6 +55,18 @@
     }
   }
 
+  function notify() {
+    try {
+      window.dispatchEvent(new CustomEvent(RECEIPT_EVENT));
+    } catch (_) {
+      // Receipt rendering is best-effort; persistence remains authoritative.
+    }
+  }
+
+  function makeId(createdAt) {
+    return `${createdAt}-${Math.random().toString(16).slice(2, 10)}`;
+  }
+
   // ----------------------------------------------------------------
   // create(receipt) — write a new active receipt
   //
@@ -67,17 +81,25 @@
   function create(receipt) {
     const existing = read(KEYS.active);
     if (existing) {
-      _pushToArchive(existing);
+      const terminal = TERMINAL_STATES.includes(existing.state);
+      _pushToArchive(Object.assign({}, existing, terminal ? {} : {
+        state: 'UNCLEAR',
+        fundsMoved: existing.fundsMoved === true ? true : null,
+        lastKnownMessage: existing.lastKnownMessage || 'Replaced by a newer local transfer attempt.',
+        resolvedAt: existing.resolvedAt || new Date().toISOString(),
+      }));
     }
 
     const now = new Date().toISOString();
     const stored = Object.assign({}, receipt, {
-      id:         now,   // stable identifier; ISO timestamp of creation
-      timestamp:  now,   // moment of first event
-      resolvedAt: null,  // populated by clearActive()
+      id:         receipt.id || makeId(now),
+      createdAt:  receipt.createdAt || now,
+      timestamp:  receipt.timestamp || receipt.createdAt || now, // legacy alias
+      resolvedAt: receipt.resolvedAt || null,
     });
 
     write(KEYS.active, stored);
+    notify();
     return stored;
   }
 
@@ -94,7 +116,10 @@
     const active = read(KEYS.active);
     if (!active || active.id !== id) return false;
 
-    write(KEYS.active, Object.assign({}, active, patch));
+    write(KEYS.active, Object.assign({}, active, patch, {
+      updatedAt: new Date().toISOString(),
+    }));
+    notify();
     return true;
   }
 
@@ -119,6 +144,7 @@
       }));
     }
     write(KEYS.active, null);
+    notify();
   }
 
   // ----------------------------------------------------------------
@@ -127,6 +153,12 @@
   // ----------------------------------------------------------------
   function listRecent() {
     return read(KEYS.archive) || [];
+  }
+
+  function listAll() {
+    const active = read(KEYS.active);
+    const archive = read(KEYS.archive) || [];
+    return active ? [active, ...archive] : archive;
   }
 
   // ----------------------------------------------------------------
@@ -147,6 +179,6 @@
   // but receipt-store.js loads first, so we seed the namespace here.
   // ----------------------------------------------------------------
   window.IX = window.IX || {};
-  window.IX.receipts = { create, update, getActive, clearActive, listRecent };
+  window.IX.receipts = { create, update, getActive, clearActive, listRecent, listAll };
 
 })();

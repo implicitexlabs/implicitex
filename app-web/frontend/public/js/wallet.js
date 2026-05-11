@@ -1,9 +1,7 @@
 /**
  * wallet.js — ImplicitEx wallet connection and transfer flow
  *
- * Current state: wallet connect UI + disabled transfer preview.
- * Production TODOs are marked clearly below.
- * Do not enable transfersEnabled until testnet smoke passes.
+ * Current state: live Polygon transfer UI with local-only receipt persistence.
  */
 
 (function () {
@@ -53,7 +51,7 @@
   // ----------------------------------------------------------------
   // Receipt store helpers — same guard pattern as companionState.
   //
-  // storeReceipt(detail)         — create active receipt, return {id}
+  // storeReceipt(detail)         — create active receipt, return receipt
   // updateReceipt(id, patch)     — patch active receipt by id
   // resolveReceipt(id, patch)    — patch then move to archive (terminal state)
   //
@@ -116,6 +114,7 @@
     previewMode:        document.getElementById('previewMode'),
     previewNote:        document.getElementById('previewNote'),
     recipientError:     document.getElementById('recipientError'),
+    receiptHistory:     document.getElementById('receiptHistory'),
   };
 
   // ----------------------------------------------------------------
@@ -139,12 +138,122 @@
     if (els.usdcBalance) els.usdcBalance.textContent = '—';
   }
 
+  function buildReceiptDetail({
+    stateKey,
+    sender,
+    recipient,
+    amount,
+    fee,
+    totalDebit,
+    chainId,
+    chainConfig,
+    contractAddress,
+    lastKnownMessage,
+    fundsMoved = null,
+  }) {
+    return {
+      state: stateKey,
+      chainId,
+      sender,
+      recipient,
+      amount: ethers.formatUnits(amount, 6),
+      fee: ethers.formatUnits(fee, 6),
+      totalDebit: ethers.formatUnits(totalDebit, 6),
+      contractAddress,
+      approvalHash: null,
+      transferHash: null,
+      hash: null, // legacy alias for rehydration compatibility
+      fundsMoved,
+      explorerUrl: null,
+      lastKnownMessage,
+      network: chainConfig.name,
+    };
+  }
+
   function showPreview() {
     if (els.txPreview) els.txPreview.removeAttribute('hidden');
   }
 
   function hidePreview() {
     if (els.txPreview) els.txPreview.setAttribute('hidden', '');
+  }
+
+  function formatReceiptTime(value) {
+    if (!value) return '—';
+    try {
+      return new Date(value).toLocaleString([], {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    } catch (_) {
+      return value;
+    }
+  }
+
+  function shortHash(hash) {
+    if (!hash) return null;
+    return hash.slice(0, 10) + '…' + hash.slice(-6);
+  }
+
+  function renderReceiptHistory() {
+    if (!els.receiptHistory) return;
+    const receipts = window.IX && window.IX.receipts
+      ? window.IX.receipts.listAll().slice(0, 5)
+      : [];
+
+    if (!receipts.length) {
+      const empty = document.createElement('p');
+      empty.className = 'receipt-empty';
+      empty.textContent = 'No local receipts yet.';
+      els.receiptHistory.replaceChildren(empty);
+      return;
+    }
+
+    els.receiptHistory.replaceChildren(...receipts.map(receipt => {
+      const item = document.createElement('div');
+      item.className = 'receipt-item';
+
+      const head = document.createElement('div');
+      head.className = 'receipt-item-head';
+
+      const stateLabel = document.createElement('span');
+      stateLabel.className = 'receipt-state';
+      stateLabel.textContent = receipt.state || 'UNKNOWN';
+
+      const time = document.createElement('span');
+      time.textContent = formatReceiptTime(receipt.createdAt || receipt.timestamp);
+
+      head.append(stateLabel, time);
+
+      const meta = document.createElement('p');
+      meta.className = 'receipt-meta';
+      meta.textContent = `${receipt.amount || '—'} USDC → ${receipt.recipient ? shortAddr(receipt.recipient) : '—'}`;
+
+      const message = document.createElement('p');
+      message.className = 'receipt-message';
+      message.textContent = receipt.lastKnownMessage || (
+        receipt.fundsMoved === true ? 'Funds moved.' :
+        receipt.fundsMoved === false ? 'No funds moved.' :
+        'Outcome not yet resolved.'
+      );
+
+      item.append(head, meta, message);
+
+      const txHash = receipt.transferHash || receipt.hash;
+      if (receipt.explorerUrl && txHash) {
+        const link = document.createElement('a');
+        link.className = 'receipt-link';
+        link.href = receipt.explorerUrl;
+        link.target = '_blank';
+        link.rel = 'noopener';
+        link.textContent = `View ${shortHash(txHash)}`;
+        item.append(link);
+      }
+
+      return item;
+    }));
   }
 
   /**
@@ -769,32 +878,65 @@
       return;
     }
 
+    // --- Fee math — mirrors contract integer division exactly ---
+    const fee        = (rawAmount * BigInt(feeBps)) / 10000n;
+    const totalDebit = rawAmount + fee;
+    const receipt = storeReceipt(buildReceiptDetail({
+      stateKey: 'READY',
+      sender: state.address,
+      recipient,
+      amount: rawAmount,
+      fee,
+      totalDebit,
+      chainId,
+      chainConfig,
+      contractAddress,
+      lastKnownMessage: 'Transfer details validated. No wallet action requested yet.',
+    }));
+    const receiptId = receipt.id;
+
     if (rawAmount < minTransfer) {
       const minHuman = ethers.formatUnits(minTransfer, 6);
+      resolveReceipt(receiptId, {
+        state: 'FAILED',
+        fundsMoved: false,
+        lastKnownMessage: `Amount below contract minimum of ${minHuman} USDC. No funds moved.`,
+      });
       setStatus(`Amount below contract minimum of ${minHuman} USDC.`);
       return;
     }
 
     if (rawAmount % precision !== 0n) {
       const precHuman = ethers.formatUnits(precision, 6);
+      resolveReceipt(receiptId, {
+        state: 'FAILED',
+        fundsMoved: false,
+        lastKnownMessage: `Amount must be a multiple of ${precHuman} USDC. No funds moved.`,
+      });
       setStatus(`Amount must be a multiple of ${precHuman} USDC.`);
       return;
     }
 
     if (chainConfig.maxTransferUsdc && amountFloat > chainConfig.maxTransferUsdc) {
+      resolveReceipt(receiptId, {
+        state: 'FAILED',
+        fundsMoved: false,
+        lastKnownMessage: `Amount exceeds the ${chainConfig.maxTransferUsdc} USDC soft launch cap. No funds moved.`,
+      });
       setStatus(`Amount exceeds the ${chainConfig.maxTransferUsdc} USDC soft launch cap.`);
       return;
     }
-
-    // --- Fee math — mirrors contract integer division exactly ---
-    const fee        = (rawAmount * BigInt(feeBps)) / 10000n;
-    const totalDebit = rawAmount + fee;
 
     // --- Balance check ---
     let balance;
     try {
       balance = await usdc.balanceOf(state.address);
     } catch (_) {
+      resolveReceipt(receiptId, {
+        state: 'FAILED',
+        fundsMoved: false,
+        lastKnownMessage: 'Could not read USDC balance. No funds moved.',
+      });
       setStatus('Could not read USDC balance.');
       return;
     }
@@ -802,6 +944,11 @@
     if (balance < totalDebit) {
       const have = ethers.formatUnits(balance, 6);
       const need = ethers.formatUnits(totalDebit, 6);
+      resolveReceipt(receiptId, {
+        state: 'FAILED',
+        fundsMoved: false,
+        lastKnownMessage: `Insufficient balance. Have ${have} USDC, need ${need} USDC.`,
+      });
       setStatus(`Insufficient balance. Have ${have} USDC, need ${need} USDC (amount + fee).`);
       return;
     }
@@ -811,6 +958,11 @@
     try {
       allowance = await usdc.allowance(state.address, contractAddress);
     } catch (_) {
+      resolveReceipt(receiptId, {
+        state: 'FAILED',
+        fundsMoved: false,
+        lastKnownMessage: 'Could not read USDC allowance. No funds moved.',
+      });
       setStatus('Could not read USDC allowance.');
       return;
     }
@@ -826,6 +978,10 @@
       setTransferNote('Step 1 of 2 — Authorize USDC Access');
       setStatus('Funds are not sent yet.');
       setTxState('pending', 'Wallet authorization required.');
+      updateReceipt(receiptId, {
+        state: 'AUTHORIZING',
+        lastKnownMessage: 'USDC authorization requested. Funds are not sent yet.',
+      });
       companionState('AWAITING_APPROVAL', {
         statusLine: 'Step 1 of 2 — Authorize USDC access',
         stateVal:   'Awaiting authorization',
@@ -836,10 +992,18 @@
       });
       try {
         const approveTx = await usdc.approve(contractAddress, totalDebit);
+        updateReceipt(receiptId, {
+          approvalHash: approveTx.hash,
+          lastKnownMessage: 'USDC authorization submitted. Funds are not sent yet.',
+        });
         setStatus('');
         setTxState('pending', 'Authorization submitted.');
         setTransferNote('Step 1 of 2 — Confirming authorization…');
         await approveTx.wait();
+        updateReceipt(receiptId, {
+          state: 'AUTHORIZED',
+          lastKnownMessage: 'USDC authorization confirmed. Transfer not submitted yet.',
+        });
         setTransferNote('Authorization confirmed — preparing transfer…');
       } catch (err) {
         const rejected = err.code === 4001 ||
@@ -847,6 +1011,11 @@
         if (rejected) {
           setTransferNote('');
           setStatus('');
+          resolveReceipt(receiptId, {
+            state: 'REJECTED',
+            fundsMoved: false,
+            lastKnownMessage: 'USDC authorization declined in wallet. No funds moved.',
+          });
           setTxState('idle', 'Authorization declined. No funds moved.');
           companionState('REJECTED', {
             statusLine: 'Authorization declined. Transfer cancelled.',
@@ -860,6 +1029,11 @@
         } else {
           setTransferNote('');
           setStatus('');
+          resolveReceipt(receiptId, {
+            state: 'FAILED',
+            fundsMoved: false,
+            lastKnownMessage: 'USDC authorization failed. No transfer was submitted.',
+          });
           setTxState('idle', 'Authorization failed: ' + (err.shortMessage || err.message || 'Unknown error'));
           companionState('FAILED', {
             statusLine: 'Authorization failed. Transfer cancelled.',
@@ -873,6 +1047,11 @@
         }
         return;
       }
+    } else {
+      updateReceipt(receiptId, {
+        state: 'AUTHORIZED',
+        lastKnownMessage: 'Existing USDC allowance is sufficient. Transfer not submitted yet.',
+      });
     }
 
     // ---- Step 2 of 2 (or sole step when allowance already sufficient): Execute transfer ----
@@ -884,6 +1063,10 @@
     setTransferNote(stepLabel);
     setStatus('This sends funds on-chain.');
     setTxState('pending', 'Wallet confirmation required.');
+    updateReceipt(receiptId, {
+      state: 'SUBMITTING',
+      lastKnownMessage: 'Transfer confirmation requested. Funds move only after on-chain confirmation.',
+    });
     companionState('AWAITING_APPROVAL', {
       statusLine: needsApproval ? 'Step 2 of 2 — Confirm transfer' : 'Confirm transfer',
       stateVal:   'Awaiting confirmation',
@@ -893,26 +1076,17 @@
       actionVal:  'This is the final step. Confirming sends the funds on-chain.',
     });
 
-    // Create receipt — tracks this transfer from signature request through resolution.
-    // The receipt represents the transfer transaction only, not the approve step.
-    const { id: receiptId } = storeReceipt({
-      state:       'AWAITING_APPROVAL',
-      hash:        null,
-      amount:      amountStr,
-      fee:         ethers.formatUnits(fee, 6),
-      recipient,
-      sender:      state.address,
-      network:     chainConfig.name,
-      chainId,
-      explorerUrl: null,
-      fundsMoved:  null,
-    });
-
     try {
       const tx = await implicitex.transferWithFee(recipient, rawAmount);
 
       // Hash is available immediately after broadcast, before confirmation.
-      updateReceipt(receiptId, { state: 'SUBMITTED', hash: tx.hash });
+      updateReceipt(receiptId, {
+        state: 'SUBMITTED',
+        transferHash: tx.hash,
+        hash: tx.hash,
+        explorerUrl: `${chainConfig.explorerUrl}/tx/${tx.hash}`,
+        lastKnownMessage: 'Transfer broadcast to network. Awaiting confirmation.',
+      });
 
       setTransferNote('Transfer submitted — awaiting confirmation…');
       setStatus('');
@@ -938,7 +1112,14 @@
       }
       setTransferNote('');
       setTxState('idle', null); // status already set above via innerHTML
-      resolveReceipt(receiptId, { state: 'CONFIRMED', fundsMoved: true, explorerUrl: receiptUrl });
+      resolveReceipt(receiptId, {
+        state: 'CONFIRMED',
+        fundsMoved: true,
+        transferHash: txHash,
+        hash: txHash,
+        explorerUrl: receiptUrl,
+        lastKnownMessage: 'Transfer confirmed. Funds moved.',
+      });
       companionState('CONFIRMED', {
         statusLine: 'Transfer confirmed. Funds have moved.',
         stateVal:   'Confirmed',
@@ -957,7 +1138,11 @@
       if (rejected) {
         setTransferNote('');
         setStatus('');
-        resolveReceipt(receiptId, { state: 'REJECTED', fundsMoved: false });
+        resolveReceipt(receiptId, {
+          state: 'REJECTED',
+          fundsMoved: false,
+          lastKnownMessage: 'Transfer rejected in wallet. No funds moved.',
+        });
         setTxState('idle', 'Transfer declined. No funds moved.');
         companionState('REJECTED', {
           statusLine: 'Transfer rejected. Nothing was sent.',
@@ -971,7 +1156,17 @@
       } else {
         setTransferNote('');
         setStatus('');
-        resolveReceipt(receiptId, { state: 'FAILED', fundsMoved: false });
+        const failedHash = err.receipt && err.receipt.hash
+          ? err.receipt.hash
+          : err.transactionHash || null;
+        resolveReceipt(receiptId, {
+          state: 'FAILED',
+          fundsMoved: false,
+          transferHash: failedHash,
+          hash: failedHash,
+          explorerUrl: failedHash ? `${chainConfig.explorerUrl}/tx/${failedHash}` : null,
+          lastKnownMessage: 'Transfer failed. Funds were not moved.',
+        });
         setTxState('idle', 'Transfer failed: ' + (err.reason || err.shortMessage || err.message || 'Unknown error'));
         companionState('FAILED', {
           statusLine: 'Transaction failed. Funds were not moved.',
@@ -1139,6 +1334,8 @@
   }
 
   pollNetworkData();
+  renderReceiptHistory();
+  window.addEventListener('ix:receipts-changed', renderReceiptHistory);
 
   // ----------------------------------------------------------------
   // Public API on window.IX
