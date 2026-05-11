@@ -66,14 +66,14 @@
 
   function updateReceipt(id, patch) {
     if (window.IX && window.IX.receipts) {
-      window.IX.receipts.update(id, patch);
+      return window.IX.receipts.update(id, patch);
     }
+    return false;
   }
 
   function resolveReceipt(id, patch) {
     // update fields first, then archive — always a terminal-state operation
-    updateReceipt(id, patch);
-    if (window.IX && window.IX.receipts) {
+    if (updateReceipt(id, patch) && window.IX && window.IX.receipts) {
       window.IX.receipts.clearActive();
     }
   }

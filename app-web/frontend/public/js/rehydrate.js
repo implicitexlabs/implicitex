@@ -60,6 +60,11 @@
     // No transfer hash in a submitting/unknown state means the page lost context
     // while wallet interaction was in progress. Do not fabricate failure.
     if (!transferHash) {
+      window.IX.receipts.update(active.id, {
+        state: 'UNCLEAR',
+        fundsMoved: null,
+        lastKnownMessage: 'Transaction was not broadcast. No network record to verify.',
+      });
       showUnclear(active, 'Transaction was not broadcast. No network record to verify.');
       return;
     }
