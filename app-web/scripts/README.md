@@ -47,3 +47,28 @@ never in this repo.
 
 Do not commit raw Hardhat artifacts (`artifacts/`, `cache/`) — those are gitignored.
 The only artifact that belongs in the repo after a deploy is the chain config update.
+
+---
+
+## smoke_transfer_polygon.js
+
+Controlled Polygon mainnet smoke test for the deployed contract recorded in
+`deployments/polygon.json`.
+
+The script approves exactly the expected total debit, calls `transferWithFee`,
+checks the `TransferExecuted` event, and verifies USDC balance deltas for sender,
+recipient, treasury, and the transfer contract.
+
+```
+cd app-web
+SMOKE_RECIPIENT=0x... npx hardhat run scripts/smoke_transfer_polygon.js --network polygon
+```
+
+Optional:
+
+```
+SMOKE_AMOUNT_USDC=1.000000
+```
+
+The recipient must be explicit and must not be the sender, treasury, transfer
+contract, or configured USDC token contract.

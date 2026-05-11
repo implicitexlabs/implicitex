@@ -14,7 +14,7 @@
   const STATIC_FEEDS = [
     {
       source: 'Polygon',
-      text:   'ImplicitEx is live on Polygon mainnet. Contract deployed and verified.',
+      text:   'ImplicitEx is live on Polygon mainnet. Hardened contract smoke-verified 2026-05-11.',
     },
     {
       source: 'Circle',
@@ -22,7 +22,7 @@
     },
     {
       source: 'ImplicitEx',
-      text:   'Live transfers enabled. 1% flat fee routed to treasury on execution.',
+      text:   'Live transfers enabled. 1% flat fee routed to treasury on execution. $250 soft launch cap.',
     },
   ];
 

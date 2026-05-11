@@ -59,6 +59,8 @@ contract ImplicitExTransfer is Ownable2Step, Pausable, ReentrancyGuard {
         whenNotPaused
     {
         require(recipient != address(0), "RECIPIENT_ZERO_ADDRESS");
+        require(recipient != address(this), "RECIPIENT_IS_CONTRACT");
+        require(recipient != address(usdc), "RECIPIENT_IS_USDC_TOKEN");
         require(amount >= minTransferAmount, "AMOUNT_BELOW_MINIMUM");
         require(amount % transferPrecision == 0, "INVALID_TRANSFER_PRECISION");
 

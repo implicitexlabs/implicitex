@@ -84,11 +84,13 @@
   // DOM refs
   // ----------------------------------------------------------------
   const els = {
-    connectBtn:  document.getElementById('connectBtn'),
-    walletPill:  document.getElementById('walletPill'),
-    walletAddr:  document.getElementById('walletAddr'),
-    modules:     document.getElementById('modules'),
-    howItWorks:  document.getElementById('howItWorks'),
+    connectBtn:     document.getElementById('connectBtn'),
+    disconnectBtn:  document.getElementById('disconnectBtn'),
+    walletPill:     document.getElementById('walletPill'),
+    walletAddr:     document.getElementById('walletAddr'),
+    modules:        document.getElementById('modules'),
+    portalControls: document.getElementById('portalControls'),
+    howItWorks:     document.getElementById('howItWorks'),
     txStatus:    document.getElementById('txStatus'),
     txBtn:       document.getElementById('txBtn'),
     feeDisplay:  document.getElementById('feeDisplay'),
@@ -113,6 +115,7 @@
     previewContract:    document.getElementById('previewContract'),
     previewMode:        document.getElementById('previewMode'),
     previewNote:        document.getElementById('previewNote'),
+    recipientError:     document.getElementById('recipientError'),
   };
 
   // ----------------------------------------------------------------
@@ -221,6 +224,7 @@
     state.chainId = null;
     state.connecting = false;
 
+    if (els.disconnectBtn) els.disconnectBtn.setAttribute('hidden', '');
     resetConnectButton();
     setNavStatus(message);
     setStatus(message);
@@ -228,6 +232,16 @@
 
   function isConfiguredChain(chainId) {
     return !!(chainId && window.IX_CHAINS && window.IX_CHAINS[chainId]);
+  }
+
+  function isConfiguredTokenAddress(address) {
+    const chainConfig = window.IX_CHAINS && window.IX_CHAINS[state.chainId];
+    return !!(
+      address &&
+      chainConfig &&
+      chainConfig.usdcAddress &&
+      address.toLowerCase() === chainConfig.usdcAddress.toLowerCase()
+    );
   }
 
   /**
@@ -285,6 +299,15 @@
   function showTransferModules(shouldScroll) {
     if (!els.modules) return;
 
+    // Hide How It Works — instrument activates in-place over the same geometry.
+    if (els.howItWorks) els.howItWorks.setAttribute('hidden', '');
+
+    // Portal controls (dismiss button) appear above the grid, outside the border.
+    if (els.portalControls) els.portalControls.removeAttribute('hidden');
+
+    // Signal the portal-active state — hero recedes, instrument asserts.
+    document.body.classList.add('portal-active');
+
     els.modules.removeAttribute('hidden');
     if (shouldScroll) {
       setTimeout(() => {
@@ -295,6 +318,62 @@
 
   function hideTransferModules() {
     if (els.modules) els.modules.setAttribute('hidden', '');
+    if (els.portalControls) els.portalControls.setAttribute('hidden', '');
+    // Restore How It Works and return to informational state.
+    if (els.howItWorks) els.howItWorks.removeAttribute('hidden');
+    document.body.classList.remove('portal-active');
+  }
+
+  function dismissModules() {
+    hideTransferModules();
+    // Scroll back to the how-it-works frame smoothly.
+    if (els.howItWorks) {
+      setTimeout(() => {
+        els.howItWorks.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 60);
+    }
+  }
+
+  // Open portal if already connected; otherwise initiate connect.
+  // Wired to the connect button so it serves both states.
+  function openOrConnect() {
+    if (state.connected && isConfiguredChain(state.chainId)) {
+      showTransferModules(true);
+    } else if (state.connected) {
+      applyWrongNetworkPresentation();
+    } else {
+      connect();
+    }
+  }
+
+  // Disconnect — clears local session state and resets UI.
+  // MetaMask retains site permission internally; user must revoke via wallet settings.
+  // This gives the dapp a clean disconnected state without requiring wallet cooperation.
+  function disconnect() {
+    if (state.networkPollTimer) {
+      clearInterval(state.networkPollTimer);
+      state.networkPollTimer = null;
+    }
+
+    state.connected = false;
+    state.address   = null;
+    state.provider  = null;
+    state.signer    = null;
+    state.chainId   = null;
+    state.connecting = false;
+
+    if (els.walletPill) els.walletPill.classList.remove('visible');
+    if (els.walletAddr) els.walletAddr.textContent = '';
+    if (els.disconnectBtn) els.disconnectBtn.setAttribute('hidden', '');
+    resetConnectButton();
+    setNavStatus('');
+    resetBalanceDisplay();
+    setTransferNote('');
+    setStatus('');
+    hidePreview();
+    hideTransferModules();
+
+    if (window.IX && window.IX.companion) window.IX.companion.reset();
   }
 
   function applyConnectedPresentation(options = {}) {
@@ -310,6 +389,7 @@
       els.connectBtn.textContent = short;
       els.connectBtn.classList.add('connected');
     }
+    if (els.disconnectBtn) els.disconnectBtn.removeAttribute('hidden');
     setNavStatus('Wallet connected');
     if (els.networkBadge) {
       els.networkBadge.textContent = chainLabel(state.chainId);
@@ -349,6 +429,7 @@
       els.connectBtn.textContent = short;
       els.connectBtn.classList.add('connected');
     }
+    if (els.disconnectBtn) els.disconnectBtn.removeAttribute('hidden');
     setNavStatus('Wallet connected');
     if (els.networkBadge) {
       els.networkBadge.textContent = chainLabel(state.chainId);
@@ -382,6 +463,7 @@
       els.connectBtn.textContent = 'Wrong Network';
       els.connectBtn.classList.add('connected');
     }
+    if (els.disconnectBtn) els.disconnectBtn.removeAttribute('hidden');
     setNavStatus('Wrong network');
     if (els.networkBadge) {
       els.networkBadge.textContent = chainLabel(state.chainId);
@@ -479,8 +561,46 @@
     });
   }
 
+  // ----------------------------------------------------------------
+  // Recipient address validation — assertive, hard-state
+  // ----------------------------------------------------------------
+  function validateRecipient(value) {
+    if (!value || value.trim() === '') return null; // empty — no error shown yet
+
+    const v = value.trim();
+
+    if (!/^0x/i.test(v))          return 'Address must start with 0x.';
+    if (v.length !== 42)           return 'Address must be 42 characters (0x + 40 hex).';
+    if (!/^0x[0-9a-fA-F]{40}$/.test(v)) return 'Invalid characters in address.';
+    if (state.address && v.toLowerCase() === state.address.toLowerCase())
+                                   return 'Recipient cannot be your own wallet.';
+    if (isConfiguredTokenAddress(v)) return 'Recipient cannot be the configured USDC token contract.';
+    return ''; // valid
+  }
+
+  function applyRecipientValidation(value) {
+    const result = validateRecipient(value);
+    if (result === null) {
+      // Empty field — clear error state silently
+      if (els.recipientError) els.recipientError.textContent = '';
+      if (els.txRecipient) els.txRecipient.classList.remove('tx-field--error');
+    } else if (result === '') {
+      // Valid
+      if (els.recipientError) els.recipientError.textContent = '';
+      if (els.txRecipient) els.txRecipient.classList.remove('tx-field--error');
+    } else {
+      // Invalid — show error
+      if (els.recipientError) els.recipientError.textContent = result;
+      if (els.txRecipient) els.txRecipient.classList.add('tx-field--error');
+    }
+    return result === '';
+  }
+
   if (els.txRecipient) {
-    els.txRecipient.addEventListener('input', updatePreview);
+    els.txRecipient.addEventListener('input', function () {
+      applyRecipientValidation(this.value);
+      updatePreview();
+    });
   }
 
   // ----------------------------------------------------------------
@@ -493,6 +613,9 @@
    */
   function parseUsdcAmount(str) {
     const s = String(str).trim();
+    if (!/^(?:\d+|\d+\.\d{1,6}|\.\d{1,6})$/.test(s)) {
+      throw new Error('INVALID_USDC_DECIMALS');
+    }
     const dotIdx = s.indexOf('.');
     const whole = dotIdx === -1 ? s : s.slice(0, dotIdx);
     const frac  = dotIdx === -1 ? '' : s.slice(dotIdx + 1);
@@ -547,8 +670,10 @@
     const amountFloat = parseFloat(amountStr);
 
     // --- Basic input validation ---
+    // Run inline validator so the red error state appears on submit attempt too.
+    applyRecipientValidation(recipient || '');
     if (!recipient || !/^0x[0-9a-fA-F]{40}$/.test(recipient)) {
-      setStatus('Enter a valid recipient address (0x… 42 characters).');
+      setStatus('');
       return;
     }
 
@@ -637,8 +762,10 @@
     let rawAmount;
     try {
       rawAmount = parseUsdcAmount(amountStr);
-    } catch (_) {
-      setStatus('Invalid amount format.');
+    } catch (err) {
+      setStatus(err && err.message === 'INVALID_USDC_DECIMALS'
+        ? 'Amount supports up to 6 decimal places for USDC.'
+        : 'Invalid amount format.');
       return;
     }
 
@@ -688,43 +815,59 @@
       return;
     }
 
-    if (allowance < totalDebit) {
-      setTxState('pending', 'Waiting for approval in wallet…');
+    const needsApproval = allowance < totalDebit;
+
+    if (needsApproval) {
+      // ---- Step 1 of 2: Authorize USDC Access ----
+      // Narrate BEFORE MetaMask fires. Three rails, three distinct roles:
+      //   transferStateNote = primary action rail  (what step, what is required)
+      //   txStatus          = contextual note      (what this action does NOT do)
+      //   companionState    = state memory rail    (record for the tray)
+      setTransferNote('Step 1 of 2 — Authorize USDC Access');
+      setStatus('Funds are not sent yet.');
+      setTxState('pending', 'Wallet authorization required.');
       companionState('AWAITING_APPROVAL', {
-        statusLine: 'Waiting for USDC approval in wallet…',
-        stateVal:   'Awaiting approval',
-        fundsVal:   'No — not until transfer confirms',
+        statusLine: 'Step 1 of 2 — Authorize USDC access',
+        stateVal:   'Awaiting authorization',
+        fundsVal:   'Not yet — authorization only',
         networkVal: chainConfig.name,
-        eventVal:   'USDC allowance approval requested',
-        actionVal:  'Approve the USDC allowance in your wallet to continue.',
+        eventVal:   'USDC authorization requested',
+        actionVal:  'Authorizes the contract to prepare the transfer. Funds are not sent yet.',
       });
       try {
         const approveTx = await usdc.approve(contractAddress, totalDebit);
-        setTxState('pending', 'Approval submitted — waiting for confirmation…');
+        setStatus('');
+        setTxState('pending', 'Authorization submitted.');
+        setTransferNote('Step 1 of 2 — Confirming authorization…');
         await approveTx.wait();
+        setTransferNote('Authorization confirmed — preparing transfer…');
       } catch (err) {
         const rejected = err.code === 4001 ||
           (err.info && err.info.error && err.info.error.code === 4001);
         if (rejected) {
-          setTxState('idle', 'Approval rejected. Transfer cancelled.');
+          setTransferNote('');
+          setStatus('');
+          setTxState('idle', 'Authorization declined. No funds moved.');
           companionState('REJECTED', {
-            statusLine: 'Approval rejected. Nothing was sent.',
-            stateVal:   'Rejected',
+            statusLine: 'Authorization declined. Transfer cancelled.',
+            stateVal:   'Declined',
             fundsVal:   'No — nothing was sent',
             networkVal: chainConfig.name,
-            eventVal:   'USDC approval rejected in wallet',
-            actionVal:  'Retry when ready.',
+            eventVal:   'USDC authorization declined in wallet',
+            actionVal:  'No funds moved. Retry when ready.',
             autoOpen:   true,
           });
         } else {
-          setTxState('idle', 'Approval failed: ' + (err.shortMessage || err.message || 'Unknown error'));
+          setTransferNote('');
+          setStatus('');
+          setTxState('idle', 'Authorization failed: ' + (err.shortMessage || err.message || 'Unknown error'));
           companionState('FAILED', {
-            statusLine: 'Approval failed. Transfer cancelled.',
+            statusLine: 'Authorization failed. Transfer cancelled.',
             stateVal:   'Failed',
             fundsVal:   'No — transfer did not proceed',
             networkVal: chainConfig.name,
             eventVal:   err.shortMessage || err.message || 'Unknown error',
-            actionVal:  'Check reason above and retry if appropriate.',
+            actionVal:  'No funds moved. Check reason and retry if appropriate.',
             autoOpen:   true,
           });
         }
@@ -732,15 +875,22 @@
       }
     }
 
-    // --- Transfer ---
-    setTxState('pending', 'Waiting for transfer confirmation in wallet…');
+    // ---- Step 2 of 2 (or sole step when allowance already sufficient): Execute transfer ----
+    // Narrate BEFORE MetaMask fires.
+    //   transferStateNote = primary action rail
+    //   txStatus          = point-of-no-return signal
+    //   companionState    = state memory
+    const stepLabel = needsApproval ? 'Step 2 of 2 — Confirm Transfer' : 'Confirm Transfer';
+    setTransferNote(stepLabel);
+    setStatus('This sends funds on-chain.');
+    setTxState('pending', 'Wallet confirmation required.');
     companionState('AWAITING_APPROVAL', {
-      statusLine: 'Waiting for transfer confirmation in wallet…',
+      statusLine: needsApproval ? 'Step 2 of 2 — Confirm transfer' : 'Confirm transfer',
       stateVal:   'Awaiting confirmation',
       fundsVal:   'No — not until confirmed on-chain',
       networkVal: chainConfig.name,
       eventVal:   'Transfer signature requested',
-      actionVal:  'Confirm the transfer in your wallet.',
+      actionVal:  'This is the final step. Confirming sends the funds on-chain.',
     });
 
     // Create receipt — tracks this transfer from signature request through resolution.
@@ -764,7 +914,9 @@
       // Hash is available immediately after broadcast, before confirmation.
       updateReceipt(receiptId, { state: 'SUBMITTED', hash: tx.hash });
 
-      setTxState('pending', 'Transfer submitted — waiting for on-chain confirmation…');
+      setTransferNote('Transfer submitted — awaiting confirmation…');
+      setStatus('');
+      setTxState('pending', 'Broadcast to network. Do not retry.');
       companionState('SUBMITTED', {
         statusLine: 'Transaction submitted. Awaiting network confirmation…',
         stateVal:   'Submitted',
@@ -784,6 +936,7 @@
           `<a href="${receiptUrl}" target="_blank" rel="noopener">` +
           `View on ${chainConfig.name} explorer</a>`;
       }
+      setTransferNote('');
       setTxState('idle', null); // status already set above via innerHTML
       resolveReceipt(receiptId, { state: 'CONFIRMED', fundsMoved: true, explorerUrl: receiptUrl });
       companionState('CONFIRMED', {
@@ -802,8 +955,10 @@
       const rejected = err.code === 4001 ||
         (err.info && err.info.error && err.info.error.code === 4001);
       if (rejected) {
+        setTransferNote('');
+        setStatus('');
         resolveReceipt(receiptId, { state: 'REJECTED', fundsMoved: false });
-        setTxState('idle', 'Transfer rejected in wallet.');
+        setTxState('idle', 'Transfer declined. No funds moved.');
         companionState('REJECTED', {
           statusLine: 'Transfer rejected. Nothing was sent.',
           stateVal:   'Rejected',
@@ -814,6 +969,8 @@
           autoOpen:   true,
         });
       } else {
+        setTransferNote('');
+        setStatus('');
         resolveReceipt(receiptId, { state: 'FAILED', fundsMoved: false });
         setTxState('idle', 'Transfer failed: ' + (err.reason || err.shortMessage || err.message || 'Unknown error'));
         companionState('FAILED', {
@@ -944,14 +1101,13 @@
         state.address = null;
         if (els.walletPill) els.walletPill.classList.remove('visible');
         if (els.walletAddr) els.walletAddr.textContent = '';
-        if (els.connectBtn) {
-          resetConnectButton();
-        }
-        setNavStatus('Testnet prep');
+        if (els.disconnectBtn) els.disconnectBtn.setAttribute('hidden', '');
+        resetConnectButton();
+        setNavStatus('');
         resetBalanceDisplay();
         setTransferNote('');
         hidePreview();
-        if (els.modules) els.modules.setAttribute('hidden', '');
+        hideTransferModules();
         if (window.IX && window.IX.companion) window.IX.companion.reset();
         return;
       }
@@ -991,9 +1147,18 @@
   // ----------------------------------------------------------------
   window.IX = Object.assign(window.IX || {}, {
     connect,
+    disconnect,
+    openOrConnect,
     submitTransfer,
     scrollToModules,
+    dismissModules,
     getState: () => ({ ...state }),
   });
+
+  // Wire dismiss and disconnect buttons
+  const dismissBtn = document.getElementById('modulesDismiss');
+  if (dismissBtn) dismissBtn.addEventListener('click', dismissModules);
+
+  if (els.disconnectBtn) els.disconnectBtn.addEventListener('click', disconnect);
 
 })();

@@ -27,6 +27,8 @@
   --nav-bg:     rgba(8, 8, 8, 0.92);
   --button-hover: #d8d8d6;
   --status-ok:  rgba(242, 242, 240, 0.7);
+  --warn:       #c0392b;
+  --warn-border: rgba(192, 57, 43, 0.7);
   --logo-pixel: rgba(242, 242, 240, 1);
   --sans:       'Oxanium', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --display:    'Orbitron', system-ui, -apple-system, sans-serif;
@@ -47,6 +49,8 @@
   --nav-bg:     rgba(242, 242, 240, 0.92);
   --button-hover: #222222;
   --status-ok:  rgba(8, 8, 8, 0.7);
+  --warn:       #b03020;
+  --warn-border: rgba(176, 48, 32, 0.7);
   --logo-pixel: rgba(8, 8, 8, 1);
 }
 
@@ -188,7 +192,7 @@ body {
   background: transparent;
   color: var(--white);
   border: 1px solid var(--border);
-  cursor: default;
+  cursor: pointer;
 }
 
 .theme-toggle {
@@ -226,6 +230,21 @@ body {
   justify-content: center;
   overflow: hidden;
   padding: calc(var(--nav-h) + 7vh + 100px) 0 5vh;
+  transition: opacity 0.45s ease, padding 0.45s ease;
+}
+
+/* When the transaction portal is active, the hero recedes into context —
+   it is no longer the focus, but remains visible as site identity. */
+body.portal-active .hero {
+  opacity: 0.65;
+  padding-bottom: 2vh;
+  pointer-events: none;
+}
+
+/* Nav border asserts when portal is active — signals mode shift */
+body.portal-active #nav {
+  border-bottom-color: var(--border-2);
+  transition: border-bottom-color 0.3s ease;
 }
 
 #worldCanvas {
@@ -486,31 +505,110 @@ body {
   transform: translateY(0);
 }
 
+/* ---- Portal activation animation ---- */
+/* Frame appears first (outline + opacity), content follows with slight delay.
+   Replaying on hidden-removal is intentional — display:none resets animation. */
+@keyframes portalFrameIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes portalContentIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.modules:not([hidden]) {
+  animation: portalFrameIn 0.28s ease both;
+}
+
+.modules:not([hidden]) .mod {
+  animation: portalContentIn 0.24s 0.18s ease both;
+}
+
+/* ---- Portal controls — sits above .modules, outside its border ---- */
+.portal-controls {
+  max-width: 1280px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: flex-end;
+  padding: 0.5rem 0 0.4rem;
+}
+
+.portal-controls[hidden] { display: none; }
+
+.portal-dismiss {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: var(--dim);
+  background: transparent;
+  border: 1px solid var(--border);
+  padding: 5px 10px;
+  cursor: pointer;
+  transition: color 0.12s, border-color 0.12s;
+  line-height: 1;
+}
+
+.portal-dismiss:hover {
+  color: var(--white);
+  border-color: var(--border-2);
+}
+
+/* ---- Disconnect button ---- */
+.disconnect-btn {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--dim);
+  background: transparent;
+  border: 1px solid var(--border);
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: color 0.12s, border-color 0.12s;
+}
+
+.disconnect-btn:hover {
+  color: var(--white);
+  border-color: var(--border-2);
+}
+
+.disconnect-btn[hidden] { display: none; }
+
 /* ---- Modules ---- */
 .modules {
-  max-width: 1040px;
-  margin: 0 auto;
-  padding: 4rem 1.5rem 3rem;
+  max-width: 1280px;
+  margin: 0 auto 3rem;
+  padding: 0;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 1px;
   background: var(--border);
+  /* Portal frame — instrument housing: dual-border + contained shadow.
+     padding: 0 so outline wraps the content edge uniformly on all four sides. */
+  outline: 1px solid var(--border-2);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.06),
+    0 2px 0 rgba(255, 255, 255, 0.05),
+    0 4px 18px rgba(0, 0, 0, 0.5);
 }
 
 .modules[hidden] { display: none; }
 
 .mod {
   background: var(--surface);
-  padding: 1.75rem;
+  padding: 1.75rem 2rem;
 }
 
 .mod-tag {
   display: block;
   font-family: var(--mono);
-  font-size: 8px;
-  letter-spacing: 0.22em;
+  font-size: 10px;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--muted);
+  color: var(--dim);
   margin-bottom: 1rem;
 }
 
@@ -531,8 +629,8 @@ body {
   border-bottom: none;
   color: var(--white);
   font-family: var(--mono);
-  font-size: 11px;
-  padding: 10px 12px;
+  font-size: 13px;
+  padding: 11px 12px;
   width: 100%;
   outline: none;
   transition: border-color 0.12s;
@@ -541,6 +639,22 @@ body {
 .tx-field:last-of-type { border-bottom: 1px solid var(--border); }
 .tx-field::placeholder { color: var(--muted); }
 .tx-field:focus { border-color: var(--border-2); }
+
+.tx-field--error {
+  border-color: var(--warn-border) !important;
+  border-bottom: 1px solid var(--warn-border) !important;
+}
+
+.tx-field--error:focus { border-color: var(--warn) !important; }
+
+.tx-recipient-error {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--warn);
+  margin-top: 5px;
+  min-height: 1.4em;
+}
 
 .fee-row {
   display: flex;
@@ -553,20 +667,20 @@ body {
 
 .fee-label {
   font-family: var(--mono);
-  font-size: 9px;
-  letter-spacing: 0.12em;
-  color: var(--muted);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--dim);
 }
 
 .fee-val {
   font-family: var(--mono);
-  font-size: 10px;
-  color: var(--dim);
+  font-size: 11px;
+  color: var(--white);
 }
 
 .tx-btn {
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -585,16 +699,16 @@ body {
 
 .tx-state-note {
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 11px;
   color: var(--dim);
-  margin-top: 6px;
+  margin-top: 8px;
   text-align: center;
 }
 
 .tx-status {
   font-family: var(--mono);
-  font-size: 10px;
-  color: var(--dim);
+  font-size: 11px;
+  color: var(--white);
   min-height: 1.4em;
   margin-top: 8px;
   text-align: center;
@@ -608,10 +722,10 @@ body {
 
 .tx-preview-label {
   font-family: var(--mono);
-  font-size: 9px;
+  font-size: 10px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--muted);
+  color: var(--dim);
   margin-bottom: 8px;
 }
 
@@ -619,8 +733,8 @@ body {
 
 .tx-preview-note {
   font-family: var(--mono);
-  font-size: 9px;
-  letter-spacing: 0.08em;
+  font-size: 11px;
+  letter-spacing: 0.04em;
   color: var(--dim);
   text-align: center;
   margin-top: 10px;
@@ -634,16 +748,16 @@ body {
 
 .fee-explanation-label {
   font-family: var(--mono);
-  font-size: 9px;
+  font-size: 10px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--muted);
+  color: var(--dim);
   margin-bottom: 6px;
 }
 
 .fee-explanation-body {
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 11px;
   color: var(--dim);
   line-height: 1.65;
 }
@@ -666,7 +780,7 @@ body {
   font-size: 9px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--muted);
+  color: var(--dim);
 }
 
 .data-v {
@@ -813,7 +927,12 @@ footer {
 
   .modules {
     grid-template-columns: 1fr;
-    padding: 2rem 1rem;
+    padding: 0;
+    margin-bottom: 2rem;
+  }
+
+  .portal-controls {
+    padding: 0.5rem 0 0.4rem;
   }
 
   .stat-strip {

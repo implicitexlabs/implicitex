@@ -43,8 +43,11 @@
       <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch to light theme" aria-pressed="false">
         Theme
       </button>
-      <span class="nav-status">Testnet prep</span>
-      <button class="connect-btn" id="connectBtn" onclick="IX.connect()">
+      <span class="nav-status">Polygon · Live</span>
+      <button class="disconnect-btn" id="disconnectBtn" aria-label="Disconnect wallet" hidden>
+        Disconnect
+      </button>
+      <button class="connect-btn" id="connectBtn" onclick="IX.openOrConnect()">
         Connect Wallet
       </button>
     </div>
@@ -129,6 +132,11 @@
     </div>
   </section>
 
+  <!-- Portal controls — outside the border, above the grid -->
+  <div class="portal-controls" id="portalControls" hidden>
+    <button class="portal-dismiss" id="modulesDismiss" aria-label="Collapse transfer panel">✕ Collapse</button>
+  </div>
+
   <!-- MODULES — revealed after wallet connect -->
   <section class="modules" id="modules" aria-label="Transfer interface" hidden>
     <!-- 01 Transfer -->
@@ -144,14 +152,16 @@
           autocomplete="off"
           spellcheck="false"
           aria-label="Recipient wallet address"
+          aria-describedby="recipientError"
         >
+        <p class="tx-recipient-error" id="recipientError" aria-live="assertive"></p>
         <input
           class="tx-field"
           type="number"
           id="txAmount"
           placeholder="Amount (USDC)"
           min="1"
-          step="any"
+          step="0.000001"
           aria-label="Amount in USDC"
         >
         <div class="fee-row" aria-live="polite">
@@ -245,25 +255,6 @@
       </div>
     </div>
 
-    <!-- 03 Feeds -->
-    <div class="mod">
-      <span class="mod-tag">03 — Feeds</span>
-      <p class="mod-title">Network &amp; News</p>
-      <div id="feedList" class="feed-list">
-        <div class="feed-item">
-          <p class="feed-src">Polygon</p>
-          <p class="feed-text">ImplicitEx is live on Polygon mainnet. Contract deployed and verified.</p>
-        </div>
-        <div class="feed-item">
-          <p class="feed-src">Circle</p>
-          <p class="feed-text">USDC on Polygon maintains full 1:1 USD redemption.</p>
-        </div>
-        <div class="feed-item">
-          <p class="feed-src">ImplicitEx</p>
-          <p class="feed-text">Live transfers enabled. 1% flat fee routed to treasury on execution.</p>
-        </div>
-      </div>
-    </div>
   </section>
 
   </main>
@@ -318,10 +309,14 @@
       <a class="social-link social-x" href="https://x.com/implicitex" target="_blank" rel="noopener" aria-label="ImplicitEx on X"></a>
       <a class="social-link social-github" href="https://github.com/implicitexlabs" target="_blank" rel="noopener" aria-label="ImplicitEx Labs on GitHub"></a>
     </nav>
-    <span class="f-net" id="networkBadge">Demo shell</span>
+    <span class="f-net" id="networkBadge">Polygon live</span>
   </footer>
 
-  <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
+  <script
+    src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"
+    integrity="sha384-6Zl0Pc8zjSz8KvmNeXRvUQgY4ryFb+BwDvKCmLYcBME0joAaru491tQgi9B7zsMM"
+    crossorigin="anonymous"
+  ></script>
   <script src="config/chains.js"></script>
   <script src="js/canvas.js"></script>
   <script src="js/receipt-store.js"></script>

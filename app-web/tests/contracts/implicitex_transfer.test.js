@@ -347,6 +347,41 @@ describe("ImplicitExTransfer", function () {
     ).to.be.revertedWith("RECIPIENT_ZERO_ADDRESS");
   });
 
+  it("transferWithFee rejects the transfer contract as recipient", async function () {
+    const { transferContract, usdc, sender, feeBps } = await deployFixture();
+
+    const amount = 100n;
+    await fundAndApprove({ usdc, transferContract, sender, amount, feeBps });
+
+    await expect(
+      transferContract.connect(sender).transferWithFee(await transferContract.getAddress(), amount)
+    ).to.be.revertedWith("RECIPIENT_IS_CONTRACT");
+  });
+
+  it("transferWithFee rejects the configured USDC token contract as recipient", async function () {
+    const { transferContract, usdc, sender, feeBps } = await deployFixture();
+
+    const amount = 100n;
+    await fundAndApprove({ usdc, transferContract, sender, amount, feeBps });
+
+    await expect(
+      transferContract.connect(sender).transferWithFee(await usdc.getAddress(), amount)
+    ).to.be.revertedWith("RECIPIENT_IS_USDC_TOKEN");
+  });
+
+  it("transferWithFee allows treasury as recipient by explicit policy", async function () {
+    const { transferContract, usdc, sender, treasury, feeBps } = await deployFixture();
+
+    const amount = 100n;
+    const { fee, totalDebit } = await fundAndApprove({ usdc, transferContract, sender, amount, feeBps });
+
+    await expect(transferContract.connect(sender).transferWithFee(treasury.address, amount))
+      .to.emit(transferContract, "TransferExecuted")
+      .withArgs(sender.address, treasury.address, amount, fee, totalDebit);
+
+    expect(await usdc.balanceOf(treasury.address)).to.equal(amount + fee);
+  });
+
   it("transferWithFee rejects while paused", async function () {
     const { transferContract, usdc, sender, recipient, feeBps } = await deployFixture();
 

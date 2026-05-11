@@ -2,13 +2,13 @@
   "network": "polygon",
   "chainId": 137,
   "contract": "ImplicitExTransfer",
-  "address": "0x2e4256F0cf732d081994d6ddF6188Ca0aB805930",
+  "address": "0xdB0084caBF891872Ee5bD7cf9Ba47E828449D972",
   "deployer": "0xf614356F93408460b594AdDAcC86a7fC94310f1D",
   "usdc": "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359",
   "treasury": "0xEC9F1E0074CFeC89684C19703A6A95D4ca436b28",
   "feeBps": 100,
   "minTransfer": 1000000,
   "precision": 1000000,
-  "timestamp": "2026-05-11T18:44:02.786Z",
-  "txHash": "0xfd31607d58517e843bd479653f038fae3881b324dd5bc1d81911936b377e6eff"
+  "timestamp": "2026-05-11T22:07:05.408Z",
+  "txHash": "0x4d16294345a30c5ab39c7e73901804b3e8f2ddc146854e14cf97a1a42b53b142"
 }
