@@ -138,6 +138,19 @@
     if (els.usdcBalance) els.usdcBalance.textContent = '—';
   }
 
+  function clearTransferForm() {
+    if (els.txRecipient) {
+      els.txRecipient.value = '';
+      els.txRecipient.classList.remove('tx-field--error');
+    }
+    if (els.amtIn) els.amtIn.value = '';
+    if (els.recipientError) els.recipientError.textContent = '';
+    if (els.feeDisplay) els.feeDisplay.textContent = '—';
+    setStatus('');
+    setTransferNote('');
+    hidePreview();
+  }
+
   function buildReceiptDetail({
     stateKey,
     sender,
@@ -477,9 +490,7 @@
     resetConnectButton();
     setNavStatus('');
     resetBalanceDisplay();
-    setTransferNote('');
-    setStatus('');
-    hidePreview();
+    clearTransferForm();
     hideTransferModules();
 
     if (window.IX && window.IX.companion) window.IX.companion.reset();
@@ -1300,8 +1311,7 @@
         resetConnectButton();
         setNavStatus('');
         resetBalanceDisplay();
-        setTransferNote('');
-        hidePreview();
+        clearTransferForm();
         hideTransferModules();
         if (window.IX && window.IX.companion) window.IX.companion.reset();
         return;

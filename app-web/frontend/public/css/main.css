@@ -20,8 +20,8 @@
   --surface-2:  #1a1a1a;
   --surface-3:  #222222;
   --white:      #f2f2f0;
-  --dim:        rgba(242, 242, 240, 0.45);
-  --muted:      rgba(242, 242, 240, 0.22);
+  --dim:        rgba(242, 242, 240, 0.58);
+  --muted:      rgba(242, 242, 240, 0.30);
   --border:     rgba(255, 255, 255, 0.09);
   --border-2:   rgba(255, 255, 255, 0.18);
   --nav-bg:     rgba(8, 8, 8, 0.92);
@@ -669,7 +669,7 @@ body.portal-active #nav {
   font-family: var(--mono);
   font-size: 11px;
   letter-spacing: 0.08em;
-  color: var(--dim);
+  color: var(--white);
 }
 
 .fee-val {
@@ -733,9 +733,9 @@ body.portal-active #nav {
 
 .tx-preview-note {
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: 0.04em;
-  color: var(--dim);
+  color: var(--white);
   text-align: center;
   margin-top: 10px;
 }
@@ -757,8 +757,8 @@ body.portal-active #nav {
 
 .fee-explanation-body {
   font-family: var(--mono);
-  font-size: 11px;
-  color: var(--dim);
+  font-size: 12px;
+  color: var(--white);
   line-height: 1.65;
 }
 
@@ -786,7 +786,7 @@ body.portal-active #nav {
 .receipt-empty,
 .receipt-item {
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 11px;
   line-height: 1.5;
   color: var(--dim);
 }
@@ -812,7 +812,7 @@ body.portal-active #nav {
 
 .receipt-meta,
 .receipt-message {
-  color: var(--dim);
+  color: var(--white);
 }
 
 .receipt-link {
