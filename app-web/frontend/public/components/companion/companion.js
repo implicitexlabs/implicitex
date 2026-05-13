@@ -28,6 +28,21 @@
 
   if (!els.companion || !els.bar) return;
 
+  function applySeverity(severity) {
+    els.companion.classList.remove('companion--error', 'companion--warning');
+    [els.stateVal, els.networkVal, els.actionVal].forEach(function (el) {
+      if (!el) return;
+      el.classList.remove('is-error', 'is-warning');
+    });
+
+    if (!severity) return;
+    els.companion.classList.add('companion--' + severity);
+    [els.stateVal, els.networkVal, els.actionVal].forEach(function (el) {
+      if (!el) return;
+      el.classList.add('is-' + severity);
+    });
+  }
+
   // ----------------------------------------------------------------
   // Toggle
   // ----------------------------------------------------------------
@@ -69,7 +84,7 @@
   //
   // setState(state, detail) — updates companion display.
   //   state:  string key from transaction-states.md
-  //           e.g. 'SUBMITTED' | 'CONFIRMED' | 'UNCLEAR' etc.
+  //           e.g. 'SUBMITTED' | 'CONFIRMED' | 'OUTCOME_UNKNOWN' | 'UNCLEAR' etc.
   //   detail: object {
   //     statusLine: string,   // collapsed bar text
   //     stateVal:   string,   // expanded Status row
@@ -77,11 +92,12 @@
   //     networkVal: string,   // expanded Network row
   //     eventVal:   string,   // expanded Last Event row
   //     actionVal:  string,   // expanded Next Step row
-  //     autoOpen:   boolean,  // open tray automatically (use for UNCLEAR, FAILED, REPLACED)
+  //     autoOpen:   boolean,  // open tray automatically (use for OUTCOME_UNKNOWN, UNCLEAR, FAILED, REPLACED)
   //   }
   // ----------------------------------------------------------------
   function setState(state, detail) {
     if (!detail) return;
+    applySeverity(detail.severity);
 
     if (els.status && detail.statusLine)     els.status.textContent    = detail.statusLine;
     if (els.stateVal && detail.stateVal)     els.stateVal.textContent  = detail.stateVal;
@@ -109,11 +125,12 @@
     els.companion.classList.add('is-active');
 
     // Auto-open only for high-priority states where user most needs context:
-    // WRONG_NETWORK, REJECTED, FAILED, CONFIRMED, UNCLEAR.
+    // WRONG_NETWORK, REJECTED, FAILED, CONFIRMED, OUTCOME_UNKNOWN, UNCLEAR.
     if (detail.autoOpen) open();
   }
 
   function reset() {
+    applySeverity(null);
     if (els.status)     els.status.textContent    = 'Ready · No active transaction';
     if (els.stateVal)   els.stateVal.textContent  = 'Ready';
     if (els.fundsVal)   els.fundsVal.textContent  = 'No active transaction';

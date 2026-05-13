@@ -24,14 +24,15 @@ answer "did funds move?" after an interruption.
 ## Governing Rules
 
 **1. An active receipt is never discarded until its state is terminal.**
-SUBMITTED and UNCLEAR receipts survive page refresh, wallet disconnect,
-and RPC failure. They are the most important receipts to preserve because
-their outcome is unresolved.
+SUBMITTED, OUTCOME_UNKNOWN, and UNCLEAR receipts survive page refresh, wallet
+disconnect, and RPC failure. They are the most important receipts to preserve
+because their outcome is unresolved.
 
 **2. Rehydration re-queries the chain, not the stored state.**
-On page load, if an active receipt exists with a non-terminal state, the
-interface queries the chain for the transaction hash before displaying anything.
-Stored state is a starting point, not a conclusion.
+On page load, if an active hash-bearing receipt exists with a non-terminal
+state, the interface displays the stored evidence immediately, then queries the
+chain for the transaction hash. Stored state is a starting point, not a
+conclusion.
 
 **3. The archive is bounded and silent.**
 Maximum 20 archived receipts. Oldest dropped when limit is reached.
@@ -40,11 +41,18 @@ Archive is never displayed by default — it is accessible but not foregrounded.
 **4. One active receipt at a time.**
 The store tracks one current reading. If a new transaction begins while an
 active receipt exists in a non-terminal state, that prior receipt is moved
-to archive first (marked UNCLEAR if still unresolved).
+to archive first as recoverable uncertainty if still unresolved. Hash-bearing
+receipts preserve their hash/explorer evidence for verification.
 
 **5. No fabricated state.**
-The store never writes a terminal state it cannot confirm. If re-query fails,
-the state remains UNCLEAR — not FAILED, not EXPIRED.
+The store never writes a terminal state it cannot confirm. If hash-bearing
+re-query fails, the state remains recoverable uncertainty — SUBMITTED or
+OUTCOME_UNKNOWN — not FAILED, not EXPIRED.
+
+**6. Hash evidence is durable.**
+Once a transfer hash exists, the receipt must preserve the hash and explorer URL.
+Hash-bearing receipts must never imply safe retry until the explorer or chain
+query verifies the outcome.
 
 ---
 
@@ -89,9 +97,9 @@ Both keys are namespaced under `ix.receipt` to avoid collisions.
 
 | Value | Meaning |
 |---|---|
-| `true` | On-chain confirmation received. Funds transferred. |
+| `true` | On-chain confirmation received. Funds transferred. CONFIRMED only. |
 | `false` | Terminal non-transfer state confirmed. Funds did not move. |
-| `null` | State is UNCLEAR or pre-terminal. Do not assume. |
+| `null` | State is pre-terminal, SUBMITTED, OUTCOME_UNKNOWN, or UNCLEAR. Do not assume. |
 
 ---
 
@@ -118,9 +126,10 @@ Both keys are namespaced under `ix.receipt` to avoid collisions.
         │
         ├──► [re-query: tx found, succeeded]  → CONFIRMED  (fundsMoved: true)
         ├──► [re-query: tx found, reverted]   → FAILED     (fundsMoved: false)
-        ├──► [re-query: tx not found, timeout] → UNCLEAR   (fundsMoved: null)
+        ├──► [re-query: tx not found]          → SUBMITTED or OUTCOME_UNKNOWN (fundsMoved: null)
+        ├──► [RPC/provider visibility failed]  → OUTCOME_UNKNOWN (fundsMoved: null)
         ├──► [wallet rejected before broadcast] → REJECTED (fundsMoved: false)
-        └──► [timeout without re-query result]  → UNCLEAR  (fundsMoved: null)
+        └──► [no reliable hash/evidence]        → UNCLEAR  (fundsMoved: null)
 
 [terminal state reached]
         │
@@ -145,21 +154,21 @@ On every page load, the store module runs before companion state is set.
    a. Display stored receipt in companion immediately (do not wait for re-query)
    b. If no transferHash exists and state is DRAFT, READY, AUTHORIZING, or AUTHORIZED,
       show the local state and do not query chain
-   c. If transferHash exists → query chain for receipt status
+   c. If transferHash exists → preserve hash/explorer evidence and query chain
       - Confirmed on-chain → update to CONFIRMED, fundsMoved: true
       - Reverted on-chain  → update to FAILED, fundsMoved: false
-      - Not found          → leave as UNCLEAR, prompt Polygonscan check
-      - RPC error          → leave as UNCLEAR, note RPC unavailable
+      - Not found          → keep SUBMITTED or OUTCOME_UNKNOWN, prompt explorer check
+      - RPC error          → update to OUTCOME_UNKNOWN, prompt explorer check
    d. Auto-open companion tray (rehydrated active receipt is high-priority)
 ```
 
 ### Rehydration companion message (before re-query resolves)
 
 ```
-Status:      Unclear
+Status:      Submitted / Outcome unknown
 Funds Moved: Unknown — checking network
 Network:     [stored network name]
-Last Event:  Transaction submitted [stored timestamp]
+Last Event:  [stored transfer hash]
 Next Step:   Checking transaction status. Do not retry yet.
 ```
 
@@ -169,23 +178,38 @@ Next Step:   Checking transaction status. Do not retry yet.
 
 A receipt transitions to UNCLEAR when:
 
-- Re-query for the hash returns null after the network's expected confirmation window
-- RPC call errors without returning a status
-- Page was closed or wallet disconnected while state was SUBMITTED or PENDING
-  and no confirmation was received before the interruption
+- No reliable transfer hash exists and the local state is not safely
+  classifiable as pre-broadcast
+- The app has insufficient evidence to determine whether a network transaction
+  exists
 
 A receipt does NOT transition to UNCLEAR when:
 
 - The user cancelled in wallet (that is REJECTED — known outcome)
 - The transaction reverted on-chain (that is FAILED — known outcome)
+- A transfer hash exists (that is SUBMITTED or OUTCOME_UNKNOWN until reconciled)
 - The companion tray is simply not open (visibility is irrelevant to state)
 
-### UNCLEAR timeout threshold (Polygon Amoy)
+## OUTCOME_UNKNOWN Transition Rules
+
+A receipt transitions to OUTCOME_UNKNOWN when:
+
+- A transfer hash exists and local confirmation visibility fails
+- RPC query errors without returning a status for a hash-bearing receipt
+- Provider wait fails after the SUBMITTED hash was durably written
+- Page reload, wallet disconnect, or runtime interruption loses local
+  confirmation visibility after broadcast evidence exists
+
+OUTCOME_UNKNOWN remains active and re-queriable. It must preserve `transferHash`,
+`hash`, and `explorerUrl` when available. It must direct the user to explorer
+verification before retrying.
+
+### Re-query timeout threshold (Polygon Amoy)
 
 Polygon Amoy target block time is ~2 seconds. A transaction not confirmed
-within 3 minutes (90 blocks) after submission should be considered potentially
-dropped and flagged UNCLEAR for re-query. This threshold is configurable per
-chain in `config/chains.js` as `confirmationTimeoutMs`.
+within 3 minutes (90 blocks) after submission should remain hash-bearing
+uncertainty and be re-queried or verified in the explorer. This threshold is
+configurable per chain in `config/chains.js` as `confirmationTimeoutMs`.
 
 ---
 
@@ -196,9 +220,10 @@ chain in `config/chains.js` as `confirmationTimeoutMs`.
 | Active, non-terminal | Indefinite — never expired while unresolved |
 | Archived, terminal | Last 20 entries, oldest dropped at limit |
 
-No time-based expiration. A receipt from 30 days ago that was UNCLEAR
-when the page closed is still UNCLEAR when it reopens — and still warrants
-a re-query, not silent deletion.
+No time-based expiration. A receipt from 30 days ago that was SUBMITTED,
+OUTCOME_UNKNOWN, or UNCLEAR when the page closed keeps that recoverable state
+when it reopens. Hash-bearing receipts warrant chain re-query or explorer
+verification, not silent deletion.
 
 ---
 
@@ -243,5 +268,6 @@ at this scale. Migrate if receipts grow significantly in size or quantity.
 
 **Why not sessionStorage?**
 sessionStorage is cleared on tab close. That defeats the primary purpose of
-persistence — surviving unintended interruptions. The UNCLEAR state would be
-lost exactly when it matters most.
+persistence — surviving unintended interruptions. Recoverable states such as
+SUBMITTED, OUTCOME_UNKNOWN, and UNCLEAR would be lost exactly when they matter
+most.

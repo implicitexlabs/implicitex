@@ -26,7 +26,7 @@
 
   const ARCHIVE_MAX = 20;
   const RECEIPT_EVENT = 'ix:receipts-changed';
-  const TERMINAL_STATES = ['CONFIRMED', 'FAILED', 'REJECTED', 'EXPIRED', 'REPLACED'];
+  const TERMINAL_STATES = ['CONFIRMED', 'FAILED', 'REJECTED', 'EXPIRED', 'REPLACED', 'INTERRUPTED'];
 
   // ----------------------------------------------------------------
   // Storage primitives — isolated so every caller gets null on error
@@ -165,7 +165,9 @@
   // Internal — prepend to archive, trim to ARCHIVE_MAX
   // ----------------------------------------------------------------
   function _pushToArchive(receipt) {
-    const archive = read(KEYS.archive) || [];
+    const archive = (read(KEYS.archive) || []).filter(function (item) {
+      return !receipt.id || item.id !== receipt.id;
+    });
     archive.unshift(receipt);
     if (archive.length > ARCHIVE_MAX) {
       archive.length = ARCHIVE_MAX;

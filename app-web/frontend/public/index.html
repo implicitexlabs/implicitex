@@ -8,6 +8,10 @@
   <meta property="og:description" content="Peer-to-peer USDC transfers on Polygon. Non-custodial. 1% flat fee.">
   <meta property="og:type" content="website">
   <title>ImplicitEx — Send USDC. No intermediaries.</title>
+  <link rel="icon" href="assets/icons/favicon.ico" sizes="any">
+  <link rel="icon" href="assets/icons/favicon-32x32.png" type="image/png" sizes="32x32">
+  <link rel="icon" href="assets/icons/favicon-16x16.png" type="image/png" sizes="16x16">
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="components/companion/companion.css">
   <link rel="manifest" href="manifest.json">
@@ -41,17 +45,102 @@
         <span class="wallet-addr" id="walletAddr"></span>
       </div>
       <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch to light theme" aria-pressed="false">
-        Theme
+        <svg class="theme-icon" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+          <!-- Left half: contrasting fill -->
+          <path d="M7 1 A6 6 0 0 0 7 13 Z" fill="var(--white)"/>
+          <!-- Right half: background fill -->
+          <path d="M7 1 A6 6 0 0 1 7 13 Z" fill="var(--bg)"/>
+          <!-- Circle border -->
+          <circle cx="7" cy="7" r="6" fill="none" stroke="currentColor" stroke-width="1.2"/>
+        </svg>
       </button>
       <span class="nav-status">Polygon · Live</span>
-      <button class="disconnect-btn" id="disconnectBtn" aria-label="Disconnect wallet" hidden>
+      <button class="switch-account-btn" id="switchAccountBtn" aria-label="Switch wallet account" hidden>
+        Switch Account
+      </button>
+      <button class="disconnect-btn" id="disconnectBtn" aria-label="Disconnect wallet" title="Disconnect removes ImplicitEx access. On shared computers, also lock MetaMask." hidden>
         Disconnect
       </button>
       <button class="connect-btn" id="connectBtn" onclick="IX.openOrConnect()">
         Connect Wallet
       </button>
+      <!-- Hamburger — mobile only, hidden on desktop via CSS -->
+      <button class="hamburger-btn" id="hamburgerBtn" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
+        <svg width="18" height="14" viewBox="0 0 18 14" aria-hidden="true">
+          <rect y="0"  width="18" height="1.8" fill="currentColor"/>
+          <rect y="6"  width="18" height="1.8" fill="currentColor"/>
+          <rect y="12" width="18" height="1.8" fill="currentColor"/>
+        </svg>
+      </button>
     </div>
   </nav>
+
+  <!-- MOBILE MENU OVERLAY -->
+  <div class="mobile-menu" id="mobileMenu" role="dialog" aria-modal="true" aria-label="Site menu" hidden>
+    <div class="mobile-menu-inner">
+      <div class="mobile-menu-head">
+        <span class="mobile-menu-title">Menu</span>
+        <button class="mobile-menu-close" id="mobileMenuClose" type="button" aria-label="Close menu">
+          <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+            <line x1="1" y1="1" x2="13" y2="13" stroke="currentColor" stroke-width="1.6"/>
+            <line x1="13" y1="1" x2="1" y2="13" stroke="currentColor" stroke-width="1.6"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Wallet section -->
+      <section class="mobile-menu-section" aria-label="Wallet">
+        <p class="mobile-menu-label">Wallet</p>
+        <p class="mobile-menu-status" id="menuWalletStatus">No wallet connected.</p>
+        <p class="mobile-menu-sender" id="menuSenderDisplay" hidden></p>
+        <p class="mobile-menu-network" id="menuNetworkDisplay" hidden></p>
+        <div class="mobile-menu-actions">
+          <button class="mobile-menu-btn mobile-menu-btn--primary" id="menuConnectBtn" type="button">
+            Connect Wallet
+          </button>
+          <button class="mobile-menu-btn" id="menuSwitchBtn" type="button" hidden>
+            Switch Account
+          </button>
+          <button class="mobile-menu-btn mobile-menu-btn--danger" id="menuDisconnectBtn" type="button" hidden>
+            Disconnect
+          </button>
+        </div>
+      </section>
+
+      <!-- Transaction section -->
+      <section class="mobile-menu-section" aria-label="Transaction">
+        <p class="mobile-menu-label">Transaction</p>
+        <button class="mobile-menu-btn mobile-menu-btn--primary" id="menuOpenPortalBtn" type="button">
+          Open Transfer Portal
+        </button>
+      </section>
+
+      <!-- Navigation links -->
+      <section class="mobile-menu-section" aria-label="Navigation">
+        <p class="mobile-menu-label">Site</p>
+        <nav class="mobile-menu-links">
+          <a href="/about.html">About</a>
+          <a href="/components/terms.html">Terms</a>
+          <a href="/privacy.html">Privacy</a>
+          <a href="/legal.html">Legal</a>
+          <a href="/jurisdictions.html">Access</a>
+          <a href="/news.html">News</a>
+          <a href="mailto:connect@implicitex.com">Contact</a>
+        </nav>
+      </section>
+
+      <!-- Social links — separated from site navigation -->
+      <section class="mobile-menu-section" aria-label="Social">
+        <p class="mobile-menu-label">Social</p>
+        <nav class="mobile-menu-links">
+          <a href="https://x.com/implicitex" target="_blank" rel="noopener">X</a>
+          <a href="https://github.com/implicitexlabs" target="_blank" rel="noopener">GitHub</a>
+        </nav>
+      </section>
+    </div>
+    <!-- Backdrop — tap to close -->
+    <div class="mobile-menu-backdrop" id="mobileMenuBackdrop" aria-hidden="true"></div>
+  </div>
 
   <main class="landing-main">
 
@@ -120,13 +209,12 @@
       <details class="flow-step reveal-copy">
         <summary>
           <span class="flow-num">03 — Confirm</span>
-          <p>Approve and transfer in two on-chain steps. Receipt link provided on completion.</p>
+          <p>Approve permission, then confirm transfer. Approval alone does not move funds.</p>
           <span class="flow-toggle" aria-hidden="true"></span>
         </summary>
         <div class="flow-more">
-          Token approval and transfer execution are separate wallet actions.
-          When live transfers are enabled, completed transactions will include
-          a network explorer receipt link.
+          Token approval gives contract permission only. The transfer is a separate
+          wallet confirmation, and completed transactions include a network explorer receipt link.
         </div>
       </details>
     </div>
@@ -144,6 +232,10 @@
       <span class="mod-tag">01 — Transfer</span>
       <p class="mod-title">Send USDC</p>
       <div class="tx-form">
+        <div class="fee-row" aria-live="polite">
+          <span class="fee-label">Connected sender</span>
+          <span class="fee-val" id="senderAddressDisplay">—</span>
+        </div>
         <input
           class="tx-field"
           type="text"
@@ -172,15 +264,18 @@
           <span class="fee-label">Fee (1%)</span>
           <span class="fee-val" id="feeDisplay">—</span>
         </div>
-        <button class="tx-btn" id="txBtn" onclick="IX.submitTransfer()">
-          Preview Transfer
+        <button class="tx-btn" id="txBtn" onclick="IX.handleTxAction()">
+          Review Transfer
+        </button>
+        <button class="tx-btn tx-btn--cancel" id="txCancelReview" type="button" aria-label="Return to editing transfer details" hidden>
+          Edit Details
         </button>
         <p class="tx-state-note" id="transferStateNote"></p>
         <p class="tx-status" id="txStatus" aria-live="assertive"></p>
       </div>
 
       <div id="txPreview" class="tx-preview" hidden aria-live="polite" aria-label="Transfer preview">
-        <p class="tx-preview-label">Transfer Preview</p>
+        <p class="tx-preview-label" id="txPreviewLabel">Transfer Preview</p>
         <div class="data-row">
           <span class="data-k">Recipient</span>
           <span class="data-v" id="previewRecipient">—</span>
@@ -217,8 +312,8 @@
         <p class="fee-explanation-body">
           ImplicitEx applies a 1% platform fee to completed transfers. The fee is routed by
           the smart contract to the configured treasury address at execution time — not held
-          or reviewed manually by ImplicitEx. In preview mode, no transaction is submitted
-          and no funds move.
+          or reviewed manually by ImplicitEx. Before wallet approval, no transaction is
+          submitted and no funds move.
         </p>
       </div>
 
@@ -312,9 +407,9 @@
       <a href="/news.html">News</a>
       <a href="mailto:connect@implicitex.com">Contact</a>
     </nav>
-    <nav class="social-icons" aria-label="Social links">
-      <a class="social-link social-x" href="https://x.com/implicitex" target="_blank" rel="noopener" aria-label="ImplicitEx on X"></a>
-      <a class="social-link social-github" href="https://github.com/implicitexlabs" target="_blank" rel="noopener" aria-label="ImplicitEx Labs on GitHub"></a>
+    <nav class="social-links" aria-label="Social links">
+      <a class="social-text-link" href="https://x.com/implicitex" target="_blank" rel="noopener">X</a>
+      <a class="social-text-link" href="https://github.com/implicitexlabs" target="_blank" rel="noopener">GitHub</a>
     </nav>
     <span class="f-net" id="networkBadge">Polygon live</span>
   </footer>
@@ -330,6 +425,7 @@
   <script src="js/wallet.js"></script>
   <script src="js/feeds.js"></script>
   <script src="js/app.js"></script>
+  <script src="js/mobile-menu.js"></script>
   <script src="components/companion/companion.js"></script>
   <script src="js/rehydrate.js"></script>
 </body>

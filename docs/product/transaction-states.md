@@ -11,10 +11,14 @@ Wording evolves here first. Code follows.
 **1. "Funds Moved?" is always answered first.**
 If the companion communicates nothing else, it answers that question.
 
-**2. UNCLEAR is not a failure state. It is an epistemic state.**
+**2. Uncertainty is not failure.**
 The companion must not imply a transaction failed when the outcome is genuinely
 unknown. Uncertainty and failure are different. Treating them as the same causes
 users to retry transactions that may have already confirmed.
+
+Hash-bearing uncertainty is `OUTCOME_UNKNOWN`, not generic `UNCLEAR`. Once a
+transfer hash exists, the app has durable evidence and must preserve explorer
+verification before any retry guidance.
 
 **3. AI never invents state.**
 If an AI interpretation layer is added later, it annotates known state —
@@ -24,6 +28,10 @@ it does not classify it. The state machine is authoritative. The AI is explanato
 If the RPC cannot distinguish mempool presence from initial broadcast, collapse
 both into SUBMITTED. Do not fabricate state granularity that the provider cannot
 confirm.
+
+**5. CONFIRMED is the only funds-moved state.**
+`fundsMoved: true` is written only after on-chain confirmation. Approval, wallet
+confirmation, broadcast, and local visibility loss do not mean funds moved.
 
 ---
 
@@ -36,12 +44,13 @@ confirm.
 | `AUTHORIZING` | USDC allowance authorization requested or submitted. | No | Confirm authorization or wait for approval confirmation. | "USDC authorization in progress. Funds are not sent yet." |
 | `AUTHORIZED` | Approval confirmed or existing allowance is sufficient. Transfer has not been submitted. | No | Confirm transfer if intended. | "USDC authorization ready. Transfer not submitted yet." |
 | `SUBMITTING` | Transfer confirmation requested in wallet, but no transfer hash is known yet. | Unknown | Do not refresh if wallet is open. | "Transfer confirmation requested. Awaiting wallet or transaction hash." |
-| `SUBMITTED` | Broadcast to network. Not yet included in a block. | No | Wait. Do not retry. | "Transaction submitted. Awaiting network confirmation. No funds have moved yet." |
+| `SUBMITTED` | Transfer hash exists. Broadcast evidence is available, but confirmation is unresolved. | Unknown — verify before retrying | Wait. Do not retry. Preserve the hash and explorer link. | "Transaction submitted. Awaiting network confirmation. Do not retry yet." |
 | `PENDING` | Seen by network nodes. In mempool, awaiting mining. Only use when provider confirms mempool presence. | No | Wait. Do not retry. | "Transaction pending. The network is working. No funds have moved yet." |
 | `CONFIRMED` | Included in a finalized block. On-chain record exists. | Yes | Review receipt. | "Transfer confirmed. Funds have moved. Receipt available on Polygonscan." |
 | `REJECTED` | Cancelled in wallet before broadcast. Nothing reached the network. | No | Retry if intended, or do nothing. | "Transaction rejected in wallet. Nothing was sent. No funds moved." |
 | `FAILED` | Reached the network. Included in a block. Execution reverted on-chain. | No — gas was consumed | Check reason. Correct inputs. Retry only if appropriate. | "Transaction failed on-chain. Transfer did not complete. Gas was consumed. Funds were not moved." |
-| `UNCLEAR` | Submitted, but current status cannot be resolved. Cause: RPC failure, timeout, or network error. | Unknown — verify before retrying | Check Polygonscan. Do not retry without confirming current status. | "Transaction status is unclear. Check Polygonscan before retrying. Do not assume the transfer failed." |
+| `OUTCOME_UNKNOWN` | Transfer hash exists, but local confirmation visibility failed after broadcast. Cause: RPC error, reload, wallet disconnect, or provider wait failure. | Unknown — verify before retrying | Check the explorer using the stored hash. Do not retry until the outcome is verified. | "Outcome unknown. Check explorer before retrying." |
+| `UNCLEAR` | Insufficient evidence to classify the attempt, usually because no reliable transfer hash exists. | Unknown — do not assume | Review local state. If a hash appears later, promote to `SUBMITTED` or `OUTCOME_UNKNOWN`. | "Transaction status is unclear. No reliable network record is available." |
 | `EXPIRED` | Broadcast but dropped from mempool before mining. Cause: gas too low or network timeout. | No | Retry with adjusted gas, or wait for network conditions to improve. | "Transaction expired. Not processed by the network. No funds moved. Retry with higher gas if needed." |
 | `REPLACED` | A later transaction with the same nonce was mined instead. Cause: speed-up or cancel action. | Depends on the replacement | Verify which transaction was mined on Polygonscan before proceeding. | "Transaction replaced by a later submission. Verify the outcome on Polygonscan before proceeding." |
 
@@ -68,9 +77,10 @@ confirm.
         │        ▼
         ├──► CONFIRMED  ← terminal, positive
         ├──► FAILED     ← terminal, negative (reverted on-chain)
+        ├──► OUTCOME_UNKNOWN ← non-terminal, hash-bearing (verify explorer; re-query)
         ├──► EXPIRED    ← terminal, negative (dropped from mempool)
         ├──► REPLACED   ← terminal, ambiguous (check replacement)
-        └──► UNCLEAR    ← non-terminal (re-query; may resolve to any terminal state)
+        └──► UNCLEAR    ← non-terminal, insufficient evidence (usually no reliable hash)
 
 [user cancels in wallet]
         │
@@ -85,11 +95,11 @@ confirm.
 - No first-person language. Subject is always the transaction or the network.
 - No emotional coloring. No apology, no celebration, no reassurance beyond fact.
 - Present tense for current state. Past tense only in confirmed receipts.
-- Do not speculate. If the state is UNCLEAR, the companion says it is unclear.
+- Do not speculate. If the state is OUTCOME_UNKNOWN or UNCLEAR, name that state directly.
 - Operational truth only. The companion reads like an instrument, not a voice.
 
 **Correct:**
-> "Transaction submitted. Awaiting network confirmation. No funds have moved yet."
+> "Transaction submitted. Awaiting network confirmation. Do not retry yet."
 
 **Incorrect:**
 > "We're processing your transaction! Hang tight 🚀"
@@ -137,10 +147,15 @@ opposite implications for "did my money move?" and must never be collapsed into
 a single error message.
 
 **UNCLEAR**
-This is the state the Polygon Amoy faucet produced with "try again in 12 hours"
-and no further explanation. It is the gap ImplicitEx must never replicate. When
-status is unresolvable, name it explicitly, state that funds status is unknown,
-and direct the user to an authoritative source (block explorer) before any retry.
+UNCLEAR means the app lacks enough evidence to classify the attempt, usually
+because no reliable transfer hash exists. It is not a synonym for failed, and it
+is not the normal state for hash-bearing uncertainty.
+
+**OUTCOME_UNKNOWN**
+OUTCOME_UNKNOWN means a transfer hash exists but local confirmation visibility
+failed. The hash is durable evidence. Preserve it, preserve the explorer link,
+state that funds status is unknown, and direct the user to verify the explorer
+before any retry.
 
 **REPLACED**
 Occurs when a user or wallet submits a second transaction with the same nonce
