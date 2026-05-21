@@ -29,6 +29,9 @@
   --status-ok:  rgba(242, 242, 240, 0.7);
   --warn:       #c0392b;
   --warn-border: rgba(192, 57, 43, 0.7);
+  --telemetry-amber:     #b87a1e;
+  --telemetry-amber-dim: rgba(184, 122, 30, 0.82);
+  --telemetry-amber-border: rgba(184, 122, 30, 0.28);
   --logo-pixel: rgba(242, 242, 240, 1);
   --sans:       'Oxanium', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --display:    'Orbitron', system-ui, -apple-system, sans-serif;
@@ -51,6 +54,9 @@
   --status-ok:  rgba(8, 8, 8, 0.7);
   --warn:       #b03020;
   --warn-border: rgba(176, 48, 32, 0.7);
+  --telemetry-amber:     #a06818;
+  --telemetry-amber-dim: rgba(160, 104, 24, 0.82);
+  --telemetry-amber-border: rgba(160, 104, 24, 0.28);
   --logo-pixel: rgba(8, 8, 8, 1);
 }
 
@@ -663,6 +669,24 @@ body.portal-active #nav {
 .tx-field::placeholder { color: var(--muted); }
 .tx-field:focus { border-color: var(--border-2); }
 
+.tx-field--select {
+  appearance: none;
+  color: var(--white);
+}
+
+.tx-meta-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.82fr) minmax(0, 1fr);
+}
+
+.tx-meta-grid .tx-field {
+  border-top: none;
+}
+
+.tx-meta-grid .tx-field + .tx-field {
+  border-left: none;
+}
+
 .tx-field--error {
   border-color: var(--warn-border) !important;
   border-bottom: 1px solid var(--warn-border) !important;
@@ -752,9 +776,9 @@ body.portal-active #nav {
 .receipt-link:link,
 .receipt-link:visited,
 .receipt-check-btn {
-  color: var(--white);
+  color: var(--dim);
   text-decoration: none;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--border-2);
   letter-spacing: 0.08em;
 }
 
@@ -764,8 +788,8 @@ body.portal-active #nav {
 .receipt-link:focus-visible,
 .receipt-check-btn:hover,
 .receipt-check-btn:focus-visible {
-  color: var(--accent);
-  border-bottom-color: var(--accent);
+  color: var(--white);
+  border-bottom-color: var(--white);
 }
 
 .receipt-check-btn {
@@ -811,6 +835,78 @@ body.portal-active #nav {
   margin-top: 10px;
 }
 
+.intel-panel,
+.preflight-panel {
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  background: transparent;
+  padding: 8px 0;
+  margin: 8px 0 10px;
+}
+
+.intel-panel[hidden] {
+  display: none;
+}
+
+.intel-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--dim);
+  margin-bottom: 7px;
+}
+
+.intel-list,
+.preflight-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  list-style: none;
+}
+
+.intel-list li,
+.preflight-list li {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  font-family: var(--mono);
+  font-size: 10px;
+  line-height: 1.45;
+  color: var(--dim);
+}
+
+.intel-list li::before,
+.preflight-list li::before {
+  content: "";
+  width: 4px;
+  height: 4px;
+  margin-top: 5px;
+  border-radius: 50%;
+  background: var(--muted);
+  flex: 0 0 auto;
+}
+
+.intel-list li.is-ok::before,
+.preflight-list li.is-ok::before {
+  background: var(--dim);
+}
+
+.intel-list li.is-warning::before,
+.preflight-list li.is-warning::before {
+  background: var(--warn);
+}
+
+.preflight-list li.is-blocking,
+.preflight-list li.is-warning,
+.intel-list li.is-warning {
+  color: var(--dim);
+}
+
+.preflight-list li.is-blocking::before {
+  background: var(--warn);
+}
+
 .fee-explanation {
   border-top: 1px solid var(--border);
   margin-top: 14px;
@@ -828,9 +924,15 @@ body.portal-active #nav {
 
 .fee-explanation-body {
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: 11px;
+  color: var(--dim);
+  line-height: 1.55;
+}
+
+.fee-explanation-body a {
   color: var(--white);
-  line-height: 1.65;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .receipt-history {
@@ -863,9 +965,9 @@ body.portal-active #nav {
 }
 
 .receipt-item {
-  border: 1px solid var(--border);
-  padding: 8px;
-  background: var(--surface-2);
+  border-top: 1px solid var(--border);
+  padding: 8px 0 0;
+  background: transparent;
 }
 
 .receipt-item-head {
@@ -883,7 +985,7 @@ body.portal-active #nav {
 
 .receipt-meta,
 .receipt-message {
-  color: var(--white);
+  color: var(--dim);
 }
 
 .receipt-actions {
@@ -891,6 +993,23 @@ body.portal-active #nav {
   flex-wrap: wrap;
   gap: 10px;
   margin-top: 4px;
+}
+
+.receipt-proof-btn {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--border-2);
+  color: var(--white);
+  cursor: pointer;
+  font: inherit;
+  padding: 0;
+  text-align: left;
+}
+
+.receipt-proof-btn:hover,
+.receipt-proof-btn:focus-visible {
+  border-bottom-color: var(--white);
 }
 
 
@@ -1270,6 +1389,14 @@ footer .social-links a:focus-visible,
     grid-template-columns: 1fr;
     padding: 0;
     margin-bottom: 2rem;
+  }
+
+  .tx-meta-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .tx-meta-grid .tx-field + .tx-field {
+    border-left: 1px solid var(--border);
   }
 
   .portal-controls {
