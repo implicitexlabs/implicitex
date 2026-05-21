@@ -13,6 +13,8 @@ contract MockERC20 {
     bool public failTransferFrom;
     uint256 public failTransferOnCall;
     uint256 public transferCallCount;
+    uint256 public failTransferFromOnCall;
+    uint256 public transferFromCallCount;
 
     constructor(string memory tokenName, string memory tokenSymbol, uint8 tokenDecimals) {
         name = tokenName;
@@ -30,6 +32,10 @@ contract MockERC20 {
 
     function setFailTransferOnCall(uint256 callNumber) external {
         failTransferOnCall = callNumber;
+    }
+
+    function setFailTransferFromOnCall(uint256 callNumber) external {
+        failTransferFromOnCall = callNumber;
     }
 
     function mint(address to, uint256 amount) external {
@@ -60,6 +66,11 @@ contract MockERC20 {
 
     function transferFrom(address sender, address recipient, uint256 amount) external returns (bool) {
         if (failTransferFrom) {
+            return false;
+        }
+
+        transferFromCallCount += 1;
+        if (failTransferFromOnCall != 0 && transferFromCallCount == failTransferFromOnCall) {
             return false;
         }
 
