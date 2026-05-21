@@ -21,15 +21,19 @@
 (function () {
   'use strict';
 
+  const TRANSFER_STATUS = window.IX && window.IX.transferStatus;
+  const IX_TRANSFER_STATES = TRANSFER_STATUS && TRANSFER_STATUS.IX_TRANSFER_STATES;
+  const RECEIPT_SCHEMA = window.IX && window.IX.receiptSchema;
+  const OBSERVATION_SOURCES = RECEIPT_SCHEMA && RECEIPT_SCHEMA.OBSERVATION_SOURCES;
+  const REHYDRATION_SOURCE = OBSERVATION_SOURCES && OBSERVATION_SOURCES.REHYDRATION;
   // Terminal states that should have been archived but weren't (e.g. crash mid-resolve).
-  // INTERRUPTED: wallet event or -32002 mid-flow; fundsMoved is always false — archive, do not re-query.
   // OUTCOME_UNKNOWN is intentionally absent: it has a transferHash and should be re-queried.
-  const TERMINAL_STATES = ['CONFIRMED', 'FAILED', 'REJECTED', 'EXPIRED', 'REPLACED', 'INTERRUPTED'];
+  const TERMINAL_STATES = TRANSFER_STATUS ? TRANSFER_STATUS.TERMINAL_STATES : ['confirmed', 'failed', 'rejected', 'expired', 'replaced'];
   // SUBMITTING without a hash: MetaMask had the transfer confirmation dialog open
   // but the page closed before the wallet returned a tx object. The transaction
   // was never broadcast — semantically identical to AUTHORIZING or AUTHORIZED.
   // Keeping it in PRE_BROADCAST_STATES prevents a false UNCLEAR promotion on reload.
-  const PRE_BROADCAST_STATES = ['DRAFT', 'READY', 'AUTHORIZING', 'AUTHORIZED', 'SUBMITTING'];
+  const PRE_BROADCAST_STATES = TRANSFER_STATUS ? TRANSFER_STATUS.PRE_BROADCAST_STATES : ['draft', 'ready', 'authorizing', 'authorized', 'submitting'];
 
   // ----------------------------------------------------------------
   // Main rehydration entry point
@@ -51,7 +55,7 @@
     // Pre-broadcast receipts: no hash, no chain record, no funds moved.
     // SUBMITTING without a hash is pre-broadcast — wallet closed before returning a tx.
     if (!transferHash && PRE_BROADCAST_STATES.includes(active.state)) {
-      const walletClosedBeforeBroadcast = active.state === 'SUBMITTING';
+      const walletClosedBeforeBroadcast = active.state === IX_TRANSFER_STATES.SUBMITTING;
       showCompanion(active.state, {
         statusLine: active.lastKnownMessage || 'Transfer attempt saved locally.',
         stateVal:   active.state,
@@ -69,8 +73,9 @@
     // No hash in any other state: cannot determine outcome, do not fabricate failure.
     if (!transferHash) {
       window.IX.receipts.update(active.id, {
-        state: 'UNCLEAR',
+        state: IX_TRANSFER_STATES.UNCLEAR,
         fundsMoved: null,
+        observationSource: REHYDRATION_SOURCE,
         lastKnownMessage: 'Transaction was not broadcast. No network record to verify.',
       });
       showUnclear(active, 'Transaction was not broadcast. No network record to verify.');
@@ -83,28 +88,28 @@
     const rpcUrl = chainConfig && chainConfig.rpcUrl;
 
     if (!rpcUrl) {
-      markOutcomeUnknown(active, transferHash, chainConfig, 'No RPC configured for this network. Check Polygonscan manually.');
+      markOutcomeUnknown(active, transferHash, chainConfig, 'No RPC configured for this network. Verify on explorer manually.');
       return;
     }
 
     if (typeof ethers === 'undefined') {
-      markOutcomeUnknown(active, transferHash, chainConfig, 'Network library unavailable. Check Polygonscan manually.');
+      markOutcomeUnknown(active, transferHash, chainConfig, 'Network library unavailable. Verify on explorer manually.');
       return;
     }
 
     // Show the stored hash-bearing state immediately. The companion updates
     // again if the chain query resolves to confirmed, failed, or unknown.
-    showCompanion(active.state === 'OUTCOME_UNKNOWN' ? 'OUTCOME_UNKNOWN' : 'SUBMITTED', {
-      statusLine: active.state === 'OUTCOME_UNKNOWN'
+    showCompanion(active.state === IX_TRANSFER_STATES.OUTCOME_UNKNOWN ? IX_TRANSFER_STATES.OUTCOME_UNKNOWN : IX_TRANSFER_STATES.SUBMITTED, {
+      statusLine: active.state === IX_TRANSFER_STATES.OUTCOME_UNKNOWN
         ? 'Outcome unknown. Checking network…'
         : 'Transaction submitted. Checking network…',
-      stateVal:   active.state === 'OUTCOME_UNKNOWN' ? 'Outcome unknown' : 'Submitted',
+      stateVal:   active.state === IX_TRANSFER_STATES.OUTCOME_UNKNOWN ? 'Outcome unknown' : 'Submitted',
       fundsVal:   'Unknown — checking now',
       networkVal: active.network || '—',
       eventVal:   transferHash,
       actionVal:  'Checking transaction status. Do not retry yet.',
       actionHref: active.explorerUrl || explorerUrlFor(chainConfig, transferHash) || undefined,
-      severity:   active.state === 'OUTCOME_UNKNOWN' ? 'warning' : undefined,
+      severity:   active.state === IX_TRANSFER_STATES.OUTCOME_UNKNOWN ? 'warning' : undefined,
       autoOpen:   true,
     });
 
@@ -116,16 +121,17 @@
       if (txReceipt === null) {
         // Not found: still in mempool, dropped, or RPC sync lag.
         // Cannot distinguish without mempool access — keep hash evidence active.
-        const unresolvedState = active.state === 'OUTCOME_UNKNOWN' ? 'OUTCOME_UNKNOWN' : 'SUBMITTED';
+        const unresolvedState = active.state === IX_TRANSFER_STATES.OUTCOME_UNKNOWN ? IX_TRANSFER_STATES.OUTCOME_UNKNOWN : IX_TRANSFER_STATES.SUBMITTED;
         window.IX.receipts.update(active.id, {
           state: unresolvedState,
           transferHash,
           hash: transferHash,
           explorerUrl: active.explorerUrl || explorerUrlFor(chainConfig, transferHash),
           fundsMoved: null,
-          lastKnownMessage: 'Transaction not yet confirmed. Check Polygonscan before retrying.',
+          observationSource: REHYDRATION_SOURCE,
+          lastKnownMessage: 'Transaction not yet confirmed. Verify on explorer before retrying.',
         });
-        showHashUnresolved(unresolvedState, active, transferHash, chainConfig, 'Transaction not yet confirmed. Check Polygonscan before retrying.');
+        showHashUnresolved(unresolvedState, active, transferHash, chainConfig, 'Transaction not yet confirmed. Verify on explorer before retrying.');
         return;
       }
 
@@ -136,16 +142,18 @@
           : null;
 
         window.IX.receipts.update(active.id, {
-          state:       'CONFIRMED',
+          state:       IX_TRANSFER_STATES.CONFIRMED,
           fundsMoved:  true,
           transferHash,
           hash:        transferHash,
           explorerUrl,
+          blockNumber: txReceipt.blockNumber || null,
+          observationSource: REHYDRATION_SOURCE,
           lastKnownMessage: 'Transfer confirmed. Funds moved.',
         });
         window.IX.receipts.clearActive();
 
-        showCompanion('CONFIRMED', {
+        showCompanion(IX_TRANSFER_STATES.CONFIRMED, {
           statusLine: 'Transfer confirmed. Funds have moved.',
           stateVal:   'Confirmed',
           fundsVal:   'Yes — transfer complete',
@@ -161,15 +169,16 @@
       if (txReceipt.status === 0) {
         // Reverted on-chain. Gas was consumed. Funds did not move.
         window.IX.receipts.update(active.id, {
-          state: 'FAILED',
+          state: IX_TRANSFER_STATES.FAILED,
           fundsMoved: false,
           transferHash,
           hash: transferHash,
+          observationSource: REHYDRATION_SOURCE,
           lastKnownMessage: 'Transaction reverted on-chain. Funds were not moved.',
         });
         window.IX.receipts.clearActive();
 
-        showCompanion('FAILED', {
+        showCompanion(IX_TRANSFER_STATES.FAILED, {
           statusLine: 'Transaction failed on-chain. Funds were not moved.',
           stateVal:   'Failed',
           fundsVal:   'No — gas may have been consumed',
@@ -186,7 +195,7 @@
 
     } catch (_) {
       // RPC error — cannot determine outcome. Keep receipt active for next load.
-      markOutcomeUnknown(active, transferHash, chainConfig, 'Network query failed. Check Polygonscan before retrying.');
+      markOutcomeUnknown(active, transferHash, chainConfig, 'Network query failed. Verify on explorer before retrying.');
     }
   }
 
@@ -200,14 +209,14 @@
   }
 
   function showUnclear(receipt, reason) {
-    showCompanion('UNCLEAR', {
+    showCompanion(IX_TRANSFER_STATES.UNCLEAR, {
       statusLine: 'Transaction status is unclear.',
       stateVal:   'Unclear',
       fundsVal:   'Unknown — verify before retrying',
       networkVal: (receipt && receipt.network) || '—',
       eventVal:   reason,
       // No dramatization. No "may be lost." Factual direction only.
-      actionVal:  'Check Polygonscan before retrying. Do not assume the transfer failed.',
+      actionVal:  'Verify on explorer before retrying. Do not assume the transfer failed.',
       autoOpen:   true,
     });
   }
@@ -216,24 +225,25 @@
     const explorerUrl = (receipt && receipt.explorerUrl) || explorerUrlFor(chainConfig, transferHash);
     if (receipt && receipt.id) {
       window.IX.receipts.update(receipt.id, {
-        state: 'OUTCOME_UNKNOWN',
+        state: IX_TRANSFER_STATES.OUTCOME_UNKNOWN,
         transferHash,
         hash: transferHash,
         explorerUrl,
         fundsMoved: null,
+        observationSource: REHYDRATION_SOURCE,
         lastKnownMessage: reason,
       });
     }
-    showHashUnresolved('OUTCOME_UNKNOWN', receipt, transferHash, chainConfig, reason);
+    showHashUnresolved(IX_TRANSFER_STATES.OUTCOME_UNKNOWN, receipt, transferHash, chainConfig, reason);
   }
 
   function showHashUnresolved(stateKey, receipt, transferHash, chainConfig, reason) {
     const explorerUrl = (receipt && receipt.explorerUrl) || explorerUrlFor(chainConfig, transferHash);
     showCompanion(stateKey, {
-      statusLine: stateKey === 'SUBMITTED'
-        ? 'Transaction submitted. Check explorer before retrying.'
-        : 'Outcome unknown. Check explorer before retrying.',
-      stateVal:   stateKey === 'SUBMITTED' ? 'Submitted' : 'Outcome unknown',
+      statusLine: stateKey === IX_TRANSFER_STATES.SUBMITTED
+        ? 'Transaction submitted. Verify on explorer before retrying.'
+        : 'Outcome unknown. Verify on explorer before retrying.',
+      stateVal:   stateKey === IX_TRANSFER_STATES.SUBMITTED ? 'Submitted' : 'Outcome unknown',
       fundsVal:   'Unknown — check explorer',
       networkVal: (receipt && receipt.network) || (chainConfig && chainConfig.name) || '—',
       eventVal:   transferHash,
@@ -241,7 +251,7 @@
         ? 'Check on ' + ((chainConfig && chainConfig.name) || 'network') + ' explorer \u2197'
         : reason,
       actionHref: explorerUrl || undefined,
-      severity:   stateKey === 'OUTCOME_UNKNOWN' ? 'warning' : undefined,
+      severity:   stateKey === IX_TRANSFER_STATES.OUTCOME_UNKNOWN ? 'warning' : undefined,
       autoOpen:   true,
     });
   }
