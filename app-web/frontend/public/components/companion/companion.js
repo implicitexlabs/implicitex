@@ -1,10 +1,6 @@
 /**
  * companion.js — Transaction Companion Tray
  *
- * Current scope: static shell only. Toggle open/close. One hardcoded READY state.
- * Not wired to wallet flow yet. No localStorage. No transaction events.
- *
- * Future: wire to wallet.js via window.IX.companion.setState(state, detail)
  * State vocabulary: docs/product/transaction-states.md
  */
 
@@ -80,7 +76,7 @@
 
   // ----------------------------------------------------------------
   // Public API
-  // Exposed on window.IX.companion for future wallet.js wiring.
+  // Exposed on window.IX.companion for wallet.js status updates.
   //
   // setState(state, detail) — updates companion display.
   //   state:  string key from transaction-states.md
@@ -92,7 +88,7 @@
   //     networkVal: string,   // expanded Network row
   //     eventVal:   string,   // expanded Last Event row
   //     actionVal:  string,   // expanded Next Step row
-  //     autoOpen:   boolean,  // open tray automatically (use for OUTCOME_UNKNOWN, UNCLEAR, FAILED, REPLACED)
+  //     autoOpen:   boolean,  // open tray automatically for states that need user attention
   //   }
   // ----------------------------------------------------------------
   function setState(state, detail) {
@@ -105,7 +101,7 @@
     if (els.networkVal && detail.networkVal) els.networkVal.textContent = detail.networkVal;
     if (els.eventVal && detail.eventVal)     els.eventVal.textContent  = detail.eventVal;
 
-    // actionVal may carry a link (e.g. Polygonscan receipt on CONFIRMED).
+    // actionVal may carry a link for external chain verification.
     // actionHref is always from our own chain config + a chain-produced 0x hex — safe.
     if (els.actionVal && detail.actionVal) {
       if (detail.actionHref) {
@@ -124,8 +120,7 @@
 
     els.companion.classList.add('is-active');
 
-    // Auto-open only for high-priority states where user most needs context:
-    // WRONG_NETWORK, REJECTED, FAILED, CONFIRMED, OUTCOME_UNKNOWN, UNCLEAR.
+    // Auto-open only for states where user most needs context.
     if (detail.autoOpen) open();
   }
 
