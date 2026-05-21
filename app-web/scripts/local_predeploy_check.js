@@ -95,11 +95,14 @@ async function main() {
   console.log("\n=== Predeploy check passed ===");
   console.log("Local deploy mechanics are confirmed working.");
   console.log("No config/chains.js was updated — this is a local check only.");
-  console.log("\nRemaining before Amoy deploy:");
-  console.log("  - Fund testnet deployer wallet with MATIC");
-  console.log("  - Set IMPLICITEX_DEPLOYER_KEY, IMPLICITEX_RPC_URL_AMOY in .env");
-  console.log("  - Set all five deploy-param env vars");
-  console.log("  - Run: npx hardhat run scripts/deploy_implicitex_transfer.js --network polygon-amoy");
+  console.log("\nRemaining before Polygon mainnet deploy:");
+  console.log("  - Identify a clean deployer wallet (key not exposed to any agent/tool)");
+  console.log("  - Set IMPLICITEX_DEPLOYER_KEY, IMPLICITEX_RPC_URL_POLYGON in .env manually");
+  console.log("  - Set IMPLICITEX_USDC_ADDRESS, IMPLICITEX_TREASURY_ADDRESS,");
+  console.log("    IMPLICITEX_OWNER_ADDRESS,");
+  console.log("    IMPLICITEX_INITIAL_FEE_BPS, IMPLICITEX_MIN_TRANSFER_AMOUNT,");
+  console.log("    IMPLICITEX_TRANSFER_PRECISION in .env");
+  console.log("  - Run: npx hardhat run scripts/deploy_implicitex_transfer.js --network polygon");
 }
 
 main().catch((err) => {
