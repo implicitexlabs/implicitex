@@ -38,7 +38,7 @@ code:
 | Role | Address | Current readiness |
 |---|---|---|
 | Deployer | `0x5466bbA8cD334554c88F81342dDfcEc4c4A7698B` | Funded for deploy and verification; 40.0 POL observed. |
-| Governance wallet | `0x6d6232f653f5DD765017F12647435c2122F3F6B8` | Identified; needs small POL reserve before governance/Safe operations. |
+| Governance wallet | `0x6d6232f653f5DD765017F12647435c2122F3F6B8` | Identified and funded for governance/Safe operational use; 5.0 POL observed. |
 | Safe / owner | `0x776A0D6b9F96445A38303F56d5B923e6d1FF8E97` | Intended owner target; 10.0 POL observed. |
 | Treasury | `0xa7cE4232811021d2Dd01f4f0f264Df2427ab3919` | Intended fee recipient; 5.0 POL observed. |
 | Operations | `0xFfEe63C73C082Da41Ec2ceB315aEd61ef192B616` | Operational reserve; 15.0 POL and 75.0 native Polygon USDC observed. |
