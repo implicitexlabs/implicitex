@@ -81,9 +81,10 @@
   ];
 
   const IMPLICITEX_ABI = [
-    'function feeBasisPoints() view returns (uint16)',
     'function minTransferAmount() view returns (uint256)',
     'function transferPrecision() view returns (uint256)',
+    'function paused() view returns (bool)',
+    'function previewTransfer(address sender,uint256 amount) view returns (uint256 fee,uint256 totalDebit,uint256 balance,uint256 allowance,bool canTransfer)',
     'function transferWithFee(address recipient, uint256 amount)',
   ];
 
@@ -573,6 +574,25 @@
     };
   }
 
+  function buildOnChainPreviewSummary(baseSummary, preview, chainConfig) {
+    const fee = BigInt(preview[0]);
+    const totalDebit = BigInt(preview[1]);
+    const balance = BigInt(preview[2]);
+    const allowance = BigInt(preview[3]);
+    const canTransfer = Boolean(preview[4]);
+
+    return Object.assign({}, baseSummary, {
+      fee,
+      totalDebit,
+      balance,
+      allowance,
+      canTransfer,
+      chainConfig,
+      balanceKnown: true,
+      insufficientBalance: balance < totalDebit,
+    });
+  }
+
   function recipientBookEntries() {
     const entries = fullStorageRead(RECIPIENT_BOOK_KEY, []);
     return Array.isArray(entries) ? entries : [];
@@ -734,7 +754,8 @@
       { label: aboveMinimum ? 'Above minimum' : minimumLabel, status: aboveMinimum ? 'ok' : 'blocking' },
       { label: summary && summary.balanceKnown ? 'Balance loaded' : 'Balance loading', status: summary && summary.balanceKnown ? 'ok' : 'warning' },
       { label: summary && !summary.insufficientBalance ? 'Balance covers total debit' : 'Balance must cover recipient amount plus fee', status: summary && !summary.insufficientBalance ? 'ok' : validAmount ? 'blocking' : 'warning' },
-      { label: summary ? 'Fee preview ready' : 'Fee preview pending', status: summary ? 'ok' : 'warning' },
+      { label: summary ? 'Amount preview ready' : 'Amount preview pending', status: summary ? 'ok' : 'warning' },
+      { label: 'Execution checks run before wallet prompt', status: 'warning' },
     ];
   }
 
@@ -1124,7 +1145,7 @@
     renderTransferSummary(summary, {
       label: 'Transfer Preview',
       mode: 'Live',
-      note: 'Review recipient amount, platform fee, and total wallet debit before approval.',
+      note: 'Amount preview only. Recipient, network, pause state, contract, USDC token, balance, and allowance are checked again before any wallet prompt.',
     });
     setStatus('');
     setTransferNote('');
@@ -1353,7 +1374,7 @@
     renderTransferSummary(summary, {
       label: 'Review Transfer',
       mode: 'Review ready',
-      note: 'Confirm to check allowance. If approval is needed, approve the full total wallet debit.',
+      note: 'Continue to refresh on-chain preview data and check allowance before any wallet prompt.',
     });
 
     // Show cancel path and update primary button.
@@ -1371,7 +1392,7 @@
       fundsVal:   'No — wallet action not yet requested',
       networkVal: chainLabel(state.chainId),
       eventVal:   'Transfer details validated.',
-      actionVal:  'Continue to check allowance. If approval is needed, approve the full total wallet debit.',
+      actionVal:  'Continue to refresh contract data and check allowance. If approval is needed, approve the full total wallet debit.',
     });
   }
 
@@ -2283,19 +2304,6 @@
     const usdc       = new ethers.Contract(usdcAddress,     ERC20_ABI,     signer);
     const implicitex = new ethers.Contract(contractAddress, IMPLICITEX_ABI, signer);
 
-    // --- Read on-chain contract parameters ---
-    let feeBps, minTransfer, precision;
-    try {
-      [feeBps, minTransfer, precision] = await Promise.all([
-        implicitex.feeBasisPoints(),
-        implicitex.minTransferAmount(),
-        implicitex.transferPrecision(),
-      ]);
-    } catch (_) {
-      setStatus('Could not read contract parameters. Is the contract deployed and reachable?');
-      return;
-    }
-
     // --- Amount validation ---
     let rawAmount;
     try {
@@ -2307,9 +2315,40 @@
       return;
     }
 
+    // --- Fresh on-chain preview and contract state ---
+    // previewTransfer is an amount/balance/allowance helper only. Recipient,
+    // network, configured addresses, and pause state remain separate UI gates.
+    let minTransfer, precision, isPaused, onChainPreview;
+    try {
+      [minTransfer, precision, isPaused, onChainPreview] = await Promise.all([
+        implicitex.minTransferAmount(),
+        implicitex.transferPrecision(),
+        implicitex.paused(),
+        implicitex.previewTransfer(state.address, rawAmount),
+      ]);
+    } catch (_) {
+      setStatus('Could not refresh contract preview data. Is the contract deployed and reachable?');
+      return;
+    }
+
+    if (isPaused) {
+      setStatus('Transfers are currently paused. No wallet action was requested.');
+      setTransferNote('Contract pause state blocks transfer execution.');
+      companionState('TRANSFERS_DISABLED', {
+        statusLine: 'Transfers paused by contract.',
+        stateVal:   'Transfers paused',
+        fundsVal:   'No active transaction',
+        networkVal: chainConfig.name,
+        eventVal:   'Contract paused() returned true.',
+        actionVal:  'Wait until transfers are unpaused before retrying.',
+        severity:   'warning',
+      });
+      return;
+    }
+
     // --- Fee math — mirrors contract integer division exactly ---
-    const fee        = (rawAmount * BigInt(feeBps)) / 10000n;
-    const totalDebit = rawAmount + fee;
+    const fee        = BigInt(onChainPreview[0]);
+    const totalDebit = BigInt(onChainPreview[1]);
 
     if (rawAmount < minTransfer) {
       const minHuman = ethers.formatUnits(minTransfer, 6);
@@ -2328,14 +2367,10 @@
       return;
     }
 
-    // --- Balance check ---
-    let balance;
-    try {
-      balance = await usdc.balanceOf(state.address);
-    } catch (_) {
-      setStatus('Could not read USDC balance.');
-      return;
-    }
+    // --- Balance and allowance snapshot from previewTransfer ---
+    const balance = BigInt(onChainPreview[2]);
+    const allowance = BigInt(onChainPreview[3]);
+    state.usdcBalanceRaw = balance;
 
     if (balance < totalDebit) {
       const have = ethers.formatUnits(balance, 6);
@@ -2343,6 +2378,19 @@
       setStatus(`Insufficient balance. Have ${have} USDC, need ${need} USDC (amount + fee).`);
       return;
     }
+
+    const refreshedSummary = buildOnChainPreviewSummary(
+      state.reviewDraft,
+      onChainPreview,
+      chainConfig
+    );
+    state.reviewDraft = refreshedSummary;
+    state.reviewDraft.metadata = metadata;
+    renderTransferSummary(refreshedSummary, {
+      label: 'Review Transfer',
+      mode: 'On-chain refreshed',
+      note: 'Contract preview refreshed. Recipient, network, pause state, contract, and USDC token checks passed before wallet prompt.',
+    });
 
     const storedReceipt = storeReceipt(buildReceiptDetail({
       stateKey: IX_TRANSFER_STATES.READY,
@@ -2360,19 +2408,6 @@
     receiptId = storedReceipt.id;
 
     // --- Allowance check / approve ---
-    let allowance;
-    try {
-      allowance = await usdc.allowance(state.address, contractAddress);
-    } catch (_) {
-      resolveReceipt(receiptId, {
-        state: IX_TRANSFER_STATES.EXPIRED,
-        fundsMoved: false,
-        lastKnownMessage: 'Could not read USDC allowance. No funds moved.',
-      });
-      setStatus('Could not read USDC allowance.');
-      return;
-    }
-
     const needsApproval = allowance < totalDebit;
 
     if (needsApproval) {
