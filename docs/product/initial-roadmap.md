@@ -69,13 +69,22 @@ On-chain verified: 2026-05-23 — owner/pendingOwner/treasury/fee/paused all PAS
 - ✅ Merged to main at `ad53db6` / `587aa93`
 - ✅ All checks passing: syntax, static, observability (27/27)
 
-### 🔲 Controlled production smoke — NEXT
+### ✅ Controlled production smoke — COMPLETE (2026-05-23)
 
-- Open global + Polygon gate
-- Run one 1 USDC transfer from operations wallet to a controlled recipient
-- Verify: sender debit, recipient credit, treasury fee, contract USDC balance = 0
-- Capture: receipt, explorer link, frontend timeline state
-- Close gate before any commit
+- ✅ 1 USDC transfer executed on canonical contract
+- ✅ Recipient received 1.00 USDC, treasury received 0.01 USDC, contract retained 0
+- ✅ Timeline, armed state, MetaMask phase narration all verified
+- ✅ Gate closed before commit
+- Evidence: docs/operations/evidence/smoke-polygon-mainnet-2026-05-23.md
+
+### 🔲 Receipt lifecycle bug — MUST FIX before public exposure
+
+Observed during 2026-05-23 smoke:
+- "READY" receipt persisting after completed transfer
+- AUTHORIZING not promoting to CONFIRMED
+- Possible dual-record between approve and transfer phases
+
+Receipts are part of the trust surface. Must be resolved before public traffic.
 
 ### 🔲 Real-wallet QA
 
@@ -97,7 +106,7 @@ On-chain verified: 2026-05-23 — owner/pendingOwner/treasury/fee/paused all PAS
 - ✅ Harden contract (routing, fee cap, ownership, pause, no-owner-drain)
 - ✅ Deploy to Polygon mainnet with Safe ownership
 - ✅ Verify source and on-chain state
-- 🔲 Prove controlled live transfer path on canonical contract
+- ✅ Prove controlled live transfer path on canonical contract (2026-05-23)
 
 ## Stage 2 - Operational Reliability
 

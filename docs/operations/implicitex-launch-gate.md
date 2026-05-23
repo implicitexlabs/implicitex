@@ -19,9 +19,15 @@ COMPLETED:
   ✅ Deployer key hygiene: 0xf614356 (exposed 2026-05-13) not used; 0x5466 used instead
 
 REMAINING BLOCKERS (2):
-  1. Controlled production smoke transfer — NEXT ACTION
-     Open gate → 1 USDC transfer → record 4 balance deltas → close gate.
-     Do not enable production traffic without this evidence.
+  1. Receipt lifecycle reconciliation bug — MUST FIX before public exposure
+     Observed during 2026-05-23 smoke:
+     - "READY" receipt state persisting after confirmed transfer
+     - AUTHORIZING records not promoting to CONFIRMED
+     - Possible dual-record between approve + transfer phases
+     Receipts are part of the trust surface. Stale records after a confirmed
+     transfer will undermine user confidence. Fix and re-verify before opening
+     to public traffic.
+     Evidence: docs/operations/evidence/smoke-polygon-mainnet-2026-05-23.md
 
   2. Attorney review before public promotion
      Required before public-facing transfer promotion.
@@ -32,13 +38,14 @@ State classification (2026-05-23):
   Deployment:              COMPLETE — canonical contract on Polygon mainnet
   Ownership:               COMPLETE — Safe owns, pendingOwner zeroed
   Source verification:     COMPLETE — Polygonscan verified
+  Controlled smoke:        COMPLETE — 2026-05-23, tx 0xf4359437..., all deltas verified
   Git history:             CLEAN
-  Secret hygiene:          CLEAN — exposed key never used for canonical deploy
-  Frontend:                COMPLETE — polished, merged, gate closed
-  Controlled smoke:        PENDING — next action
-  Domain cutover:          BLOCKED until smoke complete
+  Secret hygiene:          CLEAN
+  Frontend UX:             COMPLETE — execution instrument polished and smoke-verified
+  Receipt lifecycle:       BUG — stale READY/AUTHORIZING records after confirmed transfer
+  Domain cutover:          BLOCKED until receipt bug resolved
   Attorney review:         PENDING — required before public promotion
-  transfersEnabled:        false — do not set true before smoke evidence recorded
+  transfersEnabled:        false — gate closed after smoke
 
 .env hygiene rule:
   Never let an agent or tool read or print .env contents.
