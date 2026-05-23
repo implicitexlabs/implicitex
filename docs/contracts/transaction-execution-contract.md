@@ -61,6 +61,8 @@ The frontend must block submit when:
 
 - Recipient is not a valid EVM address.
 - Recipient is the zero address.
+- Recipient is the configured ImplicitEx contract address.
+- Recipient is the configured USDC token address.
 - Amount is not positive.
 - Amount is below `minTransferAmount`.
 - Amount does not satisfy `transferPrecision`.
@@ -69,6 +71,13 @@ The frontend must block submit when:
 - Chain config is missing.
 - Wallet is disconnected.
 - Connected chain is unsupported.
+
+The frontend should not block arbitrary smart-contract recipients only because
+code exists at the recipient address. Safe wallets, smart accounts, DAO
+treasuries, and merchant contracts can be legitimate recipients. If deployed
+code is detected at the recipient address, the frontend may show a warning that
+the address appears to be a smart contract and the user should continue only if
+they are sure it can receive and manage USDC.
 
 ## Required Approval Flow
 
@@ -80,6 +89,11 @@ If USDC allowance is below the required total debit, the frontend must:
 - Handle failed approval.
 - Wait for approval confirmation.
 - Re-read allowance before transfer submission.
+
+The required total debit is `amount + fee`. The contract may execute separate
+USDC `transferFrom` legs for recipient amount and treasury fee, so approving
+only the recipient amount is insufficient and can cause the transaction to
+revert. Exact-spend approval UI must use the full required total debit.
 
 ## Required Transfer Flow
 

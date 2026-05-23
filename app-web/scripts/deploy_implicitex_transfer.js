@@ -10,7 +10,8 @@
  * Required environment variables (set locally; never commit to repo):
  *   IMPLICITEX_USDC_ADDRESS          — USDC token contract address on target network
  *   IMPLICITEX_TREASURY_ADDRESS      — address that receives fee payments
- *   IMPLICITEX_INITIAL_FEE_BPS       — fee in basis points (e.g. 100 = 1%; max 1000 = 10%)
+ *   IMPLICITEX_OWNER_ADDRESS         — target admin owner, preferably a Safe/multisig
+ *   IMPLICITEX_INITIAL_FEE_BPS       — fee in basis points (e.g. 100 = 1%; max 100 = 1%)
  *   IMPLICITEX_MIN_TRANSFER_AMOUNT   — minimum transfer amount in USDC atomic units (6 decimals)
  *   IMPLICITEX_TRANSFER_PRECISION    — transfer precision divisor in atomic units
  *
@@ -85,14 +86,15 @@ async function main() {
 
   const usdcAddress      = requireAddress("IMPLICITEX_USDC_ADDRESS");
   const treasuryAddress  = requireAddress("IMPLICITEX_TREASURY_ADDRESS");
+  const ownerAddress     = requireAddress("IMPLICITEX_OWNER_ADDRESS");
   const initialFeeBps    = requirePositiveInt("IMPLICITEX_INITIAL_FEE_BPS");
   const initialMinTransfer = requirePositiveInt("IMPLICITEX_MIN_TRANSFER_AMOUNT");
   const initialPrecision = requirePositiveInt("IMPLICITEX_TRANSFER_PRECISION");
 
-  // Fee cap guard (mirrors MAX_FEE_BPS = 1000 in contract)
-  if (initialFeeBps > 1000) {
+  // Fee cap guard (mirrors MAX_FEE_BPS = 100 in contract)
+  if (initialFeeBps > 100) {
     throw new Error(
-      `IMPLICITEX_INITIAL_FEE_BPS exceeds contract maximum of 1000 (10%), got: ${initialFeeBps}`
+      `IMPLICITEX_INITIAL_FEE_BPS exceeds contract maximum of 100 (1%), got: ${initialFeeBps}`
     );
   }
 
@@ -101,10 +103,22 @@ async function main() {
   const networkName = network.name;
   const timestamp   = new Date().toISOString();
   const feePercent  = (initialFeeBps / 100).toFixed(2) + "%";
+  const ownerIsDeployer = ownerAddress.toLowerCase() === deployer.address.toLowerCase();
+
+  if (ownerAddress.toLowerCase() === treasuryAddress.toLowerCase()) {
+    throw new Error("IMPLICITEX_OWNER_ADDRESS must be distinct from IMPLICITEX_TREASURY_ADDRESS.");
+  }
+
+  if (networkName === "polygon" && ownerIsDeployer) {
+    throw new Error(
+      "Polygon mainnet deploys must set IMPLICITEX_OWNER_ADDRESS to a Safe/multisig, not the deployer EOA."
+    );
+  }
 
   console.log(`Network:   ${networkName} (${chainId})`);
   console.log(`Timestamp: ${timestamp}`);
   console.log(`Deployer:  ${deployer.address}`);
+  console.log(`Owner:     ${ownerAddress}${ownerIsDeployer ? " (deployer)" : " (pending transfer)"}`);
   console.log(`Treasury:  ${treasuryAddress}`);
   console.log(`USDC:      ${usdcAddress}`);
   console.log(`Fee:       ${initialFeeBps} bps (${feePercent})`);
@@ -124,6 +138,14 @@ async function main() {
   await contract.waitForDeployment();
   const deployedAddress = await contract.getAddress();
   const deployTx        = contract.deploymentTransaction();
+  let ownershipTransferTx = null;
+
+  if (!ownerIsDeployer) {
+    console.log(`\nInitiating two-step ownership transfer to ${ownerAddress}...`);
+    ownershipTransferTx = await contract.transferOwnership(ownerAddress);
+    await ownershipTransferTx.wait();
+    console.log("Ownership transfer initiated. Target owner must acceptOwnership().");
+  }
 
   // ---------------------------------------------------------------------------
   // Success output
@@ -135,6 +157,7 @@ async function main() {
     `Timestamp: ${timestamp}`,
     "",
     `Deployer:  ${deployer.address}`,
+    `Owner:     ${ownerAddress}`,
     `Treasury:  ${treasuryAddress}`,
     `USDC:      ${usdcAddress}`,
     `Fee:       ${feePercent}`,
@@ -149,8 +172,9 @@ Next steps:
        npx hardhat verify --network ${networkName} ${deployedAddress} \\
          ${usdcAddress} ${treasuryAddress} ${initialFeeBps} ${initialMinTransfer} ${initialPrecision}
   2. Update frontend/public/config/chains.js contractAddress for chainId ${chainId}
-  3. Run testnet signoff checklist before setting transfersEnabled: true
-  4. Save deployments/${networkName}.json (written automatically — see below)
+  3. If Owner is pending, have ${ownerAddress} call acceptOwnership()
+  4. Run signoff checklist before setting transfersEnabled: true
+  5. Save deployments/${networkName}.json (written automatically — see below)
 `);
 
   // ---------------------------------------------------------------------------
@@ -162,6 +186,8 @@ Next steps:
     contract:   "ImplicitExTransfer",
     address:    deployedAddress,
     deployer:   deployer.address,
+    owner:      ownerIsDeployer ? deployer.address : null,
+    pendingOwner: ownerIsDeployer ? null : ownerAddress,
     usdc:       usdcAddress,
     treasury:   treasuryAddress,
     feeBps:     initialFeeBps,
@@ -169,6 +195,7 @@ Next steps:
     precision:  initialPrecision,
     timestamp,
     txHash:     deployTx ? deployTx.hash : null,
+    ownershipTransferTxHash: ownershipTransferTx ? ownershipTransferTx.hash : null,
   };
 
   const manifestDir  = path.resolve(__dirname, "../deployments");

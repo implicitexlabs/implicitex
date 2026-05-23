@@ -2,13 +2,17 @@
   "network": "polygon",
   "chainId": 137,
   "contract": "ImplicitExTransfer",
-  "address": "0xdB0084caBF891872Ee5bD7cf9Ba47E828449D972",
-  "deployer": "0xf614356F93408460b594AdDAcC86a7fC94310f1D",
+  "address": "0x5015841D6E665e63Ea174aD6b8FeF854026dE0C0",
+  "deployer": "0x5466bbA8cD334554c88F81342dDfcEc4c4A7698B",
+  "owner": "0x776A0D6b9F96445A38303F56d5B923e6d1FF8E97",
+  "pendingOwner": null,
   "usdc": "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359",
-  "treasury": "0xEC9F1E0074CFeC89684C19703A6A95D4ca436b28",
+  "treasury": "0xa7cE4232811021d2Dd01f4f0f264Df2427ab3919",
   "feeBps": 100,
   "minTransfer": 1000000,
   "precision": 1000000,
-  "timestamp": "2026-05-11T22:07:05.408Z",
-  "txHash": "0x4d16294345a30c5ab39c7e73901804b3e8f2ddc146854e14cf97a1a42b53b142"
+  "timestamp": "2026-05-22T20:27:50.300Z",
+  "txHash": "0x87593fdb3d256a4a94b3e73877ba0bc433c39e81eefc78334af6da79ff5ef1f3",
+  "ownershipTransferTxHash": "0xd84181dbffbd4f760cfa650b2a1edb1acc17713e66bb5d6d478376dc5202d777",
+  "ownershipAcceptanceTxHash": "0xd6bfb2876725391c956dbd17ec5f774f9246b50df5667e8b29e8c78305365e90"
 }

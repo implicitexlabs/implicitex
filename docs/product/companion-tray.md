@@ -53,8 +53,6 @@ The distinction matters: `--dim` asks to be read; `--muted` is peripheral contex
 
 ## Layout Behavior
 
-*(to be specified)*
-
 - Position: fixed, bottom 0, full-width
 - Collapsed height: ~40px — single status line
 - Expanded height: ~280px — lifts upward via transform
@@ -79,8 +77,6 @@ Rendering is deterministic. The same state always produces the same output.
 
 ## Persistence Behavior
 
-*(to be specified)*
-
 - Receipts persist in localStorage across disconnect and refresh
 - Companion re-derives display from stored raw state on reload
 - Does not rely on runtime memory for state reconstruction
@@ -90,13 +86,14 @@ Rendering is deterministic. The same state always produces the same output.
 
 ## Mobile Behavior
 
-*(to be specified)*
+- Remains subordinate to the transfer instrument
+- Uses the same state and receipt model as desktop
+- Does not become a chat surface or notification feed
+- Must not cover wallet-critical controls while expanded
 
 ---
 
 ## Animation Constraints
-
-*(to be specified)*
 
 - Expansion and collapse use CSS transform only (no layout reflow)
 - No entrance animations on the collapsed tray
@@ -107,11 +104,10 @@ Rendering is deterministic. The same state always produces the same output.
 
 ## Interaction Boundaries
 
-*(to be specified)*
-
 - User can expand and collapse at any time
 - Companion does not force expansion
-- Companion may expand automatically on UNCLEAR, FAILED, or REPLACED states
+- Companion may expand automatically on `unclear`, `failed`, `replaced`,
+  `outcome_unknown`, and `confirmed` states
   (high-priority events where the user most needs context)
 - No other automatic expansion
 

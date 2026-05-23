@@ -13,7 +13,7 @@
 
 /* ---- Collapsed bar ---- */
 .companion-bar {
-  height: 40px;
+  height: 36px;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -45,7 +45,14 @@
 .companion.is-open .companion-indicator,
 .companion.is-active .companion-indicator {
   background: var(--white);
-  animation: blink 2.5s ease-in-out infinite;
+}
+
+.companion.companion--error .companion-indicator {
+  background: var(--warn);
+}
+
+.companion.companion--warning .companion-indicator {
+  background: var(--warn);
 }
 
 /* Status line — dim keeps it readable while remaining secondary to page content */
@@ -53,12 +60,20 @@
   font-family: var(--mono);
   font-size: 10px;
   font-weight: 400;
-  letter-spacing: 0.10em;
+  letter-spacing: 0.06em;
   color: var(--dim);
   flex: 1;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.companion.companion--error .companion-status {
+  color: var(--warn);
+}
+
+.companion.companion--warning .companion-status {
+  color: var(--warn);
 }
 
 /* Chevron toggle — points DOWN when collapsed (tap to expand below) */
@@ -94,13 +109,13 @@
 }
 
 .companion.is-open .companion-detail {
-  max-height: 300px;
+  max-height: 260px;
   border-top-width: 1px;
 }
 
 /* ---- Detail body ---- */
 .companion-body {
-  padding: 1rem 2rem 1.25rem;
+  padding: 0.75rem 2rem 0.9rem;
   display: flex;
   flex-direction: column;
 }
@@ -110,7 +125,7 @@
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  padding: 8px 0;
+  padding: 6px 0;
   border-bottom: 1px solid var(--border);
 }
 
@@ -133,11 +148,14 @@
   color: var(--dim);
   text-align: right;
   padding-left: 1rem;
+  max-width: min(68ch, 70%);
+  overflow-wrap: anywhere;
   transition: color 0.2s;
 }
 
-.companion.is-active .companion-v {
-  color: var(--white);
+.companion.is-active .companion-v,
+.companion.is-active .companion-action {
+  color: var(--dim);
 }
 
 /* Next-step action value — slightly dimmer, not a call to action */
@@ -146,7 +164,7 @@
   font-size: 10px;
 }
 
-/* Action link — rendered when CONFIRMED provides an explorer receipt URL */
+/* Action link — rendered when a state provides external chain verification */
 .companion-action-link {
   font-family: var(--mono);
   font-size: 10px;
@@ -163,6 +181,13 @@
 .companion-action-link:focus-visible {
   outline: 1px solid var(--dim);
   outline-offset: 2px;
+}
+
+.companion-v.is-error,
+.companion-v.is-warning,
+.companion-action.is-error,
+.companion-action.is-warning {
+  color: var(--warn);
 }
 
 /* ---- Responsive ---- */

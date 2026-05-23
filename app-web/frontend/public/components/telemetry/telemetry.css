@@ -1,0 +1,222 @@
+/*
+  telemetry.css — TELEMETRY panel
+  Inherits design tokens from main.css (--mono, --surface, --border, etc.)
+  Introduces --telemetry-amber for elevated signal (defined in main.css :root).
+  Red (critical) uses existing --warn token.
+*/
+
+/* ---- Panel container ---- */
+.telemetry {
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+/* ---- Collapsed bar ---- */
+.telemetry-bar {
+  height: 36px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 2rem;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.12s;
+}
+
+.telemetry-bar:hover {
+  background: var(--surface-2);
+}
+
+.telemetry-bar:focus-visible {
+  outline: 1px solid var(--border-2);
+  outline-offset: -1px;
+}
+
+/* ---- Dot — the primary signal primitive ---- */
+.telemetry-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--muted);
+  flex-shrink: 0;
+  transition: background 0.3s;
+}
+
+/* Signal level: color */
+.telemetry--status   .telemetry-dot { background: var(--white); }
+.telemetry--elevated .telemetry-dot { background: var(--telemetry-amber); }
+.telemetry--critical .telemetry-dot { background: var(--warn); }
+
+/* Pulse animation — single keyframe, duration controls rate */
+@keyframes telemetry-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.18; }
+}
+
+.telemetry--pulse-low  .telemetry-dot { animation: telemetry-pulse 7s   ease-in-out infinite; }
+.telemetry--pulse-avg  .telemetry-dot { animation: telemetry-pulse 3.5s ease-in-out infinite; }
+.telemetry--pulse-high .telemetry-dot { animation: telemetry-pulse 1.2s ease-in-out infinite; }
+
+/* Dot goes solid when panel is open — seen state */
+.telemetry.is-open .telemetry-dot {
+  animation: none;
+  opacity: 1;
+}
+
+/* ---- Label ---- */
+.telemetry-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+/* ---- Summary — one-line collapsed state description ---- */
+.telemetry-summary {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  color: var(--dim);
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 0.2s;
+}
+
+.telemetry--elevated .telemetry-summary { color: var(--telemetry-amber-dim); }
+.telemetry--critical .telemetry-summary { color: var(--warn); }
+
+/* ---- Chevron toggle ---- */
+.telemetry-chevron {
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 5px solid var(--dim);
+  flex-shrink: 0;
+  transition: transform 0.18s ease-out, border-top-color 0.12s;
+}
+
+.telemetry.is-open .telemetry-chevron {
+  transform: rotate(180deg);
+  border-top-color: var(--white);
+}
+
+/* ---- Expanded panel ---- */
+.telemetry-panel {
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height 0.18s ease-out;
+  border-top: 0px solid var(--border);
+}
+
+.telemetry-panel[hidden] {
+  display: block; /* override browser hidden — we animate max-height instead */
+  visibility: hidden;
+}
+
+.telemetry.is-open .telemetry-panel {
+  max-height: 480px;
+  border-top-width: 1px;
+  visibility: visible;
+}
+
+/* ---- Panel body ---- */
+.telemetry-body {
+  padding: 0.75rem 2rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* ---- Sections ---- */
+.telemetry-section[hidden] {
+  display: none;
+}
+
+.telemetry-section-label {
+  font-family: var(--mono);
+  font-size: 8px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 0.35rem;
+}
+
+/* ---- Data rows ---- */
+.telemetry-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.telemetry-row:last-child {
+  border-bottom: none;
+}
+
+.telemetry-k {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.telemetry-v {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--dim);
+  text-align: right;
+  padding-left: 1rem;
+  max-width: min(60ch, 72%);
+  overflow-wrap: anywhere;
+}
+
+/* Value level tints */
+.telemetry-v--elevated { color: var(--telemetry-amber-dim); }
+.telemetry-v--critical { color: var(--warn); }
+
+/* Explorer links inside value cells */
+.telemetry-v a,
+.telemetry-v a:link,
+.telemetry-v a:visited {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--dim);
+  text-decoration: none;
+  transition: color 0.12s;
+}
+
+.telemetry-v a:hover,
+.telemetry-v a:focus-visible {
+  color: var(--white);
+  text-decoration: underline;
+}
+
+.telemetry-v a:focus-visible {
+  outline: 1px solid var(--dim);
+  outline-offset: 2px;
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 768px) {
+  .telemetry-bar  { padding: 0 1rem; }
+  .telemetry-body { padding: 0.75rem 1rem 1rem; }
+}
+
+/* ---- Reduced motion ---- */
+@media (prefers-reduced-motion: reduce) {
+  .telemetry-dot    { animation: none !important; }
+  .telemetry-panel  { transition: none; }
+  .telemetry-chevron { transition: none; }
+}

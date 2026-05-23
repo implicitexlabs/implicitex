@@ -31,19 +31,26 @@ Set these locally before running. **Never commit these values to the repo.**
 |---|---|
 | `IMPLICITEX_USDC_ADDRESS` | USDC token contract address on the target network |
 | `IMPLICITEX_TREASURY_ADDRESS` | Address that receives fee payments |
-| `IMPLICITEX_INITIAL_FEE_BPS` | Fee in basis points (e.g. `100` = 1%; max `1000`) |
+| `IMPLICITEX_OWNER_ADDRESS` | Target admin owner; use a Safe/multisig for production |
+| `IMPLICITEX_INITIAL_FEE_BPS` | Fee in basis points (e.g. `100` = 1%; max `100`) |
 | `IMPLICITEX_MIN_TRANSFER_AMOUNT` | Minimum transfer in USDC atomic units (6 decimals) |
 | `IMPLICITEX_TRANSFER_PRECISION` | Transfer precision divisor in atomic units |
 
 A deploy key and env vars must live in `.private/` or in the shell environment —
 never in this repo.
 
+For Polygon mainnet, `IMPLICITEX_OWNER_ADDRESS` must be distinct from the
+deployer and treasury addresses. The deployer is only the temporary owner during
+deployment; the script initiates the Ownable2Step transfer and the Safe/multisig
+must call `acceptOwnership()` before owner-only maintenance actions are live.
+
 ### After a successful deploy
 
 1. Record the deployed contract address printed in the deploy summary.
 2. Verify the contract on the block explorer.
-3. Update `frontend/public/config/chains.js` only after review and verification.
-4. Run the testnet signoff checklist before setting `transfersEnabled: true`.
+3. Have the configured Safe/multisig call `acceptOwnership()` if ownership is pending.
+4. Update `frontend/public/config/chains.js` only after review and verification.
+5. Run the signoff checklist before setting `transfersEnabled: true`.
 
 Do not commit raw Hardhat artifacts (`artifacts/`, `cache/`) — those are gitignored.
 The only artifact that belongs in the repo after a deploy is the chain config update.

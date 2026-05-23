@@ -62,7 +62,7 @@ describe("ImplicitExTransfer", function () {
 
     await expect(
       ImplicitExTransfer.deploy(ethers.ZeroAddress, treasury.address, 100, 1, 1)
-    ).to.be.revertedWith("USDC_ZERO_ADDRESS");
+    ).to.be.revertedWithCustomError(ImplicitExTransfer, "UsdcZeroAddress");
   });
 
   it("constructor rejects zero treasury", async function () {
@@ -73,7 +73,22 @@ describe("ImplicitExTransfer", function () {
     const ImplicitExTransfer = await ethers.getContractFactory("ImplicitExTransfer");
     await expect(
       ImplicitExTransfer.deploy(await usdc.getAddress(), ethers.ZeroAddress, 100, 1, 1)
-    ).to.be.revertedWith("TREASURY_ZERO_ADDRESS");
+    ).to.be.revertedWithCustomError(ImplicitExTransfer, "TreasuryZeroAddress");
+  });
+
+  it("constructor rejects treasury set to configured USDC token", async function () {
+    const MockERC20 = await ethers.getContractFactory("MockERC20");
+    const usdc = await MockERC20.deploy("Mock USDC", "mUSDC", 6);
+    await usdc.waitForDeployment();
+
+    const ImplicitExTransfer = await ethers.getContractFactory("ImplicitExTransfer");
+    const usdcAddress = await usdc.getAddress();
+
+    await expect(
+      ImplicitExTransfer.deploy(usdcAddress, usdcAddress, 100, 1, 1)
+    )
+      .to.be.revertedWithCustomError(ImplicitExTransfer, "InvalidTreasury")
+      .withArgs(usdcAddress);
   });
 
   it("constructor rejects fee above max", async function () {
@@ -84,8 +99,10 @@ describe("ImplicitExTransfer", function () {
 
     const ImplicitExTransfer = await ethers.getContractFactory("ImplicitExTransfer");
     await expect(
-      ImplicitExTransfer.deploy(await usdc.getAddress(), treasury.address, 1001, 1, 1)
-    ).to.be.revertedWith("FEE_TOO_HIGH");
+      ImplicitExTransfer.deploy(await usdc.getAddress(), treasury.address, 101, 1, 1)
+    )
+      .to.be.revertedWithCustomError(ImplicitExTransfer, "FeeTooHigh")
+      .withArgs(101, 100);
   });
 
   it("constructor rejects zero precision", async function () {
@@ -97,7 +114,7 @@ describe("ImplicitExTransfer", function () {
     const ImplicitExTransfer = await ethers.getContractFactory("ImplicitExTransfer");
     await expect(
       ImplicitExTransfer.deploy(await usdc.getAddress(), treasury.address, 100, 1, 0)
-    ).to.be.revertedWith("PRECISION_ZERO");
+    ).to.be.revertedWithCustomError(ImplicitExTransfer, "PrecisionZero");
   });
 
   it("owner can update treasury", async function () {
@@ -177,17 +194,19 @@ describe("ImplicitExTransfer", function () {
   it("setFeeBasisPoints owner success and emits event", async function () {
     const { transferContract } = await deployFixture();
 
-    await expect(transferContract.setFeeBasisPoints(250))
+    await expect(transferContract.setFeeBasisPoints(50))
       .to.emit(transferContract, "FeeUpdated")
-      .withArgs(100, 250);
+      .withArgs(100, 50);
 
-    expect(await transferContract.feeBasisPoints()).to.equal(250);
+    expect(await transferContract.feeBasisPoints()).to.equal(50);
   });
 
   it("setFeeBasisPoints rejects above MAX_FEE_BPS", async function () {
     const { transferContract } = await deployFixture();
 
-    await expect(transferContract.setFeeBasisPoints(1001)).to.be.revertedWith("FEE_TOO_HIGH");
+    await expect(transferContract.setFeeBasisPoints(101))
+      .to.be.revertedWithCustomError(transferContract, "FeeTooHigh")
+      .withArgs(101, 100);
   });
 
   it("setMinTransferAmount owner success and emits event", async function () {
@@ -213,7 +232,8 @@ describe("ImplicitExTransfer", function () {
   it("setTransferPrecision rejects zero", async function () {
     const { transferContract } = await deployFixture();
 
-    await expect(transferContract.setTransferPrecision(0)).to.be.revertedWith("PRECISION_ZERO");
+    await expect(transferContract.setTransferPrecision(0))
+      .to.be.revertedWithCustomError(transferContract, "PrecisionZero");
   });
 
   it("non-owner cannot initiate ownership transfer", async function () {
@@ -274,6 +294,72 @@ describe("ImplicitExTransfer", function () {
     expect(await usdc.balanceOf(await transferContract.getAddress())).to.equal(0n);
   });
 
+  it("production minimum rejects dust amounts", async function () {
+    const minTransfer = ethers.parseUnits("1", 6);
+    const { transferContract, sender, recipient } = await deployFixture({
+      minTransfer,
+      precision: minTransfer
+    });
+
+    await expect(
+      transferContract.connect(sender).transferWithFee(recipient.address, 1n)
+    )
+      .to.be.revertedWithCustomError(transferContract, "AmountBelowMinimum")
+      .withArgs(1n, minTransfer);
+
+    await expect(
+      transferContract.connect(sender).transferWithFee(recipient.address, minTransfer - 1n)
+    )
+      .to.be.revertedWithCustomError(transferContract, "AmountBelowMinimum")
+      .withArgs(minTransfer - 1n, minTransfer);
+  });
+
+  it("production minimum valid amount charges a nonzero one percent fee", async function () {
+    const minTransfer = ethers.parseUnits("1", 6);
+    const { transferContract, usdc, sender, recipient, treasury, feeBps } = await deployFixture({
+      minTransfer,
+      precision: minTransfer,
+      feeBps: 100
+    });
+
+    const amount = minTransfer;
+    const { fee, totalDebit } = await fundAndApprove({ usdc, transferContract, sender, amount, feeBps });
+
+    expect(fee).to.equal(10_000n);
+    expect(totalDebit).to.equal(1_010_000n);
+
+    await expect(transferContract.connect(sender).transferWithFee(recipient.address, amount))
+      .to.emit(transferContract, "TransferExecuted")
+      .withArgs(sender.address, recipient.address, amount, fee, totalDebit);
+
+    expect(await usdc.balanceOf(recipient.address)).to.equal(amount);
+    expect(await usdc.balanceOf(treasury.address)).to.equal(fee);
+    expect(await usdc.balanceOf(await transferContract.getAddress())).to.equal(0n);
+  });
+
+  it("production 100 USDC amount charges exactly 1 USDC fee", async function () {
+    const minTransfer = ethers.parseUnits("1", 6);
+    const { transferContract, usdc, sender, recipient, treasury, feeBps } = await deployFixture({
+      minTransfer,
+      precision: minTransfer,
+      feeBps: 100
+    });
+
+    const amount = ethers.parseUnits("100", 6);
+    const { fee, totalDebit } = await fundAndApprove({ usdc, transferContract, sender, amount, feeBps });
+
+    expect(fee).to.equal(1_000_000n);
+    expect(totalDebit).to.equal(101_000_000n);
+
+    await expect(transferContract.connect(sender).transferWithFee(recipient.address, amount))
+      .to.emit(transferContract, "TransferExecuted")
+      .withArgs(sender.address, recipient.address, amount, fee, totalDebit);
+
+    expect(await usdc.balanceOf(recipient.address)).to.equal(amount);
+    expect(await usdc.balanceOf(treasury.address)).to.equal(fee);
+    expect(await usdc.balanceOf(await transferContract.getAddress())).to.equal(0n);
+  });
+
   it("zero-fee transfer path transfers exact amount and emits TransferExecuted", async function () {
     const { transferContract, usdc, sender, recipient, treasury } = await deployFixture({ feeBps: 0 });
 
@@ -298,13 +384,14 @@ describe("ImplicitExTransfer", function () {
   });
 
   it("fee math and rounding uses floor division", async function () {
-    const { transferContract, usdc, sender, recipient, treasury, feeBps } = await deployFixture({ feeBps: 333 });
+    // feeBps: 99 (0.99%) with amount 1001 → floor(1001 * 99 / 10000) = floor(99.099) = 99
+    const { transferContract, usdc, sender, recipient, treasury, feeBps } = await deployFixture({ feeBps: 99 });
 
-    const amount = 101n; // floor(101 * 333 / 10000) = 3
+    const amount = 1001n;
     const { fee, totalDebit } = await fundAndApprove({ usdc, transferContract, sender, amount, feeBps });
 
-    expect(fee).to.equal(3n);
-    expect(totalDebit).to.equal(104n);
+    expect(fee).to.equal(9n); // floor(1001 * 99 / 10000) = floor(9.9099) = 9
+    expect(totalDebit).to.equal(1010n);
 
     await expect(transferContract.connect(sender).transferWithFee(recipient.address, amount))
       .to.emit(transferContract, "TransferExecuted")
@@ -322,7 +409,9 @@ describe("ImplicitExTransfer", function () {
 
     await expect(
       transferContract.connect(sender).transferWithFee(recipient.address, 99n)
-    ).to.be.revertedWith("AMOUNT_BELOW_MINIMUM");
+    )
+      .to.be.revertedWithCustomError(transferContract, "AmountBelowMinimum")
+      .withArgs(99n, 100n);
   });
 
   it("transferWithFee enforces transferPrecision", async function () {
@@ -333,7 +422,9 @@ describe("ImplicitExTransfer", function () {
 
     await expect(
       transferContract.connect(sender).transferWithFee(recipient.address, 11n)
-    ).to.be.revertedWith("INVALID_TRANSFER_PRECISION");
+    )
+      .to.be.revertedWithCustomError(transferContract, "InvalidTransferPrecision")
+      .withArgs(11n, 10n);
   });
 
   it("transferWithFee rejects zero recipient", async function () {
@@ -344,7 +435,7 @@ describe("ImplicitExTransfer", function () {
 
     await expect(
       transferContract.connect(sender).transferWithFee(ethers.ZeroAddress, amount)
-    ).to.be.revertedWith("RECIPIENT_ZERO_ADDRESS");
+    ).to.be.revertedWithCustomError(transferContract, "RecipientZeroAddress");
   });
 
   it("transferWithFee rejects the transfer contract as recipient", async function () {
@@ -355,7 +446,9 @@ describe("ImplicitExTransfer", function () {
 
     await expect(
       transferContract.connect(sender).transferWithFee(await transferContract.getAddress(), amount)
-    ).to.be.revertedWith("RECIPIENT_IS_CONTRACT");
+    )
+      .to.be.revertedWithCustomError(transferContract, "InvalidRecipient")
+      .withArgs(await transferContract.getAddress());
   });
 
   it("transferWithFee rejects the configured USDC token contract as recipient", async function () {
@@ -366,7 +459,9 @@ describe("ImplicitExTransfer", function () {
 
     await expect(
       transferContract.connect(sender).transferWithFee(await usdc.getAddress(), amount)
-    ).to.be.revertedWith("RECIPIENT_IS_USDC_TOKEN");
+    )
+      .to.be.revertedWithCustomError(transferContract, "InvalidRecipient")
+      .withArgs(await usdc.getAddress());
   });
 
   it("transferWithFee allows treasury as recipient by explicit policy", async function () {
@@ -408,12 +503,12 @@ describe("ImplicitExTransfer", function () {
       .withArgs(await usdc.getAddress());
   });
 
-  it("transferWithFee reverts when recipient transfer fails", async function () {
+  it("transferWithFee reverts when recipient transferFrom fails", async function () {
     const { transferContract, usdc, sender, recipient, feeBps } = await deployFixture();
 
     const amount = 100n;
     await fundAndApprove({ usdc, transferContract, sender, amount, feeBps });
-    await usdc.setFailTransferOnCall(1);
+    await usdc.setFailTransferFromOnCall(1);
 
     await expect(
       transferContract.connect(sender).transferWithFee(recipient.address, amount)
@@ -422,12 +517,12 @@ describe("ImplicitExTransfer", function () {
       .withArgs(await usdc.getAddress());
   });
 
-  it("transferWithFee reverts when fee transfer fails", async function () {
+  it("transferWithFee reverts when fee transferFrom fails", async function () {
     const { transferContract, usdc, sender, recipient, feeBps } = await deployFixture({ feeBps: 100 });
 
     const amount = 100n;
     await fundAndApprove({ usdc, transferContract, sender, amount, feeBps });
-    await usdc.setFailTransferOnCall(2);
+    await usdc.setFailTransferFromOnCall(2);
 
     await expect(
       transferContract.connect(sender).transferWithFee(recipient.address, amount)
@@ -470,7 +565,12 @@ describe("ImplicitExTransfer", function () {
     expect(await reentrantToken.reentrySucceeded()).to.equal(false);
   });
 
-  it("fee-on-transfer token behavior is unsupported and transferWithFee fails safely", async function () {
+  it("fee-on-transfer token: transaction completes but recipient receives less than amount", async function () {
+    // With direct routing the contract never holds tokens, so there is no
+    // "contract tried to send more than it received" revert path. Fee-on-transfer
+    // tokens are not a supported use case (this contract is for USDC only).
+    // The invariant that matters: contract balance remains zero; recipient
+    // receives whatever the token delivers after its own internal fee.
     const [owner, treasury, sender, recipient] = await ethers.getSigners();
 
     const FeeOnTransferERC20Mock = await ethers.getContractFactory("FeeOnTransferERC20Mock");
@@ -488,15 +588,21 @@ describe("ImplicitExTransfer", function () {
     await transferContract.waitForDeployment();
 
     const amount = 1000n;
-    const fee = (amount * 100n) / 10000n;
-    const totalDebit = amount + fee;
+    const implicitExFee = (amount * 100n) / 10000n;
+    const totalDebit = amount + implicitExFee;
 
     await feeToken.mint(sender.address, totalDebit);
     await feeToken.connect(sender).approve(await transferContract.getAddress(), totalDebit);
 
-    await expect(
-      transferContract.connect(sender).transferWithFee(recipient.address, amount)
-    ).to.be.revertedWith("MOCK_INSUFFICIENT_BALANCE");
+    // Transaction succeeds; token takes 5% on each transferFrom leg
+    await transferContract.connect(sender).transferWithFee(recipient.address, amount);
+
+    // Recipient gets amount minus the token's 5% cut (950 of 1000)
+    const tokenFeeOnAmount = (amount * 500n) / 10000n;
+    expect(await feeToken.balanceOf(recipient.address)).to.equal(amount - tokenFeeOnAmount);
+
+    // Contract holds nothing — direct routing leaves no residual balance
+    expect(await feeToken.balanceOf(await transferContract.getAddress())).to.equal(0n);
   });
 
   it("multiple sequential transfers preserve expected balances", async function () {
@@ -531,7 +637,7 @@ describe("ImplicitExTransfer", function () {
     const ImplicitExTransfer = await ethers.getContractFactory("ImplicitExTransfer");
     await expect(
       ImplicitExTransfer.deploy(await usdc.getAddress(), treasury.address, 100, 0, 1)
-    ).to.be.revertedWith("MIN_TRANSFER_ZERO");
+    ).to.be.revertedWithCustomError(ImplicitExTransfer, "MinTransferZero");
   });
 
   // ---- M1 fix: treasury cannot be set to the contract address ----
@@ -542,19 +648,48 @@ describe("ImplicitExTransfer", function () {
 
     await expect(
       transferContract.setTreasury(contractAddr)
-    ).to.be.revertedWith("TREASURY_IS_CONTRACT");
+    )
+      .to.be.revertedWithCustomError(transferContract, "InvalidTreasury")
+      .withArgs(contractAddr);
   });
 
-  // ---- L3 fix: MAX_FEE_BPS boundary ----
+  it("setTreasury rejects the configured USDC token address as treasury", async function () {
+    const { transferContract, usdc } = await deployFixture();
 
-  it("setFeeBasisPoints accepts MAX_FEE_BPS exactly (1000 bps = 10%)", async function () {
+    await expect(
+      transferContract.setTreasury(await usdc.getAddress())
+    )
+      .to.be.revertedWithCustomError(transferContract, "InvalidTreasury")
+      .withArgs(await usdc.getAddress());
+  });
+
+  it("setMinTransferAmount rejects zero", async function () {
     const { transferContract } = await deployFixture();
 
-    await expect(transferContract.setFeeBasisPoints(1000))
-      .to.emit(transferContract, "FeeUpdated")
-      .withArgs(100, 1000);
+    await expect(transferContract.setMinTransferAmount(0))
+      .to.be.revertedWithCustomError(transferContract, "MinTransferZero");
+  });
 
-    expect(await transferContract.feeBasisPoints()).to.equal(1000);
+  // ---- MAX_FEE_BPS boundary ----
+
+  it("setFeeBasisPoints accepts MAX_FEE_BPS exactly (100 bps = 1%)", async function () {
+    const { transferContract } = await deployFixture();
+
+    // Already at 100; lower then raise back to verify exact boundary
+    await transferContract.setFeeBasisPoints(50);
+    await expect(transferContract.setFeeBasisPoints(100))
+      .to.emit(transferContract, "FeeUpdated")
+      .withArgs(50, 100);
+
+    expect(await transferContract.feeBasisPoints()).to.equal(100);
+  });
+
+  it("setFeeBasisPoints rejects 101 bps — owner cannot exceed 1% cap", async function () {
+    const { transferContract } = await deployFixture();
+
+    await expect(transferContract.setFeeBasisPoints(101))
+      .to.be.revertedWithCustomError(transferContract, "FeeTooHigh")
+      .withArgs(101, 100);
   });
 
   // ---- M3 fix: rescueERC20 ----
@@ -581,12 +716,22 @@ describe("ImplicitExTransfer", function () {
     expect(await stuckToken.balanceOf(contractAddr)).to.equal(0n);
   });
 
-  it("rescueERC20 cannot rescue the configured USDC transfer token", async function () {
+  it("rescueERC20 cannot recover configured USDC by explicit no-owner-drain policy", async function () {
     const { transferContract, usdc, other } = await deployFixture();
+    const contractAddr = await transferContract.getAddress();
+
+    // Simulate USDC accidentally direct-transferred to the contract
+    await usdc.mint(contractAddr, 500n);
+    expect(await usdc.balanceOf(contractAddr)).to.equal(500n);
 
     await expect(
-      transferContract.rescueERC20(await usdc.getAddress(), other.address, 100n)
-    ).to.be.revertedWith("CANNOT_RESCUE_TRANSFER_TOKEN");
+      transferContract.rescueERC20(await usdc.getAddress(), other.address, 500n)
+    )
+      .to.be.revertedWithCustomError(transferContract, "CannotRescueTransferToken")
+      .withArgs(await usdc.getAddress());
+
+    expect(await usdc.balanceOf(other.address)).to.equal(0n);
+    expect(await usdc.balanceOf(contractAddr)).to.equal(500n);
   });
 
   it("non-owner cannot call rescueERC20", async function () {
@@ -599,6 +744,103 @@ describe("ImplicitExTransfer", function () {
       .withArgs(sender.address);
   });
 
+  // ---- Direct routing: contract holds zero USDC after transfer ----
+
+  it("contract holds zero USDC balance after a successful transfer", async function () {
+    const { transferContract, usdc, sender, recipient, feeBps } = await deployFixture({ feeBps: 100 });
+
+    const amount = ethers.parseUnits("100", 6);
+    await fundAndApprove({ usdc, transferContract, sender, amount, feeBps });
+
+    await transferContract.connect(sender).transferWithFee(recipient.address, amount);
+
+    expect(await usdc.balanceOf(await transferContract.getAddress())).to.equal(0n);
+  });
+
+  it("contract holds zero USDC balance after a zero-fee transfer", async function () {
+    const { transferContract, usdc, sender, recipient } = await deployFixture({ feeBps: 0 });
+
+    const amount = ethers.parseUnits("50", 6);
+    await fundAndApprove({ usdc, transferContract, sender, amount, feeBps: 0 });
+
+    await transferContract.connect(sender).transferWithFee(recipient.address, amount);
+
+    expect(await usdc.balanceOf(await transferContract.getAddress())).to.equal(0n);
+  });
+
+  // ---- previewTransfer view helper ----
+
+  it("previewTransfer returns correct fee, totalDebit, balance, allowance, and canTransfer", async function () {
+    const { transferContract, usdc, sender, feeBps } = await deployFixture({ feeBps: 100 });
+
+    const amount = ethers.parseUnits("100", 6);
+    await fundAndApprove({ usdc, transferContract, sender, amount, feeBps });
+
+    const result = await transferContract.previewTransfer(sender.address, amount);
+
+    expect(result.fee).to.equal((amount * 100n) / 10000n);
+    expect(result.totalDebit).to.equal(amount + result.fee);
+    expect(result.balance).to.equal(result.totalDebit);
+    expect(result.allowance).to.equal(result.totalDebit);
+    expect(result.canTransfer).to.equal(true);
+  });
+
+  it("previewTransfer returns canTransfer false when balance is insufficient", async function () {
+    const { transferContract, usdc, sender, feeBps } = await deployFixture({ feeBps: 100 });
+
+    const amount = ethers.parseUnits("100", 6);
+    // Fund and approve only half
+    const fee = (amount * 100n) / 10000n;
+    await usdc.mint(sender.address, amount / 2n);
+    await usdc.connect(sender).approve(await transferContract.getAddress(), amount + fee);
+
+    const result = await transferContract.previewTransfer(sender.address, amount);
+
+    expect(result.canTransfer).to.equal(false);
+  });
+
+  it("previewTransfer returns canTransfer false when allowance is insufficient", async function () {
+    const { transferContract, usdc, sender, feeBps } = await deployFixture({ feeBps: 100 });
+
+    const amount = ethers.parseUnits("100", 6);
+    const fee = (amount * 100n) / 10000n;
+    await usdc.mint(sender.address, amount + fee);
+    // Approve less than totalDebit
+    await usdc.connect(sender).approve(await transferContract.getAddress(), amount);
+
+    const result = await transferContract.previewTransfer(sender.address, amount);
+
+    expect(result.canTransfer).to.equal(false);
+  });
+
+  it("previewTransfer returns canTransfer false for zero address sender", async function () {
+    const { transferContract } = await deployFixture();
+
+    const result = await transferContract.previewTransfer(ethers.ZeroAddress, 1000000n);
+
+    expect(result.canTransfer).to.equal(false);
+    expect(result.balance).to.equal(0n);
+    expect(result.allowance).to.equal(0n);
+  });
+
+  it("previewTransfer returns canTransfer false when amount is below minimum", async function () {
+    const minTransfer = ethers.parseUnits("1", 6);
+    const { transferContract, usdc, sender, feeBps } = await deployFixture({
+      minTransfer,
+      precision: minTransfer,
+      feeBps: 100,
+    });
+
+    const amount = minTransfer - 1n;
+    const fee = (amount * 100n) / 10000n;
+    await usdc.mint(sender.address, amount + fee);
+    await usdc.connect(sender).approve(await transferContract.getAddress(), amount + fee);
+
+    const result = await transferContract.previewTransfer(sender.address, amount);
+
+    expect(result.canTransfer).to.equal(false);
+  });
+
   it("pause blocks transferWithFee but owner config updates remain available", async function () {
     const { transferContract, usdc, sender, recipient, feeBps } = await deployFixture();
 
@@ -607,7 +849,7 @@ describe("ImplicitExTransfer", function () {
 
     await transferContract.pause();
 
-    await expect(transferContract.setFeeBasisPoints(200)).to.emit(transferContract, "FeeUpdated");
+    await expect(transferContract.setFeeBasisPoints(50)).to.emit(transferContract, "FeeUpdated");
     await expect(transferContract.setMinTransferAmount(2)).to.emit(transferContract, "MinTransferUpdated");
     await expect(transferContract.setTransferPrecision(2)).to.emit(transferContract, "PrecisionUpdated");
 

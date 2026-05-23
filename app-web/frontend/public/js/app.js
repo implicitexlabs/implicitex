@@ -20,7 +20,7 @@
         'aria-label',
         theme === 'light' ? 'Switch to dark theme' : 'Switch to light theme'
       );
-      btn.textContent = theme === 'light' ? 'Dark' : 'Light';
+      // Do not set textContent — the button contains a split-circle SVG icon.
       safeStorageSet('implicitex-theme', theme);
     }
 

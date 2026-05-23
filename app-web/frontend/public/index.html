@@ -14,6 +14,7 @@
   <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="components/companion/companion.css">
+  <link rel="stylesheet" href="components/telemetry/telemetry.css">
   <link rel="manifest" href="manifest.json">
 </head>
 <body>
@@ -247,23 +248,64 @@
           aria-describedby="recipientError"
         >
         <p class="tx-recipient-error" id="recipientError" aria-live="assertive"></p>
+        <div class="intel-panel" id="recipientIntel" aria-live="polite" hidden>
+          <p class="intel-label">Recipient</p>
+          <ul class="intel-list" id="recipientIntelList"></ul>
+        </div>
         <input
           class="tx-field"
           type="number"
           id="txAmount"
-          placeholder="Amount (USDC)"
+          placeholder="Amount recipient gets (USDC)"
+          inputmode="decimal"
           min="1"
           step="0.000001"
-          aria-label="Amount in USDC"
+          aria-label="Amount recipient gets in USDC"
+        >
+        <div class="tx-meta-grid" aria-label="Transfer metadata">
+          <select class="tx-field tx-field--select" id="txPurposeTag" aria-label="Transfer purpose tag">
+            <option value="">Purpose tag</option>
+            <option value="invoice">Invoice</option>
+            <option value="contractor">Contractor</option>
+            <option value="refund">Refund</option>
+            <option value="family">Family</option>
+            <option value="donation">Donation</option>
+            <option value="purchase">Purchase</option>
+            <option value="subscription">Subscription</option>
+            <option value="test">Test</option>
+            <option value="other">Other</option>
+          </select>
+          <input
+            class="tx-field"
+            type="text"
+            id="txReference"
+            placeholder="Invoice / reference"
+            maxlength="80"
+            autocomplete="off"
+            aria-label="Invoice or internal reference"
+          >
+        </div>
+        <input
+          class="tx-field"
+          type="text"
+          id="txMemo"
+          placeholder="Memo (local receipt only)"
+          maxlength="140"
+          autocomplete="off"
+          aria-label="Transfer memo"
         >
         <div class="fee-row" aria-live="polite">
           <span class="fee-label">Your USDC balance</span>
           <span class="fee-val" id="usdcBalance">—</span>
         </div>
         <div class="fee-row" aria-live="polite">
-          <span class="fee-label">Fee (1%)</span>
+          <span class="fee-label">Platform fee (1%)</span>
           <span class="fee-val" id="feeDisplay">—</span>
         </div>
+        <label class="tx-confirm" id="txConfirmWrap" hidden>
+          <input type="checkbox" id="txConfirmAck">
+          <span>I confirm the recipient, amount, fee, and total debit.</span>
+        </label>
         <button class="tx-btn" id="txBtn" onclick="IX.handleTxAction()">
           Review Transfer
         </button>
@@ -274,6 +316,11 @@
         <p class="tx-status" id="txStatus" aria-live="assertive"></p>
       </div>
 
+      <div class="preflight-panel" id="preflightPanel" aria-live="polite">
+        <p class="intel-label">Preflight</p>
+        <ul class="preflight-list" id="preflightList"></ul>
+      </div>
+
       <div id="txPreview" class="tx-preview" hidden aria-live="polite" aria-label="Transfer preview">
         <p class="tx-preview-label" id="txPreviewLabel">Transfer Preview</p>
         <div class="data-row">
@@ -281,15 +328,15 @@
           <span class="data-v" id="previewRecipient">—</span>
         </div>
         <div class="data-row">
-          <span class="data-k">Amount</span>
+          <span class="data-k">Recipient gets</span>
           <span class="data-v" id="previewAmount">—</span>
         </div>
         <div class="data-row">
-          <span class="data-k">Fee (1%)</span>
+          <span class="data-k">Platform fee</span>
           <span class="data-v" id="previewFee">—</span>
         </div>
         <div class="data-row">
-          <span class="data-k">Total debit</span>
+          <span class="data-k">Total from wallet</span>
           <span class="data-v" id="previewTotal">—</span>
         </div>
         <div class="data-row">
@@ -304,21 +351,51 @@
           <span class="data-k">Mode</span>
           <span class="data-v" id="previewMode">—</span>
         </div>
+        <div class="data-row">
+          <span class="data-k">Purpose</span>
+          <span class="data-v" id="previewPurpose">—</span>
+        </div>
         <p class="tx-preview-note" id="previewNote">Preview only — no funds will move.</p>
+        <div class="tx-timeline" id="txTimeline" hidden></div>
       </div>
 
       <div class="fee-explanation">
         <p class="fee-explanation-label">Fee &amp; Routing</p>
         <p class="fee-explanation-body">
-          ImplicitEx applies a 1% platform fee to completed transfers. The fee is routed by
-          the smart contract to the configured treasury address at execution time — not held
-          or reviewed manually by ImplicitEx. Before wallet approval, no transaction is
-          submitted and no funds move.
+          The recipient amount and total wallet debit are different. The total debit is
+          recipient amount plus platform fee. Approval, when needed, must cover the full
+          total debit. Approval alone does not send funds.
+        </p>
+      </div>
+
+      <div class="fee-explanation">
+        <p class="fee-explanation-label">Preview Discipline</p>
+        <p class="fee-explanation-body">
+          Preview data is refreshed from the contract before any wallet prompt. Recipient,
+          network, pause state, contract address, and USDC token checks remain separate
+          execution gates.
+        </p>
+      </div>
+
+      <div class="fee-explanation">
+        <p class="fee-explanation-label">Network Note</p>
+        <p class="fee-explanation-body">
+          This transfer uses USDC on Polygon. Do not use this form to send Bitcoin,
+          Ethereum mainnet USDC, bank USD, or unsupported assets. A valid-looking
+          address does not prove the recipient controls it.
+        </p>
+      </div>
+
+      <div class="fee-explanation">
+        <p class="fee-explanation-label">Direct Send Warning</p>
+        <p class="fee-explanation-body">
+          Do not send USDC directly to the ImplicitEx contract address. Direct transfers
+          may be unrecoverable. See <a href="/legal.html">Legal</a> for current notices.
         </p>
       </div>
 
       <div class="receipt-history" aria-label="Recent transaction attempts">
-        <p class="receipt-history-label">Recent Receipts</p>
+        <p class="receipt-history-label">Receipts</p>
         <div id="receiptHistory" class="receipt-history-list">
           <p class="receipt-empty">No local receipts yet.</p>
         </div>
@@ -396,6 +473,39 @@
     </div>
   </div>
 
+  <!-- TELEMETRY — expandable instrumentation panel -->
+  <section class="telemetry" id="telemetry" aria-label="System telemetry">
+    <div class="telemetry-bar" id="telemetryBar"
+         role="button" tabindex="0"
+         aria-expanded="false" aria-controls="telemetryPanel"
+         aria-label="Telemetry — click to expand">
+      <span class="telemetry-dot" id="telemetryDot" aria-hidden="true"></span>
+      <span class="telemetry-label">Telemetry</span>
+      <span class="telemetry-summary" id="telemetrySummary">Nominal</span>
+      <span class="telemetry-chevron" aria-hidden="true"></span>
+    </div>
+    <div class="telemetry-panel" id="telemetryPanel" hidden aria-hidden="true">
+      <div class="telemetry-body">
+
+        <div class="telemetry-section" id="telemetrySectionStatus">
+          <div class="telemetry-section-label">Status</div>
+          <div class="telemetry-rows" id="telemetryStatusRows"></div>
+        </div>
+
+        <div class="telemetry-section" id="telemetrySectionDetails">
+          <div class="telemetry-section-label">Details</div>
+          <div class="telemetry-rows" id="telemetryDetailsRows"></div>
+        </div>
+
+        <div class="telemetry-section" id="telemetrySectionGuidance">
+          <div class="telemetry-section-label">Guidance</div>
+          <div class="telemetry-rows" id="telemetryGuidanceRows"></div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
   <!-- FOOTER -->
   <footer>
     <nav class="f-links" aria-label="Footer links">
@@ -421,12 +531,18 @@
   ></script>
   <script src="config/chains.js"></script>
   <script src="js/canvas.js"></script>
+  <script src="js/transfer-status.js"></script>
+  <script src="js/error-classifier.js"></script>
+  <script src="js/receipt-schema.js"></script>
+  <script src="js/receipt-integrity.js"></script>
+  <script src="js/proof-packet.js"></script>
   <script src="js/receipt-store.js"></script>
   <script src="js/wallet.js"></script>
   <script src="js/feeds.js"></script>
   <script src="js/app.js"></script>
   <script src="js/mobile-menu.js"></script>
   <script src="components/companion/companion.js"></script>
+  <script src="js/telemetry.js"></script>
   <script src="js/rehydrate.js"></script>
 </body>
 </html>

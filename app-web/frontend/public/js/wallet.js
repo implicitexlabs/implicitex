@@ -43,17 +43,36 @@
     chainId:   null,
     connecting: false,
     userDisconnected: false,
-    txPhase:   'DRAFT',   // 'DRAFT' | 'REVIEW_READY'
+    txPhase:   'DRAFT',   // 'DRAFT' | 'SIMULATING' | 'REVIEW_READY'
     reviewDraft: null,    // frozen validated draft set by enterReview
+    transferTimeline: { active: [], terminal: null },
     usdcBalanceRaw: null,
     networkPollTimer: null,
     walletChainPollTimer: null,
+    recipientCodeWarning: null,
   };
 
   const DEMO_FEE_RATE = 0.01;
   const POLYGON_GAS_STATION_URL = 'https://gasstation.polygon.technology/v2';
   const POLYGON_MAINNET_CHAIN_ID = 137;
   const POLYGON_MAINNET_CHAIN_HEX = '0x89';
+  const RECIPIENT_BOOK_KEY = 'ix.recipient.book';
+  const TRANSFER_STATUS = window.IX && window.IX.transferStatus;
+  const IX_TRANSFER_STATES = TRANSFER_STATUS && TRANSFER_STATUS.IX_TRANSFER_STATES;
+  const ERROR_CLASSIFIER = window.IX && window.IX.errorClassifier;
+  const RECEIPT_SCHEMA = window.IX && window.IX.receiptSchema;
+  const OBSERVATION_SOURCES = RECEIPT_SCHEMA && RECEIPT_SCHEMA.OBSERVATION_SOURCES;
+  const PURPOSE_TAGS = new Set([
+    'invoice',
+    'contractor',
+    'refund',
+    'family',
+    'donation',
+    'purchase',
+    'subscription',
+    'test',
+    'other',
+  ]);
 
   // Minimal ABIs — only the selectors this client calls.
   const ERC20_ABI = [
@@ -63,9 +82,10 @@
   ];
 
   const IMPLICITEX_ABI = [
-    'function feeBasisPoints() view returns (uint16)',
     'function minTransferAmount() view returns (uint256)',
     'function transferPrecision() view returns (uint256)',
+    'function paused() view returns (bool)',
+    'function previewTransfer(address sender,uint256 amount) view returns (uint256 fee,uint256 totalDebit,uint256 balance,uint256 allowance,bool canTransfer)',
     'function transferWithFee(address recipient, uint256 amount)',
   ];
 
@@ -78,6 +98,93 @@
     if (window.IX && window.IX.companion) {
       window.IX.companion.setState(stateKey, detail);
     }
+    updateTelemetryFromTransferState(stateKey, detail);
+  }
+
+  // ----------------------------------------------------------------
+  // Telemetry helper — drives TELEMETRY panel signal + rows.
+  // Signal mapping: network/transfer state → level + rate + summary.
+  // ----------------------------------------------------------------
+  var TELEMETRY_SIGNAL_MAP = {
+    'DISCONNECTED':        { level: 'dormant',   rate: 'low',  summary: 'Nominal' },
+    'WALLET_CONNECTED':    { level: 'status',    rate: 'low',  summary: 'Connected' },
+    'WRONG_NETWORK':       { level: 'elevated',  rate: 'avg',  summary: 'Wrong network' },
+    'CONTRACT_UNAVAILABLE':{ level: 'elevated',  rate: 'avg',  summary: 'Contract unavailable' },
+    'TRANSFERS_DISABLED':  { level: 'elevated',  rate: 'avg',  summary: 'Transfers disabled' },
+    'ready':               { level: 'status',    rate: 'low',  summary: 'Ready' },
+    'authorizing':         { level: 'status',    rate: 'avg',  summary: 'Awaiting approval' },
+    'authorized':          { level: 'status',    rate: 'avg',  summary: 'Approved' },
+    'submitting':          { level: 'status',    rate: 'avg',  summary: 'Submitting' },
+    'submitted':           { level: 'status',    rate: 'avg',  summary: 'Submitted' },
+    'confirmed':           { level: 'status',    rate: 'low',  summary: 'Confirmed' },
+    'rejected':            { level: 'status',    rate: 'low',  summary: 'Rejected by wallet' },
+    'failed':              { level: 'critical',  rate: 'avg',  summary: 'Transaction failed' },
+    'interrupted':         { level: 'elevated',  rate: 'avg',  summary: 'Interrupted' },
+    'outcome_unknown':     { level: 'elevated',  rate: 'high', summary: 'Outcome uncertain' },
+  };
+
+  var TELEMETRY_GUIDANCE_MAP = {
+    'WRONG_NETWORK':        [{ key: 'Action',   value: 'Switch to Polygon to continue.' }],
+    'CONTRACT_UNAVAILABLE': [{ key: 'Status',   value: 'Contract not deployed on this network.' }],
+    'TRANSFERS_DISABLED':   [{ key: 'Status',   value: 'Transfers currently disabled on this network.' }],
+    'failed':               [{ key: 'Recovery', value: 'Funds were not moved. Safe to retry.' }],
+    'interrupted':          [{ key: 'Recovery', value: 'Session interrupted. Funds were not moved. Safe to retry.' }],
+    'outcome_unknown':      [{ key: 'Recovery', value: 'Transaction status uncertain. Verify on the block explorer before retrying.' }],
+  };
+
+  function updateTelemetryFromTransferState(stateKey, detail) {
+    if (!window.IX || !window.IX.telemetry) return;
+    var tel = window.IX.telemetry;
+
+    var sig = TELEMETRY_SIGNAL_MAP[stateKey] || { level: 'status', rate: 'low', summary: 'Active' };
+    tel.setSignal(sig);
+
+    // Status rows — wallet address + network
+    var statusRows = [];
+    if (state.address) {
+      statusRows.push({ key: 'Wallet', value: state.address });
+    }
+    var chainConfig = window.IX_CHAINS && window.IX_CHAINS[state.chainId];
+    if (chainConfig && chainConfig.name) {
+      statusRows.push({ key: 'Network', value: chainConfig.name });
+    } else if (state.chainId) {
+      statusRows.push({ key: 'Chain ID', value: String(state.chainId) });
+    }
+    tel.setRows('status', statusRows);
+
+    // Details rows — contract, USDC, tx hash, explorer
+    var detailRows = [];
+    if (chainConfig) {
+      if (chainConfig.contractAddress) {
+        detailRows.push({ key: 'Contract', value: chainConfig.contractAddress });
+      }
+      if (chainConfig.usdcAddress) {
+        detailRows.push({ key: 'USDC', value: chainConfig.usdcAddress });
+      }
+    }
+    // txHash may arrive as detail.txHash or detail.eventVal (when eventVal is a 0x hash string)
+    var txHashVal = (detail && detail.txHash)
+      || (detail && detail.eventVal && /^0x[0-9a-fA-F]{64}$/.test(detail.eventVal) ? detail.eventVal : null);
+
+    if (txHashVal) {
+      detailRows.push({ key: 'Tx Hash', value: txHashVal });
+      var explorerBase = chainConfig && chainConfig.explorerUrl
+        ? chainConfig.explorerUrl.replace(/\/$/, '') + '/tx/'
+        : null;
+      if (explorerBase) {
+        var url = explorerBase + txHashVal;
+        detailRows.push({
+          key: 'Explorer',
+          value: '<a href="' + url + '" target="_blank" rel="noopener">View on explorer ↗</a>',
+          html: true,
+        });
+      }
+    }
+    tel.setRows('details', detailRows);
+
+    // Guidance rows — contextual, state-specific
+    var guidance = TELEMETRY_GUIDANCE_MAP[stateKey] || [];
+    tel.setRows('guidance', guidance);
   }
 
   // ----------------------------------------------------------------
@@ -91,14 +198,27 @@
   // ----------------------------------------------------------------
   function storeReceipt(detail) {
     if (window.IX && window.IX.receipts) {
-      return window.IX.receipts.create(detail);
+      return window.IX.receipts.create(Object.assign({
+        observationSource: OBSERVATION_SOURCES && OBSERVATION_SOURCES.LOCAL,
+      }, detail));
     }
     return { id: '_noop' }; // storage unavailable — id is a harmless sentinel
   }
 
   function updateReceipt(id, patch) {
     if (window.IX && window.IX.receipts) {
-      return window.IX.receipts.update(id, patch);
+      return window.IX.receipts.update(id, Object.assign({
+        observationSource: OBSERVATION_SOURCES && OBSERVATION_SOURCES.WALLET,
+      }, patch));
+    }
+    return false;
+  }
+
+  function updateReceiptFromSource(id, patch, source) {
+    if (window.IX && window.IX.receipts) {
+      return window.IX.receipts.update(id, Object.assign({
+        observationSource: source,
+      }, patch));
     }
     return false;
   }
@@ -152,8 +272,18 @@
     previewNetwork:     document.getElementById('previewNetwork'),
     previewContract:    document.getElementById('previewContract'),
     previewMode:        document.getElementById('previewMode'),
+    previewPurpose:     document.getElementById('previewPurpose'),
     previewNote:        document.getElementById('previewNote'),
+    txTimeline:         document.getElementById('txTimeline'),
+    txConfirmWrap:      document.getElementById('txConfirmWrap'),
+    txConfirmAck:       document.getElementById('txConfirmAck'),
     recipientError:     document.getElementById('recipientError'),
+    recipientIntel:     document.getElementById('recipientIntel'),
+    recipientIntelList: document.getElementById('recipientIntelList'),
+    preflightList:      document.getElementById('preflightList'),
+    txPurposeTag:       document.getElementById('txPurposeTag'),
+    txReference:        document.getElementById('txReference'),
+    txMemo:             document.getElementById('txMemo'),
     receiptHistory:     document.getElementById('receiptHistory'),
     txCancelReview:     document.getElementById('txCancelReview'),
     txPreviewLabel:     document.getElementById('txPreviewLabel'),
@@ -165,6 +295,53 @@
   function shortAddr(addr) {
     if (!addr || typeof addr !== 'string') return '';
     return addr.slice(0, 6) + '…' + addr.slice(-4);
+  }
+
+  function fullStorageRead(key, fallback) {
+    try {
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
+    } catch (_) {
+      return fallback;
+    }
+  }
+
+  function fullStorageWrite(key, value) {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function normalizeAddress(value) {
+    const v = String(value || '').trim();
+    if (!/^0x[0-9a-fA-F]{40}$/.test(v)) return null;
+    if (typeof ethers !== 'undefined' && ethers.getAddress) {
+      try {
+        return ethers.getAddress(v);
+      } catch (_) {
+        return v;
+      }
+    }
+    return v;
+  }
+
+  function getTransferMetadata() {
+    const purposeTag = (els.txPurposeTag && els.txPurposeTag.value) || '';
+    const referenceId = ((els.txReference && els.txReference.value) || '').trim().slice(0, 80);
+    const memo = ((els.txMemo && els.txMemo.value) || '').trim().slice(0, 140);
+    return {
+      purposeTag: PURPOSE_TAGS.has(purposeTag) ? purposeTag : '',
+      referenceId,
+      memo,
+    };
+  }
+
+  function purposeLabel(tag) {
+    if (!tag) return 'Not tagged';
+    return tag.charAt(0).toUpperCase() + tag.slice(1);
   }
 
   function setStatus(msg) {
@@ -214,10 +391,128 @@
     return 'error';
   }
 
+  function classifyTransferError(err, context) {
+    if (ERROR_CLASSIFIER) {
+      return ERROR_CLASSIFIER.classifyError(err, context);
+    }
+    return {
+      code: 'UNKNOWN_ERROR',
+      state: IX_TRANSFER_STATES.FAILED,
+      title: 'Transfer could not continue',
+      message: 'The transfer could not continue.',
+      fundsMoved: false,
+      broadcastKnown: false,
+      retryGuidance: 'Review details, then retry if appropriate.',
+      severity: 'blocking',
+    };
+  }
+
   // Persistent contextual note below the button — explains the current transfer gate.
   // Empty string clears it (element is invisible when empty).
   function setTransferNote(msg) {
     if (els.transferStateNote) els.transferStateNote.textContent = msg;
+  }
+
+  function resetReviewAcknowledgement() {
+    if (els.txConfirmAck) els.txConfirmAck.checked = false;
+    if (els.txConfirmWrap) els.txConfirmWrap.setAttribute('hidden', '');
+    if (els.txBtn) els.txBtn.classList.remove('tx-btn--armed');
+  }
+
+  function setReviewAcknowledgementVisible(visible) {
+    if (!els.txConfirmWrap) return;
+    if (visible) {
+      els.txConfirmWrap.removeAttribute('hidden');
+    } else {
+      els.txConfirmWrap.setAttribute('hidden', '');
+    }
+  }
+
+  function updateReviewActionButton() {
+    if (!els.txBtn || state.txPhase !== 'REVIEW_READY') return;
+    const acknowledged = !!(els.txConfirmAck && els.txConfirmAck.checked);
+    const armed = acknowledged && getNetworkState() === 'READY';
+
+    els.txBtn.textContent = 'Execute Transfer';
+    els.txBtn.disabled = !armed;
+    els.txBtn.classList.toggle('tx-btn--armed', armed);
+  }
+
+  const TRANSFER_TIMELINE_LABELS = {
+    review_ready: 'Review complete',
+    authorization_requested: 'Wallet authorization requested',
+    authorization_confirmed: 'Wallet authorization confirmed',
+    transfer_requested: 'Transfer confirmation requested',
+    broadcast: 'Transfer submitted to Polygon',
+    confirmed: 'Transfer confirmed',
+  };
+
+  function renderTransferTimeline() {
+    if (!els.txTimeline) return;
+    const steps = state.transferTimeline && state.transferTimeline.active || [];
+    const terminal = state.transferTimeline && state.transferTimeline.terminal;
+
+    if (!steps.length) {
+      els.txTimeline.replaceChildren();
+      els.txTimeline.setAttribute('hidden', '');
+      return;
+    }
+
+    const failedStep = terminal && terminal.step;
+    const failedReason = terminal && terminal.reason;
+    const currentStep = failedStep || steps[steps.length - 1];
+
+    els.txTimeline.replaceChildren(...steps.map(step => {
+      const item = document.createElement('div');
+      const isFailed = failedStep === step;
+      const isCurrent = !terminal && step === currentStep && step !== 'confirmed';
+      const isComplete = !isFailed && !isCurrent;
+      item.className = 'tx-timeline-item' +
+        (isComplete ? ' is-complete' : '') +
+        (isCurrent ? ' is-current' : '') +
+        (isFailed ? ' is-failed' : '');
+
+      const mark = document.createElement('span');
+      mark.className = 'tx-timeline-mark';
+      mark.textContent = isFailed ? '!' : isCurrent ? '●' : '✓';
+
+      const label = document.createElement('span');
+      label.textContent = isFailed && failedReason
+        ? `${TRANSFER_TIMELINE_LABELS[step] || step}: ${failedReason}`
+        : TRANSFER_TIMELINE_LABELS[step] || step;
+
+      item.append(mark, label);
+      return item;
+    }));
+
+    els.txTimeline.removeAttribute('hidden');
+  }
+
+  function markTransferStep(step) {
+    if (!TRANSFER_TIMELINE_LABELS[step]) return;
+    state.transferTimeline.terminal = null;
+    if (!state.transferTimeline.active.includes(step)) {
+      state.transferTimeline.active.push(step);
+    }
+    renderTransferTimeline();
+  }
+
+  function failTransferTimeline(step, reason) {
+    if (!TRANSFER_TIMELINE_LABELS[step]) return;
+    if (!state.transferTimeline.active.includes(step)) {
+      state.transferTimeline.active.push(step);
+    }
+    state.transferTimeline.terminal = { step, reason: reason || 'Interrupted' };
+    renderTransferTimeline();
+  }
+
+  function resetTransferTimeline() {
+    state.transferTimeline = { active: [], terminal: null };
+    renderTransferTimeline();
+  }
+
+  function resetTransferTimelineOnDraftEdit() {
+    if (state.txPhase === 'DRAFT') resetTransferTimeline();
   }
 
   function resetBalanceDisplay() {
@@ -239,6 +534,8 @@
     state.txPhase = 'DRAFT';
     if (els.txCancelReview) els.txCancelReview.setAttribute('hidden', '');
     if (els.txPreviewLabel) els.txPreviewLabel.textContent = 'Transfer Preview';
+    resetReviewAcknowledgement();
+    resetTransferTimeline();
 
     if (els.txRecipient) {
       els.txRecipient.value = '';
@@ -249,10 +546,24 @@
       els.amtIn.value = '';
       els.amtIn.disabled = false;
     }
+    if (els.txPurposeTag) {
+      els.txPurposeTag.value = '';
+      els.txPurposeTag.disabled = false;
+    }
+    if (els.txReference) {
+      els.txReference.value = '';
+      els.txReference.disabled = false;
+    }
+    if (els.txMemo) {
+      els.txMemo.value = '';
+      els.txMemo.disabled = false;
+    }
     if (els.recipientError) els.recipientError.textContent = '';
     if (els.feeDisplay) els.feeDisplay.textContent = '—';
     setStatus('');
     setTransferNote('');
+    renderRecipientIntel();
+    renderPreflight();
     hidePreview();
   }
 
@@ -261,6 +572,8 @@
     state.txPhase = 'DRAFT';
     if (els.txCancelReview) els.txCancelReview.setAttribute('hidden', '');
     if (els.txPreviewLabel) els.txPreviewLabel.textContent = 'Transfer Preview';
+    resetReviewAcknowledgement();
+    resetTransferTimeline();
     if (els.txRecipient) {
       els.txRecipient.value = '';
       els.txRecipient.disabled = false;
@@ -270,14 +583,67 @@
       els.amtIn.value = '';
       els.amtIn.disabled = false;
     }
+    if (els.txPurposeTag) {
+      els.txPurposeTag.value = '';
+      els.txPurposeTag.disabled = false;
+    }
+    if (els.txReference) {
+      els.txReference.value = '';
+      els.txReference.disabled = false;
+    }
+    if (els.txMemo) {
+      els.txMemo.value = '';
+      els.txMemo.disabled = false;
+    }
     if (els.recipientError) els.recipientError.textContent = '';
     if (els.feeDisplay) els.feeDisplay.textContent = '—';
     if (els.txBtn) {
-      els.txBtn.disabled = getNetworkState() !== 'READY';
+      els.txBtn.disabled = true;
       els.txBtn.textContent = currentButtonLabel();
+      els.txBtn.classList.remove('tx-btn--armed');
     }
     setTransferNote('');
+    renderRecipientIntel();
+    renderPreflight();
     hidePreview();
+  }
+
+  function clearDraftControlsAfterConfirmation() {
+    state.reviewDraft = null;
+    state.txPhase = 'DRAFT';
+
+    if (els.txRecipient) {
+      els.txRecipient.value = '';
+      els.txRecipient.disabled = false;
+      els.txRecipient.classList.remove('tx-field--error');
+    }
+    if (els.amtIn) {
+      els.amtIn.value = '';
+      els.amtIn.disabled = false;
+    }
+    if (els.txPurposeTag) {
+      els.txPurposeTag.value = '';
+      els.txPurposeTag.disabled = false;
+    }
+    if (els.txReference) {
+      els.txReference.value = '';
+      els.txReference.disabled = false;
+    }
+    if (els.txMemo) {
+      els.txMemo.value = '';
+      els.txMemo.disabled = false;
+    }
+    if (els.txCancelReview) els.txCancelReview.setAttribute('hidden', '');
+    if (els.recipientError) els.recipientError.textContent = '';
+    if (els.feeDisplay) els.feeDisplay.textContent = '—';
+    if (els.txBtn) {
+      els.txBtn.disabled = true;
+      els.txBtn.textContent = currentButtonLabel();
+      els.txBtn.classList.remove('tx-btn--armed');
+    }
+    resetReviewAcknowledgement();
+    renderRecipientIntel();
+    renderPreflight();
   }
 
   function buildReceiptDetail({
@@ -290,6 +656,7 @@
     chainId,
     chainConfig,
     contractAddress,
+    metadata,
     lastKnownMessage,
     fundsMoved = null,
   }) {
@@ -309,6 +676,9 @@
       explorerUrl: null,
       lastKnownMessage,
       network: chainConfig.name,
+      purposeTag: metadata && metadata.purposeTag || '',
+      referenceId: metadata && metadata.referenceId || '',
+      memo: metadata && metadata.memo || '',
     };
   }
 
@@ -353,11 +723,381 @@
     };
   }
 
+  function buildOnChainPreviewSummary(baseSummary, preview, chainConfig) {
+    const fee = BigInt(preview[0]);
+    const totalDebit = BigInt(preview[1]);
+    const balance = BigInt(preview[2]);
+    const allowance = BigInt(preview[3]);
+    const canTransfer = Boolean(preview[4]);
+
+    return Object.assign({}, baseSummary, {
+      fee,
+      totalDebit,
+      balance,
+      allowance,
+      canTransfer,
+      chainConfig,
+      balanceKnown: true,
+      insufficientBalance: balance < totalDebit,
+    });
+  }
+
+  function recipientBookEntries() {
+    const entries = fullStorageRead(RECIPIENT_BOOK_KEY, []);
+    return Array.isArray(entries) ? entries : [];
+  }
+
+  function findRecipientBookEntry(address) {
+    const normalized = normalizeAddress(address);
+    if (!normalized) return null;
+    return recipientBookEntries().find(entry =>
+      entry.address && entry.address.toLowerCase() === normalized.toLowerCase()
+    ) || null;
+  }
+
+  function upsertRecipientBook(address, metadata) {
+    const normalized = normalizeAddress(address);
+    if (!normalized) return;
+    const now = new Date().toISOString();
+    const entries = recipientBookEntries();
+    const idx = entries.findIndex(entry =>
+      entry.address && entry.address.toLowerCase() === normalized.toLowerCase()
+    );
+    const label = metadata && (metadata.referenceId || metadata.purposeTag || metadata.memo);
+    if (idx >= 0) {
+      entries[idx] = Object.assign({}, entries[idx], {
+        label: entries[idx].label || label || '',
+        lastUsedAt: now,
+        transferCount: Number(entries[idx].transferCount || 0) + 1,
+      });
+    } else {
+      entries.unshift({
+        address: normalized,
+        label: label || '',
+        notes: '',
+        createdAt: now,
+        lastUsedAt: now,
+        transferCount: 1,
+      });
+    }
+    fullStorageWrite(RECIPIENT_BOOK_KEY, entries.slice(0, 50));
+  }
+
+  function localReceiptMatches(address) {
+    const normalized = normalizeAddress(address);
+    if (!normalized || !window.IX || !window.IX.receipts) return [];
+    return window.IX.receipts.listAll().filter(receipt =>
+      receipt.recipient && receipt.recipient.toLowerCase() === normalized.toLowerCase()
+    );
+  }
+
+  function renderListItem(message, severity) {
+    const li = document.createElement('li');
+    li.textContent = message;
+    if (severity) li.className = 'is-' + severity;
+    return li;
+  }
+
+  function renderRecipientIntel() {
+    if (!els.recipientIntel || !els.recipientIntelList) return;
+    const recipient = (els.txRecipient && els.txRecipient.value.trim()) || '';
+    const normalized = normalizeAddress(recipient);
+
+    if (!recipient || !normalized) {
+      els.recipientIntel.setAttribute('hidden', '');
+      els.recipientIntelList.replaceChildren();
+      return;
+    }
+
+    const matches = localReceiptMatches(normalized);
+    const bookEntry = findRecipientBookEntry(normalized);
+    const items = [
+      renderListItem('Format valid', 'ok'),
+      renderListItem('Confirm network with recipient', 'warning'),
+    ];
+
+    if (
+      state.recipientCodeWarning &&
+      state.recipientCodeWarning.address &&
+      state.recipientCodeWarning.address.toLowerCase() === normalized.toLowerCase() &&
+      state.recipientCodeWarning.chainId === state.chainId &&
+      state.recipientCodeWarning.isContract
+    ) {
+      items.push(renderListItem('Smart contract address detected — continue only if it can receive and manage USDC', 'warning'));
+    }
+
+    if (matches.length > 0 || bookEntry) {
+      const count = Math.max(matches.length, Number(bookEntry && bookEntry.transferCount || 0));
+      items.splice(1, 0, renderListItem(`Known locally · ${count} prior transfer${count === 1 ? '' : 's'}`, 'ok'));
+    } else {
+      items.splice(1, 0, renderListItem('New to this browser history', 'warning'));
+    }
+
+    if (bookEntry && bookEntry.label) {
+      items.push(renderListItem(`Label · ${bookEntry.label}`, 'ok'));
+    }
+
+    els.recipientIntelList.replaceChildren(...items);
+    els.recipientIntel.removeAttribute('hidden');
+  }
+
+  async function refreshRecipientCodeWarning(address) {
+    const normalized = normalizeAddress(address);
+    const provider = getWalletProvider();
+    const chainIdAtStart = state.chainId;
+
+    state.recipientCodeWarning = null;
+    renderRecipientIntel();
+
+    if (!normalized || !provider || !provider.request || !state.connected) return;
+    if (isConfiguredTokenAddress(normalized) || isConfiguredTransferContractAddress(normalized)) return;
+
+    try {
+      const code = await provider.request({
+        method: 'eth_getCode',
+        params: [normalized, 'latest'],
+      });
+
+      const currentRecipient = normalizeAddress((els.txRecipient && els.txRecipient.value) || '');
+      if (
+        state.chainId !== chainIdAtStart ||
+        !currentRecipient ||
+        currentRecipient.toLowerCase() !== normalized.toLowerCase()
+      ) {
+        return;
+      }
+
+      state.recipientCodeWarning = {
+        address: normalized,
+        chainId: chainIdAtStart,
+        isContract: !!(code && code !== '0x'),
+      };
+      renderRecipientIntel();
+    } catch (_) {
+      state.recipientCodeWarning = null;
+    }
+  }
+
+  function buildPreflightItems() {
+    const recipient = (els.txRecipient && els.txRecipient.value.trim()) || '';
+    const amountStr = (els.amtIn && els.amtIn.value.trim()) || '';
+    const validRecipient = validateRecipient(recipient) === '';
+    const amountFloat = parseFloat(amountStr);
+    const validAmount = !!amountStr && !isNaN(amountFloat) && amountFloat > 0;
+    const chainConfig = window.IX_CHAINS && window.IX_CHAINS[state.chainId];
+    const networkReady = getNetworkState() === 'READY';
+    const summary = validRecipient && validAmount && chainConfig
+      ? safeBuildDraftSummary(recipient, amountStr, amountFloat, chainConfig)
+      : null;
+    const aboveMinimum = validAmount && (!chainConfig || !chainConfig.minTransferUsdc || amountFloat >= chainConfig.minTransferUsdc);
+    const minimumLabel = chainConfig && chainConfig.minTransferUsdc
+      ? `Amount below ${chainConfig.minTransferUsdc} USDC minimum`
+      : 'Amount must be above the configured minimum';
+
+    return [
+      { label: state.connected ? 'Wallet connected' : 'Wallet required', status: state.connected ? 'ok' : 'blocking' },
+      { label: networkReady ? 'Polygon network' : 'Switch to Polygon', status: networkReady ? 'ok' : 'blocking' },
+      { label: chainConfig && chainConfig.contractAddress ? 'Contract configured' : 'Contract unavailable', status: chainConfig && chainConfig.contractAddress ? 'ok' : 'blocking' },
+      { label: validRecipient ? 'Recipient valid' : 'Recipient required', status: validRecipient ? 'ok' : 'blocking' },
+      { label: validAmount ? 'Recipient amount entered' : 'Recipient amount required', status: validAmount ? 'ok' : 'blocking' },
+      { label: aboveMinimum ? 'Above minimum' : minimumLabel, status: aboveMinimum ? 'ok' : 'blocking' },
+      { label: summary && summary.balanceKnown ? 'Balance loaded' : 'Balance loading', status: summary && summary.balanceKnown ? 'ok' : 'warning' },
+      { label: summary && !summary.insufficientBalance ? 'Balance covers total debit' : 'Balance must cover recipient amount plus fee', status: summary && !summary.insufficientBalance ? 'ok' : validAmount ? 'blocking' : 'warning' },
+      { label: summary ? 'Amount preview ready' : 'Amount preview pending', status: summary ? 'ok' : 'warning' },
+      { label: 'Execution checks run before wallet prompt', status: 'warning' },
+    ];
+  }
+
+  function safeBuildDraftSummary(recipient, amountStr, amountFloat, chainConfig) {
+    try {
+      return buildDraftSummary(recipient, amountStr, amountFloat, chainConfig);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function renderPreflight() {
+    if (!els.preflightList) return;
+    els.preflightList.replaceChildren(...buildPreflightItems().map(item =>
+      renderListItem(item.label, item.status)
+    ));
+  }
+
+  /**
+   * Replace the preflight list with "Checking…" placeholder items
+   * while runPreflight() is in progress.
+   */
+  function renderPreflightChecking() {
+    if (!els.preflightList) return;
+    els.preflightList.replaceChildren(
+      renderListItem('Checking network state…', 'checking'),
+      renderListItem('Checking contract state…', 'checking'),
+      renderListItem('Reading balance and allowance…', 'checking'),
+    );
+  }
+
+  /**
+   * Replace the preflight list with the completed simulation results and
+   * a verdict row at the bottom. Called after runPreflight() resolves.
+   */
+  function renderPreflightResult(result) {
+    if (!els.preflightList) return;
+
+    const items = [];
+
+    // Network passed local validation before runPreflight was called.
+    items.push(renderListItem('Network valid', 'ok'));
+
+    if (result.isPaused === false) {
+      items.push(renderListItem('Contract active', 'ok'));
+    } else if (result.isPaused === true) {
+      items.push(renderListItem('Transfers paused', 'blocking'));
+    } else {
+      items.push(renderListItem('Contract state unverified', 'warning'));
+    }
+
+    if (result.previewOk) {
+      if (result.balance >= result.totalDebit) {
+        items.push(renderListItem('Balance covers total debit', 'ok'));
+      } else {
+        items.push(renderListItem('Insufficient balance', 'blocking'));
+      }
+
+      if (result.needsApproval) {
+        items.push(renderListItem('Allowance insufficient — approval required', 'warning'));
+      } else if (result.allowance !== null) {
+        items.push(renderListItem('Allowance sufficient', 'ok'));
+      }
+
+      if (result.gasOk === true) {
+        items.push(renderListItem('Gas estimated', 'ok'));
+      } else if (result.gasOk === false) {
+        items.push(renderListItem('Gas estimate failed', 'warning'));
+      }
+      // gasOk === null: gas check skipped because approval is required first
+    }
+
+    // Verdict row — visually separated by CSS border-top
+    const verdictStatus = (result.verdict === 'OK') ? 'ok'
+      : (result.verdict === 'PAUSED' || result.verdict === 'INSUFFICIENT_BALANCE') ? 'blocking'
+      : 'warning';
+
+    const verdictItem = renderListItem(result.verdictText, verdictStatus);
+    verdictItem.classList.add('is-verdict');
+    items.push(verdictItem);
+
+    els.preflightList.replaceChildren(...items);
+  }
+
+  /**
+   * Read on-chain state and produce a readiness verdict before the wallet
+   * prompt. Uses a read-only BrowserProvider — no signer, no wallet interaction.
+   *
+   * Verdict values:
+   *   'OK'                   — No blocking issue detected
+   *   'NEEDS_APPROVAL'       — Approval required before transfer
+   *   'INSUFFICIENT_BALANCE' — Likely to fail: insufficient balance
+   *   'PAUSED'               — Transfers unavailable: contract paused
+   *   'GAS_FAILED'           — Unable to verify — likely to fail
+   *   'UNABLE_TO_VERIFY'     — Unable to verify current chain state
+   *
+   * This result is UI guidance only. submitTransfer() performs its own
+   * fresh checks immediately before prompting the wallet, regardless of
+   * what runPreflight() returned.
+   */
+  async function runPreflight(sender, recipient, rawAmount, chainConfig) {
+    const contractAddress = chainConfig.contractAddress;
+    const result = {
+      isPaused: null,
+      previewOk: false,
+      balance: null,
+      allowance: null,
+      fee: null,
+      totalDebit: null,
+      needsApproval: false,
+      gasOk: null,
+      verdict: 'UNABLE_TO_VERIFY',
+      verdictText: 'Unable to verify current chain state',
+    };
+
+    let provider;
+    let implicitex;
+    try {
+      provider = new ethers.BrowserProvider(getWalletProvider());
+      implicitex = new ethers.Contract(contractAddress, IMPLICITEX_ABI, provider);
+    } catch (_) {
+      return result;
+    }
+
+    // Step 1 — pause state
+    try {
+      result.isPaused = await implicitex.paused();
+    } catch (_) {
+      return result; // RPC failure — unable to verify
+    }
+
+    if (result.isPaused) {
+      result.verdict = 'PAUSED';
+      result.verdictText = 'Transfers unavailable: contract paused';
+      return result;
+    }
+
+    // Step 2 — previewTransfer (balance, allowance, fee, canTransfer)
+    try {
+      const preview = await implicitex.previewTransfer(sender, rawAmount);
+      result.fee        = BigInt(preview[0]);
+      result.totalDebit = BigInt(preview[1]);
+      result.balance    = BigInt(preview[2]);
+      result.allowance  = BigInt(preview[3]);
+      result.previewOk  = true;
+    } catch (_) {
+      return result; // RPC failure — unable to verify
+    }
+
+    // Step 3 — classify balance
+    if (result.balance < result.totalDebit) {
+      result.verdict     = 'INSUFFICIENT_BALANCE';
+      result.verdictText = 'Likely to fail: insufficient balance';
+      return result;
+    }
+
+    // Step 4 — classify allowance
+    result.needsApproval = result.allowance < result.totalDebit;
+
+    if (result.needsApproval) {
+      // Don't estimate gas for transferWithFee — allowance is too low so the
+      // call would revert, making the gas failure misleading.
+      result.verdict     = 'NEEDS_APPROVAL';
+      result.verdictText = 'Approval required before transfer';
+      return result;
+    }
+
+    // Step 5 — gas estimation (transfer-ready path only)
+    try {
+      const iface = new ethers.Interface(IMPLICITEX_ABI);
+      await provider.estimateGas({
+        from: sender,
+        to: contractAddress,
+        data: iface.encodeFunctionData('transferWithFee', [recipient, rawAmount]),
+      });
+      result.gasOk       = true;
+      result.verdict     = 'OK';
+      result.verdictText = 'No blocking issue detected';
+    } catch (_) {
+      result.gasOk       = false;
+      result.verdict     = 'GAS_FAILED';
+      result.verdictText = 'Unable to verify — likely to fail';
+    }
+
+    return result;
+  }
+
   function renderTransferSummary(summary, options = {}) {
     const chainConfig = summary.chainConfig;
     const label = options.label || 'Transfer Preview';
     const mode = options.mode || 'Live';
-    const note = options.note || 'Review details before wallet approval.';
+    const note = options.note || 'Review recipient amount, platform fee, and total wallet debit before approval.';
+    const metadata = getTransferMetadata();
 
     if (els.txPreviewLabel) els.txPreviewLabel.textContent = label;
     if (els.previewRecipient) els.previewRecipient.textContent = summary.recipient.slice(0, 10) + '…' + summary.recipient.slice(-6);
@@ -369,6 +1109,7 @@
       ? chainConfig.contractAddress.slice(0, 10) + '…'
       : 'Not deployed';
     if (els.previewMode)      els.previewMode.textContent      = mode;
+    if (els.previewPurpose)   els.previewPurpose.textContent   = purposeLabel(metadata.purposeTag);
     if (els.previewNote)      els.previewNote.textContent      = note;
 
     showPreview();
@@ -376,8 +1117,11 @@
 
   function setDraftButton(label, disabled) {
     if (!els.txBtn || state.txPhase !== 'DRAFT') return;
+    const acknowledged = !!(els.txConfirmAck && els.txConfirmAck.checked);
+    const armed = !disabled && acknowledged;
     els.txBtn.textContent = label;
-    els.txBtn.disabled = disabled;
+    els.txBtn.disabled = !armed;
+    els.txBtn.classList.toggle('tx-btn--armed', armed);
   }
 
   function formatReceiptTime(value) {
@@ -399,6 +1143,27 @@
     return hash.slice(0, 10) + '…' + hash.slice(-6);
   }
 
+  function buildProofPacket(receipt) {
+    if (window.IX && window.IX.proofPacket) {
+      return window.IX.proofPacket.buildProofPacket(receipt);
+    }
+    return Object.assign({ schemaVersion: 'proof-packet.v1' }, receipt);
+  }
+
+  function downloadProofPacket(receipt) {
+    const packet = buildProofPacket(receipt);
+    const blob = new Blob([JSON.stringify(packet, null, 2) + '\n'], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const hash = packet.transactionHash || receipt.id || 'local';
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `implicitex-proof-${String(hash).slice(0, 12)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 0);
+  }
+
   function receiptExplorerUrl(chainConfig, txHash) {
     return chainConfig && chainConfig.explorerUrl && txHash
       ? chainConfig.explorerUrl + '/tx/' + txHash
@@ -413,7 +1178,7 @@
       active &&
       active.id === receipt.id &&
       txHash &&
-      (receipt.state === 'SUBMITTED' || receipt.state === 'OUTCOME_UNKNOWN')
+      (receipt.state === IX_TRANSFER_STATES.SUBMITTED || receipt.state === IX_TRANSFER_STATES.OUTCOME_UNKNOWN)
     );
   }
 
@@ -426,31 +1191,32 @@
     const txHash = active.transferHash || active.hash;
     const chainConfig = window.IX_CHAINS && window.IX_CHAINS[active.chainId];
     const explorerUrl = active.explorerUrl || receiptExplorerUrl(chainConfig, txHash);
+    const rpcSource = OBSERVATION_SOURCES && OBSERVATION_SOURCES.RPC;
 
     function preserveUnresolved(stateKey, message) {
-      updateReceipt(active.id, {
+      updateReceiptFromSource(active.id, {
         state: stateKey,
         transferHash: txHash,
         hash: txHash,
         explorerUrl,
         fundsMoved: null,
         lastKnownMessage: message,
-      });
+      }, rpcSource);
     }
 
-    updateReceipt(active.id, {
+    updateReceiptFromSource(active.id, {
       lastKnownMessage: 'Checking transaction status. Do not retry yet.',
-    });
+    }, rpcSource);
 
     if (!chainConfig || !chainConfig.rpcUrl || typeof ethers === 'undefined') {
-      preserveUnresolved('OUTCOME_UNKNOWN', 'App status check unavailable. Check the explorer before retrying.');
-      companionState('OUTCOME_UNKNOWN', {
-        statusLine: 'Outcome unknown. Check explorer before retrying.',
+      preserveUnresolved(IX_TRANSFER_STATES.OUTCOME_UNKNOWN, 'App status check unavailable. Check the explorer before retrying.');
+      companionState(IX_TRANSFER_STATES.OUTCOME_UNKNOWN, {
+        statusLine: 'Transaction outcome could not be verified locally.',
         stateVal:   'Outcome unknown',
         fundsVal:   'Unknown — check explorer',
         networkVal: active.network || (chainConfig && chainConfig.name) || '—',
         eventVal:   txHash,
-        actionVal:  'Check the explorer. Do not retry until you confirm the outcome.',
+        actionVal:  'Verify on explorer before retrying.',
         actionHref: explorerUrl || undefined,
         severity:   'warning',
         autoOpen:   true,
@@ -463,40 +1229,41 @@
       const txReceipt = await provider.getTransactionReceipt(txHash);
 
       if (txReceipt === null) {
-        const unresolvedState = active.state === 'OUTCOME_UNKNOWN' ? 'OUTCOME_UNKNOWN' : 'SUBMITTED';
+        const unresolvedState = active.state === IX_TRANSFER_STATES.OUTCOME_UNKNOWN ? IX_TRANSFER_STATES.OUTCOME_UNKNOWN : IX_TRANSFER_STATES.SUBMITTED;
         preserveUnresolved(unresolvedState, 'Transaction not yet confirmed. Check the explorer before retrying.');
         companionState(unresolvedState, {
-          statusLine: unresolvedState === 'SUBMITTED'
-            ? 'Transaction submitted. Check explorer before retrying.'
-            : 'Outcome unknown. Check explorer before retrying.',
-          stateVal:   unresolvedState === 'SUBMITTED' ? 'Submitted' : 'Outcome unknown',
+          statusLine: unresolvedState === IX_TRANSFER_STATES.SUBMITTED
+            ? 'Transaction submitted. Awaiting chain confirmation.'
+            : 'Transaction outcome could not be verified locally.',
+          stateVal:   unresolvedState === IX_TRANSFER_STATES.SUBMITTED ? 'Submitted' : 'Outcome unknown',
           fundsVal:   'Unknown — check explorer',
           networkVal: active.network || chainConfig.name,
           eventVal:   txHash,
-          actionVal:  'Check on ' + chainConfig.name + ' explorer \u2197',
+          actionVal:  'View on ' + chainConfig.name + ' explorer',
           actionHref: explorerUrl || undefined,
-          severity:   unresolvedState === 'OUTCOME_UNKNOWN' ? 'warning' : undefined,
+          severity:   unresolvedState === IX_TRANSFER_STATES.OUTCOME_UNKNOWN ? 'warning' : undefined,
           autoOpen:   true,
         });
         return;
       }
 
       if (txReceipt.status === 1) {
-        resolveReceipt(active.id, {
-          state: 'CONFIRMED',
+        updateReceiptFromSource(active.id, {
+          state: IX_TRANSFER_STATES.CONFIRMED,
           fundsMoved: true,
           transferHash: txHash,
           hash: txHash,
           explorerUrl,
-          lastKnownMessage: 'Transfer confirmed. Funds moved.',
-        });
-        companionState('CONFIRMED', {
-          statusLine: 'Transfer confirmed. Funds have moved.',
+          lastKnownMessage: 'Transfer confirmed. Funds moved on Polygon.',
+        }, rpcSource);
+        if (window.IX && window.IX.receipts) window.IX.receipts.clearActive();
+        companionState(IX_TRANSFER_STATES.CONFIRMED, {
+          statusLine: 'Transfer confirmed. Funds moved on Polygon.',
           stateVal:   'Confirmed',
           fundsVal:   'Yes — transfer complete',
           networkVal: active.network || chainConfig.name,
           eventVal:   txHash,
-          actionVal:  explorerUrl ? 'View on ' + chainConfig.name + ' explorer \u2197' : 'Transfer confirmed.',
+          actionVal:  explorerUrl ? 'View on ' + chainConfig.name + ' explorer' : 'Transfer confirmed.',
           actionHref: explorerUrl || undefined,
           autoOpen:   true,
         });
@@ -504,37 +1271,38 @@
       }
 
       if (txReceipt.status === 0) {
-        resolveReceipt(active.id, {
-          state: 'FAILED',
+        updateReceiptFromSource(active.id, {
+          state: IX_TRANSFER_STATES.FAILED,
           fundsMoved: false,
           transferHash: txHash,
           hash: txHash,
           explorerUrl,
           lastKnownMessage: 'Transaction reverted on-chain. Funds were not moved.',
-        });
-        companionState('FAILED', {
+        }, rpcSource);
+        if (window.IX && window.IX.receipts) window.IX.receipts.clearActive();
+        companionState(IX_TRANSFER_STATES.FAILED, {
           statusLine: 'Transaction failed on-chain. Funds were not moved.',
           stateVal:   'Failed',
           fundsVal:   'No — gas may have been consumed',
           networkVal: active.network || chainConfig.name,
           eventVal:   txHash,
-          actionVal:  explorerUrl ? 'View on ' + chainConfig.name + ' explorer \u2197' : 'Verify on explorer before retrying.',
+          actionVal:  explorerUrl ? 'View on ' + chainConfig.name + ' explorer' : 'Verify on explorer before retrying.',
           actionHref: explorerUrl || undefined,
           autoOpen:   true,
         });
         return;
       }
 
-      preserveUnresolved('OUTCOME_UNKNOWN', 'Network returned an unrecognised transaction status. Check the explorer before retrying.');
+      preserveUnresolved(IX_TRANSFER_STATES.OUTCOME_UNKNOWN, 'Network returned an unrecognised transaction status. Check the explorer before retrying.');
     } catch (_) {
-      preserveUnresolved('OUTCOME_UNKNOWN', 'App status check failed. Check the explorer before retrying.');
-      companionState('OUTCOME_UNKNOWN', {
-        statusLine: 'Outcome unknown. Check explorer before retrying.',
+      preserveUnresolved(IX_TRANSFER_STATES.OUTCOME_UNKNOWN, 'App status check failed. Check the explorer before retrying.');
+      companionState(IX_TRANSFER_STATES.OUTCOME_UNKNOWN, {
+        statusLine: 'Transaction outcome could not be verified locally.',
         stateVal:   'Outcome unknown',
         fundsVal:   'Unknown — check explorer',
         networkVal: active.network || (chainConfig && chainConfig.name) || '—',
         eventVal:   txHash,
-        actionVal:  'Check the explorer. Do not retry until you confirm the outcome.',
+        actionVal:  'Verify on explorer before retrying.',
         actionHref: explorerUrl || undefined,
         severity:   'warning',
         autoOpen:   true,
@@ -574,7 +1342,8 @@
 
       const meta = document.createElement('p');
       meta.className = 'receipt-meta';
-      meta.textContent = `${receipt.amount || '—'} USDC → ${receipt.recipient ? shortAddr(receipt.recipient) : '—'}`;
+      const purpose = receipt.purposeTag ? ` · ${purposeLabel(receipt.purposeTag)}` : '';
+      meta.textContent = `${receipt.amount || '—'} USDC → ${receipt.recipient ? shortAddr(receipt.recipient) : '—'}${purpose}`;
 
       const message = document.createElement('p');
       message.className = 'receipt-message';
@@ -596,9 +1365,18 @@
         link.href = receipt.explorerUrl;
         link.target = '_blank';
         link.rel = 'noopener';
-        link.textContent = `View on explorer ${shortHash(txHash)}`;
+        link.textContent = `Verify on explorer ${shortHash(txHash)}`;
         receiptActions.append(link);
       }
+
+      const proofButton = document.createElement('button');
+      proofButton.type = 'button';
+      proofButton.className = 'receipt-proof-btn';
+      proofButton.textContent = 'Export proof packet';
+      proofButton.addEventListener('click', function () {
+        downloadProofPacket(receipt);
+      });
+      receiptActions.append(proofButton);
 
       if (canReconcileActiveReceipt(receipt)) {
         const checkButton = document.createElement('button');
@@ -634,20 +1412,23 @@
    * Hides otherwise.
    */
   function updatePreview() {
-    if (state.txPhase === 'REVIEW_READY') return; // frozen during review — do not overwrite
+    if (state.txPhase === 'REVIEW_READY' || state.txPhase === 'SIMULATING') return; // frozen during preflight check and review
 
     const recipient  = (els.txRecipient && els.txRecipient.value.trim()) || '';
     const amountStr  = (els.amtIn && els.amtIn.value.trim()) || '';
     const amountFloat = parseFloat(amountStr);
+    renderRecipientIntel();
+    renderPreflight();
 
-    const validRecipient = /^0x[0-9a-fA-F]{40}$/.test(recipient);
+    const validRecipient = validateRecipient(recipient) === '';
     const validAmount    = !isNaN(amountFloat) && amountFloat > 0;
     const validNetwork   = state.connected && isLiveTransferChain(state.chainId);
 
     if (!validRecipient || !validAmount || !validNetwork) {
       hidePreview();
+      setReviewAcknowledgementVisible(false);
       setTransferNote('');
-      setDraftButton(currentButtonLabel(), getNetworkState() !== 'READY');
+      setDraftButton(currentButtonLabel(), true);
       return;
     }
 
@@ -657,7 +1438,8 @@
       summary = buildDraftSummary(recipient, amountStr, amountFloat, chainConfig);
     } catch (_) {
       hidePreview();
-      setDraftButton(currentButtonLabel(), getNetworkState() !== 'READY');
+      setReviewAcknowledgementVisible(false);
+      setDraftButton(currentButtonLabel(), true);
       return;
     }
 
@@ -667,6 +1449,7 @@
         note: 'Checking USDC balance before review.',
       });
       setTransferNote('Checking USDC balance before review.');
+      setReviewAcknowledgementVisible(false);
       setDraftButton('Checking Balance', true);
       return;
     }
@@ -679,6 +1462,7 @@
       });
       setStatus(`Insufficient balance. Have ${formatUsdcRaw(summary.balance, 2)} USDC, need ${formatUsdcRaw(summary.totalDebit, 2)} USDC.`);
       setTransferNote('Lower the amount or add USDC before reviewing this transfer.');
+      setReviewAcknowledgementVisible(false);
       setDraftButton('Insufficient Balance', true);
       return;
     }
@@ -686,11 +1470,12 @@
     renderTransferSummary(summary, {
       label: 'Transfer Preview',
       mode: 'Live',
-      note: 'Review details before wallet approval.',
+      note: 'Amount preview only. Recipient, network, pause state, contract, USDC token, balance, and allowance are checked again before any wallet prompt.',
     });
     setStatus('');
     setTransferNote('');
-    setDraftButton('Review Transfer', false);
+    setReviewAcknowledgementVisible(true);
+    setDraftButton('Execute Transfer', false);
   }
 
   function setNavStatus(msg) {
@@ -768,6 +1553,16 @@
     );
   }
 
+  function isConfiguredTransferContractAddress(address) {
+    const chainConfig = window.IX_CHAINS && window.IX_CHAINS[state.chainId];
+    return !!(
+      address &&
+      chainConfig &&
+      chainConfig.contractAddress &&
+      address.toLowerCase() === chainConfig.contractAddress.toLowerCase()
+    );
+  }
+
   /**
    * Classify current connection into one of five named states.
    * Used to route presentation functions and set button labels.
@@ -827,8 +1622,8 @@
    */
   function currentButtonLabel() {
     if (getNetworkState() !== 'READY') return 'Switch to Polygon';
-    if (state.txPhase === 'REVIEW_READY') return 'Confirm Transfer';
-    return 'Review Transfer';
+    if (state.txPhase === 'SIMULATING') return 'Checking…';
+    return 'Execute Transfer';
   }
 
   // ----------------------------------------------------------------
@@ -836,13 +1631,19 @@
   // ----------------------------------------------------------------
 
   /**
-   * Freeze the current form values and enter REVIEW_READY.
-   * Validates locally (no async chain reads). Locks inputs and the
-   * preview panel so the user reviews a stable, deterministic summary
-   * before any wallet action is requested.
+   * Freeze the current form values, run a preflight readiness check against
+   * the live contract, then enter REVIEW_READY.
+   *
+   * Phase flow:
+   *   DRAFT → (local validation) → SIMULATING → (on-chain reads) → REVIEW_READY
+   *                                                               ↘ DRAFT (on hard block)
+   *
+   * The preflight result is user-visible guidance only. submitTransfer() always
+   * performs its own fresh checks immediately before prompting the wallet —
+   * the preflight snapshot never replaces those execution-safety gates.
    */
-  function enterReview() {
-    if (state.txPhase === 'REVIEW_READY') return; // idempotent
+  async function enterReview() {
+    if (state.txPhase === 'REVIEW_READY' || state.txPhase === 'SIMULATING') return; // idempotent
 
     const recipient   = (els.txRecipient && els.txRecipient.value.trim()) || '';
     const amountStr   = (els.amtIn && els.amtIn.value.trim()) || '';
@@ -890,37 +1691,97 @@
       return;
     }
 
-    state.reviewDraft = summary;
-    state.txPhase = 'REVIEW_READY';
+    // ---- Local validation passed. Enter SIMULATING. ----
 
-    // Lock inputs so the summary cannot drift while the user reads it.
+    state.reviewDraft = summary;
+    state.reviewDraft.metadata = getTransferMetadata();
+    state.txPhase = 'SIMULATING';
+
+    // Lock inputs so form values cannot drift during the async check.
     if (els.txRecipient) els.txRecipient.disabled = true;
     if (els.amtIn)       els.amtIn.disabled = true;
+    if (els.txPurposeTag) els.txPurposeTag.disabled = true;
+    if (els.txReference)  els.txReference.disabled = true;
+    if (els.txMemo)       els.txMemo.disabled = true;
 
-    // Freeze preview panel as review summary.
-    renderTransferSummary(summary, {
-      label: 'Review Transfer',
-      mode: 'Review ready',
-      note: 'Confirm to begin wallet authorization. No wallet action requested yet.',
-    });
-
-    // Show cancel path and update primary button.
+    // Show cancel path; primary button disabled while checking.
+    // Hide the acknowledgement checkbox but preserve its checked state —
+    // it was already confirmed by the user before the Execute click.
     if (els.txCancelReview) els.txCancelReview.removeAttribute('hidden');
+    setReviewAcknowledgementVisible(false);
     if (els.txBtn) {
-      els.txBtn.disabled = false;
-      els.txBtn.textContent = 'Confirm Transfer';
+      els.txBtn.disabled = true;
+      els.txBtn.classList.remove('tx-btn--armed');
+      els.txBtn.textContent = 'Checking…';
     }
-    setTransferNote('Review sender, recipient, and amount. No wallet action requested yet.');
+
+    renderPreflightChecking();
+    setTransferNote('Reading contract state…');
     setStatus('');
 
-    companionState('REVIEW_READY', {
-      statusLine: 'Transfer ready. No wallet action requested yet.',
-      stateVal:   'Review ready',
+    // Run the on-chain preflight check.
+    let preflightResult;
+    try {
+      const rawAmount = parseUsdcAmount(amountStr);
+      preflightResult = await runPreflight(state.address, recipient, rawAmount, chainConfig);
+    } catch (_) {
+      preflightResult = {
+        isPaused: null, previewOk: false, balance: null, allowance: null,
+        fee: null, totalDebit: null, needsApproval: false, gasOk: null,
+        verdict: 'UNABLE_TO_VERIFY', verdictText: 'Unable to verify current chain state',
+      };
+    }
+
+    // If the phase was reset by an external event (account change, disconnect,
+    // "Edit Details" click) while the async check was running, abort cleanly.
+    if (state.txPhase !== 'SIMULATING') return;
+
+    // Render the check results regardless of verdict.
+    renderPreflightResult(preflightResult);
+
+    // Hard blocks — return to DRAFT with a status message.
+    // The preflight result remains visible in the list until next input change.
+    const hardBlocks = ['PAUSED', 'INSUFFICIENT_BALANCE'];
+    if (hardBlocks.includes(preflightResult.verdict)) {
+      state.reviewDraft = null;
+      state.txPhase = 'DRAFT';
+      if (els.txRecipient) els.txRecipient.disabled = false;
+      if (els.amtIn)       els.amtIn.disabled = false;
+      if (els.txPurposeTag) els.txPurposeTag.disabled = false;
+      if (els.txReference)  els.txReference.disabled = false;
+      if (els.txMemo)       els.txMemo.disabled = false;
+      if (els.txCancelReview) els.txCancelReview.setAttribute('hidden', '');
+      resetReviewAcknowledgement();
+      if (els.txBtn) {
+        els.txBtn.disabled = true;
+        els.txBtn.textContent = currentButtonLabel();
+      }
+      setStatus(preflightResult.verdictText);
+      setTransferNote('');
+      return;
+    }
+
+    // ---- Soft outcomes (OK, NEEDS_APPROVAL, GAS_FAILED, UNABLE_TO_VERIFY) ----
+    // Proceed to REVIEW_READY. submitTransfer() will re-check everything before
+    // prompting the wallet — the preflight result is guidance, not an authority.
+
+    state.txPhase = 'REVIEW_READY';
+    resetTransferTimeline();
+    markTransferStep('review_ready');
+
+    setTransferNote('');
+    setStatus('');
+
+    companionState(IX_TRANSFER_STATES.READY, {
+      statusLine: 'Transfer acknowledged. Submitting wallet request.',
+      stateVal:   'Executing',
       fundsVal:   'No — wallet action not yet requested',
       networkVal: chainLabel(state.chainId),
-      eventVal:   'Transfer details validated.',
-      actionVal:  'Confirm to begin wallet authorization. Edit Details to revise.',
+      eventVal:   'Transfer details validated and acknowledged.',
+      actionVal:  'Wallet request incoming. If approval is needed, approve the full total wallet debit.',
     });
+
+    await submitTransfer();
   }
 
   /**
@@ -930,7 +1791,7 @@
    * status message (e.g. "Transfer confirmed — View on explorer").
    */
   function exitReview(options = {}) {
-    if (state.txPhase !== 'REVIEW_READY') return; // idempotent
+    if (state.txPhase !== 'REVIEW_READY' && state.txPhase !== 'SIMULATING') return; // idempotent
 
     const clearStatus = options.clearStatus !== false;
 
@@ -939,11 +1800,17 @@
 
     if (els.txRecipient) els.txRecipient.disabled = false;
     if (els.amtIn)       els.amtIn.disabled = false;
+    if (els.txPurposeTag) els.txPurposeTag.disabled = false;
+    if (els.txReference)  els.txReference.disabled = false;
+    if (els.txMemo)       els.txMemo.disabled = false;
     if (els.txCancelReview) els.txCancelReview.setAttribute('hidden', '');
     if (els.txPreviewLabel) els.txPreviewLabel.textContent = 'Transfer Preview';
+    resetReviewAcknowledgement();
+    if (!options.preserveTimeline) resetTransferTimeline();
     if (els.txBtn) {
-      els.txBtn.disabled = getNetworkState() !== 'READY';
+      els.txBtn.disabled = true;
       els.txBtn.textContent = currentButtonLabel();
+      els.txBtn.classList.remove('tx-btn--armed');
     }
 
     if (clearStatus) {
@@ -962,10 +1829,14 @@
    */
   async function handleTxAction() {
     if (state.txPhase === 'DRAFT') {
-      enterReview();
-    } else if (state.txPhase === 'REVIEW_READY') {
-      await submitTransfer();
+      if (!els.txConfirmAck || !els.txConfirmAck.checked) {
+        setStatus('Confirm the details and check the acknowledgement before executing.');
+        return;
+      }
+      await enterReview();
     }
+    // SIMULATING: no-op — button disabled during preflight
+    // REVIEW_READY: unreachable in normal flow — enterReview() chains to submitTransfer()
   }
 
   function showTransferModules(shouldScroll) {
@@ -1158,7 +2029,7 @@
       setElementSeverity(els.networkBadge, null);
     }
     if (els.txBtn) {
-      els.txBtn.disabled = false;
+      els.txBtn.disabled = true;
       els.txBtn.textContent = currentButtonLabel();
     }
     setStatus('');
@@ -1188,12 +2059,12 @@
     const short = shortAddr(state.address);
     const networkLabel = chainLabel(state.chainId);
     const configuredChain = window.IX_CHAINS && window.IX_CHAINS[state.chainId];
-    const stateVal = configuredChain ? 'Unsupported transfer network' : 'Wrong network';
+    const stateVal = configuredChain ? 'Live transfers disabled' : 'Wrong network';
     const statusLine = configuredChain
-      ? 'Unsupported transfer network · Switch to Polygon Mainnet'
+      ? 'Live transfers disabled'
       : 'Wrong network · Switch to Polygon Mainnet';
     const eventVal = configuredChain
-      ? 'Wallet connected on a network without live transfers.'
+      ? 'Wallet connected on Polygon. Live transfers are currently disabled.'
       : 'Wallet connected on unsupported network.';
 
     if (els.walletAddr) els.walletAddr.textContent = short;
@@ -1437,6 +2308,12 @@
 
     refreshUsdcBalance();
     updatePreview();
+    const recipient = (els.txRecipient && els.txRecipient.value.trim()) || '';
+    if (validateRecipient(recipient) === '') {
+      refreshRecipientCodeWarning(recipient);
+    } else {
+      state.recipientCodeWarning = null;
+    }
     dispatchWalletStateChanged();
   }
 
@@ -1556,6 +2433,7 @@
 
   if (els.amtIn) {
     els.amtIn.addEventListener('input', function () {
+      resetTransferTimelineOnDraftEdit();
       const val = parseFloat(this.value);
       if (!isNaN(val) && val > 0) {
         const fee = calcFee(val);
@@ -1580,6 +2458,7 @@
     if (!/^0x[0-9a-fA-F]{40}$/.test(v)) return 'Invalid address format. Check for missing characters, extra spaces, or mistaken letters.';
     if (state.address && v.toLowerCase() === state.address.toLowerCase())
                                    return 'Recipient cannot be your own wallet.';
+    if (isConfiguredTransferContractAddress(v)) return 'Recipient cannot be the configured ImplicitEx contract.';
     if (isConfiguredTokenAddress(v)) return 'Recipient cannot be the configured USDC token contract.';
     return ''; // valid
   }
@@ -1604,10 +2483,28 @@
 
   if (els.txRecipient) {
     els.txRecipient.addEventListener('input', function () {
-      applyRecipientValidation(this.value);
+      resetTransferTimelineOnDraftEdit();
+      const valid = applyRecipientValidation(this.value);
+      if (valid) {
+        refreshRecipientCodeWarning(this.value);
+      } else {
+        state.recipientCodeWarning = null;
+      }
       updatePreview();
     });
   }
+
+  [els.txPurposeTag, els.txReference, els.txMemo].forEach(function (el) {
+    if (!el) return;
+    el.addEventListener('input', function () {
+      resetTransferTimelineOnDraftEdit();
+      updatePreview();
+    });
+    el.addEventListener('change', function () {
+      resetTransferTimelineOnDraftEdit();
+      updatePreview();
+    });
+  });
 
   // ----------------------------------------------------------------
   // Transfer helpers
@@ -1634,12 +2531,19 @@
    * txState: 'idle' | 'pending'
    * message: string, or null to leave status unchanged.
    */
-  function setTxState(txState, message) {
+  function setTxState(txState, message, buttonLabel) {
     const isPending = txState === 'pending';
     if (els.txBtn) {
       const isUnavailable = getNetworkState() !== 'READY';
       els.txBtn.disabled = isPending || isUnavailable;
-      els.txBtn.textContent = isPending ? 'Processing…' : currentButtonLabel();
+      if (isPending) {
+        els.txBtn.textContent = buttonLabel || 'Processing…';
+        els.txBtn.classList.add('tx-btn--pending');
+      } else {
+        els.txBtn.textContent = currentButtonLabel();
+        els.txBtn.classList.remove('tx-btn--pending');
+      }
+      if (isPending || isUnavailable) els.txBtn.classList.remove('tx-btn--armed');
     }
     // Disable Edit Details while a wallet prompt is open — clicking it during
     // an active MetaMask request would leave the prompt orphaned.
@@ -1712,12 +2616,20 @@
       activeTransferFlow = false;
       return;
     }
+    if (!els.txConfirmAck || !els.txConfirmAck.checked) {
+      setStatus('Confirm the reviewed recipient, amount, fee, and total debit before executing.');
+      activeTransferFlow = false;
+      updateReviewActionButton();
+      return;
+    }
 
     // Capture frozen values before any async operations.
     const { recipient, amountStr, amountFloat } = state.reviewDraft;
+    const metadata = state.reviewDraft.metadata || getTransferMetadata();
 
     // receiptId is hoisted so the outer catch can update it on FLOW_INVALIDATED.
     let receiptId = null;
+    let transferConfirmed = false;
 
     try {
 
@@ -1809,19 +2721,6 @@
     const usdc       = new ethers.Contract(usdcAddress,     ERC20_ABI,     signer);
     const implicitex = new ethers.Contract(contractAddress, IMPLICITEX_ABI, signer);
 
-    // --- Read on-chain contract parameters ---
-    let feeBps, minTransfer, precision;
-    try {
-      [feeBps, minTransfer, precision] = await Promise.all([
-        implicitex.feeBasisPoints(),
-        implicitex.minTransferAmount(),
-        implicitex.transferPrecision(),
-      ]);
-    } catch (_) {
-      setStatus('Could not read contract parameters. Is the contract deployed and reachable?');
-      return;
-    }
-
     // --- Amount validation ---
     let rawAmount;
     try {
@@ -1833,9 +2732,40 @@
       return;
     }
 
+    // --- Fresh on-chain preview and contract state ---
+    // previewTransfer is an amount/balance/allowance helper only. Recipient,
+    // network, configured addresses, and pause state remain separate UI gates.
+    let minTransfer, precision, isPaused, onChainPreview;
+    try {
+      [minTransfer, precision, isPaused, onChainPreview] = await Promise.all([
+        implicitex.minTransferAmount(),
+        implicitex.transferPrecision(),
+        implicitex.paused(),
+        implicitex.previewTransfer(state.address, rawAmount),
+      ]);
+    } catch (_) {
+      setStatus('Could not refresh contract preview data. Is the contract deployed and reachable?');
+      return;
+    }
+
+    if (isPaused) {
+      setStatus('Transfers are currently paused. No wallet action was requested.');
+      setTransferNote('Contract pause state blocks transfer execution.');
+      companionState('TRANSFERS_DISABLED', {
+        statusLine: 'Transfers paused by contract.',
+        stateVal:   'Transfers paused',
+        fundsVal:   'No active transaction',
+        networkVal: chainConfig.name,
+        eventVal:   'Contract paused() returned true.',
+        actionVal:  'Wait until transfers are unpaused before retrying.',
+        severity:   'warning',
+      });
+      return;
+    }
+
     // --- Fee math — mirrors contract integer division exactly ---
-    const fee        = (rawAmount * BigInt(feeBps)) / 10000n;
-    const totalDebit = rawAmount + fee;
+    const fee        = BigInt(onChainPreview[0]);
+    const totalDebit = BigInt(onChainPreview[1]);
 
     if (rawAmount < minTransfer) {
       const minHuman = ethers.formatUnits(minTransfer, 6);
@@ -1854,14 +2784,10 @@
       return;
     }
 
-    // --- Balance check ---
-    let balance;
-    try {
-      balance = await usdc.balanceOf(state.address);
-    } catch (_) {
-      setStatus('Could not read USDC balance.');
-      return;
-    }
+    // --- Balance and allowance snapshot from previewTransfer ---
+    const balance = BigInt(onChainPreview[2]);
+    const allowance = BigInt(onChainPreview[3]);
+    state.usdcBalanceRaw = balance;
 
     if (balance < totalDebit) {
       const have = ethers.formatUnits(balance, 6);
@@ -1870,8 +2796,21 @@
       return;
     }
 
+    const refreshedSummary = buildOnChainPreviewSummary(
+      state.reviewDraft,
+      onChainPreview,
+      chainConfig
+    );
+    state.reviewDraft = refreshedSummary;
+    state.reviewDraft.metadata = metadata;
+    renderTransferSummary(refreshedSummary, {
+      label: 'Review Transfer',
+      mode: 'On-chain refreshed',
+      note: 'Contract preview refreshed. Recipient, network, pause state, contract, and USDC token checks passed before wallet prompt.',
+    });
+
     const storedReceipt = storeReceipt(buildReceiptDetail({
-      stateKey: 'READY',
+      stateKey: IX_TRANSFER_STATES.READY,
       sender: state.address,
       recipient,
       amount: rawAmount,
@@ -1880,66 +2819,58 @@
       chainId,
       chainConfig,
       contractAddress,
+      metadata,
       lastKnownMessage: 'Transfer details validated. No wallet action requested yet.',
     }));
     receiptId = storedReceipt.id;
+    markTransferStep('review_ready');
 
     // --- Allowance check / approve ---
-    let allowance;
-    try {
-      allowance = await usdc.allowance(state.address, contractAddress);
-    } catch (_) {
-      resolveReceipt(receiptId, {
-        state: 'FAILED',
-        fundsMoved: false,
-        lastKnownMessage: 'Could not read USDC allowance. No funds moved.',
-      });
-      setStatus('Could not read USDC allowance.');
-      return;
-    }
-
     const needsApproval = allowance < totalDebit;
 
     if (needsApproval) {
+      const totalDebitHuman = ethers.formatUnits(totalDebit, 6);
+      markTransferStep('authorization_requested');
       // ---- Step 1 of 2: Authorize USDC Access ----
       // Narrate BEFORE MetaMask fires. Three rails, three distinct roles:
       //   transferStateNote = primary action rail  (what step, what is required)
       //   txStatus          = contextual note      (what this action does NOT do)
       //   companionState    = state memory rail    (record for the tray)
-      setTransferNote('Step 1 of 2 — Authorize USDC Access');
-      setStatus('Funds are not sent yet.');
-      setTxState('pending', 'Wallet authorization required.');
-      if (els.previewNote) els.previewNote.textContent = 'Wallet authorization requested. Confirm or cancel in MetaMask. Funds are not sent yet.';
+      setTransferNote(`Step 1 of 2 — Approve ${totalDebitHuman} USDC total debit`);
+      setStatus('Approval is permission only. Funds are not sent yet.');
+      setTxState('pending', 'Wallet authorization required.', 'Approve in MetaMask…');
+      if (els.previewNote) els.previewNote.textContent = `Wallet authorization requested for ${totalDebitHuman} USDC total debit. Funds are not sent yet.`;
       updateReceipt(receiptId, {
-        state: 'AUTHORIZING',
-        lastKnownMessage: 'USDC authorization requested. Funds are not sent yet.',
+        state: IX_TRANSFER_STATES.AUTHORIZING,
+        lastKnownMessage: `USDC authorization requested for ${totalDebitHuman} USDC total debit. Funds are not sent yet.`,
       });
-      companionState('AWAITING_APPROVAL', {
-        statusLine: 'Step 1 of 2 — Authorize USDC access',
+      companionState(IX_TRANSFER_STATES.AUTHORIZING, {
+        statusLine: `Approve ${totalDebitHuman} USDC total debit.`,
         stateVal:   'Awaiting authorization',
         fundsVal:   'Not yet — authorization only',
         networkVal: chainConfig.name,
         eventVal:   'USDC authorization requested',
-        actionVal:  'Authorizes the contract to prepare the transfer. Funds are not sent yet.',
+        actionVal:  'Approve the full total debit. Approval alone does not send funds.',
       });
       try {
         const approveTx = await usdc.approve(contractAddress, totalDebit);
         updateReceipt(receiptId, {
           approvalHash: approveTx.hash,
-          lastKnownMessage: 'USDC authorization submitted. Funds are not sent yet.',
+          lastKnownMessage: `USDC authorization submitted for ${totalDebitHuman} USDC total debit. Funds are not sent yet.`,
         });
-        setStatus('');
-        setTxState('pending', 'Authorization submitted.');
-        setTransferNote('Step 1 of 2 — Confirming authorization…');
+        setStatus('Step 2 of 2 — transfer confirmation follows.');
+        setTxState('pending', 'Authorization submitted.', 'Confirming approval…');
+        setTransferNote('Step 1 of 2 — Approval submitted — awaiting chain confirmation…');
         await approveTx.wait();
         // Check flow after the approval wait — account or network may have changed
         // while we were blocked on the confirmation.
         assertFlowActive();
         updateReceipt(receiptId, {
-          state: 'AUTHORIZED',
+          state: IX_TRANSFER_STATES.AUTHORIZED,
           lastKnownMessage: 'USDC authorization confirmed. Transfer not submitted yet.',
         });
-        setTransferNote('Authorization confirmed — preparing transfer…');
+        markTransferStep('authorization_confirmed');
+        setTransferNote('Approval confirmed — transfer confirmation opening in MetaMask…');
       } catch (err) {
         if (err.code === 'FLOW_INVALIDATED') throw err; // bubble to outer catch
 
@@ -1953,13 +2884,14 @@
           setTransferNote('');
           setStatus('');
           resolveReceipt(receiptId, {
-            state: 'INTERRUPTED',
+            state: IX_TRANSFER_STATES.INTERRUPTED,
             fundsMoved: false,
             lastKnownMessage: 'Wallet request already pending in MetaMask. No authorization occurred. No funds moved.',
           });
+          failTransferTimeline('authorization_requested', 'Wallet request already pending');
           setTxState('idle', 'MetaMask already has a pending request. Open MetaMask and finish or cancel it, then retry.');
-          companionState('REJECTED', {
-            statusLine: 'Wallet busy — pending request in MetaMask.',
+          companionState(IX_TRANSFER_STATES.REJECTED, {
+            statusLine: 'Wallet request already pending in MetaMask.',
             stateVal:   'Interrupted',
             fundsVal:   'No — nothing was sent',
             networkVal: chainConfig.name,
@@ -1974,13 +2906,14 @@
             setTransferNote('');
             setStatus('');
             resolveReceipt(receiptId, {
-              state: 'REJECTED',
+              state: IX_TRANSFER_STATES.REJECTED,
               fundsMoved: false,
               lastKnownMessage: 'USDC authorization declined in wallet. No funds moved.',
             });
+            failTransferTimeline('authorization_requested', 'Authorization declined');
             setTxState('idle', 'Authorization declined. No funds moved.');
-            companionState('REJECTED', {
-              statusLine: 'Authorization declined. Transfer cancelled.',
+            companionState(IX_TRANSFER_STATES.REJECTED, {
+              statusLine: 'Authorization rejected in wallet.',
               stateVal:   'Declined',
               fundsVal:   'No — nothing was sent',
               networkVal: chainConfig.name,
@@ -1989,21 +2922,23 @@
               autoOpen:   true,
             });
           } else {
+            const explained = classifyTransferError(err, { phase: 'authorization', broadcastKnown: false });
             setTransferNote('');
             setStatus('');
             resolveReceipt(receiptId, {
-              state: 'FAILED',
-              fundsMoved: false,
-              lastKnownMessage: 'USDC authorization failed. No transfer was submitted.',
+              state: IX_TRANSFER_STATES.INTERRUPTED,
+              fundsMoved: explained.fundsMoved,
+              lastKnownMessage: `${explained.title}. ${explained.message}`,
             });
-            setTxState('idle', 'Authorization failed: ' + (err.shortMessage || err.message || 'Unknown error'));
-            companionState('FAILED', {
-              statusLine: 'Authorization failed. Transfer cancelled.',
-              stateVal:   'Failed',
+            failTransferTimeline('authorization_requested', explained.title);
+            setTxState('idle', `${explained.title}. ${explained.retryGuidance}`);
+            companionState(IX_TRANSFER_STATES.INTERRUPTED, {
+              statusLine: 'Authorization interrupted. Transfer cancelled.',
+              stateVal:   explained.title,
               fundsVal:   'No — transfer did not proceed',
               networkVal: chainConfig.name,
-              eventVal:   err.shortMessage || err.message || 'Unknown error',
-              actionVal:  'No funds moved. Check reason and retry if appropriate.',
+              eventVal:   explained.code,
+              actionVal:  explained.retryGuidance,
               autoOpen:   true,
             });
           }
@@ -2012,7 +2947,11 @@
       }
     } else {
       updateReceipt(receiptId, {
-        state: 'AUTHORIZED',
+        state: IX_TRANSFER_STATES.AUTHORIZING,
+        lastKnownMessage: 'Existing USDC allowance is being checked. Transfer not submitted yet.',
+      });
+      updateReceipt(receiptId, {
+        state: IX_TRANSFER_STATES.AUTHORIZED,
         lastKnownMessage: 'Existing USDC allowance is sufficient. Transfer not submitted yet.',
       });
     }
@@ -2026,22 +2965,23 @@
     //   transferStateNote = primary action rail
     //   txStatus          = point-of-no-return signal
     //   companionState    = state memory
-    const stepLabel = needsApproval ? 'Step 2 of 2 — Confirm Transfer' : 'Confirm Transfer';
+    const stepLabel = needsApproval ? 'Step 2 of 2 — Confirm the transfer in MetaMask' : 'Confirm the transfer in MetaMask';
+    markTransferStep('transfer_requested');
     setTransferNote(stepLabel);
-    setStatus('This is the funds-moving request.');
-    setTxState('pending', 'Wallet confirmation required.');
-    if (els.previewNote) els.previewNote.textContent = 'Transfer confirmation requested. Confirm in MetaMask only if the details match.';
+    setStatus(`This is the funds-moving request. Recipient gets ${ethers.formatUnits(rawAmount, 6)} USDC; total wallet debit is ${ethers.formatUnits(totalDebit, 6)} USDC.`);
+    setTxState('pending', 'Wallet confirmation required.', 'Confirm transfer in MetaMask…');
+    if (els.previewNote) els.previewNote.textContent = 'Transfer confirmation requested. Confirm in MetaMask only if recipient amount, platform fee, and total wallet debit match.';
     updateReceipt(receiptId, {
-      state: 'SUBMITTING',
+      state: IX_TRANSFER_STATES.SUBMITTING,
       lastKnownMessage: 'Transfer confirmation requested. Funds move only after on-chain confirmation.',
     });
-    companionState('AWAITING_APPROVAL', {
-      statusLine: needsApproval ? 'Step 2 of 2 — Confirm transfer' : 'Confirm transfer',
+    companionState(IX_TRANSFER_STATES.SUBMITTING, {
+      statusLine: 'Confirm transfer.',
       stateVal:   'Awaiting confirmation',
       fundsVal:   'No — not until confirmed on-chain',
       networkVal: chainConfig.name,
       eventVal:   'Transfer signature requested',
-      actionVal:  'This is the funds-moving request. Funds move only if the transaction confirms on-chain.',
+      actionVal:  `Funds move only if confirmed on-chain. Recipient gets ${ethers.formatUnits(rawAmount, 6)} USDC; total wallet debit is ${ethers.formatUnits(totalDebit, 6)} USDC.`,
     });
 
     // txBroadcast: set true only after SUBMITTED is persisted to localStorage.
@@ -2060,7 +3000,7 @@
       // write, rehydrate.js will find a SUBMITTED receipt with a hash and attempt
       // chain reconciliation on next load.
       updateReceipt(receiptId, {
-        state: 'SUBMITTED',
+        state: IX_TRANSFER_STATES.SUBMITTED,
         transferHash: broadcastHash,
         hash: broadcastHash,
         explorerUrl: broadcastUrl,
@@ -2071,11 +3011,12 @@
       // post-broadcast errors (OUTCOME_UNKNOWN) from pre-broadcast errors (FAILED).
       txBroadcast = true;
 
-      setTransferNote('Transfer submitted — awaiting confirmation…');
+      markTransferStep('broadcast');
+      setTransferNote('Transfer submitted — awaiting Polygon confirmation…');
       setStatus('');
-      setTxState('pending', 'Broadcast to network. Do not retry.');
-      companionState('SUBMITTED', {
-        statusLine: 'Transaction submitted. Awaiting network confirmation…',
+      setTxState('pending', 'Broadcast to network. Do not retry.', 'Awaiting Polygon…');
+      companionState(IX_TRANSFER_STATES.SUBMITTED, {
+        statusLine: 'Transaction submitted. Awaiting chain confirmation.',
         stateVal:   'Submitted',
         fundsVal:   'No — not until confirmed',
         networkVal: chainConfig.name,
@@ -2089,32 +3030,42 @@
       if (els.txStatus) {
         // explorerUrl is from our own config; txHash is a 0x-prefixed hex from the chain — safe.
         els.txStatus.innerHTML =
-          `Transfer confirmed — ` +
+          `Transfer confirmed. ` +
           `<a href="${receiptUrl}" target="_blank" rel="noopener">` +
           `View on ${chainConfig.name} explorer</a>`;
       }
       setTransferNote('');
       setTxState('idle', null); // status already set above via innerHTML
-      resolveReceipt(receiptId, {
-        state: 'CONFIRMED',
+      updateReceiptFromSource(receiptId, {
+        state: IX_TRANSFER_STATES.CONFIRMED,
         fundsMoved: true,
         transferHash: txHash,
         hash: txHash,
         explorerUrl: receiptUrl,
-        lastKnownMessage: 'Transfer confirmed. Funds moved.',
+        blockNumber: txReceipt.blockNumber || null,
+        lastKnownMessage: 'Transfer confirmed. Funds moved on Polygon.',
+      }, OBSERVATION_SOURCES && OBSERVATION_SOURCES.RPC);
+      if (window.IX && window.IX.receipts) window.IX.receipts.clearActive();
+      markTransferStep('confirmed');
+      renderTransferSummary(refreshedSummary, {
+        label: 'Transfer Confirmed',
+        mode: 'Confirmed',
+        note: `Tx ${shortHash(txHash)} confirmed on Polygon. Explorer link is visible above and in the receipt list.`,
       });
-      companionState('CONFIRMED', {
-        statusLine: 'Transfer confirmed. Funds have moved.',
+      companionState(IX_TRANSFER_STATES.CONFIRMED, {
+        statusLine: 'Transfer confirmed. Funds moved on Polygon.',
         stateVal:   'Confirmed',
         fundsVal:   'Yes — transfer complete',
         networkVal: chainConfig.name,
         eventVal:   txHash,
-        actionVal:  `View on ${chainConfig.name} explorer ↗`,
+        actionVal:  `View on ${chainConfig.name} explorer`,
         actionHref: receiptUrl,
         autoOpen:   true,
       });
 
-      clearTransferDraftPreservingStatus();
+      transferConfirmed = true;
+      upsertRecipientBook(recipient, metadata);
+      clearDraftControlsAfterConfirmation();
       refreshUsdcBalance();
     } catch (err) {
       if (err.code === 'FLOW_INVALIDATED') throw err; // bubble to outer catch
@@ -2123,34 +3074,36 @@
         // Transaction was broadcast before the error. Outcome is unknown —
         // we cannot assert fundsMoved either way. Surface the hash and direct
         // the user to the explorer rather than claiming funds were not moved.
+        const explained = classifyTransferError(err, { phase: 'confirmation', broadcastKnown: true });
         setTransferNote('');
         const outcomeHash = err.receipt && err.receipt.hash
           ? err.receipt.hash
           : err.transactionHash || broadcastHash;
         const outcomeUrl = outcomeHash ? `${chainConfig.explorerUrl}/tx/${outcomeHash}` : broadcastUrl;
         preserveReceiptForRehydration(receiptId, {
-          state: 'OUTCOME_UNKNOWN',
-          fundsMoved: null, // explicitly unknown — do not assert false
+          state: explained.state,
+          fundsMoved: explained.fundsMoved,
           transferHash: outcomeHash,
           hash: outcomeHash,
           explorerUrl: outcomeUrl,
-          lastKnownMessage: 'Transaction broadcast detected. Final confirmation could not be verified. Check the explorer before retrying.',
+          lastKnownMessage: 'Transaction broadcast detected. Final confirmation could not be verified locally.',
         });
+        failTransferTimeline('broadcast', 'Outcome unknown');
         if (els.txStatus && outcomeUrl) {
           els.txStatus.innerHTML =
-            `Outcome unknown — ` +
+            `Outcome unknown. ` +
             `<a href="${outcomeUrl}" target="_blank" rel="noopener">` +
             `Check on ${chainConfig.name} explorer</a>`;
         } else {
           setTxState('idle', 'Outcome unknown. Check the explorer before retrying.');
         }
-        companionState('OUTCOME_UNKNOWN', {
-          statusLine: 'Outcome unknown. Check explorer before retrying.',
+        companionState(IX_TRANSFER_STATES.OUTCOME_UNKNOWN, {
+          statusLine: 'Transaction outcome could not be verified locally.',
           stateVal:   'Outcome unknown',
           fundsVal:   'Unknown — check explorer',
           networkVal: chainConfig.name,
-          eventVal:   err.shortMessage || err.message || 'Confirmation not received',
-          actionVal:  'Check the explorer. Do not retry until you confirm the outcome.',
+          eventVal:   explained.code,
+          actionVal:  explained.retryGuidance,
           severity:   'warning',
           autoOpen:   true,
         });
@@ -2166,13 +3119,14 @@
           setTransferNote('');
           setStatus('');
           resolveReceipt(receiptId, {
-            state: 'INTERRUPTED',
+            state: IX_TRANSFER_STATES.INTERRUPTED,
             fundsMoved: false,
             lastKnownMessage: 'Wallet request already pending in MetaMask. No transfer was submitted. No funds moved.',
           });
+          failTransferTimeline('transfer_requested', 'Wallet request already pending');
           setTxState('idle', 'MetaMask already has a pending request. Open MetaMask and finish or cancel it, then retry.');
-          companionState('REJECTED', {
-            statusLine: 'Wallet busy — pending request in MetaMask.',
+          companionState(IX_TRANSFER_STATES.REJECTED, {
+            statusLine: 'Wallet request already pending in MetaMask.',
             stateVal:   'Interrupted',
             fundsVal:   'No — nothing was sent',
             networkVal: chainConfig.name,
@@ -2187,36 +3141,39 @@
             setTransferNote('');
             setStatus('');
             resolveReceipt(receiptId, {
-              state: 'REJECTED',
+              state: IX_TRANSFER_STATES.REJECTED,
               fundsMoved: false,
-              lastKnownMessage: 'Transfer rejected in wallet. No funds moved.',
+              lastKnownMessage: 'Transfer rejected in wallet. No transfer was broadcast.',
             });
+            failTransferTimeline('transfer_requested', 'Transfer declined');
             setTxState('idle', 'Transfer declined. No funds moved.');
-            companionState('REJECTED', {
-              statusLine: 'Transfer rejected. Nothing was sent.',
+            companionState(IX_TRANSFER_STATES.REJECTED, {
+              statusLine: 'Transfer rejected in wallet.',
               stateVal:   'Rejected',
               fundsVal:   'No — nothing was sent',
               networkVal: chainConfig.name,
               eventVal:   'Transfer rejected in wallet',
-              actionVal:  'Retry when ready, or do nothing.',
+              actionVal:  'No transfer was broadcast. Retry when ready.',
               autoOpen:   true,
             });
           } else {
+            const explained = classifyTransferError(err, { phase: 'transfer', broadcastKnown: false });
             setTransferNote('');
             setStatus('');
             resolveReceipt(receiptId, {
-              state: 'FAILED',
-              fundsMoved: false,
-              lastKnownMessage: 'Transfer was not broadcast. No funds moved.',
+              state: IX_TRANSFER_STATES.INTERRUPTED,
+              fundsMoved: explained.fundsMoved,
+              lastKnownMessage: `${explained.title}. ${explained.message}`,
             });
-            setTxState('idle', 'Transfer was not broadcast: ' + (err.reason || err.shortMessage || err.message || 'Unknown error'));
-            companionState('FAILED', {
-              statusLine: 'Transfer was not broadcast. No funds moved.',
-              stateVal:   'Not broadcast',
+            failTransferTimeline('transfer_requested', explained.title);
+            setTxState('idle', `${explained.title}. ${explained.retryGuidance}`);
+            companionState(IX_TRANSFER_STATES.INTERRUPTED, {
+              statusLine: 'Transfer interrupted before broadcast.',
+              stateVal:   explained.title,
               fundsVal:   'No — transfer did not reach the network',
               networkVal: chainConfig.name,
-              eventVal:   err.reason || err.shortMessage || err.message || 'Unknown error',
-              actionVal:  'Check the reason above. No network transaction exists; you can start again.',
+              eventVal:   explained.code,
+              actionVal:  explained.retryGuidance,
               autoOpen:   true,
             });
           }
@@ -2232,7 +3189,7 @@
       if (err.code === 'FLOW_INVALIDATED') {
         if (receiptId) {
           resolveReceipt(receiptId, {
-            state: 'INTERRUPTED',
+            state: IX_TRANSFER_STATES.INTERRUPTED,
             fundsMoved: false,
             lastKnownMessage: 'Transfer interrupted. Account or network changed mid-flow. No funds moved.',
           });
@@ -2244,7 +3201,10 @@
       // Always release the flow lock and exit review.
       // Terminal states preserve the status message; errors unlock the form for editing.
       activeTransferFlow = false;
-      exitReview({ clearStatus: false });
+      if (!transferConfirmed) {
+        const preserveTimeline = !!(state.transferTimeline && state.transferTimeline.terminal);
+        exitReview({ clearStatus: false, preserveTimeline });
+      }
     }
   }
 
@@ -2477,7 +3437,13 @@
 
   pollNetworkData();
   renderReceiptHistory();
-  window.addEventListener('ix:receipts-changed', renderReceiptHistory);
+  renderRecipientIntel();
+  renderPreflight();
+  window.addEventListener('ix:receipts-changed', function () {
+    renderReceiptHistory();
+    renderRecipientIntel();
+    renderPreflight();
+  });
 
   // ----------------------------------------------------------------
   // Public API on window.IX
@@ -2509,5 +3475,6 @@
   }
   if (els.switchAccountBtn) els.switchAccountBtn.addEventListener('click', requestAccountSelection);
   if (els.txCancelReview)  els.txCancelReview.addEventListener('click', () => exitReview());
+  if (els.txConfirmAck)    els.txConfirmAck.addEventListener('change', updatePreview);
 
 })();
