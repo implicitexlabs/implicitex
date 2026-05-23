@@ -77,14 +77,16 @@ On-chain verified: 2026-05-23 — owner/pendingOwner/treasury/fee/paused all PAS
 - ✅ Gate closed before commit
 - Evidence: docs/operations/evidence/smoke-polygon-mainnet-2026-05-23.md
 
-### 🔲 Receipt lifecycle bug — MUST FIX before public exposure
+### 🔲 Receipt stale-state fix — MUST FIX before public exposure
 
-Observed during 2026-05-23 smoke:
-- "READY" receipt persisting after completed transfer
-- AUTHORIZING not promoting to CONFIRMED
-- Possible dual-record between approve and transfer phases
+Scope: do not show stale READY/AUTHORIZING records as active after a confirmed transfer.
+Polygon is the authoritative receipt. Local receipts are UX/proof packaging.
 
-Receipts are part of the trust surface. Must be resolved before public traffic.
+After confirmation the UI should show:
+  "Confirmed on Polygon · View transaction · Export proof packet"
+
+Not required for MVP: a perfect local accounting ledger.
+Required for MVP: no stale intermediate records presented as active state after settlement.
 
 ### 🔲 Real-wallet QA
 
