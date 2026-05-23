@@ -1,134 +1,116 @@
 # Initial Roadmap
 
-Last updated: 2026-05-22
+Last updated: 2026-05-23
 
 ## Current MVP Readiness Snapshot
 
-Estimated MVP readiness: 88-92%.
+Estimated MVP readiness: 96-98%.
 
-ImplicitEx is no longer in the idea phase. The MVP has a hardened transfer
-contract, a live Polygon transfer UI, local receipt persistence, deployment
-evidence, wallet role separation, and funded operational wallets. The remaining
-work is deployment execution, ownership acceptance, production evidence capture,
-and real-wallet QA.
+ImplicitEx has a hardened transfer contract deployed on Polygon mainnet with Safe
+ownership accepted, source verified, and on-chain state confirmed. The frontend
+instrument polish is merged to main. The only remaining gate before public
+exposure is a controlled live smoke transfer and attorney review.
 
 Current posture:
 
-- Contract lane: closed / frozen.
-- Frontend execution-safety lane: closed.
-- Product-change lane: closed.
-- Deployment lane: active.
-- Preserved polish stash: do not apply before deployment evidence is complete.
+- Contract lane: CLOSED / FROZEN.
+- Deployment lane: COMPLETE — canonical contract live, Safe-owned.
+- Frontend execution-safety lane: CLOSED.
+- Frontend polish lane: COMPLETE — merged to main at `587aa93`.
+- Controlled smoke lane: ACTIVE — next action.
+- Product-change lane: closed until smoke evidence captured.
 
-Deployable code identity:
+Main branch tip: `587aa93 — Restore canonical Polygon deployment record`
 
-```text
-32de649 Refresh transfer preview before wallet prompt
-```
-
-Deployment evidence was captured in a docs-only commit on top of deployable
-code:
+## Canonical Production Contract
 
 ```text
-59e5187 Capture Polygon mainnet deployment evidence
+Address:   0x5015841D6E665e63Ea174aD6b8FeF854026dE0C0
+Network:   Polygon mainnet (137)
+Owner:     0x776A0D6b9F96445A38303F56d5B923e6d1FF8E97 (Safe — ACCEPTED)
+PendingOwner: 0x0000000000000000000000000000000000000000
+Treasury:  0xa7cE4232811021d2Dd01f4f0f264Df2427ab3919
+Fee:       100 bps (1%)
+Deploy tx: 0x87593fdb3d256a4a94b3e73877ba0bc433c39e81eefc78334af6da79ff5ef1f3
+Ownership accepted tx: 0xd6bfb2876725391c956dbd17ec5f774f9246b50df5667e8b29e8c78305365e90
+Source verified: https://polygonscan.com/address/0x5015841D6E665e63Ea174aD6b8FeF854026dE0C0
+On-chain verified: 2026-05-23 — owner/pendingOwner/treasury/fee/paused all PASS
 ```
 
 ## MVP Wallet And Funding State
 
-| Role | Address | Current readiness |
+| Role | Address | Status |
 |---|---|---|
-| Deployer | `0x5466bbA8cD334554c88F81342dDfcEc4c4A7698B` | Funded for deploy and verification; 40.0 POL observed. |
-| Governance wallet | `0x6d6232f653f5DD765017F12647435c2122F3F6B8` | Identified and funded for governance/Safe operational use; 5.0 POL observed. |
-| Safe / owner | `0x776A0D6b9F96445A38303F56d5B923e6d1FF8E97` | Intended owner target; 10.0 POL observed. |
-| Treasury | `0xa7cE4232811021d2Dd01f4f0f264Df2427ab3919` | Intended fee recipient; 5.0 POL observed. |
-| Operations | `0xFfEe63C73C082Da41Ec2ceB315aEd61ef192B616` | Operational reserve; 15.0 POL and 75.0 native Polygon USDC observed. |
-
-Native Polygon USDC reserve:
-
-```text
-Operations Wallet: 75.0 USDC
-Governance, Safe/owner, deployer, and treasury: 0.0 USDC observed.
-```
+| Deployer | `0x5466bbA8cD334554c88F81342dDfcEc4c4A7698B` | DONE — used for canonical deploy |
+| Governance wallet | `0x6d6232f653f5DD765017F12647435c2122F3F6B8` | Funded; governance/Safe operational reserve |
+| Safe / owner | `0x776A0D6b9F96445A38303F56d5B923e6d1FF8E97` | DONE — ownership accepted on canonical contract |
+| Treasury | `0xa7cE4232811021d2Dd01f4f0f264Df2427ab3919` | Configured in contract; ready to receive fees |
+| Operations | `0xFfEe63C73C082Da41Ec2ceB315aEd61ef192B616` | 75.0 USDC available for smoke transfers |
 
 ## Remaining MVP Gates
 
-### Deployment execution
+### ✅ Deployment execution — COMPLETE
 
-- Confirm clean deployer provenance by operator.
-- Confirm Safe / owner address is the intended owner target.
-- Confirm treasury address is the intended fee recipient.
-- Add small POL reserve to governance wallet.
-- Run Polygon deployment:
+- ✅ Deployer provenance confirmed by operator
+- ✅ Safe / owner address confirmed
+- ✅ Treasury address confirmed
+- ✅ Polygon mainnet deployment executed (`0x5015841D`)
+- ✅ Ownership transferred and accepted by Safe
+- ✅ Source verified on Polygonscan
+- ✅ On-chain state verified 2026-05-23 (owner, pendingOwner, treasury, fee, paused)
+- ✅ `deployments/polygon.json` reflects canonical contract
 
-```bash
-npx hardhat run scripts/deploy_implicitex_transfer.js --network polygon
-```
+### ✅ Frontend polish — COMPLETE
 
-### Post-deploy evidence
+- ✅ Single-action execution UX (checkbox → Execute Transfer)
+- ✅ Transfer timeline with phase-specific milestones
+- ✅ Phase-specific pulsing button labels across all pending states
+- ✅ Preflight readiness check before wallet prompt
+- ✅ Merged to main at `ad53db6` / `587aa93`
+- ✅ All checks passing: syntax, static, observability (27/27)
 
-- Record deployed contract address, deployment tx hash, constructor args, owner,
-  pendingOwner, treasury, fee, min transfer, precision, paused state, and
-  explorer links.
-- Verify source on Polygonscan.
-- Confirm `owner()` and `pendingOwner()` state.
-- Have the Safe / owner accept ownership.
-- Record final owner and pending owner state after acceptance.
+### 🔲 Controlled production smoke — NEXT
 
-### Controlled production smoke
+- Open global + Polygon gate
+- Run one 1 USDC transfer from operations wallet to a controlled recipient
+- Verify: sender debit, recipient credit, treasury fee, contract USDC balance = 0
+- Capture: receipt, explorer link, frontend timeline state
+- Close gate before any commit
 
-- Update frontend config only after deployment evidence is reviewed.
-- Run one low-value USDC smoke transfer.
-- Verify sender debit, recipient credit, treasury fee, and contract USDC balance
-  remains zero.
-- Capture receipt, explorer link, and frontend state.
+### 🔲 Real-wallet QA
 
-### Real-wallet QA
+- Desktop MetaMask: connect, wrong network, approval path, transfer, rejection, refresh recovery
+- Mobile MetaMask or mobile wallet: same minimum flow
+- Confirm fee, total debit, and receipt visibility on mobile and low-resolution screens
 
-- Desktop MetaMask: connect, wrong network, approval, transfer, rejection, and
-  refresh recovery.
-- Mobile MetaMask browser or mobile wallet path: same minimum flow.
-- Confirm fee, total debit, and receipt visibility on mobile and low-resolution
-  laptop screens.
+### 🔲 Legal and operating boundary
 
-### Legal and operating boundary
-
-- Attorney review remains required before public production transfer promotion.
-- Jurisdiction language remains platform policy, not a legal authorization claim.
-- Keep max transfer capped at 250 USDC until written promotion checklist passes.
+- Attorney review required before public production transfer promotion
+- Jurisdiction language remains platform policy, not a legal authorization claim
+- Keep max transfer capped at 250 USDC until written promotion checklist passes
 
 ## Stage 1 - Online Transfer MVP
 
-- Define product scope for the online tool. Status: complete for MVP.
-- Capture transfer flow requirements. Status: complete for MVP.
-- Establish implementation baseline. Status: complete for MVP.
-- Harden contract routing, fee cap, ownership, pause, and no-owner-drain policy.
-  Status: complete.
-- Prove controlled live transfer path. Status: prototype proven; fresh clean
-  deployment pending.
+- ✅ Define product scope
+- ✅ Capture transfer flow requirements
+- ✅ Establish implementation baseline
+- ✅ Harden contract (routing, fee cap, ownership, pause, no-owner-drain)
+- ✅ Deploy to Polygon mainnet with Safe ownership
+- ✅ Verify source and on-chain state
+- 🔲 Prove controlled live transfer path on canonical contract
 
 ## Stage 2 - Operational Reliability
 
-- Fully realize online platform functionality. Status: mostly complete for MVP.
-- Stabilize operations, reliability, and usability. Status: final deployment
-  evidence and real-wallet QA pending.
-- Maintain clear role separation between deployer, Safe/owner, treasury,
-  governance, operations, and test wallets.
-- Prove operational reliability with a small number of controlled production
-  transfers before expanding limits.
+- ✅ Role separation: deployer / Safe / treasury / governance / operations
+- ✅ Frontend execution instrument complete and merged
+- 🔲 Controlled production smoke evidence
+- 🔲 Real-wallet QA (desktop + mobile)
+- 🔲 Prove reliability with small number of production transfers before expanding limits
 
 ## Stage 3 - Desktop Resource
 
-- Plan desktop resource based on proven online patterns.
-- Begin Electron desktop implementation after online maturity.
-- Introduce desktop-only UX improvements without rebuilding core product logic.
-- Do not start this stage until the web transfer MVP has clean production
-  evidence.
+- Do not start until Stage 2 smoke evidence is complete.
 
 ## Stage 4 - Hardware Wallet And Security Expansion
 
-- Begin Ledger hardware wallet integration only after web and Electron are stable.
-- Implement controlled hardware-signing flows and UX hardening.
-- Integrate AuditWalk as a complementary security tool for risk visibility and
-  trust support.
-- Evaluate Safe/timelock/governance hardening after MVP proof, not during the
-  deployment execution lane.
+- Do not start until Stage 3 is mature.

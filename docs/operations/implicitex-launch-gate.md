@@ -1,126 +1,62 @@
 # ImplicitEx Launch Gate
 
-## Current Status — 2026-05-21
+## Current Status — 2026-05-23
 
 ```
-Launch status: BLOCKED
-Recorded: 2026-05-21
+Launch status: SMOKE PENDING
+Recorded: 2026-05-23
 
-Contract logic: RE-FROZEN
-  A controlled hardening patch has been applied: custom-error modernization
-  plus constructor treasury validation fix. No routing, fee-cap, preview,
-  ownership, or pause behavior changed. Owner rescue authority was narrowed:
-  configured USDC can no longer be rescued.
-  Verification: npm test 59/59 passing; npx hardhat compile passed;
-  node scripts/local_predeploy_check.js passed.
+COMPLETED:
+  ✅ Contract deployed: 0x5015841D6E665e63Ea174aD6b8FeF854026dE0C0
+  ✅ Safe ownership accepted: owner = 0x776A0D6b9F96445A38303F56d5B923e6d1FF8E97
+  ✅ pendingOwner = 0x0000000000000000000000000000000000000000
+  ✅ Source verified on Polygonscan
+  ✅ On-chain state verified 2026-05-23 (owner/pendingOwner/treasury/fee/paused PASS)
+  ✅ Frontend instrument polish merged to main (587aa93)
+  ✅ All checks passing: 59/59 contract tests, 27/27 observability, syntax, static
+  ✅ chains.js points to canonical contract, transfersEnabled: false
+  ✅ deployments/polygon.json reflects canonical deployment evidence
+  ✅ Deployer key hygiene: 0xf614356 (exposed 2026-05-13) not used; 0x5466 used instead
 
-Contract-level items closed (2026-05-20):
-  - setMinTransferAmount(0) now blocked (MIN_TRANSFER_ZERO)
-  - setTreasury(address(usdc)) now blocked (TREASURY_IS_USDC)
-  - Both cases covered by new tests
-  - transferOwnership auto-initiated by deploy script (confirmed existing)
-  - Manifest records pendingOwner and ownershipTransferTxHash (confirmed existing)
-  - Mainnet deployer-as-owner blocked by deploy script (network === "polygon" guard)
+REMAINING BLOCKERS (2):
+  1. Controlled production smoke transfer — NEXT ACTION
+     Open gate → 1 USDC transfer → record 4 balance deltas → close gate.
+     Do not enable production traffic without this evidence.
 
-Remaining primary blockers:
-  1. Deployer private key — rotation required
-     The deployer private key was read by an automated analysis agent during a
-     security review session (2026-05-13). The key was never committed to git
-     and does not appear in any tracked source file, but the exposure via agent
-     session is sufficient to require rotation before any further deployment
-     operations. Treat the key as compromised for operational purposes.
-     Derived deployer address: 0xf614356F93408460b594AdDAcC86a7fC94310f1D
+  2. Attorney review before public promotion
+     Required before public-facing transfer promotion.
+     Max transfer cap stays at 250 USDC until written checklist passes.
 
-  2. Safe/multisig must call acceptOwnership() post-deploy
-     The deploy script automatically calls transferOwnership(ownerAddress) and
-     waits for confirmation. Ownership is NOT complete until the Safe/multisig
-     calls acceptOwnership(). Post-acceptance verified state must be recorded:
-       owner: Safe/multisig address
-       pendingOwner: 0x0000000000000000000000000000000000000000
-
-Actions frozen until blockers are resolved:
-  - Domain cutover (implicitex.com)
-  - Production transfer enablement (transfersEnabled: true)
-  - Additional smoke tests using the current deployer key
-  - Any mainnet operation using 0xf614356F93408460b594AdDAcC86a7fC94310f1D
-
-What is NOT blocked:
-  - Frontend development and staging
-  - Documentation and governance work
-  - Local tests and contract test suite
-
-Amoy status (revised 2026-05-13):
-  Amoy testnet is OPTIONAL, not mandatory.
-  The owner has already verified the MetaMask approval → transferWithFee →
-  receipt lifecycle with real funds between wallets they control on Polygon
-  mainnet. Chasing Amoy faucet drips adds no functional insight and wastes
-  days. Do not pursue Amoy unless testnet tokens are immediately available.
-
-Execution order:
-  1. Create or identify a clean deployer wallet (any wallet whose key was
-     not read, pasted, committed, or inspected by a tool)
-  2. Redeploy a fresh mainnet contract with the clean deployer as owner
-     (Option A — preferred). No production traffic exists; the exposed-owner
-     story ends cleanly with a fresh deploy.
-  3. Put only the clean key into app-web/.env locally — never let an
-     agent or tool read or print .env contents
-  4. Run: npm test, npx hardhat compile,
-          npx hardhat run scripts/local_predeploy_check.js
-  5. Deploy: npx hardhat run scripts/deploy_implicitex_transfer.js --network polygon
-     Confirm output shows: network: polygon, chainId: 137
-  6. Have the Safe/multisig call acceptOwnership()
-  7. Record final on-chain state: owner = Safe, pendingOwner = 0x000...
-  8. Update chains.js with new contract address
-  9. Run one controlled real USDC transfer (wallets you own; only cost is gas)
-  10. Record sender/recipient/treasury balances, tx hash, explorer confirmation
-  11. Fill domain-cutover-readiness artifact
-  12. Decide go/no-go
-
-State classification (2026-05-21):
-  Contract logic:          RE-FROZEN after verified patch (59/59 tests passing)
-  Deploy script:           PASS (ownership transfer automated)
+State classification (2026-05-23):
+  Contract logic:          FROZEN (59/59 tests)
+  Deployment:              COMPLETE — canonical contract on Polygon mainnet
+  Ownership:               COMPLETE — Safe owns, pendingOwner zeroed
+  Source verification:     COMPLETE — Polygonscan verified
   Git history:             CLEAN
-  Local secret hygiene:    NEEDS ROTATION (session-only exposure 2026-05-13)
-  Amoy testnet:            OPTIONAL (real USDC already proven)
-  Mainnet deployment:      NOT PRODUCTION-TRUSTWORTHY YET (owner = exposed EOA)
-  Domain cutover:          BLOCKED
-  Frontend / code work:    ALLOWED
-  Smoke testing after clean deploy: ALLOWED
-
-Forensic note (2026-05-13):
-  git ls-files | grep .env       → no output (file never tracked)
-  git log --all -- app-web/.env  → no output (never committed)
-  grep -R "0x6cec" (tracked files) → no output (key not in source)
-  git check-ignore -v app-web/.env → .gitignore:19:.env (correctly ignored)
-  Conclusion: git history is clean. Exposure was session-only.
-  This is a controlled operational hygiene incident, not a repo-scrub incident.
+  Secret hygiene:          CLEAN — exposed key never used for canonical deploy
+  Frontend:                COMPLETE — polished, merged, gate closed
+  Controlled smoke:        PENDING — next action
+  Domain cutover:          BLOCKED until smoke complete
+  Attorney review:         PENDING — required before public promotion
+  transfersEnabled:        false — do not set true before smoke evidence recorded
 
 .env hygiene rule:
-  The .env file is allowed to exist locally.
-  The rule is: never let an agent or tool read or print .env contents.
+  Never let an agent or tool read or print .env contents.
   Automated analysis must not be directed at .env files or secret-bearing paths.
   Build/deploy/test commands may load environment variables internally, but
-  command output must not display secret values. Do not cat, grep, search,
-  summarize, screenshot, or paste .env contents into chat.
+  command output must not display secret values.
 
 USDC rescue policy:
   Configured USDC cannot be rescued by the owner. Any USDC sent directly to the
-  contract outside transferWithFee may be permanently unrecoverable. This is
-  intentional to preserve the no-owner-drain property.
+  contract outside transferWithFee may be permanently unrecoverable.
 
 USDC dependency risk:
-  ImplicitEx uses a fixed configured USDC token address, but token behavior
-  still depends on that token contract and its administrator-controlled
-  implementation and roles. If USDC behavior changes unexpectedly, pauses,
-  blacklists, or stops behaving as expected, pause ImplicitEx transfers and
-  review the dependency before resuming.
+  If USDC behavior changes unexpectedly (pause, blacklist, implementation change),
+  pause ImplicitEx transfers and review before resuming.
 
 Treasury receive risk:
-  If the configured treasury cannot receive USDC, the treasury fee leg can fail
-  and the whole user transfer will revert. This preserves fee enforcement but
-  can halt production transfers until treasury is corrected. Response: pause
-  transfers, set a clean treasury, verify with a controlled smoke transfer,
-  capture evidence, then resume.
+  If treasury cannot receive USDC, the fee leg fails and the whole transfer
+  reverts. Response: pause, fix treasury, verify with controlled smoke, resume.
 ```
 
 ## Purpose
