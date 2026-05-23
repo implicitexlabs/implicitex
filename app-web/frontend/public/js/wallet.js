@@ -43,7 +43,7 @@
     chainId:   null,
     connecting: false,
     userDisconnected: false,
-    txPhase:   'DRAFT',   // 'DRAFT' | 'REVIEW_READY'
+    txPhase:   'DRAFT',   // 'DRAFT' | 'SIMULATING' | 'REVIEW_READY'
     reviewDraft: null,    // frozen validated draft set by enterReview
     usdcBalanceRaw: null,
     networkPollTimer: null,
@@ -774,6 +774,175 @@
     ));
   }
 
+  /**
+   * Replace the preflight list with "Checking…" placeholder items
+   * while runPreflight() is in progress.
+   */
+  function renderPreflightChecking() {
+    if (!els.preflightList) return;
+    els.preflightList.replaceChildren(
+      renderListItem('Checking network state…', 'checking'),
+      renderListItem('Checking contract state…', 'checking'),
+      renderListItem('Reading balance and allowance…', 'checking'),
+    );
+  }
+
+  /**
+   * Replace the preflight list with the completed simulation results and
+   * a verdict row at the bottom. Called after runPreflight() resolves.
+   */
+  function renderPreflightResult(result) {
+    if (!els.preflightList) return;
+
+    const items = [];
+
+    // Network passed local validation before runPreflight was called.
+    items.push(renderListItem('Network valid', 'ok'));
+
+    if (result.isPaused === false) {
+      items.push(renderListItem('Contract active', 'ok'));
+    } else if (result.isPaused === true) {
+      items.push(renderListItem('Transfers paused', 'blocking'));
+    } else {
+      items.push(renderListItem('Contract state unverified', 'warning'));
+    }
+
+    if (result.previewOk) {
+      if (result.balance >= result.totalDebit) {
+        items.push(renderListItem('Balance covers total debit', 'ok'));
+      } else {
+        items.push(renderListItem('Insufficient balance', 'blocking'));
+      }
+
+      if (result.needsApproval) {
+        items.push(renderListItem('Allowance insufficient — approval required', 'warning'));
+      } else if (result.allowance !== null) {
+        items.push(renderListItem('Allowance sufficient', 'ok'));
+      }
+
+      if (result.gasOk === true) {
+        items.push(renderListItem('Gas estimated', 'ok'));
+      } else if (result.gasOk === false) {
+        items.push(renderListItem('Gas estimate failed', 'warning'));
+      }
+      // gasOk === null: gas check skipped because approval is required first
+    }
+
+    // Verdict row — visually separated by CSS border-top
+    const verdictStatus = (result.verdict === 'OK') ? 'ok'
+      : (result.verdict === 'PAUSED' || result.verdict === 'INSUFFICIENT_BALANCE') ? 'blocking'
+      : 'warning';
+
+    const verdictItem = renderListItem(result.verdictText, verdictStatus);
+    verdictItem.classList.add('is-verdict');
+    items.push(verdictItem);
+
+    els.preflightList.replaceChildren(...items);
+  }
+
+  /**
+   * Read on-chain state and produce a readiness verdict before the wallet
+   * prompt. Uses a read-only BrowserProvider — no signer, no wallet interaction.
+   *
+   * Verdict values:
+   *   'OK'                   — No blocking issue detected
+   *   'NEEDS_APPROVAL'       — Approval required before transfer
+   *   'INSUFFICIENT_BALANCE' — Likely to fail: insufficient balance
+   *   'PAUSED'               — Transfers unavailable: contract paused
+   *   'GAS_FAILED'           — Unable to verify — likely to fail
+   *   'UNABLE_TO_VERIFY'     — Unable to verify current chain state
+   *
+   * This result is UI guidance only. submitTransfer() performs its own
+   * fresh checks immediately before prompting the wallet, regardless of
+   * what runPreflight() returned.
+   */
+  async function runPreflight(sender, recipient, rawAmount, chainConfig) {
+    const contractAddress = chainConfig.contractAddress;
+    const result = {
+      isPaused: null,
+      previewOk: false,
+      balance: null,
+      allowance: null,
+      fee: null,
+      totalDebit: null,
+      needsApproval: false,
+      gasOk: null,
+      verdict: 'UNABLE_TO_VERIFY',
+      verdictText: 'Unable to verify current chain state',
+    };
+
+    let provider;
+    let implicitex;
+    try {
+      provider = new ethers.BrowserProvider(getWalletProvider());
+      implicitex = new ethers.Contract(contractAddress, IMPLICITEX_ABI, provider);
+    } catch (_) {
+      return result;
+    }
+
+    // Step 1 — pause state
+    try {
+      result.isPaused = await implicitex.paused();
+    } catch (_) {
+      return result; // RPC failure — unable to verify
+    }
+
+    if (result.isPaused) {
+      result.verdict = 'PAUSED';
+      result.verdictText = 'Transfers unavailable: contract paused';
+      return result;
+    }
+
+    // Step 2 — previewTransfer (balance, allowance, fee, canTransfer)
+    try {
+      const preview = await implicitex.previewTransfer(sender, rawAmount);
+      result.fee        = BigInt(preview[0]);
+      result.totalDebit = BigInt(preview[1]);
+      result.balance    = BigInt(preview[2]);
+      result.allowance  = BigInt(preview[3]);
+      result.previewOk  = true;
+    } catch (_) {
+      return result; // RPC failure — unable to verify
+    }
+
+    // Step 3 — classify balance
+    if (result.balance < result.totalDebit) {
+      result.verdict     = 'INSUFFICIENT_BALANCE';
+      result.verdictText = 'Likely to fail: insufficient balance';
+      return result;
+    }
+
+    // Step 4 — classify allowance
+    result.needsApproval = result.allowance < result.totalDebit;
+
+    if (result.needsApproval) {
+      // Don't estimate gas for transferWithFee — allowance is too low so the
+      // call would revert, making the gas failure misleading.
+      result.verdict     = 'NEEDS_APPROVAL';
+      result.verdictText = 'Approval required before transfer';
+      return result;
+    }
+
+    // Step 5 — gas estimation (transfer-ready path only)
+    try {
+      const iface = new ethers.Interface(IMPLICITEX_ABI);
+      await provider.estimateGas({
+        from: sender,
+        to: contractAddress,
+        data: iface.encodeFunctionData('transferWithFee', [recipient, rawAmount]),
+      });
+      result.gasOk       = true;
+      result.verdict     = 'OK';
+      result.verdictText = 'No blocking issue detected';
+    } catch (_) {
+      result.gasOk       = false;
+      result.verdict     = 'GAS_FAILED';
+      result.verdictText = 'Unable to verify — likely to fail';
+    }
+
+    return result;
+  }
+
   function renderTransferSummary(summary, options = {}) {
     const chainConfig = summary.chainConfig;
     const label = options.label || 'Transfer Preview';
@@ -1091,7 +1260,7 @@
    * Hides otherwise.
    */
   function updatePreview() {
-    if (state.txPhase === 'REVIEW_READY') return; // frozen during review — do not overwrite
+    if (state.txPhase === 'REVIEW_READY' || state.txPhase === 'SIMULATING') return; // frozen during preflight check and review
 
     const recipient  = (els.txRecipient && els.txRecipient.value.trim()) || '';
     const amountStr  = (els.amtIn && els.amtIn.value.trim()) || '';
@@ -1296,6 +1465,7 @@
    */
   function currentButtonLabel() {
     if (getNetworkState() !== 'READY') return 'Switch to Polygon';
+    if (state.txPhase === 'SIMULATING') return 'Checking…';
     if (state.txPhase === 'REVIEW_READY') return 'Continue to Wallet';
     return 'Review Transfer';
   }
@@ -1305,13 +1475,19 @@
   // ----------------------------------------------------------------
 
   /**
-   * Freeze the current form values and enter REVIEW_READY.
-   * Validates locally (no async chain reads). Locks inputs and the
-   * preview panel so the user reviews a stable, deterministic summary
-   * before any wallet action is requested.
+   * Freeze the current form values, run a preflight readiness check against
+   * the live contract, then enter REVIEW_READY.
+   *
+   * Phase flow:
+   *   DRAFT → (local validation) → SIMULATING → (on-chain reads) → REVIEW_READY
+   *                                                               ↘ DRAFT (on hard block)
+   *
+   * The preflight result is user-visible guidance only. submitTransfer() always
+   * performs its own fresh checks immediately before prompting the wallet —
+   * the preflight snapshot never replaces those execution-safety gates.
    */
-  function enterReview() {
-    if (state.txPhase === 'REVIEW_READY') return; // idempotent
+  async function enterReview() {
+    if (state.txPhase === 'REVIEW_READY' || state.txPhase === 'SIMULATING') return; // idempotent
 
     const recipient   = (els.txRecipient && els.txRecipient.value.trim()) || '';
     const amountStr   = (els.amtIn && els.amtIn.value.trim()) || '';
@@ -1359,26 +1535,83 @@
       return;
     }
 
+    // ---- Local validation passed. Enter SIMULATING. ----
+
     state.reviewDraft = summary;
     state.reviewDraft.metadata = getTransferMetadata();
-    state.txPhase = 'REVIEW_READY';
+    state.txPhase = 'SIMULATING';
 
-    // Lock inputs so the summary cannot drift while the user reads it.
+    // Lock inputs so form values cannot drift during the async check.
     if (els.txRecipient) els.txRecipient.disabled = true;
     if (els.amtIn)       els.amtIn.disabled = true;
     if (els.txPurposeTag) els.txPurposeTag.disabled = true;
     if (els.txReference)  els.txReference.disabled = true;
     if (els.txMemo)       els.txMemo.disabled = true;
 
-    // Freeze preview panel as review summary.
+    // Show cancel path; primary button disabled while checking.
+    if (els.txCancelReview) els.txCancelReview.removeAttribute('hidden');
+    if (els.txBtn) {
+      els.txBtn.disabled = true;
+      els.txBtn.textContent = 'Checking…';
+    }
+
+    renderPreflightChecking();
+    setTransferNote('Reading contract state…');
+    setStatus('');
+
+    // Run the on-chain preflight check.
+    let preflightResult;
+    try {
+      const rawAmount = parseUsdcAmount(amountStr);
+      preflightResult = await runPreflight(state.address, recipient, rawAmount, chainConfig);
+    } catch (_) {
+      preflightResult = {
+        isPaused: null, previewOk: false, balance: null, allowance: null,
+        fee: null, totalDebit: null, needsApproval: false, gasOk: null,
+        verdict: 'UNABLE_TO_VERIFY', verdictText: 'Unable to verify current chain state',
+      };
+    }
+
+    // If the phase was reset by an external event (account change, disconnect,
+    // "Edit Details" click) while the async check was running, abort cleanly.
+    if (state.txPhase !== 'SIMULATING') return;
+
+    // Render the check results regardless of verdict.
+    renderPreflightResult(preflightResult);
+
+    // Hard blocks — return to DRAFT with a status message.
+    // The preflight result remains visible in the list until next input change.
+    const hardBlocks = ['PAUSED', 'INSUFFICIENT_BALANCE'];
+    if (hardBlocks.includes(preflightResult.verdict)) {
+      state.reviewDraft = null;
+      state.txPhase = 'DRAFT';
+      if (els.txRecipient) els.txRecipient.disabled = false;
+      if (els.amtIn)       els.amtIn.disabled = false;
+      if (els.txPurposeTag) els.txPurposeTag.disabled = false;
+      if (els.txReference)  els.txReference.disabled = false;
+      if (els.txMemo)       els.txMemo.disabled = false;
+      if (els.txCancelReview) els.txCancelReview.setAttribute('hidden', '');
+      if (els.txBtn) {
+        els.txBtn.disabled = false;
+        els.txBtn.textContent = currentButtonLabel();
+      }
+      setStatus(preflightResult.verdictText);
+      setTransferNote('');
+      return;
+    }
+
+    // ---- Soft outcomes (OK, NEEDS_APPROVAL, GAS_FAILED, UNABLE_TO_VERIFY) ----
+    // Proceed to REVIEW_READY. submitTransfer() will re-check everything before
+    // prompting the wallet — the preflight result is guidance, not an authority.
+
+    state.txPhase = 'REVIEW_READY';
+
     renderTransferSummary(summary, {
       label: 'Review Transfer',
       mode: 'Review ready',
       note: 'Continue to refresh on-chain preview data and check allowance before any wallet prompt.',
     });
 
-    // Show cancel path and update primary button.
-    if (els.txCancelReview) els.txCancelReview.removeAttribute('hidden');
     if (els.txBtn) {
       els.txBtn.disabled = false;
       els.txBtn.textContent = 'Continue to Wallet';
@@ -1403,7 +1636,7 @@
    * status message (e.g. "Transfer confirmed — View on explorer").
    */
   function exitReview(options = {}) {
-    if (state.txPhase !== 'REVIEW_READY') return; // idempotent
+    if (state.txPhase !== 'REVIEW_READY' && state.txPhase !== 'SIMULATING') return; // idempotent
 
     const clearStatus = options.clearStatus !== false;
 
@@ -1438,10 +1671,11 @@
    */
   async function handleTxAction() {
     if (state.txPhase === 'DRAFT') {
-      enterReview();
+      await enterReview();
     } else if (state.txPhase === 'REVIEW_READY') {
       await submitTransfer();
     }
+    // SIMULATING: no-op — button is disabled during the preflight check
   }
 
   function showTransferModules(shouldScroll) {

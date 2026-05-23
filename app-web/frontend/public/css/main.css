@@ -907,6 +907,21 @@ body.portal-active #nav {
   background: var(--warn);
 }
 
+.preflight-list li.is-checking {
+  opacity: 0.45;
+}
+
+.preflight-list li.is-checking::before {
+  background: var(--muted);
+}
+
+/* Verdict row — separated from individual check items */
+.preflight-list li.is-verdict {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--border);
+}
+
 .fee-explanation {
   border-top: 1px solid var(--border);
   margin-top: 14px;
