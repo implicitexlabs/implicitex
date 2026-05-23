@@ -659,8 +659,11 @@ body.portal-active #nav {
   color: var(--white);
   font-family: var(--mono);
   font-size: 13px;
+  line-height: 1.2;
+  min-height: 42px;
   padding: 11px 12px;
   width: 100%;
+  box-sizing: border-box;
   outline: none;
   transition: border-color 0.12s;
 }
@@ -743,6 +746,27 @@ body.portal-active #nav {
 
 .tx-btn:hover { background: var(--button-hover); }
 .tx-btn:disabled { background: var(--surface-3); color: var(--muted); cursor: not-allowed; }
+
+.tx-btn--armed {
+  background: var(--white);
+  color: var(--bg);
+  border-color: var(--white);
+  box-shadow: 0 0 0 1px var(--white), 0 0 18px rgba(255, 255, 255, 0.18);
+}
+
+.tx-btn--armed:hover {
+  background: var(--button-hover);
+}
+
+@keyframes tx-pending-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.5; }
+}
+
+.tx-btn--pending {
+  animation: tx-pending-pulse 1.4s ease-in-out infinite;
+  cursor: wait;
+}
 
 .tx-btn--cancel {
   background: transparent;
@@ -833,6 +857,63 @@ body.portal-active #nav {
   color: var(--white);
   text-align: center;
   margin-top: 10px;
+}
+
+.tx-timeline {
+  border-top: 1px solid var(--border);
+  margin-top: 12px;
+  padding-top: 10px;
+}
+
+.tx-timeline-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--dim);
+  padding: 3px 0;
+}
+
+.tx-timeline-mark {
+  flex: 0 0 16px;
+  color: var(--dim);
+  text-align: center;
+}
+
+.tx-timeline-item.is-complete {
+  color: var(--white);
+}
+
+.tx-timeline-item.is-current {
+  color: var(--white);
+}
+
+.tx-timeline-item.is-failed {
+  color: var(--warn);
+}
+
+.tx-confirm {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  border-top: 1px solid var(--border);
+  margin-top: 12px;
+  margin-bottom: 10px;
+  padding-top: 12px;
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--white);
+}
+
+.tx-confirm input {
+  flex: 0 0 auto;
+  width: 15px;
+  height: 15px;
+  margin: 1px 0 0;
+  accent-color: var(--white);
 }
 
 .intel-panel,
@@ -1491,6 +1572,17 @@ footer .social-links a:focus-visible,
     transform: none;
     transition: none;
   }
+}
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
 }
 
 /* ---- Utility ---- */

@@ -257,6 +257,7 @@
           type="number"
           id="txAmount"
           placeholder="Amount recipient gets (USDC)"
+          inputmode="decimal"
           min="1"
           step="0.000001"
           aria-label="Amount recipient gets in USDC"
@@ -301,6 +302,10 @@
           <span class="fee-label">Platform fee (1%)</span>
           <span class="fee-val" id="feeDisplay">—</span>
         </div>
+        <label class="tx-confirm" id="txConfirmWrap" hidden>
+          <input type="checkbox" id="txConfirmAck">
+          <span>I confirm the recipient, amount, fee, and total debit.</span>
+        </label>
         <button class="tx-btn" id="txBtn" onclick="IX.handleTxAction()">
           Review Transfer
         </button>
@@ -351,6 +356,7 @@
           <span class="data-v" id="previewPurpose">—</span>
         </div>
         <p class="tx-preview-note" id="previewNote">Preview only — no funds will move.</p>
+        <div class="tx-timeline" id="txTimeline" hidden></div>
       </div>
 
       <div class="fee-explanation">

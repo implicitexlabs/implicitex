@@ -45,6 +45,7 @@
     userDisconnected: false,
     txPhase:   'DRAFT',   // 'DRAFT' | 'SIMULATING' | 'REVIEW_READY'
     reviewDraft: null,    // frozen validated draft set by enterReview
+    transferTimeline: { active: [], terminal: null },
     usdcBalanceRaw: null,
     networkPollTimer: null,
     walletChainPollTimer: null,
@@ -273,6 +274,9 @@
     previewMode:        document.getElementById('previewMode'),
     previewPurpose:     document.getElementById('previewPurpose'),
     previewNote:        document.getElementById('previewNote'),
+    txTimeline:         document.getElementById('txTimeline'),
+    txConfirmWrap:      document.getElementById('txConfirmWrap'),
+    txConfirmAck:       document.getElementById('txConfirmAck'),
     recipientError:     document.getElementById('recipientError'),
     recipientIntel:     document.getElementById('recipientIntel'),
     recipientIntelList: document.getElementById('recipientIntelList'),
@@ -409,6 +413,108 @@
     if (els.transferStateNote) els.transferStateNote.textContent = msg;
   }
 
+  function resetReviewAcknowledgement() {
+    if (els.txConfirmAck) els.txConfirmAck.checked = false;
+    if (els.txConfirmWrap) els.txConfirmWrap.setAttribute('hidden', '');
+    if (els.txBtn) els.txBtn.classList.remove('tx-btn--armed');
+  }
+
+  function setReviewAcknowledgementVisible(visible) {
+    if (!els.txConfirmWrap) return;
+    if (visible) {
+      els.txConfirmWrap.removeAttribute('hidden');
+    } else {
+      els.txConfirmWrap.setAttribute('hidden', '');
+    }
+  }
+
+  function updateReviewActionButton() {
+    if (!els.txBtn || state.txPhase !== 'REVIEW_READY') return;
+    const acknowledged = !!(els.txConfirmAck && els.txConfirmAck.checked);
+    const armed = acknowledged && getNetworkState() === 'READY';
+
+    els.txBtn.textContent = 'Execute Transfer';
+    els.txBtn.disabled = !armed;
+    els.txBtn.classList.toggle('tx-btn--armed', armed);
+  }
+
+  const TRANSFER_TIMELINE_LABELS = {
+    review_ready: 'Review complete',
+    authorization_requested: 'Wallet authorization requested',
+    authorization_confirmed: 'Wallet authorization confirmed',
+    transfer_requested: 'Transfer confirmation requested',
+    broadcast: 'Transfer submitted to Polygon',
+    confirmed: 'Transfer confirmed',
+  };
+
+  function renderTransferTimeline() {
+    if (!els.txTimeline) return;
+    const steps = state.transferTimeline && state.transferTimeline.active || [];
+    const terminal = state.transferTimeline && state.transferTimeline.terminal;
+
+    if (!steps.length) {
+      els.txTimeline.replaceChildren();
+      els.txTimeline.setAttribute('hidden', '');
+      return;
+    }
+
+    const failedStep = terminal && terminal.step;
+    const failedReason = terminal && terminal.reason;
+    const currentStep = failedStep || steps[steps.length - 1];
+
+    els.txTimeline.replaceChildren(...steps.map(step => {
+      const item = document.createElement('div');
+      const isFailed = failedStep === step;
+      const isCurrent = !terminal && step === currentStep && step !== 'confirmed';
+      const isComplete = !isFailed && !isCurrent;
+      item.className = 'tx-timeline-item' +
+        (isComplete ? ' is-complete' : '') +
+        (isCurrent ? ' is-current' : '') +
+        (isFailed ? ' is-failed' : '');
+
+      const mark = document.createElement('span');
+      mark.className = 'tx-timeline-mark';
+      mark.textContent = isFailed ? '!' : isCurrent ? '●' : '✓';
+
+      const label = document.createElement('span');
+      label.textContent = isFailed && failedReason
+        ? `${TRANSFER_TIMELINE_LABELS[step] || step}: ${failedReason}`
+        : TRANSFER_TIMELINE_LABELS[step] || step;
+
+      item.append(mark, label);
+      return item;
+    }));
+
+    els.txTimeline.removeAttribute('hidden');
+  }
+
+  function markTransferStep(step) {
+    if (!TRANSFER_TIMELINE_LABELS[step]) return;
+    state.transferTimeline.terminal = null;
+    if (!state.transferTimeline.active.includes(step)) {
+      state.transferTimeline.active.push(step);
+    }
+    renderTransferTimeline();
+  }
+
+  function failTransferTimeline(step, reason) {
+    if (!TRANSFER_TIMELINE_LABELS[step]) return;
+    if (!state.transferTimeline.active.includes(step)) {
+      state.transferTimeline.active.push(step);
+    }
+    state.transferTimeline.terminal = { step, reason: reason || 'Interrupted' };
+    renderTransferTimeline();
+  }
+
+  function resetTransferTimeline() {
+    state.transferTimeline = { active: [], terminal: null };
+    renderTransferTimeline();
+  }
+
+  function resetTransferTimelineOnDraftEdit() {
+    if (state.txPhase === 'DRAFT') resetTransferTimeline();
+  }
+
   function resetBalanceDisplay() {
     state.usdcBalanceRaw = null;
     if (els.usdcBalance) els.usdcBalance.textContent = '—';
@@ -428,6 +534,8 @@
     state.txPhase = 'DRAFT';
     if (els.txCancelReview) els.txCancelReview.setAttribute('hidden', '');
     if (els.txPreviewLabel) els.txPreviewLabel.textContent = 'Transfer Preview';
+    resetReviewAcknowledgement();
+    resetTransferTimeline();
 
     if (els.txRecipient) {
       els.txRecipient.value = '';
@@ -464,6 +572,8 @@
     state.txPhase = 'DRAFT';
     if (els.txCancelReview) els.txCancelReview.setAttribute('hidden', '');
     if (els.txPreviewLabel) els.txPreviewLabel.textContent = 'Transfer Preview';
+    resetReviewAcknowledgement();
+    resetTransferTimeline();
     if (els.txRecipient) {
       els.txRecipient.value = '';
       els.txRecipient.disabled = false;
@@ -488,13 +598,52 @@
     if (els.recipientError) els.recipientError.textContent = '';
     if (els.feeDisplay) els.feeDisplay.textContent = '—';
     if (els.txBtn) {
-      els.txBtn.disabled = getNetworkState() !== 'READY';
+      els.txBtn.disabled = true;
       els.txBtn.textContent = currentButtonLabel();
+      els.txBtn.classList.remove('tx-btn--armed');
     }
     setTransferNote('');
     renderRecipientIntel();
     renderPreflight();
     hidePreview();
+  }
+
+  function clearDraftControlsAfterConfirmation() {
+    state.reviewDraft = null;
+    state.txPhase = 'DRAFT';
+
+    if (els.txRecipient) {
+      els.txRecipient.value = '';
+      els.txRecipient.disabled = false;
+      els.txRecipient.classList.remove('tx-field--error');
+    }
+    if (els.amtIn) {
+      els.amtIn.value = '';
+      els.amtIn.disabled = false;
+    }
+    if (els.txPurposeTag) {
+      els.txPurposeTag.value = '';
+      els.txPurposeTag.disabled = false;
+    }
+    if (els.txReference) {
+      els.txReference.value = '';
+      els.txReference.disabled = false;
+    }
+    if (els.txMemo) {
+      els.txMemo.value = '';
+      els.txMemo.disabled = false;
+    }
+    if (els.txCancelReview) els.txCancelReview.setAttribute('hidden', '');
+    if (els.recipientError) els.recipientError.textContent = '';
+    if (els.feeDisplay) els.feeDisplay.textContent = '—';
+    if (els.txBtn) {
+      els.txBtn.disabled = true;
+      els.txBtn.textContent = currentButtonLabel();
+      els.txBtn.classList.remove('tx-btn--armed');
+    }
+    resetReviewAcknowledgement();
+    renderRecipientIntel();
+    renderPreflight();
   }
 
   function buildReceiptDetail({
@@ -968,8 +1117,11 @@
 
   function setDraftButton(label, disabled) {
     if (!els.txBtn || state.txPhase !== 'DRAFT') return;
+    const acknowledged = !!(els.txConfirmAck && els.txConfirmAck.checked);
+    const armed = !disabled && acknowledged;
     els.txBtn.textContent = label;
-    els.txBtn.disabled = disabled;
+    els.txBtn.disabled = !armed;
+    els.txBtn.classList.toggle('tx-btn--armed', armed);
   }
 
   function formatReceiptTime(value) {
@@ -1274,8 +1426,9 @@
 
     if (!validRecipient || !validAmount || !validNetwork) {
       hidePreview();
+      setReviewAcknowledgementVisible(false);
       setTransferNote('');
-      setDraftButton(currentButtonLabel(), getNetworkState() !== 'READY');
+      setDraftButton(currentButtonLabel(), true);
       return;
     }
 
@@ -1285,7 +1438,8 @@
       summary = buildDraftSummary(recipient, amountStr, amountFloat, chainConfig);
     } catch (_) {
       hidePreview();
-      setDraftButton(currentButtonLabel(), getNetworkState() !== 'READY');
+      setReviewAcknowledgementVisible(false);
+      setDraftButton(currentButtonLabel(), true);
       return;
     }
 
@@ -1295,6 +1449,7 @@
         note: 'Checking USDC balance before review.',
       });
       setTransferNote('Checking USDC balance before review.');
+      setReviewAcknowledgementVisible(false);
       setDraftButton('Checking Balance', true);
       return;
     }
@@ -1307,6 +1462,7 @@
       });
       setStatus(`Insufficient balance. Have ${formatUsdcRaw(summary.balance, 2)} USDC, need ${formatUsdcRaw(summary.totalDebit, 2)} USDC.`);
       setTransferNote('Lower the amount or add USDC before reviewing this transfer.');
+      setReviewAcknowledgementVisible(false);
       setDraftButton('Insufficient Balance', true);
       return;
     }
@@ -1318,7 +1474,8 @@
     });
     setStatus('');
     setTransferNote('');
-    setDraftButton('Review Transfer', false);
+    setReviewAcknowledgementVisible(true);
+    setDraftButton('Execute Transfer', false);
   }
 
   function setNavStatus(msg) {
@@ -1466,8 +1623,7 @@
   function currentButtonLabel() {
     if (getNetworkState() !== 'READY') return 'Switch to Polygon';
     if (state.txPhase === 'SIMULATING') return 'Checking…';
-    if (state.txPhase === 'REVIEW_READY') return 'Continue to Wallet';
-    return 'Review Transfer';
+    return 'Execute Transfer';
   }
 
   // ----------------------------------------------------------------
@@ -1549,9 +1705,13 @@
     if (els.txMemo)       els.txMemo.disabled = true;
 
     // Show cancel path; primary button disabled while checking.
+    // Hide the acknowledgement checkbox but preserve its checked state —
+    // it was already confirmed by the user before the Execute click.
     if (els.txCancelReview) els.txCancelReview.removeAttribute('hidden');
+    setReviewAcknowledgementVisible(false);
     if (els.txBtn) {
       els.txBtn.disabled = true;
+      els.txBtn.classList.remove('tx-btn--armed');
       els.txBtn.textContent = 'Checking…';
     }
 
@@ -1591,8 +1751,9 @@
       if (els.txReference)  els.txReference.disabled = false;
       if (els.txMemo)       els.txMemo.disabled = false;
       if (els.txCancelReview) els.txCancelReview.setAttribute('hidden', '');
+      resetReviewAcknowledgement();
       if (els.txBtn) {
-        els.txBtn.disabled = false;
+        els.txBtn.disabled = true;
         els.txBtn.textContent = currentButtonLabel();
       }
       setStatus(preflightResult.verdictText);
@@ -1605,28 +1766,22 @@
     // prompting the wallet — the preflight result is guidance, not an authority.
 
     state.txPhase = 'REVIEW_READY';
+    resetTransferTimeline();
+    markTransferStep('review_ready');
 
-    renderTransferSummary(summary, {
-      label: 'Review Transfer',
-      mode: 'Review ready',
-      note: 'Continue to refresh on-chain preview data and check allowance before any wallet prompt.',
-    });
-
-    if (els.txBtn) {
-      els.txBtn.disabled = false;
-      els.txBtn.textContent = 'Continue to Wallet';
-    }
-    setTransferNote('Review sender, recipient amount, platform fee, and total wallet debit. No wallet action requested yet.');
+    setTransferNote('');
     setStatus('');
 
     companionState(IX_TRANSFER_STATES.READY, {
-      statusLine: 'Transfer ready. No wallet action requested yet.',
-      stateVal:   'Review ready',
+      statusLine: 'Transfer acknowledged. Submitting wallet request.',
+      stateVal:   'Executing',
       fundsVal:   'No — wallet action not yet requested',
       networkVal: chainLabel(state.chainId),
-      eventVal:   'Transfer details validated.',
-      actionVal:  'Continue to refresh contract data and check allowance. If approval is needed, approve the full total wallet debit.',
+      eventVal:   'Transfer details validated and acknowledged.',
+      actionVal:  'Wallet request incoming. If approval is needed, approve the full total wallet debit.',
     });
+
+    await submitTransfer();
   }
 
   /**
@@ -1650,9 +1805,12 @@
     if (els.txMemo)       els.txMemo.disabled = false;
     if (els.txCancelReview) els.txCancelReview.setAttribute('hidden', '');
     if (els.txPreviewLabel) els.txPreviewLabel.textContent = 'Transfer Preview';
+    resetReviewAcknowledgement();
+    if (!options.preserveTimeline) resetTransferTimeline();
     if (els.txBtn) {
-      els.txBtn.disabled = getNetworkState() !== 'READY';
+      els.txBtn.disabled = true;
       els.txBtn.textContent = currentButtonLabel();
+      els.txBtn.classList.remove('tx-btn--armed');
     }
 
     if (clearStatus) {
@@ -1671,11 +1829,14 @@
    */
   async function handleTxAction() {
     if (state.txPhase === 'DRAFT') {
+      if (!els.txConfirmAck || !els.txConfirmAck.checked) {
+        setStatus('Confirm the details and check the acknowledgement before executing.');
+        return;
+      }
       await enterReview();
-    } else if (state.txPhase === 'REVIEW_READY') {
-      await submitTransfer();
     }
-    // SIMULATING: no-op — button is disabled during the preflight check
+    // SIMULATING: no-op — button disabled during preflight
+    // REVIEW_READY: unreachable in normal flow — enterReview() chains to submitTransfer()
   }
 
   function showTransferModules(shouldScroll) {
@@ -1868,7 +2029,7 @@
       setElementSeverity(els.networkBadge, null);
     }
     if (els.txBtn) {
-      els.txBtn.disabled = false;
+      els.txBtn.disabled = true;
       els.txBtn.textContent = currentButtonLabel();
     }
     setStatus('');
@@ -1898,12 +2059,12 @@
     const short = shortAddr(state.address);
     const networkLabel = chainLabel(state.chainId);
     const configuredChain = window.IX_CHAINS && window.IX_CHAINS[state.chainId];
-    const stateVal = configuredChain ? 'Unsupported transfer network' : 'Wrong network';
+    const stateVal = configuredChain ? 'Live transfers disabled' : 'Wrong network';
     const statusLine = configuredChain
-      ? 'Unsupported transfer network · Switch to Polygon Mainnet'
+      ? 'Live transfers disabled'
       : 'Wrong network · Switch to Polygon Mainnet';
     const eventVal = configuredChain
-      ? 'Wallet connected on a network without live transfers.'
+      ? 'Wallet connected on Polygon. Live transfers are currently disabled.'
       : 'Wallet connected on unsupported network.';
 
     if (els.walletAddr) els.walletAddr.textContent = short;
@@ -2272,6 +2433,7 @@
 
   if (els.amtIn) {
     els.amtIn.addEventListener('input', function () {
+      resetTransferTimelineOnDraftEdit();
       const val = parseFloat(this.value);
       if (!isNaN(val) && val > 0) {
         const fee = calcFee(val);
@@ -2321,6 +2483,7 @@
 
   if (els.txRecipient) {
     els.txRecipient.addEventListener('input', function () {
+      resetTransferTimelineOnDraftEdit();
       const valid = applyRecipientValidation(this.value);
       if (valid) {
         refreshRecipientCodeWarning(this.value);
@@ -2333,8 +2496,14 @@
 
   [els.txPurposeTag, els.txReference, els.txMemo].forEach(function (el) {
     if (!el) return;
-    el.addEventListener('input', updatePreview);
-    el.addEventListener('change', updatePreview);
+    el.addEventListener('input', function () {
+      resetTransferTimelineOnDraftEdit();
+      updatePreview();
+    });
+    el.addEventListener('change', function () {
+      resetTransferTimelineOnDraftEdit();
+      updatePreview();
+    });
   });
 
   // ----------------------------------------------------------------
@@ -2362,12 +2531,19 @@
    * txState: 'idle' | 'pending'
    * message: string, or null to leave status unchanged.
    */
-  function setTxState(txState, message) {
+  function setTxState(txState, message, buttonLabel) {
     const isPending = txState === 'pending';
     if (els.txBtn) {
       const isUnavailable = getNetworkState() !== 'READY';
       els.txBtn.disabled = isPending || isUnavailable;
-      els.txBtn.textContent = isPending ? 'Processing…' : currentButtonLabel();
+      if (isPending) {
+        els.txBtn.textContent = buttonLabel || 'Processing…';
+        els.txBtn.classList.add('tx-btn--pending');
+      } else {
+        els.txBtn.textContent = currentButtonLabel();
+        els.txBtn.classList.remove('tx-btn--pending');
+      }
+      if (isPending || isUnavailable) els.txBtn.classList.remove('tx-btn--armed');
     }
     // Disable Edit Details while a wallet prompt is open — clicking it during
     // an active MetaMask request would leave the prompt orphaned.
@@ -2440,6 +2616,12 @@
       activeTransferFlow = false;
       return;
     }
+    if (!els.txConfirmAck || !els.txConfirmAck.checked) {
+      setStatus('Confirm the reviewed recipient, amount, fee, and total debit before executing.');
+      activeTransferFlow = false;
+      updateReviewActionButton();
+      return;
+    }
 
     // Capture frozen values before any async operations.
     const { recipient, amountStr, amountFloat } = state.reviewDraft;
@@ -2447,6 +2629,7 @@
 
     // receiptId is hoisted so the outer catch can update it on FLOW_INVALIDATED.
     let receiptId = null;
+    let transferConfirmed = false;
 
     try {
 
@@ -2640,12 +2823,14 @@
       lastKnownMessage: 'Transfer details validated. No wallet action requested yet.',
     }));
     receiptId = storedReceipt.id;
+    markTransferStep('review_ready');
 
     // --- Allowance check / approve ---
     const needsApproval = allowance < totalDebit;
 
     if (needsApproval) {
       const totalDebitHuman = ethers.formatUnits(totalDebit, 6);
+      markTransferStep('authorization_requested');
       // ---- Step 1 of 2: Authorize USDC Access ----
       // Narrate BEFORE MetaMask fires. Three rails, three distinct roles:
       //   transferStateNote = primary action rail  (what step, what is required)
@@ -2653,7 +2838,7 @@
       //   companionState    = state memory rail    (record for the tray)
       setTransferNote(`Step 1 of 2 — Approve ${totalDebitHuman} USDC total debit`);
       setStatus('Approval is permission only. Funds are not sent yet.');
-      setTxState('pending', 'Wallet authorization required.');
+      setTxState('pending', 'Wallet authorization required.', 'Approve in MetaMask…');
       if (els.previewNote) els.previewNote.textContent = `Wallet authorization requested for ${totalDebitHuman} USDC total debit. Funds are not sent yet.`;
       updateReceipt(receiptId, {
         state: IX_TRANSFER_STATES.AUTHORIZING,
@@ -2673,9 +2858,9 @@
           approvalHash: approveTx.hash,
           lastKnownMessage: `USDC authorization submitted for ${totalDebitHuman} USDC total debit. Funds are not sent yet.`,
         });
-        setStatus('');
-        setTxState('pending', 'Authorization submitted.');
-        setTransferNote('Step 1 of 2 — Confirming authorization…');
+        setStatus('Step 2 of 2 — transfer confirmation follows.');
+        setTxState('pending', 'Authorization submitted.', 'Confirming approval…');
+        setTransferNote('Step 1 of 2 — Approval submitted — awaiting chain confirmation…');
         await approveTx.wait();
         // Check flow after the approval wait — account or network may have changed
         // while we were blocked on the confirmation.
@@ -2684,7 +2869,8 @@
           state: IX_TRANSFER_STATES.AUTHORIZED,
           lastKnownMessage: 'USDC authorization confirmed. Transfer not submitted yet.',
         });
-        setTransferNote('Authorization confirmed — preparing transfer…');
+        markTransferStep('authorization_confirmed');
+        setTransferNote('Approval confirmed — transfer confirmation opening in MetaMask…');
       } catch (err) {
         if (err.code === 'FLOW_INVALIDATED') throw err; // bubble to outer catch
 
@@ -2702,6 +2888,7 @@
             fundsMoved: false,
             lastKnownMessage: 'Wallet request already pending in MetaMask. No authorization occurred. No funds moved.',
           });
+          failTransferTimeline('authorization_requested', 'Wallet request already pending');
           setTxState('idle', 'MetaMask already has a pending request. Open MetaMask and finish or cancel it, then retry.');
           companionState(IX_TRANSFER_STATES.REJECTED, {
             statusLine: 'Wallet request already pending in MetaMask.',
@@ -2723,6 +2910,7 @@
               fundsMoved: false,
               lastKnownMessage: 'USDC authorization declined in wallet. No funds moved.',
             });
+            failTransferTimeline('authorization_requested', 'Authorization declined');
             setTxState('idle', 'Authorization declined. No funds moved.');
             companionState(IX_TRANSFER_STATES.REJECTED, {
               statusLine: 'Authorization rejected in wallet.',
@@ -2742,6 +2930,7 @@
               fundsMoved: explained.fundsMoved,
               lastKnownMessage: `${explained.title}. ${explained.message}`,
             });
+            failTransferTimeline('authorization_requested', explained.title);
             setTxState('idle', `${explained.title}. ${explained.retryGuidance}`);
             companionState(IX_TRANSFER_STATES.INTERRUPTED, {
               statusLine: 'Authorization interrupted. Transfer cancelled.',
@@ -2776,10 +2965,11 @@
     //   transferStateNote = primary action rail
     //   txStatus          = point-of-no-return signal
     //   companionState    = state memory
-    const stepLabel = needsApproval ? 'Step 2 of 2 — Confirm Transfer' : 'Confirm Transfer';
+    const stepLabel = needsApproval ? 'Step 2 of 2 — Confirm the transfer in MetaMask' : 'Confirm the transfer in MetaMask';
+    markTransferStep('transfer_requested');
     setTransferNote(stepLabel);
     setStatus(`This is the funds-moving request. Recipient gets ${ethers.formatUnits(rawAmount, 6)} USDC; total wallet debit is ${ethers.formatUnits(totalDebit, 6)} USDC.`);
-    setTxState('pending', 'Wallet confirmation required.');
+    setTxState('pending', 'Wallet confirmation required.', 'Confirm transfer in MetaMask…');
     if (els.previewNote) els.previewNote.textContent = 'Transfer confirmation requested. Confirm in MetaMask only if recipient amount, platform fee, and total wallet debit match.';
     updateReceipt(receiptId, {
       state: IX_TRANSFER_STATES.SUBMITTING,
@@ -2821,9 +3011,10 @@
       // post-broadcast errors (OUTCOME_UNKNOWN) from pre-broadcast errors (FAILED).
       txBroadcast = true;
 
-      setTransferNote('Transfer submitted — awaiting confirmation…');
+      markTransferStep('broadcast');
+      setTransferNote('Transfer submitted — awaiting Polygon confirmation…');
       setStatus('');
-      setTxState('pending', 'Broadcast to network. Do not retry.');
+      setTxState('pending', 'Broadcast to network. Do not retry.', 'Awaiting Polygon…');
       companionState(IX_TRANSFER_STATES.SUBMITTED, {
         statusLine: 'Transaction submitted. Awaiting chain confirmation.',
         stateVal:   'Submitted',
@@ -2855,6 +3046,12 @@
         lastKnownMessage: 'Transfer confirmed. Funds moved on Polygon.',
       }, OBSERVATION_SOURCES && OBSERVATION_SOURCES.RPC);
       if (window.IX && window.IX.receipts) window.IX.receipts.clearActive();
+      markTransferStep('confirmed');
+      renderTransferSummary(refreshedSummary, {
+        label: 'Transfer Confirmed',
+        mode: 'Confirmed',
+        note: `Tx ${shortHash(txHash)} confirmed on Polygon. Explorer link is visible above and in the receipt list.`,
+      });
       companionState(IX_TRANSFER_STATES.CONFIRMED, {
         statusLine: 'Transfer confirmed. Funds moved on Polygon.',
         stateVal:   'Confirmed',
@@ -2866,8 +3063,9 @@
         autoOpen:   true,
       });
 
+      transferConfirmed = true;
       upsertRecipientBook(recipient, metadata);
-      clearTransferDraftPreservingStatus();
+      clearDraftControlsAfterConfirmation();
       refreshUsdcBalance();
     } catch (err) {
       if (err.code === 'FLOW_INVALIDATED') throw err; // bubble to outer catch
@@ -2890,6 +3088,7 @@
           explorerUrl: outcomeUrl,
           lastKnownMessage: 'Transaction broadcast detected. Final confirmation could not be verified locally.',
         });
+        failTransferTimeline('broadcast', 'Outcome unknown');
         if (els.txStatus && outcomeUrl) {
           els.txStatus.innerHTML =
             `Outcome unknown. ` +
@@ -2924,6 +3123,7 @@
             fundsMoved: false,
             lastKnownMessage: 'Wallet request already pending in MetaMask. No transfer was submitted. No funds moved.',
           });
+          failTransferTimeline('transfer_requested', 'Wallet request already pending');
           setTxState('idle', 'MetaMask already has a pending request. Open MetaMask and finish or cancel it, then retry.');
           companionState(IX_TRANSFER_STATES.REJECTED, {
             statusLine: 'Wallet request already pending in MetaMask.',
@@ -2945,6 +3145,7 @@
               fundsMoved: false,
               lastKnownMessage: 'Transfer rejected in wallet. No transfer was broadcast.',
             });
+            failTransferTimeline('transfer_requested', 'Transfer declined');
             setTxState('idle', 'Transfer declined. No funds moved.');
             companionState(IX_TRANSFER_STATES.REJECTED, {
               statusLine: 'Transfer rejected in wallet.',
@@ -2964,6 +3165,7 @@
               fundsMoved: explained.fundsMoved,
               lastKnownMessage: `${explained.title}. ${explained.message}`,
             });
+            failTransferTimeline('transfer_requested', explained.title);
             setTxState('idle', `${explained.title}. ${explained.retryGuidance}`);
             companionState(IX_TRANSFER_STATES.INTERRUPTED, {
               statusLine: 'Transfer interrupted before broadcast.',
@@ -2999,7 +3201,10 @@
       // Always release the flow lock and exit review.
       // Terminal states preserve the status message; errors unlock the form for editing.
       activeTransferFlow = false;
-      exitReview({ clearStatus: false });
+      if (!transferConfirmed) {
+        const preserveTimeline = !!(state.transferTimeline && state.transferTimeline.terminal);
+        exitReview({ clearStatus: false, preserveTimeline });
+      }
     }
   }
 
@@ -3270,5 +3475,6 @@
   }
   if (els.switchAccountBtn) els.switchAccountBtn.addEventListener('click', requestAccountSelection);
   if (els.txCancelReview)  els.txCancelReview.addEventListener('click', () => exitReview());
+  if (els.txConfirmAck)    els.txConfirmAck.addEventListener('change', updatePreview);
 
 })();
