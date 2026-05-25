@@ -2016,6 +2016,7 @@
     updateSenderDisplay();
     if (els.walletPill) els.walletPill.classList.add('visible');
     if (els.connectBtn) {
+      els.connectBtn.hidden = false;
       els.connectBtn.disabled = false;
       els.connectBtn.textContent = short;
       els.connectBtn.classList.add('connected');
@@ -2071,9 +2072,16 @@
     updateSenderDisplay();
     if (els.walletPill) els.walletPill.classList.add('visible');
     if (els.connectBtn) {
-      els.connectBtn.disabled = false;
-      els.connectBtn.textContent = 'Switch to Polygon';
-      els.connectBtn.classList.add('connected');
+      if (state.chainId === POLYGON_MAINNET_CHAIN_ID) {
+        // Already on Polygon — "Switch to Polygon" is wrong; hide the action button.
+        // Disconnect and account-switch remain available.
+        els.connectBtn.hidden = true;
+      } else {
+        els.connectBtn.hidden = false;
+        els.connectBtn.disabled = false;
+        els.connectBtn.textContent = 'Switch to Polygon';
+        els.connectBtn.classList.add('connected');
+      }
     }
     if (els.disconnectBtn) els.disconnectBtn.removeAttribute('hidden');
     setAccountSwitchVisible(true);
