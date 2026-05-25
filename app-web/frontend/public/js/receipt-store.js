@@ -204,6 +204,7 @@
     const active = normalizeReceipt(raw);
     if (!active || !active.id) {
       write(KEYS.active, null);
+      notify();
       return null;
     }
     return active;
