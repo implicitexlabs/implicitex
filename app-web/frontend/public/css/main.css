@@ -335,12 +335,13 @@ body.portal-active #nav {
   display: grid;
   grid-template-rows: 24px 14px;
   align-items: center;
+  justify-items: center;
   text-align: center;
   width: 108px;
 }
 
 .stat-gas {
-  width: 190px;
+  width: max-content;
 }
 
 .stat-link {
@@ -383,6 +384,8 @@ body.portal-active #nav {
   display: flex;
   align-items: center;
   justify-content: center;
+  justify-self: center;
+  width: max-content;
   gap: 8px;
   font-size: 17px;
   line-height: 1;
@@ -411,6 +414,7 @@ body.portal-active #nav {
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.14em;
+  text-indent: 0.14em;
   text-transform: uppercase;
   color: var(--white);
   display: block;
