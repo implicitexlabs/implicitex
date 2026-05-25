@@ -1495,6 +1495,7 @@
   function resetConnectButton() {
     if (!els.connectBtn) return;
 
+    els.connectBtn.hidden = false;
     els.connectBtn.disabled = false;
     els.connectBtn.textContent = 'Connect Wallet';
     els.connectBtn.classList.remove('connected');
