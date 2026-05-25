@@ -192,9 +192,21 @@
 
   // ----------------------------------------------------------------
   // getActive() — return the active receipt or null
+  //
+  // Returns null if:
+  //   - localStorage has no ix.receipt.active
+  //   - the stored value migrates to a receipt with no id (schema skeleton)
+  // In the latter case the stale/corrupt entry is removed immediately.
   // ----------------------------------------------------------------
   function getActive() {
-    return normalizeReceipt(read(KEYS.active));
+    const raw = read(KEYS.active);
+    if (!raw) return null;
+    const active = normalizeReceipt(raw);
+    if (!active || !active.id) {
+      write(KEYS.active, null);
+      return null;
+    }
+    return active;
   }
 
   // ----------------------------------------------------------------
@@ -226,7 +238,7 @@
   }
 
   function listAll() {
-    const active = normalizeReceipt(read(KEYS.active));
+    const active = getActive();
     const archive = schemaApi
       ? schemaApi.migrateReceiptCollection(read(KEYS.archive) || [])
       : (read(KEYS.archive) || []).map(normalizeReceipt);
