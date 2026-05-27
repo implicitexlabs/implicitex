@@ -24,18 +24,42 @@
 
   if (!els.companion || !els.bar) return;
 
+  function normalizeSeverity(severity) {
+    if (!severity) return null;
+    if (severity === 'error' || severity === 'critical') return 'critical';
+    if (severity === 'warning' || severity === 'advisory' || severity === 'blocking') return 'advisory';
+    if (severity === 'pending' || severity === 'neutral' || severity === 'ok') return severity;
+    return null;
+  }
+
+  function companionClassForSeverity(severity) {
+    if (severity === 'critical') return 'error';
+    if (severity === 'advisory' || severity === 'blocking') return 'warning';
+    return null;
+  }
+
+  function valueClassForSeverity(severity) {
+    if (severity === 'critical') return 'error';
+    if (severity === 'advisory' || severity === 'blocking') return 'warning';
+    return null;
+  }
+
   function applySeverity(severity) {
+    const normalized = normalizeSeverity(severity);
+    const companionClass = companionClassForSeverity(normalized);
+    const valueClass = valueClassForSeverity(normalized);
+
     els.companion.classList.remove('companion--error', 'companion--warning');
     [els.stateVal, els.networkVal, els.actionVal].forEach(function (el) {
       if (!el) return;
       el.classList.remove('is-error', 'is-warning');
     });
 
-    if (!severity) return;
-    els.companion.classList.add('companion--' + severity);
+    if (!companionClass) return;
+    els.companion.classList.add('companion--' + companionClass);
     [els.stateVal, els.networkVal, els.actionVal].forEach(function (el) {
       if (!el) return;
-      el.classList.add('is-' + severity);
+      if (valueClass) el.classList.add('is-' + valueClass);
     });
   }
 

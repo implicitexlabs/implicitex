@@ -1,26 +1,40 @@
 # Initial Roadmap
 
-Last updated: 2026-05-23
+Last updated: 2026-05-27
 
 ## Current MVP Readiness Snapshot
 
 Estimated MVP readiness: 96-98%.
 
 ImplicitEx has a hardened transfer contract deployed on Polygon mainnet with Safe
-ownership accepted, source verified, and on-chain state confirmed. The frontend
-instrument polish is merged to main. The only remaining gate before public
-exposure is a controlled live smoke transfer and attorney review.
+ownership accepted, source verified, and on-chain state confirmed. The platform
+is deployed, but remains pre-live/read-only by configuration. The frontend can
+load, connect a wallet, detect Polygon, show the instrument UI, and verify
+configuration, but it must not allow a real transfer yet.
 
 Current posture:
 
 - Contract lane: CLOSED / FROZEN.
 - Deployment lane: COMPLETE — canonical contract live, Safe-owned.
 - Frontend execution-safety lane: CLOSED.
-- Frontend polish lane: COMPLETE — merged to main at `587aa93`.
-- Controlled smoke lane: ACTIVE — next action.
-- Product-change lane: closed until smoke evidence captured.
+- Frontend calm-state lane: ACTIVE — stable operational states must not render
+  as error/recovery states.
+- Frontend polish lane: ACTIVE — pre-live/read-only presentation tightening.
+- Controlled smoke lane: COMPLETE for prior gated smoke; CLOSED until transfers
+  are deliberately re-enabled under a written checklist.
+- Product-change lane: limited to state-contract and read-only presentation
+  hardening before WalletConnect/mobile work.
 
-Main branch tip: `587aa93 — Restore canonical Polygon deployment record`
+Transfer gates:
+
+```text
+IX_CONFIG.transfersEnabled = false
+IX_CHAINS[137].transfersEnabled = false
+```
+
+Main branch tip: last documented production checkpoint was
+`587aa93 — Restore canonical Polygon deployment record`. Re-check before any
+new deploy or live-transfer gate change.
 
 ## Canonical Production Contract
 
@@ -36,6 +50,9 @@ Ownership accepted tx: 0xd6bfb2876725391c956dbd17ec5f774f9246b50df5667e8b29e8c78
 Source verified: https://polygonscan.com/address/0x5015841D6E665e63Ea174aD6b8FeF854026dE0C0
 On-chain verified: 2026-05-23 — owner/pendingOwner/treasury/fee/paused all PASS
 ```
+
+Frontend production config points Polygon mainnet to the same contract address,
+but both the global transfer gate and Polygon chain transfer gate remain false.
 
 ## MVP Wallet And Funding State
 
@@ -77,7 +94,7 @@ On-chain verified: 2026-05-23 — owner/pendingOwner/treasury/fee/paused all PAS
 - ✅ Gate closed before commit
 - Evidence: docs/operations/evidence/smoke-polygon-mainnet-2026-05-23.md
 
-### 🔲 Receipt stale-state fix — MUST FIX before public exposure
+### ✅ Receipt stale-state fix — COMPLETE
 
 Scope: do not show stale READY/AUTHORIZING records as active after a confirmed transfer.
 Polygon is the authoritative receipt. Local receipts are UX/proof packaging.
@@ -87,6 +104,34 @@ After confirmation the UI should show:
 
 Not required for MVP: a perfect local accounting ledger.
 Required for MVP: no stale intermediate records presented as active state after settlement.
+
+Follow-up confirmed 2026-05-27:
+
+- Stale receipt phantom state was fixed.
+- Corrupt active receipt state now notifies subscribers when cleared.
+- Firebase JS cache headers were updated so stale `wallet.js` and
+  `receipt-store.js` should not survive deploys.
+
+### 🔲 Frontend state contract — MUST DEFINE before WalletConnect/Reown
+
+The app is safe, but it is not yet calm. Transfer gates are doing their job; the
+next risk is presentation-layer twitchiness where stable operational states look
+like error or recovery states.
+
+Before WalletConnect/mobile handoff is added, define explicit allowed frontend
+states for at least:
+
+- disconnected
+- connected on Polygon while transfers are disabled
+- connected on unsupported network
+- connected on configured network without a deployed contract
+- wallet request pending
+- wallet request rejected
+- account changed
+- local disconnect with wallet permission still authorized
+- draft/review-ready with no wallet action requested
+- post-wallet transaction execution states, delegated to
+  `docs/product/transaction-states.md`
 
 ### 🔲 Real-wallet QA
 
@@ -114,9 +159,18 @@ Required for MVP: no stale intermediate records presented as active state after 
 
 - ✅ Role separation: deployer / Safe / treasury / governance / operations
 - ✅ Frontend execution instrument complete and merged
-- 🔲 Controlled production smoke evidence
+- ✅ Controlled production smoke evidence
 - 🔲 Real-wallet QA (desktop + mobile)
 - 🔲 Prove reliability with small number of production transfers before expanding limits
+
+## Next Best Sequence
+
+1. Update Firebase Hosting documentation for JavaScript cache headers.
+2. Fix the CSS transform warning only if it stays a small one-commit change.
+3. Define the frontend state contract.
+4. Add WalletConnect/Reown after the state contract is explicit.
+5. Run live-transfer smoke only after UI modes are stable and transfers are
+   deliberately enabled under controlled conditions.
 
 ## Stage 3 - Desktop Resource
 

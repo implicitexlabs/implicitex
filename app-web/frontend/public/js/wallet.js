@@ -94,11 +94,44 @@
   // companion.js registers window.IX.companion after wallet.js runs,
   // but all calls happen on user interaction, so it is always available by then.
   // ----------------------------------------------------------------
+  const CONFIDENCE_BY_STATE = {
+    'confirmed':       'confirmed',
+    'failed':          'confirmed',
+    'submitted':       'probable',
+    'pending':         'probable',
+    'outcome_unknown': 'uncertain',
+    'unclear':         'uncertain',
+  };
+
+  function normalizeSemanticSeverity(severity) {
+    if (!severity) return null;
+    if (severity === 'error' || severity === 'critical') return 'critical';
+    if (severity === 'warning' || severity === 'advisory') return 'advisory';
+    if (severity === 'blocking') return 'blocking';
+    if (severity === 'pending') return 'pending';
+    if (severity === 'neutral' || severity === 'ok') return severity;
+    return null;
+  }
+
+  function confidenceForState(stateKey, detail) {
+    if (detail && detail.confidence) return detail.confidence;
+    return CONFIDENCE_BY_STATE[stateKey] || null;
+  }
+
+  function normalizeCompanionDetail(stateKey, detail) {
+    if (!detail) return detail;
+    const normalized = Object.assign({}, detail);
+    normalized.severity = normalizeSemanticSeverity(detail.severity);
+    normalized.confidence = confidenceForState(stateKey, detail);
+    return normalized;
+  }
+
   function companionState(stateKey, detail) {
+    const normalizedDetail = normalizeCompanionDetail(stateKey, detail);
     if (window.IX && window.IX.companion) {
-      window.IX.companion.setState(stateKey, detail);
+      window.IX.companion.setState(stateKey, normalizedDetail);
     }
-    updateTelemetryFromTransferState(stateKey, detail);
+    updateTelemetryFromTransferState(stateKey, normalizedDetail);
   }
 
   // ----------------------------------------------------------------
@@ -110,7 +143,7 @@
     'WALLET_CONNECTED':    { level: 'status',    rate: 'low',  summary: 'Connected' },
     'WRONG_NETWORK':       { level: 'elevated',  rate: 'avg',  summary: 'Wrong network' },
     'CONTRACT_UNAVAILABLE':{ level: 'elevated',  rate: 'avg',  summary: 'Contract unavailable' },
-    'TRANSFERS_DISABLED':  { level: 'elevated',  rate: 'avg',  summary: 'Transfers disabled' },
+    'TRANSFERS_DISABLED':  { level: 'status',    rate: 'low',  summary: 'Standby' },
     'ready':               { level: 'status',    rate: 'low',  summary: 'Ready' },
     'authorizing':         { level: 'status',    rate: 'avg',  summary: 'Awaiting approval' },
     'authorized':          { level: 'status',    rate: 'avg',  summary: 'Approved' },
@@ -126,7 +159,7 @@
   var TELEMETRY_GUIDANCE_MAP = {
     'WRONG_NETWORK':        [{ key: 'Action',   value: 'Switch to Polygon to continue.' }],
     'CONTRACT_UNAVAILABLE': [{ key: 'Status',   value: 'Contract not deployed on this network.' }],
-    'TRANSFERS_DISABLED':   [{ key: 'Status',   value: 'Transfers currently disabled on this network.' }],
+    'TRANSFERS_DISABLED':   [{ key: 'Status',   value: 'Contract transfers are paused. No wallet action required.' }],
     'failed':               [{ key: 'Recovery', value: 'Funds were not moved. Safe to retry.' }],
     'interrupted':          [{ key: 'Recovery', value: 'Session interrupted. Funds were not moved. Safe to retry.' }],
     'outcome_unknown':      [{ key: 'Recovery', value: 'Transaction status uncertain. Verify on the block explorer before retrying.' }],
@@ -137,6 +170,9 @@
     var tel = window.IX.telemetry;
 
     var sig = TELEMETRY_SIGNAL_MAP[stateKey] || { level: 'status', rate: 'low', summary: 'Active' };
+    if (detail && detail.severity === 'critical') {
+      sig = Object.assign({}, sig, { level: 'critical', rate: sig.rate || 'avg' });
+    }
     tel.setSignal(sig);
 
     // Status rows — wallet address + network
@@ -149,6 +185,15 @@
       statusRows.push({ key: 'Network', value: chainConfig.name });
     } else if (state.chainId) {
       statusRows.push({ key: 'Chain ID', value: String(state.chainId) });
+    }
+    if (detail && detail.confidence) {
+      statusRows.push({
+        key: 'Confidence',
+        value: detail.confidence,
+        level: detail.confidence === 'untrusted' ? 'critical'
+          : detail.confidence === 'uncertain' ? 'elevated'
+          : undefined,
+      });
     }
     tel.setRows('status', statusRows);
 
@@ -350,7 +395,7 @@
 
   function setElementSeverity(el, severity) {
     if (!el) return;
-    el.classList.remove('is-error', 'is-warning');
+    el.classList.remove('is-error', 'is-warning', 'is-advisory', 'is-blocking', 'is-critical', 'is-pending');
     if (severity) el.classList.add('is-' + severity);
   }
 
@@ -515,9 +560,13 @@
     if (state.txPhase === 'DRAFT') resetTransferTimeline();
   }
 
-  function resetBalanceDisplay() {
+  function setBalanceDisplay(text) {
+    if (els.usdcBalance) els.usdcBalance.textContent = text;
+  }
+
+  function resetBalanceDisplay(label = 'Not connected') {
     state.usdcBalanceRaw = null;
-    if (els.usdcBalance) els.usdcBalance.textContent = '—';
+    setBalanceDisplay(label);
   }
 
   function updateSenderDisplay() {
@@ -813,7 +862,7 @@
     const bookEntry = findRecipientBookEntry(normalized);
     const items = [
       renderListItem('Format valid', 'ok'),
-      renderListItem('Confirm network with recipient', 'warning'),
+      renderListItem('Confirm network with recipient', 'advisory'),
     ];
 
     if (
@@ -823,14 +872,14 @@
       state.recipientCodeWarning.chainId === state.chainId &&
       state.recipientCodeWarning.isContract
     ) {
-      items.push(renderListItem('Smart contract address detected — continue only if it can receive and manage USDC', 'warning'));
+      items.push(renderListItem('Smart contract address detected — continue only if it can receive and manage USDC', 'advisory'));
     }
 
     if (matches.length > 0 || bookEntry) {
       const count = Math.max(matches.length, Number(bookEntry && bookEntry.transferCount || 0));
       items.splice(1, 0, renderListItem(`Known locally · ${count} prior transfer${count === 1 ? '' : 's'}`, 'ok'));
     } else {
-      items.splice(1, 0, renderListItem('New to this browser history', 'warning'));
+      items.splice(1, 0, renderListItem('New to this browser history', 'advisory'));
     }
 
     if (bookEntry && bookEntry.label) {
@@ -881,11 +930,16 @@
   function buildPreflightItems() {
     const recipient = (els.txRecipient && els.txRecipient.value.trim()) || '';
     const amountStr = (els.amtIn && els.amtIn.value.trim()) || '';
+    const draftStarted = !!recipient || !!amountStr;
+    const walletConnected = !!(state.connected || state.address);
     const validRecipient = validateRecipient(recipient) === '';
     const amountFloat = parseFloat(amountStr);
     const validAmount = !!amountStr && !isNaN(amountFloat) && amountFloat > 0;
     const chainConfig = window.IX_CHAINS && window.IX_CHAINS[state.chainId];
-    const networkReady = getNetworkState() === 'READY';
+    const networkState = getNetworkState();
+    const polygonConnected = walletConnected && isPolygonMainnet(state.chainId);
+    const transfersDisabled = networkState === 'TRANSFERS_DISABLED';
+    const contractConfigured = !!(chainConfig && chainConfig.contractAddress);
     const summary = validRecipient && validAmount && chainConfig
       ? safeBuildDraftSummary(recipient, amountStr, amountFloat, chainConfig)
       : null;
@@ -894,18 +948,36 @@
       ? `Amount below ${chainConfig.minTransferUsdc} USDC minimum`
       : 'Amount must be above the configured minimum';
 
-    return [
-      { label: state.connected ? 'Wallet connected' : 'Wallet required', status: state.connected ? 'ok' : 'blocking' },
-      { label: networkReady ? 'Polygon network' : 'Switch to Polygon', status: networkReady ? 'ok' : 'blocking' },
-      { label: chainConfig && chainConfig.contractAddress ? 'Contract configured' : 'Contract unavailable', status: chainConfig && chainConfig.contractAddress ? 'ok' : 'blocking' },
-      { label: validRecipient ? 'Recipient valid' : 'Recipient required', status: validRecipient ? 'ok' : 'blocking' },
-      { label: validAmount ? 'Recipient amount entered' : 'Recipient amount required', status: validAmount ? 'ok' : 'blocking' },
-      { label: aboveMinimum ? 'Above minimum' : minimumLabel, status: aboveMinimum ? 'ok' : 'blocking' },
-      { label: summary && summary.balanceKnown ? 'Balance loaded' : 'Balance loading', status: summary && summary.balanceKnown ? 'ok' : 'warning' },
-      { label: summary && !summary.insufficientBalance ? 'Balance covers total debit' : 'Balance must cover recipient amount plus fee', status: summary && !summary.insufficientBalance ? 'ok' : validAmount ? 'blocking' : 'warning' },
-      { label: summary ? 'Amount preview ready' : 'Amount preview pending', status: summary ? 'ok' : 'warning' },
-      { label: 'Execution checks run before wallet prompt', status: 'warning' },
+    const items = [
+      { label: walletConnected ? 'Wallet connected' : 'Wallet not connected', status: walletConnected ? 'ok' : 'neutral' },
+      { label: !walletConnected ? 'Network pending' : polygonConnected ? 'Polygon connected' : 'Switch to Polygon', status: !walletConnected ? 'neutral' : polygonConnected ? 'ok' : 'advisory' },
+      { label: !walletConnected ? 'Contract pending' : contractConfigured ? 'Contract configured' : 'Contract unavailable', status: !walletConnected ? 'neutral' : contractConfigured ? 'ok' : 'critical' },
+      { label: transfersDisabled ? 'Transfers paused by launch gate' : networkState === 'READY' ? 'Transfers enabled' : 'Transfer gate pending', status: transfersDisabled ? 'advisory' : networkState === 'READY' ? 'ok' : 'neutral' },
     ];
+
+    if (!draftStarted) return items;
+
+    items.push(
+      { label: validRecipient ? 'Recipient valid' : 'Recipient not entered', status: validRecipient ? 'ok' : 'neutral' },
+      { label: validAmount ? 'Recipient amount entered' : 'Recipient amount not entered', status: validAmount ? 'ok' : 'neutral' },
+    );
+
+    if (amountStr) {
+      items.push({ label: aboveMinimum ? 'Above minimum' : minimumLabel, status: validAmount ? 'blocking' : 'neutral' });
+    }
+
+    if (validRecipient && validAmount) {
+      items.push(
+        { label: summary && summary.balanceKnown ? 'Balance loaded' : 'Balance loading', status: summary && summary.balanceKnown ? 'ok' : 'pending' },
+        { label: summary && !summary.insufficientBalance ? 'Balance covers total debit' : 'Balance must cover recipient amount plus fee', status: summary && !summary.insufficientBalance ? 'ok' : 'blocking' },
+        { label: summary ? 'Amount preview ready' : 'Amount preview pending', status: summary ? 'ok' : 'pending' },
+      );
+      if (networkState === 'READY') {
+        items.push({ label: 'Execution checks run before wallet prompt', status: 'advisory' });
+      }
+    }
+
+    return items;
   }
 
   function safeBuildDraftSummary(recipient, amountStr, amountFloat, chainConfig) {
@@ -951,20 +1023,20 @@
     if (result.isPaused === false) {
       items.push(renderListItem('Contract active', 'ok'));
     } else if (result.isPaused === true) {
-      items.push(renderListItem('Transfers paused', 'blocking'));
+      items.push(renderListItem('Transfers paused', 'advisory'));
     } else {
-      items.push(renderListItem('Contract state unverified', 'warning'));
+      items.push(renderListItem('Contract state unverified', 'advisory'));
     }
 
     if (result.previewOk) {
       if (result.balance >= result.totalDebit) {
         items.push(renderListItem('Balance covers total debit', 'ok'));
       } else {
-        items.push(renderListItem('Insufficient balance', 'blocking'));
+        items.push(renderListItem('Insufficient balance', 'critical'));
       }
 
       if (result.needsApproval) {
-        items.push(renderListItem('Allowance insufficient — approval required', 'warning'));
+        items.push(renderListItem('Allowance insufficient — approval required', 'advisory'));
       } else if (result.allowance !== null) {
         items.push(renderListItem('Allowance sufficient', 'ok'));
       }
@@ -972,15 +1044,16 @@
       if (result.gasOk === true) {
         items.push(renderListItem('Gas estimated', 'ok'));
       } else if (result.gasOk === false) {
-        items.push(renderListItem('Gas estimate failed', 'warning'));
+        items.push(renderListItem('Gas estimate failed', 'critical'));
       }
       // gasOk === null: gas check skipped because approval is required first
     }
 
     // Verdict row — visually separated by CSS border-top
     const verdictStatus = (result.verdict === 'OK') ? 'ok'
-      : (result.verdict === 'PAUSED' || result.verdict === 'INSUFFICIENT_BALANCE') ? 'blocking'
-      : 'warning';
+      : (result.verdict === 'INSUFFICIENT_BALANCE' || result.verdict === 'GAS_FAILED') ? 'critical'
+      : (result.verdict === 'PAUSED') ? 'advisory'
+      : 'advisory';
 
     const verdictItem = renderListItem(result.verdictText, verdictStatus);
     verdictItem.classList.add('is-verdict');
@@ -1218,7 +1291,7 @@
         eventVal:   txHash,
         actionVal:  'Verify on explorer before retrying.',
         actionHref: explorerUrl || undefined,
-        severity:   'warning',
+        severity:   'advisory',
         autoOpen:   true,
       });
       return;
@@ -1241,7 +1314,7 @@
           eventVal:   txHash,
           actionVal:  'View on ' + chainConfig.name + ' explorer',
           actionHref: explorerUrl || undefined,
-          severity:   unresolvedState === IX_TRANSFER_STATES.OUTCOME_UNKNOWN ? 'warning' : undefined,
+          severity:   unresolvedState === IX_TRANSFER_STATES.OUTCOME_UNKNOWN ? 'advisory' : undefined,
           autoOpen:   true,
         });
         return;
@@ -1304,7 +1377,7 @@
         eventVal:   txHash,
         actionVal:  'Verify on explorer before retrying.',
         actionHref: explorerUrl || undefined,
-        severity:   'warning',
+        severity:   'advisory',
         autoOpen:   true,
       });
     }
@@ -1533,6 +1606,14 @@
     return !!(chainId && window.IX_CHAINS && window.IX_CHAINS[chainId]);
   }
 
+  function isPolygonMainnet(chainId) {
+    return normalizeChainId(chainId) === POLYGON_MAINNET_CHAIN_ID;
+  }
+
+  function isConnectedToPolygon() {
+    return !!(state.connected && isPolygonMainnet(state.chainId));
+  }
+
   function isLiveTransferChain(chainId) {
     const chainConfig = window.IX_CHAINS && window.IX_CHAINS[chainId];
     return !!(
@@ -1622,7 +1703,9 @@
    * Keeps setTxState() and presentation functions consistent.
    */
   function currentButtonLabel() {
-    if (getNetworkState() !== 'READY') return 'Switch to Polygon';
+    const netState = getNetworkState();
+    if (netState === 'WRONG_NETWORK' || netState === 'CONTRACT_UNAVAILABLE') return 'Switch to Polygon';
+    if (netState === 'TRANSFERS_DISABLED') return 'Transfers disabled';
     if (state.txPhase === 'SIMULATING') return 'Checking…';
     return 'Execute Transfer';
   }
@@ -1660,7 +1743,18 @@
       setStatus('Enter a valid amount.');
       return;
     }
-    if (!state.connected || !isLiveTransferChain(state.chainId)) {
+    if (!state.connected) {
+      setStatus('Connect a wallet before reviewing this transfer.');
+      return;
+    }
+    if (!isLiveTransferChain(state.chainId)) {
+      // TRANSFERS_DISABLED: on a configured chain but transfers are paused.
+      // Standby — do not show wrong-network error or prompt to switch networks.
+      if (isConfiguredChain(state.chainId)) {
+        setStatus('Transfers are currently paused on this network.');
+        return;
+      }
+      // Genuinely wrong network — guide the user to switch.
       setStatus('Switch to Polygon Mainnet before reviewing this transfer.');
       applyWrongNetworkPresentation();
       return;
@@ -1883,6 +1977,9 @@
   async function openOrConnect() {
     if (state.connected && isLiveTransferChain(state.chainId)) {
       showTransferModules(true);
+    } else if (state.connected && isConfiguredChain(state.chainId)) {
+      // Connected on a known chain (e.g. Polygon pre-live) — scroll to the standby panel.
+      showTransferModules(true);
     } else if (state.connected) {
       await switchToPolygonMainnet();
     } else {
@@ -1938,7 +2035,7 @@
       actionVal:  stillAuthorized
         ? 'Open MetaMask → Connected sites → disconnect this site, then lock MetaMask.'
         : 'For shared computers, also lock MetaMask.',
-      severity:   stillAuthorized ? 'warning' : null,
+      severity:   stillAuthorized ? 'advisory' : null,
       autoOpen:   stillAuthorized,
     });
   }
@@ -2061,12 +2158,12 @@
     const short = shortAddr(state.address);
     const networkLabel = chainLabel(state.chainId);
     const configuredChain = window.IX_CHAINS && window.IX_CHAINS[state.chainId];
-    const stateVal = configuredChain ? 'Live transfers disabled' : 'Wrong network';
+    const stateVal = configuredChain ? 'Contract unavailable' : 'Wrong network';
     const statusLine = configuredChain
-      ? 'Live transfers disabled'
+      ? 'Contract not deployed on this network'
       : 'Wrong network · Switch to Polygon Mainnet';
     const eventVal = configuredChain
-      ? 'Wallet connected on Polygon. Live transfers are currently disabled.'
+      ? 'Contract not deployed on this network.'
       : 'Wallet connected on unsupported network.';
 
     if (els.walletAddr) els.walletAddr.textContent = short;
@@ -2096,7 +2193,11 @@
     hideTransferModules();
     setTransferNote('');
     hidePreview();
-    setStatus('Switch MetaMask to Polygon Mainnet before sending USDC.');
+    if (state.chainId !== POLYGON_MAINNET_CHAIN_ID) {
+      setStatus('Switch MetaMask to Polygon Mainnet before sending USDC.');
+    } else {
+      setStatus('');
+    }
 
     companionState('WRONG_NETWORK', {
       statusLine,
@@ -2104,7 +2205,9 @@
       fundsVal:   'No active transaction',
       networkVal: networkLabel,
       eventVal,
-      actionVal:  'Use Switch to Polygon, or switch MetaMask to Polygon Mainnet before sending USDC.',
+      actionVal:  state.chainId !== POLYGON_MAINNET_CHAIN_ID
+        ? 'Use Switch to Polygon, or switch MetaMask to Polygon Mainnet before sending USDC.'
+        : 'No wallet action required.',
       severity:   'error',
       autoOpen:   true,
     });
@@ -2305,23 +2408,33 @@
 
   function applyCurrentNetworkPresentation(options = {}) {
     const netState = getNetworkState();
-    if (netState !== 'READY') {
+
+    // Wrong network or no contract — hide the transfer panel, show guidance.
+    if (netState === 'WRONG_NETWORK' || netState === 'CONTRACT_UNAVAILABLE') {
       applyWrongNetworkPresentation();
-      resetBalanceDisplay();
+      resetBalanceDisplay(netState === 'WRONG_NETWORK' ? 'Switch to Polygon' : 'Unavailable on this network');
       dispatchWalletStateChanged();
       return;
     }
 
+    // TRANSFERS_DISABLED or READY — both show the transfer panel.
+    // applyConnectedPresentation handles the disabled-transfer copy internally.
     const eventVal = options.eventVal;
     applyConnectedPresentation({ shouldScroll: options.shouldScroll, eventVal });
 
     refreshUsdcBalance();
-    updatePreview();
-    const recipient = (els.txRecipient && els.txRecipient.value.trim()) || '';
-    if (validateRecipient(recipient) === '') {
-      refreshRecipientCodeWarning(recipient);
+
+    if (netState === 'READY') {
+      updatePreview();
+      const recipient = (els.txRecipient && els.txRecipient.value.trim()) || '';
+      if (validateRecipient(recipient) === '') {
+        refreshRecipientCodeWarning(recipient);
+      } else {
+        state.recipientCodeWarning = null;
+      }
     } else {
-      state.recipientCodeWarning = null;
+      // TRANSFERS_DISABLED — balance readback is allowed, execution remains disabled.
+      updatePreview();
     }
     dispatchWalletStateChanged();
   }
@@ -2446,9 +2559,9 @@
       const val = parseFloat(this.value);
       if (!isNaN(val) && val > 0) {
         const fee = calcFee(val);
-        els.feeDisplay.textContent = fee.toFixed(6) + ' USDC';
+        if (els.feeDisplay) els.feeDisplay.textContent = fee.toFixed(6) + ' USDC';
       } else {
-        els.feeDisplay.textContent = '—';
+        if (els.feeDisplay) els.feeDisplay.textContent = '—';
       }
       updatePreview();
     });
@@ -2566,25 +2679,62 @@
 
   /**
    * Fetch the connected wallet's USDC balance and update #usdcBalance.
-   * Silently no-ops if chain config or address is missing.
+   * Balance visibility is independent of transfer enablement. The row should
+   * always show either a balance or the reason a balance cannot be read yet.
    */
   async function refreshUsdcBalance() {
-    if (!state.address || !state.chainId || !window.IX_CHAINS) return;
+    if (!state.address) {
+      resetBalanceDisplay('Not connected');
+      return;
+    }
+    if (!state.chainId || !window.IX_CHAINS) {
+      resetBalanceDisplay('Network pending');
+      return;
+    }
     const chainConfig = window.IX_CHAINS[state.chainId];
-    if (!chainConfig || !chainConfig.usdcAddress) return;
+    if (!chainConfig || !chainConfig.usdcAddress) {
+      resetBalanceDisplay('Switch to Polygon');
+      return;
+    }
+    if (typeof ethers === 'undefined') {
+      resetBalanceDisplay('Balance unavailable');
+      return;
+    }
+
+    setBalanceDisplay('Checking…');
 
     try {
       const provider = new ethers.BrowserProvider(getWalletProvider());
       const usdc = new ethers.Contract(chainConfig.usdcAddress, ERC20_ABI, provider);
       const bal = await usdc.balanceOf(state.address);
       state.usdcBalanceRaw = BigInt(bal);
-      if (els.usdcBalance) {
-        els.usdcBalance.textContent = parseFloat(ethers.formatUnits(bal, 6)).toFixed(2) + ' USDC';
-      }
+      setBalanceDisplay(parseFloat(ethers.formatUnits(bal, 6)).toFixed(2) + ' USDC');
       updatePreview();
     } catch (_) {
+      // First attempt failed (RPC hiccup on connect). Schedule one retry after 4 s.
+      // If the retry also fails, leave balanceRaw null and show a visible
+      // unavailable state. Do not spin — one retry is sufficient.
       state.usdcBalanceRaw = null;
       updatePreview();
+      const expectedAddress     = state.address;
+      const expectedChainConfig = chainConfig;
+      setTimeout(async () => {
+        // Guard: only retry if still on the same account and chain.
+        if (!state.address || !state.chainId) return;
+        if (state.address !== expectedAddress) return;
+        const currentChainConfig = window.IX_CHAINS && window.IX_CHAINS[state.chainId];
+        if (currentChainConfig !== expectedChainConfig) return;
+        try {
+          const retryProvider = new ethers.BrowserProvider(getWalletProvider());
+          const retryUsdc = new ethers.Contract(chainConfig.usdcAddress, ERC20_ABI, retryProvider);
+          const retryBal = await retryUsdc.balanceOf(state.address);
+          state.usdcBalanceRaw = BigInt(retryBal);
+          setBalanceDisplay(parseFloat(ethers.formatUnits(retryBal, 6)).toFixed(2) + ' USDC');
+          updatePreview();
+        } catch (_retryErr) {
+          resetBalanceDisplay('Balance unavailable');
+        }
+      }, 4000);
     }
   }
 
@@ -2670,12 +2820,19 @@
     state.chainId = chainId;
 
     if (!isLiveTransferChain(chainId)) {
-      const supported = Object.values(window.IX_CHAINS || {})
-        .filter(c => c.transfersEnabled && c.contractAddress)
-        .map(c => c.name)
-        .join(', ') || 'Polygon';
-      setStatus(`Wrong network. Switch to ${supported} in your wallet.`);
-      applyWrongNetworkPresentation();
+      if (isConfiguredChain(chainId)) {
+        // On a known chain but transfers are paused — Standby, not a network error.
+        setStatus('Transfers are currently paused on this network. No wallet action required.');
+        applyCurrentNetworkPresentation();
+      } else {
+        // Genuinely wrong network — direct the user to switch.
+        const supported = Object.values(window.IX_CHAINS || {})
+          .filter(c => c.transfersEnabled && c.contractAddress)
+          .map(c => c.name)
+          .join(', ') || 'Polygon';
+        setStatus(`Wrong network. Switch to ${supported} in your wallet.`);
+        applyWrongNetworkPresentation();
+      }
       return;
     }
 
@@ -2767,7 +2924,7 @@
         networkVal: chainConfig.name,
         eventVal:   'Contract paused() returned true.',
         actionVal:  'Wait until transfers are unpaused before retrying.',
-        severity:   'warning',
+        severity:   'advisory',
       });
       return;
     }
@@ -3113,7 +3270,7 @@
           networkVal: chainConfig.name,
           eventVal:   explained.code,
           actionVal:  explained.retryGuidance,
-          severity:   'warning',
+          severity:   'advisory',
           autoOpen:   true,
         });
       } else {
@@ -3312,10 +3469,11 @@
   function scrollToModules() {
     if (!state.connected) {
       connect({ forcePermission: state.userDisconnected });
-    } else if (!isLiveTransferChain(state.chainId)) {
+    } else if (isConfiguredChain(state.chainId)) {
+      // On a known chain (live or pre-live) — scroll to the panel, which may be in standby.
+      if (els.modules) els.modules.scrollIntoView({ behavior: 'smooth' });
+    } else {
       applyWrongNetworkPresentation();
-    } else if (els.modules) {
-      els.modules.scrollIntoView({ behavior: 'smooth' });
     }
   }
 
@@ -3389,7 +3547,9 @@
       if (!state.connected) {
         if (els.networkBadge) {
           els.networkBadge.textContent = chainLabel(state.chainId);
-          setElementSeverity(els.networkBadge, isLiveTransferChain(state.chainId) ? null : 'error');
+          // Only mark the badge as error if the chain is entirely unknown (WRONG_NETWORK).
+          // A known/configured chain in pre-live is not an error condition.
+          setElementSeverity(els.networkBadge, isConfiguredChain(state.chainId) ? null : 'error');
         }
         return;
       }
@@ -3445,6 +3605,7 @@
   }
 
   pollNetworkData();
+  resetBalanceDisplay('Not connected');
   renderReceiptHistory();
   renderRecipientIntel();
   renderPreflight();

@@ -36,13 +36,34 @@
   outline-offset: 2px;
 }
 
-.social-icons {
+.social-icons,
+.social-text-links {
   margin-bottom: 1rem;
   display: flex;
   justify-content: center;
   gap: 1rem;
   flex-wrap: wrap;
   padding: 0;
+}
+
+.social-text-links a {
+  font-family: var(--font-main);
+  font-weight: 700;
+  font-size: 0.9rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  transition: color 0.17s, opacity 0.17s;
+  opacity: 0.9;
+}
+
+.social-text-links a:hover,
+.social-text-links a:focus {
+  color: var(--color-text-primary);
+  opacity: 1;
+  outline: 2px solid var(--color-border-strong);
+  outline-offset: 2px;
 }
 
 .social-icons a {

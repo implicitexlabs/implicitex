@@ -52,7 +52,7 @@
 }
 
 .companion.companion--warning .companion-indicator {
-  background: var(--warn);
+  background: var(--telemetry-amber);
 }
 
 /* Status line — dim keeps it readable while remaining secondary to page content */
@@ -73,7 +73,7 @@
 }
 
 .companion.companion--warning .companion-status {
-  color: var(--warn);
+  color: var(--telemetry-amber-dim);
 }
 
 /* Chevron toggle — points DOWN when collapsed (tap to expand below) */
@@ -184,10 +184,13 @@
 }
 
 .companion-v.is-error,
-.companion-v.is-warning,
-.companion-action.is-error,
-.companion-action.is-warning {
+.companion-action.is-error {
   color: var(--warn);
+}
+
+.companion-v.is-warning,
+.companion-action.is-warning {
+  color: var(--telemetry-amber-dim);
 }
 
 /* ---- Responsive ---- */

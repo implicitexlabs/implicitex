@@ -179,19 +179,24 @@ body {
 }
 
 .nav-status.is-error,
+.nav-status.is-critical,
 .f-net.is-error,
+.f-net.is-critical,
 .data-v.is-error {
   color: var(--warn);
   border-color: var(--warn-border);
 }
 
-.nav-status.is-warning {
-  color: var(--warn);
-  border-color: var(--warn-border);
+.nav-status.is-warning,
+.nav-status.is-advisory,
+.nav-status.is-blocking,
+.nav-status.is-pending {
+  color: var(--telemetry-amber-dim);
+  border-color: var(--telemetry-amber-border);
 }
 
 .status-warn {
-  color: var(--warn);
+  color: var(--telemetry-amber-dim);
 }
 
 .connect-btn {
@@ -676,9 +681,31 @@ body.portal-active #nav {
 .tx-field::placeholder { color: var(--muted); }
 .tx-field:focus { border-color: var(--border-2); }
 
+.tx-field--primary {
+  background: var(--white);
+  border-color: var(--white);
+  color: var(--bg);
+  font-weight: 600;
+}
+
+.tx-field--primary::placeholder {
+  color: rgba(8, 8, 8, 0.52);
+}
+
+.tx-field--primary:focus {
+  border-color: var(--white);
+  box-shadow: 0 0 0 1px var(--white);
+}
+
+.tx-field--primary:disabled {
+  background: var(--surface-3);
+  border-color: var(--border);
+  color: var(--dim);
+}
+
 .tx-field--select {
   appearance: none;
-  color: var(--white);
+  color: var(--dim);
 }
 
 .tx-meta-grid {
@@ -977,25 +1004,45 @@ body.portal-active #nav {
   background: var(--dim);
 }
 
+.intel-list li.is-neutral::before,
+.preflight-list li.is-neutral::before {
+  background: var(--muted);
+}
+
 .intel-list li.is-warning::before,
-.preflight-list li.is-warning::before {
-  background: var(--warn);
+.intel-list li.is-advisory::before,
+.preflight-list li.is-warning::before,
+.preflight-list li.is-advisory::before,
+.preflight-list li.is-blocking::before {
+  background: var(--telemetry-amber);
 }
 
 .preflight-list li.is-blocking,
 .preflight-list li.is-warning,
-.intel-list li.is-warning {
+.preflight-list li.is-advisory,
+.intel-list li.is-warning,
+.intel-list li.is-advisory {
   color: var(--dim);
 }
 
-.preflight-list li.is-blocking::before {
+.intel-list li.is-critical,
+.preflight-list li.is-critical,
+.preflight-list li.is-error {
+  color: var(--dim);
+}
+
+.intel-list li.is-critical::before,
+.preflight-list li.is-critical::before,
+.preflight-list li.is-error::before {
   background: var(--warn);
 }
 
+.preflight-list li.is-pending,
 .preflight-list li.is-checking {
   opacity: 0.45;
 }
 
+.preflight-list li.is-pending::before,
 .preflight-list li.is-checking::before {
   background: var(--muted);
 }

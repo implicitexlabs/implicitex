@@ -1,6 +1,6 @@
 # ImplicitEx Firebase Hosting Notes
 
-Last updated: 2026-05-07
+Last updated: 2026-05-27
 
 Purpose: keep the Firebase Hosting setup details for ImplicitEx in one internal
 reference file. Do not store private keys, service-account credentials, wallet
@@ -81,6 +81,27 @@ Hosting configuration:
       "firebase.json",
       "**/.*",
       "**/node_modules/**"
+    ],
+    "headers": [
+      {
+        "source": "**/*.js",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache, must-revalidate"
+          }
+        ]
+      },
+      {
+        "source": "**",
+        "headers": [
+          { "key": "Content-Security-Policy", "value": "[see firebase.json]" },
+          { "key": "X-Frame-Options", "value": "DENY" },
+          { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+          { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=(), payment=()" },
+          { "key": "X-Content-Type-Options", "value": "nosniff" }
+        ]
+      }
     ]
   }
 }
@@ -95,6 +116,28 @@ Setup choices:
 - Automatic GitHub builds/deploys: `No`
 - Existing `index.html` was not overwritten
 - Firebase wrote `app-web/frontend/public/404.html`
+
+## Cache Headers
+
+Firebase Hosting now sends this header for JavaScript assets:
+
+```text
+Cache-Control: no-cache, must-revalidate
+```
+
+Scope:
+
+- Applies to `**/*.js` under `app-web/frontend/public`.
+- Intended to prevent stale runtime modules such as `wallet.js` and
+  `receipt-store.js` from surviving a deploy in browser cache.
+- Does not make JavaScript immutable or long-lived; browsers may store a copy,
+  but must revalidate before reuse.
+- Keep this behavior in place while wallet, receipt, and pre-live transfer
+  gating code are changing.
+
+Operational note: if a stale wallet or receipt behavior appears after deploy,
+first verify the response headers for the relevant `.js` file before assuming a
+runtime state bug.
 
 ## Deploy Commands
 
@@ -140,6 +183,9 @@ Expected clean state before deploy:
   `app-web/frontend/public`.
 - Live transfers remain controlled by application config and contract readiness
   gates, not by Firebase Hosting deployment.
+- Current pre-live/read-only posture depends on both transfer gates remaining
+  false: `IX_CONFIG.transfersEnabled === false` and
+  `IX_CHAINS[137].transfersEnabled === false`.
 - Do not commit `.firebase/`; it is a local deploy cache.
 - Do not add secrets to Firebase Hosting config or this reference file.
 - Re-check custom-domain setup separately when `implicitex.com` is connected.

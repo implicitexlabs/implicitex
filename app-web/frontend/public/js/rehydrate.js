@@ -52,8 +52,25 @@
 
     const transferHash = active.transferHash || active.hash;
 
+    // READY and AUTHORIZING with no hash: the previous session made zero chain impact.
+    //   READY      — on-chain preview completed, MetaMask was never prompted.
+    //   AUTHORIZING — MetaMask approval dialog was open; page closed before user acted.
+    // Neither state produced a transaction. There is nothing to surface or recover.
+    // Clear silently so no stale receipt shell appears in the history list or
+    // gets archived as "Replaced by newer attempt" when the user retries.
+    if (!transferHash && (
+      active.state === IX_TRANSFER_STATES.READY ||
+      active.state === IX_TRANSFER_STATES.AUTHORIZING
+    )) {
+      window.IX.receipts.clearActive();
+      return;
+    }
+
     // Pre-broadcast receipts: no hash, no chain record, no funds moved.
-    // SUBMITTING without a hash is pre-broadcast — wallet closed before returning a tx.
+    // AUTHORIZED — USDC approve() was confirmed on-chain; transfer was never submitted.
+    //              Surface so user knows the allowance was granted even though no funds moved.
+    // SUBMITTING  — MetaMask transfer dialog was open; wallet closed before returning a tx.
+    //              Surface so user knows to verify before retrying.
     if (!transferHash && PRE_BROADCAST_STATES.includes(active.state)) {
       const walletClosedBeforeBroadcast = active.state === IX_TRANSFER_STATES.SUBMITTING;
       showCompanion(active.state, {
@@ -109,7 +126,7 @@
       eventVal:   transferHash,
       actionVal:  'Checking transaction status. Do not retry yet.',
       actionHref: active.explorerUrl || explorerUrlFor(chainConfig, transferHash) || undefined,
-      severity:   active.state === IX_TRANSFER_STATES.OUTCOME_UNKNOWN ? 'warning' : undefined,
+      severity:   active.state === IX_TRANSFER_STATES.OUTCOME_UNKNOWN ? 'advisory' : undefined,
       autoOpen:   true,
     });
 
@@ -251,7 +268,7 @@
         ? 'Check on ' + ((chainConfig && chainConfig.name) || 'network') + ' explorer \u2197'
         : reason,
       actionHref: explorerUrl || undefined,
-      severity:   stateKey === IX_TRANSFER_STATES.OUTCOME_UNKNOWN ? 'warning' : undefined,
+      severity:   stateKey === IX_TRANSFER_STATES.OUTCOME_UNKNOWN ? 'advisory' : undefined,
       autoOpen:   true,
     });
   }
