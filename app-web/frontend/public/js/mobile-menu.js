@@ -77,20 +77,25 @@
     const s = window.IX.getState();
 
     const connected = s.connected && s.address;
+    const chainConfig = window.IX_CHAINS && window.IX_CHAINS[s.chainId];
+    const transfersLive = !!(
+      chainConfig &&
+      chainConfig.transfersEnabled &&
+      window.IX_CONFIG &&
+      window.IX_CONFIG.transfersEnabled
+    );
+    const onConfiguredChain = !!chainConfig;
+    const onWrongNetwork = connected && !onConfiguredChain;
+    const onConfiguredStandby = connected && onConfiguredChain && !transfersLive;
 
     if (els.menuWalletStatus) {
       if (s.connecting) {
         els.menuWalletStatus.textContent = 'Connecting…';
       } else if (connected) {
-        const isLive = window.IX_CHAINS &&
-          window.IX_CHAINS[s.chainId] &&
-          window.IX_CHAINS[s.chainId].transfersEnabled &&
-          window.IX_CONFIG && window.IX_CONFIG.transfersEnabled;
-
-        if (!window.IX_CHAINS || !window.IX_CHAINS[s.chainId]) {
+        if (onWrongNetwork) {
           els.menuWalletStatus.textContent = 'Wrong network — switch to Polygon.';
-        } else if (!isLive) {
-          els.menuWalletStatus.textContent = 'Unsupported transfer network.';
+        } else if (onConfiguredStandby) {
+          els.menuWalletStatus.textContent = 'Connected · ' + chainLabel(s.chainId) + ' · Standby';
         } else {
           els.menuWalletStatus.textContent = 'Connected · ' + chainLabel(s.chainId);
         }
@@ -117,13 +122,15 @@
 
     // Button visibility
     if (els.menuConnectBtn) {
-      els.menuConnectBtn.textContent = connected ? 'Switch to Polygon' : 'Connect Wallet';
-      // Show connect when disconnected; show switch-to-polygon when connected on wrong network
-      const isLive = connected && window.IX_CHAINS &&
-        window.IX_CHAINS[s.chainId] &&
-        window.IX_CHAINS[s.chainId].transfersEnabled &&
-        window.IX_CONFIG && window.IX_CONFIG.transfersEnabled;
-      setHidden(els.menuConnectBtn, isLive);
+      if (!connected) {
+        els.menuConnectBtn.textContent = 'Connect Wallet';
+        setHidden(els.menuConnectBtn, false);
+      } else if (onWrongNetwork) {
+        els.menuConnectBtn.textContent = 'Switch to Polygon';
+        setHidden(els.menuConnectBtn, false);
+      } else {
+        setHidden(els.menuConnectBtn, true);
+      }
     }
     setHidden(els.menuSwitchBtn, !connected);
     setHidden(els.menuDisconnectBtn, !connected);

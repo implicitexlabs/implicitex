@@ -21,6 +21,119 @@
     return walletRuntime.provider || window.ethereum || null;
   }
 
+  let activeProviderEventTarget = null;
+
+  function setActiveProvider(provider, source) {
+    if (walletRuntime.provider && walletRuntime.provider !== provider) {
+      unbindActiveProviderEvents(walletRuntime.provider);
+    }
+
+    walletRuntime.provider = provider || null;
+    walletRuntime.source = provider ? source : null;
+
+    if (provider) {
+      bindActiveProviderEvents(provider);
+    }
+  }
+
+  function clearActiveProvider() {
+    unbindActiveProviderEvents();
+    walletRuntime.provider = null;
+    walletRuntime.source = null;
+  }
+
+  async function handleActiveProviderAccountsChanged(accounts) {
+    if (!accounts || !accounts[0]) {
+      activeFlowId = null; // invalidate any running transfer flow
+      state.connected = false;
+      state.address = null;
+      state.provider = null;
+      state.chainId = null;
+      state.connecting = false;
+      state.userDisconnected = true;
+      stopWalletChainWatcher();
+      if (els.walletPill) els.walletPill.classList.remove('visible');
+      if (els.walletAddr) els.walletAddr.textContent = '';
+      updateSenderDisplay();
+      if (els.disconnectBtn) els.disconnectBtn.setAttribute('hidden', '');
+      setAccountSwitchVisible(false);
+      resetConnectButton();
+      setNavStatus('');
+      setElementSeverity(els.navStatus, null);
+      if (els.networkBadge) {
+        els.networkBadge.textContent = 'Polygon · Preview only';
+        setElementSeverity(els.networkBadge, null);
+      }
+      resetBalanceDisplay();
+      clearTransferForm();
+      hideTransferModules();
+      if (window.IX && window.IX.companion) window.IX.companion.reset();
+      dispatchWalletStateChanged();
+      return;
+    }
+
+    if (state.userDisconnected) {
+      return;
+    }
+
+    activeFlowId = null; // account changed — invalidate any running transfer flow
+    state.address = accounts[0];
+    state.connected = true;
+    state.userDisconnected = false;
+    clearTransferForm();
+    resetBalanceDisplay();
+    try {
+      const chainHex = await getWalletProvider().request({ method: 'eth_chainId' });
+      state.chainId = normalizeChainId(chainHex);
+    } catch (_) {
+      // Keep existing chainId; onConnected will still render the best known state.
+    }
+    startWalletChainWatcher();
+    onConnected();
+  }
+
+  function handleActiveProviderChainChanged(chainHex) {
+    state.chainId = normalizeChainId(chainHex);
+    if (!state.connected) {
+      if (els.networkBadge) {
+        els.networkBadge.textContent = chainLabel(state.chainId);
+        // Only mark the badge as error if the chain is entirely unknown (WRONG_NETWORK).
+        // A known/configured chain in pre-live is not an error condition.
+        setElementSeverity(els.networkBadge, isConfiguredChain(state.chainId) ? null : 'error');
+      }
+      return;
+    }
+    activeFlowId = null; // network changed while connected — invalidate any running transfer flow
+    applyCurrentNetworkPresentation({
+      eventVal: `Network changed to ${chainLabel(state.chainId)}.`,
+    });
+  }
+
+  function bindActiveProviderEvents(provider) {
+    if (!provider || typeof provider.on !== 'function') return;
+    if (provider === activeProviderEventTarget) return;
+
+    unbindActiveProviderEvents();
+    provider.on('accountsChanged', handleActiveProviderAccountsChanged);
+    provider.on('chainChanged', handleActiveProviderChainChanged);
+    activeProviderEventTarget = provider;
+  }
+
+  function unbindActiveProviderEvents(provider = activeProviderEventTarget) {
+    if (!provider || typeof provider.removeListener !== 'function') {
+      if (provider === activeProviderEventTarget) {
+        activeProviderEventTarget = null;
+      }
+      return;
+    }
+
+    provider.removeListener('accountsChanged', handleActiveProviderAccountsChanged);
+    provider.removeListener('chainChanged', handleActiveProviderChainChanged);
+    if (provider === activeProviderEventTarget) {
+      activeProviderEventTarget = null;
+    }
+  }
+
   // ----------------------------------------------------------------
   // Transfer flow lifecycle — re-entry guard + invalidation token + wallet cooldown.
   // activeTransferFlow:  prevents concurrent submitTransfer() calls.
@@ -1987,8 +2100,7 @@
     }
   }
 
-  async function revokeWalletPermission() {
-    const provider = getWalletProvider();
+  async function revokeWalletPermission(provider) {
     if (!provider || !provider.request) return false;
 
     try {
@@ -2003,8 +2115,7 @@
     }
   }
 
-  async function readAuthorizedAccounts() {
-    const provider = getWalletProvider();
+  async function readAuthorizedAccounts(provider) {
     if (!provider || !provider.request) return [];
     return provider.request({ method: 'eth_accounts' });
   }
@@ -2044,12 +2155,17 @@
   // asks MetaMask to revoke this site's account permission when supported.
   async function disconnect(options = {}) {
     const revokeProvider = options.revokeProvider === true;
+    const activeProvider = getWalletProvider();
 
     if (state.networkPollTimer) {
       clearInterval(state.networkPollTimer);
       state.networkPollTimer = null;
     }
     stopWalletChainWatcher();
+
+    if (activeProvider) {
+      unbindActiveProviderEvents(activeProvider);
+    }
 
     // Clear session state before any async so focus/visibility events that call
     // syncProviderState cannot re-render connected UI during the revoke wait.
@@ -2059,13 +2175,11 @@
     state.chainId   = null;
     state.connecting = false;
     state.userDisconnected = revokeProvider;
-    walletRuntime.provider = null;
-    walletRuntime.source = null;
     activeFlowId = null; // invalidate any running transfer flow
 
     let providerChecked = false;
     let stillAuthorized = false;
-    if (revokeProvider) await revokeWalletPermission();
+    if (revokeProvider) await revokeWalletPermission(activeProvider);
 
     if (els.walletPill) els.walletPill.classList.remove('visible');
     if (els.walletAddr) els.walletAddr.textContent = '';
@@ -2087,13 +2201,15 @@
     hideTransferModules();
     if (revokeProvider) {
       try {
-        const accounts = await readAuthorizedAccounts();
+        const accounts = await readAuthorizedAccounts(activeProvider);
         providerChecked = true;
         stillAuthorized = !!(accounts && accounts.length > 0);
       } catch (_) {
         providerChecked = false;
       }
     }
+
+    clearActiveProvider();
 
     if (revokeProvider) {
       setDisconnectedPresentation({ stillAuthorized, providerChecked });
@@ -2515,8 +2631,7 @@
         return;
       }
 
-      walletRuntime.provider = getWalletProvider();
-      walletRuntime.source = 'injected';
+      setActiveProvider(getWalletProvider(), 'injected');
       state.connected = true;
       state.address = accounts[0];
       state.provider = walletRuntime.provider;
@@ -3494,71 +3609,7 @@
     return knownChains[chainId] || `Unsupported chain ${chainId}`;
   }
 
-  if (window.ethereum && window.ethereum.on) {
-    window.ethereum.on('accountsChanged', async accounts => {
-      if (!accounts || !accounts[0]) {
-        activeFlowId = null; // invalidate any running transfer flow
-        state.connected = false;
-        state.address = null;
-        state.provider = null;
-        state.chainId = null;
-        state.connecting = false;
-        state.userDisconnected = true;
-        stopWalletChainWatcher();
-        if (els.walletPill) els.walletPill.classList.remove('visible');
-        if (els.walletAddr) els.walletAddr.textContent = '';
-        updateSenderDisplay();
-        if (els.disconnectBtn) els.disconnectBtn.setAttribute('hidden', '');
-        setAccountSwitchVisible(false);
-        resetConnectButton();
-        setNavStatus('');
-        setElementSeverity(els.navStatus, null);
-        if (els.networkBadge) {
-          els.networkBadge.textContent = 'Polygon live';
-          setElementSeverity(els.networkBadge, null);
-        }
-        resetBalanceDisplay();
-        clearTransferForm();
-        hideTransferModules();
-        if (window.IX && window.IX.companion) window.IX.companion.reset();
-        return;
-      }
-      if (state.userDisconnected) {
-        return;
-      }
-      activeFlowId = null; // account changed — invalidate any running transfer flow
-      state.address = accounts[0];
-      state.connected = true;
-      state.userDisconnected = false;
-      clearTransferForm();
-      resetBalanceDisplay();
-      try {
-        const chainHex = await getWalletProvider().request({ method: 'eth_chainId' });
-        state.chainId = normalizeChainId(chainHex);
-      } catch (_) {
-        // Keep existing chainId; onConnected will still render the best known state.
-      }
-      startWalletChainWatcher();
-      onConnected();
-    });
-
-    window.ethereum.on('chainChanged', chainHex => {
-      state.chainId = normalizeChainId(chainHex);
-      if (!state.connected) {
-        if (els.networkBadge) {
-          els.networkBadge.textContent = chainLabel(state.chainId);
-          // Only mark the badge as error if the chain is entirely unknown (WRONG_NETWORK).
-          // A known/configured chain in pre-live is not an error condition.
-          setElementSeverity(els.networkBadge, isConfiguredChain(state.chainId) ? null : 'error');
-        }
-        return;
-      }
-      activeFlowId = null; // network changed while connected — invalidate any running transfer flow
-      applyCurrentNetworkPresentation({
-        eventVal: `Network changed to ${chainLabel(state.chainId)}.`,
-      });
-    });
-  }
+  bindActiveProviderEvents(window.ethereum);
 
   window.addEventListener('focus', () => {
     syncProviderState({ force: true });
