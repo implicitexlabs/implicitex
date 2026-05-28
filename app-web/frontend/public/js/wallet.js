@@ -476,7 +476,7 @@
   function updateReviewActionButton() {
     if (!els.txBtn || state.txPhase !== 'REVIEW_READY') return;
     const acknowledged = !!(els.txConfirmAck && els.txConfirmAck.checked);
-    const armed = acknowledged && getNetworkState() === 'READY';
+    const armed = acknowledged && isLiveTransferChain(state.chainId);
 
     els.txBtn.textContent = 'Execute Transfer';
     els.txBtn.disabled = !armed;
@@ -1495,7 +1495,7 @@
 
     const validRecipient = validateRecipient(recipient) === '';
     const validAmount    = !isNaN(amountFloat) && amountFloat > 0;
-    const validNetwork   = state.connected && isLiveTransferChain(state.chainId);
+    const validNetwork   = state.connected && isConfiguredChain(state.chainId);
 
     if (!validRecipient || !validAmount || !validNetwork) {
       hidePreview();
