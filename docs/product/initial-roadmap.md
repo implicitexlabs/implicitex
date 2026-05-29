@@ -112,38 +112,70 @@ Follow-up confirmed 2026-05-27:
 - Firebase JS cache headers were updated so stale `wallet.js` and
   `receipt-store.js` should not survive deploys.
 
-### 🔲 Frontend state contract — MUST DEFINE before WalletConnect/Reown
+### 🔲 Gate 1 — Real-browser MetaMask state regression smoke
 
-The app is safe, but it is not yet calm. Transfer gates are doing their job; the
-next risk is presentation-layer twitchiness where stable operational states look
-like error or recovery states.
+The state taxonomy is defined and the standby/provider-event refactor is complete.
+This gate is now a **browser evidence task**, not a definition task.
 
-Before WalletConnect/mobile handoff is added, define explicit allowed frontend
-states for at least:
+Required evidence before WalletConnect/Reown work begins:
 
-- disconnected
-- connected on Polygon while transfers are disabled
-- connected on unsupported network
-- connected on configured network without a deployed contract
-- wallet request pending
-- wallet request rejected
-- account changed
-- local disconnect with wallet permission still authorized
-- draft/review-ready with no wallet action requested
-- post-wallet transaction execution states, delegated to
-  `docs/product/transaction-states.md`
+- MetaMask desktop connect — Polygon standby state is calm while transfers are disabled
+- Ethereum mainnet → Polygon recovery — no stale "Switch to Polygon" on Polygon
+- Disconnect → reconnect — sender clears and re-populates cleanly
+- Refresh with wallet permission already granted — state recovers without false error
+- Account switch — sender address updates cleanly, no stale prior-account display
+- No duplicated wallet/provider events after reconnect
+- No repeated companion notices, balance refreshes, or account-change reactions
+- Rejected approval — human-readable copy shown, no misleading receipt state
+- Rejected transfer signature — human-readable copy shown, no misleading receipt state
+- Receipt survives refresh/reconnect — no stale READY/AUTHORIZING ghosts
 
-### 🔲 Real-wallet QA
+### 🔲 Gate 2 — Manual production-frontend QA
+
+Full-flow verification in a real browser. MetaMask mobile browser is MVP QA.
+WalletConnect/Reown is not.
 
 - Desktop MetaMask: connect, wrong network, approval path, transfer, rejection, refresh recovery
-- Mobile MetaMask or mobile wallet: same minimum flow
-- Confirm fee, total debit, and receipt visibility on mobile and low-resolution screens
+- Mobile MetaMask browser: same minimum flow
+- iPhone Safari: visual and layout pass
+- Low-resolution laptop viewport: fee, total debit, receipt, and operational text readable
+- Recipient copy/paste from wallet apps and mobile keyboard
+- Keyboard overlay behavior on mobile
+- Approval path, rejected approval path, rejected transfer path
+- Refresh/reconnect after receipt
+- Wrong-network recovery: Ethereum mainnet → back to Polygon
+- Receipt visibility and correct state after reconnect
 
-### 🔲 Legal and operating boundary
+### 🔲 Gate 3 — Attorney/legal clearance
 
-- Attorney review required before public production transfer promotion
-- Jurisdiction language remains platform policy, not a legal authorization claim
-- Keep max transfer capped at 250 USDC until written promotion checklist passes
+Required before enabling or publicly promoting live transfers.
+
+- Attorney review of Terms, Privacy, Legal, and Jurisdictions pages
+- Jurisdiction copy remains platform policy, not an authorized/legal approval claim
+- No escrow, custody, recovery, or reversal language
+- No implication that ImplicitEx can reverse or guarantee funds
+- Max 250 USDC cap holds until written legal/product checklist passes
+- All legal pages remain marked as draft until review is complete
+- Research brief for attorney: `docs/product/legal-review-research-brief.md`
+  (10 platforms, 10 risk categories, ImplicitEx-specific framing for each)
+
+### 🔲 Gate 4 — Mainnet enablement checklist
+
+Separate from legal clearance. Legal says "may we?" This checklist says "did we
+flip the right switches?"
+
+Before any live transfer toggle:
+
+- Polygon contract address confirmed: `0x5015841D6E665e63Ea174aD6b8FeF854026dE0C0`
+- USDC address confirmed for Polygon mainnet
+- Treasury address confirmed: `0xa7cE4232811021d2Dd01f4f0f264Df2427ab3919`
+- Fee confirmed at 1% (100 bps)
+- Max transfer cap intentionally set
+- Contract pause state checked — not paused
+- `transfersEnabled` flags changed intentionally, not accidentally inherited
+- Polygonscan links render correctly in the UI
+- Failed/rejected transactions do not create misleading receipt states
+- Confirmed transfer receipt clearly shows hash and status
 
 ## Stage 1 - Online Transfer MVP
 
@@ -165,12 +197,46 @@ states for at least:
 
 ## Next Best Sequence
 
-1. Update Firebase Hosting documentation for JavaScript cache headers.
-2. Fix the CSS transform warning only if it stays a small one-commit change.
-3. Define the frontend state contract.
-4. Add WalletConnect/Reown after the state contract is explicit.
-5. Run live-transfer smoke only after UI modes are stable and transfers are
-   deliberately enabled under controlled conditions.
+1. Run Gate 1 real-browser MetaMask state regression smoke.
+2. Run Gate 2 manual production-frontend QA (desktop + mobile MetaMask, iPhone Safari).
+3. Begin WalletConnect/Reown branch after Gate 1 and Gate 2 are closed.
+   WalletConnect is an engineering integration — it does not require attorney review
+   first, but it does require proven MetaMask/browser state behavior. Adding it before
+   Gates 1 and 2 are closed multiplies uncertainty.
+4. Obtain Gate 3 attorney/legal clearance.
+5. Execute Gate 4 mainnet enablement checklist immediately before flipping transfer gates.
+6. Enable live transfers only after Gates 3 and 4 are closed.
+7. Update Firebase Hosting cache header documentation if not done before Gate 1.
+
+### Receipt History Lane — Specced, Not Yet Implemented
+
+Identified 2026-05-28 during receipt-store architecture review.
+
+The receipt archive already contains the raw material for a local-first recipient
+relationship memory system. No backend, schema migration, or new storage layer is
+required.
+
+API contract specced in `docs/product/receipt-store.md` under
+"Recipient Context Queries":
+
+```javascript
+window.IX.receipts.getRecipientContext(address)
+// returns { known, recipient, count, lastTransfer, recentTags, lastMemo, lastReference }
+// returns null for unknown recipients
+```
+
+Scope rules locked:
+- Archive-only (active receipt excluded — in-flight state must not influence history)
+- `totalSent` deferred to v2 (requires integer USDC base unit arithmetic, not parseFloat)
+- `wallet.js` calls the interface; it does not query the archive directly
+
+Implementation branch: `receipt-history` (not yet opened)
+Spec diff parked at: `/tmp/implicitex-recipient-context-doc.diff` (uncommitted)
+Next step: open `receipt-history`, apply diff, implement, verify with `node --check`
+
+Do not start until the frontend state contract gate is resolved.
+
+---
 
 ## Stage 3 - Desktop Resource
 
