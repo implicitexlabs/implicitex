@@ -1,10 +1,10 @@
 # ImplicitEx Launch Gate
 
-## Current Status — 2026-05-23
+## Current Status — 2026-05-29
 
 ```
-Launch status: SMOKE PENDING
-Recorded: 2026-05-23
+Launch status: PRE-BROWSER-QA
+Recorded: 2026-05-29 (updated from 2026-05-23)
 
 COMPLETED:
   ✅ Contract deployed: 0x5015841D6E665e63Ea174aD6b8FeF854026dE0C0
@@ -17,23 +17,43 @@ COMPLETED:
   ✅ chains.js points to canonical contract, transfersEnabled: false
   ✅ deployments/polygon.json reflects canonical deployment evidence
   ✅ Deployer key hygiene: 0xf614356 (exposed 2026-05-13) not used; 0x5466 used instead
+  ✅ Receipt lifecycle bug FIXED (2026-05-26) — rehydrate.js clears READY/AUTHORIZING
+     silently; AUTHORIZED/SUBMITTING still surface correctly; corrupt active receipt
+     state now notifies subscribers when cleared
+  ✅ Standby/provider-event refactor complete — TRANSFERS_DISABLED is standby not error;
+     isConfiguredChain ≠ isLiveTransferChain; amber ≠ red
+  ✅ Firebase JS cache headers updated — stale wallet.js and receipt-store.js should
+     not survive deploys
 
-REMAINING BLOCKERS (2):
-  1. Receipt lifecycle reconciliation bug — MUST FIX before public exposure
-     Observed during 2026-05-23 smoke:
-     - "READY" receipt state persisting after confirmed transfer
-     - AUTHORIZING records not promoting to CONFIRMED
-     - Possible dual-record between approve + transfer phases
-     Receipts are part of the trust surface. Stale records after a confirmed
-     transfer will undermine user confidence. Fix and re-verify before opening
-     to public traffic.
-     Evidence: docs/operations/evidence/smoke-polygon-mainnet-2026-05-23.md
+REMAINING BLOCKERS (3):
+  1. Real-browser MetaMask state regression smoke — MUST VERIFY before public exposure
+     The state taxonomy is defined and the standby/provider-event refactor is complete.
+     Required browser evidence:
+     - MetaMask desktop connect; Polygon standby calm while transfers are disabled
+     - Ethereum mainnet → Polygon recovery; no stale "Switch to Polygon" on Polygon
+     - Disconnect → reconnect; no stale sender display
+     - Refresh with wallet permission already granted
+     - Account switch updates sender cleanly
+     - No duplicated wallet/provider events after reconnect
+     - Rejected approval and rejected transfer signature show human-readable copy
+     - Receipt survives refresh/reconnect without READY/AUTHORIZING ghosts
 
-  2. Attorney review before public promotion
-     Required before public-facing transfer promotion.
+  2. Manual production-frontend QA — MUST VERIFY before public exposure
+     - Desktop MetaMask full flow (connect, approve, transfer, reject, refresh recovery)
+     - Mobile MetaMask browser full flow
+     - iPhone Safari visual/layout pass
+     - Low-resolution laptop viewport: fee, receipt, operational text readable
+     - Recipient copy/paste, keyboard overlay on mobile
+     - Wrong-network recovery; receipt visibility after reconnect
+     Note: MetaMask mobile browser is MVP QA. WalletConnect/Reown is not.
+
+  3. Attorney review before public promotion
+     Required before enabling or publicly promoting live transfers.
      Max transfer cap stays at 250 USDC until written checklist passes.
+     Jurisdiction copy remains platform policy, not a legal authorization claim.
+     Terms/Privacy/Legal/Jurisdictions remain draft until reviewed.
 
-State classification (2026-05-23):
+State classification (2026-05-29):
   Contract logic:          FROZEN (59/59 tests)
   Deployment:              COMPLETE — canonical contract on Polygon mainnet
   Ownership:               COMPLETE — Safe owns, pendingOwner zeroed
@@ -42,8 +62,9 @@ State classification (2026-05-23):
   Git history:             CLEAN
   Secret hygiene:          CLEAN
   Frontend UX:             COMPLETE — execution instrument polished and smoke-verified
-  Receipt lifecycle:       BUG — stale READY/AUTHORIZING records after confirmed transfer
-  Domain cutover:          BLOCKED until receipt bug resolved
+  Receipt lifecycle:       FIXED (2026-05-26) — awaiting real-browser confirmation
+  Standby/provider events: COMPLETE — refactor merged; amber/red routing corrected
+  Domain cutover:          BLOCKED until browser QA complete
   Attorney review:         PENDING — required before public promotion
   transfersEnabled:        false — gate closed after smoke
 
