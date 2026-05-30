@@ -147,6 +147,10 @@ window.IX_WC = (function () {
    * Disconnect the active WalletConnect session. Must be called on user
    * disconnect — clearing local wallet state alone is not sufficient.
    * The relay session must be explicitly terminated on the WalletConnect side.
+   *
+   * After relay termination, localStorage keys written by the WC SDK are
+   * cleared. Without this, EthereumProvider.init() on the next connect
+   * finds the cached session and auto-reconnects without showing a QR code.
    */
   async function disconnect() {
     if (_provider && typeof _provider.disconnect === 'function') {
@@ -157,6 +161,23 @@ window.IX_WC = (function () {
       }
     }
     _provider = null;
+
+    // Clear WalletConnect session/pairing data from localStorage.
+    // The WC v2 SDK writes keys prefixed with "wc@2:" and the modal
+    // writes keys prefixed with "WCM_" / "W3M_". Removing them ensures
+    // the next init() + enable() always shows a fresh QR rather than
+    // silently restoring a prior session.
+    try {
+      Object.keys(localStorage).forEach(function (key) {
+        if (key.startsWith('wc@2:') ||
+            key.startsWith('WCM_') ||
+            key.startsWith('W3M_')) {
+          localStorage.removeItem(key);
+        }
+      });
+    } catch (_) {
+      // localStorage may be unavailable (private browsing, storage blocked).
+    }
   }
 
   return {
