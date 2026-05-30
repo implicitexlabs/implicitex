@@ -374,6 +374,74 @@ const context = window.IX.receipts.getRecipientContext(validatedAddress);
 
 ---
 
+## Recipient Context Queries
+
+The store exposes a read-only query that aggregates archived receipts by
+recipient address. This powers recipient history signals in the transfer UI —
+for example, surfacing "Sent 14 times before" at review time rather than
+"New to this browser history."
+
+### `getRecipientContext(address)`
+
+Returns a context object for the given recipient address, or `null` if the
+address is absent or has no prior archived receipts.
+
+```javascript
+const context = window.IX.receipts.getRecipientContext(validatedAddress);
+```
+
+**Returns:**
+
+```javascript
+{
+  known: true,           // always true when context is returned (null when unknown)
+  recipient,             // normalized (lowercase) address that generated this context
+  count,                 // number of archived receipts for this recipient
+  lastTransfer,          // createdAt string of the most recent archived receipt
+  recentTags,            // up to 3 distinct purposeTag values, most recent first
+  lastMemo,              // memo from the most recent archived receipt, or null
+  lastReference,         // referenceId from the most recent archived receipt, or null
+}
+```
+
+**Scope rules:**
+
+- Queries the archive only (`listRecent()`). The active receipt is deliberately
+  excluded. A transfer that is in-flight, pending approval, or pre-broadcast
+  must not influence recipient history — it has not resolved yet and including
+  it would cause history to lie about confirmed activity.
+- Address comparison is case-insensitive. Checksummed and lowercase forms of
+  the same address are treated as identical.
+- Only receipts with a non-empty `recipient` field are considered.
+
+**What is not included (v1):**
+
+- Total USDC sent. Summing amounts from string fields requires care around
+  precision and unit representation. This is deferred to v2, where amounts
+  will be summed as integer USDC base units (6 decimals) before display
+  formatting.
+- Alias or label. Local recipient naming is a separate feature and does not
+  belong in the receipt store.
+- Filtering by terminal state. All archived receipts are included regardless
+  of outcome (`confirmed`, `failed`, `rejected`, etc.). The archive already
+  excludes in-flight state by design — a receipt moves to the archive only
+  after `clearActive()` is called at a terminal boundary.
+
+**Usage in `wallet.js`:**
+
+`wallet.js` calls this function after recipient validation at review entry.
+It does not query the archive directly; all history access goes through this
+interface.
+
+```javascript
+// wallet.js — enterReview()
+const context = window.IX.receipts.getRecipientContext(validatedAddress);
+// context is null → show "New to this browser history"
+// context.known   → show count, lastTransfer, recentTags, etc.
+```
+
+---
+
 ## Notes
 
 **Why not IndexedDB?**
