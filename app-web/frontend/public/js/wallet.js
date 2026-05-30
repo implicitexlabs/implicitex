@@ -1653,6 +1653,20 @@
       return;
     }
 
+    const minUsdc = chainConfig && chainConfig.minTransferUsdc;
+    if (minUsdc && amountFloat < minUsdc) {
+      renderTransferSummary(summary, {
+        label: 'Transfer Blocked',
+        mode: 'Blocked',
+        note: `Minimum transfer is ${minUsdc} USDC.`,
+      });
+      setStatus(`Minimum transfer is ${minUsdc} USDC.`);
+      setTransferNote(`Enter ${minUsdc} USDC or more to continue.`);
+      setReviewAcknowledgementVisible(false);
+      setDraftButton('Below Minimum', true);
+      return;
+    }
+
     renderTransferSummary(summary, {
       label: 'Transfer Preview',
       mode: 'Live',
@@ -1895,6 +1909,19 @@
         label: 'Transfer Blocked',
         mode: 'Blocked',
         note: `Increase USDC balance or lower amount before review. Have ${formatUsdcRaw(summary.balance, 2)} USDC, need ${formatUsdcRaw(summary.totalDebit, 2)} USDC.`,
+      });
+      return;
+    }
+
+    const minUsdc = chainConfig && chainConfig.minTransferUsdc;
+    if (minUsdc && amountFloat < minUsdc) {
+      setStatus(`Minimum transfer is ${minUsdc} USDC.`);
+      setTransferNote(`Enter ${minUsdc} USDC or more to continue.`);
+      setDraftButton('Below Minimum', true);
+      renderTransferSummary(summary, {
+        label: 'Transfer Blocked',
+        mode: 'Blocked',
+        note: `Minimum transfer is ${minUsdc} USDC.`,
       });
       return;
     }
