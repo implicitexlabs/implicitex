@@ -219,6 +219,7 @@
       'explorerUrl',
       'createdAt',
       'lastObservedAt',
+      'id',
     ].forEach(function (key) {
       preserveKnown(current, next, key);
     });
