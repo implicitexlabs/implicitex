@@ -1222,19 +1222,26 @@ body.portal-active #nav {
   text-align: left;
 }
 
-.data-row-toggle:hover .data-toggle-icon { color: var(--white); }
-
+/* Border-triangle — mirrors .telemetry-chevron and .companion-toggle exactly */
 .data-toggle-icon {
-  font-family: var(--mono);
-  font-size: 9px;
-  color: var(--dim);
-  transition: transform 0.15s, color 0.12s;
-  margin-left: 6px;
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 5px solid var(--dim);
   flex-shrink: 0;
+  margin-left: 6px;
+  transition: transform 0.18s ease-out, border-top-color 0.12s;
+}
+
+.data-row-toggle:hover .data-toggle-icon,
+.data-row-toggle:focus-visible .data-toggle-icon {
+  border-top-color: var(--white);
 }
 
 .data-row--expandable.is-open .data-toggle-icon {
   transform: rotate(180deg);
+  border-top-color: var(--white);
 }
 
 .data-row-detail {
