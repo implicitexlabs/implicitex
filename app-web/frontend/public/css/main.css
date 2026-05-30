@@ -794,6 +794,25 @@ body.portal-active #nav {
   50%       { opacity: 0.5; }
 }
 
+/* Slow instrument-light throb on blocking/critical preflight bullets.
+   Points the eye without panic. 1.8 s is calm enough to read first. */
+@keyframes ix-issue-pulse {
+  0%, 100% { opacity: 0.45; transform: scale(1); }
+  50%       { opacity: 1;    transform: scale(1.18); }
+}
+
+.preflight-list li.is-blocking::before,
+.preflight-list li.is-critical::before {
+  animation: ix-issue-pulse 1.8s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .preflight-list li.is-blocking::before,
+  .preflight-list li.is-critical::before {
+    animation: none;
+  }
+}
+
 .tx-btn--pending {
   animation: tx-pending-pulse 1.4s ease-in-out infinite;
   cursor: wait;
@@ -823,6 +842,7 @@ body.portal-active #nav {
   margin-top: 8px;
   text-align: center;
 }
+.tx-status.is-warning { color: var(--telemetry-amber-dim); }
 
 .tx-status a,
 .tx-status a:link,
@@ -1485,6 +1505,101 @@ footer .social-links a:focus-visible,
 
 .mobile-menu-links a:hover { text-decoration: underline; }
 
+/* ---- Wallet Choice Overlay ---- */
+/* Small centered dialog shown when Connect Wallet is tapped without an injected provider. */
+.wallet-choice {
+  position: fixed;
+  inset: 0;
+  z-index: 400;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+.wallet-choice[hidden] { display: none; }
+
+.wallet-choice-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 0;
+}
+
+.wallet-choice-inner {
+  position: relative;
+  z-index: 1;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 320px;
+}
+
+.wallet-choice-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+}
+
+.wallet-choice-title {
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--white);
+}
+
+.wallet-choice-close {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--white);
+  padding: 6px 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.12s;
+}
+.wallet-choice-close:hover { border-color: var(--border-2); }
+
+.wallet-choice-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.wallet-choice-btn {
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--white);
+  padding: 12px 14px;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.12s;
+  width: 100%;
+  text-decoration: none;
+  display: block;
+  box-sizing: border-box;
+}
+.wallet-choice-btn:hover { border-color: var(--border-2); }
+
+.wallet-choice-btn--primary {
+  background: var(--white);
+  color: var(--bg);
+  border-color: var(--white);
+}
+.wallet-choice-btn--primary:hover {
+  background: var(--button-hover);
+  border-color: var(--button-hover);
+}
+
 /* ---- Responsive ---- */
 @media (max-width: 768px) {
   :root {
@@ -1554,6 +1669,12 @@ footer .social-links a:focus-visible,
 
   .tx-meta-grid .tx-field + .tx-field {
     border-left: 1px solid var(--border);
+  }
+
+  /* Prevent iOS Safari from auto-zooming the page when the user taps a
+     transfer input. Safari zooms any input with font-size < 16px on focus. */
+  .tx-field {
+    font-size: 16px;
   }
 
   .portal-controls {

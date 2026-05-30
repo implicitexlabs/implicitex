@@ -7,6 +7,10 @@
 
 window.IX_CONFIG = {
   transfersEnabled: false,
+
+  // WalletConnect / Reown Project ID from cloud.walletconnect.com.
+  // Public client identifier — safe to commit. Not a secret.
+  walletConnectProjectId: '0538feccd78aacaf3bda61038db1f65a',
 };
 
 window.IX_CHAINS = {

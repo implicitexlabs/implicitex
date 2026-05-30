@@ -9,13 +9,30 @@
 
   // ----------------------------------------------------------------
   // Provider runtime — source of truth for the active wallet provider.
-  // Before WalletConnect: getWalletProvider() falls back to window.ethereum.
-  // After WalletConnect wiring: walletRuntime.provider is set on connect.
+  //
+  // walletRuntime.provider is null until the user connects. Pre-connect
+  // reads fall back to window.ethereum via getWalletProvider() so that
+  // chain-changed events are observed before the user clicks Connect.
+  //
+  // On connect, setActiveProvider() is called explicitly:
+  //   - injected MetaMask:  setActiveProvider(window.ethereum, 'injected')
+  //   - WalletConnect:      setActiveProvider(wcProvider,      'walletconnect')
+  //
+  // The WalletConnect provider must be EIP-1193 compatible. Any async
+  // operation started through it must capture the session identity at
+  // start and verify it has not changed before mutating UI or receipts.
   // ----------------------------------------------------------------
   const walletRuntime = {
     provider: null,
     source: null, // 'injected' | 'walletconnect'
   };
+
+  // Returns true when MetaMask or another injected EIP-1193 provider is
+  // available. False on mobile browsers without the MetaMask extension.
+  // connect() uses this to branch between injected and WalletConnect paths.
+  function hasInjectedProvider() {
+    return !!(window.ethereum && typeof window.ethereum.request === 'function');
+  }
 
   function getWalletProvider() {
     return walletRuntime.provider || window.ethereum || null;
@@ -445,6 +462,11 @@
     receiptHistory:     document.getElementById('receiptHistory'),
     txCancelReview:     document.getElementById('txCancelReview'),
     txPreviewLabel:     document.getElementById('txPreviewLabel'),
+    walletChoiceOverlay:      document.getElementById('walletChoiceOverlay'),
+    walletChoiceClose:        document.getElementById('walletChoiceClose'),
+    walletChoiceBackdrop:     document.getElementById('walletChoiceBackdrop'),
+    walletChoiceMetaMask:     document.getElementById('walletChoiceMetaMask'),
+    walletChoiceWalletConnect: document.getElementById('walletChoiceWalletConnect'),
   };
 
   // ----------------------------------------------------------------
@@ -502,8 +524,9 @@
     return tag.charAt(0).toUpperCase() + tag.slice(1);
   }
 
-  function setStatus(msg) {
+  function setStatus(msg, severity) {
     if (els.txStatus) els.txStatus.textContent = msg;
+    setElementSeverity(els.txStatus, severity || null);
   }
 
   function setElementSeverity(el, severity) {
@@ -1616,7 +1639,9 @@
 
     if (!validRecipient || !validAmount || !validNetwork) {
       hidePreview();
-      setReviewAcknowledgementVisible(false);
+      // resetReviewAcknowledgement unchecks the checkbox — stale ack must not
+      // persist across blocked states and re-arm the button on the next valid input.
+      resetReviewAcknowledgement();
       setTransferNote('');
       setDraftButton(currentButtonLabel(), true);
       return;
@@ -1628,7 +1653,7 @@
       summary = buildDraftSummary(recipient, amountStr, amountFloat, chainConfig);
     } catch (_) {
       hidePreview();
-      setReviewAcknowledgementVisible(false);
+      resetReviewAcknowledgement();
       setDraftButton(currentButtonLabel(), true);
       return;
     }
@@ -1639,7 +1664,7 @@
         note: 'Checking USDC balance before review.',
       });
       setTransferNote('Checking USDC balance before review.');
-      setReviewAcknowledgementVisible(false);
+      resetReviewAcknowledgement();
       setDraftButton('Checking Balance', true);
       return;
     }
@@ -1652,7 +1677,7 @@
       });
       setStatus(`Insufficient balance. Have ${formatUsdcRaw(summary.balance, 2)} USDC, need ${formatUsdcRaw(summary.totalDebit, 2)} USDC.`);
       setTransferNote('Lower the amount or add USDC before reviewing this transfer.');
-      setReviewAcknowledgementVisible(false);
+      resetReviewAcknowledgement();
       setDraftButton('Insufficient Balance', true);
       return;
     }
@@ -1666,7 +1691,7 @@
       });
       setStatus(`Minimum transfer is ${minUsdc} USDC.`);
       setTransferNote(`Enter ${minUsdc} USDC or more to continue.`);
-      setReviewAcknowledgementVisible(false);
+      resetReviewAcknowledgement();
       setDraftButton('Below Minimum', true);
       return;
     }
@@ -1731,6 +1756,20 @@
     setElementSeverity(els.networkBadge, null);
     setStatus(message);
     dispatchWalletStateChanged();
+  }
+
+  // ----------------------------------------------------------------
+  // Wallet choice overlay — shown when Connect is tapped without an
+  // injected provider. Presents MetaMask and WalletConnect options.
+  // IX_WC.init() is wired into the WalletConnect button in a later commit.
+  // ----------------------------------------------------------------
+  function showWalletChoice() {
+    if (els.walletChoiceOverlay) els.walletChoiceOverlay.removeAttribute('hidden');
+    resetConnectButton();
+  }
+
+  function hideWalletChoice() {
+    if (els.walletChoiceOverlay) els.walletChoiceOverlay.setAttribute('hidden', '');
   }
 
   function isConfiguredChain(chainId) {
@@ -1908,6 +1947,7 @@
     if (summary.insufficientBalance) {
       setStatus(`Insufficient balance. Have ${formatUsdcRaw(summary.balance, 2)} USDC, need ${formatUsdcRaw(summary.totalDebit, 2)} USDC.`);
       setTransferNote('Lower the amount or add USDC before reviewing this transfer.');
+      resetReviewAcknowledgement();
       setDraftButton('Insufficient Balance', true);
       renderTransferSummary(summary, {
         label: 'Transfer Blocked',
@@ -1921,6 +1961,7 @@
     if (minUsdc && amountFloat < minUsdc) {
       setStatus(`Minimum transfer is ${minUsdc} USDC.`);
       setTransferNote(`Enter ${minUsdc} USDC or more to continue.`);
+      resetReviewAcknowledgement();
       setDraftButton('Below Minimum', true);
       renderTransferSummary(summary, {
         label: 'Transfer Blocked',
@@ -2208,9 +2249,24 @@
     state.userDisconnected = revokeProvider;
     activeFlowId = null; // invalidate any running transfer flow
 
+    // Capture source before clearActiveProvider() nulls it.
+    const wasWalletConnect = walletRuntime.source === 'walletconnect';
+
+    // Terminate WalletConnect relay session before local cleanup.
+    // Clearing walletRuntime.provider alone is not sufficient — the relay
+    // session remains alive on the WC side until explicitly closed.
+    // Failure here must not block local UI reset.
+    if (wasWalletConnect && window.IX_WC) {
+      try {
+        await window.IX_WC.disconnect();
+      } catch (err) {
+        console.warn('[ImplicitEx] WalletConnect relay disconnect failed', err);
+      }
+    }
+
     let providerChecked = false;
     let stillAuthorized = false;
-    if (revokeProvider) await revokeWalletPermission(activeProvider);
+    if (revokeProvider && !wasWalletConnect) await revokeWalletPermission(activeProvider);
 
     if (els.walletPill) els.walletPill.classList.remove('visible');
     if (els.walletAddr) els.walletAddr.textContent = '';
@@ -2218,9 +2274,7 @@
     if (els.disconnectBtn) els.disconnectBtn.setAttribute('hidden', '');
     setAccountSwitchVisible(false);
     resetConnectButton();
-    setNavStatus(revokeProvider
-      ? 'Wallet disconnected. Connect Wallet will ask MetaMask for account permission.'
-      : '');
+    setNavStatus('');
     setElementSeverity(els.navStatus, null);
     if (els.networkBadge) {
       els.networkBadge.textContent = 'Polygon live';
@@ -2230,7 +2284,7 @@
     clearTransferForm();
     hidePreview();
     hideTransferModules();
-    if (revokeProvider) {
+    if (revokeProvider && !wasWalletConnect) {
       try {
         const accounts = await readAuthorizedAccounts(activeProvider);
         providerChecked = true;
@@ -2242,7 +2296,12 @@
 
     clearActiveProvider();
 
-    if (revokeProvider) {
+    if (wasWalletConnect) {
+      // WalletConnect disconnect: calm neutral state, no MetaMask-specific copy.
+      setStatus('');
+      setNavStatus('');
+      if (window.IX && window.IX.companion) window.IX.companion.reset();
+    } else if (revokeProvider) {
       setDisconnectedPresentation({ stillAuthorized, providerChecked });
     } else if (window.IX && window.IX.companion) {
       window.IX.companion.reset();
@@ -2645,8 +2704,10 @@
   async function connect(options = {}) {
     if (state.connected || state.connecting) return;
 
-    if (!getWalletProvider() || !getWalletProvider().request) {
-      handleConnectFailure('No wallet detected');
+    if (!hasInjectedProvider()) {
+      // No injected provider — MetaMask extension absent or mobile browser.
+      // Show wallet-choice overlay. WalletConnect button calls IX_WC.init().
+      showWalletChoice();
       return;
     }
 
@@ -2662,7 +2723,8 @@
         return;
       }
 
-      setActiveProvider(getWalletProvider(), 'injected');
+      // Injected path: provider is window.ethereum, confirmed present above.
+      setActiveProvider(window.ethereum, 'injected');
       state.connected = true;
       state.address = accounts[0];
       state.provider = walletRuntime.provider;
@@ -3640,7 +3702,12 @@
     return knownChains[chainId] || `Unsupported chain ${chainId}`;
   }
 
-  bindActiveProviderEvents(window.ethereum);
+  // Bind to the injected provider on startup so chain/account events are
+  // observed before the user clicks Connect. Guarded so mobile browsers
+  // without window.ethereum do not attempt to bind a missing provider.
+  if (hasInjectedProvider()) {
+    bindActiveProviderEvents(window.ethereum);
+  }
 
   window.addEventListener('focus', () => {
     syncProviderState({ force: true });
@@ -3728,5 +3795,89 @@
   if (els.switchAccountBtn) els.switchAccountBtn.addEventListener('click', requestAccountSelection);
   if (els.txCancelReview)  els.txCancelReview.addEventListener('click', () => exitReview());
   if (els.txConfirmAck)    els.txConfirmAck.addEventListener('change', updatePreview);
+
+  // Wallet choice overlay — close paths
+  if (els.walletChoiceClose)    els.walletChoiceClose.addEventListener('click', hideWalletChoice);
+  if (els.walletChoiceBackdrop) els.walletChoiceBackdrop.addEventListener('click', hideWalletChoice);
+
+  // Wallet choice overlay — WalletConnect connect flow
+  if (els.walletChoiceWalletConnect) {
+    els.walletChoiceWalletConnect.addEventListener('click', async function () {
+      if (state.connected || state.connecting) return;
+
+      // Disable button and show pending state while the QR/modal is open.
+      if (els.walletChoiceWalletConnect) {
+        els.walletChoiceWalletConnect.disabled = true;
+        els.walletChoiceWalletConnect.textContent = 'Connecting…';
+      }
+      setConnectPending(true);
+      hideWalletChoice();
+      setStatus('Opening WalletConnect…');
+
+      let wcProvider;
+      try {
+        const chainId = 137; // Polygon Mainnet
+        wcProvider = await window.IX_WC.init({ chainId });
+        setActiveProvider(wcProvider, 'walletconnect');
+
+        // enable() opens the QR modal and establishes the WalletConnect session.
+        // requestWalletAccounts() uses eth_requestAccounts which requires an
+        // active session — for WC providers, enable() must come first.
+        // enable() resolves with the accounts array once the user connects.
+        const accounts = await wcProvider.enable();
+        if (!accounts || !accounts[0]) {
+          handleConnectFailure('No account returned from WalletConnect.');
+          return;
+        }
+
+        state.connected = true;
+        state.address = accounts[0];
+        state.provider = walletRuntime.provider;
+        state.userDisconnected = false;
+
+        const chainHex = await walletRuntime.provider.request({ method: 'eth_chainId' });
+        state.chainId = normalizeChainId(chainHex);
+
+      } catch (err) {
+        // User cancelled QR scan, session rejected, SDK error, etc.
+        // Clear any partially set provider before resetting UI.
+        if (walletRuntime.source === 'walletconnect') {
+          try { await window.IX_WC.disconnect(); } catch (_) {}
+          clearActiveProvider();
+        }
+        const code = providerErrorCode(err);
+        const msg = (err && err.message) ? err.message.toLowerCase() : '';
+        // WalletConnect v2 rejects modal close / QR dismiss with non-4001 errors:
+        // "Connection request reset", "User rejected methods", "User rejected", etc.
+        // Treat all of these as user-initiated cancellations, not failures.
+        const isCancelled = code === 4001 ||
+          msg.includes('user rejected') ||
+          msg.includes('connection request reset') ||
+          msg.includes('user closed') ||
+          msg.includes('user cancelled');
+        if (isCancelled) {
+          handleConnectFailure('WalletConnect connection cancelled.');
+        } else {
+          handleConnectFailure('WalletConnect connection failed. Try again.');
+          console.warn('[ImplicitEx] WalletConnect init/connect error', err);
+        }
+        return;
+
+      } finally {
+        // Always re-enable the WalletConnect button — no stuck state.
+        if (els.walletChoiceWalletConnect) {
+          els.walletChoiceWalletConnect.disabled = false;
+          els.walletChoiceWalletConnect.textContent = 'Connect with WalletConnect';
+        }
+        setConnectPending(false);
+      }
+
+      // Account and chain are set — mirror injected post-connect sequence exactly.
+      bindActiveProviderEvents(walletRuntime.provider);
+      state.connecting = false;
+      startWalletChainWatcher();
+      onConnected();
+    });
+  }
 
 })();
