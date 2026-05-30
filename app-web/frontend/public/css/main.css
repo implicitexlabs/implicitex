@@ -1504,6 +1504,101 @@ footer .social-links a:focus-visible,
 
 .mobile-menu-links a:hover { text-decoration: underline; }
 
+/* ---- Wallet Choice Overlay ---- */
+/* Small centered dialog shown when Connect Wallet is tapped without an injected provider. */
+.wallet-choice {
+  position: fixed;
+  inset: 0;
+  z-index: 400;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+.wallet-choice[hidden] { display: none; }
+
+.wallet-choice-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 0;
+}
+
+.wallet-choice-inner {
+  position: relative;
+  z-index: 1;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 320px;
+}
+
+.wallet-choice-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+}
+
+.wallet-choice-title {
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--white);
+}
+
+.wallet-choice-close {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--white);
+  padding: 6px 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.12s;
+}
+.wallet-choice-close:hover { border-color: var(--border-2); }
+
+.wallet-choice-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.wallet-choice-btn {
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--white);
+  padding: 12px 14px;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.12s;
+  width: 100%;
+  text-decoration: none;
+  display: block;
+  box-sizing: border-box;
+}
+.wallet-choice-btn:hover { border-color: var(--border-2); }
+
+.wallet-choice-btn--primary {
+  background: var(--white);
+  color: var(--bg);
+  border-color: var(--white);
+}
+.wallet-choice-btn--primary:hover {
+  background: var(--button-hover);
+  border-color: var(--button-hover);
+}
+
 /* ---- Responsive ---- */
 @media (max-width: 768px) {
   :root {

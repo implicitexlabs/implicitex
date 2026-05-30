@@ -143,6 +143,33 @@
     <div class="mobile-menu-backdrop" id="mobileMenuBackdrop" aria-hidden="true"></div>
   </div>
 
+  <!-- WALLET CHOICE OVERLAY -->
+  <!-- Shown when Connect Wallet is tapped on a device without an injected provider. -->
+  <!-- IX_WC.init() is wired to walletChoiceWalletConnect in a later commit. -->
+  <div class="wallet-choice" id="walletChoiceOverlay" role="dialog" aria-modal="true" aria-label="Choose wallet" hidden>
+    <div class="wallet-choice-backdrop" id="walletChoiceBackdrop" aria-hidden="true"></div>
+    <div class="wallet-choice-inner">
+      <div class="wallet-choice-head">
+        <span class="wallet-choice-title">Connect Wallet</span>
+        <button class="wallet-choice-close" id="walletChoiceClose" type="button" aria-label="Close">
+          <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
+            <line x1="1" y1="1" x2="11" y2="11" stroke="currentColor" stroke-width="1.6"/>
+            <line x1="11" y1="1" x2="1" y2="11" stroke="currentColor" stroke-width="1.6"/>
+          </svg>
+        </button>
+      </div>
+      <div class="wallet-choice-actions">
+        <a class="wallet-choice-btn wallet-choice-btn--primary" id="walletChoiceMetaMask"
+           href="https://metamask.app.link/dapp/implicitex.com" target="_blank" rel="noopener">
+          Open MetaMask
+        </a>
+        <button class="wallet-choice-btn" id="walletChoiceWalletConnect" type="button">
+          Connect with WalletConnect
+        </button>
+      </div>
+    </div>
+  </div>
+
   <main class="landing-main">
 
   <!-- HERO -->

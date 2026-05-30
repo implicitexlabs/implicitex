@@ -462,6 +462,11 @@
     receiptHistory:     document.getElementById('receiptHistory'),
     txCancelReview:     document.getElementById('txCancelReview'),
     txPreviewLabel:     document.getElementById('txPreviewLabel'),
+    walletChoiceOverlay:      document.getElementById('walletChoiceOverlay'),
+    walletChoiceClose:        document.getElementById('walletChoiceClose'),
+    walletChoiceBackdrop:     document.getElementById('walletChoiceBackdrop'),
+    walletChoiceMetaMask:     document.getElementById('walletChoiceMetaMask'),
+    walletChoiceWalletConnect: document.getElementById('walletChoiceWalletConnect'),
   };
 
   // ----------------------------------------------------------------
@@ -1752,6 +1757,20 @@
     dispatchWalletStateChanged();
   }
 
+  // ----------------------------------------------------------------
+  // Wallet choice overlay — shown when Connect is tapped without an
+  // injected provider. Presents MetaMask and WalletConnect options.
+  // IX_WC.init() is wired into the WalletConnect button in a later commit.
+  // ----------------------------------------------------------------
+  function showWalletChoice() {
+    if (els.walletChoiceOverlay) els.walletChoiceOverlay.removeAttribute('hidden');
+    resetConnectButton();
+  }
+
+  function hideWalletChoice() {
+    if (els.walletChoiceOverlay) els.walletChoiceOverlay.setAttribute('hidden', '');
+  }
+
   function isConfiguredChain(chainId) {
     return !!(chainId && window.IX_CHAINS && window.IX_CHAINS[chainId]);
   }
@@ -2667,11 +2686,10 @@
     if (state.connected || state.connecting) return;
 
     if (!hasInjectedProvider()) {
-      // No injected provider — MetaMask browser extension is absent.
-      // This is the WalletConnect entry point: when @walletconnect/ethereum-provider
-      // is wired, a wallet-selection UI will go here and call
-      // setActiveProvider(wcProvider, 'walletconnect') on confirmation.
-      handleConnectFailure('No wallet detected. Install MetaMask or use a WalletConnect-compatible wallet.');
+      // No injected provider — MetaMask extension absent or mobile browser.
+      // Show wallet-choice overlay. WalletConnect button is present but not yet
+      // wired to IX_WC.init() — that lands in the next commit on this branch.
+      showWalletChoice();
       return;
     }
 
@@ -3759,5 +3777,18 @@
   if (els.switchAccountBtn) els.switchAccountBtn.addEventListener('click', requestAccountSelection);
   if (els.txCancelReview)  els.txCancelReview.addEventListener('click', () => exitReview());
   if (els.txConfirmAck)    els.txConfirmAck.addEventListener('change', updatePreview);
+
+  // Wallet choice overlay — close paths
+  if (els.walletChoiceClose)    els.walletChoiceClose.addEventListener('click', hideWalletChoice);
+  if (els.walletChoiceBackdrop) els.walletChoiceBackdrop.addEventListener('click', hideWalletChoice);
+
+  // Wallet choice overlay — WalletConnect stub
+  // IX_WC.init() wires here in the next commit once the selector UI is confirmed.
+  if (els.walletChoiceWalletConnect) {
+    els.walletChoiceWalletConnect.addEventListener('click', function () {
+      hideWalletChoice();
+      setStatus('WalletConnect connection not yet available. Use MetaMask for now.');
+    });
+  }
 
 })();
