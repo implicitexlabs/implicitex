@@ -1556,6 +1556,12 @@ footer .social-links a:focus-visible,
     border-left: 1px solid var(--border);
   }
 
+  /* Prevent iOS Safari from auto-zooming the page when the user taps a
+     transfer input. Safari zooms any input with font-size < 16px on focus. */
+  .tx-field {
+    font-size: 16px;
+  }
+
   .portal-controls {
     padding: 0.5rem 0 0.4rem;
   }
