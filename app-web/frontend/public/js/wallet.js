@@ -2249,6 +2249,18 @@
     state.userDisconnected = revokeProvider;
     activeFlowId = null; // invalidate any running transfer flow
 
+    // Terminate WalletConnect relay session before local cleanup.
+    // Clearing walletRuntime.provider alone is not sufficient — the relay
+    // session remains alive on the WC side until explicitly closed.
+    // Failure here must not block local UI reset.
+    if (walletRuntime.source === 'walletconnect' && window.IX_WC) {
+      try {
+        await window.IX_WC.disconnect();
+      } catch (err) {
+        console.warn('[ImplicitEx] WalletConnect relay disconnect failed', err);
+      }
+    }
+
     let providerChecked = false;
     let stillAuthorized = false;
     if (revokeProvider) await revokeWalletPermission(activeProvider);
@@ -2688,8 +2700,7 @@
 
     if (!hasInjectedProvider()) {
       // No injected provider — MetaMask extension absent or mobile browser.
-      // Show wallet-choice overlay. WalletConnect button is present but not yet
-      // wired to IX_WC.init() — that lands in the next commit on this branch.
+      // Show wallet-choice overlay. WalletConnect button calls IX_WC.init().
       showWalletChoice();
       return;
     }
@@ -3783,12 +3794,70 @@
   if (els.walletChoiceClose)    els.walletChoiceClose.addEventListener('click', hideWalletChoice);
   if (els.walletChoiceBackdrop) els.walletChoiceBackdrop.addEventListener('click', hideWalletChoice);
 
-  // Wallet choice overlay — WalletConnect stub
-  // IX_WC.init() wires here in the next commit once the selector UI is confirmed.
+  // Wallet choice overlay — WalletConnect connect flow
   if (els.walletChoiceWalletConnect) {
-    els.walletChoiceWalletConnect.addEventListener('click', function () {
+    els.walletChoiceWalletConnect.addEventListener('click', async function () {
+      if (state.connected || state.connecting) return;
+
+      // Disable button and show pending state while the QR/modal is open.
+      if (els.walletChoiceWalletConnect) {
+        els.walletChoiceWalletConnect.disabled = true;
+        els.walletChoiceWalletConnect.textContent = 'Connecting…';
+      }
+      setConnectPending(true);
       hideWalletChoice();
-      setStatus('WalletConnect connection not yet available. Use MetaMask for now.', 'warning');
+      setStatus('Opening WalletConnect…');
+
+      let wcProvider;
+      try {
+        const chainId = 137; // Polygon Mainnet
+        wcProvider = await window.IX_WC.init({ chainId });
+        setActiveProvider(wcProvider, 'walletconnect');
+
+        const accounts = await requestWalletAccounts();
+        if (!accounts || !accounts[0]) {
+          handleConnectFailure('No account returned from WalletConnect.');
+          return;
+        }
+
+        state.connected = true;
+        state.address = accounts[0];
+        state.provider = walletRuntime.provider;
+        state.userDisconnected = false;
+
+        const chainHex = await walletRuntime.provider.request({ method: 'eth_chainId' });
+        state.chainId = normalizeChainId(chainHex);
+
+      } catch (err) {
+        // User cancelled QR scan, session rejected, SDK error, etc.
+        // Clear any partially set provider before resetting UI.
+        if (walletRuntime.source === 'walletconnect') {
+          try { await window.IX_WC.disconnect(); } catch (_) {}
+          clearActiveProvider();
+        }
+        const code = providerErrorCode(err);
+        if (code === 4001) {
+          handleConnectFailure('WalletConnect connection cancelled.');
+        } else {
+          handleConnectFailure('WalletConnect connection failed. Try again.');
+          console.warn('[ImplicitEx] WalletConnect init/connect error', err);
+        }
+        return;
+
+      } finally {
+        // Always re-enable the WalletConnect button — no stuck state.
+        if (els.walletChoiceWalletConnect) {
+          els.walletChoiceWalletConnect.disabled = false;
+          els.walletChoiceWalletConnect.textContent = 'Connect with WalletConnect';
+        }
+        setConnectPending(false);
+      }
+
+      // Account and chain are set — mirror injected post-connect sequence exactly.
+      bindActiveProviderEvents(walletRuntime.provider);
+      state.connecting = false;
+      startWalletChainWatcher();
+      onConnected();
     });
   }
 
