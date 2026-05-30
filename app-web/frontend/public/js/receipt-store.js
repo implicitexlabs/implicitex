@@ -247,6 +247,35 @@
   }
 
   // ----------------------------------------------------------------
+  // getRecipientContext(address) — read-only query over the archive
+  // Returns null if address is absent or has no prior archived receipts.
+  // Queries archive only — active receipt is excluded by design.
+  // ----------------------------------------------------------------
+  function getRecipientContext(address) {
+    if (!address) return null;
+    var normal = address.toLowerCase();
+    var prior = listRecent().filter(function (r) {
+      return r.recipient && r.recipient.toLowerCase() === normal;
+    });
+    if (!prior.length) return null;
+
+    var tags = prior.reduce(function (acc, r) {
+      if (r.purposeTag && acc.indexOf(r.purposeTag) === -1) acc.push(r.purposeTag);
+      return acc;
+    }, []);
+
+    return {
+      known:         true,
+      recipient:     normal,
+      count:         prior.length,
+      lastTransfer:  prior[0].createdAt || null,
+      recentTags:    tags.slice(0, 3),
+      lastMemo:      prior[0].memo      || null,
+      lastReference: prior[0].referenceId || null,
+    };
+  }
+
+  // ----------------------------------------------------------------
   // Internal — prepend to archive, trim to ARCHIVE_MAX
   // ----------------------------------------------------------------
   function _pushToArchive(receipt) {
@@ -270,6 +299,6 @@
   // but receipt-store.js loads first, so we seed the namespace here.
   // ----------------------------------------------------------------
   window.IX = window.IX || {};
-  window.IX.receipts = { create, update, getActive, clearActive, listRecent, listAll };
+  window.IX.receipts = { create, update, getActive, clearActive, listRecent, listAll, getRecipientContext };
 
 })();
