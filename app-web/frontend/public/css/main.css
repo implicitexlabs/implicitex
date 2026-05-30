@@ -1203,6 +1203,73 @@ body.portal-active #nav {
 
 .data-row:last-child { border-bottom: none; }
 
+/* ---- Expandable gas price row ---- */
+.data-row--expandable {
+  flex-direction: column;
+  align-items: stretch;
+  padding: 0;
+}
+
+.data-row-toggle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 9px 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+.data-row-toggle:hover .data-toggle-icon { color: var(--white); }
+
+.data-toggle-icon {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--dim);
+  transition: transform 0.15s, color 0.12s;
+  margin-left: 6px;
+  flex-shrink: 0;
+}
+
+.data-row--expandable.is-open .data-toggle-icon {
+  transform: rotate(180deg);
+}
+
+.data-row-detail {
+  padding-bottom: 10px;
+}
+
+.data-row-detail[hidden] { display: none; }
+
+.gas-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+}
+
+.gas-detail-k {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+.gas-detail-v {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--white);
+}
+
+.gas-detail-row--meta .gas-detail-k,
+.gas-detail-row--meta .gas-detail-v {
+  font-size: 8px;
+  color: var(--dim);
+}
+
 .data-k {
   font-family: var(--mono);
   font-size: 9px;

@@ -438,9 +438,35 @@
           <span class="data-k">Network</span>
           <span class="data-v" id="networkNameDisplay">Polygon Amoy planned</span>
         </div>
-        <div class="data-row">
-          <span class="data-k">Gas price</span>
-          <span class="data-v" id="gweiDisplay">Fetching…</span>
+        <div class="data-row data-row--expandable" id="gasRow">
+          <button class="data-row-toggle" id="gasRowToggle" type="button"
+                  aria-expanded="false" aria-controls="gasRowDetail">
+            <span class="data-k">Gas price</span>
+            <span class="data-v" id="gweiDisplay">Fetching…</span>
+            <span class="data-toggle-icon" aria-hidden="true">▾</span>
+          </button>
+          <div class="data-row-detail" id="gasRowDetail" hidden>
+            <div class="gas-detail-row">
+              <span class="gas-detail-k">Low</span>
+              <span class="gas-detail-v" id="gasLow">—</span>
+            </div>
+            <div class="gas-detail-row">
+              <span class="gas-detail-k">Avg</span>
+              <span class="gas-detail-v" id="gasAvg">—</span>
+            </div>
+            <div class="gas-detail-row">
+              <span class="gas-detail-k">High</span>
+              <span class="gas-detail-v" id="gasHigh">—</span>
+            </div>
+            <div class="gas-detail-row">
+              <span class="gas-detail-k">Trend</span>
+              <span class="gas-detail-v" id="gasTrend">Collecting</span>
+            </div>
+            <div class="gas-detail-row gas-detail-row--meta">
+              <span class="gas-detail-k">Samples</span>
+              <span class="gas-detail-v" id="gasSamples">0</span>
+            </div>
+          </div>
         </div>
         <div class="data-row">
           <span class="data-k">Block</span>
