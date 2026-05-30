@@ -849,7 +849,10 @@
   }
 
   function hidePreview() {
-    if (els.txPreview) els.txPreview.setAttribute('hidden', '');
+    if (els.txPreview) {
+      els.txPreview.setAttribute('hidden', '');
+      els.txPreview.classList.remove('tx-preview--blocked');
+    }
   }
 
   function formatUsdcRaw(raw, decimals = 2) {
@@ -1298,6 +1301,7 @@
     if (els.previewPurpose)   els.previewPurpose.textContent   = purposeLabel(metadata.purposeTag);
     if (els.previewNote)      els.previewNote.textContent      = note;
 
+    if (els.txPreview) els.txPreview.classList.toggle('tx-preview--blocked', mode === 'Blocked');
     showPreview();
   }
 
