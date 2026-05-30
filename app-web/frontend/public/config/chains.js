@@ -7,6 +7,11 @@
 
 window.IX_CONFIG = {
   transfersEnabled: false,
+
+  // WalletConnect Project ID from cloud.walletconnect.com.
+  // Required when the WalletConnect provider is wired in.
+  // Null until a project is registered and the ID is added here.
+  walletConnectProjectId: null,
 };
 
 window.IX_CHAINS = {
