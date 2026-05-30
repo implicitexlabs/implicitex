@@ -794,6 +794,25 @@ body.portal-active #nav {
   50%       { opacity: 0.5; }
 }
 
+/* Slow instrument-light throb on blocking/critical preflight bullets.
+   Points the eye without panic. 1.8 s is calm enough to read first. */
+@keyframes ix-issue-pulse {
+  0%, 100% { opacity: 0.45; transform: scale(1); }
+  50%       { opacity: 1;    transform: scale(1.18); }
+}
+
+.preflight-list li.is-blocking::before,
+.preflight-list li.is-critical::before {
+  animation: ix-issue-pulse 1.8s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .preflight-list li.is-blocking::before,
+  .preflight-list li.is-critical::before {
+    animation: none;
+  }
+}
+
 .tx-btn--pending {
   animation: tx-pending-pulse 1.4s ease-in-out infinite;
   cursor: wait;

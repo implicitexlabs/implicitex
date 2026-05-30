@@ -1633,7 +1633,9 @@
 
     if (!validRecipient || !validAmount || !validNetwork) {
       hidePreview();
-      setReviewAcknowledgementVisible(false);
+      // resetReviewAcknowledgement unchecks the checkbox — stale ack must not
+      // persist across blocked states and re-arm the button on the next valid input.
+      resetReviewAcknowledgement();
       setTransferNote('');
       setDraftButton(currentButtonLabel(), true);
       return;
@@ -1645,7 +1647,7 @@
       summary = buildDraftSummary(recipient, amountStr, amountFloat, chainConfig);
     } catch (_) {
       hidePreview();
-      setReviewAcknowledgementVisible(false);
+      resetReviewAcknowledgement();
       setDraftButton(currentButtonLabel(), true);
       return;
     }
@@ -1656,7 +1658,7 @@
         note: 'Checking USDC balance before review.',
       });
       setTransferNote('Checking USDC balance before review.');
-      setReviewAcknowledgementVisible(false);
+      resetReviewAcknowledgement();
       setDraftButton('Checking Balance', true);
       return;
     }
@@ -1669,7 +1671,7 @@
       });
       setStatus(`Insufficient balance. Have ${formatUsdcRaw(summary.balance, 2)} USDC, need ${formatUsdcRaw(summary.totalDebit, 2)} USDC.`);
       setTransferNote('Lower the amount or add USDC before reviewing this transfer.');
-      setReviewAcknowledgementVisible(false);
+      resetReviewAcknowledgement();
       setDraftButton('Insufficient Balance', true);
       return;
     }
@@ -1683,7 +1685,7 @@
       });
       setStatus(`Minimum transfer is ${minUsdc} USDC.`);
       setTransferNote(`Enter ${minUsdc} USDC or more to continue.`);
-      setReviewAcknowledgementVisible(false);
+      resetReviewAcknowledgement();
       setDraftButton('Below Minimum', true);
       return;
     }
@@ -1925,6 +1927,7 @@
     if (summary.insufficientBalance) {
       setStatus(`Insufficient balance. Have ${formatUsdcRaw(summary.balance, 2)} USDC, need ${formatUsdcRaw(summary.totalDebit, 2)} USDC.`);
       setTransferNote('Lower the amount or add USDC before reviewing this transfer.');
+      resetReviewAcknowledgement();
       setDraftButton('Insufficient Balance', true);
       renderTransferSummary(summary, {
         label: 'Transfer Blocked',
@@ -1938,6 +1941,7 @@
     if (minUsdc && amountFloat < minUsdc) {
       setStatus(`Minimum transfer is ${minUsdc} USDC.`);
       setTransferNote(`Enter ${minUsdc} USDC or more to continue.`);
+      resetReviewAcknowledgement();
       setDraftButton('Below Minimum', true);
       renderTransferSummary(summary, {
         label: 'Transfer Blocked',
