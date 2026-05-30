@@ -54,6 +54,36 @@ Notes:
 
 ---
 
+## 2026-05-30 - WalletConnect Session Persistence: Privacy-First Default
+
+Decision:
+- WalletConnect sessions are not automatically restored on page refresh.
+- Explicit disconnect clears the WalletConnect relay session and localStorage
+  cache. Page refresh without disconnect also returns the application to a
+  disconnected state requiring a fresh QR handshake.
+
+Context:
+- During WalletConnect integration smoke testing, both explicit disconnect
+  and page refresh were confirmed to require fresh QR on reconnect.
+- This behavior is a product choice, not a technical limitation. The WC SDK
+  supports session restoration from localStorage, but the localStorage cache
+  is cleared on explicit disconnect and is not restored on page reload because
+  `IX_WC.init()` is not called on page load — only on user-initiated connect.
+
+Rationale:
+- ImplicitEx is a money-transfer tool. Shared-device safety is a higher
+  priority than connection convenience for MVP.
+- A user who explicitly disconnects, or who closes a browser tab, should not
+  have their wallet silently reattached on the next visit.
+- The tradeoff: returning users must scan a fresh QR after each session.
+  Accepted for MVP.
+
+Status:
+- Accepted. Session restore on refresh may be revisited post-launch if
+  returning-user friction becomes a product priority.
+
+---
+
 ## 2026-03-28 - Ledger and AuditWalk Sequencing
 
 Decision:
