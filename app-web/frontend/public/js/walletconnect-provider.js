@@ -117,6 +117,10 @@ window.IX_WC = (function () {
     var EthereumProvider = await loadSDK();
     var chainId = (options && options.chainId) || 137;
 
+    // metadata.url must match the actual page origin.
+    // Using window.location.origin works for both localhost dev and production.
+    var origin = window.location.origin;
+
     _provider = await EthereumProvider.init({
       projectId: projectId,
       // optionalChains is recommended over required chains for wallet compatibility.
@@ -126,8 +130,8 @@ window.IX_WC = (function () {
       metadata: {
         name: 'ImplicitEx',
         description: 'Wallet-to-wallet USDC transfers on Polygon.',
-        url: 'https://implicitex.com',
-        icons: ['https://implicitex.com/brand/icon-512.png'],
+        url: origin,
+        icons: [origin + '/brand/icon-512.png'],
       },
     });
 

@@ -3814,7 +3814,11 @@
         wcProvider = await window.IX_WC.init({ chainId });
         setActiveProvider(wcProvider, 'walletconnect');
 
-        const accounts = await requestWalletAccounts();
+        // enable() opens the QR modal and establishes the WalletConnect session.
+        // requestWalletAccounts() uses eth_requestAccounts which requires an
+        // active session — for WC providers, enable() must come first.
+        // enable() resolves with the accounts array once the user connects.
+        const accounts = await wcProvider.enable();
         if (!accounts || !accounts[0]) {
           handleConnectFailure('No account returned from WalletConnect.');
           return;
