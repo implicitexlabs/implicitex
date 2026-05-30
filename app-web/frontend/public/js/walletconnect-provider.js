@@ -7,12 +7,19 @@
  * wallet.js passes to setActiveProvider(provider, 'walletconnect').
  *
  * SDK loading:
- *   The @walletconnect/ethereum-provider UMD bundle is ~1.76 MB and is NOT
- *   loaded on page load. IX_WC.init() triggers a single dynamic script
- *   injection on first use. MetaMask/injected-provider users never load it.
+ *   The @walletconnect/ethereum-provider UMD bundle (~1.8 MB) is self-hosted
+ *   at js/vendor/ and is NOT loaded on page load. IX_WC.init() triggers a
+ *   single dynamic script injection on first use. MetaMask/injected-provider
+ *   users never pay the load cost.
  *
  *   The UMD bundle registers the module under window["@walletconnect/ethereum-provider"].
  *   EthereumProvider is a named export on that object (bracket notation required).
+ *
+ *   Vendored: @walletconnect/ethereum-provider@2.23.9
+ *   Source:   https://registry.npmjs.org/@walletconnect/ethereum-provider/-/ethereum-provider-2.23.9.tgz
+ *   File:     dist/index.umd.js (unmodified, same-origin — no SRI required)
+ *   To update: npm pack @walletconnect/ethereum-provider@<version>, extract
+ *              dist/index.umd.js, rename with version, update SDK_URL below.
  *
  * Load order:
  *   chains.js (IX_CONFIG.walletConnectProjectId) → walletconnect-provider.js (IX_WC)
@@ -29,9 +36,9 @@
 window.IX_WC = (function () {
   'use strict';
 
-  // Pinned version. Bump deliberately and verify the new bundle before deploying.
-  // TODO: self-host this bundle before production to eliminate CDN trust dependency.
-  var SDK_CDN_URL = 'https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider@2.23.9/dist/index.umd.js';
+  // Self-hosted, same-origin. To update: npm pack the new version, extract
+  // dist/index.umd.js, rename with version suffix, update this path.
+  var SDK_URL = 'js/vendor/walletconnect-ethereum-provider@2.23.9.umd.js';
 
   var _provider = null;
   var _sdkPromise = null; // dedup guard — concurrent init() calls share one load
@@ -58,7 +65,7 @@ window.IX_WC = (function () {
 
     _sdkPromise = new Promise(function (resolve, reject) {
       var script = document.createElement('script');
-      script.src = SDK_CDN_URL;
+      script.src = SDK_URL;
       script.onload = function () {
         var loaded = getSDKClass();
         if (loaded) {
@@ -73,7 +80,7 @@ window.IX_WC = (function () {
       };
       script.onerror = function () {
         _sdkPromise = null; // allow retry on next call
-        reject(new Error('[IX_WC] Failed to load WalletConnect SDK from ' + SDK_CDN_URL));
+        reject(new Error('[IX_WC] Failed to load WalletConnect SDK from ' + SDK_URL));
       };
       document.head.appendChild(script);
     });
