@@ -2249,11 +2249,14 @@
     state.userDisconnected = revokeProvider;
     activeFlowId = null; // invalidate any running transfer flow
 
+    // Capture source before clearActiveProvider() nulls it.
+    const wasWalletConnect = walletRuntime.source === 'walletconnect';
+
     // Terminate WalletConnect relay session before local cleanup.
     // Clearing walletRuntime.provider alone is not sufficient — the relay
     // session remains alive on the WC side until explicitly closed.
     // Failure here must not block local UI reset.
-    if (walletRuntime.source === 'walletconnect' && window.IX_WC) {
+    if (wasWalletConnect && window.IX_WC) {
       try {
         await window.IX_WC.disconnect();
       } catch (err) {
@@ -2263,7 +2266,7 @@
 
     let providerChecked = false;
     let stillAuthorized = false;
-    if (revokeProvider) await revokeWalletPermission(activeProvider);
+    if (revokeProvider && !wasWalletConnect) await revokeWalletPermission(activeProvider);
 
     if (els.walletPill) els.walletPill.classList.remove('visible');
     if (els.walletAddr) els.walletAddr.textContent = '';
@@ -2271,9 +2274,7 @@
     if (els.disconnectBtn) els.disconnectBtn.setAttribute('hidden', '');
     setAccountSwitchVisible(false);
     resetConnectButton();
-    setNavStatus(revokeProvider
-      ? 'Wallet disconnected. Connect Wallet will ask MetaMask for account permission.'
-      : '');
+    setNavStatus('');
     setElementSeverity(els.navStatus, null);
     if (els.networkBadge) {
       els.networkBadge.textContent = 'Polygon live';
@@ -2283,7 +2284,7 @@
     clearTransferForm();
     hidePreview();
     hideTransferModules();
-    if (revokeProvider) {
+    if (revokeProvider && !wasWalletConnect) {
       try {
         const accounts = await readAuthorizedAccounts(activeProvider);
         providerChecked = true;
@@ -2295,7 +2296,12 @@
 
     clearActiveProvider();
 
-    if (revokeProvider) {
+    if (wasWalletConnect) {
+      // WalletConnect disconnect: calm neutral state, no MetaMask-specific copy.
+      setStatus('');
+      setNavStatus('');
+      if (window.IX && window.IX.companion) window.IX.companion.reset();
+    } else if (revokeProvider) {
       setDisconnectedPresentation({ stillAuthorized, providerChecked });
     } else if (window.IX && window.IX.companion) {
       window.IX.companion.reset();
@@ -3840,7 +3846,16 @@
           clearActiveProvider();
         }
         const code = providerErrorCode(err);
-        if (code === 4001) {
+        const msg = (err && err.message) ? err.message.toLowerCase() : '';
+        // WalletConnect v2 rejects modal close / QR dismiss with non-4001 errors:
+        // "Connection request reset", "User rejected methods", "User rejected", etc.
+        // Treat all of these as user-initiated cancellations, not failures.
+        const isCancelled = code === 4001 ||
+          msg.includes('user rejected') ||
+          msg.includes('connection request reset') ||
+          msg.includes('user closed') ||
+          msg.includes('user cancelled');
+        if (isCancelled) {
           handleConnectFailure('WalletConnect connection cancelled.');
         } else {
           handleConnectFailure('WalletConnect connection failed. Try again.');
