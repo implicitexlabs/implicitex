@@ -9,13 +9,30 @@
 
   // ----------------------------------------------------------------
   // Provider runtime — source of truth for the active wallet provider.
-  // Before WalletConnect: getWalletProvider() falls back to window.ethereum.
-  // After WalletConnect wiring: walletRuntime.provider is set on connect.
+  //
+  // walletRuntime.provider is null until the user connects. Pre-connect
+  // reads fall back to window.ethereum via getWalletProvider() so that
+  // chain-changed events are observed before the user clicks Connect.
+  //
+  // On connect, setActiveProvider() is called explicitly:
+  //   - injected MetaMask:  setActiveProvider(window.ethereum, 'injected')
+  //   - WalletConnect:      setActiveProvider(wcProvider,      'walletconnect')
+  //
+  // The WalletConnect provider must be EIP-1193 compatible. Any async
+  // operation started through it must capture the session identity at
+  // start and verify it has not changed before mutating UI or receipts.
   // ----------------------------------------------------------------
   const walletRuntime = {
     provider: null,
     source: null, // 'injected' | 'walletconnect'
   };
+
+  // Returns true when MetaMask or another injected EIP-1193 provider is
+  // available. False on mobile browsers without the MetaMask extension.
+  // connect() uses this to branch between injected and WalletConnect paths.
+  function hasInjectedProvider() {
+    return !!(window.ethereum && typeof window.ethereum.request === 'function');
+  }
 
   function getWalletProvider() {
     return walletRuntime.provider || window.ethereum || null;
@@ -2645,8 +2662,12 @@
   async function connect(options = {}) {
     if (state.connected || state.connecting) return;
 
-    if (!getWalletProvider() || !getWalletProvider().request) {
-      handleConnectFailure('No wallet detected');
+    if (!hasInjectedProvider()) {
+      // No injected provider — MetaMask browser extension is absent.
+      // This is the WalletConnect entry point: when @walletconnect/ethereum-provider
+      // is wired, a wallet-selection UI will go here and call
+      // setActiveProvider(wcProvider, 'walletconnect') on confirmation.
+      handleConnectFailure('No wallet detected. Install MetaMask or use a WalletConnect-compatible wallet.');
       return;
     }
 
@@ -2662,7 +2683,8 @@
         return;
       }
 
-      setActiveProvider(getWalletProvider(), 'injected');
+      // Injected path: provider is window.ethereum, confirmed present above.
+      setActiveProvider(window.ethereum, 'injected');
       state.connected = true;
       state.address = accounts[0];
       state.provider = walletRuntime.provider;
@@ -3640,7 +3662,12 @@
     return knownChains[chainId] || `Unsupported chain ${chainId}`;
   }
 
-  bindActiveProviderEvents(window.ethereum);
+  // Bind to the injected provider on startup so chain/account events are
+  // observed before the user clicks Connect. Guarded so mobile browsers
+  // without window.ethereum do not attempt to bind a missing provider.
+  if (hasInjectedProvider()) {
+    bindActiveProviderEvents(window.ethereum);
+  }
 
   window.addEventListener('focus', () => {
     syncProviderState({ force: true });
