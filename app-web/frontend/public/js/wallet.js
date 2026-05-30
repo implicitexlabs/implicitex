@@ -524,8 +524,9 @@
     return tag.charAt(0).toUpperCase() + tag.slice(1);
   }
 
-  function setStatus(msg) {
+  function setStatus(msg, severity) {
     if (els.txStatus) els.txStatus.textContent = msg;
+    setElementSeverity(els.txStatus, severity || null);
   }
 
   function setElementSeverity(el, severity) {
@@ -3787,7 +3788,7 @@
   if (els.walletChoiceWalletConnect) {
     els.walletChoiceWalletConnect.addEventListener('click', function () {
       hideWalletChoice();
-      setStatus('WalletConnect connection not yet available. Use MetaMask for now.');
+      setStatus('WalletConnect connection not yet available. Use MetaMask for now.', 'warning');
     });
   }
 

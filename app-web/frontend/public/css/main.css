@@ -842,6 +842,7 @@ body.portal-active #nav {
   margin-top: 8px;
   text-align: center;
 }
+.tx-status.is-warning { color: var(--telemetry-amber-dim); }
 
 .tx-status a,
 .tx-status a:link,
