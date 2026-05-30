@@ -1203,6 +1203,80 @@ body.portal-active #nav {
 
 .data-row:last-child { border-bottom: none; }
 
+/* ---- Expandable gas price row ---- */
+.data-row--expandable {
+  flex-direction: column;
+  align-items: stretch;
+  padding: 0;
+}
+
+.data-row-toggle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 9px 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+/* Border-triangle — mirrors .telemetry-chevron and .companion-toggle exactly */
+.data-toggle-icon {
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 5px solid var(--dim);
+  flex-shrink: 0;
+  margin-left: 6px;
+  transition: transform 0.18s ease-out, border-top-color 0.12s;
+}
+
+.data-row-toggle:hover .data-toggle-icon,
+.data-row-toggle:focus-visible .data-toggle-icon {
+  border-top-color: var(--white);
+}
+
+.data-row--expandable.is-open .data-toggle-icon {
+  transform: rotate(180deg);
+  border-top-color: var(--white);
+}
+
+.data-row-detail {
+  padding-bottom: 10px;
+}
+
+.data-row-detail[hidden] { display: none; }
+
+.gas-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+}
+
+.gas-detail-k {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+.gas-detail-v {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--white);
+}
+
+.gas-detail-row--meta .gas-detail-k,
+.gas-detail-row--meta .gas-detail-v {
+  font-size: 8px;
+  color: var(--dim);
+}
+
 .data-k {
   font-family: var(--mono);
   font-size: 9px;

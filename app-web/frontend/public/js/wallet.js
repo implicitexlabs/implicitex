@@ -462,6 +462,14 @@
     receiptHistory:     document.getElementById('receiptHistory'),
     txCancelReview:     document.getElementById('txCancelReview'),
     txPreviewLabel:     document.getElementById('txPreviewLabel'),
+    gasRow:       document.getElementById('gasRow'),
+    gasRowToggle: document.getElementById('gasRowToggle'),
+    gasRowDetail: document.getElementById('gasRowDetail'),
+    gasLow:       document.getElementById('gasLow'),
+    gasAvg:       document.getElementById('gasAvg'),
+    gasHigh:      document.getElementById('gasHigh'),
+    gasTrend:     document.getElementById('gasTrend'),
+    gasSamples:   document.getElementById('gasSamples'),
     walletChoiceOverlay:      document.getElementById('walletChoiceOverlay'),
     walletChoiceClose:        document.getElementById('walletChoiceClose'),
     walletChoiceBackdrop:     document.getElementById('walletChoiceBackdrop'),
@@ -3645,6 +3653,43 @@
     };
   }
 
+  // ----------------------------------------------------------------
+  // Gas sample accumulator — session-local only, no persistence.
+  // Feeds the expandable Gas price detail row.
+  // ----------------------------------------------------------------
+  const GAS_SAMPLE_MAX = 20;
+  const gasSampleBuffer = []; // { standard: number, ts: number }
+
+  function pushGasSample(standard) {
+    if (!Number.isFinite(standard)) return;
+    gasSampleBuffer.push({ standard, ts: Date.now() });
+    if (gasSampleBuffer.length > GAS_SAMPLE_MAX) gasSampleBuffer.shift();
+  }
+
+  function calcGasTrend() {
+    if (gasSampleBuffer.length < 2) return 'Collecting';
+    const first = gasSampleBuffer[0].standard;
+    const last  = gasSampleBuffer[gasSampleBuffer.length - 1].standard;
+    const threshold = 5; // Gwei — below this delta is noise, not trend
+    if (last > first + threshold) return 'Rising';
+    if (last < first - threshold) return 'Falling';
+    return 'Stable';
+  }
+
+  function renderGasDetail() {
+    if (!gasSampleBuffer.length) return;
+    const vals = gasSampleBuffer.map(s => s.standard);
+    const low  = Math.min(...vals);
+    const high = Math.max(...vals);
+    const avg  = vals.reduce((a, b) => a + b, 0) / vals.length;
+
+    if (els.gasLow)     els.gasLow.textContent     = formatGwei(low)  + ' Gwei';
+    if (els.gasAvg)     els.gasAvg.textContent     = formatGwei(avg)  + ' Gwei';
+    if (els.gasHigh)    els.gasHigh.textContent    = formatGwei(high) + ' Gwei';
+    if (els.gasTrend)   els.gasTrend.textContent   = calcGasTrend();
+    if (els.gasSamples) els.gasSamples.textContent = gasSampleBuffer.length + ' / ' + GAS_SAMPLE_MAX;
+  }
+
   function pollNetworkData() {
     if (state.networkPollTimer) return;
 
@@ -3660,6 +3705,9 @@
         if (els.blockDisplay) {
           els.blockDisplay.textContent = tiers.blockNumber ? tiers.blockNumber.toLocaleString() : 'Pending';
         }
+
+        pushGasSample(tiers.standard);
+        renderGasDetail();
       } catch (err) {
         renderHeroGas({ standard: NaN, fast: NaN, rapid: NaN });
         if (els.gweiDisplay) els.gweiDisplay.textContent = 'Unavailable';
@@ -3795,6 +3843,21 @@
   if (els.switchAccountBtn) els.switchAccountBtn.addEventListener('click', requestAccountSelection);
   if (els.txCancelReview)  els.txCancelReview.addEventListener('click', () => exitReview());
   if (els.txConfirmAck)    els.txConfirmAck.addEventListener('change', updatePreview);
+
+  // Gas price row — expand / collapse toggle
+  if (els.gasRowToggle) {
+    els.gasRowToggle.addEventListener('click', function () {
+      const isOpen = els.gasRow && els.gasRow.classList.toggle('is-open');
+      if (els.gasRowToggle) els.gasRowToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+      if (els.gasRowDetail) {
+        if (isOpen) {
+          els.gasRowDetail.removeAttribute('hidden');
+        } else {
+          els.gasRowDetail.setAttribute('hidden', '');
+        }
+      }
+    });
+  }
 
   // Wallet choice overlay — close paths
   if (els.walletChoiceClose)    els.walletChoiceClose.addEventListener('click', hideWalletChoice);
