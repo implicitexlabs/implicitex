@@ -6,69 +6,115 @@
  * WalletConnect path. init() returns an EIP-1193 compatible provider that
  * wallet.js passes to setActiveProvider(provider, 'walletconnect').
  *
- * Load order:
- *   1. @walletconnect/ethereum-provider UMD  →  exposes window.EthereumProvider
- *   2. this file                             →  exposes window.IX_WC
- *   3. wallet.js                             →  consumes window.IX_WC
+ * SDK loading:
+ *   The @walletconnect/ethereum-provider UMD bundle is ~1.76 MB and is NOT
+ *   loaded on page load. IX_WC.init() triggers a single dynamic script
+ *   injection on first use. MetaMask/injected-provider users never load it.
  *
- * The WalletConnect SDK script tag is not present yet. When added, it must
- * appear before this file in index.html.
+ *   The UMD bundle registers the module under window["@walletconnect/ethereum-provider"].
+ *   EthereumProvider is a named export on that object (bracket notation required).
+ *
+ * Load order:
+ *   chains.js (IX_CONFIG.walletConnectProjectId) → walletconnect-provider.js (IX_WC)
+ *   → wallet.js (calls IX_WC.init() on WalletConnect path)
  *
  * Session identity rule:
  *   Any async operation started through a WalletConnect provider must capture
- *   provider/account/chain identity at the start and verify those values still
+ *   provider/account/chain identity at start and verify those values still
  *   match before mutating UI, telemetry, receipts, or transfer state. Relay
- *   latency and background mobile-app switching can deliver events out of order
- *   after the session the operation was started on has changed or expired.
+ *   latency and mobile-app backgrounding can deliver events out of order after
+ *   the session has changed or expired.
  */
 
 window.IX_WC = (function () {
   'use strict';
 
-  let _provider = null;
+  // Pinned version. Bump deliberately and verify the new bundle before deploying.
+  // TODO: self-host this bundle before production to eliminate CDN trust dependency.
+  var SDK_CDN_URL = 'https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider@2.23.9/dist/index.umd.js';
+
+  var _provider = null;
+  var _sdkPromise = null; // dedup guard — concurrent init() calls share one load
 
   // Returns the WalletConnect project ID from IX_CONFIG, or null if unset.
   function getProjectId() {
     return (window.IX_CONFIG && window.IX_CONFIG.walletConnectProjectId) || null;
   }
 
-  // Returns true when the WalletConnect SDK UMD bundle is loaded and the
-  // project ID is configured. wallet.js can use this to decide whether to
-  // offer WalletConnect as a connection option.
+  // Returns the EthereumProvider class from the already-loaded UMD bundle,
+  // or null if the SDK has not been loaded yet.
+  function getSDKClass() {
+    var mod = window['@walletconnect/ethereum-provider'];
+    return (mod && mod.EthereumProvider) || null;
+  }
+
+  // Injects the WalletConnect SDK UMD bundle as a script tag and waits for it.
+  // Returns a Promise that resolves with the EthereumProvider class.
+  // Subsequent calls return the same in-flight promise — no duplicate loads.
+  function loadSDK() {
+    var cls = getSDKClass();
+    if (cls) return Promise.resolve(cls);
+    if (_sdkPromise) return _sdkPromise;
+
+    _sdkPromise = new Promise(function (resolve, reject) {
+      var script = document.createElement('script');
+      script.src = SDK_CDN_URL;
+      script.onload = function () {
+        var loaded = getSDKClass();
+        if (loaded) {
+          resolve(loaded);
+        } else {
+          reject(new Error(
+            '[IX_WC] SDK script loaded but EthereumProvider was not found on ' +
+            'window[\'@walletconnect/ethereum-provider\']. ' +
+            'The bundle shape may have changed.'
+          ));
+        }
+      };
+      script.onerror = function () {
+        _sdkPromise = null; // allow retry on next call
+        reject(new Error('[IX_WC] Failed to load WalletConnect SDK from ' + SDK_CDN_URL));
+      };
+      document.head.appendChild(script);
+    });
+
+    return _sdkPromise;
+  }
+
+  // Returns true when a project ID is configured.
+  // SDK load happens on demand inside init(); isAvailable() does not require
+  // the SDK to be present — only the project ID.
   function isAvailable() {
-    return typeof window.EthereumProvider !== 'undefined' && !!getProjectId();
+    return !!getProjectId();
   }
 
   /**
-   * Initialize the WalletConnect provider and return it. The caller must
-   * pass the returned provider to setActiveProvider(provider, 'walletconnect').
+   * Initialize the WalletConnect provider and return it. Lazy-loads the SDK
+   * if it has not been loaded yet. The caller must pass the returned provider
+   * to setActiveProvider(provider, 'walletconnect').
    *
    * options:
-   *   chainId  — required. Chain ID to connect to (e.g. 137 for Polygon).
+   *   chainId — required. Chain ID to connect to (e.g. 137 for Polygon).
    *
-   * Throws if the SDK is not loaded or the project ID is not configured.
+   * Throws if the project ID is not configured or the SDK fails to load.
    */
   async function init(options) {
-    const projectId = getProjectId();
+    var projectId = getProjectId();
     if (!projectId) {
       throw new Error(
         '[IX_WC] walletConnectProjectId is not set in IX_CONFIG. ' +
-        'Register a project at cloud.walletconnect.com and set the ID before connecting.'
+        'Register a project at cloud.walletconnect.com and add the ID before connecting.'
       );
     }
 
-    if (typeof window.EthereumProvider === 'undefined') {
-      throw new Error(
-        '[IX_WC] @walletconnect/ethereum-provider is not loaded. ' +
-        'Add the SDK script tag before walletconnect-provider.js in index.html.'
-      );
-    }
+    var EthereumProvider = await loadSDK();
+    var chainId = (options && options.chainId) || 137;
 
-    const chainId = (options && options.chainId) || 137;
-
-    _provider = await window.EthereumProvider.init({
-      projectId,
-      chains: [chainId],
+    _provider = await EthereumProvider.init({
+      projectId: projectId,
+      // optionalChains is recommended over required chains for wallet compatibility.
+      // ImplicitEx handles wrong-network state in wallet.js after connection.
+      optionalChains: [chainId],
       showQrModal: true,
       metadata: {
         name: 'ImplicitEx',
@@ -88,8 +134,8 @@ window.IX_WC = (function () {
 
   /**
    * Disconnect the active WalletConnect session. Must be called on user
-   * disconnect — clearing local wallet state alone is not sufficient for
-   * WalletConnect. The relay session must be explicitly terminated.
+   * disconnect — clearing local wallet state alone is not sufficient.
+   * The relay session must be explicitly terminated on the WalletConnect side.
    */
   async function disconnect() {
     if (_provider && typeof _provider.disconnect === 'function') {
@@ -103,10 +149,10 @@ window.IX_WC = (function () {
   }
 
   return {
-    isAvailable,
-    init,
-    getProvider,
-    disconnect,
+    isAvailable: isAvailable,
+    init: init,
+    getProvider: getProvider,
+    disconnect: disconnect,
   };
 
 }());
