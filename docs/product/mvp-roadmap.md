@@ -213,3 +213,15 @@ Observability:     27/27  pass
 Contract tests:    59/59  pass
 Working tree:      clean
 ```
+
+## Gate 2 Smoke Attempt Log
+
+### 2026-05-31 — Controlled live smoke attempt
+
+Outcome: blocked / incomplete.
+
+The controlled live smoke branch opened `transfersEnabled` globally and for Polygon, but the approve → transferWithFee money path did not complete. No active receipt was present afterward, no approval hash or transfer hash was recorded, and no corresponding Polygonscan transaction was observed.
+
+Follow-up contract check confirmed `paused() = false`, so the blocked browser message was not caused by the contract pause state. Most likely cause is wallet/session instability during the WalletConnect flow or stale frontend presentation after disconnect.
+
+Gate 2 remains open. Next attempt should use a stable injected MetaMask session before opening the transfer gate.
