@@ -1,45 +1,80 @@
 # ImplicitEx
 
-Implicit Exchange (ImplicitEx) is a USDC transfer service.
+Non-custodial USDC transfer platform. Sender wallet → recipient wallet. 1% platform fee. No custody. Polygon mainnet.
 
-This repository is organized around runtime surfaces. The web platform is the primary app today, with Python services integrated into that web app stack and a future desktop Python surface planned.
+Operated by Aden Media Group LLC.
 
-## Structure
+---
 
-- `app-web/` - Primary application surface (current production direction).
-- `app-web/frontend/` - Web UI code (`src/`, `public/`).
-- `app-web/backend/python/` - Python services and integration code (including gas services).
-- `app-web/contracts/` - Canonical Solidity contract source.
-- `app-web/tests/` - Web, Python, and contract test lanes.
-- `desktop-python/` - Future desktop GUI surface (planned).
-- `docs/product/` - Vision, product definition, and roadmap.
-- `docs/architecture/` - Platform and integration architecture docs.
-- `docs/decisions/` - Decision log and integrated notes.
-- `legacy-transfer/` - Imported historical materials from transfer batches.
-- `.private/secrets/` - Local sensitive files (never commit).
+## Repository Map
 
-## Current Focus
+```
+implicitex/
+├── app-web/                          Primary application
+│   ├── frontend/public/              Web app (Firebase deploy root)
+│   │   ├── index.html                Transfer interface
+│   │   ├── config/chains.js          Chain config and transfer gates
+│   │   ├── js/                       wallet.js, app.js, rehydrate.js
+│   │   └── css/                      Styles
+│   ├── contracts/                    Solidity contract source
+│   ├── deployments/polygon.json      Deployed contract address
+│   ├── scripts/                      Hardhat deploy/verify scripts
+│   └── tests/                        Contract, web, and Python tests
+│
+├── docs/
+│   ├── product/mvp-roadmap.md        Launch gate sequence and board
+│   ├── attorney-review/              Attorney review package (Gate 3)
+│   ├── operations/evidence/          Live smoke test evidence
+│   ├── decisions/                    ADRs and decision log
+│   └── architecture/                 Platform architecture docs
+│
+├── legacy-transfer/                  Archived historical materials (read-only)
+├── desktop-python/                   Planned future surface (not started)
+└── system/                           Infrastructure config
+```
 
-1. Build and complete the online tool.
-2. Establish a stable platform baseline.
-3. Expand into an Electron desktop client as a secondary phase.
+---
 
-## Legacy Transfer Notes (Imported April 30, 2026)
+## Current Position
 
-Older project assets from `Desktop/ImplicitEx Transfer Files/implicitex-site` were imported into:
+Gate 3 (legal/disclosure review). Live transfer smoke passed 2026-06-01 on Polygon mainnet.
 
-- `legacy-transfer/2026-04-30/implicitex-site/`
+```
+Gate 1: Wallet + UI regression smoke         COMPLETE
+Gate 2: Live-transfer readiness review       COMPLETE (2026-06-01)
+Gate 3: Legal/disclosure review              current
+Gate 4: Mainnet controlled live smoke
+Gate 5: Public soft launch
+```
 
-Legacy frontend documentation was preserved at:
+Full roadmap: `docs/product/mvp-roadmap.md`
 
-- `docs/decisions/legacy-transfer/frontend-readme-2026-04-30.md`
+---
 
-Summary of legacy frontend file purposes:
+## Contract
 
-- `index.html`: main page structure, accessibility, and wallet transfer UI integration.
-- `scripts/wallet.js`: wallet connection and transfer logic.
-- `scripts/modal.js`: confirmation modal flow and feedback states.
-- `scripts/main.js`: component loading and app initialization.
-- `styles/main.css`: core styles and global layout.
-- `styles/modal.css`: modal styling and accessibility behavior.
-- `styles/wallet.css`: wallet UI styling.
+- **Address:** `0x5015841D6E665e63Ea174aD6b8FeF854026dE0C0`
+- **Network:** Polygon mainnet
+- **Status:** Deployed, source-verified, smoke-tested
+- **Deployment record:** `app-web/deployments/polygon.json`
+
+---
+
+## Deploy
+
+Firebase hosting. Web root is `app-web/frontend/public/`.
+
+```bash
+firebase deploy --only hosting
+```
+
+---
+
+## Archive Note
+
+Two older GitHub repositories exist from earlier development phases:
+
+- `implicitexlabs/implicitex-site` — superseded by this repo's `app-web/`
+- `implicitexlabs/implicitex-contract` — contract source now canonical in `app-web/contracts/`
+
+Both are archived and inactive. This repository (`implicitexlabs/implicitex`) is the active codebase.
