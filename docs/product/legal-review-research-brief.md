@@ -367,16 +367,18 @@ resident in a jurisdiction subject to comprehensive sanctions.
 
 ---
 
-## Live Legal Pages
+## Attorney Review Package
 
-These pages require attorney review before the transfer-enablement gate opens:
+These documents constitute the attorney review package for Gate 3:
 
-- `app-web/frontend/public/legal.html`
-- `app-web/frontend/public/privacy.html`
-- `app-web/frontend/public/components/terms.html`
-- `app-web/frontend/public/jurisdictions.html`
+- `docs/product/service-model-summary.md` — factual service model summary with Gate 2 evidence
+- `docs/product/legal-review-research-brief.md` — this document; 10 risk categories, Circle comparative review
+- `app-web/frontend/public/legal.html` — live legal page
+- `app-web/frontend/public/privacy.html` — live privacy page
+- `app-web/frontend/public/components/terms.html` — live terms page
+- `app-web/frontend/public/jurisdictions.html` — live jurisdiction availability page
 
-All four remain in draft status until reviewed.
+All legal pages remain in draft status until reviewed by counsel.
 
 ---
 
