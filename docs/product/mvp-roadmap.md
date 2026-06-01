@@ -165,6 +165,9 @@ plus four screenshots.
 ### 6. Public launch prep
 
 ```
+[x] FAQ added — Polygon, USDC, two wallet confirmations, fee vs gas, wrong address risk
+[x] Landing page How It Works copy aligned to proven fee-on-top model and two-prompt flow
+[x] About page copy aligned — fee example with total debit, jargon removed
 [ ] Homepage copy final
 [ ] Contact path
 [ ] Basic support language
