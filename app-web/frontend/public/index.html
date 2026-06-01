@@ -226,23 +226,25 @@
       <details class="flow-step reveal-copy">
         <summary>
           <span class="flow-num">02 — Send</span>
-          <p>Enter a recipient address and USDC amount. Review the 1% fee before confirming.</p>
+          <p>Enter a recipient address and amount. The 1% platform fee is added on top — the recipient receives the full amount you enter.</p>
           <span class="flow-toggle" aria-hidden="true"></span>
         </summary>
         <div class="flow-more">
-          The transfer preview shows the recipient, USDC amount, platform fee,
-          and estimated gas context before any wallet confirmation is requested.
+          The transfer preview shows the recipient, amount, platform fee, and total
+          debit before any wallet action. You pay the amount plus the fee. The
+          recipient receives the full amount.
         </div>
       </details>
       <details class="flow-step reveal-copy">
         <summary>
           <span class="flow-num">03 — Confirm</span>
-          <p>Approve permission, then confirm transfer. Approval alone does not move funds.</p>
+          <p>Two wallet confirmations: one to authorize, one to send. Authorization alone does not move funds.</p>
           <span class="flow-toggle" aria-hidden="true"></span>
         </summary>
         <div class="flow-more">
-          Token approval gives contract permission only. The transfer is a separate
-          wallet confirmation, and completed transactions include a network explorer receipt link.
+          The first wallet prompt authorizes the ImplicitEx contract to transfer
+          the exact USDC amount. The second sends it. You receive a receipt with
+          a link to verify the transaction on Polygon.
         </div>
       </details>
     </div>
