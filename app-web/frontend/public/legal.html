@@ -175,15 +175,19 @@
     <h2>Platform Fee</h2>
 
     <p>
-      Live ImplicitEx transfers use a flat 1% platform fee for wallet-to-wallet USDC transfers.
-      The fee should be shown before submission and separated from the amount
-      being sent. The fee is routed according to the applicable smart contract
-      logic when a completed transfer executes.
+      ImplicitEx charges a 1% platform fee on each transfer. The platform fee is
+      paid by the sender in addition to the transfer amount. For example, a transfer
+      of 100 USDC results in a total sender debit of 101 USDC, excluding applicable
+      blockchain network fees. The recipient receives the full 100 USDC transfer
+      amount, and the 1 USDC platform fee is routed separately during contract
+      execution.
     </p>
 
     <p>
-      Users should review the fee, transfer amount, and total transaction details
-      before authorizing any wallet action.
+      Before approving a transaction, ImplicitEx displays the transfer amount,
+      platform fee, and total debit. The total debit equals the transfer amount plus
+      the platform fee and does not include Polygon network gas fees, which are
+      displayed separately by the user's wallet.
     </p>
 
     <h2>Network and Gas Fees</h2>
@@ -199,6 +203,15 @@
       Gas fees may vary based on network conditions and may still be incurred if
       a transaction fails, is rejected by the network, or is reverted after
       submission.
+    </p>
+
+    <p>
+      A transaction that has been submitted to the Polygon network is not considered
+      complete until it has been confirmed on-chain. Confirmation times may vary
+      based on network conditions. ImplicitEx may display transaction status
+      information, but does not control block production, network confirmation
+      timing, or the operation of third-party blockchain infrastructure. Once a
+      transaction is confirmed on-chain, it is irreversible.
     </p>
 
     <h2>No Guarantee of Availability or Outcome</h2>
