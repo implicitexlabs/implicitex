@@ -30,7 +30,7 @@ session restore polish, AI features, or social login before live-transfer smoke 
 ```
 Gate 1: Wallet + UI regression smoke         ← COMPLETE
 Gate 2: Live-transfer readiness review       ← COMPLETE
-Gate 3: Legal/disclosure review              ← current position
+Gate 3: Builder-controlled launch readiness  ← current position
 Gate 4: Mainnet controlled live smoke
 Gate 5: Public soft launch
 ```
@@ -38,8 +38,10 @@ Gate 5: Public soft launch
 **Positioning:** Gate 2 complete. Live transfer smoke passed 2026-06-01 with real USDC on
 Polygon. Full approve → transferWithFee → receipt lifecycle verified end-to-end.
 
-The highest-risk unknown on the roadmap is no longer unknown. The next gate is legal/disclosure
-review — attorney review of terms, privacy policy, jurisdiction language, and risk disclosures.
+Gate 3 is builder-controlled launch readiness: failure-path validation, mobile UX smoke,
+support/disclaimer copy, transfer gate discipline, and public launch checklist. Attorney
+review is recommended before scale but is not a blocker — it is a third-party dependency
+outside MVP scope.
 
 **Every work session should start by asking: which launch risk are we removing today?**
 
