@@ -1,6 +1,6 @@
 # ImplicitEx MVP Roadmap
 
-Last updated: 2026-05-30
+Last updated: 2026-06-01
 Branch: walletconnect-mobile-session
 
 ---
@@ -29,17 +29,17 @@ session restore polish, AI features, or social login before live-transfer smoke 
 
 ```
 Gate 1: Wallet + UI regression smoke         ← COMPLETE
-Gate 2: Live-transfer readiness review       ← current position
-Gate 3: Legal/disclosure review
+Gate 2: Live-transfer readiness review       ← COMPLETE
+Gate 3: Legal/disclosure review              ← current position
 Gate 4: Mainnet controlled live smoke
 Gate 5: Public soft launch
 ```
 
-**Positioning:** Gate 1 complete. Gate 2 preparation in progress.
+**Positioning:** Gate 2 complete. Live transfer smoke passed 2026-06-01 with real USDC on
+Polygon. Full approve → transferWithFee → receipt lifecycle verified end-to-end.
 
-The product now has credible wallet coverage, safety states, telemetry, and a coherent
-interaction language. The risk is not lack of features — it is adding more before proving
-the actual money movement path end-to-end.
+The highest-risk unknown on the roadmap is no longer unknown. The next gate is legal/disclosure
+review — attorney review of terms, privacy policy, jurisdiction language, and risk disclosures.
 
 **Every work session should start by asking: which launch risk are we removing today?**
 
@@ -69,11 +69,7 @@ are correctly out of scope.
 
 ### 2. Transfer money path
 
-**This is the highest-risk unknown before Gate 4.**
-
-The approve → transferWithFee lifecycle has never executed under a real wallet prompt on
-the live frontend. Everything else on the gate list verifies existing built behavior.
-This is first-execution of the actual money path.
+**VERIFIED 2026-06-01 — live 1.01 USDC transfer on Polygon, real wallet, real contract.**
 
 ```
 [x] Preview mode — renders on valid recipient + amount
@@ -83,11 +79,11 @@ This is first-execution of the actual money path.
 [x] On-chain refreshed preview before wallet prompt
 [x] Below-minimum transfer block
 [x] Insufficient-balance block
-[ ] Approve USDC — manual wallet prompt verification needed
-[ ] Allowance confirmation — state transition AUTHORIZING → AUTHORIZED
-[ ] transferWithFee execution
-[ ] Fee deducted correctly (sender −1.01 USDC, recipient +1.00 USDC, treasury +0.01 USDC)
-[ ] Explorer verification on real transfer
+[x] Approve USDC — MetaMask spending cap prompt confirmed: 1.01 USDC, correct contract
+[x] Allowance confirmation — state transition AUTHORIZING → AUTHORIZED observed in receipt
+[x] transferWithFee execution — tx confirmed on Polygon
+[x] Fee deducted correctly (sender −1.01 USDC, recipient +1.00 USDC, treasury +0.01 USDC)
+[x] Explorer verification — Polygonscan shows correct split to 0xe0B0...796B + 0xa7cE...3919
 [ ] Failure/rejection paths under real wallet prompts
 ```
 
@@ -105,7 +101,7 @@ This is first-execution of the actual money path.
     SUBMITTED / CONFIRMED / REJECTED / FAILED / INTERRUPTED / OUTCOME_UNKNOWN
 [x] Rehydration state model (pre-broadcast vs post-broadcast vs terminal)
 [x] fundsMoved semantics — cannot be weakened once set true
-[ ] Full real-transfer receipt validation (requires live transfer)
+[x] Full real-transfer receipt validation — AUTHORIZING → CONFIRMED observed, hashes recorded
 [ ] Receipt copy/export polish — only if needed
 [ ] Recipient memory UX — only if it stays subtle
 ```
@@ -178,8 +174,8 @@ Legal review is a real gate, not cosmetic.
 | Core contract | Deployed, hardened, 59/59 tests passing |
 | MetaMask wallet | Complete |
 | WalletConnect / Reown | Complete — Gate 1 closed |
-| Transfer safety gates | Built; real-execution unverified |
-| Receipt lifecycle | Built; real-transfer validation pending |
+| Transfer safety gates | Complete — live smoke passed 2026-06-01 |
+| Receipt lifecycle | Complete — full lifecycle verified on live transfer |
 | Gas transparency | Complete — expandable row, session-local |
 | Signal / disclosure system | Complete — canonical vocabulary locked |
 | Mobile UX | Architecture decided; manual QA pending |
@@ -225,3 +221,35 @@ The controlled live smoke branch opened `transfersEnabled` globally and for Poly
 Follow-up contract check confirmed `paused() = false`, so the blocked browser message was not caused by the contract pause state. Most likely cause is wallet/session instability during the WalletConnect flow or stale frontend presentation after disconnect.
 
 Gate 2 remains open. Next attempt should use a stable injected MetaMask session before opening the transfer gate.
+
+### 2026-06-01 — Gate 2 confirmed COMPLETE
+
+Outcome: full live-transfer smoke passed.
+
+MetaMask injected session on Polygon mainnet. 1.01 USDC transfer (1.00 recipient + 0.01 fee).
+
+Participants:
+- Sender:    0x2489587C9da6EaB970a5479BA70273BA37961221
+- Recipient: 0xe0B02A6d9738aa36eE48004211E264b7a815796B
+- Treasury:  0xa7cE4232811021d2Dd01f4f0f264Df2427ab3919
+- Contract:  0x5015841D6E665e63Ea174aD6b8FeF854026dE0C0
+
+Receipt IDs (localStorage ix.receipt.archive):
+- Confirmed receipt:   2026-06-01T18:48:56.305Z-992d25bd  (state: confirmed)
+- Authorizing receipt: 2026-06-01T18:43:53.395Z-d064d498  (state: authorizing)
+
+Hashes:
+- Transfer hash: 0xcfa000fa...eeb59a  (partial — full hash pending archive[0] extraction)
+- Approval hash: pending archive[0] extraction
+
+Evidence:
+- MetaMask spending cap prompt: 1.01 USDC, spender matches chains.js
+- UI transitioned to "Step 1 of 2 — Approve 1.01 USDC total debit / Wallet authorization required"
+- Receipt panel showed AUTHORIZING → CONFIRMED state progression
+- Sender balance: 9.22 → 8.21 USDC (−1.01 exact)
+- Polygonscan confirmed split: 1.00 USDC to recipient, 0.01 USDC to treasury
+- Contract interaction verified at deployed production address
+
+All 12 money-path checklist items now complete. Failure/rejection paths remain for Gate 4.
+
+Gate 2 is closed. Current position: Gate 3 (legal/disclosure review).
