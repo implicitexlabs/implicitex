@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ImplicitEx — FAQ</title>
+  <meta name="description" content="Frequently asked questions about ImplicitEx USDC transfers on Polygon.">
+  <link rel="canonical" href="https://implicitex.com/faq.html">
+  <link rel="stylesheet" href="css/main.css">
+  <style>
+    .policy-shell {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: calc(var(--nav-h) + 4.5rem) 1.5rem 5rem;
+    }
+
+    .policy-eyebrow {
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      margin-bottom: 0.9rem;
+    }
+
+    .policy-shell h1,
+    .policy-shell h2 {
+      font-family: var(--display);
+      line-height: 1.15;
+    }
+
+    .policy-shell h1 {
+      font-size: clamp(30px, 5vw, 52px);
+      margin-bottom: 1.5rem;
+    }
+
+    .policy-shell h2 {
+      font-size: clamp(16px, 2vw, 22px);
+      margin: 2.35rem 0 1rem;
+    }
+
+    .policy-shell p {
+      color: var(--dim);
+      font-weight: 700;
+      line-height: 1.75;
+      margin-bottom: 1rem;
+    }
+
+    .policy-shell ul {
+      color: var(--dim);
+      font-weight: 700;
+      line-height: 1.75;
+      margin: 0 0 1rem 1.4rem;
+    }
+
+    .policy-shell li {
+      margin-bottom: 0.35rem;
+    }
+
+    .policy-shell a {
+      color: var(--white);
+    }
+
+    .back {
+      display: inline-block;
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      margin-top: 1.5rem;
+      text-transform: uppercase;
+    }
+  </style>
+</head>
+<body>
+  <nav id="nav">
+    <a href="/" class="logo" aria-label="ImplicitEx home">
+      <span class="logo-mark" aria-hidden="true"></span>
+      <span class="logo-word">implicit<em>ex</em></span>
+    </a>
+    <div class="nav-right">
+      <div class="wallet-pill" id="walletPill" aria-live="polite">
+        <span class="wallet-dot" aria-hidden="true"></span>
+        <span class="wallet-addr" id="walletAddr"></span>
+      </div>
+      <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch to light theme" aria-pressed="false">
+        Theme
+      </button>
+      <span class="nav-status">Polygon · Live</span>
+      <button class="connect-btn" id="connectBtn" onclick="IX.connect()">
+        Connect Wallet
+      </button>
+    </div>
+  </nav>
+
+  <main class="policy-shell">
+    <p class="policy-eyebrow">ImplicitEx</p>
+
+    <h1>FAQ</h1>
+
+    <h2>Why Polygon?</h2>
+
+    <p>
+      ImplicitEx uses Polygon because it provides fast confirmation times and
+      low network fees while supporting USDC and widely used wallets. Transfers
+      on Polygon typically settle quickly and cost significantly less than the
+      same transaction on Ethereum mainnet, making it practical for moving
+      smaller amounts of value without the gas cost consuming a large portion
+      of the transfer.
+    </p>
+
+    <h2>Why USDC?</h2>
+
+    <p>
+      ImplicitEx focuses on USDC because users generally want to transfer
+      value, not speculate on price changes during the transfer process. USDC
+      is designed to maintain a stable value close to $1.00 per token, which
+      makes it more predictable for transfers, payments, and remittances than
+      assets that fluctuate significantly in price.
+    </p>
+
+    <p>
+      USDC is issued by Circle. ImplicitEx does not issue, hold, or redeem USDC.
+    </p>
+
+    <h2>Why are there two wallet confirmations?</h2>
+
+    <p>
+      The first wallet confirmation authorizes the ImplicitEx contract to
+      transfer the exact USDC amount. The second confirmation sends the funds.
+      Authorization alone does not move any money.
+    </p>
+
+    <p>
+      This two-step process is a security feature of the ERC-20 token standard,
+      not something specific to ImplicitEx. Your wallet controls the funds.
+      The ImplicitEx contract cannot move USDC unless you explicitly authorize
+      it first. The authorization is scoped to the exact amount of the transfer
+      — it is not an unlimited approval.
+    </p>
+
+    <h2>Why is the platform fee separate from gas?</h2>
+
+    <p>
+      They are paid to different parties for different reasons.
+    </p>
+
+    <ul>
+      <li><strong>Platform Fee</strong> — 1% of the transfer amount, paid to ImplicitEx. Shown in the transfer preview as part of the total debit.</li>
+      <li><strong>Network Gas Fee</strong> — paid to the Polygon network validators that process the transaction. Varies based on network conditions. ImplicitEx does not receive it.</li>
+    </ul>
+
+    <p>
+      The platform fee is fixed and displayed before you confirm anything.
+      Gas fees are estimated by your wallet and are not collected by ImplicitEx.
+    </p>
+
+    <h2>What happens if I send to the wrong address?</h2>
+
+    <p>
+      The transaction will still execute. Once a transfer is confirmed on-chain,
+      it cannot be reversed by ImplicitEx, the recipient, or the blockchain
+      network. If the destination address is wrong, the funds may be permanently
+      inaccessible. ImplicitEx has no mechanism to recover, reverse, or
+      retrieve a completed transfer.
+    </p>
+
+    <p>
+      This is why ImplicitEx shows the recipient address, amount, platform fee,
+      and total debit before any wallet action, and asks you to confirm that you
+      have reviewed them before proceeding.
+    </p>
+
+    <p>
+      Always verify the recipient address carefully. Transfers confirmed
+      on-chain cannot be reversed.
+    </p>
+
+    <a class="back" href="/">Return to ImplicitEx</a>
+  </main>
+
+  <footer>
+    <span class="f-copy">CONNECT@IMPLICITEX.COM</span>
+    <nav class="f-links" aria-label="Footer links">
+      <a href="/about.html">About</a>
+      <a href="/faq.html">FAQ</a>
+      <a href="/components/terms.html">Terms</a>
+      <a href="/privacy.html">Privacy</a>
+      <a href="/legal.html">Legal</a>
+      <a href="/jurisdictions.html">Jurisdiction Availability</a>
+      <a href="/news.html">News</a>
+      <a href="mailto:connect@implicitex.com">Contact</a>
+    </nav>
+    <nav class="social-icons" aria-label="Social links">
+      <a class="social-link social-x" href="https://x.com/implicitex" target="_blank" rel="noopener" aria-label="ImplicitEx on X"></a>
+      <a class="social-link social-github" href="https://github.com/implicitexlabs" target="_blank" rel="noopener" aria-label="ImplicitEx Labs on GitHub"></a>
+    </nav>
+    <span class="f-net" id="networkBadge">Polygon live</span>
+  </footer>
+
+  <script src="config/chains.js"></script>
+  <script src="js/wallet.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
