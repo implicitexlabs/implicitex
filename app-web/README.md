@@ -15,14 +15,16 @@ app-web/
 │   │   ├── app.js            UI orchestration
 │   │   └── rehydrate.js      Receipt rehydration on page load
 │   ├── css/                  Styles
-│   └── components/terms.html Terms of service
+│   ├── legal.html            Legal disclosures
+│   ├── privacy.html          Privacy policy
+│   └── jurisdictions.html    Jurisdiction availability
 ├── contracts/                Solidity contract source
-│   └── ImplicitEx.sol        Hardened transfer contract with fee routing
+│   └── implicitex_transfer.sol   Hardened transfer contract with fee routing
 ├── deployments/
 │   └── polygon.json          Deployed contract address and metadata
 ├── scripts/                  Hardhat deploy and verify scripts
-├── tests/                    Contract, web, and Python test lanes
-├── backend/python/           Python services (gas, API integrations)
+├── tests/                    Contract and frontend observability tests
+├── backend/python/           Placeholder for future Python services
 └── hardhat.config.js         Hardhat project config
 ```
 

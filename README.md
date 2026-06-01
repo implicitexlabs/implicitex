@@ -78,3 +78,9 @@ Two older GitHub repositories exist from earlier development phases:
 - `implicitexlabs/implicitex-contract` — contract source now canonical in `app-web/contracts/`
 
 Both are archived and inactive. This repository (`implicitexlabs/implicitex`) is the active codebase.
+
+---
+
+## Development Attribution
+
+ImplicitEx is developed and maintained by Aden Media Group LLC / ImplicitEx Labs. AI coding assistants may be used during development for drafting, review, refactoring, testing, and documentation support. All committed code, documentation, configuration, deployment records, and release decisions are reviewed, accepted, and owned by the project maintainer.
