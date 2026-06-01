@@ -141,16 +141,24 @@ are correctly out of scope.
 [x] Hardened contract deployed and source-verified
 [x] Contract address in chains.js verified
 [x] Four-layer transfer flow protection (re-entry, cooldown, flow ID, txBroadcast flag)
+[x] Fee framing: additive model stated (sender pays amount + fee; recipient receives full amount)
+[x] Finality language: submitted ≠ confirmed; confirmed = irreversible — legal.html, terms.html, checkbox
+[x] USDC/Circle risk section: Circle issues USDC; address restrictions outside ImplicitEx control
+[x] Tax obligations: user responsibility stated in legal.html
+[x] Jurisdiction consistency: verified identical list across legal.html, terms.html, jurisdictions.html
+[x] Execution checkpoint: acknowledgement checkbox includes irreversibility statement
+[x] Attorney package assembled: docs/attorney-review/ — service model summary, brief, evidence, page refs
+[ ] Attorney screenshots added to docs/attorney-review/screenshots/
 [ ] Terms reviewed by attorney
 [ ] Privacy reviewed by attorney
 [ ] Jurisdiction language reviewed
 [ ] Risk disclosures reviewed
-[ ] Platform comparison brief refined
 [ ] Firebase deploy smoke before go-live
 [ ] transfersEnabled gate confirmed closed before deploy; opened only for controlled smoke
 ```
 
-Legal review is a real gate, not cosmetic.
+Legal self-review complete 2026-06-01. Attorney review pending. Gate 3 reduces to external review
+plus four screenshots.
 
 ---
 
