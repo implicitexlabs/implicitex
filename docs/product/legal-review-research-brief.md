@@ -160,9 +160,10 @@ does not guarantee the availability or performance of any third-party service.
 
 ### 7. Fee disclosure
 
-ImplicitEx charges a 1% service fee deducted at contract execution time. Blockchain
-gas/network fees are separate and borne by the sender. Fees are non-refundable once
-a transaction is executed.
+ImplicitEx charges a 1% platform fee paid by the sender in addition to the transfer
+amount. The recipient receives the full transfer amount. Polygon gas fees are separate
+and borne by the sender's wallet. Fees are non-refundable once a transaction is
+executed.
 
 ### 8. No escrow / no dispute resolution over funds
 
@@ -316,10 +317,11 @@ Circle separates its own fees from network fees and places network fee responsib
 on the user.
 
 ImplicitEx adaptation:
-ImplicitEx charges a 1% service fee on the transfer amount, deducted at contract
-execution and shown in the transfer preview before approval. Polygon gas fees are
-separate, paid by the sender's wallet, and not collected by ImplicitEx. All fees
-are non-refundable once a transaction is executed.
+ImplicitEx charges a 1% platform fee paid by the sender in addition to the transfer
+amount. The recipient receives the full transfer amount. The fee and total debit are
+shown in the transfer preview before approval. Polygon gas fees are separate, paid
+by the sender's wallet, and not collected by ImplicitEx. All fees are non-refundable
+once a transaction is executed.
 
 ---
 
