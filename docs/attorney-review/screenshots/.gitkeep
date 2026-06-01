@@ -1,0 +1,6 @@
+Add screenshots here before the attorney meeting:
+
+1. transfer-input.png       — amount + recipient entered, preview visible
+2. preview-panel.png        — transfer amount, platform fee, total debit displayed
+3. metamask-approval.png    — spending cap prompt: 1.01 USDC, contract address visible
+4. receipt-confirmed.png    — CONFIRMED state, AUTHORIZING + CONFIRMED entries in history
