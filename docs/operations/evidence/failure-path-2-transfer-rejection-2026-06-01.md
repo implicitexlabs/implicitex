@@ -118,14 +118,46 @@ context (who sent what to whom) that users would expect to see in receipt histor
 
 ---
 
+## Post-fix re-test (2026-06-02)
+
+Re-tested Failure Path 2 after the `preserveKnown` fix. Approval allowance was zero
+(consumed by an incidental confirmed transfer during the first re-test attempt), so
+a fresh approval prompt appeared as expected.
+
+```js
+const r = JSON.parse(localStorage.getItem('ix.receipt.archive'))[0];
+({
+  state:        r.state,         // "rejected"
+  fundsMoved:   r.fundsMoved,    // false
+  approvalHash: r.approvalHash,  // "0x0e4299469440390d7a7d4033ed1809d123cd103474a6950b8a7c3490e63b37e2"
+  transferHash: r.transferHash,  // null
+  sender:       r.sender,        // "0x2489587c9da6eab970a5479ba70273ba37961221"
+  recipient:    r.recipient,     // "0xe0B02A6d9738aa36eE48004211E264b7a815796B"
+  amount:       r.amount,        // "1.0"
+  fee:          r.fee,           // "0.01"
+  totalDebit:   r.totalDebit,    // "1.01"
+  chainId:      r.chainId        // 137
+});
+```
+
+`getActive()` → `null`. localStorage receipt keys: `["ix.receipt.archive"]` only.
+
+**All fields preserved.** The asymmetry is correctly recorded: approval completed
+on-chain (`approvalHash` present), transfer was rejected (`transferHash` null),
+no USDC moved (`fundsMoved: false`).
+
+---
+
 ## Gate discipline
 
-- `transfersEnabled` opened for test session, closed before commit
+- `transfersEnabled` opened for test sessions, closed before every commit
 - Verified: all three `transfersEnabled` flags `false` before this commit
 - Static check: 167/167 pass
 - Observability suite: 27/27 pass
 
 ## Verdict
 
-Failure Path 2 passes all safety criteria. The bug found during this test was a receipt
-data-quality issue, not a safety failure. Fix applied and verified before commit.
+Failure Path 2: CLOSED.
+- Safety: PASS — no funds moved, no active receipt, no false success state
+- Receipt integrity: PASS after `preserveKnown` fix — all transfer attempt fields preserved
+- Bug found, fixed, and live-verified in same session
