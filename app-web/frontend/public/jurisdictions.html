@@ -91,8 +91,21 @@
 <body>
   <nav id="nav">
     <a href="/" class="logo" aria-label="ImplicitEx home">
-      <span class="logo-mark" aria-hidden="true"></span>
-      <span class="logo-word">implicit<em>ex</em></span>
+      <svg class="brandmark" width="25" height="25" viewBox="0 0 25 25" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+        <path d="M18.4,21.48L2.64,5.73l.43-.43,15.76,15.76s1.3,1.3,2.79-.19.21-2.77.21-2.77L6.05,2.32l.43-.43,4.07,4.07,1.38,1.38,1.28-1.28,4.28-4.28.43.43-5.56,5.56,2.98,2.98,5.56-5.56.43.43-5.56,5.56,1.28,1.28,5.56-5.56s1.28-1.28-.21-2.77-2.79-.19-2.79-.19l-4.26,4.26-.43-.43,4.26-4.26s1.3-1.3-.19-2.79-2.77-.21-2.77-.21l-4.28,4.28L7.75.62s-1.28-1.28-2.77.21-.19,2.79-.19,2.79l15.76,15.76-.43.43L4.37,4.05s-1.3-1.3-2.79.19-.11,2.87-.11,2.87l15.68,15.68-.43.43-5.56-5.56-5.54,5.54-.43-.43,5.54-5.54-2.98-2.98-5.54,5.54-.43-.43,5.54-5.54-1.28-1.28L.51,18.08s-1.28,1.28.21,2.77,2.79.19,2.79.19l4.23-4.23.43.43-4.23,4.23s-1.3,1.3.19,2.79,2.77.21,2.77.21l4.26-4.26,4.28,4.28s1.28,1.28,2.77-.21.19-2.79.19-2.79Z" fill="#f2f2f0"/>
+      </svg>
+      <svg class="wordmark" width="200" height="15" viewBox="0 0 200 15" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+        <polygon points="13.45 13.87 16.14 13.87 16.14 3.5 21.68 3.5 21.68 13.87 24.37 13.87 24.37 3.5 29.9 3.5 29.9 13.87 32.59 13.87 32.59 .84 13.45 .84 13.45 13.87" fill="#f2f2f0"/>
+        <path d="M43.35,13.87h2.69v-5.92h10.46V.84h-13.15v13.02ZM53.81,3.5v1.78h-7.77v-1.78h7.77Z" fill="#f2f2f0"/>
+        <polygon points="69.96 .84 67.26 .84 67.26 13.87 80.42 13.87 80.42 11.2 69.96 11.2 69.96 .84" fill="#f2f2f0"/>
+        <rect x="89.69" y=".84" width="2.69" height="13.02" fill="#f2f2f0"/>
+        <polygon points="103.14 13.87 116.29 13.87 116.29 11.2 105.83 11.2 105.83 3.5 116.29 3.5 116.29 .84 103.14 .84 103.14 13.87" fill="#f2f2f0"/>
+        <polygon points="139.01 3.5 144.24 3.5 144.24 13.87 146.93 13.87 146.93 3.5 152.17 3.5 152.17 .84 139.01 .84 139.01 3.5" fill="#f2f2f0"/>
+        <polygon points="162.93 13.87 176.08 13.87 176.08 11.2 165.62 11.2 165.62 8.69 176.08 8.69 176.08 6.03 165.62 6.03 165.62 3.5 176.08 3.5 176.08 .84 162.93 .84 162.93 13.87" fill="#f2f2f0"/>
+        <rect x="125.56" y=".84" width="2.69" height="13.02" fill="#f2f2f0"/>
+        <rect y=".84" width="2.69" height="13.02" fill="#f2f2f0"/>
+        <polygon points="200 0 193.42 6.51 186.85 0 186.85 3.9 190.34 7.35 186.85 10.81 186.85 14.71 193.42 8.19 200 14.71 200 10.81 196.51 7.35 200 3.9 200 0" fill="#f2f2f0"/>
+      </svg>
     </a>
     <div class="nav-right">
       <div class="wallet-pill" id="walletPill" aria-live="polite">
@@ -100,7 +113,11 @@
         <span class="wallet-addr" id="walletAddr"></span>
       </div>
       <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch to light theme" aria-pressed="false">
-        Theme
+        <svg class="theme-icon" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+          <path d="M7 1 A6 6 0 0 0 7 13 Z" fill="var(--white)"/>
+          <path d="M7 1 A6 6 0 0 1 7 13 Z" fill="var(--bg)"/>
+          <circle cx="7" cy="7" r="6" fill="none" stroke="currentColor" stroke-width="1.2"/>
+        </svg>
       </button>
       <span class="nav-status">Polygon · Live</span>
       <button class="connect-btn" id="connectBtn" onclick="IX.connect()">
