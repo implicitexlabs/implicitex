@@ -213,13 +213,25 @@
     if (current.fundsMoved === true) next.fundsMoved = true;
 
     [
-      'blockNumber',
-      'transferHash',
-      'hash',
-      'explorerUrl',
+      // Structural identity — never erase once set
+      'id',
       'createdAt',
       'lastObservedAt',
-      'id',
+      // Transfer attempt facts — set at receipt creation, must survive state transitions
+      'sender',
+      'recipient',
+      'amount',
+      'fee',
+      'totalDebit',
+      'chainId',
+      'network',
+      'contractAddress',
+      'explorerUrl',
+      // On-chain hashes — set when tx is broadcast, must survive later state updates
+      'approvalHash',
+      'transferHash',
+      'hash',
+      'blockNumber',
     ].forEach(function (key) {
       preserveKnown(current, next, key);
     });
