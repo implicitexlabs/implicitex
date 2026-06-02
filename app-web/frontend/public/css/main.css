@@ -1727,7 +1727,7 @@ footer .social-links a:focus-visible,
 .policy-shell p,
 .policy-shell li {
   color: var(--dim);
-  font-weight: 700;
+  font-weight: 500;
   line-height: 1.75;
 }
 
@@ -1790,7 +1790,7 @@ footer .social-links a:focus-visible,
 
 .about-shell p {
   color: var(--dim);
-  font-weight: 700;
+  font-weight: 500;
   line-height: 1.75;
   margin-bottom: 1rem;
 }
