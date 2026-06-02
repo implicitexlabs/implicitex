@@ -1674,6 +1674,171 @@ footer .social-links a:focus-visible,
   border-color: var(--button-hover);
 }
 
+/* ---- Secondary / Policy Pages ---- */
+/* Shared layout for informational, legal, and policy pages.
+   All secondary pages use these rules — no page-local style blocks. */
+
+.policy-shell {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: calc(var(--nav-h) + 4.5rem) 1.5rem 5rem;
+}
+
+/* Wider variant for pages with multi-column grid content (jurisdictions) */
+.policy-shell--wide {
+  max-width: 960px;
+}
+
+.policy-eyebrow,
+.updated {
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.policy-eyebrow { margin-bottom: 0.9rem; }
+.updated { margin-bottom: 1.5rem; }
+
+.policy-shell h1,
+.policy-shell h2,
+.policy-shell h3 {
+  font-family: var(--display);
+  line-height: 1.15;
+}
+
+.policy-shell h1 {
+  font-size: clamp(30px, 5vw, 52px);
+  margin-bottom: 0.7rem;
+}
+
+.policy-shell h2 {
+  font-size: clamp(16px, 2vw, 22px);
+  margin: 2.35rem 0 1rem;
+}
+
+.policy-shell h3 {
+  font-size: 14px;
+  margin: 1.35rem 0 0.7rem;
+}
+
+.policy-shell p,
+.policy-shell li {
+  color: var(--dim);
+  font-weight: 700;
+  line-height: 1.75;
+}
+
+.policy-shell p  { margin-bottom: 1rem; }
+.policy-shell li { margin-bottom: 0.35rem; }
+.policy-shell ul { margin: 0 0 1rem 1.25rem; }
+.policy-shell a  { color: var(--white); }
+
+/* Return-to-home link at the foot of secondary pages */
+.back {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  margin-top: 1.5rem;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--white);
+}
+
+/* ---- About Page ---- */
+
+.about-shell {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: calc(var(--nav-h) + 4.5rem) 1.5rem 5rem;
+}
+
+.about-head {
+  max-width: 780px;
+  margin-bottom: 2.5rem;
+}
+
+.page-eyebrow {
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  margin-bottom: 0.9rem;
+  text-transform: uppercase;
+}
+
+.about-shell h1,
+.about-shell h2 {
+  font-family: var(--display);
+  line-height: 1.15;
+}
+
+.about-shell h1 {
+  font-size: clamp(30px, 5vw, 52px);
+  margin-bottom: 1.5rem;
+}
+
+.about-shell h2 {
+  font-size: clamp(15px, 2vw, 22px);
+  margin-bottom: 1rem;
+}
+
+.about-shell p {
+  color: var(--dim);
+  font-weight: 700;
+  line-height: 1.75;
+  margin-bottom: 1rem;
+}
+
+.about-shell a { color: var(--white); }
+
+.about-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: var(--border);
+  margin: 2rem 0;
+}
+
+.about-card {
+  background: var(--surface);
+  min-height: 260px;
+  padding: 1.5rem;
+}
+
+.about-card p:last-child,
+.about-head p:last-child,
+.about-foot p:last-child {
+  margin-bottom: 0;
+}
+
+.about-foot {
+  max-width: 780px;
+  margin-top: 2.5rem;
+}
+
+/* ---- Jurisdiction Availability Page ---- */
+
+.jurisdiction-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 1rem;
+  margin: 1rem 0 2rem;
+}
+
+.jurisdiction-card {
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.03);
+  padding: 1rem;
+}
+
+.jurisdiction-card ul { margin-bottom: 0; }
+
 /* ---- Responsive ---- */
 @media (max-width: 768px) {
   :root {
@@ -1725,6 +1890,10 @@ footer .social-links a:focus-visible,
   .reveal-copy.is-visible {
     opacity: 1;
     transform: translateY(0);
+  }
+
+  .about-grid {
+    grid-template-columns: 1fr;
   }
 
   .flow-grid {
