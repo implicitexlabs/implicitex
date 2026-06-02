@@ -3272,7 +3272,7 @@
           });
           failTransferTimeline('authorization_requested', 'Wallet request already pending');
           setTxState('idle', 'MetaMask already has a pending request. Open MetaMask and finish or cancel it, then retry.');
-          companionState(IX_TRANSFER_STATES.REJECTED, {
+          companionState(IX_TRANSFER_STATES.INTERRUPTED, {
             statusLine: 'Wallet request already pending in MetaMask.',
             stateVal:   'Interrupted',
             fundsVal:   'No — nothing was sent',
@@ -3507,7 +3507,7 @@
           });
           failTransferTimeline('transfer_requested', 'Wallet request already pending');
           setTxState('idle', 'MetaMask already has a pending request. Open MetaMask and finish or cancel it, then retry.');
-          companionState(IX_TRANSFER_STATES.REJECTED, {
+          companionState(IX_TRANSFER_STATES.INTERRUPTED, {
             statusLine: 'Wallet request already pending in MetaMask.',
             stateVal:   'Interrupted',
             fundsVal:   'No — nothing was sent',

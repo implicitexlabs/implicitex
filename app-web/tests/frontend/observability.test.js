@@ -292,3 +292,53 @@ test('rehydration-style enrichment does not overwrite stronger facts', () => {
   });
   assert.equal(regressed.ok, false);
 });
+
+// ---- Failure Path 3: wallet-busy (-32002) ----
+
+test('classifier -32002 returns INTERRUPTED with fundsMoved false', () => {
+  const err = Object.assign(new Error('MetaMask already has a pending request.'), { code: -32002 });
+  const explained = classifier.classifyError(err, { phase: 'authorization' });
+  assert.equal(explained.code, 'WALLET_REQUEST_PENDING');
+  assert.equal(explained.state, S.INTERRUPTED);
+  assert.equal(explained.fundsMoved, false);
+  assert.equal(explained.broadcastKnown, false);
+});
+
+test('classifier -32002 at transfer phase also returns INTERRUPTED', () => {
+  const err = Object.assign(new Error('MetaMask already has a pending request.'), { code: -32002 });
+  const explained = classifier.classifyError(err, { phase: 'transfer' });
+  assert.equal(explained.state, S.INTERRUPTED);
+  assert.equal(explained.fundsMoved, false);
+});
+
+test('interrupted receipt preserves transfer attempt fields on state resolve', () => {
+  const merged = schema.mergeReceiptForward(
+    {
+      state: S.AUTHORIZING,
+      fundsMoved: false,
+      sender: '0xSENDER',
+      recipient: '0xRECIPIENT',
+      amount: '1.0',
+      fee: '0.01',
+      totalDebit: '1.01',
+      chainId: 137,
+    },
+    {
+      state: S.INTERRUPTED,
+      fundsMoved: false,
+      lastKnownMessage: 'Wallet request already pending. No authorization occurred. No funds moved.',
+    }
+  );
+  assert.equal(merged.state, S.INTERRUPTED);
+  assert.equal(merged.fundsMoved, false);
+  assert.equal(merged.sender, '0xSENDER');
+  assert.equal(merged.recipient, '0xRECIPIENT');
+  assert.equal(merged.amount, '1.0');
+  assert.equal(merged.chainId, 137);
+});
+
+test('interrupted receipt cannot transition directly to confirmed', () => {
+  assert.equal(status.canTransition(S.INTERRUPTED, S.CONFIRMED), false);
+  assert.equal(status.canTransition(S.INTERRUPTED, S.REJECTED), false);
+  assert.equal(status.canTransition(S.INTERRUPTED, S.OUTCOME_UNKNOWN), true);
+});
