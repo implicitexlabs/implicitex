@@ -1785,9 +1785,21 @@ footer .social-links a:focus-visible,
   margin-bottom: 2.3rem;
 }
 
-.about-combined-mark {
+.about-hero-mark--stacked {
+  flex-direction: column;
+  align-items: center;
+  gap: 1.2rem;
+}
+
+.about-brandmark {
   display: block;
-  width: min(860px, 100%);
+  width: clamp(72px, 10vw, 104px);
+  height: auto;
+}
+
+.about-wordmark {
+  display: block;
+  width: min(680px, 100%);
   max-width: 100%;
   height: auto;
 }
@@ -1817,7 +1829,8 @@ footer .social-links a:focus-visible,
 
 .about-shell a { color: var(--white); }
 
-[data-theme="light"] .about-combined-mark {
+[data-theme="light"] .about-brandmark,
+[data-theme="light"] .about-wordmark {
   filter: invert(1);
 }
 
