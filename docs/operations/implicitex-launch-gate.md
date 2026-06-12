@@ -28,6 +28,7 @@ COMPLETED:
 REMAINING BLOCKERS (3):
   1. Real-browser MetaMask state regression smoke — MUST VERIFY before public exposure
      The state taxonomy is defined and the standby/provider-event refactor is complete.
+     Trust gate reference: docs/operations/transaction-trust-gate.md
      Required browser evidence:
      - MetaMask desktop connect; Polygon standby calm while transfers are disabled
      - Ethereum mainnet → Polygon recovery; no stale "Switch to Polygon" on Polygon

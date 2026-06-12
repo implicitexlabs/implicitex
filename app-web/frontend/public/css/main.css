@@ -94,21 +94,27 @@ body {
 .logo {
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 11px;
   text-decoration: none;
 }
 
-/* Brandmark and wordmark — inline SVGs, fill set directly on paths.
-   Light theme rule inverts all SVG shapes to dark automatically.
-   Wordmark hidden on mobile. */
+/* Brandmark and wordmark. Static pages load the shared wordmark asset. */
 .brandmark {
   display: block;
   flex-shrink: 0;
+  width: 29px;
+  height: 29px;
+}
+
+.brandmark path {
+  fill: var(--logo-pixel);
 }
 
 .wordmark {
   display: block;
   flex-shrink: 0;
+  width: 200px;
+  height: auto;
 }
 
 [data-theme="light"] .brandmark path,
@@ -116,6 +122,17 @@ body {
 [data-theme="light"] .wordmark polygon,
 [data-theme="light"] .wordmark rect {
   fill: #080808;
+}
+
+[data-theme="light"] img.wordmark {
+  filter: invert(1);
+}
+
+@media (max-width: 600px) {
+  .brandmark {
+    width: 25px;
+    height: 25px;
+  }
 }
 
 .logo-word {
@@ -528,7 +545,7 @@ body.portal-active #nav {
 .flow-more {
   border-top: 1px solid var(--border);
   color: var(--white);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 400;
   line-height: 1.65;
   margin-top: 1rem;
