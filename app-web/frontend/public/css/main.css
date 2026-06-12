@@ -1779,14 +1779,24 @@ footer .social-links a:focus-visible,
   margin-bottom: 2.5rem;
 }
 
-.page-eyebrow {
-  color: var(--muted);
-  font-family: var(--mono);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.16em;
+.about-lockup {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
   margin-bottom: 0.9rem;
-  text-transform: uppercase;
+}
+
+.about-lockup .brandmark {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 auto;
+}
+
+.about-wordmark {
+  width: 150px;
+  max-width: 48vw;
+  height: auto;
+  display: block;
 }
 
 .about-shell h1,
@@ -1813,6 +1823,14 @@ footer .social-links a:focus-visible,
 }
 
 .about-shell a { color: var(--white); }
+
+[data-theme="light"] .about-wordmark {
+  filter: invert(1);
+}
+
+[data-theme="light"] .about-lockup .brandmark path {
+  fill: var(--bg);
+}
 
 .about-grid {
   display: grid;
