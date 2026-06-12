@@ -1,10 +1,10 @@
 # ImplicitEx Launch Gate
 
-## Current Status — 2026-05-29
+## Current Status — 2026-06-12
 
 ```
-Launch status: PRE-BROWSER-QA
-Recorded: 2026-05-29 (updated from 2026-05-23)
+Launch status: PRE-PRODUCTION-QA
+Recorded: 2026-06-12 (updated from 2026-05-29)
 
 COMPLETED:
   ✅ Contract deployed: 0x5015841D6E665e63Ea174aD6b8FeF854026dE0C0
@@ -13,7 +13,7 @@ COMPLETED:
   ✅ Source verified on Polygonscan
   ✅ On-chain state verified 2026-05-23 (owner/pendingOwner/treasury/fee/paused PASS)
   ✅ Frontend instrument polish merged to main (587aa93)
-  ✅ All checks passing: 59/59 contract tests, 27/27 observability, syntax, static
+  ✅ All checks passing: 59/59 contract tests, 31/31 observability, syntax, static
   ✅ chains.js points to canonical contract, transfersEnabled: false
   ✅ deployments/polygon.json reflects canonical deployment evidence
   ✅ Deployer key hygiene: 0xf614356 (exposed 2026-05-13) not used; 0x5466 used instead
@@ -24,21 +24,28 @@ COMPLETED:
      isConfiguredChain ≠ isLiveTransferChain; amber ≠ red
   ✅ Firebase JS cache headers updated — stale wallet.js and receipt-store.js should
      not survive deploys
+  ✅ Negative-path evidence (partial) — branch: gate3-negative-path-proof (ed835be)
+     FP1 PASS: approval rejection (2026-06-01)
+     FP2 PASS: transfer rejection (2026-06-01)
+     FP3 PASS: wallet busy / -32002 (2026-06-11)
+     FP6 VERIFIED: RPC failure — code review + safe offline attempt (2026-06-11)
+     FP4 PENDING: insufficient balance
+     FP5 PENDING: wrong network mid-flow
+  ✅ BLOCKER 1 CLOSED — Real-browser MetaMask state regression smoke
+     Branch: gate3-browser-regression-smoke (358af72)
+     Icon fix: 142e0c2 — 192x192 icon declaration added; MetaMask dialog now crisp
+     B1-01 PASS: Connected on Polygon with transfers disabled — calm standby state
+     B1-02 PASS: Chain switch — provider chain confirmed via eth_chainId; no stale UI
+     B1-03 PASS: Disconnect/reconnect — clean state, network re-evaluated on reconnect
+     B1-04 PASS: Hard refresh — conservative reconnect, no ghost state
+     B1-05 PASS: Account switch — provider state re-evaluated correctly
+     B1-06 PASS: No duplicate events after reconnect
+     B1-07 PASS: Rejected approval — human-readable copy in receipt archive
+     B1-08 PASS: Receipt survives refresh without READY/AUTHORIZING ghosts
+     Static: 220/220. Observability: 31/31.
 
-REMAINING BLOCKERS (3):
-  1. Real-browser MetaMask state regression smoke — MUST VERIFY before public exposure
-     The state taxonomy is defined and the standby/provider-event refactor is complete.
-     Required browser evidence:
-     - MetaMask desktop connect; Polygon standby calm while transfers are disabled
-     - Ethereum mainnet → Polygon recovery; no stale "Switch to Polygon" on Polygon
-     - Disconnect → reconnect; no stale sender display
-     - Refresh with wallet permission already granted
-     - Account switch updates sender cleanly
-     - No duplicated wallet/provider events after reconnect
-     - Rejected approval and rejected transfer signature show human-readable copy
-     - Receipt survives refresh/reconnect without READY/AUTHORIZING ghosts
-
-  2. Manual production-frontend QA — MUST VERIFY before public exposure
+REMAINING BLOCKERS (2):
+  1. Manual production-frontend QA — MUST VERIFY before public exposure
      - Desktop MetaMask full flow (connect, approve, transfer, reject, refresh recovery)
      - Mobile MetaMask browser full flow
      - iPhone Safari visual/layout pass
@@ -47,13 +54,13 @@ REMAINING BLOCKERS (3):
      - Wrong-network recovery; receipt visibility after reconnect
      Note: MetaMask mobile browser is MVP QA. WalletConnect/Reown is not.
 
-  3. Attorney review before public promotion
+  2. Attorney review before public promotion
      Required before enabling or publicly promoting live transfers.
      Max transfer cap stays at 250 USDC until written checklist passes.
      Jurisdiction copy remains platform policy, not a legal authorization claim.
      Terms/Privacy/Legal/Jurisdictions remain draft until reviewed.
 
-State classification (2026-05-29):
+State classification (2026-06-12):
   Contract logic:          FROZEN (59/59 tests)
   Deployment:              COMPLETE — canonical contract on Polygon mainnet
   Ownership:               COMPLETE — Safe owns, pendingOwner zeroed
@@ -62,11 +69,13 @@ State classification (2026-05-29):
   Git history:             CLEAN
   Secret hygiene:          CLEAN
   Frontend UX:             COMPLETE — execution instrument polished and smoke-verified
-  Receipt lifecycle:       FIXED (2026-05-26) — awaiting real-browser confirmation
-  Standby/provider events: COMPLETE — refactor merged; amber/red routing corrected
-  Domain cutover:          BLOCKED until browser QA complete
+  Receipt lifecycle:       FIXED and CONFIRMED — real-browser refresh/reconnect verified
+  Standby/provider events: COMPLETE — refactor merged; browser smoke confirmed correct
+  Negative-path evidence:  PARTIAL — FP1/FP2/FP3 PASS, FP6 VERIFIED; FP4/FP5 PENDING
+  Browser regression smoke: COMPLETE — B1-01 through B1-08 PASS (2026-06-12)
+  Domain cutover:          BLOCKED until production QA complete
   Attorney review:         PENDING — required before public promotion
-  transfersEnabled:        false — gate closed after smoke
+  transfersEnabled:        false — gate closed
 
 .env hygiene rule:
   Never let an agent or tool read or print .env contents.
