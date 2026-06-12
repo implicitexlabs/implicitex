@@ -1775,17 +1775,19 @@ footer .social-links a:focus-visible,
 }
 
 .about-head {
-  max-width: 780px;
+  max-width: 960px;
   margin-bottom: 2.5rem;
 }
 
 .about-hero-mark {
-  margin-bottom: 1.8rem;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 2.3rem;
 }
 
 .about-combined-mark {
   display: block;
-  width: min(680px, 100%);
+  width: min(860px, 100%);
   max-width: 100%;
   height: auto;
 }
