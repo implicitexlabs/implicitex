@@ -1,10 +1,10 @@
 # ImplicitEx Launch Gate
 
-## Current Status — 2026-05-29
+## Current Status — 2026-06-11
 
 ```
 Launch status: PRE-BROWSER-QA
-Recorded: 2026-05-29 (updated from 2026-05-23)
+Recorded: 2026-06-11 (updated from 2026-05-29)
 
 COMPLETED:
   ✅ Contract deployed: 0x5015841D6E665e63Ea174aD6b8FeF854026dE0C0
@@ -13,7 +13,7 @@ COMPLETED:
   ✅ Source verified on Polygonscan
   ✅ On-chain state verified 2026-05-23 (owner/pendingOwner/treasury/fee/paused PASS)
   ✅ Frontend instrument polish merged to main (587aa93)
-  ✅ All checks passing: 59/59 contract tests, 27/27 observability, syntax, static
+  ✅ All checks passing: 59/59 contract tests, 31/31 observability, syntax, static
   ✅ chains.js points to canonical contract, transfersEnabled: false
   ✅ deployments/polygon.json reflects canonical deployment evidence
   ✅ Deployer key hygiene: 0xf614356 (exposed 2026-05-13) not used; 0x5466 used instead
@@ -24,6 +24,17 @@ COMPLETED:
      isConfiguredChain ≠ isLiveTransferChain; amber ≠ red
   ✅ Firebase JS cache headers updated — stale wallet.js and receipt-store.js should
      not survive deploys
+  ✅ Negative-path evidence (partial) — branch: gate3-negative-path-proof (cde21e7)
+     FP1 PASS: approval rejection (2026-06-01)
+     FP2 PASS: transfer rejection (2026-06-01)
+     FP3 PASS: wallet busy / -32002 (2026-06-11)
+       — acknowledgement cleared, form preserved, no phantom receipt
+       — recovery loop verified: cancel → re-acknowledge → re-enable, no reload required
+       — watch item: refresh/reconnect required after FP3 before subsequent tests
+     FP6 VERIFIED: RPC failure — code review + safe offline attempt (2026-06-11)
+       — four pre-flight guards confirmed, fundsMoved conservative, no bugs found
+     FP4 PENDING: insufficient balance
+     FP5 PENDING: wrong network mid-flow
 
 REMAINING BLOCKERS (3):
   1. Real-browser MetaMask state regression smoke — MUST VERIFY before public exposure
@@ -53,7 +64,7 @@ REMAINING BLOCKERS (3):
      Jurisdiction copy remains platform policy, not a legal authorization claim.
      Terms/Privacy/Legal/Jurisdictions remain draft until reviewed.
 
-State classification (2026-05-29):
+State classification (2026-06-11):
   Contract logic:          FROZEN (59/59 tests)
   Deployment:              COMPLETE — canonical contract on Polygon mainnet
   Ownership:               COMPLETE — Safe owns, pendingOwner zeroed
@@ -64,6 +75,7 @@ State classification (2026-05-29):
   Frontend UX:             COMPLETE — execution instrument polished and smoke-verified
   Receipt lifecycle:       FIXED (2026-05-26) — awaiting real-browser confirmation
   Standby/provider events: COMPLETE — refactor merged; amber/red routing corrected
+  Negative-path evidence:  PARTIAL — FP1/FP2/FP3 PASS, FP6 VERIFIED; FP4/FP5 PENDING
   Domain cutover:          BLOCKED until browser QA complete
   Attorney review:         PENDING — required before public promotion
   transfersEnabled:        false — gate closed after smoke
