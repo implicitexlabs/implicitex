@@ -2,7 +2,7 @@
 
 **Date:** 2026-06-11
 **Branch:** gate3-negative-path-proof
-**Outcome:** PENDING — manual wallet test required
+**Outcome:** VERIFIED BY CODE REVIEW — manual simulation inconclusive
 
 ---
 
@@ -219,9 +219,28 @@ const r = JSON.parse(localStorage.getItem('ix.receipt.archive'))[0];
 
 ## Verdict
 
-PENDING — awaiting manual wallet test.
+VERIFIED BY CODE REVIEW — 2026-06-11, gate3-negative-path-proof branch.
 
-Pre-test code review: provider failures are correctly contained at every phase. Four
-early-return guards protect against pre-flight failures with no receipt creation. Post-
-creation failures classify via `classifyTransferError()` and terminate to honest states.
-`fundsMoved` is always set conservatively. No bugs found.
+**Manual simulation attempt (Sub-B):**
+- DevTools set to Offline before clicking Execute Transfer.
+- MetaMask popup still appeared (browser extension has independent network access;
+  DevTools Offline does not block MetaMask's provider path).
+- Sub-B preflight failure condition was not reproduced via this method.
+- MetaMask request was canceled.
+- `window.IX?.receipts?.getActive?.()` → `null` — no phantom receipt created.
+- Firefox DevTools does not expose Chrome-style request blocking; targeted RPC domain
+  blocking was not available during this session.
+
+**Code review verdict (pre-test):**
+Provider failures are correctly contained at every phase:
+- Four early-return guards in `submitTransfer()` fire before `storeReceipt()` — no receipt
+  created on pre-flight failure.
+- Balance fetch failure routes to `resetBalanceDisplay('Balance unavailable')`, button
+  disabled, transfer cannot be initiated.
+- Non-rejection network errors during approval route via `classifyTransferError()` to
+  `INTERRUPTED`, `fundsMoved: false`.
+- Post-broadcast failures terminate to `OUTCOME_UNKNOWN` with broadcast hash preserved.
+- No bugs found.
+
+**FP6 is not a named hard gate requirement in the Stage 4 launch gate.**
+Code review verdict accepted as sufficient evidence. Manual simulation deferred.

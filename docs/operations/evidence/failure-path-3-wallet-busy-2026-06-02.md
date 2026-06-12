@@ -1,8 +1,8 @@
 # Failure Path 3 — Wallet Busy (-32002)
 
-**Date:** 2026-06-02
-**Branch:** main
-**Outcome:** PENDING — manual wallet test required
+**Date:** 2026-06-02 / 2026-06-11
+**Branch:** main / gate3-negative-path-proof
+**Outcome:** PASS
 
 ---
 
@@ -184,8 +184,29 @@ const r = JSON.parse(localStorage.getItem('ix.receipt.archive'))[0];
 
 ## Verdict
 
-PENDING — awaiting manual wallet test.
+PASS — 2026-06-11, gate3-negative-path-proof branch.
+
+**Method:** Option B — MetaMask native send confirmation left pending (POL send).
+
+**Observed behavior:**
+- Created pending MetaMask POL send confirmation, left open without confirming or rejecting.
+- Clicked Execute Transfer on ImplicitEx.
+- No second MetaMask confirmation appeared (wallet-busy condition intercepted).
+- Acknowledgement checkbox automatically cleared.
+- Execute Transfer returned to disabled state.
+- Recipient address and amount preserved.
+- No stuck processing state.
+- No phantom transaction initiated.
+- `window.IX?.receipts?.getActive?.()` → `null`.
+
+**Recovery loop verified:**
+- Canceled pending POL send in MetaMask.
+- Re-checked acknowledgement box on ImplicitEx.
+- Execute Transfer re-enabled without page reload or wallet reconnect.
+
+**Note:** Sub-scenario B (−32002 during transfer step) was not separately triggered.
+Sub-scenario A (−32002 during approval step) confirmed clean.
 
 Pre-test code review: handling is correct. The `-32002` telemetry bug was found and fixed
 (companionState state key corrected from REJECTED to INTERRUPTED). Observability tests added
-and passing.
+and passing. 31/31 observability tests pass post-fix.
