@@ -2,6 +2,8 @@
 
 Non-custodial USDC transfer platform. Sender wallet → recipient wallet. 1% platform fee. No custody. Polygon mainnet.
 
+Strategic direction: ImplicitEx may evolve into financial infrastructure for autonomous agents, using the current transfer engine as a foundation for future agent treasury, permissions, identity, settlement, audit, and trust layers.
+
 Operated by Aden Media Group LLC.
 
 ---
@@ -23,6 +25,8 @@ implicitex/
 │
 ├── docs/
 │   ├── product/mvp-roadmap.md        Launch gate sequence and board
+│   ├── product/agent-financial-infrastructure-initiative.md
+│   │                                  Agent infrastructure thesis
 │   ├── attorney-review/              Attorney review package (Gate 3)
 │   ├── operations/evidence/          Live smoke test evidence
 │   ├── decisions/                    ADRs and decision log
