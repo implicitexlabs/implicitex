@@ -1788,7 +1788,7 @@ footer .social-links a:focus-visible,
 .about-hero-mark--stacked {
   flex-direction: column;
   align-items: center;
-  gap: 1rem;
+  gap: calc(1rem + 4px);
 }
 
 .about-brandmark {
