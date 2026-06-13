@@ -1785,9 +1785,22 @@ footer .social-links a:focus-visible,
   margin-bottom: 2.3rem;
 }
 
-.about-hero-logo {
+.about-hero-mark--stacked {
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.about-brandmark {
   display: block;
-  width: min(920px, 100%);
+  width: clamp(88px, 8vw, 112px);
+  height: auto;
+  flex: 0 0 auto;
+}
+
+.about-wordmark {
+  display: block;
+  width: min(360px, 80vw);
   max-width: 100%;
   height: auto;
 }
@@ -1817,7 +1830,8 @@ footer .social-links a:focus-visible,
 
 .about-shell a { color: var(--white); }
 
-[data-theme="light"] .about-hero-logo {
+[data-theme="light"] .about-brandmark,
+[data-theme="light"] .about-wordmark {
   filter: invert(1);
 }
 
