@@ -1788,19 +1788,19 @@ footer .social-links a:focus-visible,
 .about-hero-mark--stacked {
   flex-direction: column;
   align-items: center;
-  gap: calc(1rem + 4px);
+  gap: calc(1rem + 12px);
 }
 
 .about-brandmark {
   display: block;
-  width: clamp(88px, 8vw, 112px);
+  width: clamp(70px, 6.4vw, 90px);
   height: auto;
   flex: 0 0 auto;
 }
 
 .about-wordmark {
   display: block;
-  width: min(360px, 80vw);
+  width: min(288px, 64vw);
   max-width: 100%;
   height: auto;
 }
