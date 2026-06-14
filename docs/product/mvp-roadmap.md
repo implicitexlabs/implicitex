@@ -91,7 +91,7 @@ are correctly out of scope.
     FP2 transfer rejection          PASS 2026-06-01
     FP3 wallet busy / -32002        PASS 2026-06-11
     FP4 insufficient balance        PASS 2026-06-14
-    FP5 wrong network mid-flow      PENDING
+    FP5 wrong network mid-flow      PASS 2026-06-14
     FP6 RPC failure / interruption  VERIFIED (code review) 2026-06-11
 ```
 
