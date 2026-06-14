@@ -1,7 +1,7 @@
 # ImplicitEx MVP Roadmap
 
-Last updated: 2026-06-01
-Branch: walletconnect-mobile-session
+Last updated: 2026-06-14
+Branch: gate3-production-frontend-qa
 
 ---
 
@@ -86,7 +86,13 @@ are correctly out of scope.
 [x] transferWithFee execution — tx confirmed on Polygon
 [x] Fee deducted correctly (sender −1.01 USDC, recipient +1.00 USDC, treasury +0.01 USDC)
 [x] Explorer verification — Polygonscan shows correct split to 0xe0B0...796B + 0xa7cE...3919
-[ ] Failure/rejection paths under real wallet prompts
+[~] Failure/rejection paths under real wallet prompts
+    FP1 approval rejection          PASS 2026-06-01
+    FP2 transfer rejection          PASS 2026-06-01
+    FP3 wallet busy / -32002        PASS 2026-06-11
+    FP4 insufficient balance        PASS 2026-06-14
+    FP5 wrong network mid-flow      PENDING
+    FP6 RPC failure / interruption  VERIFIED (code review) 2026-06-11
 ```
 
 ---
@@ -214,10 +220,10 @@ plus four screenshots.
 
 ---
 
-## Static verification (as of branch park 2026-05-30)
+## Static verification (as of branch park 2026-06-14)
 
 ```
-Static check:     145/145 pass
+Static check:     231/231 pass
 Observability:     27/27  pass
 Contract tests:    59/59  pass
 Working tree:      clean
