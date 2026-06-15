@@ -17,7 +17,7 @@ window.IX_CHAINS = {
   // Polygon Mainnet (chain ID 137)
   137: {
     name:              'Polygon',
-    rpcUrl:            'https://polygon-rpc.com',   // public, no key required
+    rpcUrl:            'https://polygon-bor-rpc.publicnode.com',  // public, no key required; polygon-rpc.com disabled unauthenticated access 2026-06
     explorerUrl:       'https://polygonscan.com',
     usdcAddress:       '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359', // Circle native USDC on Polygon PoS
     contractAddress:   '0x5015841D6E665e63Ea174aD6b8FeF854026dE0C0',
