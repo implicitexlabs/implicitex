@@ -137,21 +137,25 @@ Procedure:
 
 Open each URL and confirm it loads without error:
 
+NOTE: Custom domain `implicitex.app` is pending post-Gate-4 DNS cutover.
+Gate 4 authoritative URL is `https://implicitex-236f2.web.app`.
+Update these URLs after domain wiring is complete.
+
 ```
-https://implicitex.app/           ← homepage, logo, nav, How It Works
-https://implicitex.app/about.html
-https://implicitex.app/faq.html
-https://implicitex.app/terms.html
-https://implicitex.app/privacy.html
-https://implicitex.app/legal.html
-https://implicitex.app/jurisdictions.html
-https://implicitex.app/news.html
-https://implicitex.app/404.html   ← or navigate to a non-existent route
+https://implicitex-236f2.web.app/                ← homepage, logo, nav, How It Works
+https://implicitex-236f2.web.app/about.html
+https://implicitex-236f2.web.app/faq.html
+https://implicitex-236f2.web.app/terms.html
+https://implicitex-236f2.web.app/privacy.html
+https://implicitex-236f2.web.app/legal.html
+https://implicitex-236f2.web.app/jurisdictions.html
+https://implicitex-236f2.web.app/news.html
+https://implicitex-236f2.web.app/404.html        ← or navigate to a non-existent route
 ```
 
 ### Wallet and gate state
 
-1. Open `https://implicitex.app/` in browser.
+1. Open `https://implicitex-236f2.web.app/` in browser.
 2. Connect MetaMask on Polygon.
 3. **Closed-gate deploy:** confirm transfer panel shows standby / preview-only mode.
    Button should NOT be armed. Status should reflect TRANSFERS_DISABLED.
