@@ -31,8 +31,8 @@ session restore polish, AI features, or social login before live-transfer smoke 
 Gate 1: Wallet + UI regression smoke         ← COMPLETE
 Gate 2: Live-transfer readiness review       ← COMPLETE
 Gate 3: Builder-controlled launch readiness  ← COMPLETE 2026-06-15
-Gate 4: Mainnet controlled live smoke        ← current position
-Gate 5: Public soft launch
+Gate 4: Mainnet controlled live smoke        ← COMPLETE 2026-06-15
+Gate 5: Public soft launch                   ← current position
 ```
 
 **Positioning:** Gate 2 complete. Live transfer smoke passed 2026-06-01 with real USDC on
@@ -52,17 +52,17 @@ Gate 3 checklist — **COMPLETE 2026-06-15**:
 [x] Firebase deploy smoke — PASS 2026-06-15; all routes, gate closed, config fresh
 ```
 
-Gate 4 checklist:
+Gate 4 checklist — **COMPLETE 2026-06-15**:
 ```
-[ ] Confirm branch/commit/suite before opening gate
-[ ] Flip transfersEnabled intentionally
-[ ] Deploy live config
-[ ] Execute small controlled USDC transfer (1.00 USDC)
-[ ] Verify approval prompt → transfer prompt → receipt → Polygonscan → fee split
-[ ] Close gate immediately
-[ ] Deploy closed-gate config
-[ ] Confirm public app is closed again
-[ ] Commit evidence
+[x] Confirm branch/commit/suite before opening gate
+[x] Flip transfersEnabled intentionally
+[x] Deploy live config
+[x] Execute small controlled USDC transfer (1.00 USDC)
+[x] Verify approval prompt → transfer prompt → receipt → Polygonscan → fee split
+[x] Close gate immediately
+[x] Deploy closed-gate config
+[x] Confirm public app is closed again
+[x] Commit evidence
 ```
 
 Gate 5 (public soft launch) minimum posture:
@@ -229,7 +229,7 @@ plus four screenshots.
 | Core contract | Deployed, hardened, 59/59 tests passing |
 | MetaMask wallet | Complete |
 | WalletConnect / Reown | Complete — Gate 1 closed |
-| Transfer safety gates | Complete — live smoke passed 2026-06-01 |
+| Transfer safety gates | Complete — Gate 4 mainnet smoke passed 2026-06-15 |
 | Receipt lifecycle | Complete — full lifecycle verified on live transfer |
 | Gas transparency | Complete — expandable row, session-local |
 | Signal / disclosure system | Complete — canonical vocabulary locked |
