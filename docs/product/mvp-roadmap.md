@@ -219,10 +219,13 @@ The first-time visitor stops at one of these moments and either finds an answer 
 FAQ entries 1 and 2 exist to intercept those moments before doubt compounds.
 
 **Gate 5 session opening order:**
-1. FAQ: Why does MetaMask show two confirmations?
-2. FAQ: Why does MetaMask say the contract is untrusted?
-3. Transparency/Verification page built around actual Gate 4 evidence.
-4. Homepage copy and launch communications.
+1. verification.html — facts only, no adjectives. Build this first. It anchors everything
+   that follows: the FAQ has something to cite, the homepage has something to point to,
+   the launch announcement has something to link instead of claims to make.
+2. FAQ: Why does MetaMask show two confirmations? (cites verification page)
+3. FAQ: Why does MetaMask say the contract is untrusted? (cites verification page)
+4. Homepage copy — anchored to a proven, documented, revenue-producing transaction
+5. Launch announcement — points to evidence, not positioning
 
 Gate 5 items split into two categories:
 
