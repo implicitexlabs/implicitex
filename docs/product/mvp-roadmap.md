@@ -38,10 +38,46 @@ Gate 5: Public soft launch
 **Positioning:** Gate 2 complete. Live transfer smoke passed 2026-06-01 with real USDC on
 Polygon. Full approve → transferWithFee → receipt lifecycle verified end-to-end.
 
-Gate 3 is builder-controlled launch readiness: failure-path validation, mobile UX smoke,
-support/disclaimer copy, transfer gate discipline, and public launch checklist. Attorney
-review is recommended before scale but is not a blocker — it is a third-party dependency
-outside MVP scope.
+Gate 3 is builder-controlled launch readiness. The question it answers is no longer "can
+it work?" — that is proven. Gate 3 answers: "can we expose it without embarrassing trust
+failures, stale wallet state, unclear risk language, or unsafe deploy procedure?"
+
+Gate 3 remaining checklist (as of 2026-06-14):
+```
+[x] Failure paths — FP1–FP5 PASS, FP6 verified by code review
+[x] Mobile UX smoke — responsive viewport + real MetaMask mobile browser PASS
+[ ] Wallet/provider regression — extension ↔ WC provider swap, no duplicate events
+[ ] Support/disclaimer copy pass — non-reckless risk language, support path, limitations
+[ ] Transfer gate + deploy safety checklist — operator procedure before any live config
+[ ] Firebase deploy smoke — confirm hosted app matches local; no stale cache
+```
+
+Gate 4 checklist:
+```
+[ ] Confirm branch/commit/suite before opening gate
+[ ] Flip transfersEnabled intentionally
+[ ] Deploy live config
+[ ] Execute small controlled USDC transfer (1.00 USDC)
+[ ] Verify approval prompt → transfer prompt → receipt → Polygonscan → fee split
+[ ] Close gate immediately
+[ ] Deploy closed-gate config
+[ ] Confirm public app is closed again
+[ ] Commit evidence
+```
+
+Gate 5 (public soft launch) minimum posture:
+```
+[ ] Homepage copy final
+[ ] Support/contact route works
+[ ] Known-limitations note (no recovery, no reversal, Polygon only)
+[ ] First-user walkthrough tested
+[ ] Launch announcement ready
+[ ] Transfer cap low; fee simple; analytics watched manually
+[ ] Rollback plan ready
+```
+
+Attorney review is recommended before scale but is not a hard MVP blocker — it is a
+third-party dependency outside builder-controlled scope.
 
 **Every work session should start by asking: which launch risk are we removing today?**
 
@@ -131,8 +167,8 @@ are correctly out of scope.
 [x] Gas price row — expandable, collapsed by default
 [x] Disclosure triangle consistency (CSS border-triangle canonical)
 [x] Signal proportionality (gray/amber/red hierarchy)
-[ ] Mobile menu — hamburger nav, browsing vs transaction modes
-[ ] Mobile form — spacing, tap targets, keyboard overlays
+[x] Mobile menu — hamburger nav confirmed functional 2026-06-14
+[x] Mobile form — tap targets, balance/fee readable; real MetaMask mobile browser PASS 2026-06-14
 [ ] No duplicate provider events — verify on WC reconnect
 [ ] WalletConnect reconnect after MetaMask session and vice versa
 ```
@@ -197,7 +233,7 @@ plus four screenshots.
 | Receipt lifecycle | Complete — full lifecycle verified on live transfer |
 | Gas transparency | Complete — expandable row, session-local |
 | Signal / disclosure system | Complete — canonical vocabulary locked |
-| Mobile UX | Architecture decided; manual QA pending |
+| Mobile UX | PASS — responsive + real MetaMask mobile browser smoke 2026-06-14 |
 | Legal / disclosure | Research complete; attorney review pending |
 | Public launch prep | Not started; correctly deferred |
 
