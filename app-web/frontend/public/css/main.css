@@ -720,6 +720,24 @@ body.portal-active #nav {
   color: var(--dim);
 }
 
+/* Light-theme override: --white and --bg invert, which turns --primary fields
+   black. Pin to literal white surface so transfer entry fields are always
+   white-background / dark-text regardless of theme. */
+[data-theme="light"] .tx-field--primary {
+  background: #ffffff;
+  border-color: #c8c8c6;
+  color: #111111;
+}
+
+[data-theme="light"] .tx-field--primary::placeholder {
+  color: rgba(8, 8, 8, 0.45);
+}
+
+[data-theme="light"] .tx-field--primary:focus {
+  border-color: #888888;
+  box-shadow: 0 0 0 1px #888888;
+}
+
 .tx-field--select {
   appearance: none;
   color: var(--dim);
