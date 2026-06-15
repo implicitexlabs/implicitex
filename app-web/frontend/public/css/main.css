@@ -1012,6 +1012,8 @@ body.portal-active #nav {
   color: var(--warn);
 }
 
+.tx-confirm[hidden] { display: none; }
+
 .tx-confirm {
   display: flex;
   align-items: flex-start;
