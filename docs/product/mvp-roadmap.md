@@ -267,7 +267,7 @@ Working tree:      clean
 
 ## Post-Gate 3 fixes and improvements (2026-06-15)
 
-Suite result after all changes: 232/232 static · 27/27 observability · 59/59 contract.
+Suite result after all changes: 232/232 static · 31/31 observability · 59/59 contract.
 
 ### 1. Receipt-recovery path broken — fixed (`95d9c91` + `b48a680`)
 
