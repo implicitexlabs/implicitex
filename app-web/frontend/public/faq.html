@@ -97,6 +97,32 @@
       Gas fees are estimated by your wallet and are not collected by ImplicitEx.
     </p>
 
+    <h2>Why does my wallet warn that the contract is untrusted?</h2>
+
+    <p>
+      Wallet security providers like Blockaid analyze contracts and assign a
+      trust level based on factors that include transaction history, contract age,
+      and known malicious patterns. A warning that a contract is "untrusted" means
+      it has not yet accumulated enough history to receive a trusted classification
+      — not that malicious behavior has been detected.
+    </p>
+
+    <p>
+      The contract address shown in the warning is the ImplicitEx contract.
+      Its source code is publicly verified on Polygonscan. A controlled mainnet
+      transaction was executed on June 15, 2026 prior to public launch, confirming
+      that the contract routes funds exactly as described: the transfer amount to
+      the recipient, the 1% fee to the treasury, and nothing retained by the
+      contract. You can verify this directly on the
+      <a href="/verification.html">Verification</a> page.
+    </p>
+
+    <p>
+      If you see this warning, you can verify the contract address shown matches
+      the address on the Verification page before proceeding. If they match,
+      you are interacting with the correct contract.
+    </p>
+
     <h2>What happens if I send to the wrong address?</h2>
 
     <p>
@@ -125,6 +151,7 @@
     <nav class="f-links" aria-label="Footer links">
       <a href="/about.html">About</a>
       <a href="/faq.html">FAQ</a>
+      <a href="/verification.html">Verification</a>
       <a href="/terms.html">Terms</a>
       <a href="/privacy.html">Privacy</a>
       <a href="/legal.html">Legal</a>

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ImplicitEx — Verification</title>
+  <meta name="description" content="Public verification of the ImplicitEx contract, treasury, fee model, and transaction record on Polygon.">
+  <link rel="canonical" href="https://implicitex.com/verification.html">
+  <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+  <nav id="nav">
+    <a href="/" class="logo" aria-label="ImplicitEx home">
+      <svg class="brandmark" width="25" height="25" viewBox="0 0 25 25" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+        <path d="M18.4,21.48L2.64,5.73l.43-.43,15.76,15.76s1.3,1.3,2.79-.19.21-2.77.21-2.77L6.05,2.32l.43-.43,4.07,4.07,1.38,1.38,1.28-1.28,4.28-4.28.43.43-5.56,5.56,2.98,2.98,5.56-5.56.43.43-5.56,5.56,1.28,1.28,5.56-5.56s1.28-1.28-.21-2.77-2.79-.19-2.79-.19l-4.26,4.26-.43-.43,4.26-4.26s1.3-1.3-.19-2.79-2.77-.21-2.77-.21l-4.28,4.28L7.75.62s-1.28-1.28-2.77.21-.19,2.79-.19,2.79l15.76,15.76-.43.43L4.37,4.05s-1.3-1.3-2.79.19-.11,2.87-.11,2.87l15.68,15.68-.43.43-5.56-5.56-5.54,5.54-.43-.43,5.54-5.54-2.98-2.98-5.54,5.54-.43-.43,5.54-5.54-1.28-1.28L.51,18.08s-1.28,1.28.21,2.77,2.79.19,2.79.19l4.23-4.23.43.43-4.23,4.23s-1.3,1.3.19,2.79,2.77.21,2.77.21l4.26-4.26,4.28,4.28s1.28,1.28,2.77-.21.19-2.79.19-2.79Z" fill="#f2f2f0"/>
+      </svg>
+      <img class="wordmark" src="/components/images/wordmark.svg" alt="" aria-hidden="true">
+    </a>
+    <div class="nav-right">
+      <div class="wallet-pill" id="walletPill" aria-live="polite">
+        <span class="wallet-dot" aria-hidden="true"></span>
+        <span class="wallet-addr" id="walletAddr"></span>
+      </div>
+      <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch to light theme" aria-pressed="false">
+        <svg class="theme-icon" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+          <path d="M7 1 A6 6 0 0 0 7 13 Z" fill="var(--white)"/>
+          <path d="M7 1 A6 6 0 0 1 7 13 Z" fill="var(--bg)"/>
+          <circle cx="7" cy="7" r="6" fill="none" stroke="currentColor" stroke-width="1.2"/>
+        </svg>
+      </button>
+      <span class="nav-status">Polygon · Live</span>
+      <button class="connect-btn" id="connectBtn" onclick="IX.connect()">
+        Connect Wallet
+      </button>
+    </div>
+  </nav>
+
+  <main class="policy-shell">
+    <p class="policy-eyebrow">ImplicitEx</p>
+
+    <h1>Verification</h1>
+
+    <p>
+      Every claim on this page is independently verifiable. Nothing here requires
+      you to take ImplicitEx's word for it.
+    </p>
+
+    <h2>Public Verification</h2>
+
+    <p>
+      The following information can be confirmed directly on Polygon's public
+      blockchain without any account, login, or third-party service.
+    </p>
+
+    <dl>
+      <dt>Contract</dt>
+      <dd>
+        <a href="https://polygonscan.com/address/0x5015841D6E665e63Ea174aD6b8FeF854026dE0C0#code"
+           target="_blank" rel="noopener noreferrer">
+          0x5015841D6E665e63Ea174aD6b8FeF854026dE0C0
+        </a>
+      </dd>
+
+      <dt>Treasury</dt>
+      <dd>
+        <a href="https://polygonscan.com/address/0xa7cE4232811021d2Dd01f4f0f264Df2427ab3919"
+           target="_blank" rel="noopener noreferrer">
+          0xa7cE4232811021d2Dd01f4f0f264Df2427ab3919
+        </a>
+      </dd>
+
+      <dt>Network</dt>
+      <dd>Polygon mainnet (chainId 137)</dd>
+
+      <dt>Asset</dt>
+      <dd>
+        USDC — Circle native
+        (<a href="https://polygonscan.com/address/0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359"
+            target="_blank" rel="noopener noreferrer">0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359</a>)
+      </dd>
+
+      <dt>Source Code</dt>
+      <dd>
+        <a href="https://polygonscan.com/address/0x5015841D6E665e63Ea174aD6b8FeF854026dE0C0#code"
+           target="_blank" rel="noopener noreferrer">
+          Verified on Polygonscan
+        </a>
+      </dd>
+
+      <dt>Fee Model</dt>
+      <dd>1% additive. Sender pays transfer amount + fee. Recipient receives the full amount entered.</dd>
+
+      <dt>Transfer Cap</dt>
+      <dd>250 USDC per transfer during soft launch.</dd>
+    </dl>
+
+    <h2>Verified Transaction Record</h2>
+
+    <p>
+      The following is a controlled mainnet transaction executed on June 15, 2026
+      to validate the complete transfer and fee-routing path before opening the
+      platform to public use.
+    </p>
+
+    <div class="v-record" aria-label="Verified mainnet transaction record">
+      <p class="v-record-head">Controlled Mainnet Validation — 2026-06-15</p>
+      <div>
+        Network&emsp;&emsp;&emsp;&emsp;Polygon mainnet<br>
+        Asset&emsp;&emsp;&emsp;&emsp;&emsp;USDC<br>
+        Block&emsp;&emsp;&emsp;&emsp;&emsp;88565097
+      </div>
+      <br>
+      <div>
+        Sender debit&emsp;&emsp;&emsp;1.01 USDC<br>
+        Recipient received&emsp;1.00 USDC<br>
+        Treasury received&emsp;&emsp;0.01 USDC<br>
+        Contract retained&emsp;&emsp;0.00 USDC
+      </div>
+      <br>
+      <div>
+        Status&emsp;&emsp;Confirmed on-chain
+      </div>
+      <br>
+      <div>
+        Tx: <span class="v-record-hash"><a href="https://polygonscan.com/tx/0x37fd733a7f1854740bf702aa5bf59794f4ebab0f39d2a84fb2c231c29df622d9" target="_blank" rel="noopener noreferrer">0x37fd733a7f1854740bf702aa5bf59794f4ebab0f39d2a84fb2c231c29df622d9</a></span>
+      </div>
+    </div>
+
+    <p>
+      The fee path is independently auditable: the Polygonscan transaction record
+      shows two USDC outputs — one to the recipient, one to the treasury address
+      listed above. ImplicitEx did not hold any funds at any point in the transfer.
+    </p>
+
+    <h2>What Each Wallet Prompt Does</h2>
+
+    <p>
+      ImplicitEx requires two wallet confirmations to execute a transfer. They are
+      separate steps with different effects.
+    </p>
+
+    <p>
+      The first prompt asks your wallet to authorize the ImplicitEx contract to
+      transfer a specific USDC amount on your behalf. The authorization is limited
+      to the exact total debit for that transfer — not an unlimited approval.
+      Authorizing alone does not move any funds.
+    </p>
+
+    <p>
+      The second prompt executes the transfer. When confirmed, the contract
+      sends the transfer amount to the recipient and the platform fee to the
+      treasury in a single on-chain transaction.
+    </p>
+
+    <p>
+      If your wallet security provider shows a warning that the contract is
+      untrusted, that reflects the contract's age and transaction history, not
+      a finding of malicious behavior. The contract address in the warning
+      matches the address listed above. The source code is publicly available
+      on Polygonscan. See the <a href="/faq.html">FAQ</a> for more detail.
+    </p>
+
+    <a class="back" href="/">Return to ImplicitEx</a>
+  </main>
+
+  <footer>
+    <nav class="f-links" aria-label="Footer links">
+      <a href="/about.html">About</a>
+      <a href="/faq.html">FAQ</a>
+      <a href="/verification.html">Verification</a>
+      <a href="/terms.html">Terms</a>
+      <a href="/privacy.html">Privacy</a>
+      <a href="/legal.html">Legal</a>
+      <a href="/jurisdictions.html">Access</a>
+      <a href="/news.html">News</a>
+      <a href="mailto:connect@implicitex.com">Contact</a>
+    </nav>
+    <nav class="social-links" aria-label="Social links">
+      <a class="social-text-link" href="https://x.com/implicitex" target="_blank" rel="noopener">X</a>
+      <a class="social-text-link" href="https://www.linkedin.com/in/implicitex/" target="_blank" rel="noopener">LinkedIn</a>
+      <a class="social-text-link" href="https://github.com/implicitexlabs" target="_blank" rel="noopener">GitHub</a>
+    </nav>
+    <span class="f-net" id="networkBadge">Polygon live</span>
+  </footer>
+
+  <script src="config/chains.js"></script>
+  <script src="js/wallet.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
