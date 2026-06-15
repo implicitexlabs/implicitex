@@ -1713,6 +1713,18 @@
     });
     setStatus('');
     setTransferNote('');
+
+    // Gate guard: preview renders so the user can see the transfer summary,
+    // but the ack checkbox and armed button are suppressed while transfers are
+    // disabled. The click-time guard in enterReview() is a second layer — this
+    // prevents the visual contradiction of an armed button alongside an amber
+    // "Transfers paused by launch gate" preflight bullet.
+    if (getNetworkState() === 'TRANSFERS_DISABLED') {
+      setReviewAcknowledgementVisible(false);
+      setDraftButton(currentButtonLabel(), true);
+      return;
+    }
+
     setReviewAcknowledgementVisible(true);
     setDraftButton('Execute Transfer', false);
   }
