@@ -265,6 +265,69 @@ Contract tests:    59/59  pass
 Working tree:      clean
 ```
 
+## Post-Gate 3 fixes and improvements (2026-06-15)
+
+Suite result after all changes: 232/232 static · 27/27 observability · 59/59 contract.
+
+### 1. Receipt-recovery path broken — fixed (`95d9c91` + `b48a680`)
+
+`polygon-rpc.com` began returning 401 (unauthenticated access disabled) for all
+JSON-RPC calls including `eth_getTransactionReceipt`. The live in-session transfer
+path (`tx.wait()` via MetaMask) was unaffected — it uses the wallet's own RPC.
+But `reconcileActiveReceipt()`, called on page reload with a pending receipt and on
+the manual "Check status" button, was silently failing with `OUTCOME_UNKNOWN` and
+"App status check failed. Check the explorer before retrying."
+
+Fixed by replacing the endpoint with `polygon-bor-rpc.publicnode.com` in `chains.js`.
+The endpoint swap alone was not sufficient: `polygon-bor-rpc.publicnode.com` was not
+in the CSP `connect-src` directive in `firebase.json`, so the browser blocked the
+fetch silently — receipt recovery remained broken until both changes landed together.
+
+Verified against a recent transaction receipt (block 88,536,207) and a 14-day-old
+receipt (block 87,697,424, Gate 2 block range). Both returned correctly with
+`status: 0x1`. CORS `*` confirmed from both `implicitex.app` and
+`implicitex-236f2.web.app` origins. `eth_getLogs` is pruned on publicnode for
+old blocks; `eth_getTransactionReceipt` is not — receipt data is retained.
+
+### 2. Execute Transfer button armed in TRANSFERS_DISABLED state — fixed (`b48a680`)
+
+`updatePreview()` reached `setDraftButton('Execute Transfer', false)` unconditionally
+when the form was valid (valid recipient, sufficient balance, above minimum), even
+in `TRANSFERS_DISABLED` state. If the user checked the ack checkbox, the button
+appeared armed and clickable alongside an amber "Transfers paused by launch gate"
+preflight bullet — a direct visual contradiction.
+
+The click-time guard in `enterReview()` was always present and safe (it returns
+immediately with a status message, no wallet prompt). But the visual state was
+misleading. Fixed by adding a `TRANSFERS_DISABLED` guard in `updatePreview()` after
+the preview renders: transfer summary remains visible, ack checkbox is hidden, button
+stays inert with label "Transfers disabled." The `enterReview()` guard remains as a
+second layer.
+
+### 3. Ack checkbox not hiding due to `display:flex` CSS override — fixed (`34d746c`)
+
+`.tx-confirm { display: flex }` overrides the browser UA stylesheet's default
+`[hidden] { display: none }`. `setReviewAcknowledgementVisible(false)` was setting
+the `hidden` attribute correctly, but CSS won — the checkbox remained visible.
+Added `.tx-confirm[hidden] { display: none; }`, matching the pattern used by every
+other `[hidden]` element in the codebase.
+
+### 4. Network column additions — RPC latency and confirmation time (`793f0dd`)
+
+Two new rows added to the 02 Network panel:
+
+- **Confirmation**: `blockTime × 2` from the Gas Station response (~3.0 sec typical).
+  Live data, not a static string. Resets to `—` on Gas Station failure.
+- **RPC latency**: Direct `eth_blockNumber` probe to `polygon-bor-rpc.publicnode.com`
+  (the chain RPC, independent of the Gas Station). Gray numeric on success, red
+  "Unavailable" on timeout (5s AbortController), non-200, or network failure.
+  Resets to `—` at the start of each 30-second cycle to prevent stale readings.
+  Amber reserved for transfer-flow signals; gray/red only here.
+
+Root cause note: the CSP gap (item 1) initially caused this row to show red
+"Unavailable" even after the endpoint swap, since the browser blocked the fetch.
+Both resolved together.
+
 ## Gate 2 Smoke Attempt Log
 
 ### 2026-05-31 — Controlled live smoke attempt
