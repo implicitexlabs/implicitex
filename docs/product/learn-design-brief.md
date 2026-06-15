@@ -58,6 +58,24 @@ FAQ, Legal, and Contact as a primary footer link.
 
 ---
 
+## Proof vs. LEARN Boundary
+
+These are related but distinct jobs. Keep them separate as both sections grow.
+
+| Question | Belongs in |
+|---|---|
+| What is USDC? | LEARN |
+| Which USDC contract does ImplicitEx use? | Proof |
+| What is Polygon? | LEARN |
+| Which network does ImplicitEx operate on? | Proof |
+| What is a wallet? | LEARN |
+| Why does ImplicitEx never hold my funds? | Proof / Legal |
+
+> Proof explains why the user should believe the claims.
+> LEARN explains the concepts needed to understand the claims.
+
+---
+
 ## FAQ Boundary
 
 This boundary must be maintained as both pages grow.
