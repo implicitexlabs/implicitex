@@ -69,7 +69,7 @@ Gate 5 (public soft launch) minimum posture:
 ```
 [ ] Homepage copy final
 [ ] Support/contact route works
-[ ] Known-limitations note (no recovery, no reversal, Polygon only)
+[x] Known-limitations note (added legal.html 2026-06-15)
 [ ] First-user walkthrough tested
 [ ] Launch announcement ready
 [ ] Transfer cap low; fee simple; analytics watched manually
@@ -273,9 +273,9 @@ Gate 5 items split into two categories:
 [x] FAQ entry: "Why does MetaMask show two confirmations?" (present pre-Gate 4)
 [x] FAQ entry: "Why does MetaMask warn that the contract is untrusted?" (added 2026-06-15, cites verification.html)
 
-[ ] 1. Known-limitations note — fastest to complete; sets honest expectations;
-         referenced by every remaining item.
-         Minimum: no recovery, no reversal, Polygon only, USDC only, 250 USDC cap.
+[x] 1. Known-limitations note — added to legal.html 2026-06-15 (e479e43).
+         Seven bullet points: Polygon only, USDC only, 250 USDC cap, irreversible,
+         no address recovery, wallet required, no fiat. Links to Proof page.
 
 [ ] 2. Contact path — gives users somewhere to go when uncertain; reduces
          abandonment from questions that FAQ doesn't answer.
@@ -286,6 +286,11 @@ Gate 5 items split into two categories:
          Watch item: footer says "Proof", page title says "Verification" — observe
          whether tester hesitates on landing. If so, add subtitle: "Public Verification"
          directly below the h1 on verification.html.
+
+**Domain cutover (implicitex.com → implicitex-236f2.web.app) is held until after
+the walkthrough.** Two abandonment points already observed (wallet prompts, Blockaid
+warning). Walkthrough may reveal a third. Cutover is irreversible in terms of public
+visibility — run the cheapest comprehension test first.
 ```
 
 #### Conversion-critical (affects whether someone who already trusts the platform completes a transfer)
