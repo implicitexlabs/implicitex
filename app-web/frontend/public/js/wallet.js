@@ -2637,6 +2637,10 @@
   function applyCurrentNetworkPresentation(options = {}) {
     const netState = getNetworkState();
 
+    // No wallet connected — nothing to render. Return early so focus/visibility
+    // sync events do not overwrite the correct disconnected UI with connected state.
+    if (netState === 'DISCONNECTED') return;
+
     // Wrong network or no contract — hide the transfer panel, show guidance.
     if (netState === 'WRONG_NETWORK' || netState === 'CONTRACT_UNAVAILABLE') {
       applyWrongNetworkPresentation();
