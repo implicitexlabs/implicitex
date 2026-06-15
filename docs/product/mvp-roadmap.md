@@ -236,7 +236,7 @@ Gate 5 items split into two categories:
 [x] Landing page How It Works copy aligned to proven fee-on-top model and two-prompt flow
 [x] About page copy aligned — fee example with total debit, jargon removed
 
-[ ] Transparency / Verification page — carries the most weight of any remaining item.
+[x] Transparency / Verification page — carries the most weight of any remaining item.
     Name it "Transparency", "Verification", or "How ImplicitEx Works" — not "Trust".
     Trust is the result of evidence. This page publishes the evidence. A visitor who
     sees the Blockaid "untrusted contract" warning immediately asks: who built this,
@@ -270,17 +270,8 @@ Gate 5 items split into two categories:
         The fee path is visible and auditable. Treasury received exactly what the UI said
         it would. Most crypto projects never show this. Showing it is the point of the page.
 
-[ ] FAQ entry: "Why does MetaMask show two confirmations?"
-      - Approval vs. transfer: what each prompt does
-      - Approval alone does not move funds
-      - Transfer is the actual movement — second prompt is the money step
-
-[ ] FAQ entry: "Why does MetaMask warn that the contract is untrusted?"
-      - New contract; no transaction history yet in Blockaid's reputation system
-      - "Untrusted" ≠ "malicious" — explicit distinction
-      - Correct frame: transparency, not dismissal
-      - Note: Gate 4 produced actual screenshots of this warning during a successful,
-        verified transaction. Use them — no speculation required about what users will see.
+[x] FAQ entry: "Why does MetaMask show two confirmations?" (present pre-Gate 4)
+[x] FAQ entry: "Why does MetaMask warn that the contract is untrusted?" (added 2026-06-15, cites verification.html)
 
 [ ] Contact path
 
