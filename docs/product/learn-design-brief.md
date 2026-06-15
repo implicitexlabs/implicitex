@@ -58,6 +58,26 @@ FAQ, Legal, and Contact as a primary footer link.
 
 ---
 
+## The Durability Test
+
+Before writing any LEARN entry, ask:
+
+> "Would this content still be useful if ImplicitEx disappeared tomorrow?"
+
+If yes → LEARN.
+If no → FAQ, Proof, or Legal.
+
+Examples:
+- "What is a wallet?" → Yes → LEARN
+- "What is USDC?" → Yes → LEARN
+- "Why does ImplicitEx use Polygon?" → No → FAQ
+- "Why does ImplicitEx charge 1%?" → No → FAQ
+- "Which contract does ImplicitEx use?" → No → Proof
+
+This boundary prevents duplication as both sections grow.
+
+---
+
 ## Proof vs. LEARN Boundary
 
 These are related but distinct jobs. Keep them separate as both sections grow.
