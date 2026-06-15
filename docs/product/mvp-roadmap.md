@@ -339,23 +339,33 @@ cheapest comprehension test first.
    Restore path: one-line HTML change (restore <button> in wallet-choice overlay)
    Block: do not re-enable until all four checks pass
 
-[ ] 7. LEARN page (glossary / concepts)
+[ ] 7. LEARN — crypto onboarding center
 
-   Status: Placeholder only. Do not write entries before the walkthrough.
-   The walkthrough will reveal which terms actually cause hesitation or
-   abandonment. Write those entries first. Do not guess.
+   Status: Design locked, content deferred. Architecture is defined at
+   docs/product/learn-design-brief.md. Do not write entries before the
+   walkthrough. Walkthrough findings determine which content to write first.
 
-   Initial candidates (unconfirmed — ranked by expected confusion):
-   - Non-custodial (most likely unfamiliar to general users)
-   - Polygon (likely unfamiliar to non-crypto users)
-   - USDC (may be partially understood)
-   - Wallet approval / token allowance (likely confusing in flow)
-   - Gas / network fee (likely confusing)
+   Scope: LEARN is not a glossary. It is a crypto onboarding center — the
+   bridge between traditional finance users and crypto users. It answers
+   questions that belong neither in FAQ (product questions) nor in Legal
+   (boundaries and disclaimers).
+
+   Guiding principle:
+   "It costs nothing to educate. It can cost everything to assume."
+
+   Three layers (see design brief for full spec):
+   - Layer 1: Quick Definitions — searchable, alphabetical, one-paragraph answers
+   - Layer 2: First-Time User Guides — getting started, using ImplicitEx
+   - Layer 3: Trust & Regulation — legality, USDC, GENIUS Act, user protections
+
+   FAQ boundary:
+   - FAQ: focused product questions (why two confirmations? why Polygon? why the warning?)
+   - LEARN: educational resources (what is a wallet? how do I get one? is this legal?)
+   - When a FAQ answer becomes a teaching resource, it moves to LEARN
 
    Name: LEARN (not "Terms" — collision with Terms of Service; not "Glossary" — too academic)
    URL: /learn.html
-   Nav: footer + inline term links from FAQ and homepage
-   Pattern: one sentence on the linking page, full explanation one click away
+   Nav: primary footer link + inline term links from FAQ and homepage
 ```
 
 **Blockaid warning principle:** The correct response is not to hide or dismiss it. The
