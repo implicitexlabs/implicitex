@@ -208,37 +208,61 @@ plus four screenshots.
 
 ### 6. Public launch prep
 
+Trust items are ordered by abandonment risk — FAQ entries intercept the two most common
+drop-off moments before the user reaches the trust page.
+
 ```
 [x] FAQ added — Polygon, USDC, two wallet confirmations, fee vs gas, wrong address risk
 [x] Landing page How It Works copy aligned to proven fee-on-top model and two-prompt flow
 [x] About page copy aligned — fee example with total debit, jargon removed
+
+Priority order for remaining trust items:
+
+[ ] 1. FAQ entry: "Why does MetaMask show two confirmations?"
+        - Approval vs. transfer: what each prompt does
+        - Approval alone does not move funds
+        - Transfer is the actual movement — second prompt is the money step
+
+[ ] 2. FAQ entry: "Why does MetaMask warn that the contract is untrusted?"
+        - New contract; no transaction history yet in Blockaid's reputation system
+        - "Untrusted" ≠ "malicious" — explicit distinction
+        - Public address, source-verified on Polygonscan, transaction history building
+        - Correct frame: transparency, not dismissal
+
+[ ] 3. Trust page: contract address, treasury address, fee model, source code location,
+        supported network/asset (Polygon USDC only)
+
+[ ] 4. Public transaction examples (Gate 4 screenshots are marketing assets):
+        - Redacted before/after balances
+        - Example receipt confirmation
+        - Example Polygonscan record
+        These prove a real transaction occurred — QA evidence doubles as proof of operation.
+
 [ ] Homepage copy final
 [ ] Contact path
 [ ] Basic support language
 [ ] Known-limitations note (no recovery, no reversal, Polygon only)
 [ ] X/Reddit launch post draft
 [ ] First user walkthrough tested
-[ ] Blockaid / wallet security warning — FAQ entry: why MetaMask may show "untrusted contract"
-[ ] Trust page: contract address, treasury address, fee model, source code location
 ```
 
 **Blockaid "untrusted contract" warning — observed during Gate 4 smoke 2026-06-15.**
 
-MetaMask/Blockaid displayed a yellow warning: "The contract involved in the transaction is
-untrusted." This is a reputation gap, not a scam flag. The contract address in the warning
-matched the deployed contract exactly; the transaction completed correctly; fee routing was
-confirmed on-chain.
+This is a reputation gap, not a scam flag. The warning address matched the deployed
+contract exactly; the transaction completed correctly; fee routing was confirmed on-chain.
 
-Every first-time ImplicitEx user will likely see this warning until the contract develops
-transaction history and reputation footprint. A normal user does not distinguish "unknown"
-from "dangerous." This is a trust friction point, not a safety failure.
+The correct response is not to hide or dismiss the warning. The better response is:
+"You may see an untrusted-contract warning because the contract is new. Here is the
+address. Here is the source. Here is exactly what the transaction does."
 
-Mitigations (progressive, no single fix):
-- Polygonscan source verification (already marked complete in launch safety above)
-- FAQ entry explaining the two-wallet-prompt flow and why a contract interaction occurs
-- Public documentation linking contract address to source code
-- Transaction history accumulation over time (Blockaid becomes less aggressive)
-- Lightweight audit / review published publicly (post-MVP, before scale)
+Sophisticated users who see MetaMask performing security analysis and then see the
+transaction reconcile perfectly will develop more trust than users who are told to ignore
+the warning. Transparency is the mitigation.
+
+Longer-term mitigations (no single fix):
+- Polygonscan source verification (already complete — launch safety above)
+- Transaction history accumulation (Blockaid becomes less aggressive over time)
+- Lightweight audit published publicly (post-MVP, before scale)
 
 ---
 
