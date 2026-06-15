@@ -219,4 +219,4 @@ Never skip the post-deploy route smoke.
 
 | Date | Branch | Commit | Gate | Operator | Notes |
 |------|--------|--------|------|----------|-------|
-| (fill on first deploy) | | | closed | | |
+| 2026-06-15 | gate3-production-frontend-qa | bcfa8bb | closed | Antoine Dennison | Firebase smoke PASS. Routes, mobile FAQ, dropdown color, gate state, config/chains.js freshness all verified. Console clean of app errors — only browser/MetaMask extension warnings observed. Polygon gas station returned HTTP 200. |

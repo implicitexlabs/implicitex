@@ -30,8 +30,8 @@ session restore polish, AI features, or social login before live-transfer smoke 
 ```
 Gate 1: Wallet + UI regression smoke         ← COMPLETE
 Gate 2: Live-transfer readiness review       ← COMPLETE
-Gate 3: Builder-controlled launch readiness  ← current position
-Gate 4: Mainnet controlled live smoke
+Gate 3: Builder-controlled launch readiness  ← COMPLETE 2026-06-15
+Gate 4: Mainnet controlled live smoke        ← current position
 Gate 5: Public soft launch
 ```
 
@@ -42,14 +42,14 @@ Gate 3 is builder-controlled launch readiness. The question it answers is no lon
 it work?" — that is proven. Gate 3 answers: "can we expose it without embarrassing trust
 failures, stale wallet state, unclear risk language, or unsafe deploy procedure?"
 
-Gate 3 remaining checklist (as of 2026-06-14):
+Gate 3 checklist — **COMPLETE 2026-06-15**:
 ```
 [x] Failure paths — FP1–FP5 PASS, FP6 verified by code review
 [x] Mobile UX smoke — responsive viewport + real MetaMask mobile browser PASS
-[ ] Wallet/provider regression — extension ↔ WC provider swap, no duplicate events
-[ ] Support/disclaimer copy pass — non-reckless risk language, support path, limitations
-[ ] Transfer gate + deploy safety checklist — operator procedure before any live config
-[ ] Firebase deploy smoke — confirm hosted app matches local; no stale cache
+[x] Wallet/provider regression — PASS WITH CAVEATS; Reown noise documented
+[x] Support/disclaimer copy pass — FAQ added to mobile menu; 'being developed' removed
+[x] Transfer gate + deploy safety checklist — docs/operations/deploy-safety-checklist.md
+[x] Firebase deploy smoke — PASS 2026-06-15; all routes, gate closed, config fresh
 ```
 
 Gate 4 checklist:
