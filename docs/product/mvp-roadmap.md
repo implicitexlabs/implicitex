@@ -218,7 +218,8 @@ plus four screenshots.
 [ ] Known-limitations note (no recovery, no reversal, Polygon only)
 [ ] X/Reddit launch post draft
 [ ] First user walkthrough tested
-[ ] Blockaid / wallet security warning — plan for first-time user trust gap (see note below)
+[ ] Blockaid / wallet security warning — FAQ entry: why MetaMask may show "untrusted contract"
+[ ] Trust page: contract address, treasury address, fee model, source code location
 ```
 
 **Blockaid "untrusted contract" warning — observed during Gate 4 smoke 2026-06-15.**
