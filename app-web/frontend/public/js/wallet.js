@@ -432,9 +432,11 @@
     gasHeroVal:         document.getElementById('gasHeroVal'),
     networkBadge:       document.getElementById('networkBadge'),
     navStatus:          document.querySelector('.nav-status'),
-    networkNameDisplay: document.getElementById('networkNameDisplay'),
-    contractStatus:     document.getElementById('contractStatus'),
-    networkStatus:      document.getElementById('networkStatus'),
+    networkNameDisplay:  document.getElementById('networkNameDisplay'),
+    contractStatus:      document.getElementById('contractStatus'),
+    networkStatus:       document.getElementById('networkStatus'),
+    confirmTimeDisplay:  document.getElementById('confirmTimeDisplay'),
+    rpcLatencyDisplay:   document.getElementById('rpcLatencyDisplay'),
     senderAddressDisplay: document.getElementById('senderAddressDisplay'),
     usdcBalance:        document.getElementById('usdcBalance'),
     transferStateNote:  document.getElementById('transferStateNote'),
@@ -3650,7 +3652,33 @@
       // premium over fast until a dedicated rapid oracle is wired.
       rapid: Number.isFinite(fast) ? fast + Math.max(1, spread * 0.5) : NaN,
       blockNumber: Number(data && data.blockNumber),
+      blockTime:   Number(data && data.blockTime),
     };
+  }
+
+  // Probe the chain RPC directly — separate from Gas Station health.
+  // Gas Station could be healthy while polygon-rpc.com is degraded; this
+  // indicator targets the RPC path that wallet/contract reads actually use.
+  async function probeRpcLatency(rpcUrl) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    const t0 = Date.now();
+    try {
+      const res = await fetch(rpcUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jsonrpc: '2.0', method: 'eth_blockNumber', params: [], id: 1 }),
+        signal: controller.signal,
+        cache: 'no-store',
+      });
+      clearTimeout(timeoutId);
+      if (!res.ok) throw new Error(`RPC ${res.status}`);
+      await res.json(); // consume body so timing reflects full round-trip
+      return Date.now() - t0;
+    } catch (err) {
+      clearTimeout(timeoutId);
+      throw err;
+    }
   }
 
   // ----------------------------------------------------------------
@@ -3694,6 +3722,26 @@
     if (state.networkPollTimer) return;
 
     async function update() {
+      // Reset rpcLatencyDisplay at the start of every cycle so a stale reading
+      // from a previous poll is never left visible while the new probe is in-flight.
+      if (els.rpcLatencyDisplay) {
+        els.rpcLatencyDisplay.textContent = '—';
+        els.rpcLatencyDisplay.className = 'data-v';
+      }
+
+      // Probe chain RPC independently — parallel to Gas Station fetch.
+      // Fires without awaiting so Gas Station latency does not inflate the reading.
+      const chainCfg = window.IX_CHAINS && window.IX_CHAINS[POLYGON_MAINNET_CHAIN_ID];
+      if (chainCfg && chainCfg.rpcUrl && els.rpcLatencyDisplay) {
+        probeRpcLatency(chainCfg.rpcUrl).then(ms => {
+          els.rpcLatencyDisplay.textContent = ms + ' ms';
+          els.rpcLatencyDisplay.className = 'data-v';
+        }).catch(() => {
+          els.rpcLatencyDisplay.textContent = 'Unavailable';
+          els.rpcLatencyDisplay.className = 'data-v is-error';
+        });
+      }
+
       try {
         const tiers = await fetchGasData();
         renderHeroGas(tiers);
@@ -3705,13 +3753,17 @@
         if (els.blockDisplay) {
           els.blockDisplay.textContent = tiers.blockNumber ? tiers.blockNumber.toLocaleString() : 'Pending';
         }
+        if (els.confirmTimeDisplay && Number.isFinite(tiers.blockTime)) {
+          els.confirmTimeDisplay.textContent = '~' + (tiers.blockTime * 2).toFixed(1) + ' sec';
+        }
 
         pushGasSample(tiers.standard);
         renderGasDetail();
       } catch (err) {
         renderHeroGas({ standard: NaN, fast: NaN, rapid: NaN });
-        if (els.gweiDisplay) els.gweiDisplay.textContent = 'Unavailable';
-        if (els.blockDisplay) els.blockDisplay.textContent = 'Pending';
+        if (els.gweiDisplay)        els.gweiDisplay.textContent        = 'Unavailable';
+        if (els.blockDisplay)       els.blockDisplay.textContent       = 'Pending';
+        if (els.confirmTimeDisplay) els.confirmTimeDisplay.textContent = '—';
       }
     }
 
