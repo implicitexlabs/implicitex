@@ -208,53 +208,69 @@ plus four screenshots.
 
 ### 6. Public launch prep
 
-Trust items are ordered by abandonment risk — FAQ entries intercept the two most common
-drop-off moments before the user reaches the trust page.
+**Strategic framing (Gate 5):** The engineering question — "will the system work?" — is
+answered. The Gate 5 question is: "can a new visitor understand why they should trust it?"
+This is a copy, transparency, and communication problem, not a smart contract problem.
+
+Gate 5 items split into two categories:
+
+#### Trust-critical (affects whether a first-time visitor proceeds or bounces)
 
 ```
 [x] FAQ added — Polygon, USDC, two wallet confirmations, fee vs gas, wrong address risk
 [x] Landing page How It Works copy aligned to proven fee-on-top model and two-prompt flow
 [x] About page copy aligned — fee example with total debit, jargon removed
 
-Priority order for remaining trust items:
+[ ] Trust page — carries the most weight of any remaining item. A visitor who sees the
+    Blockaid "untrusted contract" warning immediately asks: who built this, what address
+    am I interacting with, where does the fee go, is the source public, has anyone used
+    this before? The trust page answers all five in one place. Sections:
+      - Contract address (0x5015841D6E665e63Ea174aD6b8FeF854026dE0C0, Polygonscan link)
+      - Treasury address (0xa7cE4232811021d2Dd01f4f0f264Df2427ab3919)
+      - Fee model (1% additive; sender pays amount + fee; recipient receives full amount)
+      - Supported network and asset (Polygon mainnet, USDC only)
+      - Source code location
+      - Verified Live Transaction section (no hype, no adjectives — just facts):
 
-[ ] 1. FAQ entry: "Why does MetaMask show two confirmations?"
-        - Approval vs. transfer: what each prompt does
-        - Approval alone does not move funds
-        - Transfer is the actual movement — second prompt is the money step
+          Controlled Mainnet Validation — 2026-06-15
+          Network: Polygon | Asset: USDC
+          Sender debit:       1.01 USDC
+          Recipient received: 1.00 USDC
+          Treasury received:  0.01 USDC
+          Status: Confirmed on-chain
+          Tx: 0x37fd733a7f1854740bf702aa5bf59794f4ebab0f39d2a84fb2c231c29df622d9
 
-[ ] 2. FAQ entry: "Why does MetaMask warn that the contract is untrusted?"
-        - New contract; no transaction history yet in Blockaid's reputation system
-        - "Untrusted" ≠ "malicious" — explicit distinction
-        - Public address, source-verified on Polygonscan, transaction history building
-        - Correct frame: transparency, not dismissal
+        The fee path is visible and auditable. Treasury received exactly what the UI said
+        it would. That is a trust asset — most crypto projects never show this.
 
-[ ] 3. Trust page: contract address, treasury address, fee model, source code location,
-        supported network/asset (Polygon USDC only)
+[ ] FAQ entry: "Why does MetaMask show two confirmations?"
+      - Approval vs. transfer: what each prompt does
+      - Approval alone does not move funds
+      - Transfer is the actual movement — second prompt is the money step
 
-[ ] 4. Public transaction examples (Gate 4 screenshots are marketing assets):
-        - Redacted before/after balances
-        - Example receipt confirmation
-        - Example Polygonscan record
-        These prove a real transaction occurred — QA evidence doubles as proof of operation.
+[ ] FAQ entry: "Why does MetaMask warn that the contract is untrusted?"
+      - New contract; no transaction history yet in Blockaid's reputation system
+      - "Untrusted" ≠ "malicious" — explicit distinction
+      - Correct frame: transparency, not dismissal
+      - Note: Gate 4 produced actual screenshots of this warning during a successful,
+        verified transaction. Use them — no speculation required about what users will see.
 
-[ ] Homepage copy final
 [ ] Contact path
-[ ] Basic support language
+
 [ ] Known-limitations note (no recovery, no reversal, Polygon only)
-[ ] X/Reddit launch post draft
-[ ] First user walkthrough tested
 ```
 
-**Blockaid "untrusted contract" warning — observed during Gate 4 smoke 2026-06-15.**
+#### Conversion-critical (affects whether someone who already trusts the platform completes a transfer)
 
-This is a reputation gap, not a scam flag. The warning address matched the deployed
-contract exactly; the transaction completed correctly; fee routing was confirmed on-chain.
+```
+[ ] Homepage copy final
+[ ] First-user walkthrough tested
+[ ] Launch announcement (X/Reddit)
+```
 
-The correct response is not to hide or dismiss the warning. The better response is:
-"You may see an untrusted-contract warning because the contract is new. Here is the
-address. Here is the source. Here is exactly what the transaction does."
-
+**Blockaid warning principle:** The correct response is not to hide or dismiss it. The
+better response is: "You may see an untrusted-contract warning because the contract is new.
+Here is the address. Here is the source. Here is exactly what the transaction does."
 Sophisticated users who see MetaMask performing security analysis and then see the
 transaction reconcile perfectly will develop more trust than users who are told to ignore
 the warning. Transparency is the mitigation.
