@@ -212,6 +212,18 @@ plus four screenshots.
 answered. The Gate 5 question is: "can a new visitor understand why they should trust it?"
 This is a copy, transparency, and communication problem, not a smart contract problem.
 
+**The two abandonment points** (observed from Gate 4 evidence, not hypothetical):
+1. The wallet prompt — "Why am I seeing two prompts? What does each one do?"
+2. The Blockaid warning — "Why is MetaMask warning me? What exactly is this contract doing?"
+The first-time visitor stops at one of these moments and either finds an answer or leaves.
+FAQ entries 1 and 2 exist to intercept those moments before doubt compounds.
+
+**Gate 5 session opening order:**
+1. FAQ: Why does MetaMask show two confirmations?
+2. FAQ: Why does MetaMask say the contract is untrusted?
+3. Transparency/Verification page built around actual Gate 4 evidence.
+4. Homepage copy and launch communications.
+
 Gate 5 items split into two categories:
 
 #### Trust-critical (affects whether a first-time visitor proceeds or bounces)
@@ -221,10 +233,14 @@ Gate 5 items split into two categories:
 [x] Landing page How It Works copy aligned to proven fee-on-top model and two-prompt flow
 [x] About page copy aligned — fee example with total debit, jargon removed
 
-[ ] Trust page — carries the most weight of any remaining item. A visitor who sees the
-    Blockaid "untrusted contract" warning immediately asks: who built this, what address
-    am I interacting with, where does the fee go, is the source public, has anyone used
-    this before? The trust page answers all five in one place. Sections:
+[ ] Transparency / Verification page — carries the most weight of any remaining item.
+    Name it "Transparency", "Verification", or "How ImplicitEx Works" — not "Trust".
+    Trust is the result of evidence. This page publishes the evidence. A visitor who
+    sees the Blockaid "untrusted contract" warning immediately asks: who built this,
+    what address am I interacting with, where does the fee go, is the source public,
+    has anyone used this before? This page answers all five in one place.
+    Do not use the words "Secure", "Transparent", "Decentralized", or "Audited" without
+    evidence behind them. Everything on this page is a fact or a link. Sections:
       - Contract address (0x5015841D6E665e63Ea174aD6b8FeF854026dE0C0, Polygonscan link)
       - Treasury address (0xa7cE4232811021d2Dd01f4f0f264Df2427ab3919)
       - Fee model (1% additive; sender pays amount + fee; recipient receives full amount)
@@ -241,7 +257,7 @@ Gate 5 items split into two categories:
           Tx: 0x37fd733a7f1854740bf702aa5bf59794f4ebab0f39d2a84fb2c231c29df622d9
 
         The fee path is visible and auditable. Treasury received exactly what the UI said
-        it would. That is a trust asset — most crypto projects never show this.
+        it would. Most crypto projects never show this. Showing it is the point of the page.
 
 [ ] FAQ entry: "Why does MetaMask show two confirmations?"
       - Approval vs. transfer: what each prompt does
