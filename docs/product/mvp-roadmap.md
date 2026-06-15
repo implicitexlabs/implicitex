@@ -280,17 +280,35 @@ Gate 5 items split into two categories:
 [ ] 2. Contact path — gives users somewhere to go when uncertain; reduces
          abandonment from questions that FAQ doesn't answer.
 
-[ ] 3. First-user walkthrough — run a first-time visitor through the site using
-         only public-facing pages; observe hesitation points; update FAQ and
-         verification.html before launch if gaps are found.
-         Watch item: footer says "Proof", page title says "Verification" — observe
-         whether tester hesitates on landing. If so, add subtitle: "Public Verification"
-         directly below the h1 on verification.html.
+[ ] 3. First-user walkthrough
+
+   Brief: give the tester the URL (implicitex-236f2.web.app) and one sentence:
+   "This is a USDC transfer tool. Take a look around."
+   No other context. No hints. No narration.
+
+   Observer watches for:
+   - Where do they go first?
+   - Do they find FAQ, Proof, Legal, Contact without prompting?
+   - Do they hesitate at any point? If so, where exactly?
+   - Do they understand what Polygon and USDC mean in this context?
+   - Do they understand the 1% fee before being told?
+   - Do they expect Ethereum, other tokens, or fiat support?
+
+   Known watch items from Gate 4 evidence:
+   - Wallet prompts: does the two-confirmation flow make sense unprompted?
+   - Blockaid warning: does "Proof" in the footer get clicked when they see it?
+   - Proof/Verification label: does "Verification" h1 cause confusion after clicking "Proof"?
+
+   Signal vs. noise:
+   - Hesitation + question = signal (something the site isn't answering)
+   - Hesitation + self-resolution = noise (the site is working, user just needed a moment)
+   - Confusion + no self-resolution = fix before cutover
+
+   After walkthrough: update FAQ/Proof/Contact as needed, then make cutover decision.
 
 **Domain cutover (implicitex.com → implicitex-236f2.web.app) is held until after
-the walkthrough.** Two abandonment points already observed (wallet prompts, Blockaid
-warning). Walkthrough may reveal a third. Cutover is irreversible in terms of public
-visibility — run the cheapest comprehension test first.
+the walkthrough.** Cutover is irreversible in terms of public visibility — run the
+cheapest comprehension test first.
 ```
 
 #### Conversion-critical (affects whether someone who already trusts the platform completes a transfer)
