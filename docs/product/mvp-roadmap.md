@@ -240,13 +240,21 @@ Gate 5 items split into two categories:
     what address am I interacting with, where does the fee go, is the source public,
     has anyone used this before? This page answers all five in one place.
     Do not use the words "Secure", "Transparent", "Decentralized", or "Audited" without
-    evidence behind them. Everything on this page is a fact or a link. Sections:
-      - Contract address (0x5015841D6E665e63Ea174aD6b8FeF854026dE0C0, Polygonscan link)
-      - Treasury address (0xa7cE4232811021d2Dd01f4f0f264Df2427ab3919)
-      - Fee model (1% additive; sender pays amount + fee; recipient receives full amount)
-      - Supported network and asset (Polygon mainnet, USDC only)
-      - Source code location
-      - Verified Live Transaction section (no hype, no adjectives — just facts):
+    evidence behind them. Everything on this page is a fact or a link.
+
+    Public Verification Section — a linked checklist answering the six questions a
+    cautious user asks before clicking Confirm. Purpose is not to impress; it is to
+    remove each specific uncertainty:
+
+        Contract Address   → 0x5015841D6E665e63Ea174aD6b8FeF854026dE0C0 (Polygonscan)
+        Treasury Address   → 0xa7cE4232811021d2Dd01f4f0f264Df2427ab3919
+        Supported Network  → Polygon mainnet
+        Supported Asset    → USDC (Circle native, 0x3c499c...3359)
+        Source Code        → [link to verified source on Polygonscan]
+        Fee Model          → 1% additive; sender pays amount + fee; recipient receives full amount
+        Latest Verified Tx → [link — updated as transaction history grows]
+
+    Verified Live Transaction section (no hype, no adjectives — just facts):
 
           Controlled Mainnet Validation — 2026-06-15
           Network: Polygon | Asset: USDC
