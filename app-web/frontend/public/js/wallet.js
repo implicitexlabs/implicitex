@@ -1783,7 +1783,6 @@
   // ----------------------------------------------------------------
   // Wallet choice overlay — shown when Connect is tapped without an
   // injected provider. Presents MetaMask and WalletConnect options.
-  // IX_WC.init() is wired into the WalletConnect button in a later commit.
   // ----------------------------------------------------------------
   function showWalletChoice() {
     if (els.walletChoiceOverlay) els.walletChoiceOverlay.removeAttribute('hidden');
