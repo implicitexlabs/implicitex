@@ -199,6 +199,34 @@ Sections are the primary navigation for first-time users browsing.
 
 ---
 
+## Concepts vs. Procedures
+
+LEARN content falls into two distinct categories. Keep them separate.
+
+**Concepts** — what something is:
+- What is USDC?
+- What is Polygon?
+- What is gas?
+- What is a wallet?
+
+**Procedures** — what to do next:
+- How do I create a wallet?
+- How do I connect MetaMask?
+- How do I verify a transaction on a block explorer?
+- How do I send my first transfer?
+
+Procedures tend to become more valuable than definitions over time. Most
+users don't want a definition of a wallet — they want to be told what to
+do next. When writing LEARN entries, prefer procedural framing where possible:
+
+Bad: "A wallet is a software application that stores cryptographic keys..."
+Good: "Before you can use ImplicitEx, you need a wallet. Here's how to get one."
+
+The walkthrough will indicate whether procedural content is the more urgent
+gap. Build what the evidence confirms.
+
+---
+
 ## Content Sequencing Rule
 
 **Do not write entries before the walkthrough.**
