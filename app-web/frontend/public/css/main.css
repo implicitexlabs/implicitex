@@ -1733,6 +1733,15 @@ footer .social-links a:focus-visible,
   border-color: var(--button-hover);
 }
 
+.wallet-choice-note {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--muted);
+  text-align: center;
+  margin: 0;
+  line-height: 1.5;
+}
+
 /* ---- Secondary / Policy Pages ---- */
 /* Shared layout for informational, legal, and policy pages.
    All secondary pages use these rules — no page-local style blocks. */
