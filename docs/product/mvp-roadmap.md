@@ -283,6 +283,9 @@ Gate 5 items split into two categories:
 [ ] 3. First-user walkthrough — run a first-time visitor through the site using
          only public-facing pages; observe hesitation points; update FAQ and
          verification.html before launch if gaps are found.
+         Watch item: footer says "Proof", page title says "Verification" — observe
+         whether tester hesitates on landing. If so, add subtitle: "Public Verification"
+         directly below the h1 on verification.html.
 ```
 
 #### Conversion-critical (affects whether someone who already trusts the platform completes a transfer)
