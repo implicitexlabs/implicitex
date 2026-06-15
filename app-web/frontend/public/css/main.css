@@ -723,6 +723,20 @@ body.portal-active #nav {
 .tx-field--select {
   appearance: none;
   color: var(--dim);
+  /* Force OS popup to render in dark mode — prevents browser-default blue highlight,
+     which carries no meaning in ImplicitEx's signal vocabulary (gray/amber/red). */
+  color-scheme: dark;
+}
+
+.tx-field--select option {
+  background: var(--surface-2);
+  color: var(--white);
+}
+
+.tx-field--select option:checked {
+  /* Neutral gray selection — not amber (caution), not red (error), not blue (undefined). */
+  background: var(--surface-3);
+  color: var(--white);
 }
 
 .tx-meta-grid {
