@@ -269,6 +269,23 @@ Working tree:      clean
 
 Suite result after all changes: 232/232 static · 31/31 observability · 59/59 contract.
 
+### 5. Nav shows WALLET CONNECTED with no wallet authorized — fixed (`898a547`)
+
+`applyCurrentNetworkPresentation()` had no guard for the `DISCONNECTED` state.
+On every `focus` and `visibilitychange` event, `syncProviderState({ force: true })`
+called `applyCurrentNetworkPresentation()`, which fell through to
+`applyConnectedPresentation()` even when `state.connected = false`. This applied
+the `.connected` class to `connectBtn` and set nav status to "Wallet connected"
+on every tab-switch and window-focus event when no wallet was authorized — a
+direct trust contradiction visible to any unauthenticated visitor.
+
+Fixed by adding an early return for `DISCONNECTED` at the top of
+`applyCurrentNetworkPresentation()`. Focus/visibility sync events now exit
+immediately when no wallet is connected. All connected paths (chain change,
+account change, real connect) are unchanged. Nav smoke confirmed: hard refresh
+→ "Connect Wallet"; tab-away/back → "Connect Wallet"; connect → connected state;
+disconnect → "Connect Wallet". Pre-Gate-4 blocker closed.
+
 ### 1. Receipt-recovery path broken — fixed (`95d9c91` + `b48a680`)
 
 `polygon-rpc.com` began returning 401 (unauthenticated access disabled) for all
