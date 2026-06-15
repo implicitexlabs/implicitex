@@ -169,8 +169,8 @@ are correctly out of scope.
 [x] Signal proportionality (gray/amber/red hierarchy)
 [x] Mobile menu — hamburger nav confirmed functional 2026-06-14
 [x] Mobile form — tap targets, balance/fee readable; real MetaMask mobile browser PASS 2026-06-14
-[ ] No duplicate provider events — verify on WC reconnect
-[ ] WalletConnect reconnect after MetaMask session and vice versa
+[x] No duplicate provider events — verified 2026-06-14; event dispatch clean; Reown noise is library-side
+[x] WalletConnect reconnect after MetaMask session and vice versa — PASS WITH CAVEATS 2026-06-14
 ```
 
 ---
