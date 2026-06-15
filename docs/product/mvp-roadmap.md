@@ -218,7 +218,26 @@ plus four screenshots.
 [ ] Known-limitations note (no recovery, no reversal, Polygon only)
 [ ] X/Reddit launch post draft
 [ ] First user walkthrough tested
+[ ] Blockaid / wallet security warning — plan for first-time user trust gap (see note below)
 ```
+
+**Blockaid "untrusted contract" warning — observed during Gate 4 smoke 2026-06-15.**
+
+MetaMask/Blockaid displayed a yellow warning: "The contract involved in the transaction is
+untrusted." This is a reputation gap, not a scam flag. The contract address in the warning
+matched the deployed contract exactly; the transaction completed correctly; fee routing was
+confirmed on-chain.
+
+Every first-time ImplicitEx user will likely see this warning until the contract develops
+transaction history and reputation footprint. A normal user does not distinguish "unknown"
+from "dangerous." This is a trust friction point, not a safety failure.
+
+Mitigations (progressive, no single fix):
+- Polygonscan source verification (already marked complete in launch safety above)
+- FAQ entry explaining the two-wallet-prompt flow and why a contract interaction occurs
+- Public documentation linking contract address to source code
+- Transaction history accumulation over time (Blockaid becomes less aggressive)
+- Lightweight audit / review published publicly (post-MVP, before scale)
 
 ---
 
