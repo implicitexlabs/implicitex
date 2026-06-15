@@ -726,7 +726,15 @@ body.portal-active #nav {
 [data-theme="light"] .tx-field--primary {
   background: #ffffff;
   border-color: #c8c8c6;
+  border-bottom: 1px solid #c8c8c6;
   color: #111111;
+}
+
+/* When two primary fields stack, the first field's bottom + second field's top
+   would produce a 2px double border. Suppress the top of the follower so the
+   separator stays 1px, matching the dark-theme stacking convention. */
+[data-theme="light"] .tx-field--primary + .tx-field--primary {
+  border-top: none;
 }
 
 [data-theme="light"] .tx-field--primary::placeholder {
