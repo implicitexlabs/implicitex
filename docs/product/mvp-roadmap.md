@@ -273,17 +273,26 @@ Gate 5 items split into two categories:
 [x] FAQ entry: "Why does MetaMask show two confirmations?" (present pre-Gate 4)
 [x] FAQ entry: "Why does MetaMask warn that the contract is untrusted?" (added 2026-06-15, cites verification.html)
 
-[ ] Contact path
+[ ] 1. Known-limitations note — fastest to complete; sets honest expectations;
+         referenced by every remaining item.
+         Minimum: no recovery, no reversal, Polygon only, USDC only, 250 USDC cap.
 
-[ ] Known-limitations note (no recovery, no reversal, Polygon only)
+[ ] 2. Contact path — gives users somewhere to go when uncertain; reduces
+         abandonment from questions that FAQ doesn't answer.
+
+[ ] 3. First-user walkthrough — run a first-time visitor through the site using
+         only public-facing pages; observe hesitation points; update FAQ and
+         verification.html before launch if gaps are found.
 ```
 
 #### Conversion-critical (affects whether someone who already trusts the platform completes a transfer)
 
 ```
-[ ] Homepage copy final
-[ ] First-user walkthrough tested
-[ ] Launch announcement (X/Reddit)
+[ ] 4. Homepage copy final — easier once limitations note and walkthrough feedback exist.
+
+[ ] 5. Launch announcement — last item; points to verification.html, not marketing claims.
+        "Here is the contract. Here is the treasury. Here is a verified transaction.
+        Here is how the fee works." That is the announcement.
 ```
 
 **Blockaid warning principle:** The correct response is not to hide or dismiss it. The
