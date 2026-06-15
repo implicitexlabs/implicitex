@@ -321,6 +321,44 @@ cheapest comprehension test first.
         Here is how the fee works." That is the announcement.
 ```
 
+#### Post-walkthrough (informed by tester behavior, not assumptions)
+
+```
+[ ] 6. WalletConnect end-to-end smoke
+
+   Status: Deferred. Implementation is complete — wallet.js:3935-4004,
+   walletconnect-provider.js, vendor bundle present, project ID set.
+   Button soft-disabled in index.html pending verification.
+
+   Required to re-enable:
+   - QR modal opens on a real mobile device
+   - Session connects and account is returned
+   - Transfer flow completes through WalletConnect provider
+   - Disconnect lifecycle clears session and localStorage correctly
+
+   Restore path: one-line HTML change (restore <button> in wallet-choice overlay)
+   Block: do not re-enable until all four checks pass
+
+[ ] 7. Concepts / glossary page
+
+   Status: Deferred. Do not pre-build. Let the walkthrough reveal which terms
+   actually stop people — those are the entries to write first.
+
+   Candidates (ranked by expected confusion, not confirmed):
+   - Non-custodial (most likely unfamiliar)
+   - Polygon (likely unfamiliar to non-crypto users)
+   - USDC (likely unfamiliar or partially understood)
+   - Gas / network fee (likely confusing)
+   - Wallet approval / token allowance (likely confusing)
+
+   Design notes:
+   - Do not name it "Terms" — collision with Terms of Service page
+   - "Learn" or "Concepts" are cleaner names
+   - Progressive disclosure: link terms inline from FAQ/homepage rather than
+     building a separate standalone page if entries stay short
+   - One sentence on the page, full explanation one click away
+```
+
 **Blockaid warning principle:** The correct response is not to hide or dismiss it. The
 better response is: "You may see an untrusted-contract warning because the contract is new.
 Here is the address. Here is the source. Here is exactly what the transaction does."
