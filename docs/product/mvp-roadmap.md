@@ -339,24 +339,23 @@ cheapest comprehension test first.
    Restore path: one-line HTML change (restore <button> in wallet-choice overlay)
    Block: do not re-enable until all four checks pass
 
-[ ] 7. Concepts / glossary page
+[ ] 7. LEARN page (glossary / concepts)
 
-   Status: Deferred. Do not pre-build. Let the walkthrough reveal which terms
-   actually stop people — those are the entries to write first.
+   Status: Placeholder only. Do not write entries before the walkthrough.
+   The walkthrough will reveal which terms actually cause hesitation or
+   abandonment. Write those entries first. Do not guess.
 
-   Candidates (ranked by expected confusion, not confirmed):
-   - Non-custodial (most likely unfamiliar)
+   Initial candidates (unconfirmed — ranked by expected confusion):
+   - Non-custodial (most likely unfamiliar to general users)
    - Polygon (likely unfamiliar to non-crypto users)
-   - USDC (likely unfamiliar or partially understood)
+   - USDC (may be partially understood)
+   - Wallet approval / token allowance (likely confusing in flow)
    - Gas / network fee (likely confusing)
-   - Wallet approval / token allowance (likely confusing)
 
-   Design notes:
-   - Do not name it "Terms" — collision with Terms of Service page
-   - "Learn" or "Concepts" are cleaner names
-   - Progressive disclosure: link terms inline from FAQ/homepage rather than
-     building a separate standalone page if entries stay short
-   - One sentence on the page, full explanation one click away
+   Name: LEARN (not "Terms" — collision with Terms of Service; not "Glossary" — too academic)
+   URL: /learn.html
+   Nav: footer + inline term links from FAQ and homepage
+   Pattern: one sentence on the linking page, full explanation one click away
 ```
 
 **Blockaid warning principle:** The correct response is not to hide or dismiss it. The
