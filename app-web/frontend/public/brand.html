@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ImplicitEx — Brand</title>
+  <meta name="description" content="Brand guidelines for ImplicitEx — lettermark, wordmark, approved configurations, clear space, and usage rules.">
+  <meta property="og:url" content="https://implicitex.com/brand.html">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="ImplicitEx — Brand">
+  <meta property="og:description" content="Brand guidelines for ImplicitEx — lettermark, wordmark, approved configurations, clear space, and usage rules.">
+  <meta property="og:image" content="https://implicitex.com/components/images/og-primary.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="628">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@implicitex">
+  <meta name="twitter:title" content="ImplicitEx — Brand">
+  <meta name="twitter:description" content="Brand guidelines for ImplicitEx — lettermark, wordmark, approved configurations, clear space, and usage rules.">
+  <meta name="twitter:image" content="https://implicitex.com/components/images/og-primary.png">
+  <link rel="canonical" href="https://implicitex.com/brand.html">
+  <link rel="stylesheet" href="css/main.css">
+  <style>
+    /* ── Brand demo infrastructure ─────────────────────────────────── */
+
+    .brand-section {
+      margin: 3rem 0;
+    }
+
+    /* Demo canvas — always dark regardless of theme toggle,
+       because the mark is white and we are showing it on its
+       intended dark background. */
+    .brand-canvas {
+      background: #111111;
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      border-radius: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 2rem;
+      margin: 1.5rem 0;
+    }
+
+    /* Four-up configuration grid */
+    .brand-config-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 1rem;
+      margin: 1.5rem 0;
+    }
+
+    .brand-config-cell {
+      background: #111111;
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      border-radius: 2px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1.75rem;
+      padding: 2.5rem 1.5rem 1.75rem;
+      min-height: 180px;
+    }
+
+    .brand-config-label {
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(242, 242, 240, 0.4);
+      text-align: center;
+    }
+
+    /* ── Lockup: Stacked ───────────────────────────────────────────── */
+
+    .lockup-stacked {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      /* gap = 20% of mark height (5px at reference 25px size, scaled to 36px = ~7px) */
+      gap: 7px;
+    }
+
+    .lockup-stacked .lm {
+      width: 36px;
+      height: 36px;
+    }
+
+    .lockup-stacked .wm {
+      /* maintain 201.56:25 aspect ratio at ~130px wide */
+      width: 130px;
+    }
+
+    /* ── Lockup: Horizontal ────────────────────────────────────────── */
+
+    .lockup-horizontal .combined {
+      /* the brandmark-wordmark SVG is 201.56 × 25 at reference scale */
+      width: 200px;
+    }
+
+    /* ── Lockup: Square container ──────────────────────────────────── */
+
+    .lockup-square {
+      width: 80px;
+      height: 80px;
+      border: 1px solid rgba(242, 242, 240, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Mark occupies 50% of container; equal clear space on all 4 sides */
+    .lockup-square .lm {
+      width: 40px;
+      height: 40px;
+    }
+
+    /* ── Lockup: Circle container ──────────────────────────────────── */
+
+    .lockup-circle {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      border: 1px solid rgba(242, 242, 240, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Mark at 44% of diameter — clears the circle edge by ~28% of radius on all sides */
+    .lockup-circle .lm {
+      width: 35px;
+      height: 35px;
+    }
+
+    /* ── Clear-space diagram ───────────────────────────────────────── */
+
+    .clearspace-diagram {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 0;
+    }
+
+    .clearspace-diagram .lm {
+      width: 40px;
+      height: 40px;
+    }
+
+    .clearspace-diagram .wm {
+      width: 130px;
+      /* 20% of 40px = 8px gap */
+      margin-left: 8px;
+    }
+
+    .clearspace-rule {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: rgba(242, 242, 240, 0.5);
+      margin-top: 1rem;
+      text-align: center;
+    }
+
+    /* ── Minimum size demo ─────────────────────────────────────────── */
+
+    .minsize-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .minsize-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .minsize-item .size-label {
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      color: rgba(242, 242, 240, 0.4);
+    }
+
+    .minsize-item.too-small .lm {
+      opacity: 0.35;
+    }
+
+    .minsize-item.too-small .size-label {
+      color: #c0392b;
+    }
+
+    /* ── Do-not rules list ─────────────────────────────────────────── */
+
+    .dont-list {
+      list-style: none;
+      padding: 0;
+      margin: 1rem 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .dont-list li {
+      padding-left: 1.5rem;
+      position: relative;
+      color: var(--dim);
+    }
+
+    .dont-list li::before {
+      content: "✕";
+      position: absolute;
+      left: 0;
+      color: #c0392b;
+      font-size: 0.75rem;
+      line-height: 1.6;
+    }
+
+    /* ── Asset file table ──────────────────────────────────────────── */
+
+    .asset-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      margin: 1.5rem 0;
+    }
+
+    .asset-table th {
+      text-align: left;
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--dim);
+      border-bottom: 1px solid var(--border);
+      padding: 0.5rem 1rem 0.5rem 0;
+    }
+
+    .asset-table td {
+      padding: 0.6rem 1rem 0.6rem 0;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+      color: var(--dim);
+    }
+
+    .asset-table td:first-child {
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      color: var(--white);
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+  <nav id="nav">
+    <a href="/" class="logo" aria-label="ImplicitEx home">
+      <svg class="brandmark" width="25" height="25" viewBox="0 0 25 25" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+        <path d="M18.4,21.48L2.64,5.73l.43-.43,15.76,15.76s1.3,1.3,2.79-.19.21-2.77.21-2.77L6.05,2.32l.43-.43,4.07,4.07,1.38,1.38,1.28-1.28,4.28-4.28.43.43-5.56,5.56,2.98,2.98,5.56-5.56.43.43-5.56,5.56,1.28,1.28,5.56-5.56s1.28-1.28-.21-2.77-2.79-.19-2.79-.19l-4.26,4.26-.43-.43,4.26-4.26s1.3-1.3-.19-2.79-2.77-.21-2.77-.21l-4.28,4.28L7.75.62s-1.28-1.28-2.77.21-.19,2.79-.19,2.79l15.76,15.76-.43.43L4.37,4.05s-1.3-1.3-2.79.19-.11,2.87-.11,2.87l15.68,15.68-.43.43-5.56-5.56-5.54,5.54-.43-.43,5.54-5.54-2.98-2.98-5.54,5.54-.43-.43,5.54-5.54-1.28-1.28L.51,18.08s-1.28,1.28.21,2.77,2.79.19,2.79.19l4.23-4.23.43.43-4.23,4.23s-1.3,1.3.19,2.79,2.77.21,2.77.21l4.26-4.26,4.28,4.28s1.28,1.28,2.77-.21.19-2.79.19-2.79Z" fill="#f2f2f0"/>
+      </svg>
+      <img class="wordmark" src="/components/images/wordmark.svg" alt="" aria-hidden="true">
+    </a>
+    <div class="nav-right">
+      <div class="wallet-pill" id="walletPill" aria-live="polite">
+        <span class="wallet-dot" aria-hidden="true"></span>
+        <span class="wallet-addr" id="walletAddr"></span>
+      </div>
+      <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch to light theme" aria-pressed="false">
+        <svg class="theme-icon" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+          <path d="M7 1 A6 6 0 0 0 7 13 Z" fill="var(--white)"/>
+          <path d="M7 1 A6 6 0 0 1 7 13 Z" fill="var(--bg)"/>
+          <circle cx="7" cy="7" r="6" fill="none" stroke="currentColor" stroke-width="1.2"/>
+        </svg>
+      </button>
+      <span class="nav-status">Polygon · Live</span>
+      <button class="connect-btn" id="connectBtn" onclick="IX.connect()">
+        Connect Wallet
+      </button>
+    </div>
+  </nav>
+
+  <main class="policy-shell">
+    <p class="policy-eyebrow">ImplicitEx</p>
+
+    <h1>Brand</h1>
+
+    <p>
+      Logo system, approved configurations, clear-space rules, and usage
+      guidelines for the ImplicitEx brand. For press resources and platform
+      boilerplate, see the <a href="/media.html">Media</a> page.
+    </p>
+
+
+    <!-- ── LETTERMARK ─────────────────────────────────────────────────── -->
+
+    <div class="brand-section">
+      <h2>Lettermark</h2>
+
+      <p>
+        The lettermark is the primary ImplicitEx mark — an X-form constructed
+        from crossing diagonal strokes with precise terminal angles. It is the
+        most reduced expression of the brand and the element that anchors all
+        lockup configurations.
+      </p>
+
+      <div class="brand-canvas">
+        <img src="/components/images/brandmark.svg" alt="ImplicitEx lettermark" width="72" height="72">
+      </div>
+
+      <p>
+        The lettermark is white (#f2f2f0) on dark. It does not appear in any
+        other color. Do not recolor, outline, or apply effects to the mark.
+      </p>
+    </div>
+
+
+    <!-- ── WORDMARK ───────────────────────────────────────────────────── -->
+
+    <div class="brand-section">
+      <h2>Wordmark</h2>
+
+      <p>
+        The wordmark sets IMPLICITEX in a custom geometric typeface with tight
+        tracking and consistent stroke weight. It is always used together with
+        the lettermark in one of the four approved configurations — never as a
+        standalone element without the lettermark present.
+      </p>
+
+      <div class="brand-canvas">
+        <img src="/components/images/wordmark.svg" alt="ImplicitEx wordmark" style="width: 220px;">
+      </div>
+    </div>
+
+
+    <!-- ── APPROVED CONFIGURATIONS ───────────────────────────────────── -->
+
+    <div class="brand-section">
+      <h2>Approved Configurations</h2>
+
+      <p>
+        The lettermark may only appear in these four configurations. Do not
+        combine the lettermark and wordmark in any other spatial arrangement.
+      </p>
+
+      <div class="brand-config-grid">
+
+        <!-- 1. Stacked -->
+        <div class="brand-config-cell">
+          <div class="lockup-stacked" role="img" aria-label="Stacked lockup: lettermark centered above wordmark">
+            <img class="lm" src="/components/images/brandmark.svg" alt="">
+            <img class="wm" src="/components/images/wordmark.svg" alt="">
+          </div>
+          <span class="brand-config-label">Stacked<br>Mark centered above wordmark</span>
+        </div>
+
+        <!-- 2. Horizontal -->
+        <div class="brand-config-cell">
+          <div class="lockup-horizontal" role="img" aria-label="Horizontal lockup: lettermark to the left of wordmark">
+            <img class="combined" src="/components/images/brandmark-wordmark.svg" alt="">
+          </div>
+          <span class="brand-config-label">Horizontal<br>Mark left of wordmark</span>
+        </div>
+
+        <!-- 3. Square -->
+        <div class="brand-config-cell">
+          <div class="lockup-square" role="img" aria-label="Square lockup: lettermark in a square container">
+            <img class="lm" src="/components/images/brandmark.svg" alt="">
+          </div>
+          <span class="brand-config-label">Square<br>Mark in square container</span>
+        </div>
+
+        <!-- 4. Circle -->
+        <div class="brand-config-cell">
+          <div class="lockup-circle" role="img" aria-label="Circle lockup: lettermark in a circle container">
+            <img class="lm" src="/components/images/brandmark.svg" alt="">
+          </div>
+          <span class="brand-config-label">Circle<br>Mark in circle container</span>
+        </div>
+
+      </div>
+    </div>
+
+
+    <!-- ── CLEAR SPACE ────────────────────────────────────────────────── -->
+
+    <div class="brand-section">
+      <h2>Clear Space</h2>
+
+      <p>
+        Clear space is the minimum unobstructed area that must surround the
+        lettermark in every configuration. No text, graphics, or other marks
+        may enter this zone.
+      </p>
+
+      <h3>With the wordmark (stacked or horizontal)</h3>
+
+      <p>
+        The gap between the lettermark and the wordmark must be no less than
+        20% of the lettermark's width. At the reference mark size of 25&thinsp;px,
+        this gap is 5&thinsp;px. Scale the gap proportionally at larger sizes.
+        The unit for this measurement is called <strong>x</strong> — one x
+        equals 20% of the lettermark's current rendered width.
+      </p>
+
+      <div class="brand-canvas">
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 0.75rem;">
+          <div class="clearspace-diagram" aria-hidden="true">
+            <img class="lm" src="/components/images/brandmark.svg" alt="">
+            <img class="wm" src="/components/images/wordmark.svg" alt="">
+          </div>
+          <p class="clearspace-rule">gap = 1x &nbsp;·&nbsp; x = 20% of mark width</p>
+        </div>
+      </div>
+
+      <h3>In a square container</h3>
+
+      <p>
+        The lettermark must occupy no more than 50% of the square's width and
+        height. This produces equal clear space on all four sides equal to 25%
+        of the container's dimension.
+      </p>
+
+      <h3>In a circle container</h3>
+
+      <p>
+        The lettermark must fit within a circle whose diameter is at least
+        180% of the mark's width. This ensures the gap between any point of
+        the mark and the circle boundary is at least 28% of the circle's
+        radius on all sides. Do not allow the mark to touch or overlap the
+        circle boundary at any point.
+      </p>
+
+      <h3>Standalone lettermark</h3>
+
+      <p>
+        When the lettermark appears without the wordmark (square or circle
+        container, favicon, app icon), maintain clear space of at least 1x
+        on all sides outside the container boundary.
+      </p>
+    </div>
+
+
+    <!-- ── MINIMUM SIZE ───────────────────────────────────────────────── -->
+
+    <div class="brand-section">
+      <h2>Minimum Size</h2>
+
+      <p>
+        The lettermark's fine diagonal strokes become illegible at small sizes.
+        Do not use the standalone lettermark below <strong>24&thinsp;px</strong>.
+        At or below that threshold, use the horizontal lockup
+        (lettermark + wordmark) or omit the mark entirely.
+      </p>
+
+      <div class="brand-canvas">
+        <div class="minsize-row" aria-hidden="true">
+          <div class="minsize-item">
+            <img src="/components/images/brandmark.svg" alt="" width="64" height="64">
+            <span class="size-label">64 px</span>
+          </div>
+          <div class="minsize-item">
+            <img src="/components/images/brandmark.svg" alt="" width="40" height="40">
+            <span class="size-label">40 px</span>
+          </div>
+          <div class="minsize-item">
+            <img src="/components/images/brandmark.svg" alt="" width="24" height="24">
+            <span class="size-label">24 px — minimum</span>
+          </div>
+          <div class="minsize-item too-small">
+            <img class="lm" src="/components/images/brandmark.svg" alt="" width="16" height="16">
+            <span class="size-label">16 px — do not use</span>
+          </div>
+          <div class="minsize-item too-small">
+            <img class="lm" src="/components/images/brandmark.svg" alt="" width="12" height="12">
+            <span class="size-label">12 px — do not use</span>
+          </div>
+        </div>
+      </div>
+
+      <p>
+        Favicon and app icon sizes (16, 32, 192, 512&thinsp;px) are handled
+        by purpose-built raster exports in <code>assets/icons/</code>, which
+        are pixel-optimised for each target size. Do not generate these by
+        simply scaling the SVG.
+      </p>
+    </div>
+
+
+    <!-- ── USAGE RULES ────────────────────────────────────────────────── -->
+
+    <div class="brand-section">
+      <h2>Usage Rules</h2>
+
+      <h3>The lettermark may only appear</h3>
+
+      <ul>
+        <li>Centered above the wordmark (stacked configuration)</li>
+        <li>To the left of the wordmark (horizontal configuration)</li>
+        <li>Alone inside a square container</li>
+        <li>Alone inside a circle container</li>
+      </ul>
+
+      <h3>Do not</h3>
+
+      <ul class="dont-list">
+        <li>Rotate, skew, stretch, or distort the lettermark</li>
+        <li>Recolor the lettermark — it is always #f2f2f0 on dark</li>
+        <li>Place the lettermark to the right of, below, or diagonally offset from the wordmark</li>
+        <li>Combine the lettermark with the wordmark in any configuration not listed above</li>
+        <li>Outline or add a drop shadow, glow, or other effect to the mark</li>
+        <li>Use the standalone lettermark below 24&thinsp;px</li>
+        <li>Place competing marks, icons, or text within the clear-space zone</li>
+        <li>Use the wordmark without the lettermark present in the same composition</li>
+        <li>Reconstruct the lettermark from the wordmark's X character or any other typeface</li>
+      </ul>
+    </div>
+
+
+    <!-- ── ASSET FILES ────────────────────────────────────────────────── -->
+
+    <div class="brand-section">
+      <h2>Asset Files</h2>
+
+      <table class="asset-table">
+        <thead>
+          <tr>
+            <th>File</th>
+            <th>Use</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>brandmark.svg</td>
+            <td>Standalone lettermark — square or circle containers, large display</td>
+          </tr>
+          <tr>
+            <td>wordmark.svg</td>
+            <td>Wordmark only — used in stacked lockup alongside brandmark.svg</td>
+          </tr>
+          <tr>
+            <td>brandmark-wordmark.svg</td>
+            <td>Horizontal lockup — lettermark + wordmark combined, single file</td>
+          </tr>
+          <tr>
+            <td>assets/icons/favicon.ico</td>
+            <td>Browser favicon, multi-size ICO (16, 32&thinsp;px)</td>
+          </tr>
+          <tr>
+            <td>assets/icons/favicon-16x16.png</td>
+            <td>Browser tab icon at 16&thinsp;×&thinsp;16</td>
+          </tr>
+          <tr>
+            <td>assets/icons/favicon-32x32.png</td>
+            <td>Browser tab icon at 32&thinsp;×&thinsp;32</td>
+          </tr>
+          <tr>
+            <td>assets/icons/apple-touch-icon.png</td>
+            <td>iOS home screen icon at 180&thinsp;×&thinsp;180</td>
+          </tr>
+          <tr>
+            <td>assets/icons/icon-192.png</td>
+            <td>Android / PWA icon at 192&thinsp;×&thinsp;192</td>
+          </tr>
+          <tr>
+            <td>assets/icons/icon-512.png</td>
+            <td>Android / PWA splash icon at 512&thinsp;×&thinsp;512</td>
+          </tr>
+          <tr>
+            <td>components/images/og-primary.png</td>
+            <td>Open graph / social preview card — 1200&thinsp;×&thinsp;628</td>
+          </tr>
+          <tr>
+            <td>components/images/twitter-avatar.png</td>
+            <td>X (Twitter) profile avatar — 400&thinsp;×&thinsp;400</td>
+          </tr>
+          <tr>
+            <td>components/images/twitter-banner.png</td>
+            <td>X (Twitter) header banner — 1500&thinsp;×&thinsp;500</td>
+          </tr>
+          <tr>
+            <td>components/images/linkedin-avatar.png</td>
+            <td>LinkedIn profile avatar — 400&thinsp;×&thinsp;400</td>
+          </tr>
+          <tr>
+            <td>components/images/linkedin-banner.png</td>
+            <td>LinkedIn header banner — 1584&thinsp;×&thinsp;396</td>
+          </tr>
+          <tr>
+            <td>components/images/github-avatar.png</td>
+            <td>GitHub organization avatar — 460&thinsp;×&thinsp;460</td>
+          </tr>
+          <tr>
+            <td>components/images/github-social-preview.png</td>
+            <td>GitHub repository social preview — 1280&thinsp;×&thinsp;640</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p>
+        All source files are available in the
+        <a href="https://github.com/implicitexlabs" target="_blank" rel="noopener">ImplicitEx GitHub repository</a>.
+        For press and media use, see the <a href="/media.html">Media</a> page.
+      </p>
+    </div>
+
+
+    <a class="back" href="/">Return to ImplicitEx</a>
+  </main>
+
+  <footer>
+    <nav class="f-links" aria-label="Footer links">
+      <a href="/about.html">About</a>
+      <a href="/faq.html">FAQ</a>
+      <a href="/learn.html">Learn</a>
+      <a href="/verification.html">Proof</a>
+      <a href="/terms.html">Terms</a>
+      <a href="/privacy.html">Privacy</a>
+      <a href="/legal.html">Legal</a>
+      <a href="/jurisdictions.html">Access</a>
+      <a href="/news.html">News</a>
+      <a href="/media.html">Media</a>
+      <a href="/brand.html">Brand</a>
+      <a href="/contact.html">Contact</a>
+    </nav>
+    <nav class="social-links" aria-label="Social links">
+      <a class="social-text-link" href="https://x.com/implicitex" target="_blank" rel="noopener">X</a>
+      <a class="social-text-link" href="https://www.linkedin.com/in/implicitex/" target="_blank" rel="noopener">LinkedIn</a>
+      <a class="social-text-link" href="https://github.com/implicitexlabs" target="_blank" rel="noopener">GitHub</a>
+    </nav>
+    <span class="f-net" id="networkBadge">Polygon live</span>
+  </footer>
+
+  <script src="config/chains.js"></script>
+  <script src="js/wallet.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

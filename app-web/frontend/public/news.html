@@ -4,18 +4,18 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ImplicitEx — News</title>
-  <meta name="description" content="Platform updates and release notes for ImplicitEx.">
+  <meta name="description" content="Platform updates, regulatory observations, and policy analysis from ImplicitEx.">
   <meta property="og:url" content="https://implicitex.com/news.html">
   <meta property="og:type" content="website">
   <meta property="og:title" content="ImplicitEx — News">
-  <meta property="og:description" content="Platform updates and release notes for ImplicitEx.">
+  <meta property="og:description" content="Platform updates, regulatory observations, and policy analysis from ImplicitEx.">
   <meta property="og:image" content="https://implicitex.com/components/images/og-primary.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="628">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:site" content="@implicitex">
   <meta name="twitter:title" content="ImplicitEx — News">
-  <meta name="twitter:description" content="Platform updates and release notes for ImplicitEx.">
+  <meta name="twitter:description" content="Platform updates, regulatory observations, and policy analysis from ImplicitEx.">
   <meta name="twitter:image" content="https://implicitex.com/components/images/og-primary.png">
   <link rel="canonical" href="https://implicitex.com/news.html">
   <link rel="stylesheet" href="css/main.css">
@@ -47,27 +47,12 @@
     </div>
   </nav>
 
-  <main class="policy-shell">
+  <main class="policy-shell" id="newsMain">
     <p class="policy-eyebrow">ImplicitEx</p>
-
     <h1>News</h1>
-
-    <p class="updated">Last updated: June 2, 2026</p>
-
-    <h2>June 2026 — Live transfer smoke complete</h2>
-
-    <p>
-      ImplicitEx transfer execution is live on Polygon mainnet under a limited
-      soft-launch scope. The hardened contract has been deployed, source-verified,
-      and smoke-tested on-chain with real USDC.
-    </p>
-
-    <p>
-      Current launch controls: 1% platform fee, 250 USDC soft-launch cap,
-      non-custodial wallet execution, and continued production readiness review.
-      No custody. No escrow. Funds move directly between wallets.
-    </p>
-
+    <p id="newsSubhead" class="updated"></p>
+    <!-- Articles rendered by js/news-data.js -->
+    <div id="newsArticles"></div>
     <a class="back" href="/">Return to ImplicitEx</a>
   </main>
 
@@ -82,6 +67,8 @@
       <a href="/legal.html">Legal</a>
       <a href="/jurisdictions.html">Access</a>
       <a href="/news.html">News</a>
+      <a href="/media.html">Media</a>
+      <a href="/brand.html">Brand</a>
       <a href="/contact.html">Contact</a>
     </nav>
     <nav class="social-links" aria-label="Social links">
@@ -91,6 +78,47 @@
     </nav>
     <span class="f-net" id="networkBadge">Polygon live</span>
   </footer>
+
+  <script src="js/news-data.js"></script>
+  <script>
+  (function () {
+    'use strict';
+    if (!window.IX_NEWS || !IX_NEWS.length) return;
+
+    /* Newest article first */
+    var articles = IX_NEWS.slice().reverse();
+
+    /* Update the "last updated" dateline to the most recent article */
+    var subhead = document.getElementById('newsSubhead');
+    if (subhead) subhead.textContent = 'Last updated: ' + articles[0].date;
+
+    /* Render all articles */
+    var container = document.getElementById('newsArticles');
+    if (!container) return;
+
+    container.innerHTML = articles.map(function (a) {
+      var bodyHtml = a.body.map(function (p) {
+        return '<p>' + p + '</p>';
+      }).join('');
+      return '<article class="news-article" id="' + a.id + '">' +
+        '<p class="updated" style="margin-bottom:0.5rem">' +
+          '<time datetime="' + a.dateIso + '">' + a.date + '</time>' +
+          ' &nbsp;&middot;&nbsp; ' + a.category +
+        '</p>' +
+        '<h2>' + a.title + '</h2>' +
+        bodyHtml +
+        '</article>';
+    }).join('');
+
+    /* Scroll to the anchor from the URL hash if present */
+    if (location.hash) {
+      var target = document.querySelector(location.hash);
+      if (target) {
+        setTimeout(function () { target.scrollIntoView({ behavior: 'smooth' }); }, 80);
+      }
+    }
+  }());
+  </script>
 
   <script src="config/chains.js"></script>
   <script src="js/wallet.js"></script>
