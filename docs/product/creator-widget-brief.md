@@ -309,6 +309,63 @@ embed is the wrong order.
 
 ---
 
+## Stop Conditions
+
+Success criteria define what earns the right to proceed. Stop conditions
+define what earns the right to stop. They are symmetric. Leaving them
+implicit means someone has to make a judgment call under pressure instead
+of referencing a prior decision.
+
+### After Layer 2A
+
+Stop and investigate if, after genuine creator outreach:
+
+```
+Zero transfers originate from creator links
+— OR —
+No creator publishes a link after being given the tool
+```
+
+Either result is a signal, not a failure. It means the assumption was
+wrong — wrong audience, wrong message, wrong segment, wrong timing —
+and diagnosing which one is more valuable than building the next layer.
+Do not interpret flat results as a reason to build faster. A quiet
+result is a result.
+
+Specific things to diagnose before proceeding:
+
+```
+[ ] Did creators understand what they were generating a link for?
+[ ] Did supporters who clicked have a wallet? Did they know they needed one?
+[ ] Was the 1% fee legible, or was it blocking?
+[ ] Was the recipient display trustworthy enough to complete a transfer?
+[ ] Was the outreach cohort representative, or a self-selected early adopter set?
+```
+
+### After Layer 2B
+
+Stop and do not build Layer 2C if:
+
+```
+The embed shows no measurable conversion lift over the redirect link
+— OR —
+Fewer than 50 creators are actively using the embed
+— OR —
+No creator has articulated a specific capability they need but don't have
+```
+
+If the embed and the redirect link perform identically, the embed
+complexity was not justified. The right response is not to add features
+— it is to understand why the embed did not reduce friction as intended.
+
+### General principle
+
+A flat result is not ambiguous. It is evidence that the assumption
+behind the next layer has not been proven. Stop conditions exist so
+that the default response to silence is investigation, not construction.
+
+---
+
 ## Scope Boundary
 
 Layer 2 is the support link and embed. It is not the creator dashboard.
