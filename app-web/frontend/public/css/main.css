@@ -1964,10 +1964,19 @@ footer .social-links a:focus-visible,
   padding: 1.5rem;
 }
 
-.about-card h2,
-.about-foot h2 {
+.about-card h2 {
   font-family: var(--display);
   font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--white);
+  margin-bottom: 1.25rem;
+}
+
+.about-foot h2 {
+  font-family: var(--display);
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
