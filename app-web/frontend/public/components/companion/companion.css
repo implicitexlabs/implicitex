@@ -100,16 +100,12 @@
 
 /* ---- Detail panel — expands downward below bar ---- */
 .companion-detail {
-  max-height: 0;
   overflow: hidden;
-  /* ease-out: mechanical extension — quick start, decelerates to rest.
-     Not ease (soft/app-like). Not linear (abrupt). Not slow (theatrical). */
-  transition: max-height 0.18s ease-out;
   border-top: 0px solid var(--border);
+  /* height and transition managed by JS animation */
 }
 
 .companion.is-open .companion-detail {
-  max-height: 260px;
   border-top-width: 1px;
 }
 
@@ -206,10 +202,6 @@
 
 /* ---- Reduced motion ---- */
 @media (prefers-reduced-motion: reduce) {
-  .companion-detail {
-    transition: none;
-  }
-
   .companion-toggle {
     transition: none;
   }

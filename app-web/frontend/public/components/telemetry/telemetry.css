@@ -111,20 +111,12 @@
 /* ---- Expanded panel ---- */
 .telemetry-panel {
   overflow: hidden;
-  max-height: 0;
-  transition: max-height 0.18s ease-out;
   border-top: 0px solid var(--border);
-}
-
-.telemetry-panel[hidden] {
-  display: block; /* override browser hidden — we animate max-height instead */
-  visibility: hidden;
+  /* height and transition managed by JS animation */
 }
 
 .telemetry.is-open .telemetry-panel {
-  max-height: 480px;
   border-top-width: 1px;
-  visibility: visible;
 }
 
 /* ---- Panel body ---- */
@@ -216,7 +208,6 @@
 
 /* ---- Reduced motion ---- */
 @media (prefers-reduced-motion: reduce) {
-  .telemetry-dot    { animation: none !important; }
-  .telemetry-panel  { transition: none; }
+  .telemetry-dot     { animation: none !important; }
   .telemetry-chevron { transition: none; }
 }
