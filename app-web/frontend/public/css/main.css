@@ -1791,6 +1791,14 @@ footer .social-links a:focus-visible,
   margin: 2.35rem 0 1rem;
 }
 
+.faq-shell h2 {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin: 2rem 0 0.85rem;
+}
+
 .policy-shell h3 {
   font-size: 14px;
   margin: 1.35rem 0 0.7rem;
