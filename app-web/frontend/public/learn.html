@@ -661,30 +661,87 @@
     /* Sidebar                                                              */
     /* ------------------------------------------------------------------ */
 
+    /* ---- Accordion helpers ---- */
+
+    function expandSection(sectionEl) {
+      var toggle  = sectionEl.querySelector('.learn-nav-toggle');
+      var entries = sectionEl.querySelector('.learn-nav-entries');
+      if (!entries || toggle.getAttribute('aria-expanded') === 'true') return;
+      toggle.setAttribute('aria-expanded', 'true');
+      var target = entries.scrollHeight;
+      requestAnimationFrame(function () {
+        entries.style.transition = 'height 0.25s ease';
+        entries.style.height = target + 'px';
+      });
+      function onDone(ev) {
+        if (ev.propertyName !== 'height') return;
+        entries.style.height = '';
+        entries.style.transition = '';
+        entries.removeEventListener('transitionend', onDone);
+      }
+      entries.addEventListener('transitionend', onDone);
+    }
+
+    function collapseSection(sectionEl) {
+      var toggle  = sectionEl.querySelector('.learn-nav-toggle');
+      var entries = sectionEl.querySelector('.learn-nav-entries');
+      if (!entries || toggle.getAttribute('aria-expanded') === 'false') return;
+      toggle.setAttribute('aria-expanded', 'false');
+      entries.style.height = entries.offsetHeight + 'px';
+      requestAnimationFrame(function () {
+        entries.style.transition = 'height 0.25s ease';
+        entries.style.height = '0';
+      });
+      function onDone(ev) {
+        if (ev.propertyName !== 'height') return;
+        entries.style.height = '0';
+        entries.style.transition = '';
+        entries.removeEventListener('transitionend', onDone);
+      }
+      entries.addEventListener('transitionend', onDone);
+    }
+
     function buildSidebar() {
       var nav = document.getElementById('learnNav');
       if (!nav) return;
       var html = '';
       LEARN_DATA.sections.forEach(function (section) {
         html += '<div class="learn-nav-section" data-section>' +
-          '<p class="learn-nav-label">' + section.label + '</p>';
+          '<button class="learn-nav-toggle" data-section-toggle aria-expanded="true">' +
+          section.label +
+          '<span class="learn-nav-chevron" aria-hidden="true"></span>' +
+          '</button>' +
+          '<div class="learn-nav-entries">';
         section.entries.forEach(function (entry) {
           html += '<button class="learn-nav-link" data-entry="' + entry.id + '">' +
             entry.title + '</button>';
         });
-        html += '</div>';
+        html += '</div></div>';
       });
       nav.innerHTML = html;
 
       nav.addEventListener('click', function (e) {
+        // Section toggle
+        var toggleBtn = e.target.closest('[data-section-toggle]');
+        if (toggleBtn) {
+          var sectionEl = toggleBtn.closest('[data-section]');
+          if (sectionEl) {
+            if (toggleBtn.getAttribute('aria-expanded') === 'true') {
+              collapseSection(sectionEl);
+            } else {
+              expandSection(sectionEl);
+            }
+          }
+          return;
+        }
+        // Entry link
         var btn = e.target.closest('[data-entry]');
         if (btn && btn.classList.contains('learn-nav-link')) {
           loadEntry(btn.dataset.entry);
-          // Close mobile sidebar after selection
           var sidebar = document.getElementById('learnSidebar');
           if (sidebar) sidebar.classList.remove('is-open');
-          var toggle = document.getElementById('learnMobileToggle');
-          if (toggle) toggle.setAttribute('aria-expanded', 'false');
+          var mobileToggle = document.getElementById('learnMobileToggle');
+          if (mobileToggle) mobileToggle.setAttribute('aria-expanded', 'false');
         }
       });
     }
@@ -713,10 +770,24 @@
         if (match) anyVisible = true;
       });
 
-      // Hide section headers when all their links are hidden
+      // Show/hide sections; expand sections that have matching entries during search
       sections.forEach(function (section) {
         var visibleLinks = section.querySelectorAll('.learn-nav-link:not(.is-hidden)');
-        section.style.display = visibleLinks.length ? '' : 'none';
+        if (visibleLinks.length) {
+          section.style.display = '';
+          if (q) {
+            // Force-expand so matching entries are visible
+            var toggle  = section.querySelector('.learn-nav-toggle');
+            var entries = section.querySelector('.learn-nav-entries');
+            if (toggle && entries) {
+              toggle.setAttribute('aria-expanded', 'true');
+              entries.style.height = '';
+              entries.style.transition = '';
+            }
+          }
+        } else {
+          section.style.display = 'none';
+        }
       });
 
       if (noResults) noResults.hidden = anyVisible;
@@ -762,6 +833,13 @@
 
       setActiveLink(id);
       activeId = id;
+
+      // Ensure the entry's section is expanded
+      var activeLink = document.querySelector('.learn-nav-link[data-entry="' + id + '"]');
+      if (activeLink) {
+        var sectionEl = activeLink.closest('[data-section]');
+        if (sectionEl) expandSection(sectionEl);
+      }
 
       // Update URL hash for shareability
       try { history.replaceState(null, '', '#' + id); } catch (e) {}
