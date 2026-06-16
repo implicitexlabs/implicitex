@@ -5,6 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ImplicitEx — Learn</title>
   <meta name="description" content="Guides and concepts for first-time crypto users. Learn about wallets, USDC, Polygon, gas fees, and how ImplicitEx works.">
+  <meta property="og:url" content="https://implicitex.com/learn.html">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="ImplicitEx — Learn">
+  <meta property="og:description" content="Guides for first-time crypto users. Learn about wallets, USDC, Polygon, gas fees, and how ImplicitEx works.">
+  <meta property="og:image" content="https://implicitex.com/components/images/og-learn.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="628">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@implicitex">
+  <meta name="twitter:title" content="ImplicitEx — Learn">
+  <meta name="twitter:description" content="Guides for first-time crypto users. Learn about wallets, USDC, Polygon, gas fees, and how ImplicitEx works.">
+  <meta name="twitter:image" content="https://implicitex.com/components/images/og-learn.png">
   <link rel="canonical" href="https://implicitex.com/learn.html">
   <link rel="stylesheet" href="css/main.css">
 </head>
@@ -135,6 +147,7 @@
             {
               id: 'no-account',
               title: 'Do I need an account?',
+              keywords: 'matic signup registration login email password',
               html: `<h2>Do I need an account?</h2>
 <p>ImplicitEx does not require a traditional account. There is no email address, password, or identity verification required to use the transfer interface. You connect using a crypto wallet you already control.</p>
 <p>This is different from platforms like PayPal or Venmo, which create an account on your behalf and hold your funds. ImplicitEx is non-custodial — your wallet remains under your control at all times.</p>
@@ -149,6 +162,7 @@
             {
               id: 'what-wallet',
               title: 'What is a crypto wallet?',
+              keywords: 'metamask browser extension private key seed phrase mnemonic recovery backup',
               html: `<h2>What is a crypto wallet?</h2>
 <p>A crypto wallet is software that manages your private key — the mathematical secret that proves ownership of your funds on a blockchain. Your wallet does not hold USDC or MATIC the way a physical wallet holds cash. It holds the key that lets you authorize transactions on the blockchain.</p>
 <p>Think of it this way:</p>
@@ -178,6 +192,7 @@
             {
               id: 'get-usdc',
               title: 'How do I get USDC?',
+              keywords: 'matic buy purchase coinbase kraken exchange acquire stablecoin gas token',
               html: `<h2>How do I get USDC?</h2>
 <p>USDC is a stablecoin issued by Circle. You can acquire it in several ways.</p>
 <h3>Receive it from someone</h3>
@@ -192,6 +207,7 @@
             {
               id: 'exchange-to-polygon',
               title: 'How do I move USDC from an exchange to Polygon?',
+              keywords: 'matic coinbase kraken withdraw withdrawal bridge network mainnet chain id 137',
               html: `<h2>How do I move USDC from an exchange to Polygon?</h2>
 <p>Buying USDC on an exchange does not put it in your wallet on <a href="https://polygon.technology" target="_blank" rel="noopener noreferrer">Polygon</a>. Most exchanges hold purchased assets in their own accounts until you explicitly withdraw to a destination address on a specific network. The network you select during withdrawal determines which blockchain receives the funds — and the wrong selection can put funds somewhere they are not accessible.</p>
 <h3>Why the same asset can exist on multiple networks</h3>
@@ -269,6 +285,7 @@
             {
               id: 'two-confirmations',
               title: 'Why two wallet confirmations?',
+              keywords: 'allowance approve authorize erc20 approval prompt steps',
               html: `<h2>Why are there two wallet confirmations?</h2>
 <p>The two-step process is a feature of how ERC-20 tokens like USDC work — it is not specific to ImplicitEx.</p>
 <h3>First prompt — Authorization</h3>
@@ -309,6 +326,7 @@
             {
               id: 'wallet-warning',
               title: 'Why does my wallet show a warning?',
+              keywords: 'untrusted blockaid security alert metamask prompt contract address verification',
               html: `<h2>Why does my wallet show an "untrusted contract" warning?</h2>
 <p>Wallet security systems assess contracts based on age, transaction history, and known behavior patterns. A new contract with limited on-chain history may be classified as "untrusted" even if no malicious behavior has been detected.</p>
 <p>The ImplicitEx contract is relatively new. The warning reflects its age — not a finding of fraud or malicious activity.</p>
@@ -325,6 +343,7 @@
             {
               id: 'address',
               title: 'Address',
+              keywords: 'matic wallet 0x polygon ethereum public account number',
               html: `<h2>Address</h2>
 <p>A blockchain address is a unique identifier — similar to an account number — that represents a location on the blockchain where assets can be held or received. On Polygon and Ethereum, addresses are 42 characters long and begin with 0x.</p>
 <p>Example: <code>0x742d35Cc6634C0532925a3b8D4C9C5…</code></p>
@@ -344,6 +363,7 @@
             {
               id: 'gas',
               title: 'Gas and network fees',
+              keywords: 'matic fee network cost validators polygon pay transaction',
               html: `<h2>Gas and network fees</h2>
 <p>Gas is the fee paid to the validators who process transactions on Polygon. ImplicitEx does not receive gas fees — they go entirely to the Polygon network.</p>
 <p>Gas fees on Polygon are typically very small — often a fraction of a cent. The exact amount varies based on network activity at the time of your transaction. Your wallet shows the estimated gas cost before you confirm each step.</p>
@@ -360,6 +380,7 @@
             {
               id: 'non-custodial',
               title: 'Non-custodial',
+              keywords: 'custody control funds wallet bank exchange coinbase self-custody',
               html: `<h2>Non-custodial</h2>
 <p>Non-custodial means ImplicitEx never takes possession of your funds. Your wallet remains under your control before, during, and after the transfer.</p>
 <h3>How it differs from custodial services</h3>
@@ -387,6 +408,7 @@
             {
               id: 'token',
               title: 'Token',
+              keywords: 'matic erc20 standard digital asset cryptocurrency',
               html: `<h2>Token</h2>
 <p>A token is a digital asset that exists on a blockchain. USDC is a token. MATIC is a token. Thousands of tokens exist across different blockchains, each issued and governed differently.</p>
 <p>Tokens follow standards that make them compatible with wallets, contracts, and other services. USDC follows the ERC-20 standard, which means it can be transferred using the same approval and transfer flow as any other ERC-20 token on Polygon or Ethereum.</p>
@@ -407,6 +429,7 @@
             {
               id: 'token-approval',
               title: 'Token approval',
+              keywords: 'allowance approve authorize erc20 revoke permission smart contract',
               html: `<h2>Token approval</h2>
 <p>Before a smart contract can move tokens from your wallet, you must explicitly authorize it to do so. This authorization is called an approval or allowance.</p>
 <p>When you use ImplicitEx, the first wallet prompt is an approval: you are telling the USDC contract that the ImplicitEx contract may transfer a specific amount from your wallet. This approval is scoped to the exact transfer total — not an unlimited authorization.</p>
@@ -418,6 +441,7 @@
             {
               id: 'wallet',
               title: 'Wallet',
+              keywords: 'matic metamask browser extension seed phrase private key software',
               html: `<h2>Wallet</h2>
 <p>A wallet is software that stores your private key and uses it to sign blockchain transactions. The most common wallet used with ImplicitEx is MetaMask, a browser extension.</p>
 <p>Your wallet does not hold USDC or MATIC the way a bank account holds dollars. The assets exist on the blockchain — your wallet holds the key that proves you control them.</p>
@@ -464,9 +488,10 @@
             {
               id: 'polygon',
               title: 'Polygon',
+              keywords: 'matic network mainnet chain id 137 gas fees ethereum compatible pos',
               html: `<h2>Polygon</h2>
 <p>Polygon is the blockchain network ImplicitEx uses to move USDC between wallets. It was chosen because transaction fees are typically much lower than Ethereum mainnet — often a fraction of a cent — and confirmation times are fast.</p>
-<p>Polygon uses the same address format as Ethereum (0x…) and supports the same ERC-20 token standard. Many Ethereum wallets, including MetaMask, support Polygon natively.</p>
+<p>Polygon uses the same address format as Ethereum (0x…) and supports the same ERC-20 token standard. Many Ethereum wallets, including MetaMask, support Polygon natively. MATIC is Polygon's native token — it is used to pay gas fees on the network.</p>
 <h3>Polygon mainnet only</h3>
 <p>ImplicitEx operates exclusively on Polygon mainnet (chain ID 137). Ethereum mainnet, Polygon test networks, and other EVM networks are not supported.</p>
 <p>If you attempt a transfer on the wrong network, ImplicitEx will prompt you to switch. Do not proceed on a network other than Polygon mainnet.</p>
@@ -486,6 +511,7 @@
             {
               id: 'metamask',
               title: 'MetaMask',
+              keywords: 'browser extension install desktop chrome firefox brave edge wallet connect',
               html: `<h2>MetaMask</h2>
 <p>MetaMask is a browser extension wallet that allows you to interact with Ethereum-compatible blockchains, including Polygon. It is the primary wallet supported by ImplicitEx for desktop use.</p>
 <p>MetaMask stores your private key locally on your device — not on MetaMask's servers. MetaMask cannot access your funds or authorize transactions on your behalf. Every transaction requires your explicit approval.</p>
@@ -514,6 +540,7 @@
             {
               id: 'genius-act',
               title: 'What is the GENIUS Act?',
+              keywords: 'federal law regulation stablecoin usdc circle reserve aml bsa compliance issuer',
               html: `<h2>What is the GENIUS Act?</h2>
 <p>The GENIUS Act — Guiding and Establishing National Innovation for U.S. Stablecoins Act — is US federal law enacted July 18, 2025 (<a href="https://www.govinfo.gov/app/details/PLAW-119publ27" target="_blank" rel="noopener noreferrer">Public Law 119-27</a>, 12 U.S.C. 5901). It establishes the first comprehensive federal regulatory framework for payment stablecoin issuers in the United States.</p>
 <h3>What it requires of issuers</h3>
@@ -570,6 +597,7 @@
             {
               id: 'stablecoin-not-insured',
               title: 'Are stablecoins insured?',
+              keywords: 'fdic insurance bank deposit government guarantee protection circle usdc risk',
               html: `<h2>Are stablecoins insured?</h2>
 <p>No. Payment stablecoins, including USDC, are not insured by the Federal Deposit Insurance Corporation (FDIC), the Securities Investor Protection Corporation (SIPC), or any other government insurance program.</p>
 <h3>What the GENIUS Act says explicitly</h3>
@@ -713,7 +741,8 @@
           '</button>' +
           '<div class="learn-nav-entries">';
         section.entries.forEach(function (entry) {
-          html += '<button class="learn-nav-link" data-entry="' + entry.id + '">' +
+          html += '<button class="learn-nav-link" data-entry="' + entry.id + '"' +
+            (entry.keywords ? ' data-keywords="' + entry.keywords + '"' : '') + '>' +
             entry.title + '</button>';
         });
         html += '</div></div>';
@@ -765,7 +794,9 @@
       var anyVisible = false;
 
       links.forEach(function (link) {
-        var match = !q || link.textContent.toLowerCase().indexOf(q) !== -1;
+        var match = !q ||
+          link.textContent.toLowerCase().indexOf(q) !== -1 ||
+          (link.dataset.keywords && link.dataset.keywords.toLowerCase().indexOf(q) !== -1);
         link.classList.toggle('is-hidden', !match);
         if (match) anyVisible = true;
       });
