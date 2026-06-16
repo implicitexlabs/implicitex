@@ -543,13 +543,32 @@ body.portal-active #nav {
 }
 
 .flow-more {
+  display: grid;
+  grid-template-rows: 0fr;
+  overflow: hidden;
+  transition: grid-template-rows 0.3s ease;
+}
+
+.flow-step[open] .flow-more {
+  grid-template-rows: 1fr;
+}
+
+.flow-more-inner {
+  min-height: 0;
+  overflow: hidden;
   border-top: 1px solid var(--border);
   color: var(--white);
   font-size: 13px;
   font-weight: 400;
   line-height: 1.65;
-  margin-top: 1rem;
   padding-top: 1rem;
+  margin-top: 1rem;
+  opacity: 0;
+  transition: opacity 0.22s ease 0.1s;
+}
+
+.flow-step[open] .flow-more-inner {
+  opacity: 1;
 }
 
 .reveal-copy {
