@@ -293,7 +293,7 @@
       width: 120px;
       height: 120px;
       border-radius: 50%;
-      background: #000000;
+      background: #FFFFFF;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -305,7 +305,7 @@
       width: 78px;
       height: 78px;
       border-radius: 50%;
-      border: 1px dashed rgba(255,255,255,0.5);
+      border: 1px dashed rgba(0,0,0,0.4);
       pointer-events: none;
     }
 
@@ -616,7 +616,7 @@
         <div style="display:flex; flex-direction:column; align-items:center; gap:0.75rem;">
           <div class="circle-spacing-diagram" aria-hidden="true">
             <span class="guide-ring"></span>
-            <img class="lm" src="/components/images/lettermark-white.svg" alt="">
+            <img class="lm" src="/components/images/lettermark-black.svg" alt="">
           </div>
           <p class="clearspace-rule">dashed line = max mark boundary &nbsp;·&nbsp; min. clear space = 20% of ⌀</p>
         </div>
@@ -794,7 +794,7 @@
         <li>transaction hash</li>
         <li>recipient address</li>
         <li>USDC</li>
-        <li>non-custodial</li>
+        <li>non-custodial (where technically accurate — requires review before use if any escrow, managed-flow, or custody change is introduced)</li>
       </ul>
 
       <h3>Avoid</h3>
@@ -802,7 +802,7 @@
       <ul class="dont-list">
         <li>Revolutionary, frictionless, guaranteed, risk-free</li>
         <li>Instant (network confirmation times vary)</li>
-        <li>Easy, simple, seamless (they imply the product is simpler than it is)</li>
+        <li>Easy, simple, or seamless when they obscure network behavior, fees, wallet requirements, or transaction risk</li>
         <li>Passive constructions that obscure fees or failure modes</li>
       </ul>
     </div>
@@ -901,7 +901,9 @@
 
       <p>
         These are generated from brand assets and are not public brand files.
-        Do not distribute them as brand resources.
+        Do not distribute them as brand resources. Do not link directly to
+        favicon, touch-icon, or web manifest files when sharing ImplicitEx
+        brand assets.
       </p>
 
       <ul>
