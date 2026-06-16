@@ -70,20 +70,26 @@ function buildBannerHtml() {
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    position: relative;
   }
 
-  /* Mark + wordmark as independent flex children — gap is the clearspace */
-  .lockup {
+  /* Stacked vertical identity column */
+  .stack {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 44px;
-    margin-bottom: 24px;
+    gap: 0;
   }
 
-  .lockup svg {
+  .stack svg {
     display: block;
-    flex-shrink: 0;
   }
+
+  /* Space between mark and wordmark */
+  .mark { margin-bottom: 18px; }
+
+  /* Space between wordmark and tagline */
+  .wordmark { margin-bottom: 22px; }
 
   /* Hierarchy level 2: tagline */
   .tagline {
@@ -96,7 +102,7 @@ function buildBannerHtml() {
     margin-bottom: 14px;
   }
 
-  /* Hierarchy level 3: whisper line — visible but subordinate */
+  /* Hierarchy level 3: whisper line */
   .descriptor {
     font-size: 11px;
     font-weight: 400;
@@ -105,20 +111,32 @@ function buildBannerHtml() {
     text-align: center;
     text-transform: uppercase;
   }
+
+  /* URL — pinned to bottom center */
+  .url {
+    position: absolute;
+    bottom: 28px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    color: #f2f2f0;
+    text-transform: uppercase;
+  }
 </style>
 </head>
 <body>
-  <div class="lockup">
+  <div class="stack">
 
-    <!-- Mark: standalone icon, viewBox 0 0 25 25, scale 2.2px/unit → 55×55 -->
-    <svg width="55" height="55" viewBox="0 0 25 25" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <!-- Mark: standalone icon, 64×64 -->
+    <svg class="mark" width="64" height="64" viewBox="0 0 25 25" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
       <path fill="#f2f2f0" d="${BRANDMARK_PATH}"/>
     </svg>
 
-    <!-- Wordmark: letters only, same coordinate space, same scale → 378×55 -->
-    <!-- viewBox starts at x=29.95 (left edge of first I) so the letter
-         sits flush-left in this SVG while remaining in the original coordinate grid -->
-    <svg width="378" height="55" viewBox="29.95 0 171.61 25" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <!-- Wordmark: letters only, viewBox starts at x=29.95 → 378×55 -->
+    <svg class="wordmark" width="378" height="55" viewBox="29.95 0 171.61 25" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
       <rect x="29.95" y="7" width="2.29" height="11.07" fill="#f2f2f0"/>
       <polygon points="41.39 18.07 43.68 18.07 43.68 9.26 48.38 9.26 48.38 18.07 50.67 18.07 50.67 9.26 55.37 9.26 55.37 18.07 57.65 18.07 57.65 7 41.39 7 41.39 18.07" fill="#f2f2f0"/>
       <polygon points="66.8 18.07 69.09 18.07 69.09 13.67 77.98 13.67 77.98 7 66.8 7 66.8 9.26 75.69 9.26 75.69 11.41 66.8 11.41" fill="#f2f2f0"/>
@@ -132,9 +150,12 @@ function buildBannerHtml() {
       <polygon points="198.34 7 201.56 7 190.38 18.07 187.16 18.07" fill="#f2f2f0"/>
     </svg>
 
+    <div class="tagline">WALLET-TO-WALLET. PERSON-TO-PERSON.</div>
+    <div class="descriptor">Non-custodial USDC transfers on Polygon.</div>
+
   </div>
-  <div class="tagline">WALLET-TO-WALLET. PERSON-TO-PERSON.</div>
-  <div class="descriptor">Non-custodial USDC transfers on Polygon.</div>
+
+  <div class="url">implicitex.com</div>
 </body>
 </html>`;
 }

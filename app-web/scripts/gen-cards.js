@@ -104,14 +104,18 @@ function buildHtml(descriptor) {
     text-transform: uppercase;
   }
 
-  /* Ghosted URL — bottom-right corner */
+  /* URL — bottom center */
   .url {
     position: absolute;
     bottom: 30px;
-    right: 44px;
-    font-size: 11px;
-    letter-spacing: 0.1em;
-    color: #1e1e1e;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    color: #f2f2f0;
+    text-transform: uppercase;
   }
 </style>
 </head>
