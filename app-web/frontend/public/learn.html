@@ -190,6 +190,37 @@
 <p>See <button class="learn-inline-link" data-entry="gas">Gas and network fees</button> for more on what gas is and why it's needed.</p>`
             },
             {
+              id: 'exchange-to-polygon',
+              title: 'How do I move USDC from an exchange to Polygon?',
+              html: `<h2>How do I move USDC from an exchange to Polygon?</h2>
+<p>Buying USDC on an exchange does not put it in your wallet on <a href="https://polygon.technology" target="_blank" rel="noopener noreferrer">Polygon</a>. Most exchanges hold purchased assets in their own accounts until you explicitly withdraw to a destination address on a specific network. The network you select during withdrawal determines which blockchain receives the funds — and the wrong selection can put funds somewhere they are not accessible.</p>
+<h3>Why the same asset can exist on multiple networks</h3>
+<p>USDC exists on multiple blockchains — Ethereum mainnet, Polygon, Arbitrum, Solana, and others. Each is a separate ledger. USDC on Ethereum mainnet and USDC on Polygon are different tokens on different blockchains, even though both represent $1.00 and share the same name and ticker symbol.</p>
+<p>ImplicitEx operates exclusively on Polygon mainnet (chain ID 137). If you withdraw USDC to the correct wallet address but select the wrong network at the exchange, the funds arrive on a different blockchain and are not accessible through ImplicitEx.</p>
+<h3>Step 1 — Confirm your exchange supports Polygon withdrawals</h3>
+<p>Not every exchange supports withdrawals to Polygon. Before you begin, verify that Polygon is listed as an available withdrawal network for USDC. <a href="https://www.coinbase.com" target="_blank" rel="noopener noreferrer">Coinbase</a>, <a href="https://www.kraken.com" target="_blank" rel="noopener noreferrer">Kraken</a>, and several other major exchanges support Polygon USDC withdrawals. Check your exchange's withdrawal page or support documentation to confirm before proceeding.</p>
+<h3>Step 2 — Copy your wallet address from MetaMask</h3>
+<p>Open <a href="https://metamask.io" target="_blank" rel="noopener noreferrer">MetaMask</a> and copy your wallet address. Your Polygon address uses the same 0x format as Ethereum — the address format is identical across both networks. Do not enter the address by hand. Copy and paste it directly to avoid transcription errors.</p>
+<h3>Step 3 — Select Polygon as the withdrawal network</h3>
+<p>In your exchange's withdrawal flow, find the network selection option. Select <strong>Polygon</strong> (sometimes labeled "Polygon PoS" or "MATIC Network"). Do not select Ethereum mainnet, Arbitrum, or any other network. If you are unsure which option corresponds to Polygon, look for the chain ID — Polygon mainnet is chain ID 137.</p>
+<p>The exchange will typically display the expected fee and estimated arrival time after you select a network. Polygon withdrawals are usually fast (a few minutes) and low cost.</p>
+<h3>Step 4 — Start with a small test withdrawal</h3>
+<p>Before moving a larger amount, withdraw a small test amount — a few dollars of USDC — to confirm the configuration is correct. This is standard practice for any first withdrawal to a new address or network. If the test amount arrives correctly, proceed with the remaining amount. If it does not arrive, diagnose the issue before sending more.</p>
+<h3>Step 5 — Confirm arrival in MetaMask</h3>
+<p>After the exchange confirms the withdrawal, open MetaMask and verify that your wallet is set to Polygon mainnet. If MetaMask is displaying Ethereum mainnet or another network, switch to Polygon. USDC received on Polygon will not appear when MetaMask is showing a different network — the balance is network-scoped.</p>
+<p>Once on Polygon, your USDC balance should update within a few minutes of the exchange confirming the withdrawal. If it does not appear, look up your wallet address on <a href="https://polygonscan.com" target="_blank" rel="noopener noreferrer">Polygonscan</a> to confirm the transaction arrived and view its status.</p>
+<h3>Step 6 — Verify you have MATIC for gas</h3>
+<p>Polygon transactions require a small amount of MATIC to pay network fees. If your wallet has USDC but no MATIC, you will not be able to authorize transactions. MATIC is available on most exchanges that carry USDC. A small amount — a few dollars — is sufficient for many transactions.</p>
+<h3>Common mistakes</h3>
+<ul>
+  <li><strong>Wrong network selected at the exchange</strong> — Sending USDC via Ethereum mainnet to a Polygon address may result in funds that are inaccessible without a bridge. Always confirm the withdrawal network before submitting.</li>
+  <li><strong>Viewing the wrong network in MetaMask</strong> — USDC on Polygon is invisible when MetaMask is set to Ethereum mainnet or another network. If your balance appears to be missing, check which network MetaMask is displaying and switch to Polygon mainnet.</li>
+  <li><strong>Wrong address after pasting</strong> — Verify the first and last several characters of the destination address after pasting. Clipboard-hijacking malware can silently replace a copied address with an attacker's address. Confirm the full address matches before submitting.</li>
+  <li><strong>Not accounting for exchange minimums or fees</strong> — Most exchanges impose a minimum withdrawal amount and charge a network fee per withdrawal. Factor these into your transfer amount, particularly for smaller amounts.</li>
+</ul>
+<p>See also: <button class="learn-inline-link" data-entry="polygon">Polygon</button> · <button class="learn-inline-link" data-entry="get-usdc">How do I get USDC?</button> · <button class="learn-inline-link" data-entry="connect-wallet">How do I connect my wallet?</button> · <button class="learn-inline-link" data-entry="verify-transfer">How do I verify a transfer?</button> · <button class="learn-inline-link" data-entry="gas">Gas and network fees</button></p>`
+            },
+            {
               id: 'connect-wallet',
               title: 'How do I connect my wallet?',
               html: `<h2>How do I connect my wallet to ImplicitEx?</h2>
