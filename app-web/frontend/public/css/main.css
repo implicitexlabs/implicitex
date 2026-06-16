@@ -2159,6 +2159,32 @@ input[type="number"] {
   appearance: textfield;
 }
 
+/* Trust anchor — visible landing section below How It Works */
+.trust-anchor {
+  text-align: center;
+  padding: 0 1.5rem 4.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.trust-anchor-line {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+  margin: 0;
+  line-height: 1.6;
+}
+
+.trust-anchor-line a {
+  color: var(--dim);
+  text-underline-offset: 3px;
+  transition: color 0.1s;
+}
+
+.trust-anchor-line a:hover { color: var(--white); }
+
 /* ================================================================
    LEARN page — two-column layout
    ================================================================ */
