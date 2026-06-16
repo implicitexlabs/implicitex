@@ -64,6 +64,21 @@ creators placing an ImplicitEx support link on their sites, newsletters,
 podcasts, and social profiles is five hundred independent acquisition channels
 built without buying a single ad.
 
+Once a creator adds ImplicitEx to their standard setup, it is no longer a
+product they use — it is infrastructure they deploy:
+
+```
+YouTube
+X
+Newsletter
+Website
+Patreon
+ImplicitEx
+```
+
+That is a fundamentally different relationship than acquiring one user at a
+time.
+
 ---
 
 ## Why This Expansion, and Why Now
@@ -84,12 +99,53 @@ transfer engine, creator support becomes the most natural first expansion:
 
 ---
 
+## Creator Motivation
+
+Do not assume creators adopt ImplicitEx because they care about crypto.
+Many won't. The successful ones may be completely indifferent to it.
+
+What creators care about is:
+
+```
+More money
+More control
+More resilience
+```
+
+If ImplicitEx delivers on those three things, the underlying technology
+is secondary. The pitch that works is not a blockchain lecture — it is a
+familiar financial proposition:
+
+> Your viewer sends $100. You receive $99.
+
+Creators understand money. They already know what intermediaries cost them.
+Patreon, Ko-fi, payment processors, app stores — each takes a cut they are
+accustomed to losing. A 1% fee with no platform account, no payout delay,
+and no custody is immediately legible without any crypto context.
+
+**The resilience angle is underrated.** The pitch is not:
+
+> Abandon YouTube. Abandon Patreon. Embrace decentralization.
+
+The pitch is:
+
+> If one monetization channel disappears tomorrow, you still have another one.
+
+That is a creator problem, not a crypto problem. ImplicitEx solves it without
+asking the creator to change their existing setup. They keep everything they
+already have and add one more support pathway.
+
+The ask is not "replace your business." It is "add another button." Those are
+radically different asks, and the second one has a much shorter sales cycle.
+
 ## Competitive Position
 
-The direct comparison set is custodial, fiat-first creator monetization
-tools: Buy Me a Coffee, Ko-fi, Patreon, PayPal.Me.
+ImplicitEx does not ask creators to replace YouTube, Patreon, Ko-fi, or
+anything else. It sits alongside them.
 
-The ImplicitEx position is structurally different:
+The comparison set — Buy Me a Coffee, Ko-fi, Patreon, PayPal.Me — is useful
+for understanding structural differences, not for positioning ImplicitEx as
+a replacement:
 
 | | Custodial tools | ImplicitEx |
 |---|---|---|
@@ -100,13 +156,13 @@ The ImplicitEx position is structurally different:
 | Payout delay | Days (bank transfer) | Seconds (blockchain confirmation) |
 | Lock-in | Platform-dependent | Non-custodial; creator owns their wallet |
 
-The Rumble Wallet ad (June 2026) reinforces this position. Rumble's pitch is:
-download our wallet, create an account, join our ecosystem. The ImplicitEx
-version is: already have a wallet? Click support and send USDC.
+The Rumble Wallet ad (June 2026) illustrates the harder version of this
+problem. Rumble's pitch is: download our wallet, create an account, join our
+ecosystem. That is a high-friction ask that requires the creator to believe
+in the platform before they can use it.
 
-Less friction. No ecosystem dependency. The emotional purchase is identical —
-direct support for a creator — but the path is shorter and the funds arrive
-without an intermediary holding them.
+The ImplicitEx version: already have a wallet? Generate a link. Paste it
+anywhere. Receive USDC.
 
 ImplicitEx's moat is the best wallet-to-wallet transfer experience. A
 redirect-first approach strengthens that moat. A premature creator platform
