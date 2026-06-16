@@ -1964,7 +1964,8 @@ footer .social-links a:focus-visible,
   padding: 1.5rem;
 }
 
-.about-card h2 {
+.about-card h2,
+.about-foot h2 {
   font-family: var(--display);
   font-size: 14px;
   font-weight: 700;
