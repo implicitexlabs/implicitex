@@ -212,6 +212,47 @@ identifies specific missing capabilities.
 
 ---
 
+## Success Criteria
+
+These define what "good enough" looks like at each gate. The numbers are
+not targets — they are thresholds for making the next build decision. If
+the criteria are not met, diagnose before proceeding. If they are met ahead
+of schedule, proceed early.
+
+### Layer 2A → 2B gate
+
+```
+[ ] 10 creators have generated and published a support link
+[ ] 100 unique visits to support-prefilled transfer pages
+[ ] 10 completed transfers originating from a creator link
+[ ] 3 creators have received support from more than one unique sender
+[ ] No systematic failure modes in the redirect flow (broken prefill,
+    address display errors, wallet-less dead ends)
+```
+
+These numbers are deliberately conservative. The question at this gate is
+not "is it popular?" — it is "does it work, and do real people use it?"
+A handful of genuine transfers from real supporters is sufficient evidence
+to justify building the embed. Zero transfers after reasonable creator
+outreach is evidence to stop and investigate.
+
+### Layer 2B → 2C gate
+
+```
+[ ] 50 creators actively using the embed (not just generated links)
+[ ] Measurable conversion lift from embed vs. redirect link
+    (embed should outperform redirect if it reduces friction as intended)
+[ ] Creator feedback identifies specific missing capabilities
+    (not hypothetical wants — stated requests from active users)
+[ ] No unresolved XSS, CSP, or cross-origin issues in production
+```
+
+Layer 2C is only justified if Layer 2B is working and creators are asking
+for more. Building a full toolkit for creators who are not yet using the
+embed is the wrong order.
+
+---
+
 ## Scope Boundary
 
 Layer 2 is the support link and embed. It is not the creator dashboard.
