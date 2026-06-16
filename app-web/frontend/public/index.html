@@ -246,16 +246,64 @@
     </div>
   </section>
 
-  <!-- TRUST ANCHOR -->
-  <section class="trust-anchor" aria-label="Verification and resources">
-    <p class="trust-anchor-line">
-      Source-verified contract. Mainnet tested before public launch.
-      <a href="/verification.html">Proof →</a>
-    </p>
-    <p class="trust-anchor-line">
-      New to crypto wallets or USDC? <a href="/learn.html">Learn →</a>
-    </p>
-  </section>
+  <script>
+  (function () {
+    'use strict';
+    document.querySelectorAll('.flow-step').forEach(function (det) {
+      var summary = det.querySelector('summary');
+      var more    = det.querySelector('.flow-more');
+      var inner   = det.querySelector('.flow-more-inner');
+      if (!summary || !more || !inner) return;
+
+      summary.addEventListener('click', function (e) {
+        e.preventDefault();
+
+        if (det.open) {
+          /* ── Closing ── */
+          more.style.height     = more.scrollHeight + 'px';
+          more.style.overflow   = 'hidden';
+          inner.style.opacity   = '0';
+          inner.style.transition = 'opacity 0.12s ease';
+          requestAnimationFrame(function () {
+            more.style.transition = 'height 0.28s ease';
+            more.style.height     = '0';
+          });
+          function onClose(ev) {
+            if (ev.propertyName !== 'height') return;
+            det.removeAttribute('open');
+            more.style.cssText  = '';
+            inner.style.cssText = '';
+            more.removeEventListener('transitionend', onClose);
+          }
+          more.addEventListener('transitionend', onClose);
+
+        } else {
+          /* ── Opening ── */
+          det.setAttribute('open', '');
+          more.style.height   = '0';
+          more.style.overflow = 'hidden';
+          inner.style.opacity = '0';
+          var target = more.scrollHeight;
+          requestAnimationFrame(function () {
+            more.style.transition = 'height 0.3s ease';
+            more.style.height     = target + 'px';
+            setTimeout(function () {
+              inner.style.transition = 'opacity 0.22s ease';
+              inner.style.opacity    = '1';
+            }, 80);
+          });
+          function onOpen(ev) {
+            if (ev.propertyName !== 'height') return;
+            more.style.cssText  = '';
+            inner.style.cssText = '';
+            more.removeEventListener('transitionend', onOpen);
+          }
+          more.addEventListener('transitionend', onOpen);
+        }
+      });
+    });
+  }());
+  </script>
 
   <!-- Portal controls — outside the border, above the grid -->
   <div class="portal-controls" id="portalControls" hidden>
