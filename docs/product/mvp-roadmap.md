@@ -1,6 +1,6 @@
 # ImplicitEx MVP Roadmap
 
-Last updated: 2026-06-14
+Last updated: 2026-06-16
 Branch: gate3-production-frontend-qa
 
 ---
@@ -413,6 +413,97 @@ Longer-term mitigations (no single fix):
 | Sparkline on gas row | Post-gas-row polish |
 | Ledger integration | After web + Electron both stable |
 | Ethereum mainnet | Post-Polygon-MVP |
+| Creator widget | Post-MVP; depends on transfer engine being proven reliable first |
+| Creator dashboard | Post-widget; requires transaction volume to be meaningful |
+
+---
+
+## Post-MVP expansion
+
+The MVP answers one question: **can a person reliably transfer USDC?**
+
+The next questions depend on it.
+
+---
+
+### Layer 1 — Transfer engine (current)
+
+```
+Wallet → Wallet
+1% fee
+No custody
+```
+
+This is what ships. Everything below requires this to work first.
+
+---
+
+### Layer 2 — Creator widget
+
+An embeddable transfer interface for creator pages, blogs, newsletters, and
+podcasts. The user does not create an account, download a wallet, or join an
+ecosystem. They use the wallet they already have.
+
+```
+Creator Website
+      ↓
+ImplicitEx Widget
+      ↓
+USDC Transfer
+```
+
+Conceptual UI:
+
+```
+Support [Creator]
+[ Send $5 ]  [ Send $10 ]  [ Custom Amount ]
+Powered by ImplicitEx
+```
+
+**Why this is the right first expansion:**
+
+- Every creator who embeds the widget becomes a distribution channel.
+- Supporters use it. Every transfer generates a fee. The creator gets support,
+  ImplicitEx gets transaction volume.
+- That is a cleaner growth loop than acquiring individual transfer users one by one.
+
+**Differentiation from custodial alternatives (e.g. Rumble Wallet):**
+
+Custodial model: download our wallet, create an account, join our ecosystem.
+ImplicitEx model: already have a wallet? Click support and send USDC.
+
+The second has less friction and no lock-in. The emotional purchase is the same
+— "I want to support this creator" — but the path is shorter.
+
+**Technical preconditions before building:**
+
+- Transfer engine proven stable under real load (Gate 5 complete)
+- Fee model confirmed working and understood by users
+- Receipt lifecycle reliable (no orphaned receipts in production)
+- Widget embed architecture defined (iframe, script tag, or redirect flow)
+
+**Status:** Not started. Correctly deferred until transfer engine is proven.
+
+---
+
+### Layer 3 — Creator dashboard
+
+Post-widget. Only meaningful when transaction volume exists.
+
+```
+Creators:   transfer analytics, supporter history, top supporters
+Supporters: recurring support, campaign tracking
+```
+
+This is where ImplicitEx starts competing with creator monetization tools.
+Do not design for this before Layer 2 ships and generates real data.
+
+---
+
+**Sequencing principle:** the creator widget was not abandoned — it was correctly
+deferred behind the harder problem of proving the transfer engine works. The widget
+depends on that proof. Once Gate 5 is complete and real transfers are flowing, the
+creator widget becomes the most natural first revenue-producing expansion.
 
 ---
 
