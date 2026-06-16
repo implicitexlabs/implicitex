@@ -404,12 +404,14 @@
               id: 'usdc',
               title: 'USDC',
               html: `<h2>USDC</h2>
-<p>USDC is a stablecoin issued by Circle Internet Group. It is designed to maintain a stable value of $1.00 per token, making it predictable for transfers, payments, and remittances. The value does not fluctuate the way Bitcoin or Ethereum does.</p>
+<p>USDC is a stablecoin issued by <a href="https://www.circle.com" target="_blank" rel="noopener noreferrer">Circle Internet Group</a>. It is designed to maintain a stable value of $1.00 per token, making it predictable for transfers, payments, and remittances. The value does not fluctuate the way Bitcoin or Ethereum does.</p>
 <p>USDC is not bank money. It is not FDIC-insured. It does not automatically carry the consumer protections that apply to traditional financial accounts. One USDC represents a claim on reserve assets held by Circle, subject to Circle's operational and regulatory status.</p>
+<h3>USDC under federal law</h3>
+<p>Under the <a href="https://www.govinfo.gov/app/details/PLAW-119publ27" target="_blank" rel="noopener noreferrer">GENIUS Act</a> (Public Law 119-27, enacted July 18, 2025), USDC qualifies as a payment stablecoin under US federal law. Circle, as a permitted payment stablecoin issuer, is required to maintain dollar-for-dollar reserves in qualifying assets, publish monthly reserve disclosures with independent verification, and comply with federal anti-money-laundering obligations.</p>
 <h3>USDC on Polygon</h3>
-<p>ImplicitEx uses native USDC on Polygon — specifically the contract issued directly by Circle for the Polygon network. Other USDC variants (wrapped, bridged, or issued on other networks) are not supported.</p>
+<p>ImplicitEx uses native USDC on <a href="https://polygon.technology" target="_blank" rel="noopener noreferrer">Polygon</a> — specifically the contract issued directly by Circle for the Polygon network. Other USDC variants (wrapped, bridged, or issued on other networks) are not supported.</p>
 <p>The USDC contract address used by ImplicitEx is documented on the <a href="/verification.html">Proof page</a>.</p>
-<p>See also: <button class="learn-inline-link" data-entry="who-issues-usdc">Who issues USDC?</button> · <button class="learn-inline-link" data-entry="usdc-denominations">USDC denominations</button></p>`
+<p>See also: <button class="learn-inline-link" data-entry="who-issues-usdc">Who issues USDC?</button> · <button class="learn-inline-link" data-entry="payment-stablecoin">What is a payment stablecoin?</button> · <button class="learn-inline-link" data-entry="stablecoin-not-insured">Are stablecoins insured?</button> · <button class="learn-inline-link" data-entry="usdc-denominations">USDC denominations</button></p>`
             },
             {
               id: 'usdc-denominations',
@@ -482,13 +484,71 @@
               id: 'genius-act',
               title: 'What is the GENIUS Act?',
               html: `<h2>What is the GENIUS Act?</h2>
-<p>The GENIUS Act (Guiding and Establishing National Innovation for US Stablecoins) is US federal legislation introduced in early 2025. It would establish a regulatory framework for stablecoin issuers in the United States.</p>
-<h3>What it would require</h3>
-<p>If enacted, the GENIUS Act would require stablecoin issuers like Circle — which issues USDC — to maintain verifiable reserves, comply with anti-money-laundering rules, submit to regulatory oversight, and meet other standards designed to protect stablecoin holders.</p>
+<p>The GENIUS Act — Guiding and Establishing National Innovation for U.S. Stablecoins Act — is US federal law enacted July 18, 2025 (<a href="https://www.govinfo.gov/app/details/PLAW-119publ27" target="_blank" rel="noopener noreferrer">Public Law 119-27</a>, 12 U.S.C. 5901). It establishes the first comprehensive federal regulatory framework for payment stablecoin issuers in the United States.</p>
+<h3>What it requires of issuers</h3>
+<p>The GENIUS Act requires permitted payment stablecoin issuers — companies like <a href="https://www.circle.com" target="_blank" rel="noopener noreferrer">Circle</a>, which issues USDC — to maintain dollar-for-dollar reserves in high-quality liquid assets, publish monthly reserve disclosures with independent verification, comply with Bank Secrecy Act anti-money-laundering obligations, and obtain prior approval from federal or state regulators before issuing stablecoins in the United States.</p>
+<p>Issuers are prohibited from rehypothecating reserve assets (using them as collateral for other purposes), paying interest or yield to stablecoin holders, and misrepresenting stablecoins as insured by the US government or the FDIC.</p>
 <h3>Who it applies to</h3>
-<p>The legislation targets stablecoin issuers, not users or transfer platforms. It would apply to Circle's issuance of USDC, not to ImplicitEx's use of USDC for transfers.</p>
-<p>ImplicitEx does not issue USDC and is not a stablecoin issuer. Regulatory changes affecting Circle and USDC are outside ImplicitEx's control. The status of any legislation may have changed since this page was written.</p>
-<p>See also: <button class="learn-inline-link" data-entry="who-issues-usdc">Who issues USDC?</button></p>`
+<p>The law targets stablecoin issuers, not users or transfer platforms. It applies to Circle's authority to issue USDC — not to ImplicitEx's use of USDC for transfers between wallets. ImplicitEx does not issue, hold, or redeem USDC and is not a permitted payment stablecoin issuer under the Act.</p>
+<h3>Transition period</h3>
+<p>The Act provides a three-year compliance window. Issuing a payment stablecoin in the US without meeting the permitting requirements carries penalties up to $1 million per day and potential criminal liability.</p>
+<p>See also: <button class="learn-inline-link" data-entry="payment-stablecoin">What is a payment stablecoin?</button> · <button class="learn-inline-link" data-entry="stablecoin-reserves">Stablecoin reserve requirements</button> · <button class="learn-inline-link" data-entry="who-issues-usdc">Who issues USDC?</button></p>`
+            },
+            {
+              id: 'payment-stablecoin',
+              title: 'What is a payment stablecoin?',
+              html: `<h2>What is a payment stablecoin?</h2>
+<p>A payment stablecoin is a specific legal classification under the <a href="https://www.govinfo.gov/app/details/PLAW-119publ27" target="_blank" rel="noopener noreferrer">GENIUS Act</a> (Public Law 119-27, enacted July 18, 2025). Not every asset that claims to be stable qualifies.</p>
+<h3>The statutory definition</h3>
+<p>Under the GENIUS Act, a payment stablecoin is a digital asset that meets three criteria:</p>
+<ol>
+  <li>It is designed to be used as a means of payment or settlement</li>
+  <li>The issuer is obligated to convert or redeem it at a fixed monetary value on demand</li>
+  <li>It is designed to maintain a stable value relative to that monetary value</li>
+</ol>
+<p>The law explicitly excludes: national currencies, bank deposits, securities regulated under federal securities law, and open-loop prepaid accounts.</p>
+<h3>How USDC qualifies</h3>
+<p>USDC is designed for payment and settlement. <a href="https://www.circle.com" target="_blank" rel="noopener noreferrer">Circle</a> is obligated to redeem USDC at $1.00 per token on demand. USDC is designed to maintain a $1.00 stable value. It meets all three criteria under the GENIUS Act definition.</p>
+<h3>Why the classification matters</h3>
+<p>Being classified as a payment stablecoin subjects the issuer — Circle, not ImplicitEx — to mandatory reserve requirements, monthly audits, regulatory oversight, and anti-money-laundering obligations under federal law. Users of USDC gain the benefit of those regulatory requirements applied to the issuer's conduct.</p>
+<p>See also: <button class="learn-inline-link" data-entry="genius-act">What is the GENIUS Act?</button> · <button class="learn-inline-link" data-entry="stablecoin-reserves">Stablecoin reserve requirements</button> · <button class="learn-inline-link" data-entry="usdc">USDC</button></p>`
+            },
+            {
+              id: 'stablecoin-reserves',
+              title: 'Stablecoin reserve requirements',
+              html: `<h2>Stablecoin reserve requirements</h2>
+<p>The <a href="https://www.govinfo.gov/app/details/PLAW-119publ27" target="_blank" rel="noopener noreferrer">GENIUS Act</a> (Public Law 119-27, enacted July 18, 2025) requires permitted payment stablecoin issuers to maintain dollar-for-dollar reserves backing every token in circulation.</p>
+<h3>What counts as a qualifying reserve asset</h3>
+<p>The Act specifies a narrow list of high-quality liquid assets that may back payment stablecoins:</p>
+<ul>
+  <li>US coins and Federal Reserve notes (physical currency)</li>
+  <li>US Treasury bills with maturity of 93 days or less</li>
+  <li>Deposits at a Federal Reserve Bank</li>
+  <li>Same-day demand deposits or overnight reserves at insured depository institutions</li>
+  <li>Short-term money market funds invested exclusively in Treasury or agency securities</li>
+</ul>
+<p>The list is intentionally conservative — only assets that can be liquidated quickly at stable value qualify. Longer-maturity bonds, equities, and other stablecoins do not.</p>
+<h3>Prohibition on rehypothecation</h3>
+<p>Issuers are prohibited from pledging, lending, or otherwise reusing reserve assets as collateral for other financial activity. The reserves must remain available to meet redemption requests.</p>
+<h3>Monthly disclosure and certification</h3>
+<p>Issuers must publish a monthly public report disclosing their reserve composition and total tokens outstanding, verified by an independent public accounting firm. The CEO and CFO must certify reserve compliance each month.</p>
+<h3>What this means for USDC holders</h3>
+<p><a href="https://www.circle.com" target="_blank" rel="noopener noreferrer">Circle</a> is required by federal law to hold qualifying assets equal in value to every USDC token in circulation and to demonstrate this publicly each month. Circle publishes reserve attestation reports at <a href="https://www.circle.com/en/transparency" target="_blank" rel="noopener noreferrer">circle.com/transparency</a>. These requirements apply to Circle as the issuer — not to ImplicitEx.</p>
+<p>See also: <button class="learn-inline-link" data-entry="stablecoin-not-insured">Are stablecoins insured?</button> · <button class="learn-inline-link" data-entry="who-issues-usdc">Who issues USDC?</button></p>`
+            },
+            {
+              id: 'stablecoin-not-insured',
+              title: 'Are stablecoins insured?',
+              html: `<h2>Are stablecoins insured?</h2>
+<p>No. Payment stablecoins, including USDC, are not insured by the Federal Deposit Insurance Corporation (FDIC), the Securities Investor Protection Corporation (SIPC), or any other government insurance program.</p>
+<h3>What the GENIUS Act says explicitly</h3>
+<p>The <a href="https://www.govinfo.gov/app/details/PLAW-119publ27" target="_blank" rel="noopener noreferrer">GENIUS Act</a> (Public Law 119-27, enacted July 18, 2025) states directly that payment stablecoins are not backed by the full faith and credit of the United States government. The law makes it unlawful for any issuer to misrepresent that a payment stablecoin is FDIC-insured or US-government-backed.</p>
+<h3>How this differs from a bank account</h3>
+<p>Deposits at FDIC-insured banks are protected up to $250,000 per depositor per institution if the bank fails. The US government guarantees the repayment. USDC does not have this guarantee.</p>
+<p>What USDC does have instead: Circle is required under federal law to hold qualifying reserve assets backing every token in circulation and to disclose that reserve composition monthly. If Circle were to become insolvent, USDC holders would have claims on those reserve assets through the legal process — but there is no government guarantee of recovery.</p>
+<h3>What this means in practice</h3>
+<p>USDC's value is backed by Circle's reserve assets and regulatory compliance, not by a government guarantee. The <a href="https://www.govinfo.gov/app/details/PLAW-119publ27" target="_blank" rel="noopener noreferrer">GENIUS Act</a> imposes strict requirements on what those reserves must consist of, but holding USDC is not equivalent to holding insured bank deposits.</p>
+<p>See also: <button class="learn-inline-link" data-entry="stablecoin-reserves">Stablecoin reserve requirements</button> · <button class="learn-inline-link" data-entry="usdc">USDC</button> · <button class="learn-inline-link" data-entry="user-protections">What protections do users have?</button></p>`
             },
             {
               id: 'is-safe',
@@ -510,11 +570,14 @@
               id: 'who-issues-usdc',
               title: 'Who issues USDC?',
               html: `<h2>Who issues USDC?</h2>
-<p>USDC is issued by Circle Internet Group, a US-based financial technology company. Circle holds dollar-denominated reserve assets backing each USDC in circulation and publishes periodic attestation reports from independent accounting firms.</p>
+<p>USDC is issued by <a href="https://www.circle.com" target="_blank" rel="noopener noreferrer">Circle Internet Group</a>, a US-based financial technology company. Circle holds dollar-denominated reserve assets backing each USDC in circulation and publishes monthly attestation reports from independent accounting firms at <a href="https://www.circle.com/en/transparency" target="_blank" rel="noopener noreferrer">circle.com/transparency</a>.</p>
+<h3>Circle's regulatory status</h3>
+<p>Under the <a href="https://www.govinfo.gov/app/details/PLAW-119publ27" target="_blank" rel="noopener noreferrer">GENIUS Act</a> (Public Law 119-27, enacted July 18, 2025), Circle is subject to federal oversight as a permitted payment stablecoin issuer. This requires Circle to maintain 1:1 reserves in qualifying liquid assets, submit to monthly audits with public disclosure, comply with Bank Secrecy Act anti-money-laundering obligations, and obtain regulatory approval to continue issuing USDC in the United States.</p>
 <h3>What ImplicitEx does and does not do</h3>
-<p>ImplicitEx does not issue USDC. ImplicitEx does not redeem USDC for dollars. ImplicitEx transfers USDC between wallets — the asset itself is governed entirely by Circle.</p>
+<p>ImplicitEx does not issue USDC. ImplicitEx does not redeem USDC for dollars. ImplicitEx transfers USDC between wallets — the asset itself is governed entirely by Circle and subject to federal law governing its issuance.</p>
 <p>Circle may make decisions affecting USDC that are outside ImplicitEx's control, including address-level restrictions, reserve management changes, contract upgrades, or business changes. These decisions could affect the value or accessibility of USDC independently of anything ImplicitEx does.</p>
-<p>The USDC contract address used by ImplicitEx is documented on the <a href="/verification.html">Proof page</a>.</p>`
+<p>The USDC contract address used by ImplicitEx is documented on the <a href="/verification.html">Proof page</a>.</p>
+<p>See also: <button class="learn-inline-link" data-entry="genius-act">What is the GENIUS Act?</button> · <button class="learn-inline-link" data-entry="stablecoin-reserves">Stablecoin reserve requirements</button></p>`
             },
             {
               id: 'user-protections',
