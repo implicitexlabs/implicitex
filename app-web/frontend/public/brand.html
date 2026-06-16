@@ -307,8 +307,9 @@
       </div>
 
       <p>
-        The lettermark is white (#f2f2f0) on dark. It does not appear in any
-        other color. Do not recolor, outline, or apply effects to the mark.
+        The lettermark appears as white (#FFFFFF) on black, or black (#000000)
+        on white. It does not appear in any other color. Do not recolor,
+        outline, or apply effects to the mark.
       </p>
     </div>
 
@@ -328,6 +329,45 @@
       <div class="brand-canvas">
         <img src="/components/images/wordmark.svg" alt="ImplicitEx wordmark" style="width: 220px;">
       </div>
+    </div>
+
+
+    <!-- ── COLOR ────────────────────────────────────────────────────────── -->
+
+    <div class="brand-section">
+      <h2>Color</h2>
+
+      <p>
+        The brand palette is strictly black and white. Brand elements appear
+        as white on black or black on white. Both are primary — neither is
+        preferred over the other. Choose based on the background the mark
+        will appear on.
+      </p>
+
+      <div class="brand-config-grid" style="max-width: 400px;">
+
+        <div class="brand-config-cell">
+          <div style="display:flex; flex-direction:column; align-items:center; gap:0.75rem;">
+            <img src="/components/images/brandmark.svg" alt="" width="40" height="40">
+          </div>
+          <span class="brand-config-label">#FFFFFF on #000000<br>Dark background</span>
+        </div>
+
+        <div class="brand-config-cell" style="background:#FFFFFF; border-color: rgba(0,0,0,0.12);">
+          <div style="display:flex; flex-direction:column; align-items:center; gap:0.75rem;">
+            <img src="/components/images/brandmark.svg" alt="" width="40" height="40" style="filter:invert(1);">
+          </div>
+          <span class="brand-config-label" style="color:rgba(0,0,0,0.4);">#000000 on #FFFFFF<br>Light background</span>
+        </div>
+
+      </div>
+
+      <p>
+        Grey values are acceptable as a tertiary option — for example, in
+        supporting UI elements or backgrounds where pure black or white would
+        be too stark. Grey should not be used for the mark itself or the
+        wordmark, and should be avoided wherever a primary pairing is possible.
+      </p>
     </div>
 
 
@@ -503,7 +543,7 @@
 
       <ul class="dont-list">
         <li>Rotate, skew, stretch, or distort the lettermark</li>
-        <li>Recolor the lettermark — it is always #f2f2f0 on dark</li>
+        <li>Recolor the lettermark — it is #FFFFFF on black or #000000 on white</li>
         <li>Place the lettermark to the right of, below, or diagonally offset from the wordmark</li>
         <li>Combine the lettermark with the wordmark in any configuration not listed above</li>
         <li>Outline or add a drop shadow, glow, or other effect to the mark</li>
