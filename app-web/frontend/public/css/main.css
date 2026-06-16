@@ -2299,6 +2299,34 @@ input[type="number"] {
   margin: 0;
 }
 
+/* Scrollbar styling — sidebar and content panel */
+.learn-sidebar,
+.learn-panel {
+  scrollbar-width: thin;
+  scrollbar-color: var(--surface-3) transparent;
+}
+
+.learn-sidebar::-webkit-scrollbar,
+.learn-panel::-webkit-scrollbar {
+  width: 4px;
+}
+
+.learn-sidebar::-webkit-scrollbar-track,
+.learn-panel::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.learn-sidebar::-webkit-scrollbar-thumb,
+.learn-panel::-webkit-scrollbar-thumb {
+  background: var(--surface-3);
+  border-radius: 2px;
+}
+
+.learn-sidebar::-webkit-scrollbar-thumb:hover,
+.learn-panel::-webkit-scrollbar-thumb:hover {
+  background: var(--border-2);
+}
+
 /* ---- Content panel ---- */
 .learn-panel {
   padding: 3rem 3rem 5rem;
