@@ -186,6 +186,7 @@
   const POLYGON_GAS_STATION_URL = 'https://gasstation.polygon.technology/v2';
   const POLYGON_MAINNET_CHAIN_ID = 137;
   const POLYGON_MAINNET_CHAIN_HEX = '0x89';
+  const WALLET_LOCAL_DISCONNECT_KEY = 'ix.wallet.localDisconnect';
   const RECIPIENT_BOOK_KEY = 'ix.recipient.book';
   const TRANSFER_STATUS = window.IX && window.IX.transferStatus;
   const IX_TRANSFER_STATES = TRANSFER_STATUS && TRANSFER_STATUS.IX_TRANSFER_STATES;
@@ -502,6 +503,22 @@
       return true;
     } catch (_) {
       return false;
+    }
+  }
+
+  function isLocalWalletDisconnectRemembered() {
+    return fullStorageRead(WALLET_LOCAL_DISCONNECT_KEY, false) === true;
+  }
+
+  function rememberLocalWalletDisconnect() {
+    fullStorageWrite(WALLET_LOCAL_DISCONNECT_KEY, true);
+  }
+
+  function clearLocalWalletDisconnect() {
+    try {
+      localStorage.removeItem(WALLET_LOCAL_DISCONNECT_KEY);
+    } catch (_) {
+      // Storage persistence is optional; visible state still updates.
     }
   }
 
@@ -2270,6 +2287,10 @@
     state.userDisconnected = revokeProvider;
     activeFlowId = null; // invalidate any running transfer flow
 
+    if (revokeProvider) {
+      rememberLocalWalletDisconnect();
+    }
+
     // Capture source before clearActiveProvider() nulls it.
     const wasWalletConnect = walletRuntime.source === 'walletconnect';
 
@@ -2754,6 +2775,7 @@
       state.address = accounts[0];
       state.provider = walletRuntime.provider;
       state.userDisconnected = false;
+      clearLocalWalletDisconnect();
 
       const chainHex = await walletRuntime.provider.request({ method: 'eth_chainId' });
       state.chainId = normalizeChainId(chainHex);
@@ -2776,6 +2798,45 @@
     applyCurrentNetworkPresentation({ shouldScroll: true });
 
     pollNetworkData();
+  }
+
+  async function hydrateAuthorizedInjectedWallet() {
+    if (!hasInjectedProvider()) return false;
+    if (isLocalWalletDisconnectRemembered()) {
+      state.userDisconnected = true;
+      return false;
+    }
+
+    let accounts;
+    try {
+      accounts = await window.ethereum.request({ method: 'eth_accounts' });
+    } catch (_) {
+      return false;
+    }
+
+    if (!accounts || !accounts[0]) return false;
+
+    setActiveProvider(window.ethereum, 'injected');
+    state.connected = true;
+    state.address = accounts[0];
+    state.provider = walletRuntime.provider;
+    state.userDisconnected = false;
+    clearLocalWalletDisconnect();
+
+    try {
+      const chainHex = await window.ethereum.request({ method: 'eth_chainId' });
+      state.chainId = normalizeChainId(chainHex);
+    } catch (_) {
+      state.chainId = null;
+    }
+
+    startWalletChainWatcher();
+    applyCurrentNetworkPresentation({
+      shouldScroll: false,
+      eventVal: `Authorized wallet restored: ${shortAddr(state.address)}.`,
+    });
+    pollNetworkData();
+    return true;
   }
 
   // ----------------------------------------------------------------
@@ -3911,6 +3972,8 @@
   if (els.txCancelReview)  els.txCancelReview.addEventListener('click', () => exitReview());
   if (els.txConfirmAck)    els.txConfirmAck.addEventListener('change', updatePreview);
 
+  hydrateAuthorizedInjectedWallet();
+
   // Gas price row — expand / collapse toggle
   if (els.gasRowToggle) {
     els.gasRowToggle.addEventListener('click', function () {
@@ -3964,6 +4027,7 @@
         state.address = accounts[0];
         state.provider = walletRuntime.provider;
         state.userDisconnected = false;
+        clearLocalWalletDisconnect();
 
         const chainHex = await walletRuntime.provider.request({ method: 'eth_chainId' });
         state.chainId = normalizeChainId(chainHex);
