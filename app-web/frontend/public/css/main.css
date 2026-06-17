@@ -639,7 +639,7 @@ body.portal-active #nav {
 /* ---- Modules ---- */
 .modules {
   max-width: 1280px;
-  margin: 0 auto 3rem;
+  margin: 0 auto;
   padding: 0;
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -2182,7 +2182,6 @@ footer .social-links a:focus-visible,
   .modules {
     grid-template-columns: 1fr;
     padding: 0;
-    margin-bottom: 2rem;
   }
 
   .tx-meta-grid {

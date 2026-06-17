@@ -563,6 +563,39 @@
 
   </section>
 
+  <!-- TELEMETRY — expandable instrumentation panel -->
+  <section class="telemetry" id="telemetry" aria-label="System telemetry">
+    <div class="telemetry-bar" id="telemetryBar"
+         role="button" tabindex="0"
+         aria-expanded="false" aria-controls="telemetryPanel"
+         aria-label="Telemetry — click to expand">
+      <span class="telemetry-dot" id="telemetryDot" aria-hidden="true"></span>
+      <span class="telemetry-label">Telemetry</span>
+      <span class="telemetry-summary" id="telemetrySummary">Nominal</span>
+      <span class="telemetry-chevron" aria-hidden="true"></span>
+    </div>
+    <div class="telemetry-panel" id="telemetryPanel" hidden aria-hidden="true">
+      <div class="telemetry-body">
+
+        <div class="telemetry-section" id="telemetrySectionStatus">
+          <div class="telemetry-section-label">Status</div>
+          <div class="telemetry-rows" id="telemetryStatusRows"></div>
+        </div>
+
+        <div class="telemetry-section" id="telemetrySectionDetails">
+          <div class="telemetry-section-label">Details</div>
+          <div class="telemetry-rows" id="telemetryDetailsRows"></div>
+        </div>
+
+        <div class="telemetry-section" id="telemetrySectionGuidance">
+          <div class="telemetry-section-label">Guidance</div>
+          <div class="telemetry-rows" id="telemetryGuidanceRows"></div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
   </main>
 
   <!-- Transaction Companion Tray — application status layer, above footer -->
@@ -599,39 +632,6 @@
       </div>
     </div>
   </div>
-
-  <!-- TELEMETRY — expandable instrumentation panel -->
-  <section class="telemetry" id="telemetry" aria-label="System telemetry">
-    <div class="telemetry-bar" id="telemetryBar"
-         role="button" tabindex="0"
-         aria-expanded="false" aria-controls="telemetryPanel"
-         aria-label="Telemetry — click to expand">
-      <span class="telemetry-dot" id="telemetryDot" aria-hidden="true"></span>
-      <span class="telemetry-label">Telemetry</span>
-      <span class="telemetry-summary" id="telemetrySummary">Nominal</span>
-      <span class="telemetry-chevron" aria-hidden="true"></span>
-    </div>
-    <div class="telemetry-panel" id="telemetryPanel" hidden aria-hidden="true">
-      <div class="telemetry-body">
-
-        <div class="telemetry-section" id="telemetrySectionStatus">
-          <div class="telemetry-section-label">Status</div>
-          <div class="telemetry-rows" id="telemetryStatusRows"></div>
-        </div>
-
-        <div class="telemetry-section" id="telemetrySectionDetails">
-          <div class="telemetry-section-label">Details</div>
-          <div class="telemetry-rows" id="telemetryDetailsRows"></div>
-        </div>
-
-        <div class="telemetry-section" id="telemetrySectionGuidance">
-          <div class="telemetry-section-label">Guidance</div>
-          <div class="telemetry-rows" id="telemetryGuidanceRows"></div>
-        </div>
-
-      </div>
-    </div>
-  </section>
 
   <!-- NEWS -->
   <section class="news-preview" id="news" aria-labelledby="newsTitle">
