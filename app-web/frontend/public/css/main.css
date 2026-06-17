@@ -155,7 +155,7 @@ body {
 }
 
 .wallet-menu {
-  position: relative;
+  /* No position: relative — panel anchors to #nav so top: 100% = nav bottom */
 }
 
 .wallet-menu[hidden] { display: none; }
@@ -225,8 +225,8 @@ body {
 
 .wallet-menu-panel {
   position: absolute;
-  right: 0;
-  top: 100%;
+  right: 2rem;  /* matches #nav padding-right */
+  top: 100%;   /* 100% of #nav height = nav bottom line */
   margin-top: 0;
   z-index: 260;
   width: min(280px, calc(100vw - 2rem));
