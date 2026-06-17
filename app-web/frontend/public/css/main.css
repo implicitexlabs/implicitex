@@ -216,6 +216,34 @@ body {
   color: var(--telemetry-amber-dim);
 }
 
+.send-usdc-link,
+.send-usdc-link:link,
+.send-usdc-link:visited {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--bg);
+  background: var(--white);
+  border: 1px solid var(--white);
+  padding: 8px 14px;
+  text-decoration: none;
+  line-height: 1;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.send-usdc-link:hover,
+.send-usdc-link:focus-visible {
+  background: var(--button-hover);
+  border-color: var(--button-hover);
+}
+
+.send-usdc-link:focus-visible {
+  outline: 1px solid var(--white);
+  outline-offset: 3px;
+}
+
 .connect-btn {
   font-family: var(--mono);
   font-size: 10px;
@@ -580,6 +608,10 @@ body.portal-active #nav {
 
 .modules:not([hidden]) .mod {
   animation: portalContentIn 0.24s 0.18s ease both;
+}
+
+.transfer-anchor {
+  scroll-margin-top: calc(var(--nav-h) + 1rem);
 }
 
 /* ---- Portal controls — sits above .modules, outside its border ---- */
@@ -2144,6 +2176,14 @@ footer .social-links a:focus-visible,
   .switch-account-btn,
   .nav-status {
     display: none !important;
+  }
+
+  .send-usdc-link,
+  .send-usdc-link:link,
+  .send-usdc-link:visited {
+    padding: 8px 10px;
+    font-size: 9px;
+    white-space: nowrap;
   }
 
   .hamburger-btn {

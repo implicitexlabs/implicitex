@@ -54,6 +54,7 @@
         </svg>
       </button>
       <span class="nav-status">Polygon · Live</span>
+      <a class="send-usdc-link" href="#transfer" onclick="if (window.IX && IX.openOrConnect) { IX.openOrConnect(); return false; }">Send USDC</a>
       <button class="switch-account-btn" id="switchAccountBtn" aria-label="Switch wallet account" hidden>
         Switch Account
       </button>
@@ -315,6 +316,7 @@
   </script>
 
   <!-- Portal controls — outside the border, above the grid -->
+  <div class="transfer-anchor" id="transfer" aria-hidden="true"></div>
   <div class="portal-controls" id="portalControls" hidden>
     <button class="portal-dismiss" id="modulesDismiss" aria-label="Collapse transfer panel">✕ Collapse</button>
   </div>
