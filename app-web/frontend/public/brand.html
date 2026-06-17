@@ -338,10 +338,7 @@
     </a>
     <div class="nav-right">
       <a href="/brand.html" class="nav-brand-link" aria-current="page">Brand</a>
-      <div class="wallet-pill" id="walletPill" aria-live="polite">
-        <span class="wallet-dot" aria-hidden="true"></span>
-        <span class="wallet-addr" id="walletAddr"></span>
-      </div>
+      
       <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch to light theme" aria-pressed="false">
         <svg class="theme-icon" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
           <path d="M7 1 A6 6 0 0 0 7 13 Z" fill="var(--white)"/>
@@ -350,13 +347,25 @@
         </svg>
       </button>
       <span class="nav-status">Polygon · Live</span>
-      <a class="send-usdc-link" href="/#transfer">Send USDC</a>
-      <button class="disconnect-btn" id="disconnectBtn" aria-label="Disconnect wallet" title="Disconnect removes ImplicitEx access. On shared computers, also lock MetaMask." hidden>
-        Disconnect
-      </button>
+      <a class="send-usdc-link" href="/#transfer">Transfer Portal</a>
       <button class="connect-btn" id="connectBtn" onclick="IX.connect()">
         Connect Wallet
       </button>
+      <div class="wallet-menu" id="walletMenu" hidden>
+        <button class="wallet-menu-trigger" id="walletMenuTrigger" type="button" aria-expanded="false" aria-controls="walletMenuPanel" aria-label="Wallet account menu">
+          <span class="wallet-dot" aria-hidden="true"></span>
+          <span class="wallet-addr" id="walletAddr"></span>
+          <span class="wallet-chevron" aria-hidden="true"></span>
+        </button>
+        <div class="wallet-menu-panel" id="walletMenuPanel" hidden>
+          <p class="wallet-menu-title">Wallet connected</p>
+          <p class="wallet-menu-address" id="walletFullAddress"></p>
+          <button class="wallet-menu-action" id="copyAddressBtn" type="button">Copy address</button>
+          <button class="wallet-menu-action" id="switchNetworkBtn" type="button" hidden>Switch to Polygon</button>
+          <button class="wallet-menu-action" id="switchAccountBtn" type="button">Switch account</button>
+          <button class="wallet-menu-action wallet-menu-action--danger" id="disconnectBtn" type="button">Disconnect</button>
+        </div>
+      </div>
     </div>
   </nav>
 

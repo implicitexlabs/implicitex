@@ -69,12 +69,9 @@
       state.connecting = false;
       state.userDisconnected = true;
       stopWalletChainWatcher();
-      if (els.walletPill) els.walletPill.classList.remove('visible');
-      if (els.walletAddr) els.walletAddr.textContent = '';
+      closeWalletMenu();
+      hideWalletMenuEl();
       updateSenderDisplay();
-      if (els.disconnectBtn) els.disconnectBtn.setAttribute('hidden', '');
-      setAccountSwitchVisible(false);
-      resetConnectButton();
       setNavStatus('');
       setElementSeverity(els.navStatus, null);
       if (els.networkBadge) {
@@ -421,6 +418,15 @@
     disconnectBtn:  document.getElementById('disconnectBtn'),
     walletPill:     document.getElementById('walletPill'),
     walletAddr:     document.getElementById('walletAddr'),
+    walletMenu:     document.getElementById('walletMenu'),
+    walletMenuTrigger: document.getElementById('walletMenuTrigger'),
+    walletMenuPanel: document.getElementById('walletMenuPanel'),
+    walletFullAddress: document.getElementById('walletFullAddress'),
+    copyAddressBtn: document.getElementById('copyAddressBtn'),
+    switchNetworkBtn: document.getElementById('switchNetworkBtn'),
+    modulesMinimize: document.getElementById('modulesMinimize'),
+    modulesClose:   document.getElementById('modulesClose'),
+    portalMinimizedTray: document.getElementById('portalMinimizedTray'),
     modules:        document.getElementById('modules'),
     portalControls: document.getElementById('portalControls'),
     howItWorks:     document.getElementById('howItWorks'),
@@ -1778,6 +1784,81 @@
     }
   }
 
+  // ----------------------------------------------------------------
+  // Wallet menu (connected dropdown) — open/close helpers
+  // ----------------------------------------------------------------
+  function openWalletMenu() {
+    if (!els.walletMenu || !els.walletMenuPanel || !els.walletMenuTrigger) return;
+    els.walletMenu.classList.add('is-open');
+    els.walletMenuTrigger.setAttribute('aria-expanded', 'true');
+    els.walletMenuPanel.removeAttribute('hidden');
+  }
+
+  function closeWalletMenu() {
+    if (!els.walletMenu || !els.walletMenuPanel || !els.walletMenuTrigger) return;
+    els.walletMenu.classList.remove('is-open');
+    els.walletMenuTrigger.setAttribute('aria-expanded', 'false');
+    els.walletMenuPanel.setAttribute('hidden', '');
+  }
+
+  function showWalletMenu(address) {
+    if (!els.walletMenu) return;
+    if (els.walletAddr) els.walletAddr.textContent = shortAddr(address || state.address);
+    if (els.walletFullAddress) els.walletFullAddress.textContent = address || state.address || '';
+    els.walletMenu.removeAttribute('hidden');
+    if (els.connectBtn) els.connectBtn.hidden = true;
+  }
+
+  function hideWalletMenuEl() {
+    if (!els.walletMenu) return;
+    closeWalletMenu();
+    els.walletMenu.setAttribute('hidden', '');
+    if (els.connectBtn) {
+      els.connectBtn.hidden = false;
+      els.connectBtn.disabled = false;
+      els.connectBtn.textContent = 'Connect Wallet';
+      els.connectBtn.classList.remove('connected');
+    }
+  }
+
+  // Show/hide the "Switch to Polygon" recovery button inside the dropdown.
+  function setWalletMenuNetworkRecovery(show) {
+    if (els.switchNetworkBtn) {
+      if (show) {
+        els.switchNetworkBtn.removeAttribute('hidden');
+      } else {
+        els.switchNetworkBtn.setAttribute('hidden', '');
+      }
+    }
+  }
+
+  // ----------------------------------------------------------------
+  // Portal minimize/restore helpers
+  // ----------------------------------------------------------------
+  function minimizePortal() {
+    if (!els.modules) return;
+    els.modules.classList.add('is-minimized');
+    if (els.portalMinimizedTray) els.portalMinimizedTray.removeAttribute('hidden');
+  }
+
+  function restorePortal() {
+    if (!els.modules) return;
+    els.modules.classList.remove('is-minimized');
+    if (els.portalMinimizedTray) els.portalMinimizedTray.setAttribute('hidden', '');
+  }
+
+  function closePortalWithAnimation() {
+    if (!els.modules) return;
+    restorePortal();
+    els.modules.classList.add('is-closing');
+    setTimeout(() => {
+      if (els.modules) {
+        els.modules.classList.remove('is-closing');
+        hideTransferModules();
+      }
+    }, 220);
+  }
+
   function handleConnectFailure(message, severity = null) {
     state.connected = false;
     state.address = null;
@@ -1787,9 +1868,8 @@
     walletRuntime.provider = null;
     walletRuntime.source = null;
 
-    if (els.disconnectBtn) els.disconnectBtn.setAttribute('hidden', '');
-    setAccountSwitchVisible(false);
-    resetConnectButton();
+    closeWalletMenu();
+    hideWalletMenuEl();
     setNavStatus(message);
     setElementSeverity(els.navStatus, severity);
     setElementSeverity(els.networkBadge, null);
@@ -2315,12 +2395,9 @@
     let stillAuthorized = false;
     if (revokeProvider && !wasWalletConnect) await revokeWalletPermission(activeProvider);
 
-    if (els.walletPill) els.walletPill.classList.remove('visible');
-    if (els.walletAddr) els.walletAddr.textContent = '';
+    closeWalletMenu();
+    hideWalletMenuEl();
     updateSenderDisplay();
-    if (els.disconnectBtn) els.disconnectBtn.setAttribute('hidden', '');
-    setAccountSwitchVisible(false);
-    resetConnectButton();
     setNavStatus('');
     setElementSeverity(els.navStatus, null);
     if (els.networkBadge) {
@@ -2363,17 +2440,9 @@
     const transfersEnabled = chainConfig && chainConfig.transfersEnabled;
     const eventVal = options.eventVal || `Address: ${shortAddr(state.address)}`;
 
-    if (els.walletAddr) els.walletAddr.textContent = short;
+    showWalletMenu(state.address);
+    setWalletMenuNetworkRecovery(false);
     updateSenderDisplay();
-    if (els.walletPill) els.walletPill.classList.add('visible');
-    if (els.connectBtn) {
-      els.connectBtn.hidden = false;
-      els.connectBtn.disabled = false;
-      els.connectBtn.textContent = short;
-      els.connectBtn.classList.add('connected');
-    }
-    if (els.disconnectBtn) els.disconnectBtn.removeAttribute('hidden');
-    setAccountSwitchVisible(true);
     setNavStatus('Wallet connected');
     setElementSeverity(els.navStatus, null);
     if (els.networkBadge) {
@@ -2419,23 +2488,10 @@
       ? 'Contract not deployed on this network.'
       : 'Wallet connected on unsupported network.';
 
-    if (els.walletAddr) els.walletAddr.textContent = short;
+    showWalletMenu(state.address);
+    // Show "Switch to Polygon" recovery in the dropdown only when on wrong network.
+    setWalletMenuNetworkRecovery(state.chainId !== POLYGON_MAINNET_CHAIN_ID);
     updateSenderDisplay();
-    if (els.walletPill) els.walletPill.classList.add('visible');
-    if (els.connectBtn) {
-      if (state.chainId === POLYGON_MAINNET_CHAIN_ID) {
-        // Already on Polygon — "Switch to Polygon" is wrong; hide the action button.
-        // Disconnect and account-switch remain available.
-        els.connectBtn.hidden = true;
-      } else {
-        els.connectBtn.hidden = false;
-        els.connectBtn.disabled = false;
-        els.connectBtn.textContent = 'Switch to Polygon';
-        els.connectBtn.classList.add('connected');
-      }
-    }
-    if (els.disconnectBtn) els.disconnectBtn.removeAttribute('hidden');
-    setAccountSwitchVisible(true);
     setNavStatus(stateVal);
     setElementSeverity(els.navStatus, 'error');
     if (els.networkBadge) {
@@ -3968,16 +4024,89 @@
     getState: () => ({ ...state }),
   });
 
-  // Wire dismiss and wallet-session buttons
-  const dismissBtn = document.getElementById('modulesDismiss');
-  if (dismissBtn) dismissBtn.addEventListener('click', dismissModules);
+  // Portal controls — Minimize and Close
+  if (els.modulesMinimize) {
+    els.modulesMinimize.addEventListener('click', minimizePortal);
+  }
+  if (els.modulesClose) {
+    els.modulesClose.addEventListener('click', function () {
+      closePortalWithAnimation();
+      // Scroll back to how-it-works after close animation.
+      setTimeout(() => {
+        if (els.howItWorks) {
+          els.howItWorks.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 240);
+    });
+  }
+  if (els.portalMinimizedTray) {
+    els.portalMinimizedTray.addEventListener('click', restorePortal);
+  }
 
+  // Wallet menu — toggle open/close
+  if (els.walletMenuTrigger) {
+    els.walletMenuTrigger.addEventListener('click', function () {
+      if (els.walletMenu && els.walletMenu.classList.contains('is-open')) {
+        closeWalletMenu();
+      } else {
+        openWalletMenu();
+      }
+    });
+  }
+
+  // Wallet menu — close on outside click
+  document.addEventListener('click', function (e) {
+    if (!els.walletMenu || !els.walletMenu.classList.contains('is-open')) return;
+    if (!els.walletMenu.contains(e.target)) {
+      closeWalletMenu();
+    }
+  });
+
+  // Wallet menu — keyboard close on Escape
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && els.walletMenu && els.walletMenu.classList.contains('is-open')) {
+      closeWalletMenu();
+      if (els.walletMenuTrigger) els.walletMenuTrigger.focus();
+    }
+  });
+
+  // Copy address button
+  if (els.copyAddressBtn) {
+    els.copyAddressBtn.addEventListener('click', function () {
+      if (!state.address) return;
+      navigator.clipboard.writeText(state.address).then(function () {
+        const original = els.copyAddressBtn.textContent;
+        els.copyAddressBtn.textContent = 'Copied';
+        setTimeout(function () {
+          if (els.copyAddressBtn) els.copyAddressBtn.textContent = original;
+        }, 1400);
+      }).catch(function () {
+        // Clipboard unavailable — silently no-op.
+      });
+    });
+  }
+
+  // Switch to Polygon recovery button (inside wallet menu, shown on wrong network)
+  if (els.switchNetworkBtn) {
+    els.switchNetworkBtn.addEventListener('click', function () {
+      closeWalletMenu();
+      switchToPolygonMainnet();
+    });
+  }
+
+  // Wallet menu action buttons — wire disconnect and switch account
   if (els.disconnectBtn) {
     els.disconnectBtn.addEventListener('click', () => {
+      closeWalletMenu();
       disconnect({ revokeProvider: true });
     });
   }
-  if (els.switchAccountBtn) els.switchAccountBtn.addEventListener('click', requestAccountSelection);
+  if (els.switchAccountBtn) {
+    els.switchAccountBtn.addEventListener('click', function () {
+      closeWalletMenu();
+      requestAccountSelection();
+    });
+  }
   if (els.txCancelReview)  els.txCancelReview.addEventListener('click', () => exitReview());
   if (els.txConfirmAck)    els.txConfirmAck.addEventListener('change', updatePreview);
 

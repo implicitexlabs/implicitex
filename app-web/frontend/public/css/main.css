@@ -154,16 +154,40 @@ body {
   gap: 10px;
 }
 
-/* Wallet pill — hidden until connected */
-.wallet-pill {
-  display: none;
-  align-items: center;
-  gap: 7px;
-  border: 1px solid var(--border);
-  padding: 5px 12px;
+.wallet-menu {
+  position: relative;
 }
 
-.wallet-pill.visible { display: flex; }
+.wallet-menu[hidden] { display: none; }
+
+.wallet-menu-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--white);
+  background: transparent;
+  border: 1px solid var(--border);
+  padding: 7px 10px;
+  cursor: pointer;
+  transition: border-color 0.12s, background 0.12s;
+}
+
+.wallet-menu-trigger:hover,
+.wallet-menu-trigger:focus-visible,
+.wallet-menu.is-open .wallet-menu-trigger {
+  border-color: var(--border-2);
+  background: var(--surface-2);
+}
+
+.wallet-menu-trigger:focus-visible {
+  outline: 1px solid var(--white);
+  outline-offset: 3px;
+}
 
 .wallet-dot {
   width: 5px;
@@ -183,6 +207,87 @@ body {
   font-size: 10px;
   color: var(--white);
 }
+
+.wallet-chevron {
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 5px solid var(--dim);
+  flex-shrink: 0;
+  transition: transform 0.18s ease-out, border-top-color 0.12s;
+}
+
+.wallet-menu.is-open .wallet-chevron {
+  transform: rotate(180deg);
+  border-top-color: var(--white);
+}
+
+.wallet-menu-panel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  z-index: 260;
+  width: min(280px, calc(100vw - 2rem));
+  background: var(--bg);
+  border: 1px solid var(--border-2);
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.42);
+  padding: 0.85rem;
+}
+
+.wallet-menu-panel[hidden] { display: none; }
+
+.wallet-menu-title {
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--white);
+  margin-bottom: 0.45rem;
+}
+
+.wallet-menu-address {
+  font-family: var(--mono);
+  font-size: 10px;
+  line-height: 1.5;
+  color: var(--dim);
+  overflow-wrap: anywhere;
+  margin-bottom: 0.7rem;
+}
+
+.wallet-menu-action {
+  display: block;
+  width: 100%;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--white);
+  text-align: left;
+  background: transparent;
+  border: 1px solid var(--border);
+  padding: 9px 10px;
+  cursor: pointer;
+  transition: border-color 0.12s, color 0.12s;
+}
+
+.wallet-menu-action + .wallet-menu-action {
+  margin-top: 6px;
+}
+
+.wallet-menu-action:hover,
+.wallet-menu-action:focus-visible {
+  border-color: var(--border-2);
+}
+
+.wallet-menu-action--danger {
+  color: var(--warn);
+  border-color: var(--warn-border);
+}
+
+.wallet-menu-action[hidden] { display: none; }
 
 .nav-status {
   font-family: var(--mono);
@@ -593,8 +698,8 @@ body.portal-active #nav {
 /* Frame appears first (outline + opacity), content follows with slight delay.
    Replaying on hidden-removal is intentional — display:none resets animation. */
 @keyframes portalFrameIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes portalContentIn {
@@ -602,8 +707,18 @@ body.portal-active #nav {
   to   { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes portalFrameOut {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(-6px); }
+}
+
 .modules:not([hidden]) {
   animation: portalFrameIn 0.28s ease both;
+}
+
+.modules.is-closing {
+  animation: portalFrameOut 0.2s ease both;
+  pointer-events: none;
 }
 
 .modules:not([hidden]) .mod {
@@ -622,9 +737,10 @@ body.portal-active #nav {
 /* ---- Portal controls — sits above .modules, outside its border ---- */
 .portal-controls {
   max-width: 1280px;
-  margin: 0 auto;
+  margin: clamp(2rem, 5vh, 3.5rem) auto 0;
   display: flex;
   justify-content: flex-end;
+  gap: 8px;
   padding: 0.5rem 0 0.4rem;
 }
 
@@ -691,6 +807,66 @@ body.portal-active #nav {
 }
 
 .modules[hidden] { display: none; }
+
+.portal-minimized-tray {
+  display: none;
+  grid-column: 1 / -1;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  width: 100%;
+  min-height: 44px;
+  background: var(--surface);
+  border: 0;
+  color: var(--white);
+  cursor: pointer;
+  padding: 0 2rem;
+  text-align: left;
+}
+
+.portal-minimized-label,
+.portal-minimized-status {
+  font-family: var(--mono);
+  text-transform: uppercase;
+}
+
+.portal-minimized-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+}
+
+.portal-minimized-status {
+  flex: 1;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  color: var(--dim);
+  text-align: right;
+}
+
+.portal-minimized-chevron {
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 5px solid var(--dim);
+  transform: rotate(180deg);
+  flex-shrink: 0;
+}
+
+.transfer-portal.is-minimized {
+  grid-template-columns: 1fr;
+}
+
+.transfer-portal.is-minimized .portal-minimized-tray {
+  display: flex;
+}
+
+.transfer-portal.is-minimized > .mod,
+.transfer-portal.is-minimized > .companion,
+.transfer-portal.is-minimized > .telemetry {
+  display: none;
+}
 
 .mod {
   background: var(--surface);
@@ -2180,7 +2356,7 @@ footer .social-links a:focus-visible,
   }
 
   /* Mobile: hide all desktop wallet controls, show hamburger */
-  .wallet-pill,
+  .wallet-menu,
   .connect-btn,
   .disconnect-btn,
   .switch-account-btn,
@@ -2318,6 +2494,20 @@ footer .social-links a:focus-visible,
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .wallet-dot,
+  .modules:not([hidden]),
+  .modules:not([hidden]) .mod,
+  .modules:not([hidden]) > .companion,
+  .modules:not([hidden]) > .telemetry,
+  .modules.is-closing {
+    animation: none !important;
+  }
+
+  .wallet-chevron,
+  .portal-minimized-chevron {
+    transition: none;
+  }
+
   .reveal-copy {
     opacity: 1;
     transform: none;
