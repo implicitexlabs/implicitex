@@ -2133,12 +2133,12 @@ footer .social-links a:focus-visible,
 .about-hero-mark--stacked {
   flex-direction: column;
   align-items: center;
-  gap: calc(1rem + 12px);
+  gap: calc(1rem + 20px);
 }
 
 .about-brandmark {
   display: block;
-  width: clamp(70px, 6.4vw, 90px);
+  width: clamp(58px, 5.3vw, 76px);
   height: auto;
   flex: 0 0 auto;
 }

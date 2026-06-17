@@ -104,14 +104,14 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      /* gap = 32% of mark height — Version A: mark companion, wordmark leads */
-      gap: 13px;
+      /* gap = 51% of mark height — wordmark leads, mark introduces */
+      gap: 18px;
     }
 
     .lockup-stacked .lm {
-      /* ~1/3 of 130px wordmark, 5% smaller than reference for breathing room */
-      width: 41px;
-      height: 41px;
+      /* ~27% of 130px wordmark — mark as companion, not badge */
+      width: 35px;
+      height: 35px;
     }
 
     .lockup-stacked .wm {
@@ -169,16 +169,16 @@
     }
 
     .clearspace-diagram-stacked .lm {
-      /* 5% smaller than prior reference; companion to wordmark, not dominant */
-      width: 64px;
-      height: 64px;
+      /* ~27% of wordmark width; mark as companion */
+      width: 54px;
+      height: 54px;
     }
 
     .clearspace-diagram-stacked .wm {
-      /* 200px wide · lettermark is ~1/3 of wordmark width */
+      /* 200px wide · lettermark is ~27% of wordmark width */
       width: 200px;
-      /* 23% of 64px = 15px gap — Version A spacing */
-      margin-top: 15px;
+      /* 37% of 54px = 20px gap */
+      margin-top: 20px;
     }
 
     .clearspace-rule {
@@ -697,17 +697,18 @@
       <p>
         The vertical gap between the lettermark and the wordmark must be no
         less than 20% of the lettermark's height — this is the minimum, not
-        the target. The reference stacked lockup uses a 41&thinsp;px mark with
-        13&thinsp;px spacing (≈ 32% of mark height). Extra breathing room between
-        the mark and wordmark signals confidence and keeps both elements
-        legible as independent objects.
+        the target. The reference stacked lockup uses a 35&thinsp;px mark with
+        18&thinsp;px spacing (≈ 51% of mark height). The generous gap lets
+        both elements read as independent objects and signals that the wordmark
+        is leading, not the mark.
       </p>
 
       <p>
-        In the stacked configuration, the lettermark's width may range from
-        one-third to one-half of the wordmark's displayed width. The default
-        stacked mark is approximately one-third of the wordmark width. At the
-        reference wordmark width of 130&thinsp;px, this is 41&thinsp;px.
+        In the stacked configuration, the lettermark's width should be roughly
+        one-quarter to one-third of the wordmark's displayed width. At the
+        reference wordmark width of 130&thinsp;px, the target mark width is
+        35&thinsp;px (27%). This proportion keeps the mark as an introduction
+        to the name rather than a competing visual object.
       </p>
 
       <div class="brand-canvas">
