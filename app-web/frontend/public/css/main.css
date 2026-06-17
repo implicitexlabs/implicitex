@@ -638,16 +638,15 @@ body.portal-active #nav {
 
 /* ---- Modules ---- */
 .modules {
+  box-sizing: border-box;
   max-width: 1280px;
   margin: 0 auto;
-  padding: 0;
+  padding: 1px;
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 1px;
   background: var(--border);
-  /* Portal frame — instrument housing: dual-border + contained shadow.
-     padding: 0 so outline wraps the content edge uniformly on all four sides. */
-  outline: 1px solid var(--border-2);
+  border: 1px solid var(--border-2);
   box-shadow:
     inset 0 0 0 1px rgba(255, 255, 255, 0.06),
     0 2px 0 rgba(255, 255, 255, 0.05),
@@ -2181,7 +2180,6 @@ footer .social-links a:focus-visible,
 
   .modules {
     grid-template-columns: 1fr;
-    padding: 0;
   }
 
   .tx-meta-grid {
