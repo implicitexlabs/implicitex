@@ -104,14 +104,14 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      /* gap = 1x = 20% of mark height */
-      gap: 11px;
+      /* gap = 32% of mark height — Version A: mark companion, wordmark leads */
+      gap: 13px;
     }
 
     .lockup-stacked .lm {
-      /* 1/3 of 130px wordmark = ~43px */
-      width: 43px;
-      height: 43px;
+      /* ~1/3 of 130px wordmark, 5% smaller than reference for breathing room */
+      width: 41px;
+      height: 41px;
     }
 
     .lockup-stacked .wm {
@@ -169,15 +169,16 @@
     }
 
     .clearspace-diagram-stacked .lm {
-      width: 67px;
-      height: 67px;
+      /* 5% smaller than prior reference; companion to wordmark, not dominant */
+      width: 64px;
+      height: 64px;
     }
 
     .clearspace-diagram-stacked .wm {
-      /* 200px wide · lettermark is 1/3 of wordmark width (67px) */
+      /* 200px wide · lettermark is ~1/3 of wordmark width */
       width: 200px;
-      /* 20% of 67px = 13px gap */
-      margin-top: 13px;
+      /* 23% of 64px = 15px gap — Version A spacing */
+      margin-top: 15px;
     }
 
     .clearspace-rule {
@@ -438,7 +439,36 @@
         The lettermark is the primary ImplicitEx mark — a single continuous
         stroke whose trajectory implies an X without the path ever crossing
         itself. It is the most reduced expression of the brand and the element
-        that anchors all lockup configurations. The X-form is implicit.
+        that anchors all lockup configurations.
+      </p>
+
+      <h3>The implied X</h3>
+
+      <p>
+        The X-form is not drawn. It is constructed by the viewer. The stroke
+        creates the conditions for an X to be perceived — diagonals converging,
+        then redirecting — without the paths ever actually crossing. Most
+        observers see the X. They just see it a beat after looking.
+      </p>
+
+      <p>
+        That delay is the point. The mark earns attention rather than announcing
+        itself. And the experience of constructing the X from the implied
+        geometry aligns directly with the word <em>implicit</em>: understood
+        without being stated. The conceptual connection between the mark and the
+        company name is not incidental. Preserve it.
+      </p>
+
+      <h3>Mark relationship to wordmark</h3>
+
+      <p>
+        The lettermark acts as a companion to the wordmark, not a badge. At
+        this stage of the brand, IMPLICITEX carries the identification burden —
+        the mark is not yet recognizable in isolation. The stacked lockup is
+        calibrated to reflect this: the mark is slightly smaller than the
+        wordmark height, and the gap between them is generous enough to let
+        both elements breathe without competing. The goal is balance, not
+        hierarchy.
       </p>
 
       <div class="brand-canvas">
@@ -667,15 +697,17 @@
       <p>
         The vertical gap between the lettermark and the wordmark must be no
         less than 20% of the lettermark's height — this is the minimum, not
-        the target. The reference stacked lockup uses a 43&thinsp;px mark with
-        11&thinsp;px spacing (≈ 26% of mark height).
+        the target. The reference stacked lockup uses a 41&thinsp;px mark with
+        13&thinsp;px spacing (≈ 32% of mark height). Extra breathing room between
+        the mark and wordmark signals confidence and keeps both elements
+        legible as independent objects.
       </p>
 
       <p>
         In the stacked configuration, the lettermark's width may range from
         one-third to one-half of the wordmark's displayed width. The default
-        stacked mark is one-third of the wordmark width. At the reference
-        wordmark width of 130&thinsp;px, this is 43&thinsp;px.
+        stacked mark is approximately one-third of the wordmark width. At the
+        reference wordmark width of 130&thinsp;px, this is 41&thinsp;px.
       </p>
 
       <div class="brand-canvas">
