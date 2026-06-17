@@ -19,6 +19,14 @@
     0 4px 18px rgba(0, 0, 0, 0.5);
 }
 
+.transfer-portal > .companion {
+  max-width: none;
+  margin: 0;
+  border: 0;
+  outline: 0;
+  box-shadow: none;
+}
+
 /* ---- Collapsed bar ---- */
 .companion-bar {
   height: 36px;

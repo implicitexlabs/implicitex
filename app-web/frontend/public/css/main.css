@@ -610,6 +610,11 @@ body.portal-active #nav {
   animation: portalContentIn 0.24s 0.18s ease both;
 }
 
+.modules:not([hidden]) > .companion,
+.modules:not([hidden]) > .telemetry {
+  animation: portalContentIn 0.24s 0.24s ease both;
+}
+
 .transfer-anchor {
   scroll-margin-top: calc(var(--nav-h) + 1rem);
 }
@@ -690,6 +695,11 @@ body.portal-active #nav {
 .mod {
   background: var(--surface);
   padding: 1.75rem 2rem;
+}
+
+.transfer-portal > .companion,
+.transfer-portal > .telemetry {
+  grid-column: 1 / -1;
 }
 
 .mod-tag {

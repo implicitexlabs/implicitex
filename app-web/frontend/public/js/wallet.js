@@ -2177,6 +2177,10 @@
     }
   }
 
+  function openTransferPortal() {
+    showTransferModules(true);
+  }
+
   function hideTransferModules() {
     if (els.modules) els.modules.setAttribute('hidden', '');
     if (els.portalControls) els.portalControls.setAttribute('hidden', '');
@@ -2206,6 +2210,7 @@
     } else if (state.connected) {
       await switchToPolygonMainnet();
     } else {
+      showTransferModules(true);
       connect({ forcePermission: state.userDisconnected });
     }
   }
@@ -3934,6 +3939,9 @@
   renderReceiptHistory();
   renderRecipientIntel();
   renderPreflight();
+  if (window.location.hash === '#transfer') {
+    setTimeout(openTransferPortal, 60);
+  }
   window.addEventListener('ix:receipts-changed', function () {
     renderReceiptHistory();
     renderRecipientIntel();
@@ -3949,6 +3957,7 @@
     connect,
     disconnect,
     requestAccountSelection,
+    openTransferPortal,
     openOrConnect,
     handleTxAction,
     submitTransfer,

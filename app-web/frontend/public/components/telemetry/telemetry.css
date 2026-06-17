@@ -20,6 +20,14 @@
     0 4px 18px rgba(0, 0, 0, 0.5);
 }
 
+.transfer-portal > .telemetry {
+  max-width: none;
+  margin: 0;
+  border: 0;
+  outline: 0;
+  box-shadow: none;
+}
+
 /* ---- Collapsed bar ---- */
 .telemetry-bar {
   height: 36px;

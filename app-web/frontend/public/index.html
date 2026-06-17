@@ -54,7 +54,7 @@
         </svg>
       </button>
       <span class="nav-status">Polygon · Live</span>
-      <a class="send-usdc-link" href="#transfer" onclick="if (window.IX && IX.openOrConnect) { IX.openOrConnect(); return false; }">Send USDC</a>
+      <a class="send-usdc-link" href="#transfer" onclick="if (window.IX && IX.openTransferPortal) { IX.openTransferPortal(); return false; }">Send USDC</a>
       <button class="switch-account-btn" id="switchAccountBtn" aria-label="Switch wallet account" hidden>
         Switch Account
       </button>
@@ -321,8 +321,8 @@
     <button class="portal-dismiss" id="modulesDismiss" aria-label="Collapse transfer panel">✕ Collapse</button>
   </div>
 
-  <!-- MODULES — revealed after wallet connect -->
-  <section class="modules" id="modules" aria-label="Transfer interface" hidden>
+  <!-- Transfer Portal — revealed after wallet connect -->
+  <section class="modules transfer-portal" id="modules" aria-label="Transfer Portal" data-transaction-window hidden>
     <!-- 01 Transfer -->
     <div class="mod">
       <span class="mod-tag">01 — Transfer</span>
@@ -563,74 +563,74 @@
       </div>
     </div>
 
-  </section>
-
-  <!-- Transaction Companion Tray — application status layer -->
-  <div id="companion" class="companion" role="complementary" aria-label="Transaction status">
-    <div class="companion-bar" id="companionBar" role="button" tabindex="0"
-         aria-expanded="false" aria-controls="companionDetail"
-         aria-label="Transaction status — click to expand">
-      <span class="companion-indicator" aria-hidden="true"></span>
-      <span class="companion-status" id="companionStatus">Ready · No active transaction</span>
-      <span class="companion-toggle" aria-hidden="true"></span>
-    </div>
-    <div class="companion-detail" id="companionDetail" aria-hidden="true">
-      <div class="companion-body">
-        <div class="companion-row">
-          <span class="companion-k">Status</span>
-          <span class="companion-v" id="companionStateVal">Ready</span>
-        </div>
-        <div class="companion-row">
-          <span class="companion-k">Funds Moved</span>
-          <span class="companion-v" id="companionFundsVal">No active transaction</span>
-        </div>
-        <div class="companion-row">
-          <span class="companion-k">Network</span>
-          <span class="companion-v" id="companionNetworkVal">—</span>
-        </div>
-        <div class="companion-row">
-          <span class="companion-k">Last Event</span>
-          <span class="companion-v" id="companionEventVal">—</span>
-        </div>
-        <div class="companion-row">
-          <span class="companion-k">Next Step</span>
-          <span class="companion-v companion-action" id="companionActionVal">Connect wallet to begin.</span>
+    <!-- Transaction Companion Tray — owned by the Transfer Portal -->
+    <div id="companion" class="companion" role="complementary" aria-label="Transaction status">
+      <div class="companion-bar" id="companionBar" role="button" tabindex="0"
+           aria-expanded="false" aria-controls="companionDetail"
+           aria-label="Transaction status — click to expand">
+        <span class="companion-indicator" aria-hidden="true"></span>
+        <span class="companion-status" id="companionStatus">Ready · No active transaction</span>
+        <span class="companion-toggle" aria-hidden="true"></span>
+      </div>
+      <div class="companion-detail" id="companionDetail" aria-hidden="true">
+        <div class="companion-body">
+          <div class="companion-row">
+            <span class="companion-k">Status</span>
+            <span class="companion-v" id="companionStateVal">Ready</span>
+          </div>
+          <div class="companion-row">
+            <span class="companion-k">Funds Moved</span>
+            <span class="companion-v" id="companionFundsVal">No active transaction</span>
+          </div>
+          <div class="companion-row">
+            <span class="companion-k">Network</span>
+            <span class="companion-v" id="companionNetworkVal">—</span>
+          </div>
+          <div class="companion-row">
+            <span class="companion-k">Last Event</span>
+            <span class="companion-v" id="companionEventVal">—</span>
+          </div>
+          <div class="companion-row">
+            <span class="companion-k">Next Step</span>
+            <span class="companion-v companion-action" id="companionActionVal">Connect wallet to begin.</span>
+          </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- TELEMETRY — expandable instrumentation panel -->
-  <section class="telemetry" id="telemetry" aria-label="System telemetry">
-    <div class="telemetry-bar" id="telemetryBar"
-         role="button" tabindex="0"
-         aria-expanded="false" aria-controls="telemetryPanel"
-         aria-label="Telemetry — click to expand">
-      <span class="telemetry-dot" id="telemetryDot" aria-hidden="true"></span>
-      <span class="telemetry-label">Telemetry</span>
-      <span class="telemetry-summary" id="telemetrySummary">Nominal</span>
-      <span class="telemetry-chevron" aria-hidden="true"></span>
-    </div>
-    <div class="telemetry-panel" id="telemetryPanel" hidden aria-hidden="true">
-      <div class="telemetry-body">
-
-        <div class="telemetry-section" id="telemetrySectionStatus">
-          <div class="telemetry-section-label">Status</div>
-          <div class="telemetry-rows" id="telemetryStatusRows"></div>
-        </div>
-
-        <div class="telemetry-section" id="telemetrySectionDetails">
-          <div class="telemetry-section-label">Details</div>
-          <div class="telemetry-rows" id="telemetryDetailsRows"></div>
-        </div>
-
-        <div class="telemetry-section" id="telemetrySectionGuidance">
-          <div class="telemetry-section-label">Guidance</div>
-          <div class="telemetry-rows" id="telemetryGuidanceRows"></div>
-        </div>
-
+    <!-- TELEMETRY — owned by the Transfer Portal -->
+    <section class="telemetry" id="telemetry" aria-label="System telemetry">
+      <div class="telemetry-bar" id="telemetryBar"
+           role="button" tabindex="0"
+           aria-expanded="false" aria-controls="telemetryPanel"
+           aria-label="Telemetry — click to expand">
+        <span class="telemetry-dot" id="telemetryDot" aria-hidden="true"></span>
+        <span class="telemetry-label">Telemetry</span>
+        <span class="telemetry-summary" id="telemetrySummary">Nominal</span>
+        <span class="telemetry-chevron" aria-hidden="true"></span>
       </div>
-    </div>
+      <div class="telemetry-panel" id="telemetryPanel" hidden aria-hidden="true">
+        <div class="telemetry-body">
+
+          <div class="telemetry-section" id="telemetrySectionStatus">
+            <div class="telemetry-section-label">Status</div>
+            <div class="telemetry-rows" id="telemetryStatusRows"></div>
+          </div>
+
+          <div class="telemetry-section" id="telemetrySectionDetails">
+            <div class="telemetry-section-label">Details</div>
+            <div class="telemetry-rows" id="telemetryDetailsRows"></div>
+          </div>
+
+          <div class="telemetry-section" id="telemetrySectionGuidance">
+            <div class="telemetry-section-label">Guidance</div>
+            <div class="telemetry-rows" id="telemetryGuidanceRows"></div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
   </section>
 
   </main>
