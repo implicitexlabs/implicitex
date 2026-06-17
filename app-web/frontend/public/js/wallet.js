@@ -2435,6 +2435,10 @@
 
   function applyConnectedPresentation(options = {}) {
     const shouldScroll = options.shouldScroll === true;
+    // shouldOpen: only open the portal when the user explicitly requested it
+    // (Connect Wallet click, Transfer Portal click, #transfer hash route).
+    // Passive reconnection on page load must NOT force the portal open.
+    const shouldOpen = options.shouldOpen === true;
     const short = shortAddr(state.address);
     const chainConfig = window.IX_CHAINS && window.IX_CHAINS[state.chainId];
     const transfersEnabled = chainConfig && chainConfig.transfersEnabled;
@@ -2456,7 +2460,7 @@
     setStatus('');
     setTransferNote(transfersEnabled ? '' : 'Preview mode — live transfers not yet enabled.');
     updateNetworkModuleRows(chainConfig);
-    showTransferModules(shouldScroll);
+    if (shouldOpen) showTransferModules(shouldScroll);
 
     companionState('WALLET_CONNECTED', {
       statusLine: transfersEnabled
@@ -2730,10 +2734,11 @@
       return;
     }
 
-    // TRANSFERS_DISABLED or READY — both show the transfer panel.
-    // applyConnectedPresentation handles the disabled-transfer copy internally.
+    // TRANSFERS_DISABLED or READY — update the connected-state UI.
+    // shouldOpen propagates only from explicit user actions (Connect Wallet click).
+    // Passive reconnection on page load must NOT force the portal open.
     const eventVal = options.eventVal;
-    applyConnectedPresentation({ shouldScroll: options.shouldScroll, eventVal });
+    applyConnectedPresentation({ shouldScroll: options.shouldScroll, shouldOpen: options.shouldOpen, eventVal });
 
     refreshUsdcBalance();
 
@@ -2856,7 +2861,8 @@
   }
 
   function onConnected() {
-    applyCurrentNetworkPresentation({ shouldScroll: true });
+    // User explicitly clicked Connect Wallet — open the portal.
+    applyCurrentNetworkPresentation({ shouldScroll: true, shouldOpen: true });
 
     pollNetworkData();
   }
