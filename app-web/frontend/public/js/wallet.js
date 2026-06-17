@@ -2443,7 +2443,7 @@
     showWalletMenu(state.address);
     setWalletMenuNetworkRecovery(false);
     updateSenderDisplay();
-    setNavStatus('Wallet connected');
+    setNavStatus(chainLabel(state.chainId));
     setElementSeverity(els.navStatus, null);
     if (els.networkBadge) {
       els.networkBadge.textContent = chainLabel(state.chainId);
