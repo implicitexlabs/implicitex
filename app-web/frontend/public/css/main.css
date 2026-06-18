@@ -1632,7 +1632,8 @@ footer {
 
 .f-copy {
   font-family: var(--mono);
-  font-size: 9px;
+  font-size: 10px;
+  font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--white);
@@ -1646,7 +1647,8 @@ footer {
 
 .f-links a {
   font-family: var(--mono);
-  font-size: 9px;
+  font-size: 10px;
+  font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--white);
@@ -1669,7 +1671,8 @@ footer .social-links a:visited,
 .social-text-link:link,
 .social-text-link:visited {
   font-family: var(--mono);
-  font-size: 9px;
+  font-size: 10px;
+  font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--white);
@@ -1693,7 +1696,8 @@ footer .social-links a:focus-visible,
 
 .f-net {
   font-family: var(--mono);
-  font-size: 9px;
+  font-size: 10px;
+  font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--white);
@@ -2014,6 +2018,7 @@ footer .social-links a:focus-visible,
 .policy-shell .brand-section,
 .policy-shell .jurisdiction-grid,
 .policy-shell .about-hero-mark,
+.policy-shell .proof-panel,
 .policy-shell .v-record,
 .policy-shell #newsArticles {
   column-span: all;
@@ -2023,7 +2028,10 @@ footer .social-links a:focus-visible,
 .policy-shell p,
 .policy-shell li,
 .policy-shell dt,
-.policy-shell dd {
+.policy-shell dd,
+.proof-panel,
+.v-fact,
+.v-record-row {
   break-inside: avoid;
 }
 
@@ -2045,6 +2053,7 @@ footer .social-links a:focus-visible,
 .policy-shell h3 {
   font-family: var(--display);
   max-width: var(--ix-section-title-max);
+  break-after: avoid;
 }
 
 .policy-shell h1 {
@@ -2062,12 +2071,22 @@ footer .social-links a:focus-visible,
 }
 
 .faq-shell h2 {
+  column-span: none;
+  break-after: avoid;
   font-size: 14px;
   font-weight: 700;
   line-height: 1.35;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  margin: 2rem 0 0.85rem;
+  margin: 1.45rem 0 0.55rem;
+}
+
+.faq-shell p {
+  margin: 0 0 0.75rem;
+}
+
+.faq-shell ul {
+  margin: 0.15rem 0 0.85rem 1.25rem;
 }
 
 .policy-shell h3 {
@@ -2086,7 +2105,10 @@ footer .social-links a:focus-visible,
   letter-spacing: 0;
 }
 
-.policy-shell p { max-width: none; }
+.policy-shell p {
+  max-width: none;
+  margin: 0 0 1rem;
+}
 
 /* Eyebrow/dateline overrides — policy-shell p specificity is (0,1,1);
    these selectors are (0,2,0) so they win back the correct 10px size. */
@@ -2101,7 +2123,6 @@ footer .social-links a:focus-visible,
   max-width: none;
 }
 
-.policy-shell p  { margin-bottom: 1rem; }
 .policy-shell li { margin-bottom: 0.35rem; }
 .policy-shell ul { margin: 0 0 1rem 1.25rem; }
 .policy-shell a  { color: var(--white); }
@@ -2113,16 +2134,55 @@ footer .social-links a:focus-visible,
   margin: 1rem 0 1.5rem;
 }
 
-/* Verification page — definition list for public checklist.
-   column-span: all keeps the dl from fragmenting inside CSS multi-column
-   (display:grid containers are atomic — they won't split across columns). */
-.policy-shell dl {
+/* Verification page — public proof panel */
+.policy-shell dl:not(.v-facts) {
   max-width: none;
   column-span: all;
   display: grid;
   grid-template-columns: max-content 1fr;
   gap: 0.6rem 1.75rem;
   margin-bottom: 1.75rem;
+}
+
+.proof-panel {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.72fr) minmax(0, 1.28fr);
+  gap: var(--ix-page-gap);
+  align-items: start;
+  padding: 1.35rem 0 1.6rem;
+  margin: 1.4rem 0 0.7rem;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.proof-panel-head h2 {
+  margin-top: 0;
+}
+
+.proof-panel-head p {
+  max-width: 34rem;
+  margin-bottom: 0.75rem;
+}
+
+.v-facts {
+  max-width: none;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin: 0;
+  padding-top: 1.2rem;
+}
+
+.v-fact {
+  min-width: 0;
+  padding: 0.9rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+}
+
+.v-fact-wide {
+  grid-column: 1 / -1;
 }
 
 .policy-shell dt {
@@ -2132,7 +2192,7 @@ footer .social-links a:focus-visible,
   letter-spacing: 0.13em;
   text-transform: uppercase;
   color: var(--muted);
-  padding-top: 0.15rem;
+  margin-bottom: 0.35rem;
   white-space: nowrap;
 }
 
@@ -2140,7 +2200,7 @@ footer .social-links a:focus-visible,
   font-family: var(--mono);
   font-size: 12px;
   color: var(--dim);
-  word-break: break-all;
+  overflow-wrap: anywhere;
   line-height: 1.6;
 }
 
@@ -2151,15 +2211,15 @@ footer .social-links a:focus-visible,
 
 /* Verification record block — transaction data */
 .v-record {
-  max-width: var(--ix-section-copy-max);
+  max-width: none;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 3px;
-  padding: 1.25rem 1.5rem;
+  padding: 1.25rem;
   margin: 0.75rem 0 1.5rem;
   font-family: var(--mono);
   font-size: 12px;
-  line-height: 2;
+  line-height: 1.55;
   color: var(--dim);
 }
 
@@ -2172,8 +2232,47 @@ footer .social-links a:focus-visible,
   margin-bottom: 0.9rem;
 }
 
+.v-record-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border-top: 1px solid var(--border);
+  border-left: 1px solid var(--border);
+}
+
+.v-record-row {
+  min-width: 0;
+  padding: 0.75rem 0.85rem;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.v-record-row span,
+.v-record-tx span {
+  display: block;
+  margin-bottom: 0.25rem;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.v-record-row strong {
+  display: block;
+  min-width: 0;
+  color: var(--white);
+  font-weight: 500;
+}
+
+.v-record-tx {
+  min-width: 0;
+  padding-top: 0.95rem;
+}
+
 .v-record-hash {
-  word-break: break-all;
+  display: inline-block;
+  max-width: 100%;
+  overflow-wrap: anywhere;
   font-size: 11px;
   color: var(--dim);
 }
@@ -2200,14 +2299,17 @@ footer .social-links a:focus-visible,
 }
 
 .about-head {
-  max-width: 960px;
+  max-width: var(--ix-interface-max);
   margin-bottom: 2.5rem;
+  column-count: 2;
+  column-gap: var(--ix-page-gap);
 }
 
 .about-hero-mark {
   display: flex;
   justify-content: center;
   margin-bottom: 2.3rem;
+  column-span: all;
 }
 
 .about-hero-mark--stacked {
@@ -2257,7 +2359,7 @@ footer .social-links a:focus-visible,
   line-height: var(--ix-copy-line);
   letter-spacing: 0;
   max-width: var(--ix-section-copy-max);
-  margin-bottom: 1rem;
+  margin: 0 0 1rem;
 }
 
 .about-shell a { color: var(--white); }
@@ -2310,8 +2412,21 @@ footer .social-links a:focus-visible,
 }
 
 .about-foot {
-  max-width: 780px;
+  max-width: var(--ix-interface-max);
   margin-top: 2.5rem;
+  column-count: 2;
+  column-gap: var(--ix-page-gap);
+}
+
+.about-head p,
+.about-foot p {
+  max-width: none;
+  break-inside: avoid;
+}
+
+.about-foot h2,
+.about-foot .back {
+  column-span: all;
 }
 
 /* ---- News — shared between index.html preview and news.html full listing ---- */
@@ -2442,8 +2557,23 @@ footer .social-links a:focus-visible,
 
 /* ---- Single-column below 900px ---- */
 @media (max-width: 900px) {
-  .policy-shell {
+  .policy-shell,
+  .about-head,
+  .about-foot {
     column-count: 1;
+  }
+
+  .proof-panel,
+  .v-facts {
+    grid-template-columns: 1fr;
+  }
+
+  .v-fact-wide {
+    grid-column: auto;
+  }
+
+  .v-record-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -2520,6 +2650,23 @@ footer .social-links a:focus-visible,
 
   .tx-meta-grid .tx-field + .tx-field {
     border-left: 1px solid var(--border);
+  }
+
+  .proof-panel {
+    gap: 1.25rem;
+    padding: 1.15rem 0;
+  }
+
+  .v-facts {
+    padding-top: 0;
+  }
+
+  .v-record {
+    padding: 1rem;
+  }
+
+  .v-record-grid {
+    grid-template-columns: 1fr;
   }
 
   /* Prevent iOS Safari from auto-zooming the page when the user taps a
@@ -2684,15 +2831,14 @@ input[type="number"] {
 }
 
 /* Two-column grid */
-/* learn.html is an app-style full-viewport training surface (sidebar + reader panel),
-   not a prose/public shell. It intentionally sits outside the --ix-interface-max system.
-   The sidebar is fixed-width; the panel fills remaining space. Constraining the grid
-   to --ix-interface-max would introduce dead margins and fight the sidebar's fixed column. */
 .learn-layout {
   display: grid;
   grid-template-columns: 260px 1fr;
+  width: min(100%, var(--ix-interface-max));
   min-height: calc(100vh - var(--nav-h));
-  margin-top: var(--nav-h);
+  margin: var(--nav-h) auto 0;
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
 }
 
 /* ---- Sidebar ---- */
@@ -2747,9 +2893,9 @@ input[type="number"] {
   border: none;
   text-align: left;
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 600;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--white);
   padding: 0.85rem 1rem 0.5rem;
@@ -2785,9 +2931,11 @@ input[type="number"] {
   background: none;
   border: none;
   text-align: left;
-  font-family: var(--sans);
-  font-size: 11px;
-  font-weight: 500;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
   color: var(--dim);
   padding: 0.35rem 1rem 0.35rem 1.25rem;
   cursor: pointer;
@@ -2922,7 +3070,7 @@ input[type="number"] {
   line-height: 1.75;
 }
 
-.learn-entry p { margin-bottom: 1rem; }
+.learn-entry p { margin: 0 0 1rem; }
 .learn-entry li { margin-bottom: 0.35rem; }
 .learn-entry ul,
 .learn-entry ol { margin: 0 0 1rem 1.25rem; }
@@ -3015,6 +3163,8 @@ input[type="number"] {
   .learn-layout {
     grid-template-columns: 1fr;
     margin-top: 0;
+    border-left: none;
+    border-right: none;
   }
 
   .learn-sidebar {

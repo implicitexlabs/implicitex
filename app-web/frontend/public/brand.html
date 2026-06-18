@@ -34,6 +34,26 @@
       opacity: 0.55;
     }
 
+    .policy-shell .brand-intro-copy {
+      column-span: all;
+      max-width: var(--ix-section-copy-max);
+    }
+
+    .brand-shell {
+      --brand-lockup-wordmark: 160px;
+      --brand-lockup-lettermark: 40px;
+      --brand-lockup-inline-gap: 8px;
+      --brand-lockup-stack-gap: 18px;
+    }
+
+    .brand-shell .about-brandmark {
+      width: 72px;
+    }
+
+    .brand-shell .about-wordmark {
+      width: 288px;
+    }
+
     /* ── Brand demo infrastructure ─────────────────────────────────── */
 
     .brand-section {
@@ -104,27 +124,37 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      /* gap = 51% of mark height — wordmark leads, mark introduces */
-      gap: 18px;
+      gap: var(--brand-lockup-stack-gap);
     }
 
     .lockup-stacked .lm {
-      /* ~27% of 130px wordmark — mark as companion, not badge */
-      width: 35px;
-      height: 35px;
+      width: var(--brand-lockup-lettermark);
+      height: var(--brand-lockup-lettermark);
     }
 
     .lockup-stacked .wm {
-      /* maintain 201.56:25 aspect ratio at ~130px wide */
-      width: 130px;
+      width: var(--brand-lockup-wordmark);
     }
 
     /* ── Lockup: Horizontal ────────────────────────────────────────── */
 
-    .lockup-horizontal .combined {
-      /* combined SVG viewBox 201.56 × 25; at 300px the mark renders ~37px
-         and the internal gap scales to ~7px — clear of the 1x minimum */
-      width: 300px;
+    .lockup-horizontal {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--brand-lockup-inline-gap);
+    }
+
+    .lockup-horizontal .lm {
+      width: var(--brand-lockup-lettermark);
+      height: var(--brand-lockup-lettermark);
+      flex: 0 0 auto;
+    }
+
+    .lockup-horizontal .wm {
+      width: var(--brand-lockup-wordmark);
+      flex: 0 1 auto;
+      min-width: 0;
     }
 
     /* ── Circle lockup example (approved config cells) ───────────────── */
@@ -137,7 +167,45 @@
     }
 
     .circle-lockup-wordmark {
-      width: 160px;
+      width: var(--brand-lockup-wordmark);
+    }
+
+    .lockup-tagline {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .brand-shell .lockup-tagline-copy {
+      width: var(--brand-lockup-wordmark);
+      font-family: var(--display);
+      font-size: 8px;
+      font-weight: 700;
+      letter-spacing: 0;
+      line-height: 1.25;
+      text-transform: none;
+      color: #FFFFFF;
+      margin: 0;
+      white-space: nowrap;
+    }
+
+    .lockup-tagline--inline {
+      align-items: flex-start;
+    }
+
+    .lockup-tagline--inline .lockup-tagline-copy {
+      margin-left: calc(var(--brand-lockup-lettermark) + var(--brand-lockup-inline-gap));
+      text-align: left;
+    }
+
+    .lockup-tagline--stacked .lockup-tagline-copy {
+      text-align: center;
+    }
+
+    .brand-shell .brand-canvas--light .lockup-tagline-copy,
+    .brand-shell .brand-config-cell[style*="background:#FFFFFF"] .lockup-tagline-copy {
+      color: #000000;
     }
 
     /* ── Clear-space diagram ───────────────────────────────────────── */
@@ -155,7 +223,7 @@
     }
 
     .clearspace-diagram .wm {
-      width: 130px;
+      width: 160px;
       /* 20% of 40px = 8px gap */
       margin-left: 8px;
     }
@@ -169,23 +237,24 @@
     }
 
     .clearspace-diagram-stacked .lm {
-      /* ~27% of wordmark width; mark as companion */
-      width: 54px;
-      height: 54px;
+      width: var(--brand-lockup-lettermark);
+      height: var(--brand-lockup-lettermark);
     }
 
     .clearspace-diagram-stacked .wm {
-      /* 200px wide · lettermark is ~27% of wordmark width */
-      width: 200px;
-      /* 37% of 54px = 20px gap */
-      margin-top: 20px;
+      width: var(--brand-lockup-wordmark);
+      margin-top: var(--brand-lockup-stack-gap);
     }
 
-    .clearspace-rule {
+    .policy-shell .clearspace-rule {
       font-family: var(--mono);
-      font-size: 0.72rem;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.13em;
+      line-height: 1.5;
+      text-transform: uppercase;
       color: rgba(242, 242, 240, 0.5);
-      margin-top: 1rem;
+      margin: 1rem 0 0;
       text-align: center;
     }
 
@@ -280,8 +349,8 @@
     }
 
     .lockup-circle-filled {
-      width: 80px;
-      height: 80px;
+      width: 84px;
+      height: 84px;
       border-radius: 50%;
       display: flex;
       align-items: center;
@@ -292,9 +361,8 @@
     .lockup-circle-filled.light { background: #FFFFFF; }
 
     .lockup-circle-filled .lm {
-      /* 57.5% of circle diameter — ~21% clear space per side */
-      width: 46px;
-      height: 46px;
+      width: var(--brand-lockup-lettermark);
+      height: var(--brand-lockup-lettermark);
     }
 
     /* ── Circle spacing diagram ────────────────────────────────────────── */
@@ -347,15 +415,15 @@
         padding-inline: 1rem;
       }
 
-      .lockup-horizontal .combined,
+      .lockup-horizontal,
       .clearspace-diagram-stacked .wm,
       .brand-config-cell img {
         max-width: 100%;
         height: auto;
       }
 
-      .lockup-horizontal .combined {
-        width: min(260px, 100%);
+      .lockup-horizontal {
+        flex-wrap: wrap;
       }
 
       .brand-asset-list li {
@@ -408,7 +476,7 @@
     </div>
   </nav>
 
-  <main class="policy-shell">
+  <main class="policy-shell brand-shell">
     <div class="about-hero-mark about-hero-mark--stacked" aria-hidden="true">
       <img class="about-brandmark" src="/components/images/lettermark-white.svg" alt="" aria-hidden="true">
       <img class="about-wordmark" src="/components/images/wordmark-white.svg" alt="" aria-hidden="true">
@@ -416,7 +484,7 @@
 
     <h1>A direct, technical mark for wallet-to-wallet transfer.</h1>
 
-    <p>
+    <p class="brand-intro-copy">
       The ImplicitEx identity is built from a compact lettermark and a geometric
       wordmark. On dark surfaces, both marks are white. On light surfaces, both
       marks are black.
@@ -613,7 +681,8 @@
         <!-- 2a. Horizontal — dark -->
         <div class="brand-config-cell">
           <div class="lockup-horizontal" role="img" aria-label="Horizontal lockup on dark background">
-            <img class="combined" src="/components/images/lockup-inline-white.svg" alt="">
+            <img class="lm" src="/components/images/lettermark-white.svg" alt="">
+            <img class="wm" src="/components/images/wordmark-white.svg" alt="">
           </div>
           <span class="brand-config-label">Horizontal<br>White on black</span>
         </div>
@@ -621,7 +690,8 @@
         <!-- 2b. Horizontal — light -->
         <div class="brand-config-cell" style="background:#FFFFFF; border-color:rgba(0,0,0,0.1);">
           <div class="lockup-horizontal" role="img" aria-label="Horizontal lockup on light background">
-            <img class="combined" src="/components/images/lockup-inline-white.svg" alt="" style="filter:invert(1);">
+            <img class="lm" src="/components/images/lettermark-white.svg" alt="" style="filter:invert(1);">
+            <img class="wm" src="/components/images/wordmark-white.svg" alt="" style="filter:invert(1);">
           </div>
           <span class="brand-config-label" style="color:rgba(0,0,0,0.45);">Horizontal<br>Black on white</span>
         </div>
@@ -653,7 +723,7 @@
       <h3>With tagline</h3>
 
       <p>
-        The tagline "Wallet-to-wallet USDC transfer." may appear below any
+        The tagline "Wallet-to-wallet. USDC transfer." may appear below any
         stacked or horizontal lockup. Do not add the tagline to a circle
         lockup. Use the same color as the rest of the lockup.
       </p>
@@ -662,25 +732,49 @@
 
         <!-- 4a. Inline + tagline — dark -->
         <div class="brand-config-cell">
-          <img src="/components/images/lockup-inline-tagline-white.svg" alt="Inline lockup with tagline on dark background" style="width:260px;">
+          <div class="lockup-tagline lockup-tagline--inline" role="img" aria-label="Inline lockup with tagline on dark background">
+            <div class="lockup-horizontal" aria-hidden="true">
+              <img class="lm" src="/components/images/lettermark-white.svg" alt="">
+              <img class="wm" src="/components/images/wordmark-white.svg" alt="">
+            </div>
+            <p class="lockup-tagline-copy">Wallet-to-wallet. USDC transfer.</p>
+          </div>
           <span class="brand-config-label">Inline + tagline<br>White on black</span>
         </div>
 
         <!-- 4b. Inline + tagline — light -->
         <div class="brand-config-cell" style="background:#FFFFFF; border-color:rgba(0,0,0,0.1);">
-          <img src="/components/images/lockup-inline-tagline-black.svg" alt="Inline lockup with tagline on light background" style="width:260px;">
+          <div class="lockup-tagline lockup-tagline--inline" role="img" aria-label="Inline lockup with tagline on light background">
+            <div class="lockup-horizontal" aria-hidden="true">
+              <img class="lm" src="/components/images/lettermark-white.svg" alt="" style="filter:invert(1);">
+              <img class="wm" src="/components/images/wordmark-white.svg" alt="" style="filter:invert(1);">
+            </div>
+            <p class="lockup-tagline-copy">Wallet-to-wallet. USDC transfer.</p>
+          </div>
           <span class="brand-config-label" style="color:rgba(0,0,0,0.45);">Inline + tagline<br>Black on white</span>
         </div>
 
         <!-- 5a. Stacked + tagline — dark -->
         <div class="brand-config-cell">
-          <img src="/components/images/lockup-stacked-tagline-white.svg" alt="Stacked lockup with tagline on dark background" style="width:200px;">
+          <div class="lockup-tagline lockup-tagline--stacked" role="img" aria-label="Stacked lockup with tagline on dark background">
+            <div class="lockup-stacked" aria-hidden="true">
+              <img class="lm" src="/components/images/lettermark-white.svg" alt="">
+              <img class="wm" src="/components/images/wordmark-white.svg" alt="">
+            </div>
+            <p class="lockup-tagline-copy">Wallet-to-wallet. USDC transfer.</p>
+          </div>
           <span class="brand-config-label">Stacked + tagline<br>White on black</span>
         </div>
 
         <!-- 5b. Stacked + tagline — light -->
         <div class="brand-config-cell" style="background:#FFFFFF; border-color:rgba(0,0,0,0.1);">
-          <img src="/components/images/lockup-stacked-tagline-black.svg" alt="Stacked lockup with tagline on light background" style="width:200px;">
+          <div class="lockup-tagline lockup-tagline--stacked" role="img" aria-label="Stacked lockup with tagline on light background">
+            <div class="lockup-stacked" aria-hidden="true">
+              <img class="lm" src="/components/images/lettermark-white.svg" alt="" style="filter:invert(1);">
+              <img class="wm" src="/components/images/wordmark-white.svg" alt="" style="filter:invert(1);">
+            </div>
+            <p class="lockup-tagline-copy">Wallet-to-wallet. USDC transfer.</p>
+          </div>
           <span class="brand-config-label" style="color:rgba(0,0,0,0.45);">Stacked + tagline<br>Black on white</span>
         </div>
 
@@ -734,17 +828,18 @@
       <p>
         The vertical gap between the lettermark and the wordmark must be no
         less than 20% of the lettermark's height — this is the minimum, not
-        the target. The reference stacked lockup uses a 35&thinsp;px mark with
-        18&thinsp;px spacing (≈ 51% of mark height). The generous gap lets
+        the target. The reference stacked lockup uses a 40&thinsp;px mark with
+        18&thinsp;px spacing (45% of mark height). The generous gap lets
         both elements read as independent objects and signals that the wordmark
         is leading, not the mark.
       </p>
 
       <p>
-        In the stacked configuration, the lettermark's width should be roughly
-        one-quarter to one-third of the wordmark's displayed width. At the
-        reference wordmark width of 130&thinsp;px, the target mark width is
-        35&thinsp;px (27%). This proportion keeps the mark as an introduction
+        In every configuration where the lettermark and wordmark appear
+        together, the lettermark's width should be one-quarter of the
+        wordmark's displayed width. At the reference wordmark width of
+        160&thinsp;px, the target mark width is 40&thinsp;px. This proportion
+        keeps the mark as an introduction
         to the name rather than a competing visual object.
       </p>
 

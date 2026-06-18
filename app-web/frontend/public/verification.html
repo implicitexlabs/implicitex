@@ -140,7 +140,7 @@
     <div class="mobile-menu-backdrop" id="mobileMenuBackdrop" aria-hidden="true"></div>
   </div>
 
-  <main class="policy-shell">
+  <main class="policy-shell proof-shell">
     <p class="policy-eyebrow">ImplicitEx</p>
 
     <h1>Verification</h1>
@@ -150,54 +150,72 @@
       you to take ImplicitEx's word for it.
     </p>
 
-    <h2>Public Verification</h2>
+    <section class="proof-panel" aria-labelledby="public-verification-title">
+      <div class="proof-panel-head">
+        <h2 id="public-verification-title">Public Verification</h2>
 
-    <p>
-      The following information can be confirmed directly on Polygon's public
-      blockchain without any account, login, or third-party service.
-    </p>
+        <p>
+          The following information can be confirmed directly on Polygon's
+          public blockchain without any account, login, or third-party service.
+        </p>
+      </div>
 
-    <dl>
-      <dt>Contract</dt>
-      <dd>
-        <a href="https://polygonscan.com/address/0x5015841D6E665e63Ea174aD6b8FeF854026dE0C0#code"
-           target="_blank" rel="noopener noreferrer">
-          0x5015841D6E665e63Ea174aD6b8FeF854026dE0C0
-        </a>
-      </dd>
+      <dl class="v-facts">
+        <div class="v-fact v-fact-wide">
+          <dt>Contract</dt>
+          <dd>
+            <a href="https://polygonscan.com/address/0x5015841D6E665e63Ea174aD6b8FeF854026dE0C0#code"
+               target="_blank" rel="noopener noreferrer">
+              0x5015841D6E665e63Ea174aD6b8FeF854026dE0C0
+            </a>
+          </dd>
+        </div>
 
-      <dt>Treasury</dt>
-      <dd>
-        <a href="https://polygonscan.com/address/0xa7cE4232811021d2Dd01f4f0f264Df2427ab3919"
-           target="_blank" rel="noopener noreferrer">
-          0xa7cE4232811021d2Dd01f4f0f264Df2427ab3919
-        </a>
-      </dd>
+        <div class="v-fact v-fact-wide">
+          <dt>Treasury</dt>
+          <dd>
+            <a href="https://polygonscan.com/address/0xa7cE4232811021d2Dd01f4f0f264Df2427ab3919"
+               target="_blank" rel="noopener noreferrer">
+              0xa7cE4232811021d2Dd01f4f0f264Df2427ab3919
+            </a>
+          </dd>
+        </div>
 
-      <dt>Network</dt>
-      <dd>Polygon mainnet (chainId 137)</dd>
+        <div class="v-fact">
+          <dt>Network</dt>
+          <dd>Polygon mainnet (chainId 137)</dd>
+        </div>
 
-      <dt>Asset</dt>
-      <dd>
-        USDC — Circle native
-        (<a href="https://polygonscan.com/address/0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359"
-            target="_blank" rel="noopener noreferrer">0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359</a>)
-      </dd>
+        <div class="v-fact">
+          <dt>Asset</dt>
+          <dd>
+            USDC, Circle native<br>
+            <a href="https://polygonscan.com/address/0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359"
+               target="_blank" rel="noopener noreferrer">0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359</a>
+          </dd>
+        </div>
 
-      <dt>Source Code</dt>
-      <dd>
-        <a href="https://polygonscan.com/address/0x5015841D6E665e63Ea174aD6b8FeF854026dE0C0#code"
-           target="_blank" rel="noopener noreferrer">
-          Verified on Polygonscan
-        </a>
-      </dd>
+        <div class="v-fact">
+          <dt>Source Code</dt>
+          <dd>
+            <a href="https://polygonscan.com/address/0x5015841D6E665e63Ea174aD6b8FeF854026dE0C0#code"
+               target="_blank" rel="noopener noreferrer">
+              Verified on Polygonscan
+            </a>
+          </dd>
+        </div>
 
-      <dt>Fee Model</dt>
-      <dd>1% additive. Sender pays transfer amount + fee. Recipient receives the full amount entered.</dd>
+        <div class="v-fact">
+          <dt>Fee Model</dt>
+          <dd>1% additive. Sender pays transfer amount plus fee. Recipient receives the full amount entered.</dd>
+        </div>
 
-      <dt>Transfer Cap</dt>
-      <dd>250 USDC per transfer during soft launch.</dd>
-    </dl>
+        <div class="v-fact">
+          <dt>Transfer Cap</dt>
+          <dd>250 USDC per transfer during soft launch.</dd>
+        </div>
+      </dl>
+    </section>
 
     <h2>Verified Transaction Record</h2>
 
@@ -209,25 +227,43 @@
 
     <div class="v-record" aria-label="Verified mainnet transaction record">
       <p class="v-record-head">Controlled Mainnet Validation — 2026-06-15</p>
-      <div>
-        Network&emsp;&emsp;&emsp;&emsp;Polygon mainnet<br>
-        Asset&emsp;&emsp;&emsp;&emsp;&emsp;USDC<br>
-        Block&emsp;&emsp;&emsp;&emsp;&emsp;88565097
+      <div class="v-record-grid">
+        <div class="v-record-row">
+          <span>Network</span>
+          <strong>Polygon mainnet</strong>
+        </div>
+        <div class="v-record-row">
+          <span>Asset</span>
+          <strong>USDC</strong>
+        </div>
+        <div class="v-record-row">
+          <span>Block</span>
+          <strong>88565097</strong>
+        </div>
+        <div class="v-record-row">
+          <span>Sender debit</span>
+          <strong>1.01 USDC</strong>
+        </div>
+        <div class="v-record-row">
+          <span>Recipient received</span>
+          <strong>1.00 USDC</strong>
+        </div>
+        <div class="v-record-row">
+          <span>Treasury received</span>
+          <strong>0.01 USDC</strong>
+        </div>
+        <div class="v-record-row">
+          <span>Contract retained</span>
+          <strong>0.00 USDC</strong>
+        </div>
+        <div class="v-record-row">
+          <span>Status</span>
+          <strong>Confirmed on-chain</strong>
+        </div>
       </div>
-      <br>
-      <div>
-        Sender debit&emsp;&emsp;&emsp;1.01 USDC<br>
-        Recipient received&emsp;1.00 USDC<br>
-        Treasury received&emsp;&emsp;0.01 USDC<br>
-        Contract retained&emsp;&emsp;0.00 USDC
-      </div>
-      <br>
-      <div>
-        Status&emsp;&emsp;Confirmed on-chain
-      </div>
-      <br>
-      <div>
-        Tx: <span class="v-record-hash"><a href="https://polygonscan.com/tx/0x37fd733a7f1854740bf702aa5bf59794f4ebab0f39d2a84fb2c231c29df622d9" target="_blank" rel="noopener noreferrer">0x37fd733a7f1854740bf702aa5bf59794f4ebab0f39d2a84fb2c231c29df622d9</a></span>
+      <div class="v-record-tx">
+        <span>Tx</span>
+        <a class="v-record-hash" href="https://polygonscan.com/tx/0x37fd733a7f1854740bf702aa5bf59794f4ebab0f39d2a84fb2c231c29df622d9" target="_blank" rel="noopener noreferrer">0x37fd733a7f1854740bf702aa5bf59794f4ebab0f39d2a84fb2c231c29df622d9</a>
       </div>
     </div>
 
