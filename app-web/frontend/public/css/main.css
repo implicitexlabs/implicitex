@@ -2047,7 +2047,9 @@ footer .social-links a:focus-visible,
 
 .policy-shell h3 {
   font-size: 14px;
-  margin: 1.35rem 0 0.7rem;
+  line-height: 1.25;
+  letter-spacing: 0.04em;
+  margin: 1.85rem 0 0.75rem;
 }
 
 .policy-shell p,
