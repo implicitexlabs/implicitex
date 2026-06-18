@@ -2082,7 +2082,7 @@ footer .social-links a:focus-visible,
 .policy-shell ul { margin: 0 0 1rem 1.25rem; }
 .policy-shell a  { color: var(--white); }
 
-.policy-shell blockquote {
+.policy-shell .media-description {
   max-width: var(--ix-section-copy-max);
   font-size: var(--ix-copy-size);
   line-height: var(--ix-copy-line);
