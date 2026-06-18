@@ -2064,6 +2064,14 @@ footer .social-links a:focus-visible,
 
 .policy-shell p { max-width: var(--ix-section-copy-max); }
 
+/* Eyebrow/dateline overrides — policy-shell p specificity is (0,1,1);
+   these selectors are (0,2,0) so they win back the correct 10px size. */
+.policy-shell .policy-eyebrow,
+.policy-shell .updated {
+  font-size: 10px;
+  max-width: none;
+}
+
 .policy-shell ul,
 .policy-shell ol {
   max-width: var(--ix-section-copy-max);
