@@ -2113,9 +2113,12 @@ footer .social-links a:focus-visible,
   margin: 1rem 0 1.5rem;
 }
 
-/* Verification page — definition list for public checklist */
+/* Verification page — definition list for public checklist.
+   column-span: all keeps the dl from fragmenting inside CSS multi-column
+   (display:grid containers are atomic — they won't split across columns). */
 .policy-shell dl {
   max-width: none;
+  column-span: all;
   display: grid;
   grid-template-columns: max-content 1fr;
   gap: 0.6rem 1.75rem;
