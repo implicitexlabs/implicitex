@@ -183,7 +183,12 @@
       closeMenu();
       // openTransferPortal opens the workspace without requesting wallet permission.
       // Connect Wallet in the Wallet section is the authorization action.
-      if (window.IX && window.IX.openTransferPortal) window.IX.openTransferPortal();
+      // On secondary pages the portal DOM is absent — fall back to navigating home.
+      if (document.getElementById('modules') && window.IX && window.IX.openTransferPortal) {
+        window.IX.openTransferPortal();
+      } else {
+        window.location.href = '/#transfer';
+      }
     });
   }
 

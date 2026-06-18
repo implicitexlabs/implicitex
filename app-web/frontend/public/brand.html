@@ -328,6 +328,43 @@
       z-index: 1;
     }
 
+    @media (max-width: 768px) {
+      .nav-brand-link {
+        display: none;
+      }
+
+      .brand-canvas {
+        padding: 2rem 1rem;
+        overflow: hidden;
+      }
+
+      .brand-config-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .brand-config-cell {
+        min-width: 0;
+        padding-inline: 1rem;
+      }
+
+      .lockup-horizontal .combined,
+      .clearspace-diagram-stacked .wm,
+      .brand-config-cell img {
+        max-width: 100%;
+        height: auto;
+      }
+
+      .lockup-horizontal .combined {
+        width: min(260px, 100%);
+      }
+
+      .brand-asset-list li {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 0.25rem;
+      }
+    }
+
   </style>
 </head>
 <body>

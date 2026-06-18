@@ -2368,21 +2368,14 @@ footer .social-links a:focus-visible,
     gap: 8px;
   }
 
-  /* Mobile: hide all desktop wallet controls, show hamburger */
+  /* Mobile: hide all desktop nav controls, show hamburger only */
   .wallet-menu,
   .connect-btn,
   .disconnect-btn,
   .switch-account-btn,
-  .nav-status {
+  .nav-status,
+  .send-usdc-link {
     display: none !important;
-  }
-
-  .send-usdc-link,
-  .send-usdc-link:link,
-  .send-usdc-link:visited {
-    padding: 8px 10px;
-    font-size: 9px;
-    white-space: nowrap;
   }
 
   .hamburger-btn {
