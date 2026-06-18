@@ -2082,8 +2082,16 @@ footer .social-links a:focus-visible,
 .policy-shell ul { margin: 0 0 1rem 1.25rem; }
 .policy-shell a  { color: var(--white); }
 
+.policy-shell blockquote {
+  max-width: var(--ix-section-copy-max);
+  font-size: var(--ix-copy-size);
+  line-height: var(--ix-copy-line);
+  margin: 1rem 0 1.5rem;
+}
+
 /* Verification page — definition list for public checklist */
 .policy-shell dl {
+  max-width: var(--ix-section-copy-max);
   display: grid;
   grid-template-columns: max-content 1fr;
   gap: 0.6rem 1.75rem;
@@ -2116,6 +2124,7 @@ footer .social-links a:focus-visible,
 
 /* Verification record block — transaction data */
 .v-record {
+  max-width: var(--ix-section-copy-max);
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 3px;
