@@ -1995,7 +1995,7 @@ footer .social-links a:focus-visible,
 .policy-shell {
   max-width: var(--ix-interface-max);
   margin: 0 auto;
-  padding: calc(var(--nav-h) + 4.5rem) 1.5rem 5rem;
+  padding: calc(var(--nav-h) + 4.5rem) 0 5rem;
 }
 
 /* Wider variant for pages with multi-column grid content (jurisdictions) */
@@ -2169,7 +2169,7 @@ footer .social-links a:focus-visible,
 .about-shell {
   max-width: var(--ix-interface-max);
   margin: 0 auto;
-  padding: calc(var(--nav-h) + 4.5rem) 1.5rem 5rem;
+  padding: calc(var(--nav-h) + 4.5rem) 0 5rem;
 }
 
 .about-head {
@@ -2401,6 +2401,17 @@ footer .social-links a:focus-visible,
 }
 
 .jurisdiction-card ul { margin-bottom: 0; }
+
+/* ---- Shell gutter — restore side padding below the interface max + gutter threshold.
+   At 1328px (1280px shell + 2×24px gutter), the viewport is too narrow to keep
+   the shell flush. Below this point policy/about shells gain the same 1.5rem
+   gutter as every other container. ---- */
+@media (max-width: 1328px) {
+  .policy-shell,
+  .about-shell {
+    padding-inline: 1.5rem;
+  }
+}
 
 /* ---- Responsive ---- */
 @media (max-width: 768px) {
