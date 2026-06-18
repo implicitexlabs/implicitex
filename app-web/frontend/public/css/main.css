@@ -46,6 +46,10 @@
   --ix-section-title-max: 820px;   /* heading column — h1, h2 */
   /* Shared interface shell — matches Transfer Portal max-width */
   --ix-interface-max:    1280px;
+  /* Public-page two-column grid — echoes Transfer Portal panel orientation */
+  --ix-main-col:  minmax(0, 720px);
+  --ix-side-col:  minmax(280px, 1fr);
+  --ix-page-gap:  clamp(2rem, 4vw, 4rem);
 }
 
 [data-theme="light"] {
@@ -1996,11 +2000,36 @@ footer .social-links a:focus-visible,
   max-width: var(--ix-interface-max);
   margin: 0 auto;
   padding: calc(var(--nav-h) + 4.5rem) 0 5rem;
+  display: grid;
+  grid-template-columns: var(--ix-main-col) var(--ix-side-col);
+  column-gap: var(--ix-page-gap);
+  align-items: start;
 }
 
 /* Wider variant for pages with multi-column grid content (jurisdictions) */
 .policy-shell--wide {
   max-width: var(--ix-interface-max);
+}
+
+/* --- Two-column grid column assignments ---
+   Default: all direct children occupy the left (main) column.
+   Wide modules explicitly span both columns.
+   Right column is available for page-aside blocks added per page. */
+
+.policy-shell > *,
+.about-shell > * {
+  grid-column: 1;
+}
+
+/* Wide modules span the full shell (both columns) */
+.policy-shell > .brand-section,
+.policy-shell > .jurisdiction-grid,
+.policy-shell > .about-hero-mark {
+  grid-column: 1 / -1;
+}
+
+.about-shell > .about-grid {
+  grid-column: 1 / -1;
 }
 
 .policy-eyebrow,
@@ -2170,6 +2199,10 @@ footer .social-links a:focus-visible,
   max-width: var(--ix-interface-max);
   margin: 0 auto;
   padding: calc(var(--nav-h) + 4.5rem) 0 5rem;
+  display: grid;
+  grid-template-columns: var(--ix-main-col) var(--ix-side-col);
+  column-gap: var(--ix-page-gap);
+  align-items: start;
 }
 
 .about-head {
@@ -2410,6 +2443,19 @@ footer .social-links a:focus-visible,
   .policy-shell,
   .about-shell {
     padding-inline: 1.5rem;
+  }
+}
+
+/* ---- Two-column collapse — single column below 900px ---- */
+@media (max-width: 900px) {
+  .policy-shell,
+  .about-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .policy-shell > *,
+  .about-shell > * {
+    grid-column: 1;
   }
 }
 
