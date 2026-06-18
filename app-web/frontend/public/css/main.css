@@ -2040,7 +2040,8 @@ footer .social-links a:focus-visible,
 .faq-shell h2 {
   font-size: 14px;
   font-weight: 700;
-  letter-spacing: 0.14em;
+  line-height: 1.35;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   margin: 2rem 0 0.85rem;
 }
@@ -2240,7 +2241,8 @@ footer .social-links a:focus-visible,
   font-family: var(--display);
   font-size: 14px;
   font-weight: 700;
-  letter-spacing: 0.14em;
+  line-height: 1.35;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--white);
   margin-bottom: 1.25rem;
@@ -2250,7 +2252,8 @@ footer .social-links a:focus-visible,
   font-family: var(--display);
   font-size: 14px;
   font-weight: 700;
-  letter-spacing: 0.14em;
+  line-height: 1.35;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--white);
   margin-bottom: 1.25rem;
