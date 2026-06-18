@@ -68,7 +68,7 @@ body {
   color: var(--white);
   font-family: var(--sans);
   font-size: 15px;
-  font-weight: 400;
+  font-weight: 500;
   line-height: 1.6;
   min-height: 100vh;
   overflow-x: hidden;
@@ -167,7 +167,7 @@ body {
   min-height: 32px;
   font-family: var(--mono);
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.08em;
   color: var(--white);
   background: transparent;
@@ -245,7 +245,7 @@ body {
 .wallet-menu-title {
   font-family: var(--mono);
   font-size: 9px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--white);
@@ -256,7 +256,7 @@ body {
   font-family: var(--mono);
   font-size: 10px;
   line-height: 1.5;
-  color: var(--dim);
+  color: var(--white);
   overflow-wrap: anywhere;
   margin-bottom: 0.7rem;
 }
@@ -266,7 +266,7 @@ body {
   width: 100%;
   font-family: var(--mono);
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--white);
@@ -297,7 +297,7 @@ body {
 .nav-status {
   font-family: var(--mono);
   font-size: 9px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--white);
@@ -331,7 +331,7 @@ body {
 .send-usdc-link:visited {
   font-family: var(--mono);
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--bg);
@@ -357,7 +357,7 @@ body {
 .connect-btn {
   font-family: var(--mono);
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--bg);
@@ -461,7 +461,7 @@ body.portal-active #nav {
 .hero-kicker {
   font-family: var(--mono);
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--white);
@@ -572,7 +572,7 @@ body.portal-active #nav {
 .stat-label {
   font-family: var(--mono);
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.14em;
   text-indent: 0.14em;
   text-transform: uppercase;
@@ -645,7 +645,7 @@ body.portal-active #nav {
   display: block;
   font-family: var(--mono);
   font-size: 9px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--white);
@@ -655,7 +655,7 @@ body.portal-active #nav {
 .flow-step p {
   color: var(--white);
   font-size: 13px;
-  font-weight: 400;
+  font-weight: 500;
   line-height: 1.6;
 }
 
@@ -688,7 +688,7 @@ body.portal-active #nav {
   border-top: 1px solid var(--border);
   color: var(--white);
   font-size: 13px;
-  font-weight: 400;
+  font-weight: 500;
   line-height: 1.65;
   padding-top: 1rem;
   margin-top: 1rem;
@@ -774,7 +774,7 @@ body.portal-active #nav {
 .switch-account-btn {
   font-family: var(--mono);
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--dim);
@@ -837,7 +837,7 @@ body.portal-active #nav {
 
 .portal-minimized-label {
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.16em;
 }
 
@@ -845,7 +845,7 @@ body.portal-active #nav {
   flex: 1;
   font-size: 9px;
   letter-spacing: 0.12em;
-  color: var(--dim);
+  color: var(--white);
   text-align: right;
 }
 
@@ -1045,7 +1045,7 @@ body.portal-active #nav {
 .tx-btn {
   font-family: var(--mono);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--bg);
@@ -1387,7 +1387,7 @@ body.portal-active #nav {
 .fee-explanation-body {
   font-family: var(--mono);
   font-size: 11px;
-  color: var(--dim);
+  color: var(--white);
   line-height: 1.55;
 }
 
@@ -1600,7 +1600,7 @@ body.portal-active #nav {
 .feed-text {
   font-family: var(--sans);
   font-size: 12px;
-  font-weight: 300;
+  font-weight: 500;
   color: var(--dim);
   line-height: 1.55;
 }
@@ -1755,7 +1755,7 @@ footer .social-links a:focus-visible,
 .mobile-menu-title {
   font-family: var(--mono);
   font-size: 9px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--white);
@@ -1784,7 +1784,7 @@ footer .social-links a:focus-visible,
 .mobile-menu-label {
   font-family: var(--mono);
   font-size: 8px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--dim);
@@ -1813,7 +1813,7 @@ footer .social-links a:focus-visible,
 .mobile-menu-btn {
   font-family: var(--mono);
   font-size: 9px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   background: transparent;
@@ -1904,7 +1904,7 @@ footer .social-links a:focus-visible,
 .wallet-choice-title {
   font-family: var(--mono);
   font-size: 9px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--white);
@@ -1932,7 +1932,7 @@ footer .social-links a:focus-visible,
 .wallet-choice-btn {
   font-family: var(--mono);
   font-size: 9px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   background: transparent;
@@ -1988,7 +1988,7 @@ footer .social-links a:focus-visible,
   color: var(--muted);
   font-family: var(--mono);
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.16em;
   text-transform: uppercase;
 }
@@ -2049,7 +2049,7 @@ footer .social-links a:focus-visible,
 .policy-shell dt {
   font-family: var(--mono);
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.13em;
   text-transform: uppercase;
   color: var(--muted);
@@ -2085,7 +2085,7 @@ footer .social-links a:focus-visible,
 
 .v-record-head {
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--muted);
@@ -2103,7 +2103,7 @@ footer .social-links a:focus-visible,
   display: inline-block;
   font-family: var(--mono);
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.14em;
   margin-top: 1.5rem;
   text-transform: uppercase;
@@ -2265,7 +2265,7 @@ footer .social-links a:focus-visible,
 .news-card-meta {
   font-family: var(--mono);
   font-size: 9px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--muted);
@@ -2283,7 +2283,7 @@ footer .social-links a:focus-visible,
 
 .news-card-lede {
   font-size: 13px;
-  font-weight: 400;
+  font-weight: 500;
   color: var(--dim);
   line-height: 1.65;
   flex: 1;
@@ -2292,7 +2292,7 @@ footer .social-links a:focus-visible,
 .news-card-more {
   font-family: var(--mono);
   font-size: 9px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--muted);
@@ -2312,7 +2312,7 @@ footer .social-links a:focus-visible,
 .news-view-all {
   font-family: var(--mono);
   font-size: 9px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--muted);
@@ -2567,7 +2567,7 @@ input[type="number"] {
   width: 100%;
   font-family: var(--mono);
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   background: var(--surface);
@@ -2643,7 +2643,7 @@ input[type="number"] {
   text-align: left;
   font-family: var(--mono);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--white);
@@ -2761,7 +2761,7 @@ input[type="number"] {
 .learn-popular-label {
   font-family: var(--mono);
   font-size: 9px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--muted);
@@ -2846,7 +2846,7 @@ input[type="number"] {
 }
 
 .learn-entry th {
-  font-weight: 700;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.07em;
   font-size: 9px;
@@ -2890,7 +2890,7 @@ input[type="number"] {
 .learn-back {
   font-family: var(--mono);
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   background: none;
