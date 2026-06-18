@@ -241,6 +241,37 @@
 
     <p>See <a href="/learn.html#wallet-warning">Why does my wallet show a warning?</a> in Learn.</p>
 
+    <h2>Why might my wallet show a security warning on the approval step?</h2>
+
+    <p>
+      Some wallets use automated security screening to warn users before they
+      approve token permissions or contract interactions. During ImplicitEx
+      launch testing, MetaMask displayed a warning during the USDC approval step,
+      before the transfer execution step.
+    </p>
+
+    <p>
+      The approval amount shown by ImplicitEx was exact: the transfer amount plus
+      the displayed platform fee. ImplicitEx does not request unlimited USDC
+      approval. The authorization is always scoped to the specific amount of that
+      transfer.
+    </p>
+
+    <p>
+      The approval step and the transfer execution step are separate. Approving
+      does not move funds. Funds only move when you confirm the second wallet
+      prompt. If you see a warning on the approval step, you can verify the
+      spend amount shown matches the total debit displayed by ImplicitEx before
+      proceeding.
+    </p>
+
+    <p>
+      ImplicitEx has submitted a false-positive report with Blockaid, the
+      security provider that powers MetaMask warnings. The warning reflects the
+      contract's limited transaction history during early launch, not a finding
+      of malicious behavior.
+    </p>
+
     <h2>What happens if I send to the wrong address?</h2>
 
     <p>
