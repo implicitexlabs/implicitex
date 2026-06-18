@@ -37,6 +37,14 @@
   --display:    'Orbitron', system-ui, -apple-system, sans-serif;
   --mono:       'IBM Plex Mono', 'SFMono-Regular', Consolas, monospace;
   --nav-h:      56px;
+  /* Reading copy rhythm — prose sections only; interface elements unchanged */
+  --ix-copy-size:        18px;
+  --ix-copy-line:        28px;
+  --ix-copy-small-size:  16px;
+  --ix-copy-small-line:  24px;
+  --ix-section-copy-max: 560px;
+  /* Shared interface shell — matches Transfer Portal max-width */
+  --ix-interface-max:    1280px;
 }
 
 [data-theme="light"] {
@@ -445,7 +453,8 @@ body.portal-active #nav {
   z-index: 2;
   text-align: center;
   padding: 0 1.5rem;
-  max-width: 640px;
+  max-width: var(--ix-interface-max);
+  width: 100%;
 }
 
 .headline {
@@ -601,7 +610,7 @@ body.portal-active #nav {
 
 /* ---- How It Works ---- */
 .how-it-works {
-  max-width: 1040px;
+  max-width: var(--ix-interface-max);
   margin: 0 auto;
   padding: 1rem 1.5rem 0;
 }
@@ -654,9 +663,10 @@ body.portal-active #nav {
 
 .flow-step p {
   color: var(--white);
-  font-size: 13px;
+  font-size: var(--ix-copy-small-size);
   font-weight: 500;
-  line-height: 1.6;
+  line-height: var(--ix-copy-small-line);
+  letter-spacing: 0;
 }
 
 .flow-toggle {
@@ -687,9 +697,10 @@ body.portal-active #nav {
 .flow-more-inner {
   border-top: 1px solid var(--border);
   color: var(--white);
-  font-size: 13px;
-  font-weight: 500;
-  line-height: 1.65;
+  font-size: var(--ix-copy-small-size);
+  font-weight: 400;
+  line-height: var(--ix-copy-small-line);
+  letter-spacing: 0;
   padding-top: 1rem;
   margin-top: 1rem;
 }
@@ -741,7 +752,7 @@ body.portal-active #nav {
 
 /* ---- Portal controls — sits above .modules, outside its border ---- */
 .portal-controls {
-  max-width: 1280px;
+  max-width: var(--ix-interface-max);
   margin: clamp(2rem, 5vh, 3.5rem) auto 0;
   display: flex;
   justify-content: flex-end;
@@ -797,7 +808,7 @@ body.portal-active #nav {
 /* ---- Modules ---- */
 .modules {
   box-sizing: border-box;
-  max-width: 1280px;
+  max-width: var(--ix-interface-max);
   margin: 0 auto;
   padding: 1px;
   display: grid;
@@ -1981,14 +1992,14 @@ footer .social-links a:focus-visible,
    All secondary pages use these rules — no page-local style blocks. */
 
 .policy-shell {
-  max-width: 860px;
+  max-width: var(--ix-interface-max);
   margin: 0 auto;
   padding: calc(var(--nav-h) + 4.5rem) 1.5rem 5rem;
 }
 
 /* Wider variant for pages with multi-column grid content (jurisdictions) */
 .policy-shell--wide {
-  max-width: 960px;
+  max-width: var(--ix-interface-max);
 }
 
 .policy-eyebrow,
@@ -2037,8 +2048,17 @@ footer .social-links a:focus-visible,
 .policy-shell p,
 .policy-shell li {
   color: var(--dim);
-  font-weight: 500;
-  line-height: 1.75;
+  font-size: var(--ix-copy-size);
+  font-weight: 400;
+  line-height: var(--ix-copy-line);
+  letter-spacing: 0;
+}
+
+.policy-shell p { max-width: var(--ix-section-copy-max); }
+
+.policy-shell ul,
+.policy-shell ol {
+  max-width: var(--ix-section-copy-max);
 }
 
 .policy-shell p  { margin-bottom: 1rem; }
@@ -2122,7 +2142,7 @@ footer .social-links a:focus-visible,
 /* ---- About Page ---- */
 
 .about-shell {
-  max-width: 1040px;
+  max-width: var(--ix-interface-max);
   margin: 0 auto;
   padding: calc(var(--nav-h) + 4.5rem) 1.5rem 5rem;
 }
@@ -2176,8 +2196,11 @@ footer .social-links a:focus-visible,
 
 .about-shell p {
   color: var(--dim);
-  font-weight: 500;
-  line-height: 1.75;
+  font-size: var(--ix-copy-size);
+  font-weight: 400;
+  line-height: var(--ix-copy-line);
+  letter-spacing: 0;
+  max-width: var(--ix-section-copy-max);
   margin-bottom: 1rem;
 }
 
@@ -2250,7 +2273,7 @@ footer .social-links a:focus-visible,
 /* ---- News Preview (landing page) ---- */
 
 .news-preview {
-  max-width: 1040px;
+  max-width: var(--ix-interface-max);
   margin: 0 auto;
   padding: 2.5rem 1.5rem 0;
 }
@@ -2290,10 +2313,11 @@ footer .social-links a:focus-visible,
 }
 
 .news-card-lede {
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 15px;
+  font-weight: 400;
   color: var(--dim);
-  line-height: 1.65;
+  line-height: var(--ix-copy-small-line);
+  letter-spacing: 0;
   flex: 1;
 }
 
@@ -2584,6 +2608,10 @@ input[type="number"] {
 }
 
 /* Two-column grid */
+/* learn.html is an app-style full-viewport training surface (sidebar + reader panel),
+   not a prose/public shell. It intentionally sits outside the --ix-interface-max system.
+   The sidebar is fixed-width; the panel fills remaining space. Constraining the grid
+   to --ix-interface-max would introduce dead margins and fight the sidebar's fixed column. */
 .learn-layout {
   display: grid;
   grid-template-columns: 260px 1fr;
