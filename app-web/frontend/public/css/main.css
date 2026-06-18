@@ -1844,6 +1844,14 @@ footer .social-links a:focus-visible,
   border-color: var(--warn-border);
 }
 
+.mobile-menu-portal-note {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--dim);
+  letter-spacing: 0.06em;
+  margin-top: 0.5rem;
+}
+
 .mobile-menu-links {
   display: flex;
   flex-direction: column;

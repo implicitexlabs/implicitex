@@ -181,7 +181,9 @@
   if (els.menuOpenPortalBtn) {
     els.menuOpenPortalBtn.addEventListener('click', () => {
       closeMenu();
-      if (window.IX && window.IX.openOrConnect) window.IX.openOrConnect();
+      // openTransferPortal opens the workspace without requesting wallet permission.
+      // Connect Wallet in the Wallet section is the authorization action.
+      if (window.IX && window.IX.openTransferPortal) window.IX.openTransferPortal();
     });
   }
 
