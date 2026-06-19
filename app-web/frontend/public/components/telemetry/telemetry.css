@@ -1,8 +1,8 @@
 /*
   telemetry.css — TELEMETRY panel
-  Inherits design tokens from main.css (--mono, --surface, --border, etc.)
-  Introduces --telemetry-amber for elevated signal (defined in main.css :root).
-  Red (critical) uses existing --warn token.
+  Inherits design tokens from main.css (--font-*, --size-*, --sp-*, --surface, --border, etc.)
+  Type rules: labels/summary/section titles → --font-ui; technical row values → --font-mono; min size → --size-sm.
+  --telemetry-amber for elevated signal (defined in main.css :root). Red (critical) uses --warn.
 */
 
 /* ---- Panel container ---- */
@@ -82,20 +82,20 @@
 
 /* ---- Label ---- */
 .telemetry-label {
-  font-family: var(--mono);
-  font-size: 9px;
-  font-weight: 500;
+  font-family: var(--font-ui);        /* panel title label — not data */
+  font-size: var(--size-sm);
+  font-weight: var(--weight-semibold);
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--muted);
   flex-shrink: 0;
 }
 
-/* ---- Summary — one-line collapsed state description ---- */
+/* ---- Summary — one-line human-readable state description ---- */
 .telemetry-summary {
-  font-family: var(--mono);
-  font-size: 10px;
-  font-weight: 400;
+  font-family: var(--font-ui);        /* "Nominal", "Elevated" — human-readable, not data */
+  font-size: var(--size-sm);
+  font-weight: var(--weight-medium);
   letter-spacing: 0.06em;
   color: var(--dim);
   flex: 1;
@@ -149,9 +149,9 @@
 }
 
 .telemetry-section-label {
-  font-family: var(--mono);
-  font-size: 8px;
-  font-weight: 500;
+  font-family: var(--font-ui);        /* "Status", "Details" — section heading, not data */
+  font-size: var(--size-sm);          /* was 8px — worst size violation in the file */
+  font-weight: var(--weight-semibold);
   letter-spacing: 0.22em;
   text-transform: uppercase;
   color: var(--muted);
@@ -172,8 +172,9 @@
 }
 
 .telemetry-k {
-  font-family: var(--mono);
-  font-size: 9px;
+  font-family: var(--font-ui);        /* row key label — not a technical value */
+  font-size: var(--size-sm);
+  font-weight: var(--weight-semibold);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--muted);
@@ -181,8 +182,8 @@
 }
 
 .telemetry-v {
-  font-family: var(--mono);
-  font-size: 10px;
+  font-family: var(--font-mono);      /* row values: gas, addresses, hashes, contract IDs — stays mono */
+  font-size: var(--size-xs);          /* was 10px; --size-xs is 11px — meets the floor */
   color: var(--dim);
   text-align: right;
   padding-left: 1rem;
@@ -194,12 +195,12 @@
 .telemetry-v--elevated { color: var(--telemetry-amber-dim); }
 .telemetry-v--critical { color: var(--warn); }
 
-/* Explorer links inside value cells */
+/* Explorer links inside value cells — inline with technical value, stays mono */
 .telemetry-v a,
 .telemetry-v a:link,
 .telemetry-v a:visited {
-  font-family: var(--mono);
-  font-size: 10px;
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
   color: var(--dim);
   text-decoration: none;
   transition: color 0.12s;

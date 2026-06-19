@@ -1,6 +1,7 @@
 /*
   companion.css — Transaction Companion Tray
-  Inherits design tokens from main.css (--mono, --surface, --border, etc.)
+  Inherits design tokens from main.css (--font-*, --size-*, --sp-*, --surface, --border, etc.)
+  Type rules: labels/status/guidance → --font-ui; technical values → --font-mono; min size → --size-sm.
   Do not introduce new color values. Monochrome only.
 */
 
@@ -71,11 +72,11 @@
   background: var(--telemetry-amber);
 }
 
-/* Status line — dim keeps it readable while remaining secondary to page content */
+/* Status line — human-readable state string, not technical data → UI font */
 .companion-status {
-  font-family: var(--mono);
-  font-size: 10px;
-  font-weight: 400;
+  font-family: var(--font-ui);
+  font-size: var(--size-sm);
+  font-weight: var(--weight-medium);
   letter-spacing: 0.06em;
   color: var(--dim);
   flex: 1;
@@ -146,8 +147,9 @@
 }
 
 .companion-k {
-  font-family: var(--mono);
-  font-size: 9px;
+  font-family: var(--font-ui);     /* row label — not data */
+  font-size: var(--size-sm);
+  font-weight: var(--weight-semibold);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--muted);
@@ -155,8 +157,8 @@
 }
 
 .companion-v {
-  font-family: var(--mono);
-  font-size: 11px;
+  font-family: var(--font-mono);   /* technical values: amounts, state codes, chain data */
+  font-size: var(--size-xs);       /* 11px — same visual size, now tokenized */
   color: var(--dim);
   text-align: right;
   padding-left: 1rem;
@@ -170,16 +172,17 @@
   color: var(--dim);
 }
 
-/* Next-step action value — slightly dimmer, not a call to action */
+/* Next-step action value — guidance prose, not a technical value */
 .companion-action {
   color: var(--dim);
-  font-size: 10px;
+  font-family: var(--font-ui);
+  font-size: var(--size-sm);
 }
 
-/* Action link — rendered when a state provides external chain verification */
+/* Action link — inline link text, not technical data */
 .companion-action-link {
-  font-family: var(--mono);
-  font-size: 10px;
+  font-family: var(--font-ui);
+  font-size: var(--size-sm);
   color: var(--dim);
   text-decoration: none;
   transition: color 0.12s;

@@ -688,7 +688,7 @@ body.portal-active #nav {
   justify-content: center;
   justify-self: center;
   width: max-content;
-  gap: 8px;
+  gap: var(--sp-2);
   font-size: 17px;
   line-height: 1;
   font-variant-numeric: tabular-nums;
@@ -906,7 +906,7 @@ body.portal-active #nav {
   margin: clamp(2rem, 5vh, 3.5rem) auto 0;
   display: flex;
   justify-content: flex-end;
-  gap: 8px;
+  gap: var(--sp-2);
   padding: 0.5rem 0 0.4rem;
 }
 
@@ -941,7 +941,7 @@ body.portal-active #nav {
   color: var(--dim);
   background: transparent;
   border: 1px solid var(--border);
-  padding: 8px 12px;
+  padding: var(--sp-2) var(--sp-3);
   cursor: pointer;
   transition: color 0.12s, border-color 0.12s;
 }
@@ -979,14 +979,14 @@ body.portal-active #nav {
   grid-column: 1 / -1;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
+  gap: var(--sp-4);
   width: 100%;
   min-height: 44px;
   background: var(--surface);
   border: 0;
   color: var(--white);
   cursor: pointer;
-  padding: 0 2rem;
+  padding: 0 var(--sp-6);
   text-align: left;
 }
 
@@ -1051,7 +1051,7 @@ body.portal-active #nav {
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--dim);
-  margin-bottom: 1rem;
+  margin-bottom: var(--sp-4);
 }
 
 .mod-title {
@@ -1212,7 +1212,7 @@ body.portal-active #nav {
   color: var(--bg);
   background: var(--white);
   border: none;
-  padding: 12px;
+  padding: var(--sp-3);
   width: 100%;
   cursor: pointer;
   transition: background 0.12s;
@@ -1373,7 +1373,7 @@ body.portal-active #nav {
 .tx-timeline-item {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
+  gap: var(--sp-2);
   font-family: var(--font-ui);
   font-size: var(--size-xs);
   line-height: var(--leading-ui);
@@ -1449,14 +1449,14 @@ body.portal-active #nav {
 .preflight-list {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--sp-1);
   list-style: none;
 }
 
 .intel-list li,
 .preflight-list li {
   display: flex;
-  gap: 8px;
+  gap: var(--sp-2);
   align-items: flex-start;
   font-family: var(--font-ui);
   font-size: var(--size-xs);
@@ -1576,7 +1576,7 @@ body.portal-active #nav {
 .receipt-history-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--sp-2);
 }
 
 .receipt-empty,
@@ -1596,7 +1596,7 @@ body.portal-active #nav {
 .receipt-item-head {
   display: flex;
   justify-content: space-between;
-  gap: 8px;
+  gap: var(--sp-2);
   color: var(--white);
   margin-bottom: 4px;
 }
@@ -2856,7 +2856,7 @@ footer .social-links a:focus-visible,
     justify-content: flex-end;
     align-items: center;
     flex-wrap: nowrap;
-    gap: 8px;
+    gap: var(--sp-2);
   }
 
   /* Mobile: hide all desktop nav controls, show hamburger only */
