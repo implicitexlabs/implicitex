@@ -1428,8 +1428,8 @@ body.portal-active #nav {
   border-top: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
   background: transparent;
-  padding: 8px 0;
-  margin: 8px 0 10px;
+  padding: var(--sp-2) 0;
+  margin: var(--sp-2) 0 10px;
 }
 
 .intel-panel[hidden] {
@@ -1589,7 +1589,7 @@ body.portal-active #nav {
 
 .receipt-item {
   border-top: 1px solid var(--border);
-  padding: 8px 0 0;
+  padding: var(--sp-2) 0 0;
   background: transparent;
 }
 
@@ -1700,7 +1700,7 @@ body.portal-active #nav {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 4px 0;
+  padding: var(--sp-1) 0;
 }
 
 .gas-detail-k {
