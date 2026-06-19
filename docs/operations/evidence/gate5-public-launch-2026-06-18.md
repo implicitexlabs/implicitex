@@ -129,29 +129,70 @@ approval (prompt 1) confirmed → transfer (prompt 2) never appeared → UI repo
 the first confirmation. The original 500ms fixed delay was insufficient or insufficient for
 mobile hardware variance.
 
-**Fix deployed (commit 5f6de1e + 4c06103):**
-- Replaced fixed 500ms delay with on-chain allowance poll:
-  after approval confirms, poll `usdc.allowance(sender, contractAddress)` at 500ms intervals
-  until `allowance >= totalDebit` or 10s timeout
-- Added -32603 classification in error-classifier.js (WALLET_INTERNAL_ERROR)
-- Added `console.error('[IX] transferWithFee error (pre-broadcast):', err)` for raw error capture
+**Fix history:**
+- commit 6c2ff01 — initial 500ms fixed delay (insufficient)
+- commit 5f6de1e — replaced with on-chain allowance poll (500ms intervals, 10s timeout)
+- commit 5f6de1e — -32603 classification added to error-classifier.js (WALLET_INTERNAL_ERROR)
+- commit a4c6509 — raw provider error code now shown in LAST EVENT: "CLASSIFIED (raw: CODE)"
+  visible on device without USB debugging
 
-**Pending: device confirmation**
+**First device result (2026-06-19):**
+```text
+Approval shown:        YES
+Approval confirmed:    YES
+Second prompt shown:   NO
+Final result:          Transfer could not continue
+Last event:            UNKNOWN_ERROR
+```
+
+UNKNOWN_ERROR persisting after deployment of -32603 classifier means one of:
+1. Cached JS served old error-classifier.js (no -32603 handler)
+2. Actual error code is not -32603 — different error escaping classification
+3. ERROR_CLASSIFIER not loaded (script load failure — also produces UNKNOWN_ERROR)
+
+Raw code is not yet captured. Next test will show "UNKNOWN_ERROR (raw: CODE)" in LAST EVENT.
+
+**Pending: device confirmation — second pass**
 
 ```text
-Device:
-Browser:
-Wallet:
-Amount:
-Approval prompt shown:       [ ] yes  [ ] no
-Approval confirmed:          [ ] yes  [ ] no
-Allowance poll behavior:     [ ] resolved quickly  [ ] waited N seconds  [ ] timed out
-Second transfer prompt shown: [ ] yes  [ ] no
+Approval shown:
+Approval confirmed:
+Delay after approval (observed):
+Second prompt shown:
 Final result:
-Raw error if failed:
+Last event (full string — includes raw code):
 ```
 
 **Verdict logic:**
-- Second prompt appears → P0 likely closed
-- Fast -32603 after poll completes → split approval/transfer into two explicit user actions
-- Poll times out or reads stale → RPC/read-path issue, fix in the read path
+- Second prompt appears → P0 closed
+- Last event shows "WALLET_INTERNAL_ERROR (raw: -32603)" → classifier ran, provider state issue; split into two user-initiated steps
+- Last event shows "UNKNOWN_ERROR (raw: -32603)" → classifier present but old version cached; force cache clear
+- Last event shows "UNKNOWN_ERROR (raw: undefined)" → ERROR_CLASSIFIER not loading; script load failure
+- Last event shows any other raw code → new error category, classify and handle
+
+---
+
+## P1 — Proof Packet Export Broken on Mobile (trust-surface bug)
+
+**Observed (2026-06-19):** Interrupted receipt entries render "Export proof packet" button.
+Tapping it on MetaMask Mobile in-app browser does nothing — no download, no feedback.
+
+**Root cause:** `downloadProofPacket` used `URL.createObjectURL` + programmatic `a.click()`.
+MetaMask's in-app browser (iOS/Android WebView) silently blocks this pattern.
+
+**Fix deployed (commit a4c6509):**
+- Blob download attempted first (works on desktop)
+- On failure: `navigator.clipboard.writeText` copies JSON to clipboard
+- Status line confirms "Proof packet copied to clipboard."
+- Graceful fallback message if clipboard also unavailable
+
+**Verification needed:**
+```text
+Interrupted receipt visible:
+Export proof packet tapped:
+Result: [ ] downloaded  [ ] copied to clipboard  [ ] error message shown  [ ] silent fail
+```
+
+**Classification:** Trust-surface bug, not transfer root cause. Does not block P0 diagnosis.
+Interrupted receipts prove the app is persisting state correctly — the export action was broken,
+not the receipt itself.
