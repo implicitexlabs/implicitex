@@ -58,8 +58,110 @@
           <button class="wallet-menu-action wallet-menu-action--danger" id="disconnectBtn" type="button">Disconnect</button>
         </div>
       </div>
+      <!-- Hamburger — mobile only, hidden on desktop via CSS -->
+      <button class="hamburger-btn" id="hamburgerBtn" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
+        <svg width="18" height="14" viewBox="0 0 18 14" aria-hidden="true">
+          <rect y="0"  width="18" height="1.8" fill="currentColor"/>
+          <rect y="6"  width="18" height="1.8" fill="currentColor"/>
+          <rect y="12" width="18" height="1.8" fill="currentColor"/>
+        </svg>
+      </button>
     </div>
   </nav>
+
+  <!-- MOBILE MENU OVERLAY -->
+  <div class="mobile-menu" id="mobileMenu" role="dialog" aria-modal="true" aria-label="Site menu" hidden>
+    <div class="mobile-menu-inner">
+      <div class="mobile-menu-head">
+        <span class="mobile-menu-title">Menu</span>
+        <button class="mobile-menu-close" id="mobileMenuClose" type="button" aria-label="Close menu">
+          <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+            <line x1="1" y1="1" x2="13" y2="13" stroke="currentColor" stroke-width="1.6"/>
+            <line x1="13" y1="1" x2="1" y2="13" stroke="currentColor" stroke-width="1.6"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Wallet section -->
+      <section class="mobile-menu-section" aria-label="Wallet">
+        <p class="mobile-menu-label">Wallet</p>
+        <p class="mobile-menu-status" id="menuWalletStatus">No wallet connected.</p>
+        <p class="mobile-menu-sender" id="menuSenderDisplay" hidden></p>
+        <p class="mobile-menu-network" id="menuNetworkDisplay" hidden></p>
+        <div class="mobile-menu-actions">
+          <button class="mobile-menu-btn mobile-menu-btn--primary" id="menuConnectBtn" type="button">
+            Connect Wallet
+          </button>
+          <button class="mobile-menu-btn" id="menuSwitchBtn" type="button" hidden>
+            Switch Account
+          </button>
+          <button class="mobile-menu-btn mobile-menu-btn--danger" id="menuDisconnectBtn" type="button" hidden>
+            Disconnect
+          </button>
+        </div>
+      </section>
+
+      <!-- Transaction section -->
+      <section class="mobile-menu-section" aria-label="Transaction">
+        <p class="mobile-menu-label">Transaction</p>
+        <button class="mobile-menu-btn mobile-menu-btn--primary" id="menuOpenPortalBtn" type="button">
+          Transfer Portal
+        </button>
+        <p class="mobile-menu-portal-note">Open the USDC transfer interface.</p>
+      </section>
+
+      <!-- Navigation links -->
+      <section class="mobile-menu-section" aria-label="Navigation">
+        <p class="mobile-menu-label">Site</p>
+        <nav class="mobile-menu-links">
+          <a href="/about.html">About</a>
+          <a href="/faq.html">FAQ</a>
+          <a href="/learn.html">Learn</a>
+          <a href="/verification.html">Proof</a>
+          <a href="/terms.html">Terms</a>
+          <a href="/privacy.html">Privacy</a>
+          <a href="/legal.html">Legal</a>
+          <a href="/jurisdictions.html">Access</a>
+          <a href="/news.html">News</a>
+          <a href="/contact.html">Contact</a>
+        </nav>
+      </section>
+
+      <!-- Social links — separated from site navigation -->
+      <section class="mobile-menu-section" aria-label="Social">
+        <p class="mobile-menu-label">Social</p>
+        <nav class="mobile-menu-links">
+          <a href="https://x.com/implicitex" target="_blank" rel="noopener">X</a>
+          <a href="https://github.com/implicitexlabs" target="_blank" rel="noopener">GitHub</a>
+        </nav>
+      </section>
+    </div>
+    <!-- Backdrop — tap to close -->
+    <div class="mobile-menu-backdrop" id="mobileMenuBackdrop" aria-hidden="true"></div>
+  </div>
+
+  <!-- WALLET CHOICE OVERLAY -->
+  <div class="wallet-choice" id="walletChoiceOverlay" role="dialog" aria-modal="true" aria-label="Choose wallet" hidden>
+    <div class="wallet-choice-backdrop" id="walletChoiceBackdrop" aria-hidden="true"></div>
+    <div class="wallet-choice-inner">
+      <div class="wallet-choice-head">
+        <span class="wallet-choice-title">Connect Wallet</span>
+        <button class="wallet-choice-close" id="walletChoiceClose" type="button" aria-label="Close">
+          <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
+            <line x1="1" y1="1" x2="11" y2="11" stroke="currentColor" stroke-width="1.6"/>
+            <line x1="11" y1="1" x2="1" y2="11" stroke="currentColor" stroke-width="1.6"/>
+          </svg>
+        </button>
+      </div>
+      <div class="wallet-choice-actions">
+        <a class="wallet-choice-btn wallet-choice-btn--primary" id="walletChoiceMetaMask"
+           href="https://metamask.app.link/dapp/implicitex.com" target="_blank" rel="noopener">
+          Open MetaMask
+        </a>
+        <p class="wallet-choice-note">WalletConnect is being verified before public launch. Use MetaMask for now.</p>
+      </div>
+    </div>
+  </div>
 
   <main class="policy-shell privacy-shell">
     <div class="about-hero-mark about-hero-mark--stacked" aria-hidden="true">
@@ -329,5 +431,6 @@
   <script src="config/chains.js"></script>
   <script src="js/wallet.js"></script>
   <script src="js/app.js"></script>
+  <script src="js/mobile-menu.js"></script>
 </body>
 </html>

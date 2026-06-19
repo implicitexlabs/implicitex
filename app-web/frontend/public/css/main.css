@@ -2532,6 +2532,7 @@ footer .social-links a:focus-visible,
 .news-article h2 {
   letter-spacing: 0;
   text-transform: none;
+  margin-top: 0.4rem;
 }
 
 /* ---- News Preview (landing page) ---- */
@@ -3258,7 +3259,7 @@ input[type="number"] {
 
 /* ---- LEARN responsive ---- */
 @media (max-width: 768px) {
-  .learn-mobile-toggle { display: none; }
+  .learn-mobile-toggle { display: block; }
 
   .learn-layout {
     grid-template-columns: 1fr;
@@ -3268,12 +3269,16 @@ input[type="number"] {
   }
 
   .learn-sidebar {
+    display: none;
     position: static;
     height: min(46vh, 420px);
     overflow-y: auto;
-    display: flex;
     border-right: none;
     border-bottom: 1px solid var(--border);
+  }
+
+  .learn-sidebar.is-open {
+    display: flex;
   }
 
   .learn-panel {
