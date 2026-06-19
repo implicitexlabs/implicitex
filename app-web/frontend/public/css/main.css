@@ -1,12 +1,34 @@
 /* ============================================================
    ImplicitEx — main.css
-   Black / white / grey carry identity.
-   Accent amber (#D4A017) carries state: active, live, verified, selected.
-   Telemetry amber carries advisory. Red carries critical.
-   Fonts: Oxanium (primary), Orbitron (display), IBM Plex Mono (technical)
+
+   Color:
+     Black / white / grey  → identity
+     Accent amber #D4A017  → state: active, live, verified, selected
+     Telemetry amber       → advisory
+     Red                   → critical
+
+   Type constitution:
+     --font-body     Inter / system-ui     prose, legal, FAQ, Learn, any long copy
+     --font-ui       Oxanium               UI chrome: nav, buttons, badges, labels, forms
+     --font-display  Orbitron              Large headings only. Min --size-xl. Never in body.
+     --font-mono     IBM Plex Mono         Technical data only: addresses, hashes, IDs, chain data
+
+   Size rules:
+     --size-xs     11px   technical/meta labels, mono only
+     --size-sm     12px   badges, captions, small UI
+     --size-base   14px   standard UI — buttons, nav links, form labels
+     --size-md     16px   inputs, mobile body, readable UI
+     --size-lg     18px   prose body / lead copy
+     --size-xl     clamp  section headings
+     --size-hero   clamp  hero display only
+     8px, 9px, 10px are eliminated — too small to read on mobile
+
+   Spacing:
+     --sp-* tokens for all layout spacing (padding, margins, gaps).
+     1px borders and hairline visual details may remain raw px.
    ============================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800&family=Oxanium:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Orbitron:wght@400;500;600;700;800&family=Oxanium:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
 
 /* ---- Reset ---- */
 *, *::before, *::after {
@@ -39,21 +61,59 @@
   --accent-dim:    rgba(212, 160, 23, 0.80);
   --accent-border: rgba(212, 160, 23, 0.30);
   --logo-pixel: rgba(242, 242, 240, 1);
-  --sans:       'Oxanium', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  --display:    'Orbitron', system-ui, -apple-system, sans-serif;
-  --mono:       'IBM Plex Mono', 'SFMono-Regular', Consolas, monospace;
-  --nav-h:      56px;
-  /* Reading copy rhythm — prose sections only; interface elements unchanged */
-  --ix-copy-size:        18px;
-  --ix-copy-line:        28px;
-  --ix-copy-small-size:  16px;
-  --ix-copy-small-line:  24px;
-  --ix-section-copy-max:  720px;   /* prose column — paragraphs, lists */
-  --ix-section-title-max: 820px;   /* heading column — h1, h2 */
-  /* Shared interface shell — matches Transfer Portal max-width */
-  --ix-interface-max:    1280px;
-  /* Public-page column gap — shared by prose multi-column and section grids */
-  --ix-page-gap:  clamp(2rem, 4vw, 4rem);
+
+  /* ---- Typefaces ---- */
+  --font-body:    'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-ui:      'Oxanium', system-ui, sans-serif;
+  --font-display: 'Orbitron', 'Oxanium', system-ui, sans-serif;
+  --font-mono:    'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  /* Legacy aliases — kept during migration; new selectors should use --font-* names */
+  --sans:    var(--font-ui);
+  --display: var(--font-display);
+  --mono:    var(--font-mono);
+
+  /* ---- Type scale ---- */
+  --size-xs:   0.6875rem;                   /* 11px — technical/meta labels, mono only  */
+  --size-sm:   0.75rem;                     /* 12px — badges, captions, small UI        */
+  --size-base: 0.875rem;                    /* 14px — standard UI: buttons, nav, labels */
+  --size-md:   1rem;                        /* 16px — inputs, mobile body, readable UI  */
+  --size-lg:   1.125rem;                    /* 18px — prose body / lead copy            */
+  --size-xl:   clamp(1.25rem, 2vw, 1.75rem); /* 20–28px — section headings             */
+  --size-hero: clamp(1.75rem, 4vw, 2.75rem); /* 28–44px — hero display only            */
+
+  /* ---- Line heights ---- */
+  --leading-tight: 1.15;
+  --leading-ui:    1.35;
+  --leading-body:  1.65;
+
+  /* ---- Font weights ---- */
+  --weight-regular:  400;
+  --weight-medium:   500;
+  --weight-semibold: 600;
+  --weight-bold:     700;
+
+  /* ---- Spacing scale (layout only — borders stay 1px) ---- */
+  --sp-1:  0.25rem;   /*  4px */
+  --sp-2:  0.5rem;    /*  8px */
+  --sp-3:  0.75rem;   /* 12px */
+  --sp-4:  1rem;      /* 16px */
+  --sp-5:  1.5rem;    /* 24px */
+  --sp-6:  2rem;      /* 32px */
+  --sp-8:  3rem;      /* 48px */
+  --sp-10: 4rem;      /* 64px */
+
+  /* ---- Layout ---- */
+  --nav-h:             56px;
+  --ix-interface-max:  1280px;
+  --ix-section-copy-max:  720px;
+  --ix-section-title-max: 820px;
+  --ix-page-gap:  clamp(var(--sp-6), 4vw, var(--sp-10));
+
+  /* Legacy copy-rhythm tokens — kept for existing prose rules */
+  --ix-copy-size:        var(--size-lg);
+  --ix-copy-line:        1.65;
+  --ix-copy-small-size:  var(--size-md);
+  --ix-copy-small-line:  1.5;
 }
 
 [data-theme="light"] {
@@ -87,13 +147,41 @@ html { scroll-behavior: smooth; }
 body {
   background: var(--bg);
   color: var(--white);
-  font-family: var(--sans);
-  font-size: 15px;
-  font-weight: 500;
-  line-height: 1.6;
+  font-family: var(--font-body);
+  font-size: var(--size-md);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-body);
   min-height: 100vh;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ---- Global type enforcement ---- */
+/* All interactive elements inherit Oxanium as the UI brand font */
+button,
+input,
+select,
+textarea {
+  font-family: var(--font-ui);
+  font-size: var(--size-base);
+  line-height: var(--leading-ui);
+}
+
+/* Headings: display font, tight leading. Never below --size-xl. */
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  line-height: var(--leading-tight);
+  font-weight: var(--weight-bold);
+}
+
+/* Technical data: mono, minimum --size-xs. Nothing smaller. */
+code, kbd, pre,
+.tx-hash, .wallet-address, .contract-address,
+.receipt-id, .chain-id {
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  line-height: var(--leading-ui);
 }
 
 /* ---- Nav ---- */
@@ -172,7 +260,7 @@ body {
 .nav-right {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--sp-2);
 }
 
 .wallet-menu {
@@ -184,16 +272,16 @@ body {
 .wallet-menu-trigger {
   display: flex;
   align-items: center;
-  gap: 8px;
-  min-height: 32px;
-  font-family: var(--mono);
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
+  gap: var(--sp-2);
+  min-height: 36px;
+  font-family: var(--font-ui);
+  font-size: var(--size-sm);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.04em;
   color: var(--white);
   background: transparent;
   border: 1px solid var(--border);
-  padding: 7px 10px;
+  padding: var(--sp-2) var(--sp-3);
   cursor: pointer;
   transition: border-color 0.12s, background 0.12s;
 }
@@ -223,9 +311,10 @@ body {
   50%       { opacity: 0.25; }
 }
 
+/* Wallet address in nav trigger — technical data, stays mono */
 .wallet-addr {
-  font-family: var(--mono);
-  font-size: 10px;
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
   color: var(--white);
 }
 
@@ -246,15 +335,15 @@ body {
 
 .wallet-menu-panel {
   position: absolute;
-  right: 2rem;  /* matches #nav padding-right */
-  top: 100%;   /* 100% of #nav height = nav bottom line */
+  right: var(--sp-6);  /* matches #nav padding-right */
+  top: 100%;           /* 100% of #nav height = nav bottom line */
   margin-top: 0;
   z-index: 260;
-  width: min(280px, calc(100vw - 2rem));
+  width: min(280px, calc(100vw - var(--sp-6)));
   background: var(--bg);
   border: 1px solid var(--border);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.28);
-  padding: 0.85rem;
+  padding: var(--sp-4);
 }
 
 [data-theme="light"] .wallet-menu-panel {
@@ -264,43 +353,44 @@ body {
 .wallet-menu-panel[hidden] { display: none; }
 
 .wallet-menu-title {
-  font-family: var(--mono);
-  font-size: 9px;
-  font-weight: 600;
-  letter-spacing: 0.16em;
+  font-family: var(--font-ui);
+  font-size: var(--size-sm);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--white);
-  margin-bottom: 0.45rem;
+  color: var(--muted);
+  margin-bottom: var(--sp-2);
 }
 
+/* Full wallet address in menu — technical data, stays mono */
 .wallet-menu-address {
-  font-family: var(--mono);
-  font-size: 10px;
-  line-height: 1.5;
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  line-height: var(--leading-ui);
   color: var(--white);
   overflow-wrap: anywhere;
-  margin-bottom: 0.7rem;
+  margin-bottom: var(--sp-3);
 }
 
 .wallet-menu-action {
   display: block;
   width: 100%;
-  font-family: var(--mono);
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.12em;
+  font-family: var(--font-ui);
+  font-size: var(--size-sm);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--white);
   text-align: left;
   background: transparent;
   border: 1px solid var(--border);
-  padding: 9px 10px;
+  padding: var(--sp-2) var(--sp-3);
   cursor: pointer;
   transition: border-color 0.12s, color 0.12s;
 }
 
 .wallet-menu-action + .wallet-menu-action {
-  margin-top: 6px;
+  margin-top: var(--sp-1);
 }
 
 .wallet-menu-action:hover,
@@ -315,15 +405,16 @@ body {
 
 .wallet-menu-action[hidden] { display: none; }
 
+/* Operational state badge — keeps mono as a state/system signal */
 .nav-status {
-  font-family: var(--mono);
-  font-size: 9px;
-  font-weight: 600;
-  letter-spacing: 0.14em;
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--white);
   border: 1px solid var(--border);
-  padding: 8px 12px;
+  padding: var(--sp-2) var(--sp-3);
 }
 
 .nav-status.is-error,
@@ -357,17 +448,17 @@ body {
 .send-usdc-link,
 .send-usdc-link:link,
 .send-usdc-link:visited {
-  font-family: var(--sans);
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.14em;
+  font-family: var(--font-ui);
+  font-size: var(--size-sm);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--bg);
   background: var(--white);
   border: 1px solid var(--white);
-  padding: 8px 14px;
+  padding: var(--sp-2) var(--sp-3);
   text-decoration: none;
-  line-height: 1;
+  line-height: var(--leading-ui);
   transition: background 0.12s, border-color 0.12s;
 }
 
@@ -383,15 +474,15 @@ body {
 }
 
 .connect-btn {
-  font-family: var(--sans);
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.14em;
+  font-family: var(--font-ui);
+  font-size: var(--size-sm);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--bg);
   background: var(--white);
   border: none;
-  padding: 8px 18px;
+  padding: var(--sp-2) var(--sp-4);
   cursor: pointer;
   transition: background 0.12s;
 }
@@ -409,7 +500,7 @@ body {
   color: var(--white);
   background: transparent;
   border: 1px solid var(--border);
-  padding: 8px 10px;
+  padding: var(--sp-2) var(--sp-2);
   cursor: pointer;
   transition: border-color 0.12s, color 0.12s;
   display: flex;
@@ -478,34 +569,34 @@ body.portal-active #nav {
 }
 
 .headline {
-  font-family: var(--display);
-  font-size: clamp(24px, 3.5vw, 44px);
-  font-weight: 700;
-  line-height: 1.18;
+  font-family: var(--font-display);
+  font-size: var(--size-hero);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-tight);
   color: var(--white);
-  margin-bottom: 1.1rem;
+  margin-bottom: var(--sp-4);
   animation: fadeUp 0.7s 0.25s both;
 }
 
 .hero-kicker {
-  font-family: var(--sans);
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.16em;
+  font-family: var(--font-ui);
+  font-size: var(--size-sm);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--white);
-  margin: -0.35rem auto 1.2rem;
+  color: var(--dim);
+  margin: 0 auto var(--sp-4);
   animation: fadeUp 0.7s 0.32s both;
 }
 
 .subline {
-  font-family: var(--sans);
-  font-size: 15px;
-  font-weight: 700;
-  line-height: 1.75;
+  font-family: var(--font-body);
+  font-size: var(--size-md);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-body);
   color: var(--dim);
   max-width: 420px;
-  margin: 0 auto 1.8rem;
+  margin: 0 auto var(--sp-5);
   animation: fadeUp 0.7s 0.55s both;
 }
 
@@ -561,9 +652,9 @@ body.portal-active #nav {
 }
 
 .stat-val {
-  font-family: var(--display);
-  font-size: 17px;
-  font-weight: 700;
+  font-family: var(--font-display);
+  font-size: var(--size-xl);
+  font-weight: var(--weight-bold);
   line-height: 1;
   color: var(--white);
   display: block;
@@ -599,13 +690,12 @@ body.portal-active #nav {
 }
 
 .stat-label {
-  font-family: var(--sans);
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-indent: 0.14em;
+  font-family: var(--font-ui);
+  font-size: var(--size-sm);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--white);
+  color: var(--dim);
   display: block;
   line-height: 1;
   transition: color 0.12s;
