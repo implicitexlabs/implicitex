@@ -340,7 +340,7 @@ body {
 .send-usdc-link,
 .send-usdc-link:link,
 .send-usdc-link:visited {
-  font-family: var(--mono);
+  font-family: var(--sans);
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.14em;
@@ -366,7 +366,7 @@ body {
 }
 
 .connect-btn {
-  font-family: var(--mono);
+  font-family: var(--sans);
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.14em;
@@ -471,7 +471,7 @@ body.portal-active #nav {
 }
 
 .hero-kicker {
-  font-family: var(--mono);
+  font-family: var(--sans);
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.16em;
@@ -582,7 +582,7 @@ body.portal-active #nav {
 }
 
 .stat-label {
-  font-family: var(--mono);
+  font-family: var(--sans);
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.14em;
@@ -1664,7 +1664,7 @@ footer {
 }
 
 .f-links a {
-  font-family: var(--mono);
+  font-family: var(--sans);
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.14em;
@@ -1688,7 +1688,7 @@ footer .social-links a:visited,
 .social-text-link,
 .social-text-link:link,
 .social-text-link:visited {
-  font-family: var(--mono);
+  font-family: var(--sans);
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.14em;
@@ -2149,7 +2149,7 @@ footer .social-links a:focus-visible,
 
 .policy-shell li { margin-bottom: 0.35rem; }
 .policy-shell ul { margin: 0 0 1rem 1.25rem; }
-.policy-shell a  { color: var(--white); }
+.policy-shell a  { color: var(--white); text-decoration: underline; text-underline-offset: 3px; }
 
 .policy-shell .media-description {
   max-width: none;

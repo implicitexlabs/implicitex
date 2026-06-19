@@ -2998,9 +2998,14 @@
    * without floating-point rounding errors.
    */
   function parseUsdcAmount(str) {
-    const s = String(str).trim();
+    // Strip thousands-separator commas before validating (e.g. "10,000" → "10000").
+    // Commas used as decimal separators (European locales) are not normalized —
+    // the regex below will reject them, which is the safe default.
+    const s = String(str).trim().replace(/,(?=\d{3}(?:[^,]|$))/g, '');
     if (!/^(?:\d+|\d+\.\d{1,6}|\.\d{1,6})$/.test(s)) {
-      throw new Error('INVALID_USDC_DECIMALS');
+      throw new Error(s.includes('.') && s.split('.')[1].length > 6
+        ? 'INVALID_USDC_DECIMALS'
+        : 'INVALID_AMOUNT_FORMAT');
     }
     const dotIdx = s.indexOf('.');
     const whole = dotIdx === -1 ? s : s.slice(0, dotIdx);
@@ -3253,9 +3258,11 @@
     try {
       rawAmount = parseUsdcAmount(amountStr);
     } catch (err) {
-      setStatus(err && err.message === 'INVALID_USDC_DECIMALS'
-        ? 'Amount supports up to 6 decimal places for USDC.'
-        : 'Invalid amount format.');
+      if (err && err.message === 'INVALID_USDC_DECIMALS') {
+        setStatus('USDC supports up to 6 decimal places. Example: 10.00');
+      } else {
+        setStatus('Use numbers only. Example: 10.00');
+      }
       return;
     }
 
@@ -3488,14 +3495,37 @@
     // during the approval confirmation wait.
     assertFlowActive();
 
-    // On mobile MetaMask's in-app browser the provider needs a brief moment to settle
-    // after the approval transaction confirms before it can accept the next RPC request.
-    // Without this pause the second eth_sendTransaction fires before MetaMask's internal
-    // state has cleared the first pending entry, producing an internal JSON-RPC error
-    // (-32603) that aborts the transfer without ever showing the confirmation prompt.
+    // After approval confirms, poll the on-chain allowance before submitting
+    // the transfer. This is inherently more reliable than a fixed sleep because
+    // it gates on the actual condition the transfer requires. On mobile MetaMask's
+    // in-app browser the provider's internal state may not have settled immediately
+    // after the approval receipt, causing the next eth_sendTransaction to fail with
+    // -32603. Polling the allowance gives the provider and chain state time to
+    // propagate without overfitting to a particular hardware or network latency.
     if (needsApproval) {
-      await new Promise(function (resolve) { setTimeout(resolve, 500); });
-      assertFlowActive(); // account or network may have changed during the pause
+      const ALLOWANCE_POLL_MS    = 500;
+      const ALLOWANCE_TIMEOUT_MS = 10000;
+      const pollStart = Date.now();
+      let allowanceReady = false;
+      while (!allowanceReady) {
+        try {
+          const currentAllowance = await usdc.allowance(state.address, contractAddress);
+          if (BigInt(currentAllowance) >= totalDebit) {
+            allowanceReady = true;
+            break;
+          }
+        } catch (_) {
+          // RPC read failure — keep polling
+        }
+        if (Date.now() - pollStart >= ALLOWANCE_TIMEOUT_MS) {
+          // Allowance did not confirm within 10 s. Proceed anyway; if the
+          // allowance truly hasn't propagated the contract will revert on-chain
+          // with a classified error rather than a silent provider failure.
+          break;
+        }
+        await new Promise(function (resolve) { setTimeout(resolve, ALLOWANCE_POLL_MS); });
+      }
+      assertFlowActive(); // account or network may have changed during the wait
     }
 
     // Narrate BEFORE MetaMask fires.
