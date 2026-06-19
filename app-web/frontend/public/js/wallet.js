@@ -1398,16 +1398,39 @@
 
   function downloadProofPacket(receipt) {
     const packet = buildProofPacket(receipt);
-    const blob = new Blob([JSON.stringify(packet, null, 2) + '\n'], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
+    const json = JSON.stringify(packet, null, 2) + '\n';
     const hash = packet.transactionHash || receipt.id || 'local';
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `implicitex-proof-${String(hash).slice(0, 12)}.json`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 0);
+    const filename = `implicitex-proof-${String(hash).slice(0, 12)}.json`;
+
+    // Attempt blob download (desktop browsers + some mobile)
+    let downloaded = false;
+    try {
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 0);
+      downloaded = true;
+    } catch (_) {
+      downloaded = false;
+    }
+
+    if (downloaded) return;
+
+    // Fallback — copy JSON to clipboard (MetaMask in-app browser, iOS WebViews)
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(json).then(function () {
+        setStatus('Proof packet copied to clipboard.');
+      }).catch(function () {
+        setStatus('Download unavailable. Open in a browser to export the proof packet.');
+      });
+    } else {
+      setStatus('Download unavailable. Open in a browser to export the proof packet.');
+    }
   }
 
   function receiptExplorerUrl(chainConfig, txHash) {
@@ -3724,7 +3747,9 @@
               autoOpen:   true,
             });
           } else {
+            const rawCode = providerErrorCode(err);
             console.error('[IX] transferWithFee error (pre-broadcast):', err);
+            console.error('[IX] raw provider error code:', rawCode);
             const explained = classifyTransferError(err, { phase: 'transfer', broadcastKnown: false });
             setTransferNote('');
             setStatus('');
@@ -3735,12 +3760,16 @@
             });
             failTransferTimeline('transfer_requested', explained.title);
             setTxState('idle', `${explained.title}. ${explained.retryGuidance}`);
+            // eventVal includes raw error code so it's visible on mobile without USB debugging
+            const eventVal = rawCode != null
+              ? explained.code + ' (raw: ' + rawCode + ')'
+              : explained.code;
             companionState(IX_TRANSFER_STATES.INTERRUPTED, {
               statusLine: 'Transfer interrupted before broadcast.',
               stateVal:   explained.title,
               fundsVal:   'No — transfer did not reach the network',
               networkVal: chainConfig.name,
-              eventVal:   explained.code,
+              eventVal:   eventVal,
               actionVal:  explained.retryGuidance,
               autoOpen:   true,
             });
