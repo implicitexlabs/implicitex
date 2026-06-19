@@ -564,7 +564,7 @@
 
   function setElementSeverity(el, severity) {
     if (!el) return;
-    el.classList.remove('is-error', 'is-warning', 'is-advisory', 'is-blocking', 'is-critical', 'is-pending');
+    el.classList.remove('is-error', 'is-warning', 'is-advisory', 'is-blocking', 'is-critical', 'is-pending', 'is-live');
     if (severity) el.classList.add('is-' + severity);
   }
 
@@ -2448,10 +2448,10 @@
     setWalletMenuNetworkRecovery(false);
     updateSenderDisplay();
     setNavStatus(chainLabel(state.chainId));
-    setElementSeverity(els.navStatus, null);
+    setElementSeverity(els.navStatus, transfersEnabled ? 'live' : null);
     if (els.networkBadge) {
       els.networkBadge.textContent = chainLabel(state.chainId);
-      setElementSeverity(els.networkBadge, null);
+      setElementSeverity(els.networkBadge, transfersEnabled ? 'live' : null);
     }
     if (els.txBtn) {
       els.txBtn.disabled = true;

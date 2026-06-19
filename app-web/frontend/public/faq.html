@@ -218,6 +218,29 @@
 
     <p>See <a href="/learn.html#wallet">What is a wallet?</a> and <a href="/learn.html#metamask">MetaMask</a> in Learn.</p>
 
+    <h2 id="first-time">I have never used a crypto wallet before — how do I start?</h2>
+
+    <p>
+      If this is your first time, follow these steps in order before using ImplicitEx.
+      Each step builds on the previous one, so do not skip ahead.
+    </p>
+
+    <ol>
+      <li><strong>Install MetaMask.</strong> Download it from metamask.io or your browser's verified extension store. Do not install wallet software from third-party sites, search ads, or links in messages.</li>
+      <li><strong>Create a wallet.</strong> MetaMask will generate a new wallet address for you. If you already have a MetaMask wallet, you can import it using your recovery phrase instead of creating a new one.</li>
+      <li><strong>Write down your recovery phrase offline.</strong> MetaMask will show you a 12-word recovery phrase. Write it on paper and store it somewhere secure. Do not photograph it, type it into notes apps, email it to yourself, or save it in cloud storage. Anyone who has your recovery phrase controls your wallet.</li>
+      <li><strong>Add Polygon network.</strong> MetaMask may already include Polygon. If not, you can add it inside MetaMask under Networks, or visit the Polygon documentation for the network details. Make sure you are adding Polygon mainnet, not a testnet.</li>
+      <li><strong>Obtain USDC on Polygon.</strong> You need two things in your wallet: USDC on Polygon (the amount you want to send, plus the 1% platform fee), and a small amount of POL on Polygon to pay network gas. You can buy USDC through a supported exchange or on-ramp such as Coinbase. When withdrawing, confirm you are sending USDC on the Polygon network, not Ethereum or another chain.</li>
+      <li><strong>Connect your wallet.</strong> Return to ImplicitEx and click Connect Wallet. Select MetaMask and approve the connection. ImplicitEx will not request any transaction at this point — it only reads your wallet address and balance.</li>
+      <li><strong>Execute a transfer.</strong> Enter the recipient address and amount. Review the transfer summary carefully — verify the recipient address, amount, fee, and total debit before confirming anything in MetaMask.</li>
+    </ol>
+
+    <p>
+      If you run into difficulty at any step, the
+      <a href="/learn.html">Learn</a> page covers wallets, USDC, Polygon, and
+      gas fees in more detail.
+    </p>
+
     <h2>Why are there two wallet confirmations?</h2>
 
     <p>
@@ -341,25 +364,37 @@
 
   <footer>
     <nav class="f-links" aria-label="Footer links">
-      <a href="/about.html">About</a>
-      <a href="/faq.html">FAQ</a>
-      <a href="/learn.html">Learn</a>
-      <a href="/verification.html">Proof</a>
-      <a href="/terms.html">Terms</a>
-      <a href="/privacy.html">Privacy</a>
-      <a href="/legal.html">Legal</a>
-      <a href="/jurisdictions.html">Access</a>
-      <a href="/news.html">News</a>
-      <a href="/media.html">Media</a>
-      <a href="/brand.html">Brand</a>
-      <a href="/contact.html">Contact</a>
+      <div class="f-group">
+        <span class="f-group-label">Product</span>
+        <a href="/faq.html">FAQ</a>
+        <a href="/learn.html">Learn</a>
+        <a href="/verification.html">Proof</a>
+        <a href="/news.html">News</a>
+      </div>
+      <div class="f-group">
+        <span class="f-group-label">Legal</span>
+        <a href="/terms.html">Terms</a>
+        <a href="/privacy.html">Privacy</a>
+        <a href="/legal.html">Legal</a>
+      </div>
+      <div class="f-group">
+        <span class="f-group-label">Support</span>
+        <a href="/contact.html">Contact</a>
+        <a href="/jurisdictions.html">Access</a>
+      </div>
+      <div class="f-group">
+        <span class="f-group-label">Company</span>
+        <a href="/about.html">About</a>
+        <a href="/media.html">Media</a>
+        <a href="/brand.html">Brand</a>
+      </div>
     </nav>
     <nav class="social-links" aria-label="Social links">
       <a class="social-text-link" href="https://x.com/implicitex" target="_blank" rel="noopener">X</a>
       <a class="social-text-link" href="https://www.linkedin.com/in/implicitex/" target="_blank" rel="noopener">LinkedIn</a>
       <a class="social-text-link" href="https://github.com/implicitexlabs" target="_blank" rel="noopener">GitHub</a>
     </nav>
-    <span class="f-net" id="networkBadge">Polygon live</span>
+    <span class="f-net is-live" id="networkBadge">Polygon live</span>
   </footer>
 
   <script src="config/chains.js"></script>
