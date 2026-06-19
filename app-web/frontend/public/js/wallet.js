@@ -3488,6 +3488,16 @@
     // during the approval confirmation wait.
     assertFlowActive();
 
+    // On mobile MetaMask's in-app browser the provider needs a brief moment to settle
+    // after the approval transaction confirms before it can accept the next RPC request.
+    // Without this pause the second eth_sendTransaction fires before MetaMask's internal
+    // state has cleared the first pending entry, producing an internal JSON-RPC error
+    // (-32603) that aborts the transfer without ever showing the confirmation prompt.
+    if (needsApproval) {
+      await new Promise(function (resolve) { setTimeout(resolve, 500); });
+      assertFlowActive(); // account or network may have changed during the pause
+    }
+
     // Narrate BEFORE MetaMask fires.
     //   transferStateNote = primary action rail
     //   txStatus          = point-of-no-return signal
@@ -3684,6 +3694,7 @@
               autoOpen:   true,
             });
           } else {
+            console.error('[IX] transferWithFee error (pre-broadcast):', err);
             const explained = classifyTransferError(err, { phase: 'transfer', broadcastKnown: false });
             setTransferNote('');
             setStatus('');

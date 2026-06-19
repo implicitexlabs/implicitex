@@ -128,6 +128,19 @@
       });
     }
 
+    if (code === -32603) {
+      return base({
+        code: 'WALLET_INTERNAL_ERROR',
+        state: STATES.INTERRUPTED,
+        title: 'Wallet returned an internal error',
+        message: 'MetaMask reported an internal error processing this request. No funds were sent.',
+        fundsMoved: false,
+        broadcastKnown: false,
+        retryGuidance: 'Return to MetaMask, dismiss any pending prompts, then retry the transfer.',
+        severity: 'warning',
+      });
+    }
+
     if (/insufficient allowance|allowance/i.test(detail)) {
       return base({
         code: 'INSUFFICIENT_ALLOWANCE',
