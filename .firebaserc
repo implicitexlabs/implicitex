@@ -1,5 +1,6 @@
 {
   "projects": {
-    "default": "implicitex-236f2"
+    "default": "implicitex-236f2",
+    "production": "implicitex"
   }
 }

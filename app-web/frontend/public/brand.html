@@ -21,17 +21,13 @@
   <script>(function(){try{var t=localStorage.getItem('implicitex-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t;}catch(e){}})();</script>
   <link rel="stylesheet" href="css/main.css">
   <style>
-    /* ── Brand page nav link ───────────────────────────────────────── */
+    .logo .brandmark {
+      width: 29px;
+      height: 29px;
+    }
 
-    .nav-brand-link {
-      font-family: var(--mono);
-      font-size: 9px;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--white);
-      text-decoration: none;
-      opacity: 0.55;
+    .logo .wordmark {
+      width: 116px;
     }
 
     .policy-shell .brand-intro-copy {
@@ -349,8 +345,8 @@
     }
 
     .lockup-circle-filled {
-      width: 84px;
-      height: 84px;
+      width: 68px;
+      height: 68px;
       border-radius: 50%;
       display: flex;
       align-items: center;
@@ -397,10 +393,6 @@
     }
 
     @media (max-width: 768px) {
-      .nav-brand-link {
-        display: none;
-      }
-
       .brand-canvas {
         padding: 2rem 1rem;
         overflow: hidden;
@@ -444,8 +436,6 @@
       <img class="wordmark" src="/components/images/wordmark-white.svg" alt="" aria-hidden="true">
     </a>
     <div class="nav-right">
-      <a href="/brand.html" class="nav-brand-link" aria-current="page">Brand</a>
-      
       <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch to light theme" aria-pressed="false">
         <svg class="theme-icon" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
           <path d="M7 1 A6 6 0 0 0 7 13 Z" fill="var(--white)"/>
@@ -482,7 +472,11 @@
       <img class="about-wordmark" src="/components/images/wordmark-white.svg" alt="" aria-hidden="true">
     </div>
 
-    <h1>A direct, technical mark for wallet-to-wallet transfer.</h1>
+    <h1>Brand</h1>
+
+    <p class="brand-intro-copy">
+      A direct, technical mark for wallet-to-wallet transfer.
+    </p>
 
     <p class="brand-intro-copy">
       The ImplicitEx identity is built from a compact lettermark and a geometric
@@ -541,10 +535,12 @@
       <h2>Lettermark</h2>
 
       <p>
-        The lettermark is the primary ImplicitEx mark — a single continuous
-        stroke whose trajectory implies an X without the path ever crossing
-        itself. It is the most reduced expression of the brand and the element
-        that anchors all lockup configurations.
+      The lettermark is the primary ImplicitEx symbol — a single continuous
+      stroke whose trajectory implies an X without the path ever crossing
+      itself. It is the most reduced expression of the brand and the element
+      that anchors all lockup configurations. It may also be used separately
+      as a standalone symbol where the brand name is already present nearby or
+      the format cannot support the full lockup.
       </p>
 
       <h3>The implied X</h3>
@@ -595,10 +591,11 @@
 
       <p>
         The wordmark sets IMPLICITEX in a custom geometric typeface with tight
-        tracking and consistent stroke weight. It is used together with the
-        lettermark in the four standard lockup configurations. Standalone use
-        of the wordmark or the lettermark is permitted where the full lockup
-        does not fit the context.
+        tracking and consistent stroke weight. It may appear with the
+        lettermark in approved lockup configurations, or separately when the
+        context requires a text-only brand signature. When the lettermark and
+        wordmark appear together, the lettermark must remain one-quarter of
+        the wordmark's displayed width.
       </p>
 
       <div class="brand-canvas">
@@ -796,8 +793,9 @@
 
       <p>
         The lettermark must not fill the circle completely. Keep the mark
-        boundary inside a guide ring no more than 60% of the outer diameter,
-        leaving at least 20% of the diameter as clear space on all sides.
+        boundary inside a guide ring no more than 60% of the outer diameter.
+        The reference circle lockup uses a 40&thinsp;px mark inside a
+        68&thinsp;px filled circle, keeping the mark under that 60% maximum.
       </p>
 
       <div class="brand-canvas brand-canvas--light">
@@ -938,6 +936,14 @@
         <li>Centered above the wordmark (stacked configuration)</li>
         <li>To the left of the wordmark (horizontal configuration)</li>
         <li>Alone inside a filled circle container</li>
+        <li>Alone as a standalone symbol where the brand name is already clear from context</li>
+      </ul>
+
+      <h3>The wordmark may appear</h3>
+
+      <ul>
+        <li>With the lettermark in the approved stacked, horizontal, or circle lockup systems</li>
+        <li>Alone as a text-only brand signature where the symbol would be too small, redundant, or impractical</li>
       </ul>
 
       <h3>Do not</h3>
@@ -950,7 +956,6 @@
         <li>Outline or add a drop shadow, glow, or other effect to the mark</li>
         <li>Use the standalone lettermark below 24&thinsp;px</li>
         <li>Place competing marks, icons, or text within the clear-space zone</li>
-        <li>Use the wordmark without the lettermark present in the same composition</li>
         <li>Reconstruct the lettermark from the wordmark's X character or any other typeface</li>
         <li>Use the circle with an outline stroke rather than a filled shape — a thin white circle on a black background and a white circle with a black outline on a white background both lack the contrast the circle lockup depends on</li>
       </ul>
