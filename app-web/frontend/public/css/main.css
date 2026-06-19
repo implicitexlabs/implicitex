@@ -168,10 +168,32 @@ textarea {
   line-height: var(--leading-ui);
 }
 
-/* Headings: display font, tight leading. Never below --size-xl. */
-h1, h2, h3, h4 {
+/* Major display headings: Orbitron. Hero + primary page titles only. */
+h1,
+.headline,
+.hero-title,
+.section-title,
+.public-page-title {
   font-family: var(--font-display);
   line-height: var(--leading-tight);
+  font-weight: var(--weight-bold);
+}
+
+/* h2 defaults to display — overridden per context where readability wins */
+h2 {
+  font-family: var(--font-display);
+  line-height: var(--leading-tight);
+  font-weight: var(--weight-bold);
+}
+
+/* Subsection headings: Inter. Card titles, FAQ questions, legal subsections. */
+h3,
+h4,
+.card-title,
+.faq-question,
+.policy-section-title {
+  font-family: var(--font-body);
+  line-height: var(--leading-ui);
   font-weight: var(--weight-bold);
 }
 
@@ -762,9 +784,9 @@ body.portal-active #nav {
 
 .flow-num {
   display: block;
-  font-family: var(--mono);
-  font-size: 9px;
-  font-weight: 600;
+  font-family: var(--font-ui);
+  font-size: var(--size-sm);
+  font-weight: var(--weight-semibold);
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--white);
@@ -891,8 +913,8 @@ body.portal-active #nav {
 .portal-controls[hidden] { display: none; }
 
 .portal-dismiss {
-  font-family: var(--mono);
-  font-size: 10px;
+  font-family: var(--font-ui);
+  font-size: var(--size-sm);
   letter-spacing: 0.12em;
   color: var(--dim);
   background: transparent;
@@ -911,9 +933,9 @@ body.portal-active #nav {
 /* ---- Disconnect button ---- */
 .disconnect-btn,
 .switch-account-btn {
-  font-family: var(--mono);
-  font-size: 10px;
-  font-weight: 600;
+  font-family: var(--font-ui);
+  font-size: var(--size-sm);
+  font-weight: var(--weight-semibold);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--dim);
@@ -970,19 +992,19 @@ body.portal-active #nav {
 
 .portal-minimized-label,
 .portal-minimized-status {
-  font-family: var(--mono);
+  font-family: var(--font-ui);
   text-transform: uppercase;
 }
 
 .portal-minimized-label {
-  font-size: 10px;
-  font-weight: 600;
+  font-size: var(--size-sm);
+  font-weight: var(--weight-semibold);
   letter-spacing: 0.16em;
 }
 
 .portal-minimized-status {
   flex: 1;
-  font-size: 9px;
+  font-size: var(--size-xs);
   letter-spacing: 0.12em;
   color: var(--white);
   text-align: right;
@@ -1024,8 +1046,8 @@ body.portal-active #nav {
 
 .mod-tag {
   display: block;
-  font-family: var(--mono);
-  font-size: 10px;
+  font-family: var(--font-ui);
+  font-size: var(--size-sm);
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--dim);
@@ -1033,9 +1055,9 @@ body.portal-active #nav {
 }
 
 .mod-title {
-  font-family: var(--display);
-  font-size: 13px;
-  font-weight: 700;
+  font-family: var(--font-display);
+  font-size: var(--size-base);
+  font-weight: var(--weight-bold);
   color: var(--white);
   margin-bottom: 1.25rem;
 }
@@ -1048,8 +1070,8 @@ body.portal-active #nav {
   border: 1px solid var(--border);
   border-bottom: none;
   color: var(--white);
-  font-family: var(--mono);
-  font-size: 13px;
+  font-family: var(--font-mono);  /* user-typed addresses and amounts — mono */
+  font-size: var(--size-sm);
   line-height: 1.2;
   min-height: 42px;
   padding: 11px 12px;
@@ -1151,8 +1173,8 @@ body.portal-active #nav {
 .tx-field--error:focus { border-color: var(--warn) !important; }
 
 .tx-recipient-error {
-  font-family: var(--mono);
-  font-size: 11px;
+  font-family: var(--font-ui);
+  font-size: var(--size-xs);
   letter-spacing: 0.04em;
   color: var(--warn);
   margin-top: 5px;
@@ -1169,22 +1191,22 @@ body.portal-active #nav {
 }
 
 .fee-label {
-  font-family: var(--mono);
-  font-size: 11px;
+  font-family: var(--font-ui);   /* label — not a value */
+  font-size: var(--size-sm);
   letter-spacing: 0.08em;
   color: var(--white);
 }
 
 .fee-val {
-  font-family: var(--mono);
-  font-size: 11px;
+  font-family: var(--font-mono);  /* numeric fee amount — stays mono */
+  font-size: var(--size-xs);
   color: var(--white);
 }
 
 .tx-btn {
-  font-family: var(--mono);
-  font-size: 12px;
-  font-weight: 600;
+  font-family: var(--font-ui);
+  font-size: var(--size-sm);
+  font-weight: var(--weight-semibold);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--bg);
@@ -1249,16 +1271,16 @@ body.portal-active #nav {
 .tx-btn--cancel:hover { background: var(--surface-2); color: var(--white); }
 
 .tx-state-note {
-  font-family: var(--mono);
-  font-size: 11px;
+  font-family: var(--font-ui);
+  font-size: var(--size-xs);
   color: var(--dim);
   margin-top: 8px;
   text-align: center;
 }
 
 .tx-status {
-  font-family: var(--mono);
-  font-size: 11px;
+  font-family: var(--font-ui);
+  font-size: var(--size-sm);
   color: var(--white);
   min-height: 1.4em;
   margin-top: 8px;
@@ -1313,8 +1335,8 @@ body.portal-active #nav {
 }
 
 .tx-preview-label {
-  font-family: var(--mono);
-  font-size: 10px;
+  font-family: var(--font-ui);
+  font-size: var(--size-sm);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--dim);
@@ -1324,8 +1346,8 @@ body.portal-active #nav {
 .tx-preview .data-row:last-of-type { border-bottom: none; }
 
 .tx-preview-note {
-  font-family: var(--mono);
-  font-size: 12px;
+  font-family: var(--font-ui);
+  font-size: var(--size-sm);
   letter-spacing: 0.04em;
   color: var(--white);
   text-align: center;
@@ -1352,9 +1374,9 @@ body.portal-active #nav {
   display: flex;
   align-items: flex-start;
   gap: 8px;
-  font-family: var(--mono);
-  font-size: 11px;
-  line-height: 1.4;
+  font-family: var(--font-ui);
+  font-size: var(--size-xs);
+  line-height: var(--leading-ui);
   color: var(--dim);
   padding: 3px 0;
 }
@@ -1387,9 +1409,9 @@ body.portal-active #nav {
   margin-top: 12px;
   margin-bottom: 10px;
   padding-top: 12px;
-  font-family: var(--mono);
-  font-size: 11px;
-  line-height: 1.45;
+  font-family: var(--font-body);  /* confirmation text the user reads carefully — prose */
+  font-size: var(--size-sm);
+  line-height: var(--leading-body);
   color: var(--white);
 }
 
@@ -1415,8 +1437,8 @@ body.portal-active #nav {
 }
 
 .intel-label {
-  font-family: var(--mono);
-  font-size: 10px;
+  font-family: var(--font-ui);
+  font-size: var(--size-sm);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--dim);
@@ -1436,9 +1458,9 @@ body.portal-active #nav {
   display: flex;
   gap: 8px;
   align-items: flex-start;
-  font-family: var(--mono);
-  font-size: 10px;
-  line-height: 1.45;
+  font-family: var(--font-ui);
+  font-size: var(--size-xs);
+  line-height: var(--leading-ui);
   color: var(--dim);
 }
 
@@ -1515,8 +1537,8 @@ body.portal-active #nav {
 }
 
 .fee-explanation-label {
-  font-family: var(--mono);
-  font-size: 10px;
+  font-family: var(--font-ui);
+  font-size: var(--size-sm);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--dim);
@@ -1524,10 +1546,10 @@ body.portal-active #nav {
 }
 
 .fee-explanation-body {
-  font-family: var(--mono);
-  font-size: 11px;
+  font-family: var(--font-body);  /* explanatory prose — not technical data */
+  font-size: var(--size-sm);
   color: var(--white);
-  line-height: 1.55;
+  line-height: var(--leading-body);
 }
 
 .fee-explanation-body a {
@@ -1543,8 +1565,8 @@ body.portal-active #nav {
 }
 
 .receipt-history-label {
-  font-family: var(--mono);
-  font-size: 10px;
+  font-family: var(--font-ui);
+  font-size: var(--size-sm);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--dim);
@@ -1559,9 +1581,9 @@ body.portal-active #nav {
 
 .receipt-empty,
 .receipt-item {
-  font-family: var(--mono);
-  font-size: 11px;
-  line-height: 1.5;
+  font-family: var(--font-mono);  /* receipt records — structured data */
+  font-size: var(--size-xs);
+  line-height: var(--leading-ui);
   color: var(--dim);
 }
 
@@ -1682,36 +1704,42 @@ body.portal-active #nav {
 }
 
 .gas-detail-k {
-  font-family: var(--mono);
-  font-size: 9px;
+  font-family: var(--font-ui);   /* field label */
+  font-size: var(--size-sm);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--dim);
 }
 
 .gas-detail-v {
-  font-family: var(--mono);
-  font-size: 10px;
+  font-family: var(--font-mono);  /* gas price — technical numeric value */
+  font-size: var(--size-xs);
   color: var(--white);
 }
 
-.gas-detail-row--meta .gas-detail-k,
+.gas-detail-row--meta .gas-detail-k {
+  font-family: var(--font-ui);
+  font-size: var(--size-sm);
+  color: var(--dim);
+}
+
 .gas-detail-row--meta .gas-detail-v {
-  font-size: 8px;
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
   color: var(--dim);
 }
 
 .data-k {
-  font-family: var(--mono);
-  font-size: 9px;
+  font-family: var(--font-ui);   /* row label */
+  font-size: var(--size-sm);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--dim);
 }
 
 .data-v {
-  font-family: var(--mono);
-  font-size: 11px;
+  font-family: var(--font-mono);  /* row value — address, hash, or amount */
+  font-size: var(--size-xs);
   color: var(--white);
 }
 
@@ -1728,8 +1756,8 @@ body.portal-active #nav {
 .feed-item:last-child { border-bottom: none; }
 
 .feed-src {
-  font-family: var(--mono);
-  font-size: 8px;
+  font-family: var(--font-ui);
+  font-size: var(--size-sm);
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--muted);
@@ -1737,28 +1765,28 @@ body.portal-active #nav {
 }
 
 .feed-text {
-  font-family: var(--sans);
-  font-size: 12px;
-  font-weight: 500;
+  font-family: var(--font-body);
+  font-size: var(--size-sm);
+  font-weight: var(--weight-medium);
   color: var(--dim);
-  line-height: 1.55;
+  line-height: var(--leading-body);
 }
 
 /* ---- Footer ---- */
 footer {
   border-top: 1px solid var(--border);
-  padding: 2rem 2rem 1.5rem;
+  padding: var(--sp-6) var(--sp-6) var(--sp-5);
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 1.5rem 2rem;
+  gap: var(--sp-5) var(--sp-6);
 }
 
 .f-copy {
-  font-family: var(--mono);
-  font-size: 10px;
-  font-weight: 600;
+  font-family: var(--font-ui);
+  font-size: var(--size-sm);
+  font-weight: var(--weight-semibold);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--white);
@@ -1768,30 +1796,30 @@ footer {
 .f-links {
   display: flex;
   flex-wrap: wrap;
-  gap: 1rem 2.5rem;
+  gap: var(--sp-4) var(--sp-8);
   align-items: flex-start;
 }
 
 .f-group {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--sp-2);
 }
 
 .f-group-label {
-  font-family: var(--mono);
-  font-size: 8px;
-  font-weight: 600;
+  font-family: var(--font-ui);
+  font-size: var(--size-sm);
+  font-weight: var(--weight-semibold);
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--muted);
-  margin-bottom: 0.2rem;
+  margin-bottom: var(--sp-1);
 }
 
 .f-links a {
-  font-family: var(--sans);
-  font-size: 10px;
-  font-weight: 600;
+  font-family: var(--font-ui);
+  font-size: var(--size-sm);
+  font-weight: var(--weight-semibold);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--dim);
@@ -1804,7 +1832,7 @@ footer {
 .social-links {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  gap: var(--sp-5);
 }
 
 footer .social-links a,
@@ -1813,9 +1841,9 @@ footer .social-links a:visited,
 .social-text-link,
 .social-text-link:link,
 .social-text-link:visited {
-  font-family: var(--sans);
-  font-size: 10px;
-  font-weight: 600;
+  font-family: var(--font-ui);
+  font-size: var(--size-sm);
+  font-weight: var(--weight-semibold);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--white);
@@ -1838,14 +1866,14 @@ footer .social-links a:focus-visible,
 }
 
 .f-net {
-  font-family: var(--mono);
-  font-size: 10px;
-  font-weight: 600;
+  font-family: var(--font-mono);   /* operational state badge — stays mono */
+  font-size: var(--size-xs);
+  font-weight: var(--weight-semibold);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--white);
   border: 1px solid var(--border);
-  padding: 4px 10px;
+  padding: var(--sp-1) var(--sp-3);
 }
 
 /* ---- Hamburger button — mobile only, hidden on desktop ---- */
@@ -1856,7 +1884,7 @@ footer .social-links a:focus-visible,
   background: transparent;
   border: 1px solid var(--border);
   color: var(--white);
-  padding: 8px 10px;
+  padding: var(--sp-2) var(--sp-2);
   cursor: pointer;
   transition: border-color 0.12s;
   flex-shrink: 0;
@@ -1898,14 +1926,14 @@ footer .social-links a:focus-visible,
   border-left: none;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding: 0 0 2rem;
+  padding: 0 0 var(--sp-6);
 }
 
 .mobile-menu-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1rem 1.25rem;
+  padding: var(--sp-4) var(--sp-5);
   border-bottom: 1px solid var(--border);
   position: sticky;
   top: 0;
@@ -1914,9 +1942,9 @@ footer .social-links a:focus-visible,
 }
 
 .mobile-menu-title {
-  font-family: var(--mono);
-  font-size: 9px;
-  font-weight: 600;
+  font-family: var(--font-ui);
+  font-size: var(--size-sm);
+  font-weight: var(--weight-semibold);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--white);
@@ -1926,7 +1954,7 @@ footer .social-links a:focus-visible,
   background: transparent;
   border: 1px solid var(--border);
   color: var(--white);
-  padding: 7px 9px;
+  padding: var(--sp-2) var(--sp-2);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -1937,50 +1965,49 @@ footer .social-links a:focus-visible,
 .mobile-menu-close:hover { border-color: var(--border-2); }
 
 .mobile-menu-section {
-  padding: 1.25rem 1.25rem 0;
+  padding: var(--sp-5) var(--sp-5) var(--sp-5);
   border-bottom: 1px solid var(--border);
-  padding-bottom: 1.25rem;
 }
 
 .mobile-menu-label {
-  font-family: var(--mono);
-  font-size: 8px;
-  font-weight: 600;
+  font-family: var(--font-ui);
+  font-size: var(--size-sm);
+  font-weight: var(--weight-semibold);
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--dim);
-  margin-bottom: 0.75rem;
+  margin-bottom: var(--sp-3);
 }
 
 .mobile-menu-status,
 .mobile-menu-sender,
 .mobile-menu-network {
-  font-family: var(--mono);
-  font-size: 10px;
+  font-family: var(--font-mono);  /* wallet address / system state — technical data */
+  font-size: var(--size-xs);
   letter-spacing: 0.08em;
   color: var(--white);
-  margin-bottom: 0.4rem;
-  line-height: 1.4;
+  margin-bottom: var(--sp-1);
+  line-height: var(--leading-ui);
   overflow-wrap: anywhere;
 }
 
 .mobile-menu-actions {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  margin-top: 0.75rem;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
 }
 
 .mobile-menu-btn {
-  font-family: var(--mono);
-  font-size: 9px;
-  font-weight: 600;
+  font-family: var(--font-ui);
+  font-size: var(--size-sm);
+  font-weight: var(--weight-semibold);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   background: transparent;
   border: 1px solid var(--border);
   color: var(--white);
-  padding: 10px 14px;
+  padding: var(--sp-3) var(--sp-4);
   cursor: pointer;
   text-align: left;
   transition: border-color 0.12s;
@@ -2006,24 +2033,25 @@ footer .social-links a:focus-visible,
 }
 
 .mobile-menu-portal-note {
-  font-family: var(--mono);
-  font-size: 9px;
+  font-family: var(--font-ui);
+  font-size: var(--size-sm);
   color: var(--dim);
   letter-spacing: 0.06em;
-  margin-top: 0.5rem;
+  margin-top: var(--sp-2);
 }
 
 .mobile-menu-links {
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
+  gap: var(--sp-2);
 }
 
 .mobile-menu-links a,
 .mobile-menu-links a:link,
 .mobile-menu-links a:visited {
-  font-family: var(--mono);
-  font-size: 9px;
+  font-family: var(--font-ui);
+  font-size: var(--size-sm);
+  font-weight: var(--weight-semibold);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--white);
@@ -2058,7 +2086,7 @@ footer .social-links a:focus-visible,
   z-index: 1;
   background: var(--bg);
   border: 1px solid var(--border);
-  padding: 1.5rem;
+  padding: var(--sp-5);
   width: 100%;
   max-width: 320px;
 }
@@ -2067,13 +2095,13 @@ footer .social-links a:focus-visible,
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 1.25rem;
+  margin-bottom: var(--sp-5);
 }
 
 .wallet-choice-title {
-  font-family: var(--mono);
-  font-size: 9px;
-  font-weight: 600;
+  font-family: var(--font-ui);
+  font-size: var(--size-sm);
+  font-weight: var(--weight-semibold);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--white);
@@ -2083,7 +2111,7 @@ footer .social-links a:focus-visible,
   background: transparent;
   border: 1px solid var(--border);
   color: var(--white);
-  padding: 6px 8px;
+  padding: var(--sp-1) var(--sp-2);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -2095,19 +2123,19 @@ footer .social-links a:focus-visible,
 .wallet-choice-actions {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--sp-2);
 }
 
 .wallet-choice-btn {
-  font-family: var(--mono);
-  font-size: 9px;
-  font-weight: 600;
+  font-family: var(--font-ui);
+  font-size: var(--size-sm);
+  font-weight: var(--weight-semibold);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   background: transparent;
   border: 1px solid var(--border);
   color: var(--white);
-  padding: 12px 14px;
+  padding: var(--sp-3) var(--sp-4);
   cursor: pointer;
   text-align: left;
   transition: border-color 0.12s;
@@ -2129,12 +2157,12 @@ footer .social-links a:focus-visible,
 }
 
 .wallet-choice-note {
-  font-family: var(--mono);
-  font-size: 9px;
+  font-family: var(--font-ui);
+  font-size: var(--size-sm);
   color: var(--muted);
   text-align: center;
   margin: 0;
-  line-height: 1.5;
+  line-height: var(--leading-body);
 }
 
 /* ---- Secondary / Policy Pages ---- */
@@ -2181,9 +2209,9 @@ footer .social-links a:focus-visible,
 .policy-eyebrow,
 .updated {
   color: var(--muted);
-  font-family: var(--mono);
-  font-size: 10px;
-  font-weight: 600;
+  font-family: var(--font-ui);
+  font-size: var(--size-sm);
+  font-weight: var(--weight-semibold);
   letter-spacing: 0.16em;
   text-transform: uppercase;
 }
@@ -2200,9 +2228,9 @@ footer .social-links a:focus-visible,
 }
 
 .policy-shell h1 {
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 1.25;
+  font-size: var(--size-base);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-tight);
   letter-spacing: 0;
   text-transform: uppercase;
   max-width: none;
@@ -2222,9 +2250,9 @@ footer .social-links a:focus-visible,
 .faq-shell h2 {
   column-span: none;
   break-after: avoid;
-  font-size: 14px;
-  font-weight: 700;
-  line-height: 1.35;
+  font-size: var(--size-base);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-ui);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   margin: 1.45rem 0 0.55rem;
@@ -2239,8 +2267,8 @@ footer .social-links a:focus-visible,
 }
 
 .policy-shell h3 {
-  font-size: 14px;
-  line-height: 1.25;
+  font-size: var(--size-base);
+  line-height: var(--leading-ui);
   letter-spacing: 0.04em;
   margin: 1.85rem 0 0.75rem;
 }
@@ -2260,10 +2288,10 @@ footer .social-links a:focus-visible,
 }
 
 /* Eyebrow/dateline overrides — policy-shell p specificity is (0,1,1);
-   these selectors are (0,2,0) so they win back the correct 10px size. */
+   these selectors are (0,2,0) so they win back the correct size. */
 .policy-shell .policy-eyebrow,
 .policy-shell .updated {
-  font-size: 10px;
+  font-size: var(--size-sm);
   max-width: none;
 }
 
@@ -2390,9 +2418,9 @@ footer .social-links a:focus-visible,
 }
 
 .policy-shell dt {
-  font-family: var(--mono);
-  font-size: 10px;
-  font-weight: 600;
+  font-family: var(--font-ui);   /* label, not data */
+  font-size: var(--size-sm);
+  font-weight: var(--weight-semibold);
   letter-spacing: 0.13em;
   text-transform: uppercase;
   color: var(--muted);
@@ -2401,16 +2429,16 @@ footer .social-links a:focus-visible,
 }
 
 .policy-shell dd {
-  font-family: var(--mono);
-  font-size: 12px;
+  font-family: var(--font-mono);  /* value — often a hash, address, or chain ID */
+  font-size: var(--size-sm);
   color: var(--dim);
   overflow-wrap: anywhere;
-  line-height: 1.6;
+  line-height: var(--leading-ui);
 }
 
 .policy-shell dd a {
-  font-family: var(--mono);
-  font-size: 12px;
+  font-family: var(--font-mono);
+  font-size: var(--size-sm);
 }
 
 /* Verification record block — transaction data */
@@ -2421,15 +2449,16 @@ footer .social-links a:focus-visible,
   border-radius: 3px;
   padding: 1.25rem;
   margin: 0.75rem 0 1.5rem;
-  font-family: var(--mono);
-  font-size: 12px;
-  line-height: 1.55;
+  font-family: var(--font-mono);  /* transaction data block — mono throughout */
+  font-size: var(--size-sm);
+  line-height: var(--leading-ui);
   color: var(--dim);
 }
 
 .v-record-head {
-  font-size: 10px;
-  font-weight: 600;
+  font-family: var(--font-ui);   /* section label, not data */
+  font-size: var(--size-sm);
+  font-weight: var(--weight-semibold);
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--muted);
@@ -2454,8 +2483,9 @@ footer .social-links a:focus-visible,
 .v-record-tx span {
   display: block;
   margin-bottom: 0.25rem;
-  font-size: 9px;
-  font-weight: 600;
+  font-family: var(--font-ui);   /* field label */
+  font-size: var(--size-sm);
+  font-weight: var(--weight-semibold);
   letter-spacing: 0.13em;
   text-transform: uppercase;
   color: var(--muted);
@@ -2477,18 +2507,18 @@ footer .social-links a:focus-visible,
   display: inline-block;
   max-width: 100%;
   overflow-wrap: anywhere;
-  font-size: 11px;
+  font-size: var(--size-xs);  /* tx hash — mono from parent .v-record */
   color: var(--dim);
 }
 
 /* Return-to-home link at the foot of secondary pages */
 .back {
   display: inline-block;
-  font-family: var(--mono);
-  font-size: 10px;
-  font-weight: 600;
+  font-family: var(--font-ui);
+  font-size: var(--size-sm);
+  font-weight: var(--weight-semibold);
   letter-spacing: 0.14em;
-  margin-top: 1.5rem;
+  margin-top: var(--sp-5);
   text-transform: uppercase;
   text-decoration: none;
   color: var(--white);
@@ -2543,9 +2573,9 @@ footer .social-links a:focus-visible,
 }
 
 .about-shell h1 {
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 1.25;
+  font-size: var(--size-base);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-tight);
   letter-spacing: 0;
   text-transform: uppercase;
   max-width: none;
@@ -2595,10 +2625,10 @@ footer .social-links a:focus-visible,
 }
 
 .about-card h2 {
-  font-family: var(--display);
-  font-size: 14px;
-  font-weight: 700;
-  line-height: 1.35;
+  font-family: var(--font-display);
+  font-size: var(--size-base);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-ui);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--white);
@@ -2606,10 +2636,10 @@ footer .social-links a:focus-visible,
 }
 
 .about-foot h2 {
-  font-family: var(--display);
-  font-size: 14px;
-  font-weight: 700;
-  line-height: 1.35;
+  font-family: var(--font-display);
+  font-size: var(--size-base);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-ui);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--white);
@@ -2684,37 +2714,37 @@ footer .social-links a:focus-visible,
 }
 
 .news-card-meta {
-  font-family: var(--mono);
-  font-size: 9px;
-  font-weight: 600;
+  font-family: var(--font-ui);
+  font-size: var(--size-sm);
+  font-weight: var(--weight-semibold);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--muted);
 }
 
 .news-card-title {
-  font-family: var(--display);
-  font-size: 14px;
-  font-weight: 700;
+  font-family: var(--font-display);
+  font-size: var(--size-base);
+  font-weight: var(--weight-bold);
   letter-spacing: 0;
   text-transform: none;
   color: var(--white);
-  line-height: 1.35;
+  line-height: var(--leading-ui);
 }
 
 .news-card-lede {
-  font-size: 15px;
-  font-weight: 400;
+  font-size: var(--size-md);
+  font-weight: var(--weight-regular);
   color: var(--dim);
-  line-height: var(--ix-copy-small-line);
+  line-height: var(--leading-body);
   letter-spacing: 0;
   flex: 1;
 }
 
 .news-card-more {
-  font-family: var(--mono);
-  font-size: 9px;
-  font-weight: 600;
+  font-family: var(--font-ui);
+  font-size: var(--size-sm);
+  font-weight: var(--weight-semibold);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--muted);
@@ -2732,9 +2762,9 @@ footer .social-links a:focus-visible,
 }
 
 .news-view-all {
-  font-family: var(--mono);
-  font-size: 9px;
-  font-weight: 600;
+  font-family: var(--font-ui);
+  font-size: var(--size-sm);
+  font-weight: var(--weight-semibold);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--muted);
@@ -2762,10 +2792,10 @@ footer .social-links a:focus-visible,
 .jurisdiction-card ul { margin-bottom: 0; }
 
 .jurisdiction-card li {
-  font-family: var(--mono);
-  font-size: 10px;
-  font-weight: 600;
-  line-height: 1.55;
+  font-family: var(--font-ui);
+  font-size: var(--size-sm);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-ui);
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -3020,11 +3050,11 @@ input[type="number"] {
 }
 
 .trust-anchor-line {
-  font-family: var(--mono);
-  font-size: 11px;
+  font-family: var(--font-body);  /* readable descriptive text — prose */
+  font-size: var(--size-sm);
   color: var(--muted);
   margin: 0;
-  line-height: 1.6;
+  line-height: var(--leading-body);
 }
 
 .trust-anchor-line a {
@@ -3043,9 +3073,9 @@ input[type="number"] {
 .learn-mobile-toggle {
   display: none;
   width: 100%;
-  font-family: var(--mono);
-  font-size: 10px;
-  font-weight: 600;
+  font-family: var(--font-ui);
+  font-size: var(--size-sm);
+  font-weight: var(--weight-semibold);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   background: var(--surface);
@@ -3092,8 +3122,8 @@ input[type="number"] {
   width: 100%;
   background: var(--surface-2);
   color: var(--white);
-  font-family: var(--mono);
-  font-size: 11px;
+  font-family: var(--font-ui);
+  font-size: var(--size-sm);
   border: 1px solid var(--border);
   border-radius: 3px;
   padding: 0.45rem 0.65rem;
@@ -3122,15 +3152,15 @@ input[type="number"] {
   background: none;
   border: none;
   text-align: left;
-  font-family: var(--mono);
-  font-size: 10px;
-  font-weight: 600;
+  font-family: var(--font-ui);
+  font-size: var(--size-sm);
+  font-weight: var(--weight-semibold);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--white);
   padding: 0.85rem 1rem 0.5rem;
   cursor: pointer;
-  line-height: 1.3;
+  line-height: var(--leading-ui);
   transition: color 0.1s;
 }
 
@@ -3161,15 +3191,15 @@ input[type="number"] {
   background: none;
   border: none;
   text-align: left;
-  font-family: var(--mono);
-  font-size: 10px;
-  font-weight: 600;
+  font-family: var(--font-ui);
+  font-size: var(--size-sm);
+  font-weight: var(--weight-semibold);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--dim);
   padding: 0.35rem 1rem 0.35rem 1.25rem;
   cursor: pointer;
-  line-height: 1.4;
+  line-height: var(--leading-ui);
   transition: color 0.1s, background 0.1s;
 }
 
@@ -3178,8 +3208,8 @@ input[type="number"] {
 .learn-nav-link.is-hidden { display: none; }
 
 .learn-sidebar-foot {
-  font-family: var(--mono);
-  font-size: 10px;
+  font-family: var(--font-ui);
+  font-size: var(--size-sm);
   color: var(--muted);
   padding: 0.75rem 1rem 1rem;
   margin: 0;
@@ -3242,9 +3272,9 @@ input[type="number"] {
 .learn-popular { margin-top: 0.5rem; }
 
 .learn-popular-label {
-  font-family: var(--mono);
-  font-size: 9px;
-  font-weight: 600;
+  font-family: var(--font-ui);
+  font-size: var(--size-sm);
+  font-weight: var(--weight-semibold);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--muted);
@@ -3258,9 +3288,9 @@ input[type="number"] {
 }
 
 .learn-popular-btn {
-  font-family: var(--mono);
-  font-size: 11px;
-  font-weight: 500;
+  font-family: var(--font-ui);
+  font-size: var(--size-sm);
+  font-weight: var(--weight-medium);
   background: var(--surface-2);
   color: var(--dim);
   border: 1px solid var(--border);
@@ -3268,7 +3298,7 @@ input[type="number"] {
   padding: 0.45rem 0.85rem;
   cursor: pointer;
   transition: color 0.1s, border-color 0.1s, background 0.1s;
-  line-height: 1.4;
+  line-height: var(--leading-ui);
 }
 
 .learn-popular-btn:hover {
@@ -3286,18 +3316,19 @@ input[type="number"] {
 }
 
 .learn-entry h3 {
-  font-family: var(--display);
-  font-size: 14px;
-  font-weight: 600;
+  font-family: var(--font-body);  /* h3 → Inter per constitution; --font-display is too much at this size */
+  font-size: var(--size-base);
+  font-weight: var(--weight-bold);
   margin: 1.75rem 0 0.6rem;
 }
 
 .learn-entry p,
 .learn-entry li {
+  font-family: var(--font-body);
   color: var(--dim);
-  font-weight: 500;
-  font-size: 14px;
-  line-height: 1.75;
+  font-weight: var(--weight-medium);
+  font-size: var(--size-base);
+  line-height: var(--leading-body);
 }
 
 .learn-entry p { margin: 0 0 1rem; }
@@ -3311,8 +3342,8 @@ input[type="number"] {
 }
 
 .learn-entry code {
-  font-family: var(--mono);
-  font-size: 11px;
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
   background: var(--surface-2);
   border: 1px solid var(--border);
   border-radius: 2px;
@@ -3323,16 +3354,17 @@ input[type="number"] {
 .learn-entry table {
   width: 100%;
   border-collapse: collapse;
-  font-family: var(--mono);
-  font-size: 11px;
+  font-family: var(--font-mono);  /* data table — mono throughout */
+  font-size: var(--size-xs);
   margin-bottom: 1.25rem;
 }
 
 .learn-entry th {
-  font-weight: 600;
+  font-family: var(--font-ui);   /* column header — not data */
+  font-weight: var(--weight-semibold);
   text-transform: uppercase;
   letter-spacing: 0.07em;
-  font-size: 9px;
+  font-size: var(--size-sm);
   color: var(--muted);
   text-align: left;
   padding: 0.5rem 0.75rem;
@@ -3371,9 +3403,9 @@ input[type="number"] {
 }
 
 .learn-back {
-  font-family: var(--mono);
-  font-size: 10px;
-  font-weight: 600;
+  font-family: var(--font-ui);
+  font-size: var(--size-sm);
+  font-weight: var(--weight-semibold);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   background: none;
@@ -3423,7 +3455,7 @@ input[type="number"] {
   .learn-popular-grid { gap: 0.4rem; }
 
   .learn-popular-btn {
-    font-size: 10px;
+    font-size: var(--size-sm);
     padding: 0.4rem 0.7rem;
   }
 }
