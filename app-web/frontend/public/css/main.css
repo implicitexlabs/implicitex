@@ -2155,29 +2155,18 @@ footer .social-links a:focus-visible,
   max-width: none;
   font-size: var(--ix-copy-size);
   line-height: var(--ix-copy-line);
-  margin: 1rem 0 1.5rem;
-}
-
-/* Terms page — legal copy needs steadier section rhythm than the
-   multi-column policy default. */
-.terms-shell {
-  column-count: 1;
-}
-
-.terms-shell > p,
-.terms-shell > ul {
-  max-width: var(--ix-section-copy-max);
+  margin: 0 0 0.85rem;
 }
 
 .terms-shell .updated {
-  margin: 0 auto 1.15rem;
+  margin-bottom: 1.15rem;
   text-align: center;
 }
 
 .terms-shell > h2 {
-  max-width: var(--ix-section-copy-max);
-  margin: 2.6rem 0 0.85rem;
-  padding-top: 1.45rem;
+  column-span: none;
+  margin: 2rem 0 0.75rem;
+  padding-top: 1.1rem;
   border-top: 1px solid var(--border);
   font-size: 16px;
   line-height: 1.25;
@@ -2186,7 +2175,7 @@ footer .social-links a:focus-visible,
 }
 
 .terms-shell > h2:first-of-type {
-  margin-top: 2rem;
+  margin-top: 1.45rem;
 }
 
 .terms-shell > p {
@@ -2204,6 +2193,24 @@ footer .social-links a:focus-visible,
 .terms-shell > li,
 .terms-shell li {
   margin-bottom: 0.45rem;
+}
+
+.media-shell h2 {
+  column-span: none;
+  margin: 1.55rem 0 0.7rem;
+}
+
+.media-shell h2:first-of-type {
+  margin-top: 1.2rem;
+}
+
+.privacy-shell h2 {
+  column-span: none;
+  margin: 1.65rem 0 0.7rem;
+}
+
+.privacy-shell h2:first-of-type {
+  margin-top: 1.2rem;
 }
 
 /* Verification page — public proof panel */
@@ -2627,6 +2634,15 @@ footer .social-links a:focus-visible,
 }
 
 .jurisdiction-card ul { margin-bottom: 0; }
+
+.jurisdiction-card li {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.55;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
 
 /* ---- Shell gutter — restore side padding below the interface max + gutter threshold.
    At 1328px (1280px shell + 2×24px gutter), the viewport is too narrow to keep
