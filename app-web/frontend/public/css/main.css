@@ -698,6 +698,13 @@ body.portal-active #nav {
   display: block;
 }
 
+/* Non-custodial is a phrase, not a short metric — reduce its visual weight
+   so it doesn't pull the right side of the strip heavier than 1% and USDC. */
+.stat-strip .stat-item:last-child .stat-val {
+  font-size: clamp(1rem, 1.3vw, 1.35rem);
+  letter-spacing: 0.02em;
+}
+
 .gas-tiers {
   display: inline-grid;
   grid-auto-flow: column;
