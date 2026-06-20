@@ -2255,12 +2255,15 @@ footer .social-links a:focus-visible,
 .faq-shell h2 {
   column-span: none;
   break-after: avoid;
-  font-size: var(--size-base);
   font-weight: var(--weight-bold);
   line-height: var(--leading-ui);
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  margin: 1.45rem 0 0.55rem;
+  margin: 3rem 0 0.55rem;
+}
+
+.faq-shell h2:first-of-type {
+  margin-top: 0;
 }
 
 .faq-shell p {
@@ -2559,7 +2562,7 @@ footer .social-links a:focus-visible,
 
 .about-brandmark {
   display: block;
-  width: clamp(58px, 5.3vw, 76px);
+  width: min(58px, 12.8vw);
   height: auto;
   flex: 0 0 auto;
 }
@@ -2695,6 +2698,24 @@ footer .social-links a:focus-visible,
   margin-top: 0.4rem;
 }
 
+.news-share-btn {
+  display: inline-block;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: var(--size-sm);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 0;
+  margin-top: 1.5rem;
+  transition: color 0.12s;
+}
+
+.news-share-btn:hover { color: var(--white); }
+
 /* ---- News Preview (landing page) ---- */
 
 .news-preview {
@@ -2729,7 +2750,7 @@ footer .social-links a:focus-visible,
 
 .news-card-title {
   font-family: var(--font-display);
-  font-size: var(--size-base);
+  font-size: clamp(16px, 2vw, 22px);
   font-weight: var(--weight-bold);
   letter-spacing: 0;
   text-transform: none;

@@ -717,7 +717,7 @@
       return '<div class="news-card">' +
         '<span class="news-card-meta">' +
           '<time datetime="' + a.dateIso + '">' + a.date + '</time>' +
-          ' &nbsp;·&nbsp; ' + a.category +
+          ' &nbsp;·&nbsp; ' + (a.category === 'Platform' ? 'implicitex.com' : a.category) +
         '</span>' +
         '<p class="news-card-title">' + a.title + '</p>' +
         '<p class="news-card-lede">' + a.lede + '</p>' +

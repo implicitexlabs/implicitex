@@ -227,19 +227,43 @@
     var container = document.getElementById('newsArticles');
     if (!container) return;
 
+    /* Build lookup for share handler */
+    var articleMap = {};
+    articles.forEach(function (a) { articleMap[a.id] = a; });
+
     container.innerHTML = articles.map(function (a) {
       var bodyHtml = a.body.map(function (p) {
         return '<p>' + p + '</p>';
       }).join('');
+      var categoryLabel = a.category === 'Platform' ? 'implicitex.com' : a.category;
       return '<article class="news-article" id="' + a.id + '">' +
         '<p class="updated" style="margin-bottom:0.5rem">' +
           '<time datetime="' + a.dateIso + '">' + a.date + '</time>' +
-          ' &nbsp;&middot;&nbsp; ' + a.category +
+          ' &nbsp;&middot;&nbsp; ' + categoryLabel +
         '</p>' +
         '<h2>' + a.title + '</h2>' +
         bodyHtml +
+        '<button class="news-share-btn" data-id="' + a.id + '">Share</button>' +
         '</article>';
     }).join('');
+
+    /* Share handler */
+    container.addEventListener('click', function (e) {
+      var btn = e.target.closest('.news-share-btn');
+      if (!btn) return;
+      var a = articleMap[btn.dataset.id];
+      if (!a) return;
+      var url = 'https://implicitex.com/news.html#' + a.id;
+      var text = a.title + '\n\n' + a.lede;
+      if (navigator.share) {
+        navigator.share({ title: a.title, text: text, url: url });
+      } else {
+        navigator.clipboard.writeText(text + '\n\n' + url).then(function () {
+          btn.textContent = 'Copied';
+          setTimeout(function () { btn.textContent = 'Share'; }, 2000);
+        });
+      }
+    });
 
     /* Scroll to the anchor from the URL hash if present */
     if (location.hash) {
