@@ -3457,7 +3457,8 @@
             autoOpen:   true,
           });
         } else {
-          const rejected = errCode === 4001 ||
+          const rejected = errCode === 4001 || errCode === 5000 ||
+            err.code === 'ACTION_REJECTED' ||
             (err.info && err.info.error && err.info.error.code === 4001);
           if (rejected) {
             setTransferNote('');
@@ -3725,7 +3726,8 @@
             autoOpen:   true,
           });
         } else {
-          const rejected = errCode === 4001 ||
+          const rejected = errCode === 4001 || errCode === 5000 ||
+            err.code === 'ACTION_REJECTED' ||
             (err.info && err.info.error && err.info.error.code === 4001);
           if (rejected) {
             setTransferNote('');
@@ -3760,10 +3762,12 @@
             });
             failTransferTimeline('transfer_requested', explained.title);
             setTxState('idle', `${explained.title}. ${explained.retryGuidance}`);
-            // eventVal includes raw error code so it's visible on mobile without USB debugging
-            const eventVal = rawCode != null
-              ? explained.code + ' (raw: ' + rawCode + ')'
-              : explained.code;
+            // eventVal includes raw error code and message so it's visible on mobile without USB debugging
+            const rawDetail = ERROR_CLASSIFIER ? ERROR_CLASSIFIER.cleanDetail(err) : (err && err.message || '');
+            const eventParts = [explained.code];
+            if (rawCode != null) eventParts.push('code:' + rawCode);
+            if (rawDetail) eventParts.push(rawDetail);
+            const eventVal = eventParts.join(' — ');
             companionState(IX_TRANSFER_STATES.INTERRUPTED, {
               statusLine: 'Transfer interrupted before broadcast.',
               stateVal:   explained.title,
