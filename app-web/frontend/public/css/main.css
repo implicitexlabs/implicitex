@@ -2721,7 +2721,7 @@ footer .social-links a:focus-visible,
 .news-preview {
   max-width: var(--ix-interface-max);
   margin: 0 auto;
-  padding: 2.5rem 1.5rem 0;
+  padding: 1.5rem 1.5rem 0;
 }
 
 .news-grid {
