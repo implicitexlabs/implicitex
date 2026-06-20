@@ -2752,8 +2752,8 @@ footer .social-links a:focus-visible,
   font-family: var(--font-display);
   font-size: clamp(16px, 2vw, 22px);
   font-weight: var(--weight-bold);
-  letter-spacing: 0;
-  text-transform: none;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
   color: var(--white);
   line-height: var(--leading-ui);
 }
