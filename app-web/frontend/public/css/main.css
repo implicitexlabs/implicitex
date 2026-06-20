@@ -551,10 +551,8 @@ code, kbd, pre,
 .hero {
   position: relative;
   min-height: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  justify-items: center;
   overflow: hidden;
   padding: calc(var(--nav-h) + 7vh + 100px) 0 5vh;
   transition: opacity 0.45s ease, padding 0.45s ease;
@@ -576,19 +574,23 @@ body.portal-active #nav {
 
 #worldCanvas {
   position: absolute;
-  inset: 0;
-  width: 100%;
+  top: 0;
+  left: 50%;
+  --ix-map-optical-nudge: 0px;
+  transform: translateX(calc(-50% + var(--ix-map-optical-nudge)));
+  width: min(100vw, 1184px);
   height: 100%;
+  pointer-events: none;
 }
 
 .hero-inner {
   position: relative;
-  z-index: 2;
-  text-align: center;
-  padding: 0 1.5rem;
-  max-width: var(--ix-interface-max);
-  width: 100%;
+  z-index: 1;
+  width: min(100% - 2rem, 1184px);
   margin-inline: auto;
+  display: grid;
+  justify-items: center;
+  text-align: center;
 }
 
 .headline {
@@ -625,18 +627,24 @@ body.portal-active #nav {
   animation: fadeUp 0.7s 0.55s both;
 }
 
-/* Stat strip — 7-column grid: [1fr sep 1fr sep 1fr sep 1fr]
-   Equal 1fr columns ensure all four stats share one visual center axis.
-   Content-width flex (fit-content) was right-heavy because the gas column
-   was max-content while the other three were 108px. */
+/* Stat strip — explicit 7-column grid matching HTML structure:
+   [stat sep stat sep gas sep stat]
+   Gas column gets 1.25fr + 180px min to accommodate the wider live display.
+   Explicit column widths + shared center axis eliminates visual right-bias. */
 .stat-strip {
   display: grid;
-  grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr;
-  column-gap: 1.5rem;
+  grid-template-columns:
+    minmax(120px, 1fr)
+    1px
+    minmax(120px, 1fr)
+    1px
+    minmax(180px, 1.25fr)
+    1px
+    minmax(160px, 1fr);
+  column-gap: 1.25rem;
   align-items: center;
-  justify-items: center;
   white-space: nowrap;
-  width: min(100%, var(--ix-section-copy-max));
+  width: min(100%, 920px);
   margin: 0 auto 1.5rem;
   animation: fadeUp 0.7s 0.4s both;
 }
@@ -749,9 +757,9 @@ body.portal-active #nav {
 
 /* ---- How It Works ---- */
 .how-it-works {
-  max-width: var(--ix-interface-max);
-  margin: 0 auto;
-  padding: 1rem 1.5rem 0;
+  width: min(100% - 2rem, 1184px);
+  margin-inline: auto;
+  padding: 1rem 0 0;
 }
 
 .section-kicker {
