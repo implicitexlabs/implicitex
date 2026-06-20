@@ -627,30 +627,23 @@ body.portal-active #nav {
   animation: fadeUp 0.7s 0.55s both;
 }
 
-/* Stat strip — four equal columns so no stat pulls visual weight.
-   Gas text is controlled inside its own cell, not by a wider column. */
+/* Stat strip — inline-grid shrinks to content width and centers like text.
+   .hero-inner already has justify-items:center, so no margin math needed. */
 .stat-strip {
-  display: grid;
-  grid-template-columns:
-    minmax(0, 1fr)
-    1px
-    minmax(0, 1fr)
-    1px
-    minmax(0, 1fr)
-    1px
-    minmax(0, 1fr);
+  display: inline-grid;
+  grid-template-columns: auto 1px auto 1px auto 1px auto;
   column-gap: 1.25rem;
   align-items: center;
   justify-items: center;
+  width: max-content;
+  max-width: 100%;
+  margin-inline: auto;
+  margin-block: 0 1.5rem;
   white-space: nowrap;
-  width: min(100%, 920px);
-  margin: 0 auto 1.5rem;
   animation: fadeUp 0.7s 0.4s both;
 }
 
 .stat-item {
-  min-width: 0;
-  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -659,7 +652,7 @@ body.portal-active #nav {
 }
 
 .stat-gas {
-  /* column width now controls sizing; max-content removed */
+  /* sizing handled by inline-grid content width */
 }
 
 .stat-link {
