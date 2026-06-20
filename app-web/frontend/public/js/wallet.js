@@ -621,6 +621,19 @@
     };
   }
 
+  // QA diagnostic helper: extract serializable fields from a wallet/provider error.
+  // Used to surface raw error detail on mobile where console is not accessible.
+  function serializeWalletError(err) {
+    if (!err) return { empty: true };
+    var safe = {};
+    ['name', 'code', 'message', 'shortMessage', 'reason', 'data', 'info', 'cause', 'error', 'payload'].forEach(function (key) {
+      try { if (err[key] !== undefined) safe[key] = String(err[key]); } catch (_) {}
+    });
+    try { safe.keys = Object.keys(err); } catch (_) { safe.keys = []; }
+    try { safe.stackFirstLine = err.stack ? String(err.stack).split('\n')[0] : ''; } catch (_) {}
+    return safe;
+  }
+
   // Persistent contextual note below the button — explains the current transfer gate.
   // Empty string clears it (element is invisible when empty).
   function setTransferNote(msg) {
@@ -3809,6 +3822,10 @@
     let txBroadcast = false;
     let broadcastHash = null;
     let broadcastUrl = null;
+    // diagnosticHold: set true when a pre-broadcast failure renders a QA diagnostic
+    // block in-page. Prevents the finally from calling exitReview, which would
+    // collapse the review panel and hide the diagnostic before the user can screenshot.
+    let diagnosticHold = false;
     try {
       console.log('[IX] invoking transferWithFee — recipient:', recipient, 'rawAmount:', rawAmount.toString());
       setStatus('Opening final MetaMask transfer confirmation…');
@@ -3983,6 +4000,7 @@
           } else {
             const rawCode = providerErrorCode(err);
             const rawDetail = ERROR_CLASSIFIER ? ERROR_CLASSIFIER.cleanDetail(err) : (err && err.message || '');
+            const walletDiag = serializeWalletError(err);
             console.error('[IX] transferWithFee error (pre-broadcast):', err);
             console.error('[IX] error breakdown:', {
               code:         err && err.code,
@@ -4020,6 +4038,17 @@
               actionVal:  explained.retryGuidance,
               autoOpen:   true,
             });
+            // Render a persistent QA diagnostic block in the txStatus area so the
+            // raw error is visible on mobile without USB console access. The block
+            // stays visible until the user refreshes — exitReview is suppressed.
+            if (els.txStatus) {
+              const diagPre = document.createElement('pre');
+              diagPre.style.cssText = 'white-space:pre-wrap;word-break:break-all;font-size:10px;color:var(--red,#f33);text-align:left;margin:0.75rem 0 0;max-height:320px;overflow-y:auto;border:1px solid currentColor;padding:0.5rem;border-radius:4px;';
+              diagPre.textContent = 'QA WALLET ERROR\n' + JSON.stringify(walletDiag, null, 2);
+              els.txStatus.innerHTML = '';
+              els.txStatus.appendChild(diagPre);
+            }
+            diagnosticHold = true; // prevent exitReview from collapsing the panel
           }
         }
       }
@@ -4042,10 +4071,12 @@
       }
       // Other unexpected errors: let finally clean up without rethrowing.
     } finally {
-      // Always release the flow lock and exit review.
-      // Terminal states preserve the status message; errors unlock the form for editing.
+      // Always release the flow lock.
       activeTransferFlow = false;
-      if (!transferConfirmed) {
+      // diagnosticHold: a QA diagnostic block is rendered in-page after an
+      // unclassified pre-broadcast failure. Leave the review panel open so the
+      // user can screenshot the raw error. exitReview collapses the panel.
+      if (!transferConfirmed && !diagnosticHold) {
         const preserveTimeline = !!(state.transferTimeline && state.transferTimeline.terminal);
         exitReview({ clearStatus: false, preserveTimeline });
       }
