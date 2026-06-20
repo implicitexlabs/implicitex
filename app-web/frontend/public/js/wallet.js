@@ -3716,6 +3716,9 @@
         return;
       }
 
+      // QA: log gate allowance/balance values before dry-run (visible on desktop; use companion on mobile).
+      console.log('[IX] final-gate allowance:', gateAllowance !== null ? ethers.formatUnits(BigInt(gateAllowance), 6) : 'unread', 'totalDebit:', ethers.formatUnits(totalDebit, 6));
+
       // 5. Dry-run via staticCall — catches contract revert before wallet prompt fires.
       try {
         await gateImplicitex.transferWithFee.staticCall(recipient, rawAmount);
@@ -3744,6 +3747,8 @@
         return;
       }
 
+      console.log('[IX] final-gate: staticCall passed');
+
       // 6. estimateGas — catches RPC and mobile provider failures before the prompt.
       try {
         await gateImplicitex.transferWithFee.estimateGas(recipient, rawAmount);
@@ -3771,6 +3776,8 @@
         });
         return;
       }
+
+      console.log('[IX] final-gate: estimateGas passed — all gate checks cleared');
     }
 
     // Narrate BEFORE MetaMask fires.
@@ -3803,7 +3810,11 @@
     let broadcastHash = null;
     let broadcastUrl = null;
     try {
+      console.log('[IX] invoking transferWithFee — recipient:', recipient, 'rawAmount:', rawAmount.toString());
+      setStatus('Opening final MetaMask transfer confirmation…');
       const tx = await implicitex.transferWithFee(recipient, rawAmount);
+      console.log('[IX] transferWithFee returned — hash:', tx && tx.hash);
+      setStatus('Transfer submitted to network: ' + (tx && tx.hash ? tx.hash.slice(0, 12) + '…' : 'no hash'));
       broadcastHash = tx.hash;
       broadcastUrl = `${chainConfig.explorerUrl}/tx/${broadcastHash}`;
 
@@ -3971,11 +3982,21 @@
             });
           } else {
             const rawCode = providerErrorCode(err);
+            const rawDetail = ERROR_CLASSIFIER ? ERROR_CLASSIFIER.cleanDetail(err) : (err && err.message || '');
             console.error('[IX] transferWithFee error (pre-broadcast):', err);
-            console.error('[IX] raw provider error code:', rawCode);
+            console.error('[IX] error breakdown:', {
+              code:         err && err.code,
+              providerCode: rawCode,
+              message:      err && err.message,
+              shortMessage: err && err.shortMessage,
+              reason:       err && err.reason,
+              data:         err && err.data,
+              info:         err && err.info,
+            });
             const explained = classifyTransferError(err, { phase: 'transfer', broadcastKnown: false });
             setTransferNote('');
-            setStatus('');
+            // Surface raw detail in status so it is visible on mobile without USB debugging.
+            setStatus(rawDetail ? `${explained.title}: ${rawDetail}` : explained.title);
             resolveReceipt(receiptId, {
               state: IX_TRANSFER_STATES.INTERRUPTED,
               fundsMoved: explained.fundsMoved,
@@ -3983,11 +4004,12 @@
             });
             failTransferTimeline('transfer_requested', explained.title);
             setTxState('idle', `${explained.title}. ${explained.retryGuidance}`);
-            // eventVal includes raw error code and message so it's visible on mobile without USB debugging
-            const rawDetail = ERROR_CLASSIFIER ? ERROR_CLASSIFIER.cleanDetail(err) : (err && err.message || '');
+            // eventVal includes raw error fields so they are visible in companion on mobile.
             const eventParts = [explained.code];
             if (rawCode != null) eventParts.push('code:' + rawCode);
+            if (err && err.shortMessage) eventParts.push('short:' + String(err.shortMessage).slice(0, 80));
             if (rawDetail) eventParts.push(rawDetail);
+            if (err && err.data) eventParts.push('data:' + String(err.data).slice(0, 60));
             const eventVal = eventParts.join(' — ');
             companionState(IX_TRANSFER_STATES.INTERRUPTED, {
               statusLine: 'Transfer interrupted before broadcast.',
