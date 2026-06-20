@@ -254,7 +254,8 @@
       var a = articleMap[btn.dataset.id];
       if (!a) return;
       var url = 'https://implicitex.com/news.html#' + a.id;
-      var text = a.title + '\n\n' + a.lede;
+      var bodyText = Array.isArray(a.body) ? a.body.join('\n\n') : (a.lede || '');
+      var text = a.title + '\n\n' + bodyText + '\n\nimplicitex.com';
       if (navigator.share) {
         navigator.share({ title: a.title, text: text, url: url });
       } else {

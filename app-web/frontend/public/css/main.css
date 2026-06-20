@@ -629,6 +629,7 @@ body.portal-active #nav {
   align-items: stretch;
   justify-content: center;
   white-space: nowrap;
+  width: fit-content;
   margin: 0 auto 1.5rem;
   animation: fadeUp 0.7s 0.4s both;
 }
@@ -2753,7 +2754,7 @@ footer .social-links a:focus-visible,
   font-size: clamp(16px, 2vw, 22px);
   font-weight: var(--weight-bold);
   letter-spacing: -0.01em;
-  text-transform: uppercase;
+  text-transform: none;
   color: var(--white);
   line-height: var(--leading-ui);
 }
