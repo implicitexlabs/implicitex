@@ -3419,6 +3419,12 @@
         setTxState('pending', 'Authorization submitted.', 'Confirming approval…');
         setTransferNote('Step 1 of 2 — Approval submitted — awaiting chain confirmation…');
         await approveTx.wait();
+        // On mobile MetaMask's in-app browser the provider's internal state may
+        // not have settled immediately after the approval receipt. A short pause
+        // reduces the chance of -32603 on the next wallet prompt.
+        if (/mobile/i.test(navigator.userAgent) && activeProvider && activeProvider.isMetaMask) {
+          await new Promise(function (resolve) { setTimeout(resolve, 900); });
+        }
         // Check flow after the approval wait — account or network may have changed
         // while we were blocked on the confirmation.
         assertFlowActive();
@@ -3550,6 +3556,221 @@
         await new Promise(function (resolve) { setTimeout(resolve, ALLOWANCE_POLL_MS); });
       }
       assertFlowActive(); // account or network may have changed during the wait
+    }
+
+    // ---- Final wallet readiness gate ----
+    // Runs after approval (if any) and allowance polling, before the funds-moving
+    // prompt narrates or fires. Rehydrates the provider/signer so that any
+    // provider state drift on mobile MetaMask is caught here rather than at
+    // transferWithFee(). Each check returns early on failure; the outer finally
+    // resets activeTransferFlow and exits review.
+    {
+      // 1. Confirm wallet account has not changed.
+      let gateAccounts;
+      try { gateAccounts = await activeProvider.request({ method: 'eth_accounts' }); } catch (_) { gateAccounts = null; }
+      const gateSender = gateAccounts && gateAccounts[0];
+      if (!gateSender || gateSender.toLowerCase() !== state.address.toLowerCase()) {
+        clearTransferForm();
+        state.address = gateSender || null;
+        updateSenderDisplay();
+        setTransferNote('');
+        setStatus('Wallet account changed before transfer prompt. No funds moved. Reconnect and retry.');
+        resolveReceipt(receiptId, {
+          state: IX_TRANSFER_STATES.INTERRUPTED,
+          fundsMoved: false,
+          lastKnownMessage: 'Wallet account changed before transfer prompt. No funds moved.',
+        });
+        failTransferTimeline(
+          needsApproval ? 'authorization_confirmed' : 'review_ready',
+          'Account changed before transfer prompt'
+        );
+        companionState(IX_TRANSFER_STATES.INTERRUPTED, {
+          statusLine: 'Wallet account changed before transfer prompt.',
+          stateVal:   'Interrupted',
+          fundsVal:   'No — transfer did not proceed',
+          networkVal: chainConfig.name,
+          eventVal:   'Account mismatch at final readiness gate',
+          actionVal:  'Reconnect wallet and re-enter transfer details.',
+          autoOpen:   true,
+        });
+        return;
+      }
+
+      // 2. Confirm chain has not changed.
+      let gateChainHex;
+      try { gateChainHex = await activeProvider.request({ method: 'eth_chainId' }); } catch (_) { gateChainHex = null; }
+      const gateChainId = gateChainHex ? normalizeChainId(gateChainHex) : null;
+      if (!gateChainId || !isLiveTransferChain(gateChainId)) {
+        setTransferNote('');
+        setStatus('Network changed before transfer prompt. Switch back to Polygon and retry.');
+        resolveReceipt(receiptId, {
+          state: IX_TRANSFER_STATES.INTERRUPTED,
+          fundsMoved: false,
+          lastKnownMessage: 'Network changed before transfer prompt. No funds moved.',
+        });
+        failTransferTimeline(
+          needsApproval ? 'authorization_confirmed' : 'review_ready',
+          'Network changed before transfer prompt'
+        );
+        companionState(IX_TRANSFER_STATES.INTERRUPTED, {
+          statusLine: 'Network changed before transfer prompt.',
+          stateVal:   'Interrupted',
+          fundsVal:   'No — transfer did not proceed',
+          networkVal: chainConfig.name,
+          eventVal:   'Chain mismatch at final readiness gate',
+          actionVal:  'Switch wallet back to Polygon and retry.',
+          autoOpen:   true,
+        });
+        return;
+      }
+
+      // 3. Fresh signer + contracts for remaining checks and dry-run.
+      //    On mobile MetaMask the original signer may reference stale provider state.
+      //    If the fresh signer cannot be obtained, the provider is not ready —
+      //    treat as INTERRUPTED rather than continuing with possibly stale state.
+      let gateSigner;
+      try {
+        const gateProvider = new ethers.BrowserProvider(activeProvider);
+        gateSigner = await gateProvider.getSigner(state.address);
+      } catch (_) {
+        setTransferNote('');
+        setStatus('Wallet provider was not ready for the final confirmation. Reopen MetaMask and retry.');
+        resolveReceipt(receiptId, {
+          state: IX_TRANSFER_STATES.INTERRUPTED,
+          fundsMoved: false,
+          lastKnownMessage: 'Wallet provider was not ready for the final confirmation. No funds moved.',
+        });
+        failTransferTimeline(
+          needsApproval ? 'authorization_confirmed' : 'review_ready',
+          'Provider not ready at final readiness gate'
+        );
+        companionState(IX_TRANSFER_STATES.INTERRUPTED, {
+          statusLine: 'Wallet provider was not ready for the final confirmation.',
+          stateVal:   'Interrupted',
+          fundsVal:   'No — transfer did not proceed',
+          networkVal: chainConfig.name,
+          eventVal:   'Fresh signer unavailable at final gate',
+          actionVal:  'Reopen MetaMask and retry.',
+          autoOpen:   true,
+        });
+        return;
+      }
+      const gateUsdc       = new ethers.Contract(usdcAddress,     ERC20_ABI,     gateSigner);
+      const gateImplicitex = new ethers.Contract(contractAddress, IMPLICITEX_ABI, gateSigner);
+
+      // 4. Recheck on-chain allowance and balance.
+      let gateAllowance = null;
+      let gateBalance   = null;
+      try {
+        [gateAllowance, gateBalance] = await Promise.all([
+          gateUsdc.allowance(state.address, contractAddress),
+          gateUsdc.balanceOf(state.address),
+        ]);
+      } catch (_) { /* RPC read failure — proceed; contract will catch mismatch */ }
+
+      if (gateAllowance !== null && BigInt(gateAllowance) < totalDebit) {
+        setTransferNote('');
+        setStatus('USDC allowance dropped before transfer prompt. Retry to re-authorize the correct amount.');
+        resolveReceipt(receiptId, {
+          state: IX_TRANSFER_STATES.INTERRUPTED,
+          fundsMoved: false,
+          lastKnownMessage: 'USDC allowance insufficient at final readiness gate. No funds moved.',
+        });
+        failTransferTimeline(
+          needsApproval ? 'authorization_confirmed' : 'review_ready',
+          'Allowance dropped before transfer prompt'
+        );
+        companionState(IX_TRANSFER_STATES.INTERRUPTED, {
+          statusLine: 'USDC allowance insufficient at final readiness gate.',
+          stateVal:   'Interrupted',
+          fundsVal:   'No — transfer did not proceed',
+          networkVal: chainConfig.name,
+          eventVal:   'Allowance below totalDebit at final gate',
+          actionVal:  'Retry to authorize the correct amount.',
+          autoOpen:   true,
+        });
+        return;
+      }
+
+      if (gateBalance !== null && BigInt(gateBalance) < totalDebit) {
+        setTransferNote('');
+        setStatus('USDC balance insufficient before transfer prompt. No funds moved.');
+        resolveReceipt(receiptId, {
+          state: IX_TRANSFER_STATES.INTERRUPTED,
+          fundsMoved: false,
+          lastKnownMessage: 'USDC balance insufficient at final readiness gate. No funds moved.',
+        });
+        failTransferTimeline(
+          needsApproval ? 'authorization_confirmed' : 'review_ready',
+          'Balance insufficient before transfer prompt'
+        );
+        companionState(IX_TRANSFER_STATES.INTERRUPTED, {
+          statusLine: 'USDC balance insufficient at final readiness gate.',
+          stateVal:   'Interrupted',
+          fundsVal:   'No — transfer did not proceed',
+          networkVal: chainConfig.name,
+          eventVal:   'Balance below totalDebit at final gate',
+          actionVal:  'Top up your USDC balance before retrying.',
+          autoOpen:   true,
+        });
+        return;
+      }
+
+      // 5. Dry-run via staticCall — catches contract revert before wallet prompt fires.
+      try {
+        await gateImplicitex.transferWithFee.staticCall(recipient, rawAmount);
+      } catch (staticErr) {
+        const explained = classifyTransferError(staticErr, { phase: 'preflight', broadcastKnown: false });
+        setTransferNote('');
+        setStatus(`${explained.title}. ${explained.retryGuidance}`);
+        resolveReceipt(receiptId, {
+          state: IX_TRANSFER_STATES.FAILED,
+          fundsMoved: false,
+          lastKnownMessage: `Preflight check failed: ${explained.title}. ${explained.message}`,
+        });
+        failTransferTimeline(
+          needsApproval ? 'authorization_confirmed' : 'review_ready',
+          explained.title
+        );
+        companionState(IX_TRANSFER_STATES.FAILED, {
+          statusLine: 'Transfer dry-run failed before wallet prompt.',
+          stateVal:   explained.title,
+          fundsVal:   'No — transfer did not proceed',
+          networkVal: chainConfig.name,
+          eventVal:   explained.code,
+          actionVal:  explained.retryGuidance,
+          autoOpen:   true,
+        });
+        return;
+      }
+
+      // 6. estimateGas — catches RPC and mobile provider failures before the prompt.
+      try {
+        await gateImplicitex.transferWithFee.estimateGas(recipient, rawAmount);
+      } catch (gasErr) {
+        const explained = classifyTransferError(gasErr, { phase: 'preflight', broadcastKnown: false });
+        setTransferNote('');
+        setStatus(`${explained.title}. ${explained.retryGuidance}`);
+        resolveReceipt(receiptId, {
+          state: IX_TRANSFER_STATES.INTERRUPTED,
+          fundsMoved: false,
+          lastKnownMessage: `Gas estimate failed before wallet prompt: ${explained.title}. ${explained.message}`,
+        });
+        failTransferTimeline(
+          needsApproval ? 'authorization_confirmed' : 'review_ready',
+          explained.title
+        );
+        companionState(IX_TRANSFER_STATES.INTERRUPTED, {
+          statusLine: 'Gas estimate failed before wallet prompt.',
+          stateVal:   explained.title,
+          fundsVal:   'No — transfer did not proceed',
+          networkVal: chainConfig.name,
+          eventVal:   explained.code,
+          actionVal:  explained.retryGuidance,
+          autoOpen:   true,
+        });
+        return;
+      }
     }
 
     // Narrate BEFORE MetaMask fires.
