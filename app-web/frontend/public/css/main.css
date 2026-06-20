@@ -625,29 +625,32 @@ body.portal-active #nav {
   animation: fadeUp 0.7s 0.55s both;
 }
 
-/* Stat strip */
+/* Stat strip — 7-column grid: [1fr sep 1fr sep 1fr sep 1fr]
+   Equal 1fr columns ensure all four stats share one visual center axis.
+   Content-width flex (fit-content) was right-heavy because the gas column
+   was max-content while the other three were 108px. */
 .stat-strip {
-  display: flex;
-  gap: 2.5rem;
-  align-items: stretch;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr;
+  column-gap: 1.5rem;
+  align-items: center;
+  justify-items: center;
   white-space: nowrap;
-  width: fit-content;
+  width: min(100%, var(--ix-section-copy-max));
   margin: 0 auto 1.5rem;
   animation: fadeUp 0.7s 0.4s both;
 }
 
 .stat-item {
-  display: grid;
-  grid-template-rows: 24px 14px;
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-items: center;
+  gap: 4px;
   text-align: center;
-  width: 108px;
 }
 
 .stat-gas {
-  width: max-content;
+  /* column width now controls sizing; max-content removed */
 }
 
 .stat-link {
@@ -2966,11 +2969,11 @@ footer .social-links a:focus-visible,
   }
 
   .stat-strip {
-    display: grid;
     grid-template-columns: 1fr;
+    column-gap: 0;
+    row-gap: 0.5rem;
     width: min(100%, calc(100vw - 2rem));
     margin-inline: auto;
-    gap: 0.5rem;
     font-size: var(--size-sm);
     white-space: normal;
   }
@@ -2983,7 +2986,6 @@ footer .social-links a:focus-visible,
   .stat-gas {
     width: 100%;
     min-width: 0;
-    text-align: center;
   }
 
   .gas-tiers {
