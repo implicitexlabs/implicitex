@@ -588,6 +588,7 @@ body.portal-active #nav {
   padding: 0 1.5rem;
   max-width: var(--ix-interface-max);
   width: 100%;
+  margin-inline: auto;
 }
 
 .headline {
@@ -596,6 +597,7 @@ body.portal-active #nav {
   font-weight: var(--weight-bold);
   line-height: var(--leading-tight);
   color: var(--white);
+  text-align: center;
   margin-bottom: var(--sp-4);
   animation: fadeUp 0.7s 0.25s both;
 }
@@ -607,6 +609,7 @@ body.portal-active #nav {
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--dim);
+  text-align: center;
   margin: 0 auto var(--sp-4);
   animation: fadeUp 0.7s 0.32s both;
 }
