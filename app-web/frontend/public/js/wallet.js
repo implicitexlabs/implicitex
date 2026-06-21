@@ -674,6 +674,95 @@
     document.body.appendChild(overlay);
   }
 
+  var IX_QA_BUILD = 'd34d5e2';
+  var IX_QA_LS_KEY = 'ix_qa_last_wallet_error';
+
+  // Write a diagnostic snapshot to localStorage before UI cleanup can remove it.
+  // Survives page reload and form reset — readable even if the overlay flickers away.
+  function persistWalletDiag(stage, err, extra) {
+    try {
+      var snapshot = {
+        build:            IX_QA_BUILD,
+        timestamp:        new Date().toISOString(),
+        stage:            stage,
+        account:          state && state.address,
+        chainId:          state && state.chainId,
+        timeline:         state && state.transferTimeline && JSON.parse(JSON.stringify(state.transferTimeline)),
+        err:              err ? serializeWalletError(err) : null,
+      };
+      if (extra) {
+        Object.keys(extra).forEach(function (k) { snapshot[k] = extra[k]; });
+      }
+      localStorage.setItem(IX_QA_LS_KEY, JSON.stringify(snapshot, null, 2));
+    } catch (_) { /* localStorage unavailable — silently skip */ }
+  }
+
+  // On page load: if a persisted diagnostic exists, render a fixed overlay with
+  // Copy and Clear buttons so it can be captured even after a page reload.
+  function renderPersistedWalletDiag() {
+    var raw;
+    try { raw = localStorage.getItem(IX_QA_LS_KEY); } catch (_) { return; }
+    if (!raw) return;
+
+    var existing = document.getElementById('ix-qa-diag');
+    if (existing) existing.remove();
+
+    var overlay = document.createElement('div');
+    overlay.id = 'ix-qa-diag';
+    overlay.style.cssText = [
+      'position:fixed',
+      'bottom:0',
+      'left:0',
+      'right:0',
+      'max-height:55vh',
+      'overflow-y:auto',
+      'background:#1a0000',
+      'border-top:3px solid #f33',
+      'z-index:2147483647',
+      'padding:0.75rem 1rem 1rem',
+      'box-sizing:border-box',
+    ].join(';');
+
+    var header = document.createElement('div');
+    header.style.cssText = 'display:flex;gap:0.5rem;margin-bottom:0.5rem;align-items:center;flex-wrap:wrap;';
+
+    var label = document.createElement('span');
+    label.style.cssText = 'color:#f77;font-size:11px;font-weight:bold;flex:1 1 auto;';
+    label.textContent = 'QA WALLET DIAGNOSTIC (persisted)';
+
+    var copyBtn = document.createElement('button');
+    copyBtn.textContent = 'Copy';
+    copyBtn.style.cssText = 'font-size:10px;padding:2px 8px;background:#333;color:#f77;border:1px solid #f33;border-radius:3px;cursor:pointer;flex-shrink:0;';
+    copyBtn.addEventListener('click', function () {
+      try {
+        navigator.clipboard.writeText(raw).then(function () {
+          copyBtn.textContent = 'Copied';
+          setTimeout(function () { copyBtn.textContent = 'Copy'; }, 2000);
+        });
+      } catch (_) {}
+    });
+
+    var clearBtn = document.createElement('button');
+    clearBtn.textContent = 'Clear';
+    clearBtn.style.cssText = 'font-size:10px;padding:2px 8px;background:#333;color:#aaa;border:1px solid #555;border-radius:3px;cursor:pointer;flex-shrink:0;';
+    clearBtn.addEventListener('click', function () {
+      try { localStorage.removeItem(IX_QA_LS_KEY); } catch (_) {}
+      overlay.remove();
+    });
+
+    header.appendChild(label);
+    header.appendChild(copyBtn);
+    header.appendChild(clearBtn);
+
+    var pre = document.createElement('pre');
+    pre.style.cssText = 'white-space:pre-wrap;word-break:break-all;font-size:10px;line-height:1.4;color:#f77;margin:0;';
+    pre.textContent = raw;
+
+    overlay.appendChild(header);
+    overlay.appendChild(pre);
+    document.body.appendChild(overlay);
+  }
+
   // Persistent contextual note below the button — explains the current transfer gate.
   // Empty string clears it (element is invisible when empty).
   function setTransferNote(msg) {
@@ -3867,6 +3956,13 @@
     // collapse the review panel and hide the diagnostic before the user can screenshot.
     let diagnosticHold = false;
     try {
+      persistWalletDiag('before_transferWithFee', null, {
+        recipient:    recipient,
+        rawAmount:    rawAmount.toString(),
+        totalDebit:   totalDebit.toString(),
+        broadcastHash: broadcastHash,
+        txBroadcast:  txBroadcast,
+      });
       console.log('[IX] invoking transferWithFee — recipient:', recipient, 'rawAmount:', rawAmount.toString());
       setStatus('Opening final MetaMask transfer confirmation…');
       const tx = await implicitex.transferWithFee(recipient, rawAmount);
@@ -4014,6 +4110,7 @@
             actionVal:  'Open MetaMask, finish or cancel the pending request, then retry.',
             autoOpen:   true,
           });
+          persistWalletDiag('transferWithFee_catch_-32002', err, { broadcastHash: broadcastHash, txBroadcast: txBroadcast });
           renderPreBroadcastDiag(err, '-32002 pending request');
           diagnosticHold = true;
         } else {
@@ -4039,6 +4136,7 @@
               actionVal:  'No transfer was broadcast. Retry when ready.',
               autoOpen:   true,
             });
+            persistWalletDiag('transferWithFee_catch_rejected', err, { broadcastHash: broadcastHash, txBroadcast: txBroadcast });
             renderPreBroadcastDiag(err, 'rejected 4001/5000/ACTION_REJECTED');
             diagnosticHold = true;
           } else {
@@ -4082,6 +4180,7 @@
               actionVal:  explained.retryGuidance,
               autoOpen:   true,
             });
+            persistWalletDiag('transferWithFee_catch_unclassified', err, { broadcastHash: broadcastHash, txBroadcast: txBroadcast });
             renderPreBroadcastDiag(err, 'unclassified pre-broadcast');
             diagnosticHold = true;
           }
@@ -4108,6 +4207,14 @@
     } finally {
       // Always release the flow lock.
       activeTransferFlow = false;
+      // If the flow exited without broadcast and without a diagnostic already
+      // written, persist a breadcrumb so unexpected exit paths are capturable.
+      if (!transferConfirmed && !txBroadcast && !diagnosticHold) {
+        persistWalletDiag('finally_no_broadcast', null, {
+          broadcastHash: broadcastHash,
+          txBroadcast:   txBroadcast,
+        });
+      }
       // diagnosticHold: a QA diagnostic block is rendered in-page after an
       // unclassified pre-broadcast failure. Leave the review panel open so the
       // user can screenshot the raw error. exitReview collapses the panel.
@@ -4500,6 +4607,7 @@
   if (els.txConfirmAck)    els.txConfirmAck.addEventListener('change', updatePreview);
 
   hydrateAuthorizedInjectedWallet();
+  renderPersistedWalletDiag(); // show any diagnostic from a previous failed transfer
 
   // Gas price row — expand / collapse toggle
   if (els.gasRowToggle) {
