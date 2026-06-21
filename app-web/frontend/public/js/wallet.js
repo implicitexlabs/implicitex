@@ -642,7 +642,7 @@
     var walletDiag = serializeWalletError(err);
     var diagText = [
       'QA WALLET ERROR — ' + (label || 'pre-broadcast'),
-      'build: ' + new Date().toISOString(),
+      'build: 699a081 / ' + new Date().toISOString(),
       '',
       JSON.stringify(walletDiag, null, 2),
     ].join('\n');
