@@ -215,6 +215,7 @@
     'function paused() view returns (bool)',
     'function previewTransfer(address sender,uint256 amount) view returns (uint256 fee,uint256 totalDebit,uint256 balance,uint256 allowance,bool canTransfer)',
     'function transferWithFee(address recipient, uint256 amount)',
+    'event TransferExecuted(address indexed sender,address indexed recipient,uint256 amountSent,uint256 feeAmount,uint256 totalDebited)',
   ];
 
   // ----------------------------------------------------------------
@@ -672,6 +673,43 @@
     pre.textContent = diagText;
     overlay.appendChild(pre);
     document.body.appendChild(overlay);
+  }
+
+  // Query the ImplicitEx contract for a matching TransferExecuted event in the
+  // last ~10 minutes of Polygon blocks, using a fresh read-only RPC provider
+  // independent of the wallet provider (which may be in a bad state).
+  // Returns { found:true, txHash, explorerUrl, blockNumber } or { found:false }.
+  async function reconcileInterruptedTransfer(sender, recipient, rawAmount, contractAddress, chainConfig) {
+    try {
+      const rpcProvider = new ethers.JsonRpcProvider(chainConfig.rpcUrl);
+      const currentBlock = await rpcProvider.getBlockNumber();
+      const fromBlock = Math.max(0, currentBlock - 1200); // ~30 min at 1.5s/block; wider window reduces false negatives from RPC lag or delayed mobile callback
+      const contract = new ethers.Contract(contractAddress, IMPLICITEX_ABI, rpcProvider);
+      const events = await contract.queryFilter(
+        contract.filters.TransferExecuted(sender, recipient),
+        fromBlock,
+        currentBlock
+      );
+      const senderLc    = sender.toLowerCase();
+      const recipientLc = recipient.toLowerCase();
+      const rawAmountBn = BigInt(rawAmount);
+      const match = events.find(function (ev) {
+        return ev.args.sender.toLowerCase()    === senderLc    &&
+               ev.args.recipient.toLowerCase() === recipientLc &&
+               BigInt(ev.args.amountSent)      === rawAmountBn;
+      });
+      if (match) {
+        return {
+          found:       true,
+          txHash:      match.transactionHash,
+          explorerUrl: chainConfig.explorerUrl + '/tx/' + match.transactionHash,
+          blockNumber: match.blockNumber,
+        };
+      }
+      return { found: false };
+    } catch (err) {
+      return { found: false, reconError: err && err.message };
+    }
   }
 
   var IX_QA_BUILD = 'd34d5e2';
@@ -4155,15 +4193,16 @@
             });
             const explained = classifyTransferError(err, { phase: 'transfer', broadcastKnown: false });
             setTransferNote('');
-            // Surface raw detail in status so it is visible on mobile without USB debugging.
-            setStatus(rawDetail ? `${explained.title}: ${rawDetail}` : explained.title);
-            resolveReceipt(receiptId, {
+            // Safer copy: on mobile the tx may have reached the chain despite the local failure.
+            setStatus('Transfer status unknown. Do not retry yet. Checking Polygon for a matching transaction\u2026');
+            // Keep receipt active (updateReceipt not resolveReceipt) so reconciliation can patch it.
+            updateReceipt(receiptId, {
               state: IX_TRANSFER_STATES.INTERRUPTED,
               fundsMoved: explained.fundsMoved,
-              lastKnownMessage: `${explained.title}. ${explained.message}`,
+              lastKnownMessage: 'Transfer status unknown. Checking chain for a matching transaction.',
             });
             failTransferTimeline('transfer_requested', explained.title);
-            setTxState('idle', `${explained.title}. ${explained.retryGuidance}`);
+            setTxState('idle', 'Transfer status unknown. Do not retry yet. Checking Polygon for a matching transaction\u2026');
             // eventVal includes raw error fields so they are visible in companion on mobile.
             const eventParts = [explained.code];
             if (rawCode != null) eventParts.push('code:' + rawCode);
@@ -4172,17 +4211,64 @@
             if (err && err.data) eventParts.push('data:' + String(err.data).slice(0, 60));
             const eventVal = eventParts.join(' — ');
             companionState(IX_TRANSFER_STATES.INTERRUPTED, {
-              statusLine: 'Transfer interrupted before broadcast.',
-              stateVal:   explained.title,
-              fundsVal:   'No — transfer did not reach the network',
+              statusLine: 'Transfer status unknown \u2014 checking chain.',
+              stateVal:   'Checking Polygon\u2026',
+              fundsVal:   'Unknown \u2014 verifying on-chain',
               networkVal: chainConfig.name,
               eventVal:   eventVal,
-              actionVal:  explained.retryGuidance,
+              actionVal:  'Do not retry. Checking Polygon for a matching transaction.',
               autoOpen:   true,
             });
             persistWalletDiag('transferWithFee_catch_unclassified', err, { broadcastHash: broadcastHash, txBroadcast: txBroadcast });
             renderPreBroadcastDiag(err, 'unclassified pre-broadcast');
             diagnosticHold = true;
+
+            // ---- Chain reconciliation ----
+            // Query TransferExecuted events on Polygon via RPC to check whether the
+            // transaction reached the chain despite the local provider failure.
+            const reconResult = await reconcileInterruptedTransfer(
+              state.address, recipient, rawAmount, contractAddress, chainConfig
+            );
+            if (reconResult.found) {
+              // Transfer confirmed on-chain — repair receipt from INTERRUPTED to CONFIRMED.
+              updateReceiptFromSource(receiptId, {
+                state:            IX_TRANSFER_STATES.CONFIRMED,
+                fundsMoved:       true,
+                txHash:           reconResult.txHash,
+                explorerUrl:      reconResult.explorerUrl,
+                blockNumber:      reconResult.blockNumber,
+                lastKnownMessage: 'Transfer confirmed on-chain (recovered from interrupted state).',
+              }, OBSERVATION_SOURCES && OBSERVATION_SOURCES.RPC);
+              if (window.IX && window.IX.receipts) window.IX.receipts.clearActive();
+              setStatus('Transfer confirmed on Polygon. Funds moved.');
+              setTxState('idle', 'Transfer confirmed on-chain. No further action needed.');
+              companionState(IX_TRANSFER_STATES.CONFIRMED, {
+                statusLine: 'Transfer confirmed on Polygon.',
+                stateVal:   'Confirmed',
+                fundsVal:   'Yes \u2014 confirmed on-chain',
+                networkVal: chainConfig.name,
+                eventVal:   'TransferExecuted event found: ' + reconResult.txHash.slice(0, 12) + '\u2026',
+                actionVal:  'Save or export the proof packet.',
+                autoOpen:   true,
+              });
+            } else {
+              // No matching event — keep INTERRUPTED and archive.
+              if (window.IX && window.IX.receipts) window.IX.receipts.clearActive();
+              const reconNote = reconResult.reconError
+                ? ' (query error: ' + String(reconResult.reconError).slice(0, 60) + ')'
+                : '';
+              setStatus('No matching transfer found on Polygon. No funds moved.' + reconNote);
+              setTxState('idle', 'No matching transfer found. Safe to retry when ready.');
+              companionState(IX_TRANSFER_STATES.INTERRUPTED, {
+                statusLine: 'No matching transfer found on Polygon.',
+                stateVal:   'Interrupted',
+                fundsVal:   'No \u2014 no matching event found on-chain',
+                networkVal: chainConfig.name,
+                eventVal:   'Reconciliation complete' + reconNote,
+                actionVal:  'No funds moved. Safe to retry when ready.',
+                autoOpen:   true,
+              });
+            }
           }
         }
       }
