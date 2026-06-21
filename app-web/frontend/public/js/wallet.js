@@ -634,6 +634,46 @@
     return safe;
   }
 
+  // QA: render a fixed-position overlay with the raw wallet error.
+  // Fires on every pre-broadcast transferWithFee() failure so the error is
+  // visible regardless of panel state, scroll position, or exitReview timing.
+  // Remove by reloading the page.
+  function renderPreBroadcastDiag(err, label) {
+    var walletDiag = serializeWalletError(err);
+    var diagText = [
+      'QA WALLET ERROR — ' + (label || 'pre-broadcast'),
+      'build: ' + new Date().toISOString(),
+      '',
+      JSON.stringify(walletDiag, null, 2),
+    ].join('\n');
+
+    var existing = document.getElementById('ix-qa-diag');
+    if (existing) existing.remove();
+
+    var overlay = document.createElement('div');
+    overlay.id = 'ix-qa-diag';
+    overlay.setAttribute('aria-live', 'assertive');
+    overlay.style.cssText = [
+      'position:fixed',
+      'bottom:0',
+      'left:0',
+      'right:0',
+      'max-height:55vh',
+      'overflow-y:auto',
+      'background:#1a0000',
+      'border-top:3px solid #f33',
+      'z-index:2147483647',
+      'padding:0.75rem 1rem',
+      'box-sizing:border-box',
+    ].join(';');
+
+    var pre = document.createElement('pre');
+    pre.style.cssText = 'white-space:pre-wrap;word-break:break-all;font-size:10px;line-height:1.4;color:#f77;margin:0;';
+    pre.textContent = diagText;
+    overlay.appendChild(pre);
+    document.body.appendChild(overlay);
+  }
+
   // Persistent contextual note below the button — explains the current transfer gate.
   // Empty string clears it (element is invisible when empty).
   function setTransferNote(msg) {
@@ -3974,6 +4014,8 @@
             actionVal:  'Open MetaMask, finish or cancel the pending request, then retry.',
             autoOpen:   true,
           });
+          renderPreBroadcastDiag(err, '-32002 pending request');
+          diagnosticHold = true;
         } else {
           const rejected = errCode === 4001 || errCode === 5000 ||
             err.code === 'ACTION_REJECTED' ||
@@ -3997,6 +4039,8 @@
               actionVal:  'No transfer was broadcast. Retry when ready.',
               autoOpen:   true,
             });
+            renderPreBroadcastDiag(err, 'rejected 4001/5000/ACTION_REJECTED');
+            diagnosticHold = true;
           } else {
             const rawCode = providerErrorCode(err);
             const rawDetail = ERROR_CLASSIFIER ? ERROR_CLASSIFIER.cleanDetail(err) : (err && err.message || '');
@@ -4038,17 +4082,8 @@
               actionVal:  explained.retryGuidance,
               autoOpen:   true,
             });
-            // Render a persistent QA diagnostic block in the txStatus area so the
-            // raw error is visible on mobile without USB console access. The block
-            // stays visible until the user refreshes — exitReview is suppressed.
-            if (els.txStatus) {
-              const diagPre = document.createElement('pre');
-              diagPre.style.cssText = 'white-space:pre-wrap;word-break:break-all;font-size:10px;color:var(--red,#f33);text-align:left;margin:0.75rem 0 0;max-height:320px;overflow-y:auto;border:1px solid currentColor;padding:0.5rem;border-radius:4px;';
-              diagPre.textContent = 'QA WALLET ERROR\n' + JSON.stringify(walletDiag, null, 2);
-              els.txStatus.innerHTML = '';
-              els.txStatus.appendChild(diagPre);
-            }
-            diagnosticHold = true; // prevent exitReview from collapsing the panel
+            renderPreBroadcastDiag(err, 'unclassified pre-broadcast');
+            diagnosticHold = true;
           }
         }
       }
