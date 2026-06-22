@@ -414,19 +414,18 @@
         >
         <div class="fee-row" aria-live="polite">
           <span class="fee-label">Your USDC balance</span>
-          <span class="fee-val" id="usdcBalance">—</span>
+          <span class="fee-val" id="usdcBalance">0.00 USDC</span>
         </div>
         <div class="fee-row" aria-live="polite">
           <span class="fee-label">Platform fee (1%)</span>
-          <span class="fee-val" id="feeDisplay">—</span>
+          <span class="fee-val" id="feeDisplay">0.00 USDC</span>
         </div>
         <label class="tx-confirm" id="txConfirmWrap" hidden>
           <input type="checkbox" id="txConfirmAck">
           <span>I confirm the recipient, amount, fee, and total debit. Transfers confirmed on-chain cannot be reversed.</span>
         </label>
         <div class="portal-preview-msg" id="portalPreviewMsg">
-          <p class="tx-state-note">Preview the transfer flow before connecting your wallet.</p>
-          <p class="tx-state-note">No transaction can be prepared or signed until your wallet is connected.</p>
+          <p class="tx-state-note">Preview mode — connect your wallet to prepare a real transfer.</p>
         </div>
         <button class="tx-btn" id="txBtn" onclick="IX.connect()">
           Connect Wallet to Continue
