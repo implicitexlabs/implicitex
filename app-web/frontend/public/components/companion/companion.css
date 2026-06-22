@@ -149,7 +149,7 @@
 .companion-k {
   font-family: var(--font-ui);     /* row label — not data */
   font-size: var(--size-sm);
-  font-weight: var(--weight-semibold);
+  font-weight: var(--weight-bold);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--muted);

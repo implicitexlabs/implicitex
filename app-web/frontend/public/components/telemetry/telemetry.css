@@ -84,7 +84,7 @@
 .telemetry-label {
   font-family: var(--font-ui);        /* panel title label — not data */
   font-size: var(--size-sm);
-  font-weight: var(--weight-semibold);
+  font-weight: var(--weight-bold);
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--muted);
@@ -151,7 +151,7 @@
 .telemetry-section-label {
   font-family: var(--font-ui);        /* "Status", "Details" — section heading, not data */
   font-size: var(--size-sm);          /* was 8px — worst size violation in the file */
-  font-weight: var(--weight-semibold);
+  font-weight: var(--weight-bold);
   letter-spacing: 0.22em;
   text-transform: uppercase;
   color: var(--muted);
@@ -174,7 +174,7 @@
 .telemetry-k {
   font-family: var(--font-ui);        /* row key label — not a technical value */
   font-size: var(--size-sm);
-  font-weight: var(--weight-semibold);
+  font-weight: var(--weight-bold);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--muted);
