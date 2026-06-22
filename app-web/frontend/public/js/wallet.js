@@ -2462,6 +2462,21 @@
   function showTransferModules(shouldScroll) {
     if (!els.modules) return;
 
+    // Transition out of preview state when wallet connects for the first time.
+    if (els.modules.classList.contains('portal-preview')) {
+      els.modules.classList.remove('portal-preview');
+      els.modules.querySelectorAll('input[disabled], select[disabled]').forEach(function(el) {
+        el.removeAttribute('disabled');
+      });
+      const txBtn = document.getElementById('txBtn');
+      if (txBtn) {
+        txBtn.textContent = 'Review Transfer';
+        txBtn.onclick = function() { IX.handleTxAction(); };
+      }
+      const previewMsg = document.getElementById('portalPreviewMsg');
+      if (previewMsg) previewMsg.setAttribute('hidden', '');
+    }
+
     // Hide How It Works — instrument activates in-place over the same geometry.
     if (els.howItWorks) els.howItWorks.setAttribute('hidden', '');
 

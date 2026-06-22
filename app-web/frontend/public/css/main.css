@@ -1297,6 +1297,20 @@ body.portal-active #nav {
   text-align: center;
 }
 
+.portal-preview .tx-field:disabled,
+.portal-preview select:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.portal-preview-msg {
+  margin-bottom: 4px;
+}
+
+.portal-preview-msg .tx-state-note {
+  margin-top: 4px;
+}
+
 .tx-status {
   font-family: var(--font-ui);
   font-size: var(--size-sm);
