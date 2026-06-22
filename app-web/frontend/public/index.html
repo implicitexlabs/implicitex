@@ -335,7 +335,7 @@
   </div>
 
   <!-- Transfer Portal — revealed after wallet connect -->
-  <section class="modules transfer-portal portal-preview" id="modules" aria-label="Transfer Portal" data-transaction-window>
+  <section class="modules transfer-portal" id="modules" aria-label="Transfer Portal" data-transaction-window>
     <button class="portal-minimized-tray" id="portalMinimizedTray" type="button" hidden aria-label="Expand transfer portal">
       <span class="portal-minimized-label">Transfer Portal</span>
       <span class="portal-minimized-status" id="portalMinimizedStatus">Open workspace</span>
@@ -360,7 +360,6 @@
           spellcheck="false"
           aria-label="Recipient wallet address"
           aria-describedby="recipientError"
-          disabled
         >
         <p class="tx-recipient-error" id="recipientError" aria-live="assertive"></p>
         <div class="intel-panel" id="recipientIntel" aria-live="polite" hidden>
@@ -376,10 +375,9 @@
           min="1"
           step="0.000001"
           aria-label="Amount recipient gets in USDC"
-          disabled
         >
         <div class="tx-meta-grid" aria-label="Transfer metadata">
-          <select class="tx-field tx-field--select" id="txPurposeTag" aria-label="Transfer purpose tag" disabled>
+          <select class="tx-field tx-field--select" id="txPurposeTag" aria-label="Transfer purpose tag">
             <option value="">Purpose tag</option>
             <option value="invoice">Invoice</option>
             <option value="contractor">Contractor</option>
@@ -399,7 +397,6 @@
             maxlength="80"
             autocomplete="off"
             aria-label="Invoice or internal reference"
-            disabled
           >
         </div>
         <input
@@ -410,7 +407,6 @@
           maxlength="140"
           autocomplete="off"
           aria-label="Transfer memo"
-          disabled
         >
         <div class="fee-row" aria-live="polite">
           <span class="fee-label">Your USDC balance</span>
@@ -424,11 +420,8 @@
           <input type="checkbox" id="txConfirmAck">
           <span>I confirm the recipient, amount, fee, and total debit. Transfers confirmed on-chain cannot be reversed.</span>
         </label>
-        <div class="portal-preview-msg" id="portalPreviewMsg">
-          <p class="tx-state-note">Preview mode — connect your wallet to prepare a real transfer.</p>
-        </div>
-        <button class="tx-btn" id="txBtn" onclick="IX.connect()">
-          Connect Wallet to Continue
+        <button class="tx-btn" id="txBtn" onclick="IX.handleTxAction()">
+          Review Transfer
         </button>
         <button class="tx-btn tx-btn--cancel" id="txCancelReview" type="button" aria-label="Return to editing transfer details" hidden>
           Edit Details

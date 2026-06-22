@@ -2097,6 +2097,17 @@
     setElementSeverity(els.networkBadge, null);
     setStatus(message);
     dispatchWalletStateChanged();
+
+    // User-cancellation messages carry no actionable information after a few
+    // seconds. Clear them so the first-time visitor doesn't read a permanent
+    // "Wallet connection rejected." and conclude something is broken.
+    if (message === 'Wallet connection rejected.') {
+      setTimeout(function() {
+        if (els.txStatus && els.txStatus.textContent === 'Wallet connection rejected.') {
+          setStatus('');
+        }
+      }, 4000);
+    }
   }
 
   // ----------------------------------------------------------------
@@ -2213,11 +2224,12 @@
    * Keeps setTxState() and presentation functions consistent.
    */
   function currentButtonLabel() {
+    if (!state.connected) return 'Connect Wallet to Continue';
     const netState = getNetworkState();
     if (netState === 'WRONG_NETWORK' || netState === 'CONTRACT_UNAVAILABLE') return 'Switch to Polygon';
     if (netState === 'TRANSFERS_DISABLED') return 'Transfers disabled';
     if (state.txPhase === 'SIMULATING') return 'Checking…';
-    return 'Execute Transfer';
+    return 'Review Transfer';
   }
 
   // ----------------------------------------------------------------
@@ -2445,9 +2457,13 @@
 
   /**
    * Primary button dispatcher.
-   * DRAFT → enterReview(); REVIEW_READY → submitTransfer().
+   * No wallet → connect(); DRAFT → enterReview(); REVIEW_READY → submitTransfer().
    */
   async function handleTxAction() {
+    if (!state.connected) {
+      connect();
+      return;
+    }
     if (state.txPhase === 'DRAFT') {
       if (!els.txConfirmAck || !els.txConfirmAck.checked) {
         setStatus('Confirm the details and check the acknowledgement before executing.');
@@ -2461,21 +2477,6 @@
 
   function showTransferModules(shouldScroll) {
     if (!els.modules) return;
-
-    // Transition out of preview state when wallet connects for the first time.
-    if (els.modules.classList.contains('portal-preview')) {
-      els.modules.classList.remove('portal-preview');
-      els.modules.querySelectorAll('input[disabled], select[disabled]').forEach(function(el) {
-        el.removeAttribute('disabled');
-      });
-      const txBtn = document.getElementById('txBtn');
-      if (txBtn) {
-        txBtn.textContent = 'Review Transfer';
-        txBtn.onclick = function() { IX.handleTxAction(); };
-      }
-      const previewMsg = document.getElementById('portalPreviewMsg');
-      if (previewMsg) previewMsg.setAttribute('hidden', '');
-    }
 
     // Hide How It Works — instrument activates in-place over the same geometry.
     if (els.howItWorks) els.howItWorks.setAttribute('hidden', '');
