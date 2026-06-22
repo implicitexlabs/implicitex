@@ -536,7 +536,7 @@
       try {
         return ethers.getAddress(v);
       } catch (_) {
-        return v;
+        return null; // invalid EIP-55 checksum — treat as unresolvable
       }
     }
     return v;
@@ -627,11 +627,30 @@
   function serializeWalletError(err) {
     if (!err) return { empty: true };
     var safe = {};
+    // Allowlist: capture known provider/ethers error fields by name.
     ['name', 'code', 'message', 'shortMessage', 'reason', 'data', 'info', 'cause', 'error', 'payload'].forEach(function (key) {
       try { if (err[key] !== undefined) safe[key] = String(err[key]); } catch (_) {}
     });
+    // Enumerable own keys (may be empty for native Error objects).
     try { safe.keys = Object.keys(err); } catch (_) { safe.keys = []; }
-    try { safe.stackFirstLine = err.stack ? String(err.stack).split('\n')[0] : ''; } catch (_) {}
+    // All own property names including non-enumerable (catches Error.message, .stack, etc.).
+    try {
+      var ownNames = Object.getOwnPropertyNames(err);
+      safe.ownPropertyNames = ownNames;
+      ownNames.forEach(function (key) {
+        if (safe[key] === undefined) {
+          try {
+            var val = err[key];
+            if (val !== undefined && val !== null) {
+              safe[key] = typeof val === 'object' ? JSON.stringify(val) : String(val);
+            }
+          } catch (_) {}
+        }
+      });
+    } catch (_) {}
+    // String coercions — catch toString() overrides and prototype tag.
+    try { safe.errString       = String(err); } catch (_) {}
+    try { safe.toStringTag     = Object.prototype.toString.call(err); } catch (_) {}
     return safe;
   }
 
@@ -3142,6 +3161,13 @@
     if (!/^0x/i.test(v))          return 'Invalid address format. Wallet addresses start with 0x.';
     if (v.length !== 42)           return 'Invalid address format. Must be 42 characters (0x + 40 hex digits).';
     if (!/^0x[0-9a-fA-F]{40}$/.test(v)) return 'Invalid address format. Check for missing characters, extra spaces, or mistaken letters.';
+    if (typeof ethers !== 'undefined' && ethers.getAddress) {
+      try {
+        ethers.getAddress(v);
+      } catch (_) {
+        return 'Invalid address checksum. Try copying the address again from its original source.';
+      }
+    }
     if (state.address && v.toLowerCase() === state.address.toLowerCase())
                                    return 'Recipient cannot be your own wallet.';
     if (isConfiguredTransferContractAddress(v)) return 'Recipient cannot be the configured ImplicitEx contract.';
@@ -3160,8 +3186,32 @@
       if (els.recipientError) els.recipientError.textContent = '';
       if (els.txRecipient) els.txRecipient.classList.remove('tx-field--error');
     } else {
-      // Invalid — show error
-      if (els.recipientError) els.recipientError.textContent = result;
+      // Checksum error: explain the mixed-case issue and offer one-tap lowercase fix.
+      if (result.indexOf('checksum') !== -1 && value && /^0x[0-9a-fA-F]{40}$/.test(value.trim())) {
+        const lowercase = value.trim().toLowerCase();
+        if (els.recipientError) {
+          els.recipientError.textContent = '';
+          const msg = document.createElement('span');
+          msg.style.cssText = 'display:block;';
+          msg.textContent = 'Invalid checksum. This address uses mixed uppercase and lowercase letters with an invalid capitalization pattern. Most wallet addresses can be safely entered in lowercase.';
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.textContent = 'Use lowercase address';
+          btn.style.cssText = 'display:block;margin-top:0.35rem;background:none;border:none;padding:0;color:var(--accent);font:inherit;font-size:var(--size-sm);text-decoration:underline;cursor:pointer;letter-spacing:0.04em;';
+          btn.addEventListener('click', function () {
+            if (els.txRecipient) {
+              els.txRecipient.value = lowercase;
+              els.txRecipient.dispatchEvent(new Event('input', { bubbles: true }));
+              els.txRecipient.focus();
+            }
+          });
+          els.recipientError.appendChild(msg);
+          els.recipientError.appendChild(btn);
+        }
+      } else {
+        // All other errors — plain text
+        if (els.recipientError) els.recipientError.textContent = result;
+      }
       if (els.txRecipient) els.txRecipient.classList.add('tx-field--error');
     }
     return result === '';
@@ -3355,9 +3405,14 @@
     const { recipient, amountStr, amountFloat } = state.reviewDraft;
     const metadata = state.reviewDraft.metadata || getTransferMetadata();
 
-    // receiptId is hoisted so the outer catch can update it on FLOW_INVALIDATED.
+    // receiptId, txBroadcast, broadcastHash, and diagnosticHold are hoisted above
+    // the outer try so the inner catch and finally share the same binding.
+    // (let declarations inside try {} are not accessible in finally {}.)
     let receiptId = null;
     let transferConfirmed = false;
+    let txBroadcast = false;
+    let broadcastHash = null;
+    let diagnosticHold = false;
 
     try {
 
@@ -3924,6 +3979,9 @@
           actionVal:  explained.retryGuidance,
           autoOpen:   true,
         });
+        persistWalletDiag('staticCall_catch', staticErr, { broadcastHash: broadcastHash, txBroadcast: txBroadcast });
+        renderPreBroadcastDiag(staticErr, 'staticCall preflight');
+        diagnosticHold = true;
         return;
       }
 
@@ -3954,6 +4012,9 @@
           actionVal:  explained.retryGuidance,
           autoOpen:   true,
         });
+        persistWalletDiag('estimateGas_catch', gasErr, { broadcastHash: broadcastHash, txBroadcast: txBroadcast });
+        renderPreBroadcastDiag(gasErr, 'estimateGas preflight');
+        diagnosticHold = true;
         return;
       }
 
@@ -3986,13 +4047,8 @@
     // txBroadcast: set true only after SUBMITTED is persisted to localStorage.
     // Any error in the catch with txBroadcast=true routes to OUTCOME_UNKNOWN —
     // do not set this flag until the hash is durably written.
-    let txBroadcast = false;
-    let broadcastHash = null;
+    // (txBroadcast, broadcastHash, diagnosticHold are hoisted above the outer try.)
     let broadcastUrl = null;
-    // diagnosticHold: set true when a pre-broadcast failure renders a QA diagnostic
-    // block in-page. Prevents the finally from calling exitReview, which would
-    // collapse the review panel and hide the diagnostic before the user can screenshot.
-    let diagnosticHold = false;
     try {
       persistWalletDiag('before_transferWithFee', null, {
         recipient:    recipient,
