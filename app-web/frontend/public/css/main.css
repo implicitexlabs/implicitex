@@ -477,7 +477,7 @@ code, kbd, pre,
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--bg);
-  background: linear-gradient(to bottom, #ffffff, #e0e0e0);
+  background: var(--white);
   border: 1px solid #e0e0e0;
   border-radius: 4px;
   padding: var(--sp-2) var(--sp-3);
@@ -504,12 +504,12 @@ code, kbd, pre,
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--bg);
-  background: linear-gradient(to bottom, #ffffff, #e0e0e0);
-  border: none;
+  background: var(--white);
+  border: 1px solid #e0e0e0;
   border-radius: 4px;
   padding: var(--sp-2) var(--sp-4);
   cursor: pointer;
-  transition: background 0.12s;
+  transition: background 0.12s, border-color 0.12s;
 }
 
 .connect-btn:hover { background: var(--button-hover); }
@@ -1230,8 +1230,8 @@ body.portal-active #nav {
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--bg);
-  background: linear-gradient(to bottom, #ffffff, #e0e0e0);
-  border: none;
+  background: var(--white);
+  border: 1px solid #e0e0e0;
   border-radius: 4px;
   padding: var(--sp-3);
   width: auto;
