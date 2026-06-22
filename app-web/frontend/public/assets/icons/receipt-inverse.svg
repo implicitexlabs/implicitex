@@ -1,0 +1,19 @@
+<svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"
+     shape-rendering="crispEdges" aria-label="Receipt" role="img">
+  <mask id="receipt-inverse-mask">
+    <rect x="0" y="0" width="16" height="16" fill="#fff"/>
+    <path fill="#000" d="
+      M 4,1 H 12 V 2 H 4 Z
+      M 4,2 H 5 V 13 H 4 Z
+      M 11,2 H 12 V 13 H 11 Z
+      M 6,4 H 10 V 5 H 6 Z
+      M 6,7 H 10 V 8 H 6 Z
+      M 6,10 H 9 V 11 H 6 Z
+      M 4,13 H 5 V 14 H 4 Z
+      M 6,13 H 7 V 14 H 6 Z
+      M 8,13 H 9 V 14 H 8 Z
+      M 10,13 H 11 V 14 H 10 Z
+    "/>
+  </mask>
+  <rect x="0" y="0" width="16" height="16" fill="currentColor" mask="url(#receipt-inverse-mask)"/>
+</svg>

@@ -1,0 +1,23 @@
+<svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"
+     shape-rendering="crispEdges" aria-label="Lock" role="img">
+  <path fill="currentColor" d="
+    M 5,2 H 11 V 3 H 5 Z
+    M 5,3 H 11 V 4 H 5 Z
+    M 5,4 H 7 V 5 H 5 Z
+    M 9,4 H 11 V 5 H 9 Z
+    M 5,5 H 7 V 6 H 5 Z
+    M 9,5 H 11 V 6 H 9 Z
+    M 5,6 H 7 V 7 H 5 Z
+    M 9,6 H 11 V 7 H 9 Z
+    M 3,7 H 13 V 8 H 3 Z
+    M 3,8 H 13 V 9 H 3 Z
+    M 3,9 H 13 V 10 H 3 Z
+    M 3,10 H 7 V 11 H 3 Z
+    M 9,10 H 13 V 11 H 9 Z
+    M 3,11 H 7 V 12 H 3 Z
+    M 9,11 H 13 V 12 H 9 Z
+    M 3,12 H 7 V 13 H 3 Z
+    M 9,12 H 13 V 13 H 9 Z
+    M 3,13 H 13 V 14 H 3 Z
+  "/>
+</svg>
