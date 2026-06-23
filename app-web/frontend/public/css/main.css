@@ -2373,6 +2373,124 @@ footer .social-links a:focus-visible,
   margin: 0.15rem 0 0.85rem 1.25rem;
 }
 
+/* ----------------------------------------------------------------
+   Engineering Log
+   Single-column layout; table spans full content width.
+   ---------------------------------------------------------------- */
+.log-shell {
+  column-count: 1;
+}
+
+.log-intro {
+  font-family: var(--font-body);
+  font-size: var(--size-sm);
+  color: var(--dim);
+  margin-bottom: var(--sp-6);
+  text-align: center;
+}
+
+.log-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-body);
+  font-size: var(--size-sm);
+  column-span: all;
+  margin-top: var(--sp-4);
+}
+
+.log-table thead th {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  text-align: left;
+  padding: 0 var(--sp-3) var(--sp-3);
+  border-bottom: 1px solid var(--border);
+}
+
+.log-table thead th:first-child { padding-left: 0; }
+.log-table thead th:last-child  { padding-right: 0; }
+
+.log-table tbody tr {
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+[data-theme="light"] .log-table tbody tr {
+  border-bottom-color: rgba(0,0,0,0.07);
+}
+
+.log-table tbody td {
+  padding: var(--sp-4) var(--sp-3);
+  vertical-align: top;
+}
+
+.log-table tbody td:first-child { padding-left: 0; }
+.log-table tbody td:last-child  { padding-right: 0; }
+
+.log-date {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted);
+  white-space: nowrap;
+  padding-top: calc(var(--sp-4) + 2px) !important; /* align with change title */
+}
+
+.log-change {
+  width: 100%;
+}
+
+.log-change-title {
+  display: block;
+  font-weight: var(--weight-semibold);
+  color: var(--white);
+  margin-bottom: 0.3rem;
+}
+
+.log-change-desc {
+  display: block;
+  color: var(--dim);
+  line-height: var(--leading-body);
+}
+
+.log-status {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  padding-top: calc(var(--sp-4) + 3px) !important;
+}
+
+.log-status--deployed  { color: var(--dim); }
+.log-status--monitoring { color: var(--accent); }
+
+.log-commit {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted);
+  white-space: nowrap;
+  padding-top: calc(var(--sp-4) + 2px) !important;
+}
+
+@media (max-width: 640px) {
+  .log-table thead { display: none; }
+  .log-table tbody tr {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto auto;
+    gap: var(--sp-1) var(--sp-3);
+    padding: var(--sp-4) 0;
+  }
+  .log-table tbody td { padding: 0 !important; }
+  .log-date   { grid-column: 1; grid-row: 1; }
+  .log-change { grid-column: 1 / -1; grid-row: 2; }
+  .log-status { grid-column: 2; grid-row: 1; }
+  .log-commit { display: none; }
+}
+
 .policy-shell h3 {
   font-size: var(--size-base);
   line-height: var(--leading-ui);

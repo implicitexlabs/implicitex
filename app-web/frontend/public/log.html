@@ -3,21 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ImplicitEx — News</title>
-  <meta name="description" content="Platform updates, regulatory observations, and policy analysis from ImplicitEx.">
-  <meta property="og:url" content="https://implicitex.com/news.html">
+  <title>ImplicitEx — Engineering Log</title>
+  <meta name="description" content="A dated record of platform changes, fixes, and operational decisions. Commit hashes are independently verifiable.">
+  <meta property="og:url" content="https://implicitex.com/log.html">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="ImplicitEx — News">
-  <meta property="og:description" content="Platform updates, regulatory observations, and policy analysis from ImplicitEx.">
+  <meta property="og:title" content="ImplicitEx — Engineering Log">
+  <meta property="og:description" content="A dated record of platform changes, fixes, and operational decisions. Commit hashes are independently verifiable.">
   <meta property="og:image" content="https://implicitex.com/components/images/og-primary.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="628">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:site" content="@implicitex">
-  <meta name="twitter:title" content="ImplicitEx — News">
-  <meta name="twitter:description" content="Platform updates, regulatory observations, and policy analysis from ImplicitEx.">
+  <meta name="twitter:title" content="ImplicitEx — Engineering Log">
+  <meta name="twitter:description" content="A dated record of platform changes, fixes, and operational decisions. Commit hashes are independently verifiable.">
   <meta name="twitter:image" content="https://implicitex.com/components/images/og-primary.png">
-  <link rel="canonical" href="https://implicitex.com/news.html">
+  <link rel="canonical" href="https://implicitex.com/log.html">
   <script>(function(){try{var t=localStorage.getItem('implicitex-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t;}catch(e){}})();</script>
   <link rel="stylesheet" href="css/main.css">
 </head>
@@ -30,7 +30,6 @@
       <img class="wordmark" src="/components/images/wordmark-white.svg" alt="" aria-hidden="true">
     </a>
     <div class="nav-right">
-      
       <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch to light theme" aria-pressed="false">
         <svg class="theme-icon" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
           <path d="M7 1 A6 6 0 0 0 7 13 Z" fill="var(--white)"/>
@@ -139,41 +138,178 @@
       </section>
     </div>
     <!-- Backdrop — tap to close -->
-    <div class="mobile-menu-backdrop" id="mobileMenuBackdrop" aria-hidden="true"></div>
+    <div class="mobile-menu-backdrop" id="mobileMenuBackdiv" aria-hidden="true"></div>
   </div>
 
-  <!-- WALLET CHOICE OVERLAY -->
-  <div class="wallet-choice" id="walletChoiceOverlay" role="dialog" aria-modal="true" aria-label="Choose wallet" hidden>
-    <div class="wallet-choice-backdrop" id="walletChoiceBackdrop" aria-hidden="true"></div>
-    <div class="wallet-choice-inner">
-      <div class="wallet-choice-head">
-        <span class="wallet-choice-title">Connect Wallet</span>
-        <button class="wallet-choice-close" id="walletChoiceClose" type="button" aria-label="Close">
-          <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
-            <line x1="1" y1="1" x2="11" y2="11" stroke="currentColor" stroke-width="1.6"/>
-            <line x1="11" y1="1" x2="1" y2="11" stroke="currentColor" stroke-width="1.6"/>
-          </svg>
-        </button>
-      </div>
-      <div class="wallet-choice-actions">
-        <a class="wallet-choice-btn wallet-choice-btn--primary" id="walletChoiceMetaMask"
-           href="https://metamask.app.link/dapp/implicitex.com" target="_blank" rel="noopener">
-          Open MetaMask
-        </a>
-      </div>
-    </div>
-  </div>
-
-  <main class="policy-shell" id="newsMain">
+  <main class="policy-shell log-shell">
     <div class="about-hero-mark about-hero-mark--stacked" aria-hidden="true">
       <img class="about-brandmark" src="/components/images/lettermark-white.svg" alt="" aria-hidden="true">
       <img class="about-wordmark" src="/components/images/wordmark-white.svg" alt="" aria-hidden="true">
     </div>
-    <h1>News</h1>
-    <p id="newsSubhead" class="updated"></p>
-    <!-- Articles rendered by js/news-data.js -->
-    <div id="newsArticles"></div>
-    <a class="back" href="/">Return to ImplicitEx</a>
+
+    <h1>Engineering Log</h1>
+
+    <p class="log-intro">
+      A dated record of platform changes, fixes, and operational decisions.
+      Commit hashes can be verified independently via
+      <a href="https://github.com/implicitexlabs/implicitex" target="_blank" rel="noopener">GitHub</a>.
+      See <a href="/verification.html">Verification</a> for the current state of the platform.
+    </p>
+
+    <table class="log-table" aria-label="Platform engineering log">
+      <thead>
+        <tr>
+          <th scope="col">Date</th>
+          <th scope="col">Change</th>
+          <th scope="col">Status</th>
+          <th scope="col">Commit</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <tr>
+          <td class="log-date">2026-06-22</td>
+          <td class="log-change">
+            <span class="log-change-title">Hero copy rewrite</span>
+            <span class="log-change-desc">Replaced argumentative framing with declarative product description. Three-slide rotation: identity, utility, verification.</span>
+          </td>
+          <td class="log-status log-status--deployed">Deployed</td>
+          <td class="log-commit">c8db8f0</td>
+        </tr>
+
+        <tr>
+          <td class="log-date">2026-06-22</td>
+          <td class="log-change">
+            <span class="log-change-title">Recipient address checksum validation</span>
+            <span class="log-change-desc">Non-checksummed Ethereum addresses now trigger a recovery prompt. Address is validated against EIP-55 and corrected before the transfer is prepared.</span>
+          </td>
+          <td class="log-status log-status--deployed">Deployed</td>
+          <td class="log-commit">0a85417</td>
+        </tr>
+
+        <tr>
+          <td class="log-date">2026-06-22</td>
+          <td class="log-change">
+            <span class="log-change-title">Transfer portal visible before wallet connection</span>
+            <span class="log-change-desc">Portal is now shown on page load. Visitors can review recipient and fee fields before connecting a wallet.</span>
+          </td>
+          <td class="log-status log-status--deployed">Deployed</td>
+          <td class="log-commit">c7ad329</td>
+        </tr>
+
+        <tr>
+          <td class="log-date">2026-06-22</td>
+          <td class="log-change">
+            <span class="log-change-title">Wallet-state button labels</span>
+            <span class="log-change-desc">Transfer button reflects connection state: "Connect Wallet to Continue" when disconnected, "Review Transfer" when ready.</span>
+          </td>
+          <td class="log-status log-status--deployed">Deployed</td>
+          <td class="log-commit">2708489</td>
+        </tr>
+
+        <tr>
+          <td class="log-date">2026-06-22</td>
+          <td class="log-change">
+            <span class="log-change-title">Verification page (renamed from Proof)</span>
+            <span class="log-change-desc">Page renamed across all site navigation. Name now matches the page's function: independently verifiable on-chain data.</span>
+          </td>
+          <td class="log-status log-status--deployed">Deployed</td>
+          <td class="log-commit">54e63fc</td>
+        </tr>
+
+        <tr>
+          <td class="log-date">2026-06-22</td>
+          <td class="log-change">
+            <span class="log-change-title">Get Started guide</span>
+            <span class="log-change-desc">Dedicated first-time setup guide covering MetaMask installation, Polygon network configuration, and USDC acquisition.</span>
+          </td>
+          <td class="log-status log-status--deployed">Deployed</td>
+          <td class="log-commit">5171ae6</td>
+        </tr>
+
+        <tr>
+          <td class="log-date">2026-06-20</td>
+          <td class="log-change">
+            <span class="log-change-title">Chain reconciliation for interrupted transfers</span>
+            <span class="log-change-desc">Added recovery handling for transfers interrupted by mid-flow network switches. Session state persists across wallet reconnects.</span>
+          </td>
+          <td class="log-status log-status--deployed">Deployed</td>
+          <td class="log-commit">977ad16</td>
+        </tr>
+
+        <tr>
+          <td class="log-date">2026-06-20</td>
+          <td class="log-change">
+            <span class="log-change-title">Mobile transfer diagnostics</span>
+            <span class="log-change-desc">Signer errors on mobile MetaMask now surface as visible diagnostic output rather than silent failures.</span>
+          </td>
+          <td class="log-status log-status--deployed">Deployed</td>
+          <td class="log-commit">c823314</td>
+        </tr>
+
+        <tr>
+          <td class="log-date">2026-06-19</td>
+          <td class="log-change">
+            <span class="log-change-title">Typography system rebuild</span>
+            <span class="log-change-desc">Full CSS type pass across all pages. Font roles separated: Orbitron (display), Oxanium (UI), Inter (body), IBM Plex Mono (technical data only).</span>
+          </td>
+          <td class="log-status log-status--deployed">Deployed</td>
+          <td class="log-commit">f956fdb</td>
+        </tr>
+
+        <tr>
+          <td class="log-date">2026-06-18</td>
+          <td class="log-change">
+            <span class="log-change-title">MetaMask Blockaid false positive on approval step</span>
+            <span class="log-change-desc">MetaMask flagged the USDC approval prompt as "deceptive" during Gate 5 first-user walkthrough. Approval amount was exact, not unlimited. Transfers disabled pending Blockaid review resolution. Reports submitted 2026-06-18.</span>
+          </td>
+          <td class="log-status log-status--monitoring">Monitoring</td>
+          <td class="log-commit">9bf6922</td>
+        </tr>
+
+        <tr>
+          <td class="log-date">2026-06-15</td>
+          <td class="log-change">
+            <span class="log-change-title">Gate 4: first mainnet USDC transfer</span>
+            <span class="log-change-desc">First controlled live transfer on Polygon mainnet. 1.01 USDC sent, 1.00 USDC received, 0.01 USDC fee routed to treasury. Contract held zero balance post-transfer. Block 88565097.</span>
+          </td>
+          <td class="log-status log-status--deployed">Deployed</td>
+          <td class="log-commit">c16c571</td>
+        </tr>
+
+        <tr>
+          <td class="log-date">2026-06-14</td>
+          <td class="log-change">
+            <span class="log-change-title">Negative-path testing complete</span>
+            <span class="log-change-desc">All six failure scenarios verified on mainnet: approval rejection, transfer rejection, wallet busy, insufficient balance, wrong network mid-flow, session bleed prevention. All paths handled without data loss or UI contradiction.</span>
+          </td>
+          <td class="log-status log-status--deployed">Deployed</td>
+          <td class="log-commit">—</td>
+        </tr>
+
+        <tr>
+          <td class="log-date">2026-06-01</td>
+          <td class="log-change">
+            <span class="log-change-title">Gate 2: first live transfer smoke</span>
+            <span class="log-change-desc">First controlled live transfer smoke on Polygon mainnet. On-chain settlement confirmed. Fee routing to treasury verified. Contract held zero balance post-transfer.</span>
+          </td>
+          <td class="log-status log-status--deployed">Deployed</td>
+          <td class="log-commit">—</td>
+        </tr>
+
+        <tr>
+          <td class="log-date">2026-05-04</td>
+          <td class="log-change">
+            <span class="log-change-title">Initial deployment</span>
+            <span class="log-change-desc">ImplicitEx contract deployed on Polygon mainnet. Chain configuration, wallet runtime, and public frontend shell established.</span>
+          </td>
+          <td class="log-status log-status--deployed">Deployed</td>
+          <td class="log-commit">8581de3</td>
+        </tr>
+
+      </tbody>
+    </table>
+
   </main>
 
   <footer>
@@ -212,72 +348,6 @@
     </nav>
     <span class="f-net is-live" id="networkBadge">Polygon live</span>
   </footer>
-
-  <script src="js/news-data.js"></script>
-  <script>
-  (function () {
-    'use strict';
-    if (!window.IX_NEWS || !IX_NEWS.length) return;
-
-    /* Newest article first */
-    var articles = IX_NEWS.slice().reverse();
-
-    /* Update the "last updated" dateline to the most recent article */
-    var subhead = document.getElementById('newsSubhead');
-    if (subhead) subhead.textContent = 'Last updated: ' + articles[0].date;
-
-    /* Render all articles */
-    var container = document.getElementById('newsArticles');
-    if (!container) return;
-
-    /* Build lookup for share handler */
-    var articleMap = {};
-    articles.forEach(function (a) { articleMap[a.id] = a; });
-
-    container.innerHTML = articles.map(function (a) {
-      var bodyHtml = a.body.map(function (p) {
-        return '<p>' + p + '</p>';
-      }).join('');
-      var categoryLabel = a.category === 'Platform' ? 'implicitex.com' : a.category;
-      return '<article class="news-article" id="' + a.id + '">' +
-        '<p class="updated" style="margin-bottom:0.5rem">' +
-          '<time datetime="' + a.dateIso + '">' + a.date + '</time>' +
-          ' &nbsp;&middot;&nbsp; ' + categoryLabel +
-        '</p>' +
-        '<h2>' + a.title + '</h2>' +
-        bodyHtml +
-        '<button class="news-share-btn" data-id="' + a.id + '">Share</button>' +
-        '</article>';
-    }).join('');
-
-    /* Share handler */
-    container.addEventListener('click', function (e) {
-      var btn = e.target.closest('.news-share-btn');
-      if (!btn) return;
-      var a = articleMap[btn.dataset.id];
-      if (!a) return;
-      var url = 'https://implicitex.com/news.html#' + a.id;
-      var bodyText = Array.isArray(a.body) ? a.body.join('\n\n') : (a.lede || '');
-      var text = a.title + '\n\n' + bodyText + '\n\nimplicitex.com';
-      if (navigator.share) {
-        navigator.share({ title: a.title, text: text, url: url });
-      } else {
-        navigator.clipboard.writeText(text + '\n\n' + url).then(function () {
-          btn.textContent = 'Copied';
-          setTimeout(function () { btn.textContent = 'Share'; }, 2000);
-        });
-      }
-    });
-
-    /* Scroll to the anchor from the URL hash if present */
-    if (location.hash) {
-      var target = document.querySelector(location.hash);
-      if (target) {
-        setTimeout(function () { target.scrollIntoView({ behavior: 'smooth' }); }, 80);
-      }
-    }
-  }());
-  </script>
 
   <script src="config/chains.js"></script>
   <script src="js/wallet.js"></script>
