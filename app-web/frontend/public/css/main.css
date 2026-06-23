@@ -996,14 +996,14 @@ body.portal-active #nav {
   scroll-margin-top: calc(var(--nav-h) + 1rem);
 }
 
-/* ---- Portal controls — tab-anchored to top of .modules border ---- */
+/* ---- Portal controls — square tabs anchored to upper-right of portal border ---- */
 .portal-controls {
   max-width: var(--ix-interface-max);
   margin: clamp(2rem, 5vh, 3.5rem) auto -1px; /* -1px overlaps portal top border */
   display: flex;
   justify-content: flex-end;
   align-items: flex-end;
-  gap: var(--sp-2);
+  gap: 0;
   padding: 0;
   position: relative;
   z-index: 1; /* sit above portal border */
@@ -1015,38 +1015,45 @@ body.portal-active #nav {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
   background: var(--bg);
   border: 1px solid var(--border-2);
   border-bottom: none;
+  border-left: none;
   cursor: pointer;
   color: var(--dim);
+  padding: 0;
   transition: color 0.12s;
+}
+
+.portal-tab:first-child {
+  border-left: 1px solid var(--border-2);
 }
 
 .portal-tab:hover {
   color: var(--white);
 }
 
-/* Collapse/expand chevron — same geometry as .data-toggle-icon */
-.portal-tab-chevron {
-  width: 0;
-  height: 0;
-  border-left: 4px solid transparent;
-  border-right: 4px solid transparent;
-  border-top: 5px solid var(--dim);
-  transition: transform 0.18s ease-out, border-top-color 0.12s;
+/* Arrow glyph — font/size/color matches .mod-tag "01 — TRANSFER" */
+.portal-tab-arrow,
+.portal-tab-x {
+  font-family: var(--font-ui);
+  font-size: var(--size-sm);
+  color: inherit;
+  line-height: 1;
+  display: block;
   pointer-events: none;
 }
 
-.portal-tab:hover .portal-tab-chevron {
-  border-top-color: var(--white);
+/* Portal open (aria-expanded=true) → up arrow = "click to collapse" */
+.portal-tab-arrow::before {
+  content: '↑';
 }
 
-/* Portal minimized → flip chevron to ▲ = "expand" */
-#modulesMinimize[aria-expanded="false"] .portal-tab-chevron {
-  transform: rotate(180deg);
+/* Portal collapsed (aria-expanded=false) → down arrow = "click to expand" */
+#modulesMinimize[aria-expanded="false"] .portal-tab-arrow::before {
+  content: '↓';
 }
 
 /* ---- Disconnect button ---- */
