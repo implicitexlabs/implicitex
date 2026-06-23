@@ -1957,7 +1957,7 @@ footer {
 .f-brand {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: var(--sp-5);
   opacity: 0.3;
 }
 
