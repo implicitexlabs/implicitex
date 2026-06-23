@@ -2061,12 +2061,20 @@
     if (!els.modules) return;
     els.modules.classList.add('is-minimized');
     if (els.portalMinimizedTray) els.portalMinimizedTray.removeAttribute('hidden');
+    if (els.modulesMinimize) {
+      els.modulesMinimize.setAttribute('aria-expanded', 'false');
+      els.modulesMinimize.setAttribute('aria-label', 'Expand transfer portal');
+    }
   }
 
   function restorePortal() {
     if (!els.modules) return;
     els.modules.classList.remove('is-minimized');
     if (els.portalMinimizedTray) els.portalMinimizedTray.setAttribute('hidden', '');
+    if (els.modulesMinimize) {
+      els.modulesMinimize.setAttribute('aria-expanded', 'true');
+      els.modulesMinimize.setAttribute('aria-label', 'Collapse transfer portal');
+    }
   }
 
   function closePortalWithAnimation() {
@@ -4680,7 +4688,13 @@
 
   // Portal controls — Minimize and Close
   if (els.modulesMinimize) {
-    els.modulesMinimize.addEventListener('click', minimizePortal);
+    els.modulesMinimize.addEventListener('click', function () {
+      if (els.modules && els.modules.classList.contains('is-minimized')) {
+        restorePortal();
+      } else {
+        minimizePortal();
+      }
+    });
   }
   if (els.modulesClose) {
     els.modulesClose.addEventListener('click', function () {

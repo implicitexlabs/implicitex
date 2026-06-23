@@ -1011,23 +1011,42 @@ body.portal-active #nav {
 
 .portal-controls[hidden] { display: none; }
 
-.portal-dismiss {
-  font-family: var(--font-ui);
-  font-size: var(--size-sm);
-  letter-spacing: 0.12em;
-  color: var(--dim);
-  background: var(--bg); /* covers portal border beneath button */
-  border: 1px solid var(--border-2); /* match portal border exactly */
-  border-bottom: none;   /* open bottom — visually joins portal top edge */
-  padding: 5px 10px 6px;
+.portal-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 26px;
+  background: var(--bg);
+  border: 1px solid var(--border-2);
+  border-bottom: none;
   cursor: pointer;
-  transition: color 0.12s, border-color 0.12s;
-  line-height: 1;
+  color: var(--dim);
+  transition: color 0.12s;
 }
 
-.portal-dismiss:hover {
+.portal-tab:hover {
   color: var(--white);
-  border-color: var(--border-2);
+}
+
+/* Collapse/expand chevron — same geometry as .data-toggle-icon */
+.portal-tab-chevron {
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 5px solid var(--dim);
+  transition: transform 0.18s ease-out, border-top-color 0.12s;
+  pointer-events: none;
+}
+
+.portal-tab:hover .portal-tab-chevron {
+  border-top-color: var(--white);
+}
+
+/* Portal minimized → flip chevron to ▲ = "expand" */
+#modulesMinimize[aria-expanded="false"] .portal-tab-chevron {
+  transform: rotate(180deg);
 }
 
 /* ---- Disconnect button ---- */
