@@ -3,21 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ImplicitEx — Media</title>
-  <meta name="description" content="Media kit and press resources for ImplicitEx — platform overview, key facts, boilerplate, and brand assets.">
-  <meta property="og:url" content="https://implicitex.com/media.html">
+  <title>ImplicitEx — Get Started</title>
+  <meta name="description" content="How to set up a crypto wallet and send USDC with ImplicitEx. Step-by-step guide for first-time users.">
+  <meta property="og:url" content="https://implicitex.com/get-started.html">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="ImplicitEx — Media">
-  <meta property="og:description" content="Media kit and press resources for ImplicitEx — platform overview, key facts, boilerplate, and brand assets.">
+  <meta property="og:title" content="ImplicitEx — Get Started">
+  <meta property="og:description" content="How to set up a crypto wallet and send USDC with ImplicitEx. Step-by-step guide for first-time users.">
   <meta property="og:image" content="https://implicitex.com/components/images/og-primary.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="628">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:site" content="@implicitex">
-  <meta name="twitter:title" content="ImplicitEx — Media">
-  <meta name="twitter:description" content="Media kit and press resources for ImplicitEx — platform overview, key facts, boilerplate, and brand assets.">
+  <meta name="twitter:title" content="ImplicitEx — Get Started">
+  <meta name="twitter:description" content="How to set up a crypto wallet and send USDC with ImplicitEx. Step-by-step guide for first-time users.">
   <meta name="twitter:image" content="https://implicitex.com/components/images/og-primary.png">
-  <link rel="canonical" href="https://implicitex.com/media.html">
+  <link rel="canonical" href="https://implicitex.com/get-started.html">
   <script>(function(){try{var t=localStorage.getItem('implicitex-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t;}catch(e){}})();</script>
   <link rel="stylesheet" href="css/main.css">
 </head>
@@ -30,7 +30,6 @@
       <img class="wordmark" src="/components/images/wordmark-white.svg" alt="" aria-hidden="true">
     </a>
     <div class="nav-right">
-      
       <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch to light theme" aria-pressed="false">
         <svg class="theme-icon" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
           <path d="M7 1 A6 6 0 0 0 7 13 Z" fill="var(--white)"/>
@@ -58,7 +57,6 @@
           <button class="wallet-menu-action wallet-menu-action--danger" id="disconnectBtn" type="button">Disconnect</button>
         </div>
       </div>
-      <!-- Hamburger — mobile only, hidden on desktop via CSS -->
       <button class="hamburger-btn" id="hamburgerBtn" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
         <svg width="18" height="14" viewBox="0 0 18 14" aria-hidden="true">
           <rect y="0"  width="18" height="1.8" fill="currentColor"/>
@@ -82,7 +80,6 @@
         </button>
       </div>
 
-      <!-- Wallet section -->
       <section class="mobile-menu-section" aria-label="Wallet">
         <p class="mobile-menu-label">Wallet</p>
         <p class="mobile-menu-status" id="menuWalletStatus">No wallet connected.</p>
@@ -101,7 +98,6 @@
         </div>
       </section>
 
-      <!-- Transaction section -->
       <section class="mobile-menu-section" aria-label="Transaction">
         <p class="mobile-menu-label">Transaction</p>
         <button class="mobile-menu-btn mobile-menu-btn--primary" id="menuOpenPortalBtn" type="button">
@@ -110,7 +106,6 @@
         <p class="mobile-menu-portal-note">Open the USDC transfer interface.</p>
       </section>
 
-      <!-- Navigation links -->
       <section class="mobile-menu-section" aria-label="Navigation">
         <p class="mobile-menu-label">Site</p>
         <nav class="mobile-menu-links">
@@ -128,7 +123,6 @@
         </nav>
       </section>
 
-      <!-- Social links — separated from site navigation -->
       <section class="mobile-menu-section" aria-label="Social">
         <p class="mobile-menu-label">Social</p>
         <nav class="mobile-menu-links">
@@ -137,174 +131,118 @@
         </nav>
       </section>
     </div>
-    <!-- Backdrop — tap to close -->
     <div class="mobile-menu-backdrop" id="mobileMenuBackdrop" aria-hidden="true"></div>
   </div>
 
-  <!-- WALLET CHOICE OVERLAY -->
-  <div class="wallet-choice" id="walletChoiceOverlay" role="dialog" aria-modal="true" aria-label="Choose wallet" hidden>
-    <div class="wallet-choice-backdrop" id="walletChoiceBackdrop" aria-hidden="true"></div>
-    <div class="wallet-choice-inner">
-      <div class="wallet-choice-head">
-        <span class="wallet-choice-title">Connect Wallet</span>
-        <button class="wallet-choice-close" id="walletChoiceClose" type="button" aria-label="Close">
-          <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
-            <line x1="1" y1="1" x2="11" y2="11" stroke="currentColor" stroke-width="1.6"/>
-            <line x1="11" y1="1" x2="1" y2="11" stroke="currentColor" stroke-width="1.6"/>
-          </svg>
-        </button>
-      </div>
-      <div class="wallet-choice-actions">
-        <a class="wallet-choice-btn wallet-choice-btn--primary" id="walletChoiceMetaMask"
-           href="https://metamask.app.link/dapp/implicitex.com" target="_blank" rel="noopener">
-          Open MetaMask
-        </a>
-      </div>
-    </div>
-  </div>
-
-  <main class="policy-shell media-shell">
+  <main class="policy-shell faq-shell">
     <div class="about-hero-mark about-hero-mark--stacked" aria-hidden="true">
       <img class="about-brandmark" src="/components/images/lettermark-white.svg" alt="" aria-hidden="true">
       <img class="about-wordmark" src="/components/images/wordmark-white.svg" alt="" aria-hidden="true">
     </div>
 
-    <h1>Media</h1>
+    <h1>Get Started</h1>
 
     <p>
-      Reference material for journalists, analysts, and content creators
-      covering ImplicitEx. For brand assets and logo usage, see the
-      <a href="/brand.html">Brand</a> page.
+      If you have never used a crypto wallet, start here. This page covers
+      everything you need to set up before making your first transfer with
+      ImplicitEx. Follow the steps in order — each one builds on the previous.
     </p>
 
-    <h2>Platform Overview</h2>
+    <h2>What you need</h2>
 
-    <p>
-      ImplicitEx is a non-custodial platform for wallet-to-wallet USDC transfers
-      on Polygon. Users connect their own wallet, enter a recipient address and
-      amount, review the fee and total debit, and execute the transfer through
-      the ImplicitEx smart contract. ImplicitEx does not hold private keys,
-      does not custody user assets, and does not act as a bank, broker,
-      or exchange.
-    </p>
-
-    <p>
-      The platform charges a 1% fee added on top of the transfer amount. The
-      recipient receives the full amount entered. All fee and total debit
-      figures are displayed before the user takes any wallet action.
-      No hidden spreads. No vague service charges.
-    </p>
-
-    <p>
-      ImplicitEx is a product of Aden Media Group LLC, a software company
-      building practical, transparent tools for digital commerce and everyday
-      users.
-    </p>
-
-    <h2>At a Glance</h2>
-
-    <dl>
-      <dt>Category</dt>
-      <dd>Non-custodial USDC transfer platform</dd>
-
-      <dt>Network</dt>
-      <dd>Polygon (Ethereum-compatible, PoS)</dd>
-
-      <dt>Asset</dt>
-      <dd>USDC (USD Coin, issued by Circle)</dd>
-
-      <dt>Fee model</dt>
-      <dd>1% platform fee added on top of transfer amount; recipient receives full entered amount</dd>
-
-      <dt>Custody</dt>
-      <dd>None — funds move directly between user wallets via smart contract</dd>
-
-      <dt>Current per-transfer limit</dt>
-      <dd>250 USDC</dd>
-
-      <dt>Contract</dt>
-      <dd>Source-verified on Polygonscan; deployment address and transaction record on the <a href="/verification.html">Verification</a> page</dd>
-
-      <dt>Status</dt>
-      <dd>Live — limited soft launch as of June 2026</dd>
-
-      <dt>Operator</dt>
-      <dd>Aden Media Group LLC</dd>
-
-      <dt>Press contact</dt>
-      <dd><a href="mailto:connect@implicitex.com">connect@implicitex.com</a></dd>
-    </dl>
-
-    <h2>Platform Description</h2>
-
-    <p>
-      The following text may be used as-is or adapted when describing
-      ImplicitEx in an article, post, or broadcast segment.
-    </p>
-
-    <p class="media-description">
-      ImplicitEx is a non-custodial platform that lets users send USDC directly
-      between wallets using a smart contract on Polygon. The platform charges a
-      1% fee on each transfer and displays the full fee breakdown before any
-      wallet action is taken. ImplicitEx does not hold user funds at any point
-      in the transaction. Transfers are executed on-chain and are irreversible
-      once confirmed. ImplicitEx launched in soft-launch mode on Polygon
-      mainnet in June 2026 with a 250 USDC per-transfer cap.
-    </p>
-
-    <h2>Key Messages</h2>
+    <p>Before you can send USDC through ImplicitEx, you need three things:</p>
 
     <ul>
-      <li><strong>Non-custodial by design.</strong> ImplicitEx never holds user funds. The smart contract routes USDC between wallets without any platform custody step.</li>
-      <li><strong>Transparent fee structure.</strong> The 1% fee is shown explicitly before execution — no hidden spreads, no vague service charges.</li>
-      <li><strong>On-chain verifiable.</strong> The contract is source-verified and the transaction record is publicly accessible on Polygonscan.</li>
-      <li><strong>Built for everyday users.</strong> The interface is designed around plain-language status messages and deliberate confirmation at each step.</li>
+      <li><strong>A MetaMask wallet.</strong> MetaMask is a browser extension that lets you connect to blockchain applications. It stores your wallet address and signs transactions on your behalf. ImplicitEx does not hold your funds — your wallet does.</li>
+      <li><strong>USDC on Polygon.</strong> USDC is a digital dollar pegged 1:1 to USD and issued by Circle. ImplicitEx transfers USDC on the Polygon network. The amount you send, plus the 1% platform fee, must be in your wallet before you begin.</li>
+      <li><strong>A small amount of POL for gas.</strong> Every transaction on Polygon requires a small gas fee paid in POL (Polygon's native token). This is typically a fraction of a cent. Without it, transactions cannot be submitted.</li>
     </ul>
 
-    <h2>What ImplicitEx Is Not</h2>
+    <h2>Step-by-step setup</h2>
+
+    <ol>
+      <li>
+        <strong>Install MetaMask.</strong> Download it from
+        <a href="https://metamask.io" target="_blank" rel="noopener noreferrer">metamask.io</a>
+        or your browser's verified extension store. Do not install wallet software
+        from third-party sites, search ads, or links in messages. Only install from
+        official sources.
+      </li>
+      <li>
+        <strong>Create a wallet.</strong> MetaMask will generate a new wallet
+        address for you. If you already have a MetaMask wallet, you can import it
+        using your recovery phrase instead of creating a new one.
+      </li>
+      <li>
+        <strong>Write down your recovery phrase offline.</strong> MetaMask will show
+        you a 12-word recovery phrase during setup. Write it on paper and store it
+        somewhere secure. Do not photograph it, type it into notes apps, email it to
+        yourself, or save it in cloud storage. Anyone who has your recovery phrase
+        controls your wallet. There is no way to recover a wallet without it.
+      </li>
+      <li>
+        <strong>Add Polygon network.</strong> MetaMask may already include Polygon.
+        If not, you can add it inside MetaMask under Networks, or visit the Polygon
+        documentation for the network details. Make sure you are adding Polygon
+        mainnet, not a testnet.
+      </li>
+      <li>
+        <strong>Obtain USDC on Polygon.</strong> You can buy USDC through a
+        supported exchange or on-ramp such as
+        <a href="https://www.coinbase.com/price/usdc" target="_blank" rel="noopener noreferrer">Coinbase</a>.
+        When withdrawing, confirm you are sending USDC on the Polygon network —
+        not Ethereum or another chain. Also keep a small amount of POL in the
+        same wallet to pay network gas.
+      </li>
+      <li>
+        <strong>Connect your wallet to ImplicitEx.</strong> Return to ImplicitEx
+        and click Connect Wallet. Select MetaMask and approve the connection.
+        ImplicitEx will not request any transaction at this point — it only reads
+        your wallet address and balance.
+      </li>
+      <li>
+        <strong>Review and execute a transfer.</strong> Enter the recipient address
+        and amount. Review the transfer summary carefully — verify the recipient
+        address, amount, fee, and total debit before confirming anything in MetaMask.
+        Two wallet confirmations are required: one to authorize the contract, one to
+        send the funds. Authorization alone does not move money.
+      </li>
+    </ol>
+
+    <h2>Safety notes</h2>
 
     <p>
-      ImplicitEx is not a bank, broker, exchange, custodian, wallet provider,
-      or money services business. It does not hold private keys, does not
-      recover funds sent to wrong addresses, and does not provide financial,
-      legal, or tax advice. See the <a href="/legal.html">Legal</a> page for
-      the full scope of platform limitations.
+      ImplicitEx is a non-custodial platform. Once a transfer is confirmed
+      on-chain, it cannot be reversed. Review every transfer carefully before
+      approving anything in MetaMask.
     </p>
-
-    <h2>Social</h2>
 
     <ul>
-      <li>X (Twitter): <a href="https://x.com/implicitex" target="_blank" rel="noopener">@implicitex</a></li>
-      <li>LinkedIn: <a href="https://www.linkedin.com/in/implicitex/" target="_blank" rel="noopener">linkedin.com/in/implicitex</a></li>
-      <li>GitHub: <a href="https://github.com/implicitexlabs" target="_blank" rel="noopener">github.com/implicitexlabs</a></li>
+      <li>Always verify the recipient address before confirming. Blockchain transactions are irreversible.</li>
+      <li>Never share your recovery phrase with anyone, including support agents or websites claiming to help you recover a wallet.</li>
+      <li>Only install MetaMask from official sources. Fake wallet extensions are a common attack vector.</li>
+      <li>Confirm the network before withdrawing from an exchange. Sending Ethereum USDC to a Polygon address, or vice versa, can result in inaccessible funds.</li>
     </ul>
 
-    <h2>Brand Assets</h2>
+    <h2>External resources</h2>
 
     <p>
-      Logo files, approved configurations, clear-space rules, and usage
-      guidelines are on the <a href="/brand.html">Brand</a> page.
+      These links go to external services. Review their fees, identity requirements,
+      supported networks, and terms before using them.
     </p>
+
+    <ul>
+      <li><a href="https://support.metamask.io/start/getting-started-with-metamask/" target="_blank" rel="noopener noreferrer">MetaMask: Getting started</a></li>
+      <li><a href="https://support.metamask.io/manage-crypto/buy-crypto/how-to-buy-crypto-in-metamask/" target="_blank" rel="noopener noreferrer">MetaMask: Buying crypto</a></li>
+      <li><a href="https://www.coinbase.com/price/usdc" target="_blank" rel="noopener noreferrer">Coinbase USDC</a></li>
+    </ul>
 
     <p>
-      Social media assets (avatars, banners, open graph images) are available
-      in the <code>components/images/</code> directory of the
-      <a href="https://github.com/implicitexlabs" target="_blank" rel="noopener">ImplicitEx GitHub repository</a>.
+      For deeper explanations of wallets, USDC, Polygon, and gas fees, see the
+      <a href="/learn.html">Learn</a> page. For answers to common questions, see
+      the <a href="/faq.html">FAQ</a>.
     </p>
 
-    <h2>Press Contact</h2>
-
-    <p>
-      <a href="mailto:connect@implicitex.com">connect@implicitex.com</a>
-    </p>
-
-    <p>
-      When writing about a specific platform feature or on-chain event,
-      including the transaction hash and date helps us respond quickly
-      with the relevant on-chain record.
-    </p>
-
-    <a class="back" href="/">Return to ImplicitEx</a>
   </main>
 
   <footer>
