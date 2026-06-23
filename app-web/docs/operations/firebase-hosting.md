@@ -35,13 +35,20 @@ Firebase Hosting sits behind a global CDN. On deploy, Firebase issues a cache in
 | `**/*.js` | `no-cache, must-revalidate` | JS must always be current; no fingerprinting/versioning in use |
 | CSS, images, fonts | (Firebase default) | These change rarely; fingerprint if needed in future |
 
+### Important limitation
+
+`Cache-Control` headers in `firebase.json` control **browser caching**, not Firebase's own CDN layer. Firebase Hosting's Fastly CDN applies `max-age=3600` to HTML responses regardless of the header set in `firebase.json`. Confirmed by observation: staging URL returned `cache-control: max-age=3600` even on a `x-cache: MISS` after the `no-cache` fix was deployed.
+
+This means CDN propagation lag after a deploy is inherent to Firebase Hosting and cannot be eliminated via response headers alone. The `no-cache` header still provides value for browsers (prevents browser-level caching), but will not prevent CDN edge nodes from caching for up to 3600s.
+
 ### The failure mode (2026-06-23)
 
 1. `consent.js` added to all 16 HTML pages and deployed.
-2. Staging URL (`implicitex-236f2.web.app`) immediately served correct HTML.
-3. Custom domain (`implicitex.com`) served stale HTML missing `consent.js` for ~15–30 minutes.
-4. Root cause: HTML files had no `Cache-Control` header; CDN used its own TTL.
-5. Fix: Added `**/*.html` → `no-cache, must-revalidate` to `firebase.json` (commit `1327da8`).
+2. Staging URL (`implicitex-236f2.web.app`) served correct HTML immediately (MISS on CDN = went to origin).
+3. Custom domain (`implicitex.com`) served stale HTML missing `consent.js` for several hours — multiple Denver edge nodes each held independent `max-age=3600` cached copies.
+4. Root cause: Firebase CDN applies `max-age=3600` to HTML at the CDN layer regardless of response headers.
+5. Partial fix: Added `**/*.html` → `no-cache, must-revalidate` to `firebase.json` (commit `1327da8`) — prevents browser caching, does not affect CDN TTL.
+6. Resolution: CDN nodes naturally expired their cached copies; custom domain then served correct HTML.
 
 **Lesson:** Always check the custom domain, not just staging, when a deploy adds or reorders script tags. The staging URL bypasses the custom domain CDN layer.
 
