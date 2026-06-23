@@ -256,7 +256,9 @@ code, kbd, pre,
   fill: #080808;
 }
 
-[data-theme="light"] img.wordmark {
+[data-theme="light"] img.wordmark,
+[data-theme="light"] .hero-slide-lettermark,
+[data-theme="light"] .hero-slide-wordmark {
   filter: invert(1);
 }
 
