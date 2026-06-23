@@ -54,8 +54,8 @@
 
     banner.innerHTML =
       '<p class="consent-text">' +
-        'We use analytics to understand how the platform is used. ' +
-        'No personal data is collected and no cookies are set until you accept. ' +
+        'We use optional privacy-conscious analytics to understand site usage. ' +
+        'You can accept or decline. Your choice is remembered in this browser. ' +
         '<a href="/privacy.html">Privacy Policy</a>' +
       '</p>' +
       '<div class="consent-actions">' +
