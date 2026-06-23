@@ -121,7 +121,6 @@
           <a href="/learn.html">Learn</a>
           <a href="/trust.html">Trust</a>
           <a href="/trust.html">Trust</a>
-          <a href="/verification.html">Verification</a>
           <a href="/log.html">Devlog</a>
           <a href="/terms.html">Terms</a>
           <a href="/privacy.html">Privacy</a>
@@ -242,7 +241,6 @@
           <a href="/learn.html">Learn</a>
           <a href="/trust.html">Trust</a>
           <a href="/trust.html">Trust</a>
-          <a href="/verification.html">Verification</a>
           <a href="/log.html">Devlog</a>
           <a href="/news.html">News</a>
         </div>
@@ -447,7 +445,7 @@
 <h3>Second prompt — Execution</h3>
 <p>The transfer executes. USDC moves from your wallet to the recipient. The 1% fee goes to the ImplicitEx treasury. The contract retains nothing.</p>
 <p>Your wallet controls your funds at all times. The ImplicitEx contract cannot move USDC unless you explicitly authorize it through the first prompt. Authorization alone does not send anything.</p>
-<p>The behavior of the contract — including what happens to the fee and what the contract retains — is documented on the <a href="/verification.html">Proof page</a> with a verified on-chain transaction record.</p>
+<p>The behavior of the contract — including what happens to the fee and what the contract retains — is documented on the <a href="/trust.html">Proof page</a> with a verified on-chain transaction record.</p>
 <p>See also: <button class="learn-inline-link" data-entry="token-approval">Token approval</button></p>`
             },
             {
@@ -464,7 +462,7 @@
   <li>The result shows sender, recipient, amount, fee, timestamp, and confirmation status</li>
 </ol>
 <p>You can also look up your wallet address on Polygonscan to see all incoming and outgoing transactions associated with it.</p>
-<p>The transaction record is permanent. Anyone with the hash can independently verify what happened — including the routing of the 1% fee to the treasury address listed on the <a href="/verification.html">Proof page</a>.</p>`
+<p>The transaction record is permanent. Anyone with the hash can independently verify what happened — including the routing of the 1% fee to the treasury address listed on the <a href="/trust.html">Proof page</a>.</p>`
             },
             {
               id: 'wrong-address',
@@ -485,7 +483,7 @@
 <p>Wallet security systems assess contracts based on age, transaction history, and known behavior patterns. A new contract with limited on-chain history may be classified as "untrusted" even if no malicious behavior has been detected.</p>
 <p>The ImplicitEx contract is relatively new. The warning reflects its age — not a finding of fraud or malicious activity.</p>
 <h3>What to do</h3>
-<p>Compare the contract address shown in your wallet warning with the contract address on the <a href="/verification.html">Proof page</a>. If they match, you are interacting with the correct ImplicitEx contract — the same one with publicly verified source code and a documented on-chain transaction record.</p>
+<p>Compare the contract address shown in your wallet warning with the contract address on the <a href="/trust.html">Proof page</a>. If they match, you are interacting with the correct ImplicitEx contract — the same one with publicly verified source code and a documented on-chain transaction record.</p>
 <p>If the addresses do not match, do not proceed. Contact ImplicitEx at <a href="/contact.html">connect@implicitex.com</a>.</p>
 <p>See also the <a href="/faq.html">FAQ</a> entry on wallet warnings for more detail on how wallet security providers classify new contracts.</p>`
             }
@@ -511,7 +509,7 @@
               html: `<h2>Blockchain</h2>
 <p>A blockchain is a shared public ledger that records transactions. Once a transaction is written to the blockchain, it is permanent and visible to anyone.</p>
 <p>On Polygon — the blockchain ImplicitEx uses — every transfer, approval, and contract interaction is recorded as an on-chain transaction. There is no central company controlling the ledger. Anyone can verify what happened by looking up a transaction hash on a block explorer like Polygonscan.</p>
-<p>This public nature is what makes the <a href="/verification.html">Proof page</a> possible. The transaction record there is not a claim made by ImplicitEx — it is a public on-chain record that anyone can verify independently and permanently.</p>
+<p>This public nature is what makes the <a href="/trust.html">Proof page</a> possible. The transaction record there is not a claim made by ImplicitEx — it is a public on-chain record that anyone can verify independently and permanently.</p>
 <p>See also: <button class="learn-inline-link" data-entry="polygon">Polygon</button></p>`
             },
             {
@@ -619,7 +617,7 @@
 <p>Under the <a href="https://www.govinfo.gov/app/details/PLAW-119publ27" target="_blank" rel="noopener noreferrer">GENIUS Act</a> (Public Law 119-27, enacted July 18, 2025), USDC qualifies as a payment stablecoin under US federal law. Circle, as a permitted payment stablecoin issuer, is required to maintain dollar-for-dollar reserves in qualifying assets, publish monthly reserve disclosures with independent verification, and comply with federal anti-money-laundering obligations.</p>
 <h3>USDC on Polygon</h3>
 <p>ImplicitEx uses native USDC on <a href="https://polygon.technology" target="_blank" rel="noopener noreferrer">Polygon</a> — specifically the contract issued directly by Circle for the Polygon network. Other USDC variants (wrapped, bridged, or issued on other networks) are not supported.</p>
-<p>The USDC contract address used by ImplicitEx is documented on the <a href="/verification.html">Proof page</a>.</p>
+<p>The USDC contract address used by ImplicitEx is documented on the <a href="/trust.html">Proof page</a>.</p>
 <p>See also: <button class="learn-inline-link" data-entry="who-issues-usdc">Who issues USDC?</button> · <button class="learn-inline-link" data-entry="payment-stablecoin">What is a payment stablecoin?</button> · <button class="learn-inline-link" data-entry="stablecoin-not-insured">Are stablecoins insured?</button> · <button class="learn-inline-link" data-entry="usdc-denominations">USDC denominations</button></p>`
             },
             {
@@ -768,7 +766,7 @@
               title: 'Is ImplicitEx safe?',
               html: `<h2>Is ImplicitEx safe?</h2>
 <p>ImplicitEx is designed with a non-custodial, on-chain architecture. No party — including ImplicitEx — can access your funds without your explicit wallet authorization. The contract source code is publicly verified on Polygonscan and can be read by anyone.</p>
-<p>A controlled mainnet transfer was executed before public launch to confirm that the contract routes funds exactly as described: the transfer amount to the recipient, the 1% fee to the treasury, and nothing retained by the contract. This is documented on the <a href="/verification.html">Proof page</a>.</p>
+<p>A controlled mainnet transfer was executed before public launch to confirm that the contract routes funds exactly as described: the transfer amount to the recipient, the 1% fee to the treasury, and nothing retained by the contract. This is documented on the <a href="/trust.html">Proof page</a>.</p>
 <h3>What ImplicitEx cannot guarantee</h3>
 <p>No smart contract, wallet, blockchain network, or internet service can be guaranteed to be free of all risk. You remain responsible for:</p>
 <ul>
@@ -789,7 +787,7 @@
 <h3>What ImplicitEx does and does not do</h3>
 <p>ImplicitEx does not issue USDC. ImplicitEx does not redeem USDC for dollars. ImplicitEx transfers USDC between wallets — the asset itself is governed entirely by Circle and subject to federal law governing its issuance.</p>
 <p>Circle may make decisions affecting USDC that are outside ImplicitEx's control, including address-level restrictions, reserve management changes, contract upgrades, or business changes. These decisions could affect the value or accessibility of USDC independently of anything ImplicitEx does.</p>
-<p>The USDC contract address used by ImplicitEx is documented on the <a href="/verification.html">Proof page</a>.</p>
+<p>The USDC contract address used by ImplicitEx is documented on the <a href="/trust.html">Proof page</a>.</p>
 <p>See also: <button class="learn-inline-link" data-entry="genius-act">What is the GENIUS Act?</button> · <button class="learn-inline-link" data-entry="stablecoin-reserves">Stablecoin reserve requirements</button></p>`
             },
             {

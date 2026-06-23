@@ -11,6 +11,11 @@
         "source": "/get-started.html",
         "destination": "/start.html",
         "type": 301
+      },
+      {
+        "source": "/verification.html",
+        "destination": "/trust.html",
+        "type": 301
       }
     ],
     "headers": [
