@@ -3,21 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ImplicitEx — Verification</title>
-  <meta name="description" content="Public verification of the ImplicitEx contract, treasury, fee model, and transaction record on Polygon.">
-  <meta property="og:url" content="https://implicitex.com/verification.html">
+  <title>ImplicitEx — Trust</title>
+  <meta name="description" content="Contract address, treasury, fee model, verification steps, and wallet warning context for ImplicitEx on Polygon.">
+  <meta property="og:url" content="https://implicitex.com/trust.html">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="ImplicitEx — Proof">
-  <meta property="og:description" content="Public verification of the ImplicitEx contract, treasury, fee model, and on-chain transaction record.">
+  <meta property="og:title" content="ImplicitEx — Trust">
+  <meta property="og:description" content="Contract address, treasury, fee model, verification steps, and wallet warning context for ImplicitEx on Polygon.">
   <meta property="og:image" content="https://implicitex.com/components/images/og-proof.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="628">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:site" content="@implicitex">
-  <meta name="twitter:title" content="ImplicitEx — Proof">
-  <meta name="twitter:description" content="Public verification of the ImplicitEx contract, treasury, fee model, and on-chain transaction record.">
+  <meta name="twitter:title" content="ImplicitEx — Trust">
+  <meta name="twitter:description" content="Contract address, treasury, fee model, verification steps, and wallet warning context for ImplicitEx on Polygon.">
   <meta name="twitter:image" content="https://implicitex.com/components/images/og-proof.png">
-  <link rel="canonical" href="https://implicitex.com/verification.html">
+  <link rel="canonical" href="https://implicitex.com/trust.html">
   <script>(function(){try{var t=localStorage.getItem('implicitex-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t;}catch(e){}})();</script>
   <link rel="stylesheet" href="css/main.css">
 </head>
@@ -30,7 +30,7 @@
       <img class="wordmark" src="/components/images/wordmark-white.svg" alt="" aria-hidden="true">
     </a>
     <div class="nav-right">
-      
+
       <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch to light theme" aria-pressed="false">
         <svg class="theme-icon" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
           <path d="M7 1 A6 6 0 0 0 7 13 Z" fill="var(--white)"/>
@@ -119,7 +119,6 @@
           <a href="/faq.html">FAQ</a>
           <a href="/learn.html">Learn</a>
           <a href="/trust.html">Trust</a>
-          <a href="/trust.html">Trust</a>
           <a href="/verification.html">Verification</a>
           <a href="/log.html">Devlog</a>
           <a href="/terms.html">Terms</a>
@@ -150,24 +149,42 @@
       <img class="about-wordmark" src="/components/images/wordmark-white.svg" alt="" aria-hidden="true">
     </div>
 
-    <h1>Verification</h1>
+    <h1>Trust</h1>
 
     <p>
-      Every transfer executed through ImplicitEx is recorded on
-      <a href="https://polygon.technology" target="_blank" rel="noopener noreferrer">Polygon</a>'s
-      public blockchain and can be independently verified by anyone, without an
-      account or third-party service. This page publishes the contract address, treasury
-      address, fee model, and a verified transaction record so that every user
-      can confirm exactly how the platform operates before any value is exchanged.
+      VERIFY EVERYTHING is not a slogan. It is an instruction. This page provides
+      the contract address, treasury address, fee model, verified transaction record,
+      and step-by-step verification instructions that allow anyone to independently
+      confirm how ImplicitEx operates — before and after a transfer. No account
+      required. No login required. Every claim on this page has a corresponding
+      on-chain record or public source.
     </p>
 
-    <section class="proof-panel" aria-labelledby="public-verification-title">
-      <div class="proof-panel-head">
-        <h2 id="public-verification-title">Public Verification</h2>
+    <h2>Platform Status</h2>
 
+    <dl class="v-facts">
+      <div class="v-fact">
+        <dt>Transfers</dt>
+        <dd>Operational — Polygon mainnet (chainId 137)</dd>
+      </div>
+      <div class="v-fact">
+        <dt>Transfer cap</dt>
+        <dd>250 USDC per transfer during soft launch</dd>
+      </div>
+      <div class="v-fact">
+        <dt>Blockaid review</dt>
+        <dd>In progress — false-positive report submitted 2026-06-18; pending response. Review does not affect platform operation. See <a href="#wallet-warnings">Wallet Security Warnings</a> below.</dd>
+      </div>
+    </dl>
+
+    <h2>Smart Contract</h2>
+
+    <section class="proof-panel" aria-labelledby="contract-title">
+      <div class="proof-panel-head">
+        <h3 id="contract-title">Contract &amp; Network</h3>
         <p>
-          The following information can be confirmed directly on Polygon's
-          public blockchain without any account, login, or third-party service.
+          The following addresses can be confirmed directly on Polygon's public
+          blockchain without any account, login, or third-party service.
         </p>
       </div>
 
@@ -215,18 +232,37 @@
             </a>
           </dd>
         </div>
-
-        <div class="v-fact">
-          <dt>Fee Model</dt>
-          <dd>1% additive. Sender pays transfer amount plus fee. Recipient receives the full amount entered.</dd>
-        </div>
-
-        <div class="v-fact">
-          <dt>Transfer Cap</dt>
-          <dd>250 USDC per transfer during soft launch.</dd>
-        </div>
       </dl>
     </section>
+
+    <h2>Treasury &amp; Fee Model</h2>
+
+    <p>
+      The platform fee is 1% of the transfer amount, added on top of the amount
+      entered. The sender pays the transfer amount plus 1%. The recipient receives
+      the exact amount entered. The 1% fee is routed to the treasury address in
+      the same on-chain transaction as the transfer — there is no separate fee
+      collection step. The contract retains zero USDC after every transfer.
+    </p>
+
+    <dl class="v-facts">
+      <div class="v-fact">
+        <dt>Fee</dt>
+        <dd>1% additive — displayed before any wallet confirmation</dd>
+      </div>
+      <div class="v-fact">
+        <dt>Fee recipient</dt>
+        <dd>Treasury address above — not the contract</dd>
+      </div>
+      <div class="v-fact">
+        <dt>Contract retains</dt>
+        <dd>0 USDC after every transfer</dd>
+      </div>
+      <div class="v-fact">
+        <dt>Transfer cap</dt>
+        <dd>250 USDC per transfer during soft launch</dd>
+      </div>
+    </dl>
 
     <h2>Verified Transaction Record</h2>
 
@@ -278,46 +314,146 @@
       </div>
     </div>
 
-    <p>
-      The fee path is independently auditable: the Polygonscan transaction record
-      shows two USDC outputs — one to the recipient, one to the treasury address
-      listed above. ImplicitEx did not hold any funds at any point in the transfer.
-    </p>
-
-    <h2>What Each Wallet Prompt Does</h2>
+    <h2>How To Verify a Transfer</h2>
 
     <p>
-      ImplicitEx requires two wallet confirmations to execute a transfer. They are
-      separate steps with different effects.
+      Every transfer produces a transaction hash. To verify that a transfer
+      executed correctly, look up the hash on Polygonscan and confirm the
+      following:
+    </p>
+
+    <ol>
+      <li>Open <a href="https://polygonscan.com" target="_blank" rel="noopener noreferrer">polygonscan.com</a> and enter the transaction hash in the search field.</li>
+      <li>Find the token transfers section. A correctly executed transfer shows two USDC token movements: one to the recipient address, one to the treasury address.</li>
+      <li>Confirm the treasury address in the token transfer matches <code>0xa7cE4232811021d2Dd01f4f0f264Df2427ab3919</code>.</li>
+      <li>Confirm the recipient address matches the address you entered.</li>
+      <li>Confirm the contract address in the transaction is <code>0x5015841D6E665e63Ea174aD6b8FeF854026dE0C0</code>.</li>
+      <li>Confirm that no USDC balance is held by the contract after the transaction.</li>
+    </ol>
+
+    <p>
+      The fee path is auditable in one step: if the Polygonscan record shows the
+      two outputs described above and the contract held zero USDC afterward,
+      the transfer executed exactly as designed.
+    </p>
+
+    <h2 id="wallet-warnings">Wallet Security Warnings</h2>
+
+    <h3>What Blockaid is</h3>
+
+    <p>
+      Blockaid is an automated security screening service integrated into MetaMask
+      and other wallets. It analyzes contract interactions and assigns a trust
+      classification based on factors including transaction history, contract age,
+      and known malicious patterns. Blockaid classifications are automated — they
+      are not manual audits.
+    </p>
+
+    <h3>Why warnings appear</h3>
+
+    <p>
+      A warning that a contract is "untrusted" or that a request is "potentially
+      deceptive" means the contract has not yet accumulated enough on-chain
+      history to receive a trusted classification — not that malicious behavior
+      has been detected. New contracts, even correctly functioning ones, typically
+      trigger this classification.
     </p>
 
     <p>
-      The first prompt asks your wallet to authorize the ImplicitEx contract to
-      transfer a specific USDC amount on your behalf. The authorization is limited
-      to the exact total debit for that transfer — not an unlimited approval.
-      Authorizing alone does not move any funds.
+      During Gate 5 first-user testing on June 18, 2026, MetaMask displayed a
+      false-positive warning on the USDC approval step. The approval amount shown
+      was exact — the transfer amount plus the platform fee — not unlimited.
+      ImplicitEx submitted false-positive reports to Blockaid on June 18, 2026
+      for both <code>implicitex.com</code> and the staging domain.
     </p>
 
-    <p>
-      The second prompt executes the transfer. When confirmed, the contract
-      sends the transfer amount to the recipient and the platform fee to the
-      treasury in a single on-chain transaction.
-    </p>
+    <h3>How to verify the contract yourself</h3>
 
     <p>
-      If your wallet security provider shows a warning that the contract is
-      untrusted, that reflects the contract's age and transaction history, not
-      a finding of malicious behavior. The contract address in the warning
-      matches the address listed above.
+      If your wallet displays a warning, you can verify the contract address
+      shown in the warning against the contract address published on this page.
+      The addresses should match:
     </p>
 
+    <div class="v-record" aria-label="Contract address for comparison">
+      <div class="v-record-grid">
+        <div class="v-record-row">
+          <span>Contract</span>
+          <strong>0x5015841D6E665e63Ea174aD6b8FeF854026dE0C0</strong>
+        </div>
+        <div class="v-record-row">
+          <span>Network</span>
+          <strong>Polygon mainnet (chainId 137)</strong>
+        </div>
+        <div class="v-record-row">
+          <span>Source code</span>
+          <strong><a href="https://polygonscan.com/address/0x5015841D6E665e63Ea174aD6b8FeF854026dE0C0#code" target="_blank" rel="noopener noreferrer">Verified on Polygonscan</a></strong>
+        </div>
+      </div>
+    </div>
+
     <p>
-      To verify: compare the contract address shown in your wallet warning
-      with the contract address published on this page. If they match, you
-      are interacting with the same contract documented in the verification
-      record above. The source code is publicly available on Polygonscan.
-      See the <a href="/faq.html">FAQ</a> for more detail.
+      If the address in your wallet warning matches the contract address above,
+      you are interacting with the same contract documented in the verified
+      transaction record on this page. The source code is public. The transaction
+      history is public. The fee routing is auditable on every transfer.
     </p>
+
+    <h3>Current review status</h3>
+
+    <p>
+      The Blockaid false-positive review is in progress as of June 2026.
+      The platform remains operational while the review is pending.
+      Status updates are recorded in the <a href="/log.html">Devlog</a>.
+    </p>
+
+    <h2>Source Code &amp; Documentation</h2>
+
+    <dl class="v-facts">
+      <div class="v-fact">
+        <dt>Contract source</dt>
+        <dd>
+          <a href="https://polygonscan.com/address/0x5015841D6E665e63Ea174aD6b8FeF854026dE0C0#code"
+             target="_blank" rel="noopener noreferrer">
+            Verified on Polygonscan
+          </a>
+        </dd>
+      </div>
+      <div class="v-fact">
+        <dt>GitHub</dt>
+        <dd>
+          <a href="https://github.com/implicitexlabs" target="_blank" rel="noopener noreferrer">
+            github.com/implicitexlabs
+          </a>
+        </dd>
+      </div>
+      <div class="v-fact">
+        <dt>Verification page</dt>
+        <dd><a href="/verification.html">implicitex.com/verification.html</a> — contract facts and verified transaction record</dd>
+      </div>
+      <div class="v-fact">
+        <dt>Devlog</dt>
+        <dd><a href="/log.html">implicitex.com/log.html</a> — dated record of platform changes with commit hashes</dd>
+      </div>
+      <div class="v-fact">
+        <dt>FAQ</dt>
+        <dd><a href="/faq.html">implicitex.com/faq.html</a> — common questions including wallet warnings and fee model</dd>
+      </div>
+    </dl>
+
+    <h2>What You Should Always Verify</h2>
+
+    <p>
+      ImplicitEx will never ask you to skip verification. Before confirming any
+      wallet prompt:
+    </p>
+
+    <ul>
+      <li><strong>Recipient address.</strong> Transfers confirmed on-chain cannot be reversed. Verify the full address before approving anything.</li>
+      <li><strong>Transfer amount and fee.</strong> The preview screen shows the transfer amount, 1% platform fee, and total debit. Confirm these match what you entered before proceeding.</li>
+      <li><strong>Contract address in any warning.</strong> It should match <code>0x5015841D6E665e63Ea174aD6b8FeF854026dE0C0</code>. If it does not, do not proceed.</li>
+      <li><strong>Network.</strong> Your wallet should be connected to Polygon mainnet (chainId 137). ImplicitEx will display an error if the network is wrong before requesting any approval.</li>
+    </ul>
 
     <a class="back" href="/">Return to ImplicitEx</a>
   </main>
@@ -337,7 +473,6 @@
           <a href="/start.html">Start</a>
           <a href="/faq.html">FAQ</a>
           <a href="/learn.html">Learn</a>
-          <a href="/trust.html">Trust</a>
           <a href="/trust.html">Trust</a>
           <a href="/verification.html">Verification</a>
           <a href="/log.html">Devlog</a>
