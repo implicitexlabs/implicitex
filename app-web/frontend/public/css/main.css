@@ -996,14 +996,17 @@ body.portal-active #nav {
   scroll-margin-top: calc(var(--nav-h) + 1rem);
 }
 
-/* ---- Portal controls — sits above .modules, outside its border ---- */
+/* ---- Portal controls — tab-anchored to top of .modules border ---- */
 .portal-controls {
   max-width: var(--ix-interface-max);
-  margin: clamp(2rem, 5vh, 3.5rem) auto 0;
+  margin: clamp(2rem, 5vh, 3.5rem) auto -1px; /* -1px overlaps portal top border */
   display: flex;
   justify-content: flex-end;
+  align-items: flex-end;
   gap: var(--sp-2);
-  padding: 0.5rem 0 0.4rem;
+  padding: 0;
+  position: relative;
+  z-index: 1; /* sit above portal border */
 }
 
 .portal-controls[hidden] { display: none; }
@@ -1013,9 +1016,10 @@ body.portal-active #nav {
   font-size: var(--size-sm);
   letter-spacing: 0.12em;
   color: var(--dim);
-  background: transparent;
-  border: 1px solid var(--border);
-  padding: 5px 10px;
+  background: var(--bg); /* covers portal border beneath button */
+  border: 1px solid var(--border-2); /* match portal border exactly */
+  border-bottom: none;   /* open bottom — visually joins portal top edge */
+  padding: 5px 10px 6px;
   cursor: pointer;
   transition: color 0.12s, border-color 0.12s;
   line-height: 1;
@@ -3181,7 +3185,7 @@ footer .social-links a:focus-visible,
   }
 
   .portal-controls {
-    padding: 0.5rem 0 0.4rem;
+    padding: 0;
   }
 
   .stat-strip {
