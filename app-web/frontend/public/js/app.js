@@ -86,7 +86,7 @@
       slides[current].setAttribute('aria-hidden', 'false');
     }
 
-    setInterval(advance, 9000);
+    setInterval(advance, 14000);
   }
 
   // ----------------------------------------------------------------

@@ -612,6 +612,9 @@ body.portal-active #nav {
   display: grid;
   width: 100%;
   margin-bottom: var(--sp-5);
+  /* All slides stack in the same cell; height is set by the tallest.
+     Since all three slides now share the same structure (brand + headline + sub),
+     height is consistent and alignment locks across crossfades. */
 }
 
 .hero-slide {
@@ -619,6 +622,7 @@ body.portal-active #nav {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   text-align: center;
   gap: var(--sp-4);
   opacity: 0;
