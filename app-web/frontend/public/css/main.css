@@ -1226,7 +1226,7 @@ body.portal-active #nav {
 .tx-btn {
   font-family: var(--font-ui);
   font-size: var(--size-sm);
-  font-weight: var(--weight-bold);
+  font-weight: var(--weight-semibold);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--bg);
