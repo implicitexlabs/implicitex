@@ -63,7 +63,7 @@ curl -I https://implicitex.com/
 # Look for: x-cache, age, cache-control in the response
 ```
 
-If staging is correct and custom domain is stale: wait 10–15 minutes and re-check. With `no-cache` now set on HTML, this lag should not recur after `1327da8`.
+If staging is correct and custom domain is stale: check `cache-control` and `x-cache` response headers. If `x-cache: HIT` and `cache-control: max-age=3600`, the CDN edge received the old HTML before the `no-cache` fix was in place. Wait for the TTL to expire (up to 60 min), then re-check. After the TTL expires the edge fetches from origin and picks up the new `no-cache` policy — this lag will not recur on subsequent deploys.
 
 ---
 
