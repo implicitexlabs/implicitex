@@ -2406,6 +2406,10 @@
     // prompting the wallet — the preflight result is guidance, not an authority.
 
     state.txPhase = 'REVIEW_READY';
+    if (window.IX && window.IX.track) {
+      window.IX.track('amount_entered', { amount_bucket: window.IX._bucketAmount(amountFloat) });
+      window.IX.track('review_reached');
+    }
     resetTransferTimeline();
     markTransferStep('review_ready');
 
@@ -2485,6 +2489,7 @@
 
   function showTransferModules(shouldScroll) {
     if (!els.modules) return;
+    if (window.IX && window.IX.track) window.IX.track('portal_opened');
 
     // Hide How It Works — instrument activates in-place over the same geometry.
     if (els.howItWorks) els.howItWorks.setAttribute('hidden', '');
@@ -3107,6 +3112,7 @@
   }
 
   function onConnected() {
+    if (window.IX && window.IX.track) window.IX.track('wallet_connected', { chain: state.chainId });
     // User explicitly clicked Connect Wallet — open the portal.
     applyCurrentNetworkPresentation({ shouldScroll: true, shouldOpen: true });
 
@@ -3397,6 +3403,7 @@
     }
 
     activeTransferFlow = true;
+    if (window.IX && window.IX.track) window.IX.track('transfer_submitted');
 
     // ---- Flow identity: each invocation gets a unique token.
     // assertFlowActive() throws FLOW_INVALIDATED if the token was cleared by
@@ -4158,6 +4165,7 @@
       });
 
       transferConfirmed = true;
+      if (window.IX && window.IX.track) window.IX.track('transfer_confirmed');
       upsertRecipientBook(recipient, metadata);
       clearDraftControlsAfterConfirmation();
       refreshUsdcBalance();
