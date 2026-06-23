@@ -2446,6 +2446,28 @@ footer .social-links a:focus-visible,
   padding-top: 0;
 }
 
+/* Get Started section headings — brandmark above each h2 */
+.gs-section-head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  margin: 3rem 0 0.55rem;
+}
+
+.gs-section-head:first-of-type {
+  margin-top: 0;
+}
+
+.gs-section-head h2 {
+  margin: 0;
+}
+
+.gs-mark {
+  display: block;
+  color: var(--dim);
+  flex-shrink: 0;
+}
+
 .faq-shell p {
   margin: 0 0 0.85rem;
 }
