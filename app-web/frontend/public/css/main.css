@@ -1017,7 +1017,7 @@ body.portal-active #nav {
   justify-content: center;
   width: 28px;
   height: 28px;
-  background: var(--bg);
+  background: var(--surface);
   border: 1px solid var(--border-2);
   border-bottom: none;
   border-left: none;
@@ -1035,25 +1035,34 @@ body.portal-active #nav {
   color: var(--white);
 }
 
-/* Arrow glyph — font/size/color matches .mod-tag "01 — TRANSFER" */
-.portal-tab-arrow,
+/* Triangle — identical size and behavior to .flow-toggle in HOW IT WORKS */
+.portal-tab-arrow {
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 6px solid var(--dim);
+  transition: transform 0.16s ease, border-top-color 0.12s;
+  pointer-events: none;
+}
+
+.portal-tab:hover .portal-tab-arrow {
+  border-top-color: var(--white);
+}
+
+/* Portal open (aria-expanded="true") → flip up = collapse action */
+#modulesMinimize[aria-expanded="true"] .portal-tab-arrow {
+  transform: rotate(180deg);
+}
+
+/* × glyph — slightly larger than triangle visual weight */
 .portal-tab-x {
   font-family: var(--font-ui);
-  font-size: var(--size-sm);
+  font-size: 14px;
   color: inherit;
   line-height: 1;
   display: block;
   pointer-events: none;
-}
-
-/* Portal open (aria-expanded=true) → up arrow = "click to collapse" */
-.portal-tab-arrow::before {
-  content: '↑';
-}
-
-/* Portal collapsed (aria-expanded=false) → down arrow = "click to expand" */
-#modulesMinimize[aria-expanded="false"] .portal-tab-arrow::before {
-  content: '↓';
 }
 
 /* ---- Disconnect button ---- */
