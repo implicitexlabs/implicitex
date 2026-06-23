@@ -6,6 +6,7 @@
     "compile": "hardhat compile",
     "check:static": "node scripts/check_static_public.js",
     "test:observability": "node tests/frontend/observability.test.js",
+    "test:analytics": "node tests/frontend/analytics.test.js",
     "test": "hardhat test"
   },
   "devDependencies": {

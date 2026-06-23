@@ -40,7 +40,8 @@
   window.IX = window.IX || {};
 
   // Default: consent denied. Flip to true only after explicit user acceptance.
-  window.IX._analyticsEnabled = false;
+  // Preserve any value pre-wired before this script ran (e.g. by consent logic).
+  window.IX._analyticsEnabled = window.IX._analyticsEnabled || false;
 
   // Backend slot — assign to activate a tracking provider.
   window.IX._analyticsBackend = window.IX._analyticsBackend || null;
