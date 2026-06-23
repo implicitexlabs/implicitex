@@ -258,7 +258,9 @@ code, kbd, pre,
 
 [data-theme="light"] img.wordmark,
 [data-theme="light"] .hero-slide-lettermark,
-[data-theme="light"] .hero-slide-wordmark {
+[data-theme="light"] .hero-slide-wordmark,
+[data-theme="light"] .f-brand-mark,
+[data-theme="light"] .f-brand-word {
   filter: invert(1);
 }
 
