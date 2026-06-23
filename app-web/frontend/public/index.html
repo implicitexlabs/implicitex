@@ -16,6 +16,7 @@
   <meta name="twitter:title" content="ImplicitEx — Send USDC. No intermediaries.">
   <meta name="twitter:description" content="Peer-to-peer USDC transfers on Polygon. Non-custodial. 1% flat fee.">
   <meta name="twitter:image" content="https://implicitex.com/components/images/og-primary.png">
+  <link rel="canonical" href="https://implicitex.com/">
   <title>ImplicitEx — Send USDC. No intermediaries.</title>
   <link rel="icon" href="assets/icons/favicon.ico" sizes="any">
   <link rel="icon" href="assets/icons/favicon-32x32.png" type="image/png" sizes="32x32">
@@ -26,6 +27,60 @@
   <link rel="stylesheet" href="components/companion/companion.css">
   <link rel="stylesheet" href="components/telemetry/telemetry.css">
   <link rel="manifest" href="manifest.json">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://implicitex.com/#organization",
+        "name": "ImplicitEx",
+        "url": "https://implicitex.com",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://implicitex.com/components/images/og-primary.png",
+          "width": 1200,
+          "height": 628
+        },
+        "description": "Non-custodial wallet-to-wallet USDC transfers on Polygon. Transparent 1% flat fee. Publicly verifiable on-chain.",
+        "foundingOrganization": {
+          "@type": "Organization",
+          "name": "Aden Media Group LLC",
+          "url": "https://adenmediagroup.com"
+        },
+        "sameAs": [
+          "https://x.com/implicitex",
+          "https://github.com/implicitexlabs",
+          "https://www.linkedin.com/in/implicitex/"
+        ]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://implicitex.com/#website",
+        "url": "https://implicitex.com",
+        "name": "ImplicitEx",
+        "description": "Non-custodial USDC transfers on Polygon.",
+        "publisher": { "@id": "https://implicitex.com/#organization" }
+      },
+      {
+        "@type": "SoftwareApplication",
+        "@id": "https://implicitex.com/#app",
+        "name": "ImplicitEx",
+        "url": "https://implicitex.com",
+        "applicationCategory": "FinanceApplication",
+        "operatingSystem": "Web",
+        "description": "Wallet-to-wallet USDC transfers on Polygon. Non-custodial, 1% flat fee, publicly verifiable.",
+        "offers": {
+          "@type": "Offer",
+          "price": "1",
+          "priceCurrency": "Percent",
+          "description": "1% platform fee per transfer"
+        },
+        "publisher": { "@id": "https://implicitex.com/#organization" }
+      }
+    ]
+  }
+  </script>
 </head>
 <body>
 
