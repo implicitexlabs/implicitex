@@ -2994,8 +2994,15 @@ footer .social-links a:focus-visible,
 }
 
 .about-foot h2,
+.about-foot .gs-section-head,
 .about-foot .back {
   column-span: all;
+}
+
+/* About page: gs-section-head inside cards and foot */
+.about-card .gs-section-head,
+.about-foot .gs-section-head {
+  margin: 0 0 1.25rem;
 }
 
 /* ---- News — shared between index.html preview and news.html full listing ---- */
