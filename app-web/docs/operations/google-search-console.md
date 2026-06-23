@@ -1,5 +1,21 @@
 # Google Search Console — Setup & Operations Log
 
+## Activation Timeline
+
+| Event | Date | Notes |
+|---|---|---|
+| Pre-verification crawl observed | 2026-06-05 | Google had already discovered the domain independently |
+| Property verified | 2026-06-23 | Second attempt; first failed on token mismatch |
+| Sitemap submitted | 2026-06-23 | `https://implicitex.com/sitemap.xml` |
+| Initial indexing requests submitted | 2026-06-23 | 9 priority URLs via URL Inspection |
+| First URL in Pages/Coverage | ⏳ | — |
+| First impression in Performance report | ⏳ | — |
+| "ImplicitEx" appears as a recognized query | ⏳ | Brand disambiguation milestone |
+
+Use these dates to interpret future Search Console data. If the first brand query appears on July 2, that's nine days from activation. That timeline becomes a reference point for future properties or significant site changes.
+
+---
+
 ## Property
 
 | Field | Value |
@@ -26,6 +42,17 @@ Value: google-site-verification=Pq0L_oAcSnPFGFL1VSh3_pv6ltQq3Xu-k7twhy
 
 - First attempt: token mismatch — likely caused by creating and backing out of a property in a prior session, leaving a stale token in Search Console. DNS record was visible and correct but didn't match the active token.
 - Resolution: waited for DNS/Google synchronization. Verified successfully on second attempt (afternoon 2026-06-23).
+
+### Failure mode note (for future troubleshooting)
+
+If verification fails again, distinguish between two different problems before taking action:
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| TXT record not found | DNS hasn't propagated yet | Wait 30–60 min, retry |
+| TXT record found but token mismatch | Active Search Console token doesn't match the record | Check current token in GSC → Settings → Ownership verification; update DNS record to match |
+
+The second failure mode is easy to miss because the DNS record looks correct. The mismatch is between the *value* in DNS and the *current token* in Search Console — they can diverge if a property is created, abandoned, and re-created, generating a new token while the old record persists in DNS.
 
 ---
 
@@ -63,7 +90,9 @@ Value: google-site-verification=Pq0L_oAcSnPFGFL1VSh3_pv6ltQq3Xu-k7twhy
 
 ## Indexing Requests
 
-The following URLs were submitted via URL Inspection on 2026-06-23:
+### Initial requests — 2026-06-23 (before rename)
+
+Submitted via URL Inspection immediately after sitemap submission:
 
 1. `https://implicitex.com/`
 2. `https://implicitex.com/about.html`
@@ -73,7 +102,19 @@ The following URLs were submitted via URL Inspection on 2026-06-23:
 6. `https://implicitex.com/faq.html`
 7. `https://implicitex.com/learn.html`
 8. `https://implicitex.com/verification.html`
-9. `https://implicitex.com/start.html` *(added after rename)*
+
+**Note:** `get-started.html` was included in the initial sitemap submission but renamed to `start.html` later the same session, before a separate indexing request was made for that URL.
+
+### Cleanup request — 2026-06-23 (after rename)
+
+9. `https://implicitex.com/start.html`
+
+The `get-started.html` request is not harmful. Google will reconcile the discrepancy naturally:
+- `get-started.html` returns 404 (removed from Firebase deploy)
+- `start.html` is present in the sitemap and all internal links
+- Crawler will update its records on next visit
+
+A 301 redirect from `get-started.html` → `start.html` is not urgent — the page has no search history and no known external links at time of rename.
 
 ---
 
@@ -104,13 +145,17 @@ Three JSON-LD schema nodes live on the homepage:
 
 ```
 DNS Verification      ✅  2026-06-23
-Property Activation   ✅  2026-06-23 (sitemap submitted, URLs requested)
+Property Activation   ✅  2026-06-23 (sitemap submitted, 9 URLs requested)
 Crawl & Discovery     ⏳  pending — first URL appears in Pages/Coverage
 Indexing & Coverage   ⏳  pending — crawl statuses assigned
 Brand Query Signals   ⏳  pending — "ImplicitEx" appears as a recognized query
 ```
 
 **Baseline date: 2026-06-23** — use to measure time-to-first-crawl, time-to-first-index, time-to-first-impression.
+
+### Pre-verification crawl
+
+Search Console shows a crawl dated **June 5, 2026** — before the property was verified. Google had already discovered and mapped the domain independently. GSC verification did not introduce ImplicitEx to Google; it established ownership and provided a cleaner, more complete site map. This also means the crawler already has some familiarity with the domain, which may accelerate indexing of the newly submitted URLs.
 
 ### What each milestone means
 
