@@ -1173,6 +1173,10 @@ body.portal-active #nav {
   font-weight: var(--weight-semibold);
   letter-spacing: 0.18em;
   text-transform: uppercase;
+  color: var(--white);
+}
+
+.transfer-portal.is-minimized .portal-header-title {
   color: var(--dim);
 }
 
