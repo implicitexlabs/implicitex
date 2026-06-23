@@ -170,6 +170,16 @@
         <tr>
           <td class="log-date">2026-06-23</td>
           <td class="log-change">
+            <span class="log-change-title">Transfers paused — Blockaid review in progress</span>
+            <span class="log-change-desc">MetaMask displayed a false-positive security warning on the USDC approval step during Gate 5 first-user walkthrough (2026-06-18). Transfers intentionally disabled as a precaution. False-positive reports submitted to Blockaid for both implicitex.com and staging domain. Transfers will be re-enabled once the classification is updated. No contract defect; fee routing and on-chain behavior confirmed correct by controlled mainnet transaction (Gate 4, 2026-06-15).</span>
+          </td>
+          <td class="log-status log-status--pending">Under Review</td>
+          <td class="log-commit">9bf6922</td>
+        </tr>
+
+        <tr>
+          <td class="log-date">2026-06-23</td>
+          <td class="log-change">
             <span class="log-change-title">Analytics abstraction layer</span>
             <span class="log-change-desc">Added IX.track() with consent-denied default and pluggable backend slot. Seven event hooks wired across the transfer flow. No backend active — architecture is vendor-independent. 24-test suite added; a consent-overwrite defect was discovered and fixed during verification.</span>
           </td>

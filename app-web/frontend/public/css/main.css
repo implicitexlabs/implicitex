@@ -2591,6 +2591,7 @@ h1 + .gs-section-head {
 
 .log-status--deployed  { color: var(--dim); }
 .log-status--monitoring { color: var(--accent); }
+.log-status--pending   { color: var(--telemetry-amber); }
 
 .log-commit {
   font-family: var(--font-mono);
