@@ -838,9 +838,10 @@ body.portal-active #nav {
 
 /* ---- How It Works ---- */
 .how-it-works {
-  width: min(100% - 2rem, 1184px);
+  max-width: var(--ix-interface-max);
+  width: 100%;
   margin-inline: auto;
-  padding: 1rem 0 0;
+  padding: 1rem 1.5rem 0;
 }
 
 .section-kicker {
