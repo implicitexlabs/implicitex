@@ -999,14 +999,14 @@ body.portal-active #nav {
 /* ---- Portal controls — square tabs anchored to upper-right of portal border ---- */
 .portal-controls {
   max-width: var(--ix-interface-max);
-  margin: clamp(2rem, 5vh, 3.5rem) auto -1px; /* -1px overlaps portal top border */
+  margin: clamp(2rem, 5vh, 3.5rem) auto -2px; /* -2px overlaps portal top border by full tab border */
   display: flex;
   justify-content: flex-end;
   align-items: flex-end;
   gap: 0;
   padding: 0;
   position: relative;
-  z-index: 1; /* sit above portal border */
+  z-index: 2; /* must be above .modules — no position on .modules means DOM order wins without this */
 }
 
 .portal-controls[hidden] { display: none; }
@@ -1019,7 +1019,7 @@ body.portal-active #nav {
   height: 28px;
   background: var(--surface);
   border: 2px solid var(--border-2);
-  border-bottom: none;
+  border-bottom: 2px solid var(--border-2);
   border-left: none;
   cursor: pointer;
   color: var(--dim);
@@ -1055,10 +1055,11 @@ body.portal-active #nav {
   transform: rotate(180deg);
 }
 
-/* × glyph — slightly larger than triangle visual weight */
+/* × glyph — larger and bold to match triangle visual weight */
 .portal-tab-x {
   font-family: var(--font-ui);
   font-size: 14px;
+  font-weight: var(--weight-bold);
   color: inherit;
   line-height: 1;
   display: block;
@@ -1096,6 +1097,8 @@ body.portal-active #nav {
   max-width: var(--ix-interface-max);
   margin: 0 auto;
   padding: 1px;
+  position: relative;
+  z-index: 1;
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 1px;
