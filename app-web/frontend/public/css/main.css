@@ -3881,6 +3881,119 @@ input[type="number"] {
   }
 }
 
+/* ---- Consent Banner ---- */
+
+.consent-banner {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 280;
+  background: var(--surface-2);
+  border-top: 1px solid var(--border-2);
+  padding: var(--sp-4) var(--sp-5);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-5);
+}
+
+.consent-text {
+  font-family: var(--font-body);
+  font-size: var(--size-sm);
+  color: var(--dim);
+  margin: 0;
+  line-height: var(--leading-ui);
+  max-width: 640px;
+}
+
+.consent-text a {
+  color: var(--white);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.consent-text a:hover { color: var(--accent); }
+
+.consent-actions {
+  display: flex;
+  gap: var(--sp-3);
+  flex-shrink: 0;
+}
+
+.consent-btn {
+  font-family: var(--font-ui);
+  font-size: var(--size-sm);
+  letter-spacing: 0.06em;
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: 2px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background 0.15s, color 0.15s;
+}
+
+.consent-btn--decline {
+  background: transparent;
+  color: var(--dim);
+  border-color: var(--border);
+}
+
+.consent-btn--decline:hover {
+  background: var(--surface-3);
+  color: var(--white);
+}
+
+.consent-btn--accept {
+  background: var(--white);
+  color: var(--bg);
+  border-color: var(--white);
+}
+
+.consent-btn--accept:hover {
+  background: var(--button-hover);
+  border-color: var(--button-hover);
+}
+
+[data-theme="light"] .consent-banner {
+  background: #f0f0ee;
+  border-top-color: rgba(0, 0, 0, 0.12);
+}
+
+[data-theme="light"] .consent-btn--decline {
+  color: rgba(0, 0, 0, 0.55);
+  border-color: rgba(0, 0, 0, 0.18);
+}
+
+[data-theme="light"] .consent-btn--decline:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: #080808;
+}
+
+[data-theme="light"] .consent-btn--accept {
+  background: #080808;
+  color: #f2f2f0;
+  border-color: #080808;
+}
+
+[data-theme="light"] .consent-btn--accept:hover {
+  background: #222;
+  border-color: #222;
+}
+
+@media (max-width: 640px) {
+  .consent-banner {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: var(--sp-4);
+    gap: var(--sp-3);
+  }
+
+  .consent-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
+
 /* ---- Utility ---- */
 .sr-only {
   position: absolute;
