@@ -6,7 +6,7 @@
  */
 
 window.IX_CONFIG = {
-  transfersEnabled: false,
+  transfersEnabled: true,
 
   // WalletConnect / Reown Project ID from cloud.walletconnect.com.
   // Public client identifier — safe to commit. Not a secret.
@@ -24,7 +24,7 @@ window.IX_CHAINS = {
     feeBasisPoints:    100,    // 1%
     minTransferUsdc:   1,      // $1 USDC minimum
     maxTransferUsdc:   250,    // $250 cap during soft launch
-    transfersEnabled:  false,
+    transfersEnabled:  true,
   },
 
   // Polygon Amoy Testnet (chain ID 80002)
