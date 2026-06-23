@@ -14,7 +14,12 @@
       },
       {
         "source": "/verification.html",
-        "destination": "/trust.html",
+        "destination": "/verify.html",
+        "type": 301
+      },
+      {
+        "source": "/trust.html",
+        "destination": "/verify.html",
         "type": 301
       }
     ],
