@@ -6,6 +6,13 @@
       "**/.*",
       "**/node_modules/**"
     ],
+    "redirects": [
+      {
+        "source": "/get-started.html",
+        "destination": "/start.html",
+        "type": 301
+      }
+    ],
     "headers": [
       {
         "source": "**/*.js",
