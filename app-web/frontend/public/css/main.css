@@ -3013,8 +3013,8 @@ footer .social-links a:focus-visible,
 
 .news-preview {
   max-width: var(--ix-interface-max);
-  margin: 0 auto;
-  padding: 1.5rem 1.5rem 0;
+  margin: clamp(2rem, 5vh, 3.5rem) auto 0;
+  padding: 0 1.5rem 0;
 }
 
 .news-grid {
