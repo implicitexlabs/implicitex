@@ -1158,14 +1158,29 @@ body.portal-active #nav {
   flex-shrink: 0;
 }
 
+/* Portal header — spans full width, always visible */
+.portal-header {
+  grid-column: 1 / -1;
+  background: var(--surface);
+  padding: 1.5rem 2rem;
+  display: flex;
+  align-items: center;
+}
+
+.portal-header-title {
+  font-family: var(--font-ui);
+  font-size: var(--size-sm);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
 .transfer-portal.is-minimized {
   grid-template-columns: 1fr;
 }
 
-.transfer-portal.is-minimized .portal-minimized-tray {
-  display: flex;
-}
-
+/* Collapsed: .portal-header stays visible; everything else hides */
 .transfer-portal.is-minimized > .mod,
 .transfer-portal.is-minimized > .companion,
 .transfer-portal.is-minimized > .telemetry {
