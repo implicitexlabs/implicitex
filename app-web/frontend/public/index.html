@@ -183,8 +183,32 @@
   <section class="hero" aria-label="ImplicitEx introduction">
     <canvas id="worldCanvas" aria-hidden="true"></canvas>
     <div class="hero-inner">
-      <h1 class="headline">Send USDC.<br>No intermediaries.</h1>
-      <p class="hero-kicker">Wallet-to-wallet. Person-to-person.</p>
+      <!-- Rotating hero: Identity → Utility → Verification -->
+      <div class="hero-slides" aria-live="polite" aria-atomic="true">
+
+        <!-- Slide 1: Identity -->
+        <div class="hero-slide is-active" aria-hidden="false">
+          <div class="hero-slide-brand">
+            <img class="hero-slide-lettermark" src="/components/images/lettermark-white.svg" alt="ImplicitEx">
+            <img class="hero-slide-wordmark" src="/components/images/wordmark-white.svg" alt="" aria-hidden="true">
+          </div>
+          <p class="hero-slide-sub">Non-custodial USDC transfers. Publicly verifiable.</p>
+        </div>
+
+        <!-- Slide 2: Utility -->
+        <div class="hero-slide" aria-hidden="true">
+          <h1 class="hero-slide-headline">Send money without<br>handing it over first.</h1>
+          <p class="hero-slide-sub">Your wallet stays under your control from start to finish.</p>
+        </div>
+
+        <!-- Slide 3: Verification -->
+        <div class="hero-slide" aria-hidden="true">
+          <p class="hero-slide-headline">Verify the contract.<br>Verify the fee.<br>Verify the transfer.</p>
+          <p class="hero-slide-sub">Every transaction can be independently verified on-chain.</p>
+        </div>
+
+      </div>
+
       <div class="stat-strip" aria-label="Key statistics">
         <div class="stat-item">
           <span class="stat-val">1%</span>

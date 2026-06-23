@@ -68,11 +68,34 @@
   }
 
   // ----------------------------------------------------------------
+  // Hero slide rotation — Identity → Utility → Verification
+  // 6s per slide, 700ms crossfade. Locks to slide 1 for reduced-motion.
+  // ----------------------------------------------------------------
+  function initHeroSlides() {
+    var slides = document.querySelectorAll('.hero-slide');
+    if (!slides.length) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    var current = 0;
+
+    function advance() {
+      slides[current].classList.remove('is-active');
+      slides[current].setAttribute('aria-hidden', 'true');
+      current = (current + 1) % slides.length;
+      slides[current].classList.add('is-active');
+      slides[current].setAttribute('aria-hidden', 'false');
+    }
+
+    setInterval(advance, 6000);
+  }
+
+  // ----------------------------------------------------------------
   // Init
   // ----------------------------------------------------------------
   function init() {
     initThemeToggle();
     initRevealCopy();
+    initHeroSlides();
   }
 
   document.addEventListener('DOMContentLoaded', init);
