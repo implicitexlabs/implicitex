@@ -2454,7 +2454,8 @@ footer .social-links a:focus-visible,
   margin: 3rem 0 0.55rem;
 }
 
-.gs-section-head:first-of-type {
+.gs-section-head:first-of-type,
+h1 + .gs-section-head {
   margin-top: 0;
 }
 
