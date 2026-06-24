@@ -119,6 +119,22 @@ Posts here should reinforce the principles behind the product and attract people
 
 ---
 
+### Option 7 — The Web3 Principle (DRAFT)
+
+*Draws directly from About page mission language. Works as a standalone product introduction or as a follow-up to Option 6.*
+
+> Web3 user control means three things:
+>
+> Assets you hold.
+> Transactions you execute.
+> Records anyone can verify — not accepted on faith.
+>
+> ImplicitEx applies that to USDC transfers. No custody.
+>
+> A small step toward a more resilient model.
+
+---
+
 ## Notes
 
 - Space posts at least a few days apart. One strong post holds longer than a stream of weak ones.
