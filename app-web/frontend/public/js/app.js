@@ -93,7 +93,13 @@
     setClockHands();
 
     btn.addEventListener('click', function () {
-      applyTheme(themeForTime());
+      // Resolve current time-appropriate theme for the DOM, but store "auto"
+      // so future page loads recalculate from the visitor's local time rather
+      // than locking in today's light/dark value.
+      var theme = themeForTime();
+      document.documentElement.dataset.theme = theme;
+      syncToggleStates(theme);
+      safeStorageSet('implicitex-theme', 'auto');
     });
   }
 
