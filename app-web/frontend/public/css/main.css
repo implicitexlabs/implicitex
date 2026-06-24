@@ -3098,6 +3098,30 @@ h1 + .gs-section-head {
   margin-bottom: 1rem;
 }
 
+.about-subtitle {
+  column-span: all;
+  font-size: clamp(15px, 1.6vw, 18px);
+  color: var(--white);
+  line-height: 1.5;
+  max-width: 56ch;
+  margin: 0 auto 2rem;
+  text-align: center;
+  font-weight: var(--weight-regular);
+  letter-spacing: 0;
+}
+
+.about-thesis {
+  max-width: var(--ix-interface-max);
+  margin: 0 auto 2.5rem;
+  padding: 1.75rem var(--ix-page-gap);
+  font-size: clamp(14px, 1.4vw, 16px);
+  color: var(--dim);
+  line-height: 1.65;
+  text-align: center;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
 .about-shell p {
   color: var(--dim);
   font-size: var(--ix-copy-size);
