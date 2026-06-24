@@ -2927,6 +2927,97 @@ h1 + .gs-section-head {
   color: var(--white);
 }
 
+/* ---- proof-shell: explicit two-column grid (verify.html) ----
+   Replaces the inherited policy-shell column-count with a deliberate grid.
+   Direct children span both columns by default. proof-pair / proof-col
+   pairs split content left / right. Wide elements (h2, v-record, dl,
+   proof-panel) remain full-width via grid-column: 1 / -1. */
+.proof-shell {
+  column-count: unset;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: var(--ix-page-gap);
+  align-items: start;
+}
+
+/* All direct children span both columns by default */
+.proof-shell > * {
+  grid-column: 1 / -1;
+}
+
+/* proof-pair: nested grid that spans both parent columns.
+   Each .proof-col child becomes a left / right cell. */
+.proof-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: var(--ix-page-gap);
+  align-items: start;
+}
+
+/* proof-col: single-column grid cell */
+.proof-col {
+  min-width: 0;
+}
+
+.proof-col > *:first-child {
+  margin-top: 0;
+}
+
+.proof-col h3 {
+  margin-top: 1.85rem;
+}
+
+.proof-col h3:first-child {
+  margin-top: 0;
+}
+
+/* v-facts inside a proof-col are single-column to fit the narrower cell */
+.proof-col .v-facts {
+  grid-template-columns: 1fr;
+  padding-top: 0;
+}
+
+/* Section headings: grid does not collapse margins, so h2 border-top would
+   sit flush against the preceding element. Add explicit top margin here. */
+.proof-shell > h2 {
+  margin-top: 3rem;
+}
+
+/* First h2 already has border-top: none (from policy-shell h2:first-of-type).
+   Slightly smaller top gap is fine. */
+.proof-shell > h2:first-of-type {
+  margin-top: 1.25rem;
+}
+
+/* proof-pair sits directly before/after h2 — harmonise the gap */
+.proof-pair {
+  margin-bottom: 0.5rem;
+}
+
+/* proof-panel right column: the proof-panel itself creates a left/right split,
+   so the v-facts inside only needs a single column stack */
+.proof-panel .v-facts {
+  grid-template-columns: 1fr;
+  padding-top: 0;
+}
+
+/* proof-panel h3 header: the generic policy-shell h3 has margin: 1.85rem 0 0.75rem
+   which creates unwanted top space when h3 is the first element */
+.proof-panel-head h3 {
+  margin-top: 0;
+}
+
+/* ol inside proof-col: normalise indent to match ul (browser default is 40px) */
+.proof-col ol {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+/* 3-item v-record: use 3 columns so no empty cell appears at the right */
+.v-record--cols-3 .v-record-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 /* ---- About Page ---- */
 
 .about-shell {
@@ -3317,6 +3408,18 @@ h1 + .gs-section-head {
 
   .v-record-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .proof-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .proof-pair {
+    grid-template-columns: 1fr;
+  }
+
+  .proof-col .v-facts {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
