@@ -461,11 +461,11 @@ code, kbd, pre,
   border-color: var(--telemetry-amber-border);
 }
 
-/* Live/active operational state — accent signals the system is running */
+/* Live/active operational state — white: active, no color by default */
 .nav-status.is-live,
 .f-net.is-live {
-  color: var(--accent);
-  border-color: var(--accent-border);
+  color: var(--white);
+  border-color: var(--border);
 }
 
 .status-warn {
@@ -1112,7 +1112,7 @@ body.portal-active #nav {
   box-shadow:
     inset 0 0 0 1px rgba(255, 255, 255, 0.06),
     0 2px 0 rgba(255, 255, 255, 0.05),
-    0 4px 18px rgba(0, 0, 0, 0.5);
+    0 4px 18px rgba(0, 0, 0, 0.25);
 }
 
 .modules[hidden] { display: none; }
@@ -1166,10 +1166,12 @@ body.portal-active #nav {
 /* Portal header — spans full width, always visible */
 .portal-header {
   grid-column: 1 / -1;
-  background: var(--surface);
-  padding: 1.5rem 2rem;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+  padding: 0.875rem 1.5rem;
   display: flex;
   align-items: center;
+  justify-content: space-between;
 }
 
 .portal-header-title {
@@ -1183,6 +1185,56 @@ body.portal-active #nav {
 
 .transfer-portal.is-minimized .portal-header-title {
   color: var(--dim);
+}
+
+/* Portal header controls — collapse and close, inside the header bar */
+.portal-header-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.portal-ctrl-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  background: transparent;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  color: var(--dim);
+  padding: 0;
+  transition: color 0.12s, border-color 0.12s;
+}
+
+.portal-ctrl-btn:hover {
+  color: var(--white);
+  border-color: var(--white);
+}
+
+.portal-ctrl-arrow {
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 5px solid currentColor;
+  transition: transform 0.16s ease;
+  pointer-events: none;
+}
+
+#modulesMinimize[aria-expanded="true"] .portal-ctrl-arrow {
+  transform: rotate(180deg);
+}
+
+.portal-ctrl-x {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: var(--weight-bold);
+  color: inherit;
+  line-height: 1;
+  display: block;
+  pointer-events: none;
 }
 
 .transfer-portal.is-minimized {

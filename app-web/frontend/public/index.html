@@ -411,22 +411,22 @@
   }());
   </script>
 
-  <!-- Portal controls — outside the border, above the grid -->
+  <!-- Transfer anchor -->
   <div class="transfer-anchor" id="transfer" aria-hidden="true"></div>
-  <div class="portal-controls" id="portalControls" hidden>
-    <button class="portal-tab" id="modulesMinimize" type="button" aria-expanded="true" aria-label="Collapse transfer portal">
-      <span class="portal-tab-arrow" aria-hidden="true"></span>
-    </button>
-    <button class="portal-tab portal-tab--close" id="modulesClose" type="button" aria-label="Close transfer portal">
-      <span class="portal-tab-x" aria-hidden="true">×</span>
-    </button>
-  </div>
 
   <!-- Transfer Portal — revealed after wallet connect -->
   <section class="modules transfer-portal" id="modules" aria-label="Transfer Portal" data-transaction-window hidden>
     <!-- Portal header — always visible in both expanded and collapsed states -->
     <div class="portal-header">
       <span class="portal-header-title">Transfer Portal</span>
+      <div class="portal-header-controls">
+        <button class="portal-ctrl-btn" id="modulesMinimize" type="button" aria-expanded="true" aria-label="Collapse transfer portal">
+          <span class="portal-ctrl-arrow" aria-hidden="true"></span>
+        </button>
+        <button class="portal-ctrl-btn" id="modulesClose" type="button" aria-label="Close transfer portal">
+          <span class="portal-ctrl-x" aria-hidden="true">×</span>
+        </button>
+      </div>
     </div>
 
     <!-- 01 Transfer -->
@@ -792,7 +792,6 @@
           <a href="/learn.html">Learn</a>
           <a href="/verify.html">Verify</a>
           <a href="/log.html">Devlog</a>
-          <a href="/news.html">News</a>
         </div>
         <div class="f-group">
           <span class="f-group-label">Legal</span>
@@ -810,6 +809,7 @@
           <a href="/about.html">About</a>
           <a href="/media.html">Media</a>
           <a href="/brand.html">Brand</a>
+          <a href="/news.html">News</a>
         </div>
         <div class="f-group">
           <span class="f-group-label">Social</span>
