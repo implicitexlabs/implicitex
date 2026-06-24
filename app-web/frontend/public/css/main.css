@@ -3105,12 +3105,9 @@ h1 + .gs-section-head {
   line-height: 1.5;
   max-width: 56ch;
   margin: 0 auto 2rem;
-  padding: 1.25rem 0;
   text-align: center;
   font-weight: var(--weight-regular);
   letter-spacing: 0;
-  border-top: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
 }
 
 .about-thesis {
