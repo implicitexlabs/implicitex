@@ -1,8 +1,11 @@
 # ImplicitEx Block Type System
 
-**Status:** Specification v1.3 — 2026-06-24  
+**Status:** Specification v1.3 — 2026-06-24 — **GEOMETRY FROZEN**  
 **Scope:** All pixel-block wordmarks, glyphs, and branded typographic elements  
 **Authority:** This document governs any Claude or Codex output that generates block-type SVGs
+
+> **Design freeze — effective 2026-06-24**  
+> No geometry changes. No spacing changes. No new effects. The next revision to §7 requires evidence from real usage — Coin Cards, registry UI, footer, loading states, favicon — not speculative improvement. If a real usability issue surfaces in context, revise. Otherwise, do not touch.
 
 ---
 
