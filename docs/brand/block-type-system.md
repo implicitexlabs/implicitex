@@ -1,6 +1,6 @@
 # ImplicitEx Block Type System
 
-**Status:** Specification v1.0 — 2026-06-24  
+**Status:** Specification v1.1 — 2026-06-24  
 **Scope:** All pixel-block wordmarks, glyphs, and branded typographic elements  
 **Authority:** This document governs any Claude or Codex output that generates block-type SVGs
 
@@ -166,7 +166,77 @@ These constraints apply to every use of the block type system, across every medi
 
 ---
 
-## 7. Color Rules
+## 7. WEB3 Fixed Mark — Locked Construction Parameters
+
+**This section overrides §5 and §6 for the WEB3 wordmark specifically.**
+
+The general alphabet spec (§3) defines Primary gap as B/8 and uses a 5×7 cell. The WEB3 logo is a fixed mark with its own locked parameters. Do not "correct" WEB3 back to B/8 — the gap of 2 units (B/4) is the canon for this mark.
+
+### 7.1 Canonical Grid
+
+```text
+Grid:   24 columns × 5 rows
+Layout: W(5) + gap(1) + E(5) + gap(1) + B(6) + gap(1) + 3(5) = 24
+Filled: 69 blocks
+```
+
+Character widths:
+- `W` — 5 cols × 5 rows
+- `E` — 5 cols × 5 rows
+- `B` — 6 cols × 5 rows (open right counter — not an 8)
+- `3` — 5 cols × 5 rows
+
+Canonical glyph map (X = filled, . = empty, `|` = inter-character gap, not rendered):
+
+```text
+X.X.X | XXXXX | XXXXX. | XXXXX
+X.X.X | X.... | X....X | ....X
+X.X.X | XXXXX | XXXXX. | .XXXX
+X.X.X | X.... | X....X | ....X
+XXXXX | XXXXX | XXXXX. | XXXXX
+```
+
+### 7.2 WEB3 Primary — Locked
+
+| Parameter | Value |
+|-----------|-------|
+| Block unit (B) | 8 coordinate units |
+| Internal block gap (G) | **2 coordinate units** (= B/4) |
+| Stride (S = B + G) | 10 |
+| Letter gap | 1 empty block column = 10 coordinate units |
+| ViewBox | `0 0 238 48` |
+| Discrete block paths | 69 |
+| Asset file | `components/images/web3-primary.svg` |
+
+Block origin: `x = col × 10`, `y = row × 10`  
+Block rect: `M x,y H x+8 V y+8 H x Z`
+
+**Use at 32 px height or above.**
+
+### 7.3 WEB3 Compact — Locked
+
+| Parameter | Value |
+|-----------|-------|
+| Block unit (B) | 8 coordinate units |
+| Internal block gap (G) | **0** |
+| Stride (S = B + G) | 8 |
+| Letter gap | 1 empty block column = 8 coordinate units |
+| ViewBox | `0 0 192 40` |
+| Merged rect paths | 30 |
+| Asset file | `components/images/web3-compact.svg` |
+
+Block origin: `x = col × 8`, `y = row × 8`  
+Adjacent filled blocks in the same row are merged into single rectangles. All rectangles are exactly 8 units tall and a multiple of 8 units wide.
+
+**Use below 32 px height.** Favicon, mobile stamps, tiny UI badges.
+
+### 7.4 Why Gap = 2, Not B/8
+
+The general alphabet spec specifies B/8 as the minimum gap for Primary. At B=8 that is 1 coordinate unit — visually effective for large display sizes but marginal at mid-range logo sizes. The WEB3 logo is a fixed mark used at known sizes; gap=2 (B/4) was evaluated at logo display size and confirmed as the correct visual weight for this specific mark. This is not a deviation — it is the locked construction for WEB3.
+
+---
+
+## 8. Color Rules
 
 | Use | Value |
 |-----|-------|
@@ -180,7 +250,7 @@ The block type system observes the same accent discipline as the rest of the des
 
 ---
 
-## 8. Glyph Catalog
+## 9. Glyph Catalog
 
 ### 8.1 Notation
 
@@ -471,7 +541,7 @@ row 6: . ■ ■ ■ .
 
 ---
 
-## 9. Composing Wordmarks
+## 10. Composing Wordmarks
 
 ### IX (Primary)
 
@@ -528,7 +598,7 @@ Glyph offsets: W=0, E=47, B=94, 3=141
 
 ---
 
-## 10. Construction Rules for New Glyphs
+## 11. Construction Rules for New Glyphs
 
 When adding a new glyph to this system:
 
@@ -542,7 +612,7 @@ When adding a new glyph to this system:
 
 ---
 
-## 11. Usage Summary
+## 12. Usage Summary
 
 | Context | Variant | Minimum size |
 |---------|---------|-------------|
@@ -557,7 +627,7 @@ When adding a new glyph to this system:
 
 ---
 
-## 12. What This System Is Not
+## 13. What This System Is Not
 
 - **Not a general-purpose display font.** It does not replace Orbitron (headlines), Oxanium (UI), Inter (body), or IBM Plex Mono (technical data). Those font roles are unchanged.
 - **Not a replacement for the lettermark.** The vector `IX` lettermark (curved paths, from `lettermark-white.svg`) remains the primary brand mark for the logo lockup. The block type system is for wordmarks and branded elements where the pixel-block aesthetic is intentional.
