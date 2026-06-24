@@ -366,46 +366,46 @@
     </div>
 
     <!-- ── 7. Wallet Security Warnings ───────────────────────── -->
+    <!-- Single-column narrative: educational content, not comparative data.
+         No proof-pair — columns would create an empty rectangle on one side. -->
     <h2 id="wallet-warnings">Wallet Security Warnings</h2>
 
-    <!-- proof-pair: what/why | how to verify (text intro) -->
-    <div class="proof-pair">
-      <div class="proof-col">
-        <h3>What Blockaid is</h3>
-        <p>
-          Blockaid is an automated security screening service integrated into MetaMask
-          and other wallets. It analyzes contract interactions and assigns a trust
-          classification based on factors including transaction history, contract age,
-          and known malicious patterns. Blockaid classifications are automated — they
-          are not manual audits.
-        </p>
-        <h3>Why warnings appear</h3>
-        <p>
-          A warning that a contract is "untrusted" or that a request is "potentially
-          deceptive" means the contract has not yet accumulated enough on-chain
-          history to receive a trusted classification — not that malicious behavior
-          has been detected. New contracts, even correctly functioning ones, typically
-          trigger this classification.
-        </p>
-        <p>
-          During Gate 5 first-user testing on June 18, 2026, MetaMask displayed a
-          false-positive warning on the USDC approval step. The approval amount shown
-          was exact — the transfer amount plus the platform fee — not unlimited.
-          ImplicitEx submitted false-positive reports to Blockaid on June 18, 2026
-          for both <code>implicitex.com</code> and the staging domain.
-        </p>
-      </div>
-      <div class="proof-col">
-        <h3>How to verify the contract yourself</h3>
-        <p>
-          If your wallet displays a warning, verify the contract address shown in
-          the warning against the address published on this page. The addresses
-          should match:
-        </p>
-      </div>
-    </div>
+    <h3>What Blockaid is</h3>
 
-    <!-- contract address reference block — full width, 3 items → 3 columns -->
+    <p>
+      Blockaid is an automated security screening service integrated into MetaMask
+      and other wallets. It analyzes contract interactions and assigns a trust
+      classification based on factors including transaction history, contract age,
+      and known malicious patterns. Blockaid classifications are automated — they
+      are not manual audits.
+    </p>
+
+    <h3>Why warnings appear</h3>
+
+    <p>
+      A warning that a contract is "untrusted" or that a request is "potentially
+      deceptive" means the contract has not yet accumulated enough on-chain
+      history to receive a trusted classification — not that malicious behavior
+      has been detected. New contracts, even correctly functioning ones, typically
+      trigger this classification.
+    </p>
+
+    <p>
+      During Gate 5 first-user testing on June 18, 2026, MetaMask displayed a
+      false-positive warning on the USDC approval step. The approval amount shown
+      was exact — the transfer amount plus the platform fee — not unlimited.
+      ImplicitEx submitted false-positive reports to Blockaid on June 18, 2026
+      for both <code>implicitex.com</code> and the staging domain.
+    </p>
+
+    <h3>How to verify the contract yourself</h3>
+
+    <p>
+      If your wallet displays a warning, verify the contract address shown in
+      the warning against the address published on this page. The addresses
+      should match:
+    </p>
+
     <div class="v-record v-record--cols-3" aria-label="Contract address for comparison">
       <div class="v-record-grid">
         <div class="v-record-row">

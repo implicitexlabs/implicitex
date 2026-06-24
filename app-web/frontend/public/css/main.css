@@ -3018,6 +3018,13 @@ h1 + .gs-section-head {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+/* When h3 immediately follows h2 in proof-shell (narrative sections with no
+   intervening content), close the gap — 1.85rem h3 margin + 1.15rem h2
+   margin-bottom stacks to ~3rem of dead space between two headings */
+.proof-shell > h2 + h3 {
+  margin-top: 0.75rem;
+}
+
 /* ---- About Page ---- */
 
 .about-shell {
