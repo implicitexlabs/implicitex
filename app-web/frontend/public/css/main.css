@@ -3122,6 +3122,29 @@ h1 + .gs-section-head {
   border-bottom: 1px solid var(--border);
 }
 
+/* WEB3 Protocol Mark — section divider in about-head */
+.about-protocol-mark {
+  column-span: all;
+  margin: 2rem 0 1.5rem;
+}
+
+.about-protocol-mark svg {
+  display: block;
+  height: 28px;
+  width: auto;
+}
+
+/* WEB3 Protocol Mark — brand page display */
+.brand-web3-mark {
+  height: 56px;
+  width: auto;
+  display: block;
+}
+
+.brand-web3-mark--construction {
+  height: 48px;
+}
+
 .about-shell p {
   color: var(--dim);
   font-size: var(--ix-copy-size);

@@ -1,6 +1,6 @@
 # ImplicitEx Block Type System
 
-**Status:** Specification v1.3 — 2026-06-24 — **GEOMETRY FROZEN**  
+**Status:** Specification v1.4 — 2026-06-24 — **GEOMETRY FROZEN**  
 **Scope:** All pixel-block wordmarks, glyphs, and branded typographic elements  
 **Authority:** This document governs any Claude or Codex output that generates block-type SVGs
 
@@ -33,8 +33,8 @@ The documentation is organized in three levels:
 | **Gap** | The empty space between adjacent blocks (horizontal and vertical). |
 | **Cell** | The 5 × 7 grid slot occupied by one uppercase glyph. |
 | **Glyph** | One letter or symbol constructed from blocks on a Cell. |
-| **Primary** | Rendering variant: blocks separated by Gap = B/8. |
-| **Compact** | Rendering variant: blocks touching, Gap = 0. |
+| **Canonical Mark** | Rendering variant: blocks touching, Gap = 0. Default everywhere. |
+| **Construction Mark** | Rendering variant: blocks separated by Gap ≥ B/8. Used to reveal underlying block structure. |
 | **B** | Block unit length (one side of one square block). |
 | **G** | Gap width. G = B/8 in Primary. G = 0 in Compact. |
 
@@ -135,32 +135,13 @@ These constraints apply to every use of the block type system, across every medi
 
 ---
 
-## 5. Primary Mark
+## 5. Canonical Mark
 
-**When to use:** 32 px and above, print, presentations, splash screens, marketing, brand applications.
+**Default everywhere.** Use at all sizes unless the Construction Mark is specifically required.
 
-**Visual meaning:** Many independent blocks cooperating. The gaps carry semantic weight — they evoke blockchain, distributed state, discrete computation, cryptographic primitives. The letter is *assembled*, not drawn.
+**Visual meaning:** One unified protocol. Blocks touch to form coherent, immediately legible letterforms. Recognizable at a glance without cognitive delay.
 
-**SVG template:**
-```xml
-<svg xmlns="http://www.w3.org/2000/svg"
-     viewBox="0 0 44 62"
-     shape-rendering="crispEdges"
-     aria-hidden="true">
-  <!-- Each filled position = one path element -->
-  <!-- M x1,y1 H x2 V y2 H x1 Z  where x2=x1+8, y2=y1+8 -->
-</svg>
-```
-
-**Gap confirmation:** With B=8 and G=1, the gap between any two adjacent blocks is exactly 1 coordinate unit = B/8. This is visible at 32 px+ but disappears below ~16 px, which is why Compact exists.
-
----
-
-## 6. Compact Mark
-
-**When to use:** Below 32 px — favicons, browser tabs, mobile navigation marks, corner stamps, loading badges, footer watermarks, tiny UI elements.
-
-**Visual meaning:** One unified protocol. Same construction geometry as Primary, different zoom level. Zoomed out, the independent blocks read as a single coherent form.
+**When to use:** All brand applications — pages, presentations, documentation, marketing, UI, favicon, mobile stamps. If you are unsure which variant to use, use this one.
 
 **SVG template:**
 ```xml
@@ -170,6 +151,27 @@ These constraints apply to every use of the block type system, across every medi
      aria-hidden="true">
   <!-- Adjacent filled positions MAY be merged into rectangles for efficiency -->
   <!-- M x1,y1 H x2 V y2 H x1 Z -->
+</svg>
+```
+
+---
+
+## 6. Construction Mark
+
+**Secondary use only.** Not a logo. Used to reveal the underlying block structure of the system.
+
+**Visual meaning:** Many independent blocks cooperating. The gaps carry semantic weight — each block is a discrete, verifiable unit. The letter is *assembled*, not drawn.
+
+**When to use:** Block Type System documentation, design explainers, behind-the-scenes graphics, animation where blocks assemble into the Canonical Mark. Not for standard brand use.
+
+**SVG template:**
+```xml
+<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 44 62"
+     shape-rendering="crispEdges"
+     aria-hidden="true">
+  <!-- Each filled position = one path element — never merged -->
+  <!-- M x1,y1 H x2 V y2 H x1 Z  where x2=x1+8, y2=y1+8 -->
 </svg>
 ```
 
@@ -207,24 +209,9 @@ X.X.X | X.... | X....X | ....X
 XXXXX | XXXXX | XXXXX. | XXXXX
 ```
 
-### 7.2 WEB3 Primary — Locked
+### 7.2 WEB3 Canonical Mark — Locked
 
-| Parameter | Value |
-|-----------|-------|
-| Block unit (B) | 8 coordinate units |
-| Internal block gap (G) | **2 coordinate units** (= B/4) |
-| Stride (S = B + G) | 10 |
-| Letter gap | 1 empty block column = 10 coordinate units |
-| ViewBox | `0 0 238 48` |
-| Discrete block paths | 69 |
-| Asset file | `components/images/web3-primary.svg` |
-
-Block origin: `x = col × 10`, `y = row × 10`  
-Block rect: `M x,y H x+8 V y+8 H x Z`
-
-**Use at 32 px height or above.**
-
-### 7.3 WEB3 Compact — Locked
+**Default. Use everywhere.**
 
 | Parameter | Value |
 |-----------|-------|
@@ -234,12 +221,28 @@ Block rect: `M x,y H x+8 V y+8 H x Z`
 | Letter gap | 1 empty block column = 8 coordinate units |
 | ViewBox | `0 0 192 40` |
 | Merged rect paths | 30 |
-| Asset file | `components/images/web3-compact.svg` |
+| Asset file | `components/images/web3-canonical.svg` |
 
 Block origin: `x = col × 8`, `y = row × 8`  
 Adjacent filled blocks in the same row are merged into single rectangles. All rectangles are exactly 8 units tall and a multiple of 8 units wide.
 
-**Use below 32 px height.** Favicon, mobile stamps, tiny UI badges.
+### 7.3 WEB3 Construction Mark — Locked
+
+**Secondary. Used to illustrate the block system, not as a brand mark.**
+
+| Parameter | Value |
+|-----------|-------|
+| Block unit (B) | 8 coordinate units |
+| Internal block gap (G) | **2 coordinate units** (= B/4) |
+| Stride (S = B + G) | 10 |
+| Letter gap | 1 empty block column = 10 coordinate units |
+| ViewBox | `0 0 238 48` |
+| Discrete block paths | 69 |
+| Asset file | `components/images/web3-construction.svg` |
+
+Block origin: `x = col × 10`, `y = row × 10`  
+Block rect: `M x,y H x+8 V y+8 H x Z`  
+Every filled position is a separate path element — adjacent blocks are never merged.
 
 ### 7.4 Why Gap = 2, Not B/8
 
@@ -267,8 +270,8 @@ Future revisions may add additional block glyphs to the alphabet, but the canoni
 The following SVG files are the normative implementation of the WEB3 mark:
 
 ```text
-components/images/web3-primary.svg
-components/images/web3-compact.svg
+components/images/web3-canonical.svg     ← default, use everywhere
+components/images/web3-construction.svg  ← secondary, system documentation only
 ```
 
 If any discrepancy exists between this written specification and the SVG files, **the SVG files are authoritative**.
@@ -630,12 +633,14 @@ ViewBox: `0 0 91 62`
 </svg>
 ```
 
-### WEB3 (Primary)
+### WEB3 (Construction Mark — 5×7 general alphabet layout)
 
 ViewBox: `0 0 185 62`  
 *(4 × 44 + 3 × 3 = 176 + 9 = 185)*
 
 Glyph offsets: W=0, E=47, B=94, 3=141
+
+Note: This is a general-alphabet rendering of WEB3 using 5×7 cells. The **canonical WEB3 brand asset** is the fixed 5×5 mark defined in §7, not this general-alphabet composition.
 
 ---
 
@@ -644,27 +649,30 @@ Glyph offsets: W=0, E=47, B=94, 3=141
 When adding a new glyph to this system:
 
 1. **Map the 5×7 grid first.** Sketch on paper or in a plain text grid map (as shown in §8.2) before writing SVG coordinates.
-2. **Each filled position is one block.** In Primary mode, it produces one path element. In Compact mode, adjacent filled positions may be merged into a single rectangle path.
+2. **Each filled position is one block.** In Construction Mark mode, it produces one path element. In Canonical Mark mode, adjacent filled positions may be merged into a single rectangle path.
 3. **Verify horizontal symmetry where the letter demands it.** I, O, U, V, W, A, X are bilaterally symmetric. Check that the grid map reflects this before generating paths.
 4. **Distinguish B from D, E from F, P from R** by checking counters (the interior spaces). The 5-wide grid is tight; counters must read clearly at 32 px.
 5. **Do not invent new grid dimensions.** Every glyph uses 5 × 7. Do not create 4-wide, 6-wide, or variable-width cells — the monospace constraint is a feature, not a limitation.
 6. **Do not use diagonal approximations.** W, X, V, N, and similar letters use stepped diagonals (single-block-wide stair steps). This is correct behavior. Do not attempt to draw true diagonal lines.
-7. **Validate the output.** Render the SVG at 32 px (Primary) and 16 px (Compact). If blocks are invisible at 16 px in Compact mode, a construction error exists.
+7. **Validate the output.** Render the SVG at 32 px (Construction Mark) and 16 px (Canonical Mark). If blocks merge visually at 32 px or are invisible at 16 px, a construction error exists.
 
 ---
 
 ## 12. Usage Summary
 
-| Context | Variant | Minimum size |
-|---------|---------|-------------|
-| Wordmarks on page | Primary | 32 px height |
-| Branded section headers | Primary | 32 px height |
-| Favicon | Compact | Any |
-| Mobile nav stamp | Compact | 16–24 px height |
-| Coin card corner | Compact | 16–20 px height |
-| Print / presentation | Primary | No minimum |
-| Loading state badge | Compact | 16 px height |
-| Social media avatar | Primary | 128 px+ |
+| Context | Variant | Notes |
+|---------|---------|-------|
+| Wordmarks on page | **Canonical** | Default |
+| Branded section headers | **Canonical** | Default |
+| Favicon | **Canonical** | Default |
+| Mobile nav stamp | **Canonical** | Default |
+| Coin card corner | **Canonical** | Default |
+| Print / presentation | **Canonical** | Default |
+| Loading state badge | **Canonical** | Default |
+| Social media avatar | **Canonical** | Default |
+| Block Type System docs | Construction | Explaining the system |
+| Design explainers | Construction | Behind-the-scenes context |
+| Assembly animation | Construction → Canonical | Blocks assemble into mark |
 
 ---
 
