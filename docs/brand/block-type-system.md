@@ -14,6 +14,12 @@ This is not a general-purpose typeface. It is a proprietary construction system 
 
 The system has two rendering variants — **Primary** and **Compact** — with identical construction geometry and different inter-block spacing.
 
+The documentation is organized in three levels:
+
+- **Level 1 — Block Type System** (this document, §§1–6, 8–13): the general construction language — grid, block rules, spacing, rendering constraints, and the reusable glyph alphabet.
+- **Level 2 — Canonical Assets** (§7 and future parallel sections): fixed designs with locked parameters. `WEB3` is the first. Future entries: `IX`, `TX`, `COIN`, `CARD`, etc. Canonical assets are referenced, not regenerated.
+- **Level 3 — Generated Glyphs**: new words assembled from Level 1 rules for one-off use. Not brand assets. May be built on demand using the construction rules in §11.
+
 ---
 
 ## 2. Core Vocabulary
@@ -168,9 +174,11 @@ These constraints apply to every use of the block type system, across every medi
 
 ## 7. WEB3 Fixed Mark — Locked Construction Parameters
 
-**This section overrides §5 and §6 for the WEB3 wordmark specifically.**
+**The WEB3 mark is a canonical brand asset with fixed construction parameters.**
 
-The general alphabet spec (§3) defines Primary gap as B/8 and uses a 5×7 cell. The WEB3 logo is a fixed mark with its own locked parameters. Do not "correct" WEB3 back to B/8 — the gap of 2 units (B/4) is the canon for this mark.
+The Block Type System defines the general construction language. Individual brand assets may define fixed construction values where visual identity requires them. The WEB3 mark is the first canonical implementation of the system.
+
+The general alphabet (§3) defines Primary gap as B/8 and uses a 5×7 cell. The WEB3 mark uses a 5×5 cell and a Primary gap of 2 units — these values were evaluated at logo display size and confirmed as the correct visual weight for this mark. They are not derived from the general rules; they are fixed by this section.
 
 ### 7.1 Canonical Grid
 
@@ -233,6 +241,23 @@ Adjacent filled blocks in the same row are merged into single rectangles. All re
 ### 7.4 Why Gap = 2, Not B/8
 
 The general alphabet spec specifies B/8 as the minimum gap for Primary. At B=8 that is 1 coordinate unit — visually effective for large display sizes but marginal at mid-range logo sizes. The WEB3 logo is a fixed mark used at known sizes; gap=2 (B/4) was evaluated at logo display size and confirmed as the correct visual weight for this specific mark. This is not a deviation — it is the locked construction for WEB3.
+
+### 7.5 Canonical Glyph Geometry
+
+The WEB3 logo is a fixed brand asset.
+
+The glyph maps shown in §7.1 are normative.
+
+They shall not be:
+
+- redesigned
+- optically corrected
+- kerned
+- simplified
+- interpreted
+- regenerated from the general alphabet
+
+Future revisions may add additional block glyphs to the alphabet, but the canonical WEB3 glyphs remain fixed unless explicitly superseded by a new version of this specification.
 
 ---
 
