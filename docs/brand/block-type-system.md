@@ -1,6 +1,6 @@
 # ImplicitEx Block Type System
 
-**Status:** Specification v1.1 — 2026-06-24  
+**Status:** Specification v1.3 — 2026-06-24  
 **Scope:** All pixel-block wordmarks, glyphs, and branded typographic elements  
 **Authority:** This document governs any Claude or Codex output that generates block-type SVGs
 
@@ -258,6 +258,19 @@ They shall not be:
 - regenerated from the general alphabet
 
 Future revisions may add additional block glyphs to the alphabet, but the canonical WEB3 glyphs remain fixed unless explicitly superseded by a new version of this specification.
+
+### 7.6 Canonical Source Assets
+
+The following SVG files are the normative implementation of the WEB3 mark:
+
+```text
+components/images/web3-primary.svg
+components/images/web3-compact.svg
+```
+
+If any discrepancy exists between this written specification and the SVG files, **the SVG files are authoritative**.
+
+Changes to either asset require a corresponding update to this specification and a version increment on the Status line.
 
 ---
 
