@@ -3105,9 +3105,12 @@ h1 + .gs-section-head {
   line-height: 1.5;
   max-width: 56ch;
   margin: 0 auto 2rem;
+  padding: 1.25rem 0;
   text-align: center;
   font-weight: var(--weight-regular);
   letter-spacing: 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
 }
 
 .about-thesis {
@@ -3122,10 +3125,12 @@ h1 + .gs-section-head {
   border-bottom: 1px solid var(--border);
 }
 
-/* WEB3 Protocol Mark — section divider in about-head */
+/* WEB3 Protocol Mark — above subtitle in about-head */
 .about-protocol-mark {
   column-span: all;
-  margin: 2rem 0 1.5rem;
+  display: flex;
+  justify-content: center;
+  margin: 1.75rem 0 1.25rem;
 }
 
 .about-protocol-mark svg {
