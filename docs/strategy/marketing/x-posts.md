@@ -123,7 +123,7 @@ Posts here should reinforce the principles behind the product and attract people
 
 *Draws directly from About page mission language. Works as a standalone product introduction or as a follow-up to Option 6.*
 
-> Web3 user control means three things:
+> Web3 user control comes down to three things:
 >
 > • Assets you hold.
 > • Transactions you execute.
