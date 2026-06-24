@@ -4073,7 +4073,7 @@ input[type="number"] {
   font-size: clamp(6rem, 20vw, 13rem);
   font-weight: var(--weight-bold);
   letter-spacing: 0.06em;
-  color: var(--white);
+  color: var(--dim);
   line-height: 1;
   margin-bottom: 1.5rem;
 }
