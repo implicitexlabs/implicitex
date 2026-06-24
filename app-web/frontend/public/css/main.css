@@ -525,7 +525,8 @@ code, kbd, pre,
   cursor: pointer;
 }
 
-.theme-toggle {
+.theme-toggle,
+.clock-toggle {
   color: var(--white);
   background: transparent;
   border: 1px solid var(--border);
@@ -538,13 +539,16 @@ code, kbd, pre,
   flex-shrink: 0;
 }
 
-.theme-icon {
+.theme-icon,
+.clock-icon {
   display: block;
   pointer-events: none;
 }
 
 .theme-toggle:hover,
-.theme-toggle:focus-visible {
+.theme-toggle:focus-visible,
+.clock-toggle:hover,
+.clock-toggle:focus-visible {
   color: var(--white);
   border-color: var(--border-2);
 }
