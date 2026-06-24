@@ -1168,7 +1168,7 @@ body.portal-active #nav {
   grid-column: 1 / -1;
   background: var(--surface-2);
   border-bottom: 1px solid var(--border);
-  padding: 0.875rem 1.5rem;
+  padding: 0.875rem 0.875rem 0.875rem 1.5rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
