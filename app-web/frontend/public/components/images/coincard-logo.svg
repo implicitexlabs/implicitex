@@ -5,22 +5,22 @@
 
   <!--
     Grid: 8×8 px blocks
-    x-height: 5 rows = 40px, sitting at y=8 to y=48
-    ¢ extends to y=0 and y=56 (7 rows total)
+    x-height: 5 rows = 40px, y=8 to y=48
+    ¢ stubs at y=0–8 (above) and y=48–56 (below) — no through-body line
+    d ascender at y=0–8 (right stem only)
     Inter-character gap: 1 block = 8px
   -->
 
-  <!-- ¢ (x=0) — C with center vertical at col 2, extends above and below x-height -->
+  <!-- ¢ (x=0) — C shape + stubs above/below only, no center line through body -->
   <path fill="currentColor" d="
     M 16,0 H 24 V 8 H 16 Z
     M 0,8 H 40 V 16 H 0 Z
     M 0,16 H 8 V 40 H 0 Z
-    M 16,16 H 24 V 40 H 16 Z
     M 0,40 H 40 V 48 H 0 Z
     M 16,48 H 24 V 56 H 16 Z
   "/>
 
-  <!-- o (x=48) — open rectangle, same as O -->
+  <!-- o (x=48) — open rectangle -->
   <path fill="currentColor" d="
     M 48,8 H 88 V 16 H 48 Z
     M 48,16 H 56 V 40 H 48 Z
@@ -28,48 +28,50 @@
     M 48,40 H 88 V 48 H 48 Z
   "/>
 
-  <!-- i (x=96) — dot at row 0, gap at row 1, stem rows 2–4 -->
+  <!-- i (x=96) — single vertical line, no dot -->
   <path fill="currentColor" d="
-    M 108,8 H 124 V 16 H 108 Z
-    M 112,24 H 120 V 48 H 112 Z
+    M 112,8 H 120 V 48 H 112 Z
   "/>
 
-  <!-- n (x=144) — arch top (cols 0–3), two straight legs, no diagonal -->
+  <!-- n (x=144) — widened to 5 cols: arch + two legs, 1-col gap between legs -->
   <path fill="currentColor" d="
-    M 144,8 H 176 V 16 H 144 Z
+    M 144,8 H 184 V 16 H 144 Z
     M 144,16 H 152 V 48 H 144 Z
-    M 168,16 H 176 V 48 H 168 Z
+    M 176,16 H 184 V 48 H 176 Z
   "/>
 
-  <!-- c (x=192) — same as ¢ body without the vertical -->
+  <!-- c (x=192) — C with interior corner blocks narrowing the mouth -->
   <path fill="currentColor" d="
     M 192,8 H 232 V 16 H 192 Z
     M 192,16 H 200 V 40 H 192 Z
+    M 224,16 H 232 V 24 H 224 Z
+    M 224,32 H 232 V 40 H 224 Z
     M 192,40 H 232 V 48 H 192 Z
   "/>
 
-  <!-- a (x=240) — double-story: top arch, right col, shelf, legs, bottom -->
+  <!-- a (x=240) — double-story: filled corners, two rectangular chambers -->
   <path fill="currentColor" d="
-    M 248,8 H 272 V 16 H 248 Z
+    M 240,8 H 280 V 16 H 240 Z
+    M 240,16 H 248 V 24 H 240 Z
     M 272,16 H 280 V 24 H 272 Z
-    M 248,24 H 280 V 32 H 248 Z
+    M 240,24 H 280 V 32 H 240 Z
     M 240,32 H 248 V 48 H 240 Z
     M 272,32 H 280 V 48 H 272 Z
     M 248,40 H 272 V 48 H 248 Z
   "/>
 
-  <!-- r (x=288) — arch top (cols 0–3), right ear row 1 only, left leg rows 1–4 -->
+  <!-- r (x=288) — arch top, left leg full height, right ear row 1 only -->
   <path fill="currentColor" d="
     M 288,8 H 320 V 16 H 288 Z
     M 288,16 H 296 V 48 H 288 Z
     M 320,16 H 328 V 24 H 320 Z
   "/>
 
-  <!-- d (x=336) — ball left, right col full height -->
+  <!-- d (x=336) — bowl left, right stem with ascender to y=0 -->
   <path fill="currentColor" d="
     M 344,8 H 368 V 16 H 344 Z
     M 336,16 H 344 V 40 H 336 Z
-    M 368,8 H 376 V 48 H 368 Z
+    M 368,0 H 376 V 48 H 368 Z
     M 344,40 H 368 V 48 H 344 Z
   "/>
 
