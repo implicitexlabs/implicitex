@@ -914,6 +914,11 @@ body.portal-active #nav {
   background: var(--surface);
   min-height: 132px;
   padding: 1.5rem;
+  transition: background 0.12s;
+}
+
+.flow-step:hover {
+  background: var(--surface-2);
 }
 
 .flow-step summary {
@@ -3389,6 +3394,11 @@ h1 + .gs-section-head {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  transition: background 0.12s;
+}
+
+.news-card:hover {
+  background: var(--surface-2);
 }
 
 .news-card-meta {
