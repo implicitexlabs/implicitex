@@ -4509,6 +4509,31 @@ input[type="number"] {
   --cc-card-radius:          10px;
 }
 
+/* Coin Card typographic tokens
+   Single source of truth for all text sizing and tracking on the card face.
+   --cc-type-issuer-word-size is reserved for future text-only issuer fallback;
+   the wordmark image height is governed by --cc-art-issuer-word-height. */
+:root {
+  --cc-type-issuer-word-size:    11px;
+  --cc-type-status-size:         10px;
+  --cc-type-credential-size:     16px;
+  --cc-type-credential-tracking: 0.08em;
+  --cc-type-name-size:           11px;
+  --cc-type-address-size:        11px;
+  --cc-type-network-size:        10px;
+  --cc-type-action-size:         var(--size-sm);
+}
+
+/* Coin Card artwork tokens
+   Controls placement proportions of the three existing SVG assets:
+   lettermark, wordmark, and ¢OIN CARD product stamp. */
+:root {
+  --cc-art-issuer-mark-height:   18px;
+  --cc-art-issuer-word-height:   11px;
+  --cc-art-product-stamp-height: 14px;
+  --cc-art-issuer-gap:           7px;
+}
+
 .cc-card {
   width: 100%;
   max-width: var(--cc-card-landscape-max);
@@ -4549,21 +4574,21 @@ input[type="number"] {
 .cc-card-issuer {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: var(--cc-art-issuer-gap);
   flex-shrink: 0;
   min-width: 0;
   overflow: hidden;
 }
 
 .cc-issuer-mark {
-  height: 18px;
+  height: var(--cc-art-issuer-mark-height);
   width: auto;
   display: block;
   flex-shrink: 0;
 }
 
 .cc-issuer-word {
-  height: 11px;
+  height: var(--cc-art-issuer-word-height);
   width: auto;
   display: block;
   flex-shrink: 0;
@@ -4572,7 +4597,7 @@ input[type="number"] {
 
 /* Product stamp logo (bottom-right of card) */
 .cc-card-logo {
-  height: 14px;
+  height: var(--cc-art-product-stamp-height);
   width: auto;
   display: block;
   flex-shrink: 0;
@@ -4599,7 +4624,7 @@ input[type="number"] {
   align-items: center;
   gap: var(--sp-2);
   font-family: var(--font-ui);
-  font-size: var(--size-xs);
+  font-size: var(--cc-type-status-size);
   font-weight: var(--weight-semibold);
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -4640,9 +4665,9 @@ input[type="number"] {
 /* Credential string — dominant center element (IBM Plex Mono) */
 .cc-card-cred {
   font-family: var(--font-mono);
-  font-size: 16px;
+  font-size: var(--cc-type-credential-size);
   font-weight: var(--weight-semibold);
-  letter-spacing: 0.08em;
+  letter-spacing: var(--cc-type-credential-tracking);
   color: var(--white);
   margin: 0 0 var(--sp-2) 0;
   overflow: hidden;
@@ -4653,7 +4678,7 @@ input[type="number"] {
 /* Display name — secondary label below credential */
 .cc-card-name {
   font-family: var(--font-ui);
-  font-size: var(--size-xs);
+  font-size: var(--cc-type-name-size);
   font-weight: var(--weight-normal);
   color: var(--dim);
   line-height: var(--leading-tight);
@@ -4666,7 +4691,7 @@ input[type="number"] {
 /* Recipient address — truncated, mono */
 .cc-card-recipient {
   font-family: var(--font-mono);
-  font-size: var(--size-xs);
+  font-size: var(--cc-type-address-size);
   color: var(--muted);
   letter-spacing: 0.04em;
   margin: 0;
@@ -4746,7 +4771,7 @@ input[type="number"] {
 
 .cc-card-network {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--cc-type-network-size);
   letter-spacing: 0.08em;
   color: var(--muted);
   text-transform: uppercase;
@@ -4779,7 +4804,7 @@ input[type="number"] {
   background: var(--white);
   color: var(--bg);
   font-family: var(--font-ui);
-  font-size: var(--size-sm);
+  font-size: var(--cc-type-action-size);
   font-weight: var(--weight-semibold);
   letter-spacing: 0.06em;
   text-align: center;
