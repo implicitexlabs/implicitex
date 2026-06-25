@@ -4923,6 +4923,56 @@ input[type="number"] {
   .cc-card--portrait { aspect-ratio: auto; }
 }
 
+/* ---- Explicit dark variant (surface-fixed, independent of page theme) ---- */
+/* Mirrors dark-mode :root values as fixed tokens so the card stays dark
+   regardless of whether the page is in light or dark theme.             */
+:root {
+  --cc-card-dark-bg:            #1a1a1a;
+  --cc-card-dark-fg:            #f2f2f0;
+  --cc-card-dark-dim:           rgba(242, 242, 240, 0.58);
+  --cc-card-dark-muted:         rgba(242, 242, 240, 0.30);
+  --cc-card-dark-border:        rgba(255, 255, 255, 0.18);
+  --cc-card-dark-verified-dot:  #f2f2f0;
+}
+
+.cc-card--dark {
+  background:   var(--cc-card-dark-bg);
+  color:        var(--cc-card-dark-fg);
+  border-color: var(--cc-card-dark-border);
+  box-shadow:   0 8px 32px rgba(0, 0, 0, 0.48), 0 2px 8px rgba(0, 0, 0, 0.32);
+}
+
+/* Dark card — typography */
+.cc-card--dark .cc-card-cred      { color: var(--cc-card-dark-fg); }
+.cc-card--dark .cc-card-name      { color: var(--cc-card-dark-dim); }
+.cc-card--dark .cc-card-recipient { color: var(--cc-card-dark-muted); }
+.cc-card--dark .cc-card-network   { color: var(--cc-card-dark-muted); }
+
+/* Dark card — product stamp (coincard-logo.svg uses currentColor) */
+.cc-card--dark .cc-card-stamp         { color: var(--cc-card-dark-fg); }
+.cc-card--dark .cc-card-logo-fallback { color: var(--cc-card-dark-muted); }
+
+/* Dark card — issuer fallback text */
+.cc-card--dark .cc-issuer-fallback { color: var(--cc-card-dark-dim); }
+
+/* Dark card — status */
+.cc-card--dark .cc-card-status               { color: var(--cc-card-dark-dim); }
+.cc-card--dark .cc-card-status--verified     { color: var(--cc-card-dark-fg); }
+.cc-card--dark .cc-card-status-dot           { background: var(--cc-card-dark-muted); }
+.cc-card--dark .cc-card-status-dot--verified { background: var(--cc-card-dark-verified-dot); }
+
+/* Dark card — state panels */
+.cc-card--dark .cc-card-state-text { color: var(--cc-card-dark-fg); }
+.cc-card--dark .cc-card-state-sub  { color: var(--cc-card-dark-muted); }
+.cc-card--dark .cc-card-state-link,
+.cc-card--dark .cc-card-state-link:link,
+.cc-card--dark .cc-card-state-link:visited { color: var(--cc-card-dark-dim); }
+.cc-card--dark .cc-card-state-link:hover   { color: var(--cc-card-dark-fg); }
+.cc-card--dark a:not([class]):hover        { color: var(--cc-card-dark-fg); }
+
+/* Dark card — revoked note */
+.cc-card--dark .cc-card-revoked-note { color: var(--cc-card-dark-dim); }
+
 /* Light surface modifier */
 .cc-card--light {
   background:   var(--cc-card-light-bg);
@@ -4931,9 +4981,9 @@ input[type="number"] {
   box-shadow:   0 4px 24px rgba(0, 0, 0, 0.08), 0 1px 4px rgba(0, 0, 0, 0.04);
 }
 
-/* Dual-art issuer: white assets on dark card, black assets on light card */
-.cc-card:not(.cc-card--light) .cc-art--on-light { display: none; }
-.cc-card--light .cc-art--on-dark                { display: none; }
+/* Dual-art issuer: explicit class gates — dark hides light art, light hides dark art */
+.cc-card--dark  .cc-art--on-light { display: none; }
+.cc-card--light .cc-art--on-dark  { display: none; }
 
 /* Light card — typography */
 .cc-card--light .cc-card-cred      { color: var(--cc-card-light-fg); }
