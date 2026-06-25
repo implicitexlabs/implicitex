@@ -4895,45 +4895,6 @@ input[type="number"] {
   --cc-card-light-verified-dot:    #1a6e3f;
 }
 
-/* ---- WEB3 construction mark watermark (review surface only) ---- */
-/* Background security/registry texture. Subordinate to all foreground content.
-   Watermark sits at z-index: 0; card rows lift to z-index: 1 to stay above it.
-   This avoids negative z-index, which is fragile across stacking contexts. */
-
-.cc-card-top,
-.cc-card-body,
-.cc-card-bottom {
-  position: relative;
-  z-index: 1;
-}
-
-.cc-card-watermark {
-  position: absolute;
-  bottom: 14px;
-  right: -20px;
-  width: 150px;
-  height: 150px;
-  pointer-events: none;
-  user-select: none;
-  z-index: 0;
-}
-
-.cc-card-watermark img {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-
-/* Light card: dark mark — embossed security-pattern feel */
-.cc-card--light .cc-card-watermark img {
-  opacity: 0.10;
-}
-
-/* Dark card: light mark — shadow-etched registry-mark feel */
-.cc-card--dark .cc-card-watermark img {
-  opacity: 0.08;
-  filter: invert(1);
-}
 
 /* Portrait geometry modifier */
 .cc-card--portrait {
