@@ -3287,11 +3287,20 @@ h1 + .gs-section-head {
   margin-bottom: 3.5rem;
   padding-bottom: 3rem;
   border-bottom: 1px solid var(--border);
+  column-count: 2;
+  column-gap: clamp(2rem, 4vw, 3rem);
 }
 
 .news-article:last-child {
   border-bottom: none;
   margin-bottom: 1.5rem;
+}
+
+/* Title, dateline, and share button span both article columns */
+.news-article h2,
+.news-article .updated,
+.news-article .news-share-btn {
+  column-span: all;
 }
 
 .news-article h2 {
@@ -3508,6 +3517,10 @@ h1 + .gs-section-head {
   .policy-shell,
   .about-head,
   .about-foot {
+    column-count: 1;
+  }
+
+  .news-article {
     column-count: 1;
   }
 
