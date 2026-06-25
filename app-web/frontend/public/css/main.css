@@ -4498,13 +4498,24 @@ input[type="number"] {
   gap: var(--sp-4);
 }
 
+/* Coin Card geometry tokens — ID-1 / ISO/IEC 7810 physical-card ratio
+   Landscape: 85.60 × 53.98 mm  Portrait: 53.98 × 85.60 mm
+   Both orientations share the same ratio, radius, and shadow language. */
+:root {
+  --cc-card-ratio-landscape: 85.6 / 53.98;
+  --cc-card-ratio-portrait:  53.98 / 85.6;
+  --cc-card-landscape-max:   440px;
+  --cc-card-portrait-max:    277px;
+  --cc-card-radius:          10px;
+}
+
 .cc-card {
   width: 100%;
-  max-width: 440px;
-  aspect-ratio: 1.586;                        /* credit card: 85.60 × 53.98 mm */
+  max-width: var(--cc-card-landscape-max);
+  aspect-ratio: var(--cc-card-ratio-landscape);
   background: var(--surface-2);
   border: 1px solid var(--border-2);
-  border-radius: 10px;
+  border-radius: var(--cc-card-radius);
   box-shadow: 0 8px 32px rgba(0,0,0,0.48), 0 2px 8px rgba(0,0,0,0.32);
   display: flex;
   flex-direction: column;
