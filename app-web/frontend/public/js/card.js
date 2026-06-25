@@ -48,6 +48,19 @@
     if (wrap) wrap.className = 'cc-card-status' + (modifier ? ' cc-card-status--' + modifier : '');
   }
 
+  /* ---- Credential string helpers ---- */
+
+  function truncateAddress(addr) {
+    if (!addr || addr.length < 12) return addr;
+    return addr.slice(0, 6) + '\u2026' + addr.slice(-4);
+  }
+
+  /* Fallback: derive a display credential from the raw card ID.
+   * Preferred source is manifest.displayCredential. */
+  function deriveDisplayCredential(cardId) {
+    return (cardId || '').toUpperCase().replace(/_/g, ' ');
+  }
+
   /* ---- State renderers ---- */
 
   function renderNoCard() {
@@ -64,15 +77,24 @@
     hide('ccCardLoading');
     setStatus('Verified', 'verified');
 
+    var cred = manifest.displayCredential || deriveDisplayCredential(manifest.cardId);
+    setText('ccCardCred', cred);
     setText('ccCardName', manifest.displayName || manifest.cardId);
-    setText('ccCardDisplayId', manifest.cardId);
-    setText('ccCardRecipient', manifest.recipient);
+
+    var recipEl = el('ccCardRecipientField');
+    if (recipEl) {
+      recipEl.textContent = truncateAddress(manifest.recipient);
+      recipEl.title = manifest.recipient;
+      recipEl.hidden = false;
+    }
 
     var chainLabel = manifest.chainName
       || CHAIN_NAMES[String(manifest.chainId)]
       || 'Chain ' + manifest.chainId;
-    setText('ccCardChain', chainLabel);
-    setText('ccCardToken', (manifest.token || '').toUpperCase());
+    var networkEl = el('ccCardNetwork');
+    if (networkEl) {
+      networkEl.textContent = chainLabel + ' \u00b7 ' + (manifest.token || '').trim().toUpperCase();
+    }
 
     var portalBtn = el('ccCardPortalBtn');
     if (portalBtn) portalBtn.href = '/?cc=' + encodeURIComponent(manifest.cardId);
@@ -88,11 +110,10 @@
     hide('ccCardLoading');
     setStatus('Revoked', 'revoked');
 
+    var cred = manifest.displayCredential || deriveDisplayCredential(manifest.cardId);
+    setText('ccCardCred', cred);
     setText('ccCardName', manifest.displayName || manifest.cardId);
-    setText('ccCardDisplayId', manifest.cardId);
-
     hide('ccCardRecipientField');
-    hide('ccCardChainTokenRow');
     show('ccCardRevokedNote');
 
     var verifyLink = el('ccCardVerifyLink');

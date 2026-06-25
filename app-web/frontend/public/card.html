@@ -141,10 +141,12 @@
 
     <div class="cc-card" role="region" aria-label="Coin Card">
 
-      <!-- Card header — always visible -->
-      <div class="cc-card-head">
-        <img src="/components/images/coincard-logo.svg" alt="Coin Card" class="cc-card-logo" width="392" height="56">
-        <span class="cc-card-logo-fallback">COIN CARD</span>
+      <!-- Top row: issuer (left) + status (right) — always visible -->
+      <div class="cc-card-top">
+        <div class="cc-card-issuer">
+          <img class="cc-issuer-mark" src="/components/images/lettermark-white.svg" alt="" aria-hidden="true">
+          <img class="cc-issuer-word" src="/components/images/wordmark-white.svg" alt="ImplicitEx">
+        </div>
         <span class="cc-card-status" id="ccCardStatus">
           <span class="cc-card-status-dot" id="ccCardStatusDot" aria-hidden="true"></span>
           <span id="ccCardStatusLabel">—</span>
@@ -165,50 +167,38 @@
       <!-- Error state -->
       <div class="cc-card-state" id="ccCardError" hidden>
         <p class="cc-card-state-text" id="ccCardErrorText">—</p>
-        <div id="ccCardErrorIdRow" hidden>
-          <p class="cc-card-field-label">Card ID</p>
-          <p class="cc-card-field-value" id="ccCardErrorId">—</p>
-        </div>
+        <p class="cc-card-state-sub" id="ccCardErrorIdRow" hidden>Card ID: <span id="ccCardErrorId">—</span></p>
         <a class="cc-card-state-link" href="/verify.html">Look up on Verify page &rarr;</a>
       </div>
 
       <!-- Body — verified and revoked states -->
       <div class="cc-card-body" id="ccCardBody" hidden>
-
+        <p class="cc-card-cred" id="ccCardCred">—</p>
         <p class="cc-card-name" id="ccCardName">—</p>
-        <p class="cc-card-card-id" id="ccCardDisplayId">—</p>
-
-        <div class="cc-card-field" id="ccCardRecipientField">
-          <p class="cc-card-field-label">Recipient</p>
-          <p class="cc-card-field-value" id="ccCardRecipient">—</p>
-        </div>
-
-        <div class="cc-card-row" id="ccCardChainTokenRow">
-          <div class="cc-card-field">
-            <p class="cc-card-field-label">Chain</p>
-            <p class="cc-card-field-value cc-card-field-value--plain" id="ccCardChain">—</p>
-          </div>
-          <div class="cc-card-field">
-            <p class="cc-card-field-label">Token</p>
-            <p class="cc-card-field-value cc-card-field-value--plain" id="ccCardToken">—</p>
-          </div>
-        </div>
-
+        <p class="cc-card-recipient" id="ccCardRecipientField">—</p>
         <p class="cc-card-revoked-note" id="ccCardRevokedNote" hidden>
           This Coin Card has been revoked. Do not use it to initiate a transfer.
         </p>
-
       </div>
 
-      <!-- Footer actions -->
-      <div class="cc-card-footer" id="ccCardFooter" hidden>
-        <div id="ccCardPortalWrap">
-          <a class="cc-card-send-btn" id="ccCardPortalBtn" href="/">Send with ImplicitEx &rarr;</a>
+      <!-- Bottom row: network/token (left) + product stamp (right) — always visible -->
+      <div class="cc-card-bottom">
+        <span class="cc-card-network" id="ccCardNetwork"></span>
+        <div class="cc-card-stamp">
+          <img src="/components/images/coincard-logo.svg" alt="Coin Card" class="cc-card-logo" width="392" height="56">
+          <span class="cc-card-logo-fallback">COIN CARD</span>
         </div>
-        <a class="cc-card-verify-link" id="ccCardVerifyLink" href="/verify.html">Verify independently &rarr;</a>
       </div>
 
     </div><!-- /.cc-card -->
+
+    <!-- Actions below the sealed card frame -->
+    <div class="cc-card-actions" id="ccCardFooter" hidden>
+      <div id="ccCardPortalWrap">
+        <a class="cc-card-send-btn" id="ccCardPortalBtn" href="/">Send with ImplicitEx &rarr;</a>
+      </div>
+      <a class="cc-card-verify-link" id="ccCardVerifyLink" href="/verify.html">Verify independently &rarr;</a>
+    </div>
 
     <p class="cc-trust-note">
       Registry confirms the canonical recipient for this Coin Card.

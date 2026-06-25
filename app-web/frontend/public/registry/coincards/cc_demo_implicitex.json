@@ -3,6 +3,7 @@
   "cardId": "cc_demo_implicitex",
   "status": "active",
   "displayName": "ImplicitEx Demo Treasury",
+  "displayCredential": "CC IMPLICITEX DEMO AB3919",
   "recipient": "0xa7cE4232811021d2Dd01f4f0f264Df2427ab3919",
   "chainId": 137,
   "chainName": "Polygon",

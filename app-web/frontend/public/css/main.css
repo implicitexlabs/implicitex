@@ -4535,23 +4535,46 @@ input[type="number"] {
   .cc-card { aspect-ratio: auto; }
 }
 
-.cc-card-head {
+/* ---- Card top row: issuer (left) + status (right) ---- */
+.cc-card-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 16px;
-  border-bottom: 1px solid var(--border);
+  padding: 12px 16px;
   flex-shrink: 0;
   min-height: 0;
   overflow: hidden;
 }
 
-.cc-card-logo {
-  height: 16px;
+.cc-card-issuer {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-shrink: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.cc-issuer-mark {
+  height: 18px;
   width: auto;
-  max-width: 160px;
   display: block;
-  opacity: 0.85;
+  flex-shrink: 0;
+}
+
+.cc-issuer-word {
+  height: 11px;
+  width: auto;
+  display: block;
+  flex-shrink: 0;
+  opacity: 0.8;
+}
+
+/* Product stamp logo (bottom-right of card) */
+.cc-card-logo {
+  height: 14px;
+  width: auto;
+  display: block;
   flex-shrink: 0;
 }
 .cc-card-logo[data-failed="1"] {
@@ -4605,73 +4628,53 @@ input[type="number"] {
 .cc-card-status-dot--revoked  { background: var(--warn); }
 
 .cc-card-body {
-  padding: 12px 16px;
+  padding: 8px 16px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  justify-content: center;
+  gap: 4px;
   overflow: hidden;
   min-height: 0;
 }
 
-.cc-card-name {
-  font-family: var(--font-display);
-  font-size: clamp(1rem, 2.5vw, 1.25rem);
-  font-weight: var(--weight-bold);
+/* Credential string — dominant center element (IBM Plex Mono) */
+.cc-card-cred {
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.08em;
   color: var(--white);
-  line-height: var(--leading-tight);
-  margin: 0 0 var(--sp-1) 0;
+  margin: 0 0 var(--sp-2) 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.cc-card-card-id {
+/* Display name — secondary label below credential */
+.cc-card-name {
+  font-family: var(--font-ui);
+  font-size: var(--size-xs);
+  font-weight: var(--weight-normal);
+  color: var(--dim);
+  line-height: var(--leading-tight);
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Recipient address — truncated, mono */
+.cc-card-recipient {
   font-family: var(--font-mono);
   font-size: var(--size-xs);
   color: var(--muted);
   letter-spacing: 0.04em;
-  margin: 0 0 var(--sp-3) 0;
-}
-
-.cc-card-field {
-  margin-bottom: var(--sp-2);
-}
-
-.cc-card-field:last-child { margin-bottom: 0; }
-
-.cc-card-field-label {
-  font-family: var(--font-ui);
-  font-size: var(--size-xs);
-  font-weight: var(--weight-semibold);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--muted);
-  margin: 0 0 2px 0;
-}
-
-.cc-card-field-value {
-  font-family: var(--font-mono);
-  font-size: var(--size-xs);
-  color: var(--white);
   margin: 0;
-  word-break: break-all;
-  overflow-wrap: anywhere;
-  line-height: var(--leading-ui);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: default;
 }
-
-.cc-card-field-value--plain {
-  font-family: var(--font-ui);
-  word-break: normal;
-}
-
-/* Two-column row for chain / token */
-.cc-card-row {
-  display: flex;
-  gap: var(--sp-5);
-  margin-bottom: var(--sp-2);
-}
-
-.cc-card-row .cc-card-field { margin-bottom: 0; }
 
 .cc-card-revoked-note {
   font-family: var(--font-body);
@@ -4683,7 +4686,6 @@ input[type="number"] {
 
 /* State panels (loading / no card / error) */
 .cc-card-state {
-  flex: 1;
   padding: 14px 16px;
   display: flex;
   flex-direction: column;
@@ -4691,9 +4693,9 @@ input[type="number"] {
 }
 
 /* [hidden] overrides — author display: flex/block would otherwise win over UA [hidden] */
-.cc-card-state[hidden]  { display: none; }
-.cc-card-body[hidden]   { display: none; }
-.cc-card-footer[hidden] { display: none; }
+.cc-card-state[hidden]   { display: none; }
+.cc-card-body[hidden]    { display: none; }
+.cc-card-actions[hidden] { display: none; }
 
 .cc-card-state-text {
   font-family: var(--font-ui);
@@ -4731,16 +4733,41 @@ input[type="number"] {
 
 .cc-card-state-link:hover { color: var(--white); }
 
-/* Card footer */
-.cc-card-footer {
-  padding: 10px 16px 14px;
-  border-top: 1px solid var(--border);
+/* ---- Card bottom row: network/token (left) + product stamp (right) ---- */
+.cc-card-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px 12px;
+  flex-shrink: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.cc-card-network {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  text-transform: uppercase;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cc-card-stamp {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* ---- Actions below the sealed card frame ---- */
+.cc-card-actions {
+  width: 100%;
+  max-width: var(--cc-card-landscape-max);
   display: flex;
   flex-direction: column;
   gap: var(--sp-2);
-  flex-shrink: 0;
-  overflow: hidden;
-  min-height: 0;
 }
 
 .cc-card-send-btn,
