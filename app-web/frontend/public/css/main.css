@@ -3305,6 +3305,7 @@ h1 + .gs-section-head {
 
 .news-article h2 {
   font-family: var(--font-body);
+  max-width: none;
   letter-spacing: -0.01em;
   text-transform: none;
   margin-top: 0.4rem;
