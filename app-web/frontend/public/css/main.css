@@ -3311,34 +3311,34 @@ h1 + .gs-section-head {
 
 .news-citation-list {
   column-span: all;
-  margin-top: 1.5rem;
-  padding-top: 0.85rem;
+  margin-top: 1.25rem;
+  padding-top: 0.75rem;
   border-top: 1px solid var(--border);
 }
 
 .news-citation-label {
   font-family: var(--font-mono);
-  font-size: var(--size-xs);
+  font-size: 0.5rem;
   font-weight: var(--weight-regular);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--muted);
-  opacity: 0.6;
-  margin-bottom: 0.35rem;
+  opacity: 0.5;
+  margin-bottom: 0.25rem;
 }
 
 .news-citation-list ol {
   margin: 0;
-  padding-left: 1rem;
+  padding-left: 0.85rem;
 }
 
 .news-citation-item {
   font-family: var(--font-mono);
-  font-size: 0.625rem;
+  font-size: 0.5rem;
   color: var(--muted);
-  opacity: 0.55;
+  opacity: 0.45;
   line-height: 1.5;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.2rem;
 }
 
 .news-share-btn {
