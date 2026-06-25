@@ -3311,38 +3311,43 @@ h1 + .gs-section-head {
 
 .news-citation-list {
   column-span: all;
-  margin-top: 2rem;
-  padding-top: 1.25rem;
+  margin-top: 1.5rem;
+  padding-top: 0.85rem;
   border-top: 1px solid var(--border);
 }
 
 .news-citation-label {
-  font-family: var(--font-ui);
-  font-size: var(--size-sm);
-  font-weight: var(--weight-semibold);
-  letter-spacing: 0.14em;
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  font-weight: var(--weight-regular);
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--muted);
-  margin-bottom: 0.6rem;
+  opacity: 0.6;
+  margin-bottom: 0.35rem;
 }
 
 .news-citation-list ol {
   margin: 0;
-  padding-left: 1.25rem;
+  padding-left: 1rem;
 }
 
 .news-citation-item {
   font-family: var(--font-mono);
-  font-size: var(--size-xs);
+  font-size: 0.625rem;
   color: var(--muted);
-  line-height: 1.6;
-  margin-bottom: 0.35rem;
+  opacity: 0.55;
+  line-height: 1.5;
+  margin-bottom: 0.25rem;
 }
 
 .news-share-btn {
-  display: inline-block;
+  column-span: all;
+  display: inline-flex;
+  align-items: center;
   background: none;
-  border: none;
+  border: 1px solid var(--border-2);
+  border-radius: 2px;
   cursor: pointer;
   font-family: var(--font-ui);
   font-size: var(--size-sm);
@@ -3350,12 +3355,15 @@ h1 + .gs-section-head {
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--muted);
-  padding: 0;
-  margin-top: 1.5rem;
-  transition: color 0.12s;
+  padding: 0.45rem 1rem;
+  margin-top: 1.75rem;
+  transition: color 0.12s, border-color 0.12s;
 }
 
-.news-share-btn:hover { color: var(--white); }
+.news-share-btn:hover {
+  color: var(--white);
+  border-color: var(--white);
+}
 
 /* ---- Support Preview (landing page) ---- */
 
