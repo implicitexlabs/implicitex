@@ -849,7 +849,7 @@ body.portal-active #nav {
   max-width: var(--ix-interface-max);
   width: 100%;
   margin-inline: auto;
-  padding: 3rem 1.5rem 0;
+  padding: clamp(2.5rem, 5vw, 4rem) 1.5rem 0;
 }
 
 .product-intro-copy {
