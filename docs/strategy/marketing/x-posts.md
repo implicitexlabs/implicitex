@@ -119,7 +119,7 @@ Posts here should reinforce the principles behind the product and attract people
 
 ---
 
-### Option 7 — The Web3 Principle (READY)
+### Option 7 — The Web3 Principle (POSTED 2026-06-25)
 
 *Draws directly from About page mission language. Works as a standalone product introduction or as a follow-up to Option 6.*
 
