@@ -46,6 +46,27 @@ Every asset — pages, widgets, documentation, social presence, press mentions �
 
 ---
 
+## 6. Coin Card is a verified recipient record, not a payment instrument.
+
+A Coin Card publishes a registry-confirmed payment intent. ImplicitEx executes the transfer. These are separate acts performed on separate surfaces.
+
+The trust hierarchy is fixed:
+
+```
+URL parameters    — transport (claims only)
+Registry manifest — evidence (canonical recipient confirmed)
+Wallet prompt     — execution (user confirms and signs)
+Chain event       — settlement proof (on-chain, independently verifiable)
+```
+
+No step in this hierarchy can substitute for any other. A verified registry record does not execute a transfer. A completed transfer does not retroactively verify a registry record. They are distinct claims about distinct acts.
+
+**Corollary:** Coin Card verification must never be presented as proof of payment. Verification confirms the published recipient record. Settlement proof is the on-chain transaction hash.
+
+**V1 limitation (2026-06-25):** Registry manifests are public static JSON records served from `/registry/coincards/`. They are not cryptographically signed. Trust is based on HTTPS delivery from the ImplicitEx domain, not on a signature that could be independently verified offline. Cryptographic signing is a future upgrade, not the current state.
+
+---
+
 ## How to use these principles
 
 These principles answer future questions before they arise. When a feature is proposed:
