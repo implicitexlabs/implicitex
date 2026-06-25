@@ -4470,6 +4470,232 @@ input[type="number"] {
   margin-top: 1.25rem;
 }
 
+/* ---- Coin Card visual surface (card.html) ---- */
+
+.cc-shell {
+  min-height: calc(100vh - var(--nav-h));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-8) var(--sp-5);
+  gap: var(--sp-4);
+}
+
+.cc-card {
+  width: 100%;
+  max-width: 440px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-2);
+}
+
+.cc-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--sp-3) var(--sp-5);
+  border-bottom: 1px solid var(--border);
+}
+
+.cc-card-type {
+  font-family: var(--font-ui);
+  font-size: var(--size-xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.cc-card-status {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-family: var(--font-ui);
+  font-size: var(--size-xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+.cc-card-status--verified { color: var(--accent); }
+.cc-card-status--revoked  { color: var(--warn); }
+.cc-card-status--error    { color: var(--warn); }
+
+.cc-card-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--border-2);
+  flex-shrink: 0;
+}
+
+.cc-card-status-dot--verified { background: var(--accent); }
+.cc-card-status-dot--revoked  { background: var(--warn); }
+.cc-card-status-dot--error    { background: var(--warn); }
+
+.cc-card-body {
+  padding: var(--sp-5);
+}
+
+.cc-card-name {
+  font-family: var(--font-display);
+  font-size: var(--size-xl);
+  font-weight: var(--weight-bold);
+  color: var(--white);
+  line-height: var(--leading-tight);
+  margin: 0 0 var(--sp-2) 0;
+}
+
+.cc-card-card-id {
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  color: var(--muted);
+  letter-spacing: 0.04em;
+  margin: 0 0 var(--sp-5) 0;
+}
+
+.cc-card-field {
+  margin-bottom: var(--sp-4);
+}
+
+.cc-card-field:last-child { margin-bottom: 0; }
+
+.cc-card-field-label {
+  font-family: var(--font-ui);
+  font-size: var(--size-xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 var(--sp-1) 0;
+}
+
+.cc-card-field-value {
+  font-family: var(--font-mono);
+  font-size: var(--size-sm);
+  color: var(--white);
+  margin: 0;
+  word-break: break-all;
+  line-height: var(--leading-ui);
+}
+
+.cc-card-field-value--plain {
+  font-family: var(--font-ui);
+  word-break: normal;
+}
+
+/* Two-column row for chain / token */
+.cc-card-row {
+  display: flex;
+  gap: var(--sp-6);
+  margin-bottom: var(--sp-4);
+}
+
+.cc-card-row .cc-card-field { margin-bottom: 0; }
+
+.cc-card-revoked-note {
+  font-family: var(--font-body);
+  font-size: var(--size-sm);
+  color: var(--warn);
+  margin: var(--sp-4) 0 0 0;
+  line-height: var(--leading-body);
+}
+
+/* State panels (loading / no card / error) */
+.cc-card-state {
+  padding: var(--sp-5);
+}
+
+.cc-card-state-text {
+  font-family: var(--font-ui);
+  font-size: var(--size-base);
+  color: var(--dim);
+  margin: 0 0 var(--sp-3) 0;
+}
+
+.cc-card-state-sub {
+  font-family: var(--font-body);
+  font-size: var(--size-sm);
+  color: var(--muted);
+  margin: 0;
+  line-height: var(--leading-body);
+}
+
+.cc-card-state-link,
+.cc-card-state-link:link,
+.cc-card-state-link:visited {
+  display: inline-block;
+  margin-top: var(--sp-3);
+  font-family: var(--font-ui);
+  font-size: var(--size-sm);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--dim);
+  text-decoration: none;
+  transition: color 0.12s;
+}
+
+.cc-card-state-link:hover { color: var(--white); }
+
+/* Card footer */
+.cc-card-footer {
+  padding: var(--sp-4) var(--sp-5) var(--sp-5);
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.cc-card-send-btn,
+.cc-card-send-btn:link,
+.cc-card-send-btn:visited {
+  display: block;
+  width: 100%;
+  padding: var(--sp-3) var(--sp-5);
+  background: var(--white);
+  color: var(--bg);
+  font-family: var(--font-ui);
+  font-size: var(--size-base);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.06em;
+  text-align: center;
+  text-decoration: none;
+  text-transform: uppercase;
+  box-sizing: border-box;
+  transition: opacity 0.12s;
+}
+
+.cc-card-send-btn:hover { opacity: 0.88; }
+
+.cc-card-verify-link,
+.cc-card-verify-link:link,
+.cc-card-verify-link:visited {
+  font-family: var(--font-ui);
+  font-size: var(--size-sm);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--dim);
+  text-decoration: none;
+  text-align: center;
+  transition: color 0.12s;
+}
+
+.cc-card-verify-link:hover { color: var(--white); }
+
+/* Trust note below card */
+.cc-trust-note {
+  max-width: 440px;
+  font-family: var(--font-body);
+  font-size: var(--size-xs);
+  color: var(--muted);
+  text-align: center;
+  line-height: var(--leading-body);
+  margin: 0;
+}
+
 /* ---- Utility ---- */
 .sr-only {
   position: absolute;
