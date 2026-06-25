@@ -1,58 +1,84 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 376 40" width="376" height="40" shape-rendering="crispEdges" aria-label="Coin Card">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 376 56" width="376" height="56" shape-rendering="crispEdges" aria-label="¢oincard">
 
-  <title>COINCARD — ImplicitEx</title>
-  <desc>COINCARD logotype. Block Type System. Same construction as WEB3 Protocol Mark.</desc>
+  <title>¢oincard — ImplicitEx</title>
+  <desc>¢oincard logotype. Block Type System. Cent symbol leads; lowercase pixel forms.</desc>
 
-  <!-- C (x=0) -->
-  <path fill="currentColor" d="M 0,0 H 40 V 8 H 0 Z
-                               M 0,8 H 8 V 32 H 0 Z
-                               M 0,32 H 40 V 40 H 0 Z"/>
+  <!--
+    Grid: 8×8 px blocks
+    Letter height: 5 rows = 40px (y=8 to y=48), centered in 56px viewBox
+    ¢ is 7 rows = 56px (y=0 to y=56) — extensions at y=0–8 and y=48–56
+    Inter-character gap: 1 block = 8px
+  -->
 
-  <!-- O (x=48) -->
-  <path fill="currentColor" d="M 48,0 H 88 V 8 H 48 Z
-                               M 48,8 H 56 V 32 H 48 Z
-                               M 80,8 H 88 V 32 H 80 Z
-                               M 48,32 H 88 V 40 H 48 Z"/>
+  <!-- ¢ (x=0) — C with center vertical, extends above and below -->
+  <path fill="currentColor" d="
+    M 16,0 H 24 V 8 H 16 Z
+    M 0,8 H 40 V 16 H 0 Z
+    M 0,16 H 8 V 40 H 0 Z
+    M 16,16 H 24 V 40 H 16 Z
+    M 0,40 H 40 V 48 H 0 Z
+    M 16,48 H 24 V 56 H 16 Z
+  "/>
 
-  <!-- I (x=96) -->
-  <path fill="currentColor" d="M 96,0 H 136 V 8 H 96 Z
-                               M 112,8 H 120 V 32 H 112 Z
-                               M 96,32 H 136 V 40 H 96 Z"/>
+  <!-- o (x=48) -->
+  <path fill="currentColor" d="
+    M 48,8 H 88 V 16 H 48 Z
+    M 48,16 H 56 V 40 H 48 Z
+    M 80,16 H 88 V 40 H 80 Z
+    M 48,40 H 88 V 48 H 48 Z
+  "/>
 
-  <!-- N (x=144) -->
-  <path fill="currentColor" d="M 144,0 H 152 V 40 H 144 Z
-                               M 176,0 H 184 V 40 H 176 Z
-                               M 152,8 H 160 V 16 H 152 Z
-                               M 160,16 H 168 V 24 H 160 Z
-                               M 168,24 H 176 V 32 H 168 Z"/>
+  <!-- i (x=96) -->
+  <path fill="currentColor" d="
+    M 96,8 H 136 V 16 H 96 Z
+    M 112,16 H 120 V 40 H 112 Z
+    M 96,40 H 136 V 48 H 96 Z
+  "/>
 
-  <!-- C (x=192) -->
-  <path fill="currentColor" d="M 192,0 H 232 V 8 H 192 Z
-                               M 192,8 H 200 V 32 H 192 Z
-                               M 192,32 H 232 V 40 H 192 Z"/>
+  <!-- n (x=144) -->
+  <path fill="currentColor" d="
+    M 144,8 H 152 V 48 H 144 Z
+    M 176,8 H 184 V 48 H 176 Z
+    M 152,16 H 160 V 24 H 152 Z
+    M 160,24 H 168 V 32 H 160 Z
+    M 168,32 H 176 V 40 H 168 Z
+  "/>
 
-  <!-- A (x=240) -->
-  <path fill="currentColor" d="M 248,0 H 272 V 8 H 248 Z
-                               M 240,8 H 248 V 16 H 240 Z
-                               M 272,8 H 280 V 16 H 272 Z
-                               M 240,16 H 280 V 24 H 240 Z
-                               M 240,24 H 248 V 40 H 240 Z
-                               M 272,24 H 280 V 40 H 272 Z"/>
+  <!-- c (x=192) -->
+  <path fill="currentColor" d="
+    M 192,8 H 232 V 16 H 192 Z
+    M 192,16 H 200 V 40 H 192 Z
+    M 192,40 H 232 V 48 H 192 Z
+  "/>
 
-  <!-- R (x=288) -->
-  <path fill="currentColor" d="M 288,0 H 320 V 8 H 288 Z
-                               M 288,8 H 296 V 16 H 288 Z
-                               M 320,8 H 328 V 16 H 320 Z
-                               M 288,16 H 320 V 24 H 288 Z
-                               M 288,24 H 296 V 32 H 288 Z
-                               M 304,24 H 312 V 32 H 304 Z
-                               M 288,32 H 296 V 40 H 288 Z
-                               M 320,32 H 328 V 40 H 320 Z"/>
+  <!-- a (x=240) -->
+  <path fill="currentColor" d="
+    M 248,8 H 272 V 16 H 248 Z
+    M 240,16 H 248 V 24 H 240 Z
+    M 272,16 H 280 V 24 H 272 Z
+    M 240,24 H 280 V 32 H 240 Z
+    M 240,32 H 248 V 48 H 240 Z
+    M 272,32 H 280 V 48 H 272 Z
+  "/>
 
-  <!-- D (x=336) -->
-  <path fill="currentColor" d="M 336,0 H 368 V 8 H 336 Z
-                               M 336,8 H 344 V 32 H 336 Z
-                               M 368,8 H 376 V 32 H 368 Z
-                               M 336,32 H 368 V 40 H 336 Z"/>
+  <!-- r (x=288) -->
+  <path fill="currentColor" d="
+    M 288,8 H 320 V 16 H 288 Z
+    M 288,16 H 296 V 24 H 288 Z
+    M 320,16 H 328 V 24 H 320 Z
+    M 288,24 H 320 V 32 H 288 Z
+    M 288,32 H 296 V 40 H 288 Z
+    M 304,32 H 312 V 40 H 304 Z
+    M 288,40 H 296 V 48 H 288 Z
+    M 320,40 H 328 V 48 H 320 Z
+  "/>
+
+  <!-- d (x=336) -->
+  <path fill="currentColor" d="
+    M 336,8 H 368 V 16 H 336 Z
+    M 336,16 H 344 V 40 H 336 Z
+    M 368,16 H 376 V 40 H 368 Z
+    M 336,40 H 368 V 48 H 336 Z
+  "/>
 
 </svg>
