@@ -162,9 +162,22 @@
       });
   }
 
+  /* ---- Logo failure hardening ---- */
+
+  function initCardLogoFallback() {
+    document.querySelectorAll('.cc-card-logo').forEach(function (img) {
+      var markFailed = function () { img.setAttribute('data-failed', '1'); };
+      img.addEventListener('error', markFailed, { once: true });
+      if (img.complete && img.naturalWidth === 0) {
+        markFailed();
+      }
+    });
+  }
+
   /* ---- Init ---- */
 
   function init() {
+    initCardLogoFallback();
     var params = new URLSearchParams(window.location.search);
     var cardId = (params.get('cc') || '').trim();
     if (cardId) {

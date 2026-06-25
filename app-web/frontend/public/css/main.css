@@ -4517,9 +4517,17 @@ input[type="number"] {
   border: 1px solid var(--border-2);
   border-radius: var(--cc-card-radius);
   box-shadow: 0 8px 32px rgba(0,0,0,0.48), 0 2px 8px rgba(0,0,0,0.32);
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
   overflow: hidden;
+  contain: layout paint;
+  isolation: isolate;
+  box-sizing: border-box;
+}
+
+.cc-card * {
+  box-sizing: border-box;
+  min-width: 0;
 }
 
 /* On small screens let the card grow to fit content naturally */
@@ -4534,13 +4542,33 @@ input[type="number"] {
   padding: 10px 16px;
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .cc-card-logo {
   height: 16px;
   width: auto;
+  max-width: 160px;
   display: block;
   opacity: 0.85;
+  flex-shrink: 0;
+}
+.cc-card-logo[data-failed="1"] {
+  display: none;
+}
+.cc-card-logo-fallback {
+  display: none;
+  font-family: var(--font-ui);
+  font-size: var(--size-sm);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  opacity: 0.85;
+}
+.cc-card-logo[data-failed="1"] + .cc-card-logo-fallback {
+  display: block;
 }
 
 .cc-card-status {
@@ -4553,6 +4581,9 @@ input[type="number"] {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--dim);                          /* default: grey */
+  flex-shrink: 0;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 .cc-card-status--verified { color: var(--white); }
@@ -4574,9 +4605,12 @@ input[type="number"] {
 .cc-card-status-dot--revoked  { background: var(--warn); }
 
 .cc-card-body {
-  flex: 1;
-  padding: 14px 16px;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
   overflow: hidden;
+  min-height: 0;
 }
 
 .cc-card-name {
@@ -4586,6 +4620,9 @@ input[type="number"] {
   color: var(--white);
   line-height: var(--leading-tight);
   margin: 0 0 var(--sp-1) 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .cc-card-card-id {
@@ -4618,6 +4655,7 @@ input[type="number"] {
   color: var(--white);
   margin: 0;
   word-break: break-all;
+  overflow-wrap: anywhere;
   line-height: var(--leading-ui);
 }
 
@@ -4652,11 +4690,20 @@ input[type="number"] {
   justify-content: center;
 }
 
+/* [hidden] overrides — author display: flex/block would otherwise win over UA [hidden] */
+.cc-card-state[hidden]  { display: none; }
+.cc-card-body[hidden]   { display: none; }
+.cc-card-footer[hidden] { display: none; }
+
 .cc-card-state-text {
   font-family: var(--font-ui);
   font-size: var(--size-sm);
   color: var(--dim);
   margin: 0 0 var(--sp-2) 0;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
 }
 
 .cc-card-state-sub {
@@ -4692,6 +4739,8 @@ input[type="number"] {
   flex-direction: column;
   gap: var(--sp-2);
   flex-shrink: 0;
+  overflow: hidden;
+  min-height: 0;
 }
 
 .cc-card-send-btn,
@@ -4740,6 +4789,7 @@ input[type="number"] {
   text-align: center;
   line-height: var(--leading-body);
   margin: 0;
+  margin-top: 20px;
 }
 
 /* ---- Utility ---- */
