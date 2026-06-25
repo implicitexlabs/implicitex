@@ -115,6 +115,14 @@
   --ix-copy-line:        1.65;
   --ix-copy-small-size:  var(--size-md);
   --ix-copy-small-line:  1.5;
+
+  /* ---- Semantic type roles ---- */
+  /* Each role maps to a job, not a size. Use these in new selectors. */
+  --ix-type-display:   var(--size-hero);                    /* Hero only — one instance per page    */
+  --ix-type-statement: clamp(1.25rem, 1.8vw, 1.55rem);     /* Section thesis / product argument    */
+  --ix-type-copy:      var(--size-lg);                      /* Explanatory body paragraphs          */
+  --ix-type-data:      var(--size-xl);                      /* Stat strip / telemetry values        */
+  --ix-type-label:     var(--size-sm);                      /* Kickers, card labels, system labels  */
 }
 
 [data-theme="light"] {
@@ -854,7 +862,7 @@ body.portal-active #nav {
 
 .product-intro-statement {
   font-family: var(--font-display);
-  font-size: clamp(1.35rem, 2vw, 1.75rem);
+  font-size: var(--ix-type-statement);
   font-weight: var(--weight-bold);
   line-height: 1.2;
   color: var(--ink);
