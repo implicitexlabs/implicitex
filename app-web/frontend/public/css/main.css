@@ -3309,6 +3309,36 @@ h1 + .gs-section-head {
   margin-top: 0.4rem;
 }
 
+.news-citation-list {
+  column-span: all;
+  margin-top: 2rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
+}
+
+.news-citation-label {
+  font-family: var(--font-ui);
+  font-size: var(--size-sm);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 0.6rem;
+}
+
+.news-citation-list ol {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.news-citation-item {
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  color: var(--muted);
+  line-height: 1.6;
+  margin-bottom: 0.35rem;
+}
+
 .news-share-btn {
   display: inline-block;
   background: none;

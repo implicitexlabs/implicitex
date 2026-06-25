@@ -259,6 +259,13 @@
         return '<p>' + p + '</p>';
       }).join('');
       var categoryLabel = a.category === 'Platform' ? 'implicitex.com' : a.category;
+      var sourcesHtml = (a.sources && a.sources.length)
+        ? '<footer class="news-citation-list"><p class="news-citation-label">Sources</p><ol>' +
+            a.sources.map(function (s) {
+              return '<li class="news-citation-item">' + s + '</li>';
+            }).join('') +
+          '</ol></footer>'
+        : '';
       return '<article class="news-article" id="' + a.id + '">' +
         '<p class="updated" style="margin-bottom:0.5rem">' +
           '<time datetime="' + a.dateIso + '">' + a.date + '</time>' +
@@ -266,6 +273,7 @@
         '</p>' +
         '<h2>' + a.title + '</h2>' +
         bodyHtml +
+        sourcesHtml +
         '<button class="news-share-btn" data-id="' + a.id + '">Share</button>' +
         '</article>';
     }).join('');

@@ -15,6 +15,27 @@
      lede      – first paragraph shown in the preview card
      body      – array of paragraph strings (full article body,
                  including the lede as the first entry)
+     sources   – optional array of citation strings in Chicago
+                 Notes-Bibliography format. Rendered as a numbered
+                 list beneath the article body. Inline references
+                 in body text use short form: [GENIUS Act § X].
+
+   Chicago citation formats used on this site:
+
+   Federal statute:
+     [Author/Sponsor if relevant.] [Full Act Name] ([Short Name]).
+     Public Law [number]. [Congress], [session]. ([Year]).
+     Example: U.S. Congress. Guiding and Establishing National
+     Innovation for U.S. Stablecoins Act (GENIUS Act).
+     Public Law 119-27. 119th Cong., 1st sess. (2025).
+
+   Web / agency document:
+     [Organization]. "[Document Title]." [Site or Publisher].
+     [Month Day, Year]. [URL].
+
+   News article:
+     [Last, First]. "[Article Title]." [Publication].
+     [Month Day, Year]. [URL].
    ============================================================ */
 
 var IX_NEWS = [
@@ -55,8 +76,10 @@ var IX_NEWS = [
       'For users, the practical lesson is simple: the future of payment stablecoins will not be built only on speed, fees, or branding. It will depend on reserve quality, redemption discipline, transparency, and operational reliability.',
       'That context is directly relevant to USDC transfer tools. A non-custodial interface does not issue USDC and does not custody the user\u2019s funds. But it can help users interact with USDC in a way that is clear, deliberate, and verifiable. The interface can show the sender, recipient, network, fee, estimated gas, token contract, and transaction state before the wallet is asked to approve anything.',
       'That is the lane ImplicitEx is focused on: not issuing the asset, not holding customer funds, and not asking users to trust an opaque middle layer. The goal is to provide a careful transaction workspace around wallet-to-wallet USDC transfers.',
-      'Short-term Treasury reserves help explain why regulated payment stablecoins can become more stable and more useful. Clear, non-custodial transfer tools help explain how people may actually use them.',
-      'Source: Public Law 119-27, Guiding and Establishing National Innovation for U.S. Stablecoins Act (GENIUS Act).'
+      'Short-term Treasury reserves help explain why regulated payment stablecoins can become more stable and more useful. Clear, non-custodial transfer tools help explain how people may actually use them.'
+    ],
+    sources: [
+      'U.S. Congress. Guiding and Establishing National Innovation for U.S. Stablecoins Act (GENIUS Act). Public Law 119-27. 119th Cong., 1st sess. (2025).'
     ]
   },
 
@@ -82,8 +105,10 @@ var IX_NEWS = [
       'For users, that means stablecoin transfers are not a lawless parallel universe. The industry is moving toward a framework where issuers, service providers, wallets, and interfaces each have different roles. Issuers are responsible for reserve backing, redemption policies, disclosures, and compliance. Wallets help users custody and authorize assets. Interfaces like ImplicitEx focus on the transaction experience: clarity, preview discipline, route safety, and evidence.',
       'That is a modest role, but an important one.',
       'As stablecoins become more regulated and more familiar, the quality of the interface layer will matter. People do not only need assets that are stable. They need transfer tools that are understandable. They need to know when they are previewing, when they are approving, when funds have moved, and what evidence remains after the transaction is complete.',
-      'ImplicitEx is being built for that layer: non-custodial, direct, transparent USDC transfer. The long-term roadmap includes embedded transfer widgets, tools for developers building payment-aware applications, and additional services\u2014but the first principle remains simple: make wallet-to-wallet value transfer clearer, safer, and easier to verify.',
-      'Source: Public Law 119-27, Guiding and Establishing National Innovation for U.S. Stablecoins Act (GENIUS Act).'
+      'ImplicitEx is being built for that layer: non-custodial, direct, transparent USDC transfer. The long-term roadmap includes embedded transfer widgets, tools for developers building payment-aware applications, and additional services\u2014but the first principle remains simple: make wallet-to-wallet value transfer clearer, safer, and easier to verify.'
+    ],
+    sources: [
+      'U.S. Congress. Guiding and Establishing National Innovation for U.S. Stablecoins Act (GENIUS Act). Public Law 119-27. 119th Cong., 1st sess. (2025).'
     ]
   },
 
@@ -106,8 +131,10 @@ var IX_NEWS = [
       'This two-step model exists because approval and transfer are meaningfully different actions. Approval says: this contract is permitted to move up to this amount of my USDC. Transfer says: execute this specific movement now. Collapsing those into a single click would be faster, but it would hide a distinction that users deserve to understand.',
       'Receipt evidence is also non-custodial by design. After a transfer, the transaction hash, sender, recipient, amount, fee, and block confirmation are stored locally in your browser\u2019s localStorage. No account required. No server-side record. The on-chain transaction is the authoritative record; the local receipt is a convenience layer for your own reference.',
       'ImplicitEx does not issue USDC, does not set monetary policy, and does not determine reserve composition. Those are responsibilities that fall to Circle as the issuer, governed by frameworks like the GENIUS Act. What ImplicitEx provides is a careful interface around the transfer step: the moment between holding USDC and sending it to someone else.',
-      'Building that interface with non-custodial principles is not just a technical choice. It is a position on what a transfer tool should and should not do. The platform should make the transaction clear, not capture the asset. It should serve the user\u2019s intent, not intermediate their funds.',
-      'Source: Public Law 119-27, Guiding and Establishing National Innovation for U.S. Stablecoins Act (GENIUS Act).'
+      'Building that interface with non-custodial principles is not just a technical choice. It is a position on what a transfer tool should and should not do. The platform should make the transaction clear, not capture the asset. It should serve the user\u2019s intent, not intermediate their funds.'
+    ],
+    sources: [
+      'U.S. Congress. Guiding and Establishing National Innovation for U.S. Stablecoins Act (GENIUS Act). Public Law 119-27. 119th Cong., 1st sess. (2025).'
     ]
   }
 
