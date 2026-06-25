@@ -1,10 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" width="1200" height="675" shape-rendering="crispEdges">
 
-  <!-- Background: transparent -->
+  <title>WEB3 Protocol Mark — ImplicitEx</title>
+  <desc>Canonical WEB3 Protocol Mark for ImplicitEx. Block Type System canonical asset. https://implicitex.com</desc>
 
-  <!-- Horizontal rules — thin, dark, low opacity -->
-  <line x1="200" y1="220" x2="1000" y2="220" stroke="#0c0c0c" stroke-width="1" opacity="0.2"/>
-  <line x1="200" y1="455" x2="1000" y2="455" stroke="#0c0c0c" stroke-width="1" opacity="0.2"/>
+  <!-- Background: transparent -->
 
   <!-- WEB3 Canonical Mark — 600×125, centered: x=300 y=275, scale=3.125 -->
   <g transform="translate(300, 275) scale(3.125)">
