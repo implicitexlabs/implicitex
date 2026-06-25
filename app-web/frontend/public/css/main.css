@@ -849,7 +849,17 @@ body.portal-active #nav {
   max-width: var(--ix-interface-max);
   width: 100%;
   margin-inline: auto;
-  padding: clamp(2.5rem, 5vw, 4rem) 1.5rem 0;
+  padding: clamp(2.5rem, 5vw, 4rem) 1.5rem clamp(2.25rem, 4vw, 3.5rem);
+}
+
+.product-intro-statement {
+  font-size: clamp(1.35rem, 2vw, 1.75rem);
+  font-weight: var(--weight-bold);
+  line-height: 1.2;
+  color: var(--ink);
+  text-align: center;
+  margin: 0 auto 1.25rem;
+  letter-spacing: -0.02em;
 }
 
 .product-intro-copy {
