@@ -166,6 +166,70 @@
       on-chain record or public source.
     </p>
 
+    <!-- ── Coin Card Verification ───────────────────────────────── -->
+    <section class="coincard-verify" id="coincardVerify" aria-label="Coin Card verification">
+      <h2>Coin Card Verification</h2>
+      <p>Check the registry record for a Coin Card before using it to start a transfer.</p>
+
+      <!-- Lookup form — shown when no ?cc= param -->
+      <div id="coincardLookup">
+        <form class="coincard-lookup-form" id="coincardLookupForm" action="/verify.html" method="GET">
+          <input class="coincard-lookup-input" type="text" name="cc" id="coincardLookupInput"
+                 placeholder="Card ID  (e.g. cc_demo_implicitex)"
+                 autocomplete="off" spellcheck="false" aria-label="Coin Card ID">
+          <button class="coincard-lookup-btn" type="submit">Verify</button>
+        </form>
+      </div>
+
+      <!-- Result panel — shown after fetch -->
+      <div id="coincardResult" hidden>
+        <dl class="v-facts">
+          <div class="v-fact v-fact-wide">
+            <dt>Status</dt>
+            <dd><span id="ccvStatus">—</span></dd>
+          </div>
+          <div class="v-fact v-fact-wide" id="ccvCardIdFact" hidden>
+            <dt>Card ID</dt>
+            <dd id="ccvCardId">—</dd>
+          </div>
+          <div class="v-fact v-fact-wide" id="ccvNameFact" hidden>
+            <dt>Name</dt>
+            <dd id="ccvName">—</dd>
+          </div>
+          <div class="v-fact v-fact-wide" id="ccvRecipientFact" hidden>
+            <dt>Recipient</dt>
+            <dd id="ccvRecipient">—</dd>
+          </div>
+          <div class="v-fact v-fact-wide" id="ccvChainFact" hidden>
+            <dt>Chain</dt>
+            <dd id="ccvChain">—</dd>
+          </div>
+          <div class="v-fact v-fact-wide" id="ccvTokenFact" hidden>
+            <dt>Token</dt>
+            <dd id="ccvToken">—</dd>
+          </div>
+          <div class="v-fact v-fact-wide" id="ccvDomainFact" hidden>
+            <dt>Source domain</dt>
+            <dd id="ccvDomain">—</dd>
+          </div>
+          <div class="v-fact v-fact-wide" id="ccvRegistryFact" hidden>
+            <dt>Registry</dt>
+            <dd id="ccvRegistry">—</dd>
+          </div>
+          <div class="v-fact v-fact-wide" id="ccvUpdatedFact" hidden>
+            <dt>Updated</dt>
+            <dd id="ccvUpdated">—</dd>
+          </div>
+        </dl>
+        <div class="coincard-trust-note" id="coincardTrustNote" hidden>
+          <p>The registry confirms the canonical recipient for this Coin Card. Wallet confirmation is still required before any transfer. Verification does not prove a payment occurred.</p>
+        </div>
+        <div class="coincard-portal-link" id="coincardPortalLink" hidden>
+          <a class="send-usdc-link" href="/" id="coincardPortalHref">Open Transfer Portal →</a>
+        </div>
+      </div>
+    </section>
+
     <!-- ── 1. Platform Status ─────────────────────────────────── -->
     <h2>Platform Status</h2>
 
@@ -535,5 +599,6 @@
   <script src="js/wallet.js"></script>
   <script src="js/app.js"></script>
   <script src="js/mobile-menu.js"></script>
+  <script src="js/verify.js"></script>
 </body>
 </html>

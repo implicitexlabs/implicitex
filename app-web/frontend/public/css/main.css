@@ -4395,6 +4395,81 @@ input[type="number"] {
   margin-top: auto;
 }
 
+/* Coin Card Verification section (verify.html) */
+.coincard-verify {
+  margin-top: 2.5rem;
+  padding-top: 2.5rem;
+  border-top: 1px solid var(--border);
+  margin-bottom: 2.5rem;
+}
+
+.coincard-lookup-form {
+  display: flex;
+  align-items: stretch;
+  max-width: 480px;
+  margin-top: 1.25rem;
+}
+
+.coincard-lookup-input {
+  flex: 1;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-right: none;
+  color: var(--white);
+  font-family: var(--font-mono);
+  font-size: var(--size-sm);
+  padding: 10px 12px;
+  min-height: 42px;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.12s;
+}
+
+.coincard-lookup-input::placeholder { color: var(--muted); }
+.coincard-lookup-input:focus { border-color: var(--border-2); }
+
+.coincard-lookup-btn {
+  background: var(--white);
+  border: 1px solid var(--white);
+  color: var(--bg);
+  font-family: var(--font-ui);
+  font-size: var(--size-sm);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0 1.25rem;
+  min-height: 42px;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: opacity 0.12s;
+}
+
+.coincard-lookup-btn:hover { opacity: 0.85; }
+
+/* Status modifiers — override .policy-shell dd color */
+.ccv-status--verified   { color: var(--status-ok) !important; }
+.ccv-status--unverified { color: var(--telemetry-amber-dim) !important; }
+.ccv-status--failed     { color: var(--warn) !important; }
+
+.coincard-trust-note {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.coincard-trust-note p {
+  font-family: var(--font-body);
+  font-size: var(--size-sm);
+  color: var(--dim);
+  line-height: 1.55;
+  margin: 0;
+}
+
+.coincard-portal-link {
+  margin-top: 1.25rem;
+}
+
 /* ---- Utility ---- */
 .sr-only {
   position: absolute;
