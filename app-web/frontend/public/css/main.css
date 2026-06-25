@@ -3344,7 +3344,7 @@ h1 + .gs-section-head {
 
 .news-citation-label {
   font-family: var(--font-ui);
-  font-size: var(--size-xs);
+  font-size: 11px;
   letter-spacing: 0.06em;
   color: var(--dim);
   margin-bottom: 0.2rem;
@@ -3357,7 +3357,7 @@ h1 + .gs-section-head {
 
 .news-citation-item {
   font-family: var(--font-ui);
-  font-size: var(--size-xs);
+  font-size: 11px;
   letter-spacing: 0.06em;
   color: var(--dim);
   line-height: 1.5;
