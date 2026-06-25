@@ -689,6 +689,45 @@
       </div>
     </div>
 
+    <!-- 03 Verification -->
+    <div class="mod" id="verificationMod">
+      <span class="mod-tag">03 — Verification</span>
+      <p class="mod-title">Coin Card Verification</p>
+      <div class="data-table">
+        <div class="data-row">
+          <span class="data-k">Status</span>
+          <span class="data-v" id="cardStatus">No card</span>
+        </div>
+        <div class="data-row" id="cardIdRow" hidden>
+          <span class="data-k">Card ID</span>
+          <span class="data-v" id="cardIdDisplay">—</span>
+        </div>
+        <div class="data-row" id="cardRecipientRow" hidden>
+          <span class="data-k">Recipient</span>
+          <span class="data-v" id="cardRecipientDisplay">—</span>
+        </div>
+        <div class="data-row" id="cardChainRow" hidden>
+          <span class="data-k">Chain</span>
+          <span class="data-v" id="cardChainDisplay">—</span>
+        </div>
+        <div class="data-row" id="cardTokenRow" hidden>
+          <span class="data-k">Token</span>
+          <span class="data-v" id="cardTokenDisplay">—</span>
+        </div>
+        <div class="data-row" id="cardDomainRow" hidden>
+          <span class="data-k">Source</span>
+          <span class="data-v" id="cardDomainDisplay">—</span>
+        </div>
+        <div class="data-row" id="cardRegistryRow" hidden>
+          <span class="data-k">Registry</span>
+          <span class="data-v" id="cardRegistryDisplay">—</span>
+        </div>
+      </div>
+      <div class="card-verify-footer" id="cardVerifyFooter" hidden>
+        <a class="card-verify-link" href="/verify.html" id="cardVerifyLink">Verify independently →</a>
+      </div>
+    </div>
+
     <!-- Transaction Companion Tray — owned by the Transfer Portal -->
     <div id="companion" class="companion" role="complementary" aria-label="Transaction status">
       <div class="companion-bar" id="companionBar" role="button" tabindex="0"
@@ -881,6 +920,7 @@
   <script src="js/analytics.js"></script>
   <script src="js/consent.js"></script>
   <script src="js/wallet.js"></script>
+  <script src="js/coincard.js"></script>
   <script src="js/feeds.js"></script>
   <script src="js/app.js"></script>
   <script src="js/mobile-menu.js"></script>

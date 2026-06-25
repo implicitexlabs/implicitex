@@ -2017,6 +2017,32 @@ body.portal-active #nav {
 
 .status-ok { color: var(--status-ok); }
 
+/* CoinCard verification panel (03 — Verification mod) */
+.card-verify-footer {
+  margin-top: 1.25rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
+.card-verify-link,
+.card-verify-link:link,
+.card-verify-link:visited {
+  font-family: var(--font-ui);
+  font-size: var(--size-sm);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--dim);
+  text-decoration: none;
+  transition: color 0.12s;
+}
+
+.card-verify-link:hover { color: var(--white); }
+
+.card-status--verified   { color: var(--status-ok); }
+.card-status--unverified { color: var(--telemetry-amber-dim); }
+.card-status--failed     { color: var(--warn); }
+
 /* Feed list */
 .feed-list { display: flex; flex-direction: column; }
 
