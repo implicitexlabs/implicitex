@@ -1,28 +1,56 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 344 56" width="344" height="56" shape-rendering="crispEdges" aria-label="¢oincard">
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ImplicitEx COIN CARD — Block Logotype
+  System: 8×8 unit blocks, gap=0 (adjacent blocks merge)
+  Same canonical grid as WEB3 mark.
+  Glyph width: 40px (5 cols × 8px)
+  Letter body height: 40px (5 rows × 8px), sitting y=8–48
+  First glyph (¢-C): 7 rows (y=0–56), cent stubs at y=0–8 and y=48–56
+  ViewBox: 384 × 56
+  Inter-glyph gap: 8px  Word gap: 16px
+  Layout: ¢C(0) O(48) I(96) N(144) [gap 184–199] C(200) A(248) R(296) D(344)
+  shape-rendering="crispEdges" required.
 
-  <title>¢oincard — ImplicitEx</title>
-  <desc>¢oincard logotype. Block Type System. Lowercase pixel forms.</desc>
+  First glyph matrix (7 rows):       Other glyphs (5 rows, y=8–48):
+  ¢C: ..#..   O: #####   I: .###.   N: #...#   A: .###.   R: ####.   D: ####.
+      .####      #...#      ..#..      ##..#      #...#      #...#      #...#
+      #....      #...#      ..#..      #.#.#      #####      ####.      #...#
+      #....      #...#      ..#..      #..##      #...#      #..#.      #...#
+      #....      #####      .###.      #...#      #...#      #...#      ####.
+      .####
+      ..#..
+-->
+<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 392 56"
+     shape-rendering="crispEdges"
+     role="img"
+     aria-label="COIN CARD">
 
-  <!--
-    Grid: 8×8 px blocks
-    x-height: 5 rows = 40px, y=8 to y=48
-    ¢ body = c body + stubs at y=0–8 and y=48–56 (center col only)
-    d right stem ascends to y=0
-    i: 1-col stem, 1-block gap each side
-  -->
+  <title>COIN CARD — ImplicitEx</title>
+  <desc>COIN CARD logotype. Block type system. Uppercase. First glyph has cent-stroke accent above and below. Same construction as WEB3 canonical mark.</desc>
 
-  <!-- ¢ (x=0–40) — identical body to c, plus stubs above and below at col 2 -->
+  <!-- ¢-C (x=0) — 7-row cent variant, stubs outside the 40px letter body
+       ..#..   y=0–8
+       .####   y=8–16
+       #....   y=16–24
+       #....   y=24–32
+       #....   y=32–40
+       .####   y=40–48
+       ..#..   y=48–56 -->
   <path fill="currentColor" d="
     M 16,0 H 24 V 8 H 16 Z
-    M 0,8 H 40 V 16 H 0 Z
+    M 8,8 H 40 V 16 H 8 Z
     M 0,16 H 8 V 40 H 0 Z
-    M 32,16 H 40 V 24 H 32 Z
-    M 32,32 H 40 V 40 H 32 Z
-    M 0,40 H 40 V 48 H 0 Z
+    M 8,40 H 40 V 48 H 8 Z
     M 16,48 H 24 V 56 H 16 Z
   "/>
 
-  <!-- o (x=48–88) — open rectangle -->
+  <!-- O (x=48) — letter body y=8–48
+       #####
+       #...#
+       #...#
+       #...#
+       ##### -->
   <path fill="currentColor" d="
     M 48,8 H 88 V 16 H 48 Z
     M 48,16 H 56 V 40 H 48 Z
@@ -30,55 +58,87 @@
     M 48,40 H 88 V 48 H 48 Z
   "/>
 
-  <!-- i (x=96) — 1-col stem, tight spacing -->
+  <!-- I (x=96) — letter body y=8–48
+       .###.
+       ..#..
+       ..#..
+       ..#..
+       .###. -->
   <path fill="currentColor" d="
-    M 96,8 H 104 V 48 H 96 Z
+    M 104,8 H 128 V 16 H 104 Z
+    M 112,16 H 120 V 40 H 112 Z
+    M 104,40 H 128 V 48 H 104 Z
   "/>
 
-  <!-- n (x=112–152) — 5 cols wide, arch + two legs at col 0 and col 4 -->
+  <!-- N (x=144) — letter body y=8–48
+       #...#
+       ##..#
+       #.#.#
+       #..##
+       #...# -->
   <path fill="currentColor" d="
-    M 112,8 H 152 V 16 H 112 Z
-    M 112,16 H 120 V 48 H 112 Z
-    M 144,16 H 152 V 48 H 144 Z
+    M 144,8 H 152 V 48 H 144 Z
+    M 176,8 H 184 V 48 H 176 Z
+    M 152,16 H 160 V 24 H 152 Z
+    M 160,24 H 168 V 32 H 160 Z
+    M 168,32 H 176 V 40 H 168 Z
   "/>
 
-  <!-- c (x=160–200) — C with interior corner blocks at top-right and bottom-right -->
+  <!-- word gap: 184–207 (24px = 3 blocks) -->
+
+  <!-- C (x=208) — clean, no cent accent, letter body y=8–48
+       .####
+       #....
+       #....
+       #....
+       .#### -->
   <path fill="currentColor" d="
-    M 160,8 H 200 V 16 H 160 Z
-    M 160,16 H 168 V 40 H 160 Z
-    M 192,16 H 200 V 24 H 192 Z
-    M 192,32 H 200 V 40 H 192 Z
-    M 160,40 H 200 V 48 H 160 Z
+    M 216,8 H 248 V 16 H 216 Z
+    M 208,16 H 216 V 40 H 208 Z
+    M 216,40 H 248 V 48 H 216 Z
   "/>
 
-  <!-- a (x=208–248) — double-story: 5×5 grid
-       Row 1: all cols (top bar)
-       Row 2: col 5 only (upper bowl open on left)
-       Row 3: all cols (mid divider)
-       Row 4: col 1 + col 5 (lower bowl walls)
-       Row 5: all cols (bottom bar) -->
+  <!-- A (x=256) — letter body y=8–48
+       .###.
+       #...#
+       #####
+       #...#
+       #...# -->
   <path fill="currentColor" d="
-    M 208,8 H 248 V 16 H 208 Z
-    M 240,8 H 248 V 48 H 240 Z
-    M 208,24 H 248 V 32 H 208 Z
-    M 208,32 H 216 V 40 H 208 Z
-    M 208,40 H 248 V 48 H 208 Z
-  "/>
-
-  <!-- r (x=256–296) — full 5-col top bar, sharp right angle down 1 block at col 4, left leg -->
-  <path fill="currentColor" d="
-    M 256,8 H 296 V 16 H 256 Z
-    M 256,16 H 264 V 48 H 256 Z
+    M 264,8 H 288 V 16 H 264 Z
+    M 256,16 H 264 V 24 H 256 Z
     M 288,16 H 296 V 24 H 288 Z
+    M 256,24 H 296 V 32 H 256 Z
+    M 256,32 H 264 V 48 H 256 Z
+    M 288,32 H 296 V 48 H 288 Z
   "/>
 
-  <!-- d (x=304–344) — a without the top bar: right col ascends to y=0,
-       bowl opens at row 3 (mid bar), walls at row 4, bottom bar at row 5 -->
+  <!-- R (x=304) — letter body y=8–48
+       ####.
+       #...#
+       ####.
+       #..#.
+       #...# -->
   <path fill="currentColor" d="
-    M 336,8 H 344 V 48 H 336 Z
-    M 304,16 H 344 V 24 H 304 Z
-    M 304,24 H 312 V 40 H 304 Z
-    M 304,40 H 344 V 48 H 304 Z
+    M 304,8 H 312 V 48 H 304 Z
+    M 312,8 H 336 V 16 H 312 Z
+    M 336,16 H 344 V 24 H 336 Z
+    M 312,24 H 336 V 32 H 312 Z
+    M 328,32 H 336 V 40 H 328 Z
+    M 336,40 H 344 V 48 H 336 Z
+  "/>
+
+  <!-- D (x=352) — letter body y=8–48
+       ####.
+       #...#
+       #...#
+       #...#
+       ####. -->
+  <path fill="currentColor" d="
+    M 352,8 H 384 V 16 H 352 Z
+    M 352,16 H 360 V 40 H 352 Z
+    M 384,16 H 392 V 40 H 384 Z
+    M 352,40 H 384 V 48 H 352 Z
   "/>
 
 </svg>
