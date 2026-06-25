@@ -859,7 +859,7 @@ body.portal-active #nav {
   line-height: 1.2;
   color: var(--ink);
   text-align: center;
-  margin: 0 auto 1.25rem;
+  margin: 0 0 1.25rem;
   letter-spacing: -0.02em;
 }
 
@@ -868,8 +868,7 @@ body.portal-active #nav {
   font-weight: var(--weight-regular);
   line-height: var(--ix-copy-line);
   color: var(--dim);
-  max-width: 720px;
-  margin: 0 auto 1rem;
+  margin: 0 0 1rem;
   text-align: center;
 }
 
