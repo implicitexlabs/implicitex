@@ -76,8 +76,8 @@
        bowl opens at row 3 (mid bar), walls at row 4, bottom bar at row 5 -->
   <path fill="currentColor" d="
     M 336,0 H 344 V 48 H 336 Z
-    M 304,24 H 344 V 32 H 304 Z
-    M 304,32 H 312 V 40 H 304 Z
+    M 304,16 H 344 V 24 H 304 Z
+    M 304,24 H 312 V 40 H 304 Z
     M 304,40 H 344 V 48 H 304 Z
   "/>
 
