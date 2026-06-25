@@ -4767,6 +4767,15 @@ input[type="number"] {
   line-height: var(--leading-body);
 }
 
+/* Inline links inside card state panels (no class — prevent browser-default blue) */
+.cc-card a:not([class]) {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 0.12s;
+}
+.cc-card a:not([class]):hover { color: var(--white); }
+
 .cc-card-state-link,
 .cc-card-state-link:link,
 .cc-card-state-link:visited {
@@ -4869,6 +4878,93 @@ input[type="number"] {
   margin: 0;
   margin-top: 20px;
 }
+
+/* ---- Coin Card variants: light surface + portrait orientation ---- */
+
+/* Variant tokens */
+:root {
+  /* Portrait geometry: inverse of ID-1 landscape ratio */
+  --cc-card-portrait-max:          300px;
+  --cc-card-ratio-portrait:        5398 / 8560;
+
+  /* Light surface palette */
+  --cc-card-light-bg:              #f0ede8;
+  --cc-card-light-fg:              #1a1917;
+  --cc-card-light-dim:             #4a4844;
+  --cc-card-light-muted:           #8a8580;
+  --cc-card-light-verified-dot:    #1a6e3f;
+}
+
+/* Portrait geometry modifier */
+.cc-card--portrait {
+  max-width: var(--cc-card-portrait-max);
+  aspect-ratio: var(--cc-card-ratio-portrait);
+}
+
+/* Portrait body: credential cluster, slight optical upward bias */
+.cc-card--portrait .cc-card-body {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-block: 16px 40px;
+}
+
+/* Portrait credential: wrap instead of truncate — credential is the primary payload */
+/* max-width: 16ch accounts for 0.08em letter-spacing making each char ~1.13ch effective */
+.cc-card--portrait .cc-card-cred {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  line-height: 1.35;
+  max-width: 16ch;
+}
+
+@media (max-width: 360px) {
+  .cc-card--portrait { aspect-ratio: auto; }
+}
+
+/* Light surface modifier */
+.cc-card--light {
+  background:   var(--cc-card-light-bg);
+  color:        var(--cc-card-light-fg);
+  border-color: rgba(0, 0, 0, 0.10);
+  box-shadow:   0 4px 24px rgba(0, 0, 0, 0.08), 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+/* Dual-art issuer: white assets on dark card, black assets on light card */
+.cc-card:not(.cc-card--light) .cc-art--on-light { display: none; }
+.cc-card--light .cc-art--on-dark                { display: none; }
+
+/* Light card — typography */
+.cc-card--light .cc-card-cred      { color: var(--cc-card-light-fg); }
+.cc-card--light .cc-card-name      { color: var(--cc-card-light-dim); }
+.cc-card--light .cc-card-recipient { color: var(--cc-card-light-muted); }
+.cc-card--light .cc-card-network   { color: var(--cc-card-light-muted); }
+
+/* Light card — product stamp (coincard-logo.svg uses currentColor — driven by color:) */
+.cc-card--light .cc-card-stamp         { color: var(--cc-card-light-fg); }
+.cc-card--light .cc-card-logo-fallback { color: var(--cc-card-light-muted); }
+
+/* Light card — issuer fallback text */
+.cc-card--light .cc-issuer-fallback { color: var(--cc-card-light-dim); }
+
+/* Light card — status */
+.cc-card--light .cc-card-status               { color: var(--cc-card-light-dim); }
+.cc-card--light .cc-card-status--verified     { color: var(--cc-card-light-fg); }
+.cc-card--light .cc-card-status-dot           { background: var(--cc-card-light-muted); }
+.cc-card--light .cc-card-status-dot--verified { background: var(--cc-card-light-verified-dot); }
+
+/* Light card — state panels */
+.cc-card--light .cc-card-state-text { color: var(--cc-card-light-fg); }
+.cc-card--light .cc-card-state-sub  { color: var(--cc-card-light-muted); }
+.cc-card--light .cc-card-state-link,
+.cc-card--light .cc-card-state-link:link,
+.cc-card--light .cc-card-state-link:visited { color: var(--cc-card-light-dim); }
+.cc-card--light .cc-card-state-link:hover   { color: var(--cc-card-light-fg); }
+.cc-card--light a:not([class]):hover        { color: var(--cc-card-light-fg); }
+
+/* Light card — revoked note */
+.cc-card--light .cc-card-revoked-note { color: var(--cc-card-light-dim); }
 
 /* ---- Utility ---- */
 .sr-only {

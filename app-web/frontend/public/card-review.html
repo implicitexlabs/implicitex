@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ImplicitEx — Coin Card Variant Review</title>
+  <meta name="robots" content="noindex, nofollow">
+  <script>(function(){try{var t=localStorage.getItem('implicitex-theme');if(t==='light'||t==='dark'){document.documentElement.dataset.theme=t;}else{var h=new Date().getHours();document.documentElement.dataset.theme=(h>=7&&h<19)?'light':'dark';}}catch(e){}})();</script>
+  <link rel="stylesheet" href="css/main.css">
+  <style>
+    /* ---- Review page layout ---- */
+    .review-shell {
+      width: 100%;
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 40px 24px 80px;
+      box-sizing: border-box;
+    }
+
+    .review-heading {
+      font-family: var(--font-ui);
+      font-size: var(--size-sm);
+      font-weight: var(--weight-semibold);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0 0 4px;
+    }
+
+    .review-subheading {
+      font-family: var(--font-body);
+      font-size: var(--size-xs);
+      color: var(--dim);
+      margin: 0 0 48px;
+    }
+
+    .review-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 56px 40px;
+      align-items: start;
+    }
+
+    @media (max-width: 720px) {
+      .review-grid { grid-template-columns: 1fr; }
+    }
+
+    .review-cell {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .review-label {
+      font-family: var(--font-ui);
+      font-size: 10px;
+      font-weight: var(--weight-semibold);
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    /* Portrait cells: center the narrower card */
+    .review-cell--portrait {
+      align-items: center;
+    }
+
+    /* ---- Review-only: suppress the cc-card full-width stretch ---- */
+    /* Landscape cards take 100% of their cell naturally */
+    /* Portrait cards are constrained by --cc-card-portrait-max */
+  </style>
+</head>
+<body>
+  <nav id="nav">
+    <a href="/" class="logo" aria-label="ImplicitEx home">
+      <svg class="brandmark" width="25" height="25" viewBox="0 0 25 25" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+        <path d="M18.4,21.48L2.64,5.73l.43-.43,15.76,15.76s1.3,1.3,2.79-.19.21-2.77.21-2.77L6.05,2.32l.43-.43,4.07,4.07,1.38,1.38,1.28-1.28,4.28-4.28.43.43-5.56,5.56,2.98,2.98,5.56-5.56.43.43-5.56,5.56,1.28,1.28,5.56-5.56s1.28-1.28-.21-2.77-2.79-.19-2.79-.19l-4.26,4.26-.43-.43,4.26-4.26s1.3-1.3-.19-2.79-2.77-.21-2.77-.21l-4.28,4.28L7.75.62s-1.28-1.28-2.77.21-.19,2.79-.19,2.79l15.76,15.76-.43.43L4.37,4.05s-1.3-1.3-2.79.19-.11,2.87-.11,2.87l15.68,15.68-.43.43-5.56-5.56-5.54,5.54-.43-.43,5.54-5.54-2.98-2.98-5.54,5.54-.43-.43,5.54-5.54-1.28-1.28L.51,18.08s-1.28,1.28.21,2.77,2.79.19,2.79.19l4.23-4.23.43.43-4.23,4.23s-1.3,1.3.19,2.79,2.77.21,2.77.21l4.26-4.26,4.28,4.28s1.28,1.28,2.77-.21.19-2.79.19-2.79Z" fill="#f2f2f0"/>
+      </svg>
+      <img class="wordmark" src="/components/images/wordmark-white.svg" alt="" aria-hidden="true">
+    </a>
+    <div class="nav-right">
+      <button class="clock-toggle" id="clockToggle" type="button" aria-label="Set theme by time of day">
+        <svg class="clock-icon" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+          <circle cx="7" cy="7" r="6" fill="none" stroke="currentColor" stroke-width="1.2"/>
+          <line id="clockHourHand" x1="7" y1="7" x2="7" y2="4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <line id="clockMinuteHand" x1="7" y1="7" x2="7" y2="2.5" stroke="currentColor" stroke-width="1" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch to light theme" aria-pressed="false">
+        <svg class="theme-icon" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+          <path d="M7 1 A6 6 0 0 0 7 13 Z" fill="var(--white)"/>
+          <path d="M7 1 A6 6 0 0 1 7 13 Z" fill="var(--bg)"/>
+          <circle cx="7" cy="7" r="6" fill="none" stroke="currentColor" stroke-width="1.2"/>
+        </svg>
+      </button>
+      <span class="nav-status">Design Review</span>
+      <a class="send-usdc-link" href="/card.html">Card &rarr;</a>
+    </div>
+  </nav>
+
+  <main class="review-shell">
+
+    <p class="review-heading">Coin Card — Variant Review</p>
+    <p class="review-subheading">Design review only &mdash; not a public page. Four variants: light/dark &times; landscape/portrait.</p>
+
+    <div class="review-grid">
+
+      <!-- ① Light / Landscape -->
+      <div class="review-cell">
+        <span class="review-label">Light &middot; Landscape</span>
+        <div class="cc-card cc-card--light" role="region" aria-label="Light landscape Coin Card">
+          <div class="cc-card-top">
+            <div class="cc-card-issuer" aria-label="ImplicitEx">
+              <span class="cc-issuer-art">
+                <img class="cc-issuer-mark cc-card-art-img cc-art--on-dark"  src="/components/images/lettermark-white.svg" alt="" aria-hidden="true">
+                <img class="cc-issuer-word cc-card-art-img cc-art--on-dark"  src="/components/images/wordmark-white.svg"  alt="ImplicitEx">
+                <img class="cc-issuer-mark cc-card-art-img cc-art--on-light" src="/components/images/lettermark-black.svg" alt="" aria-hidden="true">
+                <img class="cc-issuer-word cc-card-art-img cc-art--on-light" src="/components/images/wordmark-black.svg"  alt="ImplicitEx">
+              </span>
+              <span class="cc-issuer-fallback">IMPLICITEX</span>
+            </div>
+            <span class="cc-card-status cc-card-status--verified">
+              <span class="cc-card-status-dot cc-card-status-dot--verified" aria-hidden="true"></span>
+              <span>Verified</span>
+            </span>
+          </div>
+          <div class="cc-card-body">
+            <p class="cc-card-cred">CC IMPLICITEX DEMO AB3919</p>
+            <p class="cc-card-name">ImplicitEx Demo Treasury</p>
+            <p class="cc-card-recipient" title="0xa7cE4232811021d2Dd01f4f0f264Df2427ab3919">0xa7cE&hellip;3919</p>
+          </div>
+          <div class="cc-card-bottom">
+            <span class="cc-card-network">POLYGON &middot; USDC</span>
+            <div class="cc-card-stamp">
+              <img src="/components/images/coincard-logo.svg" alt="Coin Card" class="cc-card-logo" width="392" height="56">
+              <span class="cc-card-logo-fallback">COIN CARD</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ② Dark / Landscape -->
+      <div class="review-cell">
+        <span class="review-label">Dark &middot; Landscape</span>
+        <div class="cc-card" role="region" aria-label="Dark landscape Coin Card">
+          <div class="cc-card-top">
+            <div class="cc-card-issuer" aria-label="ImplicitEx">
+              <span class="cc-issuer-art">
+                <img class="cc-issuer-mark cc-card-art-img cc-art--on-dark"  src="/components/images/lettermark-white.svg" alt="" aria-hidden="true">
+                <img class="cc-issuer-word cc-card-art-img cc-art--on-dark"  src="/components/images/wordmark-white.svg"  alt="ImplicitEx">
+                <img class="cc-issuer-mark cc-card-art-img cc-art--on-light" src="/components/images/lettermark-black.svg" alt="" aria-hidden="true">
+                <img class="cc-issuer-word cc-card-art-img cc-art--on-light" src="/components/images/wordmark-black.svg"  alt="ImplicitEx">
+              </span>
+              <span class="cc-issuer-fallback">IMPLICITEX</span>
+            </div>
+            <span class="cc-card-status cc-card-status--verified">
+              <span class="cc-card-status-dot cc-card-status-dot--verified" aria-hidden="true"></span>
+              <span>Verified</span>
+            </span>
+          </div>
+          <div class="cc-card-body">
+            <p class="cc-card-cred">CC IMPLICITEX DEMO AB3919</p>
+            <p class="cc-card-name">ImplicitEx Demo Treasury</p>
+            <p class="cc-card-recipient" title="0xa7cE4232811021d2Dd01f4f0f264Df2427ab3919">0xa7cE&hellip;3919</p>
+          </div>
+          <div class="cc-card-bottom">
+            <span class="cc-card-network">POLYGON &middot; USDC</span>
+            <div class="cc-card-stamp">
+              <img src="/components/images/coincard-logo.svg" alt="Coin Card" class="cc-card-logo" width="392" height="56">
+              <span class="cc-card-logo-fallback">COIN CARD</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ③ Light / Portrait -->
+      <div class="review-cell review-cell--portrait">
+        <span class="review-label">Light &middot; Portrait</span>
+        <div class="cc-card cc-card--light cc-card--portrait" role="region" aria-label="Light portrait Coin Card">
+          <div class="cc-card-top">
+            <div class="cc-card-issuer" aria-label="ImplicitEx">
+              <span class="cc-issuer-art">
+                <img class="cc-issuer-mark cc-card-art-img cc-art--on-dark"  src="/components/images/lettermark-white.svg" alt="" aria-hidden="true">
+                <img class="cc-issuer-word cc-card-art-img cc-art--on-dark"  src="/components/images/wordmark-white.svg"  alt="ImplicitEx">
+                <img class="cc-issuer-mark cc-card-art-img cc-art--on-light" src="/components/images/lettermark-black.svg" alt="" aria-hidden="true">
+                <img class="cc-issuer-word cc-card-art-img cc-art--on-light" src="/components/images/wordmark-black.svg"  alt="ImplicitEx">
+              </span>
+              <span class="cc-issuer-fallback">IMPLICITEX</span>
+            </div>
+            <span class="cc-card-status cc-card-status--verified">
+              <span class="cc-card-status-dot cc-card-status-dot--verified" aria-hidden="true"></span>
+              <span>Verified</span>
+            </span>
+          </div>
+          <div class="cc-card-body">
+            <p class="cc-card-cred">CC IMPLICITEX DEMO AB3919</p>
+            <p class="cc-card-name">ImplicitEx Demo Treasury</p>
+            <p class="cc-card-recipient" title="0xa7cE4232811021d2Dd01f4f0f264Df2427ab3919">0xa7cE&hellip;3919</p>
+          </div>
+          <div class="cc-card-bottom">
+            <span class="cc-card-network">POLYGON &middot; USDC</span>
+            <div class="cc-card-stamp">
+              <img src="/components/images/coincard-logo.svg" alt="Coin Card" class="cc-card-logo" width="392" height="56">
+              <span class="cc-card-logo-fallback">COIN CARD</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ④ Dark / Portrait -->
+      <div class="review-cell review-cell--portrait">
+        <span class="review-label">Dark &middot; Portrait</span>
+        <div class="cc-card cc-card--portrait" role="region" aria-label="Dark portrait Coin Card">
+          <div class="cc-card-top">
+            <div class="cc-card-issuer" aria-label="ImplicitEx">
+              <span class="cc-issuer-art">
+                <img class="cc-issuer-mark cc-card-art-img cc-art--on-dark"  src="/components/images/lettermark-white.svg" alt="" aria-hidden="true">
+                <img class="cc-issuer-word cc-card-art-img cc-art--on-dark"  src="/components/images/wordmark-white.svg"  alt="ImplicitEx">
+                <img class="cc-issuer-mark cc-card-art-img cc-art--on-light" src="/components/images/lettermark-black.svg" alt="" aria-hidden="true">
+                <img class="cc-issuer-word cc-card-art-img cc-art--on-light" src="/components/images/wordmark-black.svg"  alt="ImplicitEx">
+              </span>
+              <span class="cc-issuer-fallback">IMPLICITEX</span>
+            </div>
+            <span class="cc-card-status cc-card-status--verified">
+              <span class="cc-card-status-dot cc-card-status-dot--verified" aria-hidden="true"></span>
+              <span>Verified</span>
+            </span>
+          </div>
+          <div class="cc-card-body">
+            <p class="cc-card-cred">CC IMPLICITEX DEMO AB3919</p>
+            <p class="cc-card-name">ImplicitEx Demo Treasury</p>
+            <p class="cc-card-recipient" title="0xa7cE4232811021d2Dd01f4f0f264Df2427ab3919">0xa7cE&hellip;3919</p>
+          </div>
+          <div class="cc-card-bottom">
+            <span class="cc-card-network">POLYGON &middot; USDC</span>
+            <div class="cc-card-stamp">
+              <img src="/components/images/coincard-logo.svg" alt="Coin Card" class="cc-card-logo" width="392" height="56">
+              <span class="cc-card-logo-fallback">COIN CARD</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /.review-grid -->
+
+  </main>
+
+  <script src="config/chains.js"></script>
+  <script src="js/analytics.js"></script>
+  <script src="js/consent.js"></script>
+  <script src="js/wallet.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/mobile-menu.js"></script>
+</body>
+</html>
