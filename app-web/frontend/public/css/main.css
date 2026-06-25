@@ -4406,7 +4406,7 @@ input[type="number"] {
 .coincard-lookup-form {
   display: flex;
   align-items: stretch;
-  max-width: 480px;
+  max-width: 640px;
   margin-top: 1.25rem;
 }
 
@@ -4437,7 +4437,7 @@ input[type="number"] {
   font-weight: var(--weight-semibold);
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  padding: 0 1.25rem;
+  padding: 0 2rem;
   min-height: 42px;
   cursor: pointer;
   white-space: nowrap;
