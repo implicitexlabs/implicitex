@@ -3337,17 +3337,26 @@ h1 + .gs-section-head {
   margin-top: 0.4rem;
 }
 
+/* Citation / source note — compact, secondary, not body prose */
 .news-citation-list {
   column-span: all;
-  margin-top: 1.5rem;
+  margin-top: 1.25rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid var(--border);
+  font-family: var(--font-ui) !important;
+  font-size: 11px !important;
+  line-height: 1.4;
+  color: var(--dim);
 }
 
 .news-citation-label {
-  font-family: var(--font-ui);
+  font-family: var(--font-ui) !important;
   font-size: 11px !important;
-  letter-spacing: 0.06em;
-  color: var(--dim);
-  margin-bottom: 0.2rem;
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 0.3rem;
 }
 
 .news-citation-list ol {
@@ -3356,12 +3365,11 @@ h1 + .gs-section-head {
 }
 
 .news-citation-list .news-citation-item {
-  font-family: var(--font-ui);
+  font-family: var(--font-ui) !important;
   font-size: 11px !important;
-  letter-spacing: 0.06em;
+  line-height: 1.4;
   color: var(--dim);
-  line-height: 1.5;
-  margin-bottom: 0.15rem;
+  margin-bottom: 0.2rem;
 }
 
 .news-share-btn {
