@@ -1,0 +1,14 @@
+{
+  "schema": "implicitex.coincard.v1",
+  "cardId": "cc_demo_implicitex",
+  "status": "active",
+  "displayName": "ImplicitEx Demo Treasury",
+  "recipient": "0xa7cE4232811021d2Dd01f4f0f264Df2427ab3919",
+  "chainId": 137,
+  "chainName": "Polygon",
+  "token": "USDC",
+  "sourceDomain": "implicitex.com",
+  "createdAt": "2026-06-25T00:00:00Z",
+  "updatedAt": "2026-06-25T00:00:00Z",
+  "revokedAt": null
+}
