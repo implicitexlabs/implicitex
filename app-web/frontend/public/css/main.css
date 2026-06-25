@@ -2066,6 +2066,10 @@ footer {
   opacity: 0.3;
 }
 
+.f-tagline-br {
+  display: none;
+}
+
 .f-brand-lockup {
   display: flex;
   align-items: center;
@@ -3673,6 +3677,15 @@ h1 + .gs-section-head {
     gap: var(--sp-4) var(--sp-5);
   }
 
+  .f-brand {
+    flex-wrap: wrap;
+    gap: var(--sp-3);
+  }
+
+  .f-brand-lockup {
+    width: 100%;
+  }
+
   .wordmark {
     width: 140px;
     height: auto;
@@ -3690,6 +3703,10 @@ h1 + .gs-section-head {
   .brandmark {
     width: 28px;
     height: auto;
+  }
+
+  .f-tagline-br {
+    display: inline;
   }
 }
 
