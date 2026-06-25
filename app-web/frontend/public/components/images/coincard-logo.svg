@@ -51,14 +51,18 @@
     M 160,40 H 200 V 48 H 160 Z
   "/>
 
-  <!-- a (x=208–248) — single bowl: full top bar (inward turn at col 0), open interior,
-       bowl left col 0 y=16–40, right col 4 y=16–48, bowl bottom cols 1–3.
-       Structurally mirrors d: same row pattern, col 0 filled at y=8–16 where d has it empty -->
+  <!-- a (x=208–248) — double-story: 5×5 grid
+       Row 1: all cols (top bar)
+       Row 2: col 5 only (upper bowl open on left)
+       Row 3: all cols (mid divider)
+       Row 4: col 1 + col 5 (lower bowl walls)
+       Row 5: all cols (bottom bar) -->
   <path fill="currentColor" d="
     M 208,8 H 248 V 16 H 208 Z
-    M 208,16 H 216 V 40 H 208 Z
-    M 240,16 H 248 V 48 H 240 Z
-    M 216,40 H 240 V 48 H 216 Z
+    M 240,8 H 248 V 48 H 240 Z
+    M 208,24 H 248 V 32 H 208 Z
+    M 208,32 H 216 V 40 H 208 Z
+    M 208,40 H 248 V 48 H 208 Z
   "/>
 
   <!-- r (x=256–296) — arch top 4 cols, left leg full height, right ear row 1 only -->
