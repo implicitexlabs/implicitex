@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 376 56" width="376" height="56" shape-rendering="crispEdges" aria-label="¢oincard">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 344 56" width="344" height="56" shape-rendering="crispEdges" aria-label="¢oincard">
 
   <title>¢oincard — ImplicitEx</title>
   <desc>¢oincard logotype. Block Type System. Lowercase pixel forms.</desc>
@@ -6,21 +6,23 @@
   <!--
     Grid: 8×8 px blocks
     x-height: 5 rows = 40px, y=8 to y=48
-    ¢ stubs at y=0–8 (above) and y=48–56 (below) — no through-body line
-    d ascender at y=0–8 (right stem only)
-    Inter-character gap: 1 block = 8px
+    ¢ body = c body + stubs at y=0–8 and y=48–56 (center col only)
+    d right stem ascends to y=0
+    i: 1-col stem, 1-block gap each side
   -->
 
-  <!-- ¢ (x=0) — C shape + stubs above/below only, no center line through body -->
+  <!-- ¢ (x=0–40) — identical body to c, plus stubs above and below at col 2 -->
   <path fill="currentColor" d="
     M 16,0 H 24 V 8 H 16 Z
     M 0,8 H 40 V 16 H 0 Z
     M 0,16 H 8 V 40 H 0 Z
+    M 32,16 H 40 V 24 H 32 Z
+    M 32,32 H 40 V 40 H 32 Z
     M 0,40 H 40 V 48 H 0 Z
     M 16,48 H 24 V 56 H 16 Z
   "/>
 
-  <!-- o (x=48) — open rectangle -->
+  <!-- o (x=48–88) — open rectangle -->
   <path fill="currentColor" d="
     M 48,8 H 88 V 16 H 48 Z
     M 48,16 H 56 V 40 H 48 Z
@@ -28,51 +30,52 @@
     M 48,40 H 88 V 48 H 48 Z
   "/>
 
-  <!-- i (x=96) — single vertical line, no dot -->
+  <!-- i (x=96) — 1-col stem, tight spacing -->
   <path fill="currentColor" d="
-    M 112,8 H 120 V 48 H 112 Z
+    M 96,8 H 104 V 48 H 96 Z
   "/>
 
-  <!-- n (x=144) — widened to 5 cols: arch + two legs, 1-col gap between legs -->
+  <!-- n (x=112–152) — 5 cols wide, arch + two legs at col 0 and col 4 -->
   <path fill="currentColor" d="
-    M 144,8 H 184 V 16 H 144 Z
+    M 112,8 H 152 V 16 H 112 Z
+    M 112,16 H 120 V 48 H 112 Z
     M 144,16 H 152 V 48 H 144 Z
-    M 176,16 H 184 V 48 H 176 Z
   "/>
 
-  <!-- c (x=192) — C with interior corner blocks narrowing the mouth -->
+  <!-- c (x=160–200) — C with interior corner blocks at top-right and bottom-right -->
   <path fill="currentColor" d="
-    M 192,8 H 232 V 16 H 192 Z
-    M 192,16 H 200 V 40 H 192 Z
-    M 224,16 H 232 V 24 H 224 Z
-    M 224,32 H 232 V 40 H 224 Z
-    M 192,40 H 232 V 48 H 192 Z
+    M 160,8 H 200 V 16 H 160 Z
+    M 160,16 H 168 V 40 H 160 Z
+    M 192,16 H 200 V 24 H 192 Z
+    M 192,32 H 200 V 40 H 192 Z
+    M 160,40 H 200 V 48 H 160 Z
   "/>
 
-  <!-- a (x=240) — double-story: filled corners, two rectangular chambers -->
+  <!-- a (x=208–248) — single bowl: full top bar (inward turn at col 0), open interior,
+       bowl left col 0 y=16–40, right col 4 y=16–48, bowl bottom cols 1–3.
+       Structurally mirrors d: same row pattern, col 0 filled at y=8–16 where d has it empty -->
   <path fill="currentColor" d="
-    M 240,8 H 280 V 16 H 240 Z
-    M 240,16 H 248 V 24 H 240 Z
-    M 272,16 H 280 V 24 H 272 Z
-    M 240,24 H 280 V 32 H 240 Z
-    M 240,32 H 248 V 48 H 240 Z
-    M 272,32 H 280 V 48 H 272 Z
-    M 248,40 H 272 V 48 H 248 Z
+    M 208,8 H 248 V 16 H 208 Z
+    M 208,16 H 216 V 40 H 208 Z
+    M 240,16 H 248 V 48 H 240 Z
+    M 216,40 H 240 V 48 H 216 Z
   "/>
 
-  <!-- r (x=288) — arch top, left leg full height, right ear row 1 only -->
+  <!-- r (x=256–296) — arch top 4 cols, left leg full height, right ear row 1 only -->
   <path fill="currentColor" d="
-    M 288,8 H 320 V 16 H 288 Z
-    M 288,16 H 296 V 48 H 288 Z
-    M 320,16 H 328 V 24 H 320 Z
+    M 256,8 H 288 V 16 H 256 Z
+    M 256,16 H 264 V 48 H 256 Z
+    M 288,16 H 296 V 24 H 288 Z
   "/>
 
-  <!-- d (x=336) — bowl left, right stem with ascender to y=0 -->
+  <!-- d (x=304–344) — bowl: top cols 1–3, left col 0 y=16–40, bottom cols 1–3.
+       Right stem col 4 ascends to y=0.
+       Compare to a: col 0 empty at y=8–16 (where a fills it as inward turn) -->
   <path fill="currentColor" d="
-    M 344,8 H 368 V 16 H 344 Z
-    M 336,16 H 344 V 40 H 336 Z
-    M 368,0 H 376 V 48 H 368 Z
-    M 344,40 H 368 V 48 H 344 Z
+    M 312,8 H 336 V 16 H 312 Z
+    M 304,16 H 312 V 40 H 304 Z
+    M 336,0 H 344 V 48 H 336 Z
+    M 312,40 H 336 V 48 H 312 Z
   "/>
 
 </svg>
