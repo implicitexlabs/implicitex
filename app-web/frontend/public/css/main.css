@@ -4472,6 +4472,11 @@ input[type="number"] {
 
 /* ---- Coin Card visual surface (card.html) ---- */
 
+/*
+ * Card geometry: physical credit card ratio 85.60 × 53.98 mm → 1.586:1
+ * Status palette: grey (default) · white (verified) · amber (caution) · red (failure)
+ */
+
 .cc-shell {
   min-height: calc(100vh - var(--nav-h));
   display: flex;
@@ -4485,25 +4490,35 @@ input[type="number"] {
 .cc-card {
   width: 100%;
   max-width: 440px;
+  aspect-ratio: 1.586;                        /* credit card: 85.60 × 53.98 mm */
   background: var(--surface-2);
   border: 1px solid var(--border-2);
+  border-radius: 10px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.48), 0 2px 8px rgba(0,0,0,0.32);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* On small screens let the card grow to fit content naturally */
+@media (max-width: 500px) {
+  .cc-card { aspect-ratio: auto; }
 }
 
 .cc-card-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--sp-3) var(--sp-5);
+  padding: 10px 16px;
   border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
 }
 
-.cc-card-type {
-  font-family: var(--font-ui);
-  font-size: var(--size-xs);
-  font-weight: var(--weight-semibold);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--muted);
+.cc-card-logo {
+  height: 13px;
+  width: auto;
+  display: block;
+  opacity: 0.85;
 }
 
 .cc-card-status {
@@ -4515,36 +4530,40 @@ input[type="number"] {
   font-weight: var(--weight-semibold);
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--dim);
+  color: var(--dim);                          /* default: grey */
 }
 
-.cc-card-status--verified { color: var(--accent); }
-.cc-card-status--revoked  { color: var(--warn); }
+.cc-card-status--verified { color: var(--white); }
+.cc-card-status--caution  { color: var(--telemetry-amber); }
 .cc-card-status--error    { color: var(--warn); }
+.cc-card-status--revoked  { color: var(--warn); }
 
 .cc-card-status-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--border-2);
+  background: var(--border-2);                /* default: midtone grey */
   flex-shrink: 0;
 }
 
-.cc-card-status-dot--verified { background: var(--accent); }
-.cc-card-status-dot--revoked  { background: var(--warn); }
+.cc-card-status-dot--verified { background: var(--white); }
+.cc-card-status-dot--caution  { background: var(--telemetry-amber); }
 .cc-card-status-dot--error    { background: var(--warn); }
+.cc-card-status-dot--revoked  { background: var(--warn); }
 
 .cc-card-body {
-  padding: var(--sp-5);
+  flex: 1;
+  padding: 14px 16px;
+  overflow: hidden;
 }
 
 .cc-card-name {
   font-family: var(--font-display);
-  font-size: var(--size-xl);
+  font-size: clamp(1rem, 2.5vw, 1.25rem);
   font-weight: var(--weight-bold);
   color: var(--white);
   line-height: var(--leading-tight);
-  margin: 0 0 var(--sp-2) 0;
+  margin: 0 0 var(--sp-1) 0;
 }
 
 .cc-card-card-id {
@@ -4552,11 +4571,11 @@ input[type="number"] {
   font-size: var(--size-xs);
   color: var(--muted);
   letter-spacing: 0.04em;
-  margin: 0 0 var(--sp-5) 0;
+  margin: 0 0 var(--sp-3) 0;
 }
 
 .cc-card-field {
-  margin-bottom: var(--sp-4);
+  margin-bottom: var(--sp-2);
 }
 
 .cc-card-field:last-child { margin-bottom: 0; }
@@ -4568,12 +4587,12 @@ input[type="number"] {
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--muted);
-  margin: 0 0 var(--sp-1) 0;
+  margin: 0 0 2px 0;
 }
 
 .cc-card-field-value {
   font-family: var(--font-mono);
-  font-size: var(--size-sm);
+  font-size: var(--size-xs);
   color: var(--white);
   margin: 0;
   word-break: break-all;
@@ -4588,35 +4607,39 @@ input[type="number"] {
 /* Two-column row for chain / token */
 .cc-card-row {
   display: flex;
-  gap: var(--sp-6);
-  margin-bottom: var(--sp-4);
+  gap: var(--sp-5);
+  margin-bottom: var(--sp-2);
 }
 
 .cc-card-row .cc-card-field { margin-bottom: 0; }
 
 .cc-card-revoked-note {
   font-family: var(--font-body);
-  font-size: var(--size-sm);
+  font-size: var(--size-xs);
   color: var(--warn);
-  margin: var(--sp-4) 0 0 0;
+  margin: var(--sp-2) 0 0 0;
   line-height: var(--leading-body);
 }
 
 /* State panels (loading / no card / error) */
 .cc-card-state {
-  padding: var(--sp-5);
+  flex: 1;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .cc-card-state-text {
   font-family: var(--font-ui);
-  font-size: var(--size-base);
+  font-size: var(--size-sm);
   color: var(--dim);
-  margin: 0 0 var(--sp-3) 0;
+  margin: 0 0 var(--sp-2) 0;
 }
 
 .cc-card-state-sub {
   font-family: var(--font-body);
-  font-size: var(--size-sm);
+  font-size: var(--size-xs);
   color: var(--muted);
   margin: 0;
   line-height: var(--leading-body);
@@ -4626,9 +4649,9 @@ input[type="number"] {
 .cc-card-state-link:link,
 .cc-card-state-link:visited {
   display: inline-block;
-  margin-top: var(--sp-3);
+  margin-top: var(--sp-2);
   font-family: var(--font-ui);
-  font-size: var(--size-sm);
+  font-size: var(--size-xs);
   font-weight: var(--weight-semibold);
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -4641,11 +4664,12 @@ input[type="number"] {
 
 /* Card footer */
 .cc-card-footer {
-  padding: var(--sp-4) var(--sp-5) var(--sp-5);
+  padding: 10px 16px 14px;
   border-top: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  gap: var(--sp-3);
+  gap: var(--sp-2);
+  flex-shrink: 0;
 }
 
 .cc-card-send-btn,
@@ -4653,11 +4677,11 @@ input[type="number"] {
 .cc-card-send-btn:visited {
   display: block;
   width: 100%;
-  padding: var(--sp-3) var(--sp-5);
+  padding: 9px 16px;
   background: var(--white);
   color: var(--bg);
   font-family: var(--font-ui);
-  font-size: var(--size-base);
+  font-size: var(--size-sm);
   font-weight: var(--weight-semibold);
   letter-spacing: 0.06em;
   text-align: center;
@@ -4673,7 +4697,7 @@ input[type="number"] {
 .cc-card-verify-link:link,
 .cc-card-verify-link:visited {
   font-family: var(--font-ui);
-  font-size: var(--size-sm);
+  font-size: var(--size-xs);
   font-weight: var(--weight-semibold);
   letter-spacing: 0.08em;
   text-transform: uppercase;

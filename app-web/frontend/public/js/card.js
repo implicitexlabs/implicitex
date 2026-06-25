@@ -74,9 +74,6 @@
     setText('ccCardChain', chainLabel);
     setText('ccCardToken', (manifest.token || '').toUpperCase());
 
-    var domain = manifest.sourceDomain || 'implicitex.com';
-    setText('ccCardRegistry', domain + ' \u00b7 Active');
-
     var portalBtn = el('ccCardPortalBtn');
     if (portalBtn) portalBtn.href = '/?cc=' + encodeURIComponent(manifest.cardId);
 
@@ -93,7 +90,6 @@
 
     setText('ccCardName', manifest.displayName || manifest.cardId);
     setText('ccCardDisplayId', manifest.cardId);
-    setText('ccCardRegistry', 'Revoked');
 
     hide('ccCardRecipientField');
     hide('ccCardChainTokenRow');
@@ -107,9 +103,10 @@
     show('ccCardFooter');
   }
 
-  function renderError(cardId, message) {
+  /* modifier: 'error' (red) or 'caution' (amber) */
+  function renderError(cardId, message, modifier) {
     hide('ccCardLoading');
-    setStatus(message, 'error');
+    setStatus(message, modifier || 'error');
     setText('ccCardErrorText', message);
     if (cardId) {
       setText('ccCardErrorId', cardId);
@@ -155,13 +152,13 @@
           return;
         }
         if (manifest.status !== 'active') {
-          renderError(cardId, 'Not active');
+          renderError(cardId, 'Not active', 'caution');
           return;
         }
         renderVerified(manifest);
       })
       .catch(function () {
-        renderError(cardId, 'Registry unavailable');
+        renderError(cardId, 'Registry unavailable', 'caution');
       });
   }
 

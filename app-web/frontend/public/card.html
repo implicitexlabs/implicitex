@@ -143,7 +143,7 @@
 
       <!-- Card header — always visible -->
       <div class="cc-card-head">
-        <span class="cc-card-type">Coin Card</span>
+        <img src="/components/images/coincard-logo.svg" alt="Coin Card" class="cc-card-logo">
         <span class="cc-card-status" id="ccCardStatus">
           <span class="cc-card-status-dot" id="ccCardStatusDot" aria-hidden="true"></span>
           <span id="ccCardStatusLabel">—</span>
@@ -172,38 +172,31 @@
       </div>
 
       <!-- Body — verified and revoked states -->
-      <div id="ccCardBody" hidden>
-        <div class="cc-card-body">
+      <div class="cc-card-body" id="ccCardBody" hidden>
 
-          <p class="cc-card-name" id="ccCardName">—</p>
-          <p class="cc-card-card-id" id="ccCardDisplayId">—</p>
+        <p class="cc-card-name" id="ccCardName">—</p>
+        <p class="cc-card-card-id" id="ccCardDisplayId">—</p>
 
-          <div class="cc-card-field" id="ccCardRecipientField">
-            <p class="cc-card-field-label">Recipient</p>
-            <p class="cc-card-field-value" id="ccCardRecipient">—</p>
-          </div>
-
-          <div class="cc-card-row" id="ccCardChainTokenRow">
-            <div class="cc-card-field">
-              <p class="cc-card-field-label">Chain</p>
-              <p class="cc-card-field-value cc-card-field-value--plain" id="ccCardChain">—</p>
-            </div>
-            <div class="cc-card-field">
-              <p class="cc-card-field-label">Token</p>
-              <p class="cc-card-field-value cc-card-field-value--plain" id="ccCardToken">—</p>
-            </div>
-          </div>
-
-          <div class="cc-card-field">
-            <p class="cc-card-field-label">Registry</p>
-            <p class="cc-card-field-value cc-card-field-value--plain" id="ccCardRegistry">—</p>
-          </div>
-
-          <p class="cc-card-revoked-note" id="ccCardRevokedNote" hidden>
-            This Coin Card has been revoked. Do not use it to initiate a transfer.
-          </p>
-
+        <div class="cc-card-field" id="ccCardRecipientField">
+          <p class="cc-card-field-label">Recipient</p>
+          <p class="cc-card-field-value" id="ccCardRecipient">—</p>
         </div>
+
+        <div class="cc-card-row" id="ccCardChainTokenRow">
+          <div class="cc-card-field">
+            <p class="cc-card-field-label">Chain</p>
+            <p class="cc-card-field-value cc-card-field-value--plain" id="ccCardChain">—</p>
+          </div>
+          <div class="cc-card-field">
+            <p class="cc-card-field-label">Token</p>
+            <p class="cc-card-field-value cc-card-field-value--plain" id="ccCardToken">—</p>
+          </div>
+        </div>
+
+        <p class="cc-card-revoked-note" id="ccCardRevokedNote" hidden>
+          This Coin Card has been revoked. Do not use it to initiate a transfer.
+        </p>
+
       </div>
 
       <!-- Footer actions -->
