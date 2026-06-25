@@ -3381,20 +3381,18 @@ h1 + .gs-section-head {
 .news-share-btn {
   column-span: all;
   display: block;
-  width: 100%;
+  inline-size: max-content;
+  margin: 0.75rem 0 2.75rem auto;
+  padding: 0;
+  border: 0;
   text-align: right;
   background: none;
-  border: none;
-  border-top: 1px solid var(--border);
   cursor: pointer;
   font-family: var(--font-ui);
   font-size: var(--size-sm);
-  font-weight: var(--weight-semibold);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--muted);
-  padding: 0.75rem 0 0;
-  margin-top: 1.5rem;
   transition: color 0.12s;
 }
 
