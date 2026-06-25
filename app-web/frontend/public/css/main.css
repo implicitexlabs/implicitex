@@ -4574,10 +4574,36 @@ input[type="number"] {
 .cc-card-issuer {
   display: flex;
   align-items: center;
-  gap: var(--cc-art-issuer-gap);
   flex-shrink: 0;
   min-width: 0;
   overflow: hidden;
+}
+
+/* Issuer art group — contains lettermark + wordmark SVG images */
+.cc-issuer-art {
+  display: flex;
+  align-items: center;
+  gap: var(--cc-art-issuer-gap);
+  min-width: 0;
+  overflow: hidden;
+}
+
+.cc-issuer-art[data-failed="1"] {
+  display: none;
+}
+
+/* Issuer text fallback — shown only when SVG assets fail */
+.cc-issuer-fallback {
+  display: none;
+  font-family: var(--font-mono);
+  font-size: var(--cc-type-issuer-word-size);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.cc-issuer-art[data-failed="1"] + .cc-issuer-fallback {
+  display: inline-block;
 }
 
 .cc-issuer-mark {

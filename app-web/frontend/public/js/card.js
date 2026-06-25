@@ -183,22 +183,33 @@
       });
   }
 
-  /* ---- Logo failure hardening ---- */
+  /* ---- Artwork failure hardening ---- */
 
-  function initCardLogoFallback() {
+  function initCardArtFallbacks() {
+    /* Product stamp: coincard-logo.svg → COIN CARD text fallback */
     document.querySelectorAll('.cc-card-logo').forEach(function (img) {
       var markFailed = function () { img.setAttribute('data-failed', '1'); };
       img.addEventListener('error', markFailed, { once: true });
-      if (img.complete && img.naturalWidth === 0) {
-        markFailed();
-      }
+      if (img.complete && img.naturalWidth === 0) markFailed();
     });
+
+    /* Issuer art: either lettermark or wordmark fails → IMPLICITEX text fallback */
+    var issuerArt = document.querySelector('.cc-issuer-art');
+    if (issuerArt) {
+      issuerArt.querySelectorAll('img').forEach(function (img) {
+        var markFailed = function () {
+          issuerArt.setAttribute('data-failed', '1');
+        };
+        img.addEventListener('error', markFailed, { once: true });
+        if (img.complete && img.naturalWidth === 0) markFailed();
+      });
+    }
   }
 
   /* ---- Init ---- */
 
   function init() {
-    initCardLogoFallback();
+    initCardArtFallbacks();
     var params = new URLSearchParams(window.location.search);
     var cardId = (params.get('cc') || '').trim();
     if (cardId) {

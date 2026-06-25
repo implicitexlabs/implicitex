@@ -143,9 +143,12 @@
 
       <!-- Top row: issuer (left) + status (right) — always visible -->
       <div class="cc-card-top">
-        <div class="cc-card-issuer">
-          <img class="cc-issuer-mark" src="/components/images/lettermark-white.svg" alt="" aria-hidden="true">
-          <img class="cc-issuer-word" src="/components/images/wordmark-white.svg" alt="ImplicitEx">
+        <div class="cc-card-issuer" aria-label="ImplicitEx">
+          <span class="cc-issuer-art">
+            <img class="cc-issuer-mark cc-card-art-img" src="/components/images/lettermark-white.svg" alt="" aria-hidden="true">
+            <img class="cc-issuer-word cc-card-art-img" src="/components/images/wordmark-white.svg" alt="ImplicitEx">
+          </span>
+          <span class="cc-issuer-fallback">IMPLICITEX</span>
         </div>
         <span class="cc-card-status" id="ccCardStatus">
           <span class="cc-card-status-dot" id="ccCardStatusDot" aria-hidden="true"></span>
