@@ -4895,6 +4895,55 @@ input[type="number"] {
   --cc-card-light-verified-dot:    #1a6e3f;
 }
 
+/* ---- WEB3 construction mark — review surface substrate (card-review.html only) ----
+   Pseudo-element extends physically beyond the card boundary; overflow:hidden clips it.
+   Only a partial lower-right corner of the mark bleeds into the card — no full mark
+   visible inside, no readable logo block, no layout impact.
+   Scoped to .card-review-page so production card.html is completely unaffected. ---- */
+
+.card-review-page .cc-card {
+  overflow: hidden;
+}
+
+.card-review-page .cc-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.card-review-page .cc-card::before {
+  content: "";
+  position: absolute;
+  bottom: -80px;
+  right: -90px;
+  width: 240px;
+  height: 240px;
+  background-image: url("/components/images/web3-construction.svg");
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  opacity: 0.028;
+  pointer-events: none;
+  user-select: none;
+  z-index: 0;
+}
+
+/* Light card: dark mark on warm-paper surface */
+.card-review-page .cc-card--light::before {
+  opacity: 0.028;
+}
+
+/* Dark card: inverted mark on dark surface */
+.card-review-page .cc-card--dark::before {
+  filter: invert(1);
+  opacity: 0.028;
+}
+
+/* Portrait: narrower card — push further outside so less corner bleeds in */
+.card-review-page .cc-card--portrait::before {
+  bottom: -90px;
+  right: -100px;
+  width: 220px;
+  height: 220px;
+}
 
 /* Portrait geometry modifier */
 .cc-card--portrait {
