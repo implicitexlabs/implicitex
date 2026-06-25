@@ -862,6 +862,10 @@ body.portal-active #nav {
   text-align: center;
 }
 
+.product-intro-copy:last-child {
+  margin-bottom: 0;
+}
+
 /* ---- How It Works ---- */
 .how-it-works {
   max-width: var(--ix-interface-max);
