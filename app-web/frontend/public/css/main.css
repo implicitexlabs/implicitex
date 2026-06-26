@@ -857,7 +857,7 @@ body.portal-active #nav {
   max-width: var(--ix-interface-max);
   width: 100%;
   margin-inline: auto;
-  padding: clamp(1.25rem, 2.5vw, 2rem) 1.5rem clamp(1rem, 2vw, 1.5rem);
+  padding: clamp(1.25rem, 2.5vw, 2rem) 1.5rem 0;
 }
 
 .product-intro-statement {
@@ -889,7 +889,7 @@ body.portal-active #nav {
   max-width: var(--ix-interface-max);
   width: 100%;
   margin-inline: auto;
-  padding: 1rem 1.5rem 0;
+  padding: 0 1.5rem 0;
 }
 
 .section-kicker {
@@ -1050,6 +1050,51 @@ body.portal-active #nav {
   scroll-margin-top: calc(var(--nav-h) + 1rem);
 }
 
+/* Portal zone — positions the four-corner tick markers and owns all vertical spacing
+   around the portal. Both margins are identical so the portal sits in equal whitespace
+   relative to the content above and below. */
+.portal-zone {
+  position: relative;
+  max-width: var(--ix-interface-max);
+  margin: clamp(2rem, 4.5vh, 3.5rem) auto;
+}
+
+/* Top-right tick */
+.portal-zone::before {
+  content: "";
+  position: absolute;
+  top: -14px;
+  right: -14px;
+  width: 16px;
+  height: 16px;
+  opacity: 0.65;
+  pointer-events: none;
+  z-index: 3;
+  border-color: var(--dim);
+  border-style: solid;
+  border-width: 0;
+  border-top-width: 1.5px;
+  border-right-width: 1.5px;
+}
+
+/* Bottom-left tick */
+.portal-zone::after {
+  content: "";
+  position: absolute;
+  bottom: -14px;
+  left: -14px;
+  width: 16px;
+  height: 16px;
+  opacity: 0.65;
+  pointer-events: none;
+  z-index: 3;
+  border-color: var(--dim);
+  border-style: solid;
+  border-width: 0;
+  border-bottom-width: 1.5px;
+  border-left-width: 1.5px;
+}
+
 /* ---- Portal controls — square tabs anchored to upper-right of portal border ---- */
 .portal-controls {
   max-width: var(--ix-interface-max);
@@ -1149,7 +1194,7 @@ body.portal-active #nav {
 .modules {
   box-sizing: border-box;
   max-width: var(--ix-interface-max);
-  margin: 0 auto clamp(2rem, 5vh, 3.5rem);
+  margin: 0 auto;
   padding: 1px;
   position: relative;
   z-index: 1;
@@ -3832,12 +3877,18 @@ h1 + .gs-section-head {
 
   .modules {
     grid-template-columns: 1fr;
-    margin-inline: 1.25rem; /* extra clearance for tick markers */
   }
 
-  /* Ticks still sit outside but with tighter offset so they don't clip viewport */
+  /* Portal zone owns the side clearance so tick markers clear the viewport edge */
+  .portal-zone {
+    margin-inline: 1.25rem;
+  }
+
+  /* Ticks scale back on mobile — still outside the frame, but tighter */
   .transfer-portal::before,
-  .transfer-portal::after {
+  .transfer-portal::after,
+  .portal-zone::before,
+  .portal-zone::after {
     width: 12px;
     height: 12px;
     opacity: 0.6;
@@ -3849,6 +3900,14 @@ h1 + .gs-section-head {
   .transfer-portal::after {
     bottom: -10px;
     right: -10px;
+  }
+  .portal-zone::before {
+    top: -10px;
+    right: -10px;
+  }
+  .portal-zone::after {
+    bottom: -10px;
+    left: -10px;
   }
 
   .tx-meta-grid {
