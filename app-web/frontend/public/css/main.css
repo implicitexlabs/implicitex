@@ -1315,6 +1315,11 @@ body.portal-active #nav {
 .transfer-portal:not(.is-minimized) #modulesMinimize {
   animation: none;
 }
+@media (prefers-reduced-motion: reduce) {
+  .transfer-portal.is-minimized #modulesMinimize {
+    animation: none;
+  }
+}
 
 /* Light theme: dark collapsed rail */
 [data-theme="light"] .transfer-portal.is-minimized {

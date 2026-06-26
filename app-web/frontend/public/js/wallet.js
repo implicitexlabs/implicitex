@@ -3196,7 +3196,7 @@
   // Fee calculation
   // ----------------------------------------------------------------
   function calcFee(amount) {
-    // 1% flat fee, floored to 6 decimal places for USDC display.
+    // 1% platform fee, floored to 6 decimal places for USDC display.
     return Math.floor(amount * DEMO_FEE_RATE * 1_000_000) / 1_000_000;
   }
 
@@ -4744,12 +4744,7 @@
   if (els.modulesClose) {
     els.modulesClose.addEventListener('click', function () {
       closePortalWithAnimation();
-      // Scroll back to how-it-works after close animation.
-      setTimeout(() => {
-        if (els.howItWorks) {
-          els.howItWorks.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      }, 240);
+      // Portal is above the hero — dismiss in place, no forced scroll.
     });
   }
   if (els.portalMinimizedTray) {
