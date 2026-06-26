@@ -573,7 +573,7 @@ code, kbd, pre,
   display: grid;
   justify-items: center;
   overflow: hidden;
-  padding: calc(7vh + 100px) 0 5vh;
+  padding: calc(var(--nav-h) + 7vh + 100px) 0 5vh;
   transition: opacity 0.45s ease, padding 0.45s ease;
 }
 
@@ -1048,7 +1048,6 @@ body.portal-active #nav {
 
 .transfer-anchor {
   scroll-margin-top: calc(var(--nav-h) + 1rem);
-  padding-top: calc(var(--nav-h) + 0.5rem);
 }
 
 /* ---- Portal controls — square tabs anchored to upper-right of portal border ---- */
@@ -3741,7 +3740,7 @@ h1 + .gs-section-head {
   }
 
   .hero {
-    padding: calc(4rem + 64px) 0 2.5rem;
+    padding: calc(var(--nav-h) + 4rem + 64px) 0 2.5rem;
   }
 
   .how-it-works {
