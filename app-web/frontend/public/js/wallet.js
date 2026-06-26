@@ -2071,8 +2071,8 @@
     if (!els.modules) return;
     // If portal was mounted minimized (default state), first expansion triggers
     // full page activation — hero recedes, portal-active asserts.
+    // Portal is above the hero; no need to hide other sections.
     if (!document.body.classList.contains('portal-active')) {
-      if (els.howItWorks) els.howItWorks.setAttribute('hidden', '');
       document.body.classList.add('portal-active');
     }
     els.modules.classList.remove('is-minimized');
@@ -2507,10 +2507,7 @@
     if (!els.modules) return;
     if (window.IX && window.IX.track) window.IX.track('portal_opened');
 
-    // Hide How It Works — instrument activates in-place over the same geometry.
-    if (els.howItWorks) els.howItWorks.setAttribute('hidden', '');
-
-    // Portal controls (dismiss button) appear above the grid, outside the border.
+    // Portal is always above the hero — no geometry conflict, no need to hide other sections.
     if (els.portalControls) els.portalControls.removeAttribute('hidden');
 
     // Signal the portal-active state — hero recedes, instrument asserts.
@@ -2528,11 +2525,32 @@
     showTransferModules(true);
   }
 
+  // Nav button action: expand the already-loaded portal.
+  // If collapsed → expand. If dismissed → restore and expand. If expanded → scroll to it.
+  function focusTransferPortal() {
+    if (!els.modules) return;
+    if (els.modules.hasAttribute('hidden')) {
+      // Portal was dismissed — restore and expand fully
+      if (els.portalControls) els.portalControls.removeAttribute('hidden');
+      els.modules.removeAttribute('hidden');
+      document.body.classList.add('portal-active');
+      if (els.modulesMinimize) {
+        els.modulesMinimize.setAttribute('aria-expanded', 'true');
+        els.modulesMinimize.setAttribute('aria-label', 'Collapse transfer portal');
+      }
+    } else if (els.modules.classList.contains('is-minimized')) {
+      // Portal is collapsed — expand it
+      restorePortal();
+    }
+    // In all cases, scroll portal into view
+    setTimeout(() => {
+      els.modules.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 60);
+  }
+
   function hideTransferModules() {
     if (els.modules) els.modules.setAttribute('hidden', '');
     if (els.portalControls) els.portalControls.setAttribute('hidden', '');
-    // Restore How It Works and return to informational state.
-    if (els.howItWorks) els.howItWorks.removeAttribute('hidden');
     document.body.classList.remove('portal-active');
   }
 
@@ -4702,6 +4720,7 @@
     disconnect,
     requestAccountSelection,
     openTransferPortal,
+    focusTransferPortal,
     openOrConnect,
     handleTxAction,
     submitTransfer,

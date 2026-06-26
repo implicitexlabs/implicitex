@@ -1225,45 +1225,12 @@ body.portal-active #nav {
 }
 
 .portal-header-title {
-  font-family: var(--font-ui);
-  font-size: var(--size-sm);
+  font-family: var(--font-display);
+  font-size: var(--size-base);
   font-weight: var(--weight-semibold);
-  letter-spacing: 0.18em;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
   color: var(--white);
-}
-
-.transfer-portal.is-minimized .portal-header-title {
-  color: var(--dim);
-}
-
-/* Conversion cue — visible only when portal is collapsed */
-.portal-header-cue {
-  display: none;
-  font-family: var(--font-mono);
-  font-size: var(--size-xs);
-  letter-spacing: 0.06em;
-  color: var(--dim);
-  margin-left: 1rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.transfer-portal.is-minimized .portal-header-cue {
-  display: block;
-  flex: 1;
-  min-width: 0;
-}
-@media (max-width: 480px) {
-  .transfer-portal.is-minimized .portal-header-cue {
-    font-size: 0;
-  }
-  .transfer-portal.is-minimized .portal-header-cue::before {
-    content: attr(data-short);
-    font-family: var(--font-mono);
-    font-size: var(--size-xs);
-    letter-spacing: 0.06em;
-  }
 }
 
 /* Portal subcopy — visible when expanded, hidden when collapsed */
@@ -1334,6 +1301,61 @@ body.portal-active #nav {
 
 .transfer-portal.is-minimized {
   grid-template-columns: 1fr;
+}
+
+/* Collapsed portal inverts against page theme — functions as a featured instrument */
+@keyframes portal-toggle-glow {
+  0%, 100% { opacity: 0.4; }
+  50%       { opacity: 1;   }
+}
+
+.transfer-portal.is-minimized #modulesMinimize {
+  animation: portal-toggle-glow 2.8s ease-in-out infinite;
+}
+.transfer-portal:not(.is-minimized) #modulesMinimize {
+  animation: none;
+}
+
+/* Light theme: dark collapsed rail */
+[data-theme="light"] .transfer-portal.is-minimized {
+  border-color: rgba(0, 0, 0, 0.18);
+  background: #1a1917;
+}
+[data-theme="light"] .transfer-portal.is-minimized .portal-header {
+  background: #1a1917;
+  border-bottom-color: rgba(255, 255, 255, 0.10);
+}
+[data-theme="light"] .transfer-portal.is-minimized .portal-header-title {
+  color: #f2f2f0;
+}
+[data-theme="light"] .transfer-portal.is-minimized .portal-ctrl-btn {
+  border-color: rgba(255, 255, 255, 0.20);
+  color: rgba(242, 242, 240, 0.55);
+}
+[data-theme="light"] .transfer-portal.is-minimized .portal-ctrl-btn:hover {
+  border-color: #f2f2f0;
+  color: #f2f2f0;
+}
+
+/* Dark theme: light collapsed rail */
+[data-theme="dark"] .transfer-portal.is-minimized {
+  border-color: rgba(255, 255, 255, 0.14);
+  background: #f0ede8;
+}
+[data-theme="dark"] .transfer-portal.is-minimized .portal-header {
+  background: #f0ede8;
+  border-bottom-color: rgba(0, 0, 0, 0.10);
+}
+[data-theme="dark"] .transfer-portal.is-minimized .portal-header-title {
+  color: #1a1917;
+}
+[data-theme="dark"] .transfer-portal.is-minimized .portal-ctrl-btn {
+  border-color: rgba(0, 0, 0, 0.20);
+  color: rgba(26, 25, 23, 0.55);
+}
+[data-theme="dark"] .transfer-portal.is-minimized .portal-ctrl-btn:hover {
+  border-color: #1a1917;
+  color: #1a1917;
 }
 
 /* Collapsed: .portal-header stays visible; everything else hides */

@@ -108,7 +108,7 @@
         </svg>
       </button>
       <span class="nav-status">Polygon · Live</span>
-      <a class="send-usdc-link" href="#transfer" onclick="if (window.IX && IX.openTransferPortal) { IX.openTransferPortal(); return false; }">Transfer Portal</a>
+      <a class="send-usdc-link" href="#transfer" onclick="if (window.IX && IX.focusTransferPortal) { IX.focusTransferPortal(); return false; }">Transfer Portal</a>
       <button class="connect-btn" id="connectBtn" onclick="IX.connect()">
         Connect Wallet
       </button>
@@ -236,97 +236,14 @@
 
   <main class="landing-main">
 
-  <!-- HERO -->
-  <section class="hero" aria-label="ImplicitEx introduction">
-    <canvas id="worldCanvas" aria-hidden="true"></canvas>
-    <div class="hero-inner">
-      <!-- Rotating hero: Identity → Utility → Verification -->
-      <div class="hero-slides" aria-live="polite" aria-atomic="true">
-
-        <!-- Slide 1: Identity -->
-        <div class="hero-slide is-active" aria-hidden="false">
-          <div class="hero-slide-brand">
-            <img class="hero-slide-lettermark" src="/components/images/lettermark-white.svg" alt="ImplicitEx">
-            <img class="hero-slide-wordmark" src="/components/images/wordmark-white.svg" alt="" aria-hidden="true">
-          </div>
-          <p class="hero-slide-headline">Wallet-to-wallet<br>USDC transfers.</p>
-          <p class="hero-slide-sub">Non-custodial by design.<br>Publicly verifiable on-chain.</p>
-        </div>
-
-        <!-- Slide 2: Utility -->
-        <div class="hero-slide" aria-hidden="true">
-          <div class="hero-slide-brand">
-            <img class="hero-slide-lettermark" src="/components/images/lettermark-white.svg" alt="ImplicitEx">
-            <img class="hero-slide-wordmark" src="/components/images/wordmark-white.svg" alt="" aria-hidden="true">
-          </div>
-          <h1 class="hero-slide-headline">Send and receive<br>USDC directly.</h1>
-          <p class="hero-slide-sub">Funds stay in your wallet<br>until confirmed on-chain.</p>
-        </div>
-
-        <!-- Slide 3: Verification -->
-        <div class="hero-slide" aria-hidden="true">
-          <div class="hero-slide-brand">
-            <img class="hero-slide-lettermark" src="/components/images/lettermark-white.svg" alt="ImplicitEx">
-            <img class="hero-slide-wordmark" src="/components/images/wordmark-white.svg" alt="" aria-hidden="true">
-          </div>
-          <p class="hero-slide-headline">Contract. Fee.<br>Transfer.</p>
-          <p class="hero-slide-sub">Simple transaction flow.<br>Independently verifiable.</p>
-        </div>
-
-      </div>
-
-      <div class="stat-strip" aria-label="Key statistics">
-        <div class="stat-item">
-          <span class="stat-val">1%</span>
-          <span class="stat-label">Flat fee</span>
-        </div>
-        <div class="stat-sep" aria-hidden="true"></div>
-        <div class="stat-item">
-          <span class="stat-val">USDC</span>
-          <span class="stat-label">Polygon</span>
-        </div>
-        <div class="stat-sep" aria-hidden="true"></div>
-        <a class="stat-item stat-link stat-gas" href="https://polygonscan.com/gastracker" target="_blank" rel="noopener" aria-label="View live Polygon gas prices on PolygonScan">
-          <span class="stat-val gas-tiers gas-live" id="gasHeroVal">
-            <span>—</span>
-            <span>|</span>
-            <span>—</span>
-            <span>|</span>
-            <span>—</span>
-          </span>
-          <span class="stat-label">Gwei</span>
-        </a>
-        <div class="stat-sep" aria-hidden="true"></div>
-        <div class="stat-item">
-          <span class="stat-val">Non-custodial</span>
-          <span class="stat-label">Your wallet</span>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- PRODUCT INTRO -->
-  <section class="product-intro">
-    <p class="product-intro-statement">A cleaner way to settle in USDC.</p>
-
-    <p class="product-intro-copy">
-      ImplicitEx lets people and teams receive USDC payments directly to their wallet on
-      Polygon, with a transparent 1% fee and a verifiable on-chain record. It is built for
-      client payments, reimbursements, small business transfers, crypto-native operations,
-      and direct wallet-to-wallet payments from anyone with a USDC wallet on Polygon — no platform
-      account, no custodial balance.
-    </p>
-  </section>
-
   <!-- Transfer anchor -->
   <div class="transfer-anchor" id="transfer" aria-hidden="true"></div>
 
-  <!-- Transfer Portal — inline payment rail, default minimized -->
+  <!-- Transfer Portal — default collapsed instrument -->
   <section class="modules transfer-portal" id="modules" aria-label="Transfer Portal" data-transaction-window hidden>
     <!-- Portal header — always visible in both expanded and collapsed states -->
     <div class="portal-header">
       <span class="portal-header-title">Transfer Portal</span>
-      <span class="portal-header-cue" aria-hidden="true" data-short="Send USDC on Polygon">Send USDC on Polygon &middot; 1% platform fee &middot; non-custodial</span>
       <div class="portal-header-controls">
         <button class="portal-ctrl-btn" id="modulesMinimize" type="button" aria-expanded="true" aria-label="Collapse transfer portal">
           <span class="portal-ctrl-arrow" aria-hidden="true"></span>
@@ -336,7 +253,7 @@
         </button>
       </div>
     </div>
-    <p class="portal-header-sub">Send USDC directly to a wallet on Polygon. The 1% ImplicitEx fee is added on top — the recipient receives the amount you enter.</p>
+    <p class="portal-header-sub">Transfer details, network state, and recipient verification.</p>
 
     <!-- 01 Transfer -->
     <div class="mod">
@@ -690,6 +607,88 @@
       </div>
     </section>
 
+  </section>
+
+  <!-- HERO -->
+  <section class="hero" aria-label="ImplicitEx introduction">
+    <canvas id="worldCanvas" aria-hidden="true"></canvas>
+    <div class="hero-inner">
+      <!-- Rotating hero: Identity → Utility → Verification -->
+      <div class="hero-slides" aria-live="polite" aria-atomic="true">
+
+        <!-- Slide 1: Identity -->
+        <div class="hero-slide is-active" aria-hidden="false">
+          <div class="hero-slide-brand">
+            <img class="hero-slide-lettermark" src="/components/images/lettermark-white.svg" alt="ImplicitEx">
+            <img class="hero-slide-wordmark" src="/components/images/wordmark-white.svg" alt="" aria-hidden="true">
+          </div>
+          <p class="hero-slide-headline">Wallet-to-wallet<br>USDC transfers.</p>
+          <p class="hero-slide-sub">Non-custodial by design.<br>Publicly verifiable on-chain.</p>
+        </div>
+
+        <!-- Slide 2: Utility -->
+        <div class="hero-slide" aria-hidden="true">
+          <div class="hero-slide-brand">
+            <img class="hero-slide-lettermark" src="/components/images/lettermark-white.svg" alt="ImplicitEx">
+            <img class="hero-slide-wordmark" src="/components/images/wordmark-white.svg" alt="" aria-hidden="true">
+          </div>
+          <h1 class="hero-slide-headline">Send and receive<br>USDC directly.</h1>
+          <p class="hero-slide-sub">Funds stay in your wallet<br>until confirmed on-chain.</p>
+        </div>
+
+        <!-- Slide 3: Verification -->
+        <div class="hero-slide" aria-hidden="true">
+          <div class="hero-slide-brand">
+            <img class="hero-slide-lettermark" src="/components/images/lettermark-white.svg" alt="ImplicitEx">
+            <img class="hero-slide-wordmark" src="/components/images/wordmark-white.svg" alt="" aria-hidden="true">
+          </div>
+          <p class="hero-slide-headline">Contract. Fee.<br>Transfer.</p>
+          <p class="hero-slide-sub">Simple transaction flow.<br>Independently verifiable.</p>
+        </div>
+
+      </div>
+
+      <div class="stat-strip" aria-label="Key statistics">
+        <div class="stat-item">
+          <span class="stat-val">1%</span>
+          <span class="stat-label">Platform fee</span>
+        </div>
+        <div class="stat-sep" aria-hidden="true"></div>
+        <div class="stat-item">
+          <span class="stat-val">USDC</span>
+          <span class="stat-label">Polygon</span>
+        </div>
+        <div class="stat-sep" aria-hidden="true"></div>
+        <a class="stat-item stat-link stat-gas" href="https://polygonscan.com/gastracker" target="_blank" rel="noopener" aria-label="View live Polygon gas prices on PolygonScan">
+          <span class="stat-val gas-tiers gas-live" id="gasHeroVal">
+            <span>—</span>
+            <span>|</span>
+            <span>—</span>
+            <span>|</span>
+            <span>—</span>
+          </span>
+          <span class="stat-label">Gwei</span>
+        </a>
+        <div class="stat-sep" aria-hidden="true"></div>
+        <div class="stat-item">
+          <span class="stat-val">Non-custodial</span>
+          <span class="stat-label">Your wallet</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRODUCT INTRO -->
+  <section class="product-intro">
+    <p class="product-intro-statement">A cleaner way to settle in USDC.</p>
+
+    <p class="product-intro-copy">
+      ImplicitEx lets people and teams receive USDC payments directly to their wallet on
+      Polygon, with a transparent 1% fee and a verifiable on-chain record. It is built for
+      client payments, reimbursements, small business transfers, crypto-native operations,
+      and direct wallet-to-wallet payments from anyone with a USDC wallet on Polygon — no platform
+      account, no custodial balance.
+    </p>
   </section>
 
   <!-- HOW IT WORKS -->
