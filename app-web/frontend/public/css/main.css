@@ -4998,8 +4998,11 @@ input[type="number"] {
 .cc-card--dark .cc-card-recipient { color: var(--cc-card-dark-muted); }
 .cc-card--dark .cc-card-network   { color: var(--cc-card-dark-muted); }
 
-/* Dark card — product stamp (coincard-logo.svg uses currentColor) */
+/* Dark card — product stamp (coincard-logo.svg uses currentColor via <img>;
+   currentColor does not inherit from CSS when loaded as <img> — use filter to invert
+   the black SVG to white on the dark surface) */
 .cc-card--dark .cc-card-stamp         { color: var(--cc-card-dark-fg); }
+.cc-card--dark .cc-card-logo          { filter: invert(1); }
 .cc-card--dark .cc-card-logo-fallback { color: var(--cc-card-dark-muted); }
 
 /* Dark card — issuer fallback text */
