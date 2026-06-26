@@ -70,6 +70,18 @@ The name comes from the oscilloscope: you approach the instrument, you don't pre
 
 Any future design proposal that cannot pass this test — *is this soliciting attention or responding to it?* — does not belong in Coin Card.
 
+### The placement principle
+
+> The host content earns Coin Card.
+
+This is not a layout rule. It is a product truth.
+
+The correct sequence is: consume content → find it valuable → notice a trusted mechanism is available. In that order. The card appears after the user has already decided they care — not before.
+
+This explains why the dormant state is a sign rather than software. Signs wait. They do not compete for attention with the thing they are adjacent to. The host content completes its thought first. Then the card is discovered.
+
+Placement that violates this sequence (card before title, card before content, card before the user has oriented to the experience) does not fail because it looks wrong. It fails because it misrepresents what Coin Card is.
+
 ### The two laws
 
 These two laws operate together. Every design decision in Coin Card is governed by one or both.
