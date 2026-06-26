@@ -1220,7 +1220,8 @@ body.portal-active #nav {
   padding: 0.875rem 0.875rem 0.875rem 1.5rem;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 0;
+  min-width: 0;
 }
 
 .portal-header-title {
@@ -1241,12 +1242,31 @@ body.portal-active #nav {
   display: none;
   font-family: var(--font-mono);
   font-size: var(--size-xs);
-  letter-spacing: 0.10em;
+  letter-spacing: 0.06em;
   color: var(--dim);
-  margin-left: 0.75rem;
+  margin-left: 1rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .transfer-portal.is-minimized .portal-header-cue {
-  display: inline;
+  display: block;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Portal subcopy — visible when expanded, hidden when collapsed */
+.portal-header-sub {
+  grid-column: 1 / -1;
+  font-family: var(--font-body);
+  font-size: var(--size-sm);
+  color: var(--dim);
+  padding: 0 1.5rem 0.875rem;
+  margin: 0;
+  line-height: 1.5;
+}
+.transfer-portal.is-minimized .portal-header-sub {
+  display: none;
 }
 
 /* Portal header controls — collapse and close, inside the header bar */
@@ -1254,6 +1274,8 @@ body.portal-active #nav {
   display: flex;
   align-items: center;
   gap: var(--sp-2);
+  margin-left: auto;
+  flex-shrink: 0;
 }
 
 .portal-ctrl-btn {

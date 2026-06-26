@@ -3,18 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Non-custodial USDC transfers on Polygon. Transparent 1% flat fee.">
+  <meta name="description" content="Non-custodial USDC transfers on Polygon. Transparent 1% platform fee.">
   <meta property="og:url" content="https://implicitex.com/">
   <meta property="og:type" content="website">
   <meta property="og:title" content="ImplicitEx — Send USDC. No intermediaries.">
-  <meta property="og:description" content="Peer-to-peer USDC transfers on Polygon. Non-custodial. 1% flat fee.">
+  <meta property="og:description" content="Peer-to-peer USDC transfers on Polygon. Non-custodial. 1% platform fee.">
   <meta property="og:image" content="https://implicitex.com/components/images/og-primary.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="628">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:site" content="@implicitex">
   <meta name="twitter:title" content="ImplicitEx — Send USDC. No intermediaries.">
-  <meta name="twitter:description" content="Peer-to-peer USDC transfers on Polygon. Non-custodial. 1% flat fee.">
+  <meta name="twitter:description" content="Peer-to-peer USDC transfers on Polygon. Non-custodial. 1% platform fee.">
   <meta name="twitter:image" content="https://implicitex.com/components/images/og-primary.png">
   <link rel="canonical" href="https://implicitex.com/">
   <title>ImplicitEx — Send USDC. No intermediaries.</title>
@@ -42,7 +42,7 @@
           "width": 1200,
           "height": 628
         },
-        "description": "Non-custodial wallet-to-wallet USDC transfers on Polygon. Transparent 1% flat fee. Publicly verifiable on-chain.",
+        "description": "Non-custodial wallet-to-wallet USDC transfers on Polygon. Transparent 1% platform fee. Publicly verifiable on-chain.",
         "parentOrganization": {
           "@type": "Organization",
           "name": "Aden Media Group LLC",
@@ -69,7 +69,7 @@
         "url": "https://implicitex.com",
         "applicationCategory": "FinanceApplication",
         "operatingSystem": "Web",
-        "description": "Wallet-to-wallet USDC transfers on Polygon. Non-custodial, 1% flat fee, publicly verifiable.",
+        "description": "Wallet-to-wallet USDC transfers on Polygon. Non-custodial, 1% platform fee, publicly verifiable.",
         "publisher": { "@id": "https://implicitex.com/#organization" }
       }
     ]
@@ -318,127 +318,15 @@
     </p>
   </section>
 
-  <!-- HOW IT WORKS -->
-  <section class="how-it-works" id="howItWorks" aria-labelledby="howItWorksTitle">
-    <div class="section-kicker reveal-copy" id="howItWorksTitle">How it works</div>
-    <div class="flow-grid">
-      <details class="flow-step reveal-copy">
-        <summary>
-          <span class="flow-num">01 — Connect</span>
-          <p>Your wallet, your keys. No account required.</p>
-          <p class="flow-note">
-            Need a wallet? Start with the
-            <a href="/faq.html#wallet-usdc">wallet setup FAQ</a>.
-          </p>
-          <span class="flow-toggle" aria-hidden="true"></span>
-        </summary>
-        <div class="flow-more">
-          <div class="flow-more-inner">
-            ImplicitEx connects through your browser wallet. The platform does not
-            ask for an email account, password, seed phrase, or private key.
-          </div>
-        </div>
-      </details>
-      <details class="flow-step reveal-copy">
-        <summary>
-          <span class="flow-num">02 — Send</span>
-          <p>Enter a recipient address and amount. The 1% platform fee is added on top — the recipient receives the full amount you enter.</p>
-          <span class="flow-toggle" aria-hidden="true"></span>
-        </summary>
-        <div class="flow-more">
-          <div class="flow-more-inner">
-            The transfer preview shows the recipient, amount, platform fee, and total
-            debit before any wallet action. You pay the amount plus the fee. The
-            recipient receives the full amount.
-          </div>
-        </div>
-      </details>
-      <details class="flow-step reveal-copy">
-        <summary>
-          <span class="flow-num">03 — Confirm</span>
-          <p>Two wallet confirmations: one to authorize, one to send. Authorization alone does not move funds.</p>
-          <span class="flow-toggle" aria-hidden="true"></span>
-        </summary>
-        <div class="flow-more">
-          <div class="flow-more-inner">
-            The first wallet prompt authorizes the ImplicitEx contract to transfer
-            the exact USDC amount. The second sends it. ImplicitEx records the
-            transfer in your receipt history and provides links to verify the
-            transaction on Polygon.
-          </div>
-        </div>
-      </details>
-    </div>
-  </section>
-
-  <script>
-  (function () {
-    'use strict';
-    document.querySelectorAll('.flow-step').forEach(function (det) {
-      var summary = det.querySelector('summary');
-      var more    = det.querySelector('.flow-more');
-      var inner   = det.querySelector('.flow-more-inner');
-      if (!summary || !more || !inner) return;
-
-      summary.addEventListener('click', function (e) {
-        if (e.target.closest('a')) return;
-        e.preventDefault();
-
-        if (det.open) {
-          /* ── Closing ── */
-          more.style.height     = more.scrollHeight + 'px';
-          more.style.overflow   = 'hidden';
-          inner.style.opacity   = '0';
-          inner.style.transition = 'opacity 0.12s ease';
-          requestAnimationFrame(function () {
-            more.style.transition = 'height 0.28s ease';
-            more.style.height     = '0';
-          });
-          function onClose(ev) {
-            if (ev.propertyName !== 'height') return;
-            det.removeAttribute('open');
-            more.style.cssText  = '';
-            inner.style.cssText = '';
-            more.removeEventListener('transitionend', onClose);
-          }
-          more.addEventListener('transitionend', onClose);
-
-        } else {
-          /* ── Opening ── */
-          det.setAttribute('open', '');
-          more.style.height   = '0';
-          more.style.overflow = 'hidden';
-          inner.style.opacity = '0';
-          var target = more.scrollHeight;
-          requestAnimationFrame(function () {
-            more.style.transition = 'height 0.3s ease';
-            more.style.height     = target + 'px';
-            setTimeout(function () {
-              inner.style.transition = 'opacity 0.22s ease';
-              inner.style.opacity    = '1';
-            }, 80);
-          });
-          function onOpen(ev) {
-            if (ev.propertyName !== 'height') return;
-            more.style.cssText  = '';
-            inner.style.cssText = '';
-            more.removeEventListener('transitionend', onOpen);
-          }
-          more.addEventListener('transitionend', onOpen);
-        }
-      });
-    });
-  }());
-  </script>
-
   <!-- Transfer anchor -->
   <div class="transfer-anchor" id="transfer" aria-hidden="true"></div>
 
-  <!-- Transfer Portal — revealed after wallet connect -->
+  <!-- Transfer Portal — inline payment rail, default minimized -->
   <section class="modules transfer-portal" id="modules" aria-label="Transfer Portal" data-transaction-window hidden>
     <!-- Portal header — always visible in both expanded and collapsed states -->
     <div class="portal-header">
-      <span class="portal-header-title">Transfer Portal</span><span class="portal-header-cue" aria-hidden="true">&middot; Send USDC</span>
+      <span class="portal-header-title">Transfer Portal</span>
+      <span class="portal-header-cue" aria-hidden="true">Send USDC on Polygon &middot; 1% platform fee &middot; non-custodial</span>
       <div class="portal-header-controls">
         <button class="portal-ctrl-btn" id="modulesMinimize" type="button" aria-expanded="true" aria-label="Collapse transfer portal">
           <span class="portal-ctrl-arrow" aria-hidden="true"></span>
@@ -448,6 +336,7 @@
         </button>
       </div>
     </div>
+    <p class="portal-header-sub">Send USDC directly to a wallet on Polygon. The 1% ImplicitEx fee is added on top — the recipient receives the amount you enter.</p>
 
     <!-- 01 Transfer -->
     <div class="mod">
@@ -802,6 +691,120 @@
     </section>
 
   </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="how-it-works" id="howItWorks" aria-labelledby="howItWorksTitle">
+    <div class="section-kicker reveal-copy" id="howItWorksTitle">How it works</div>
+    <div class="flow-grid">
+      <details class="flow-step reveal-copy">
+        <summary>
+          <span class="flow-num">01 — Connect</span>
+          <p>Your wallet, your keys. No account required.</p>
+          <p class="flow-note">
+            Need a wallet? Start with the
+            <a href="/faq.html#wallet-usdc">wallet setup FAQ</a>.
+          </p>
+          <span class="flow-toggle" aria-hidden="true"></span>
+        </summary>
+        <div class="flow-more">
+          <div class="flow-more-inner">
+            ImplicitEx connects through your browser wallet. The platform does not
+            ask for an email account, password, seed phrase, or private key.
+          </div>
+        </div>
+      </details>
+      <details class="flow-step reveal-copy">
+        <summary>
+          <span class="flow-num">02 — Send</span>
+          <p>Enter a recipient address and amount. The 1% platform fee is added on top — the recipient receives the full amount you enter.</p>
+          <span class="flow-toggle" aria-hidden="true"></span>
+        </summary>
+        <div class="flow-more">
+          <div class="flow-more-inner">
+            The transfer preview shows the recipient, amount, platform fee, and total
+            debit before any wallet action. You pay the amount plus the fee. The
+            recipient receives the full amount.
+          </div>
+        </div>
+      </details>
+      <details class="flow-step reveal-copy">
+        <summary>
+          <span class="flow-num">03 — Confirm</span>
+          <p>Two wallet confirmations: one to authorize, one to send. Authorization alone does not move funds.</p>
+          <span class="flow-toggle" aria-hidden="true"></span>
+        </summary>
+        <div class="flow-more">
+          <div class="flow-more-inner">
+            The first wallet prompt authorizes the ImplicitEx contract to transfer
+            the exact USDC amount. The second sends it. ImplicitEx records the
+            transfer in your receipt history and provides links to verify the
+            transaction on Polygon.
+          </div>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <script>
+  (function () {
+    'use strict';
+    document.querySelectorAll('.flow-step').forEach(function (det) {
+      var summary = det.querySelector('summary');
+      var more    = det.querySelector('.flow-more');
+      var inner   = det.querySelector('.flow-more-inner');
+      if (!summary || !more || !inner) return;
+
+      summary.addEventListener('click', function (e) {
+        if (e.target.closest('a')) return;
+        e.preventDefault();
+
+        if (det.open) {
+          /* ── Closing ── */
+          more.style.height     = more.scrollHeight + 'px';
+          more.style.overflow   = 'hidden';
+          inner.style.opacity   = '0';
+          inner.style.transition = 'opacity 0.12s ease';
+          requestAnimationFrame(function () {
+            more.style.transition = 'height 0.28s ease';
+            more.style.height     = '0';
+          });
+          function onClose(ev) {
+            if (ev.propertyName !== 'height') return;
+            det.removeAttribute('open');
+            more.style.cssText  = '';
+            inner.style.cssText = '';
+            more.removeEventListener('transitionend', onClose);
+          }
+          more.addEventListener('transitionend', onClose);
+
+        } else {
+          /* ── Opening ── */
+          det.setAttribute('open', '');
+          more.style.height   = '0';
+          more.style.overflow = 'hidden';
+          inner.style.opacity = '0';
+          var target = more.scrollHeight;
+          requestAnimationFrame(function () {
+            more.style.transition = 'height 0.3s ease';
+            more.style.height     = target + 'px';
+            setTimeout(function () {
+              inner.style.transition = 'opacity 0.22s ease';
+              inner.style.opacity    = '1';
+            }, 80);
+          });
+          function onOpen(ev) {
+            if (ev.propertyName !== 'height') return;
+            more.style.cssText  = '';
+            inner.style.cssText = '';
+            more.removeEventListener('transitionend', onOpen);
+          }
+          more.addEventListener('transitionend', onOpen);
+        }
+      });
+    });
+  }());
+  </script>
+
 
   </main>
 
