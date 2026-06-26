@@ -1292,6 +1292,7 @@ body.portal-active #nav {
 
 /* Collapsed: .portal-header stays visible; everything else hides */
 .transfer-portal.is-minimized > .mod,
+.transfer-portal.is-minimized > .mod-col,
 .transfer-portal.is-minimized > .companion,
 .transfer-portal.is-minimized > .telemetry {
   display: none;
