@@ -4930,6 +4930,44 @@ input[type="number"] {
   .cc-card--portrait { aspect-ratio: auto; }
 }
 
+/* Square compact — 1:1, ~280px; body zone ~170px; all tx variables fit */
+.cc-card--square {
+  max-width: 280px;
+  aspect-ratio: 1 / 1;
+}
+
+/* Medium rectangle — ~19:10, 380px wide, ~200px tall; body ~90px; constrained */
+.cc-card--medium {
+  max-width: 380px;
+  aspect-ratio: 19 / 10;
+}
+
+/* Banner — teaser-only; horizontal flex single row; body/action hidden */
+.cc-card--banner {
+  max-width: 520px;
+  aspect-ratio: 13 / 2;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+}
+
+.cc-card--banner .cc-card-body,
+.cc-card--banner .cc-card-action { display: none; }
+
+.cc-card--banner .cc-card-top {
+  flex: 1;
+  border-bottom: none;
+}
+
+.cc-card--banner .cc-card-bottom {
+  border-top: none;
+  flex-shrink: 0;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 /* ---- Explicit dark variant (surface-fixed, independent of page theme) ---- */
 /* Mirrors dark-mode :root values as fixed tokens so the card stays dark
    regardless of whether the page is in light or dark theme.             */
@@ -5220,6 +5258,88 @@ input[type="number"] {
 .cc-card--light .cc-card-tx-hash      { color: var(--cc-card-light-muted); }
 .cc-card--light .cc-card-tx-error     { color: var(--warn); }
 .cc-card--light .cc-card-tx-spinner   { color: var(--cc-card-light-muted); }
+
+/* ---- Coin Card chip — in-card execution trigger ---- */
+/* Lives between cc-card-body and cc-card-bottom as an implicit 4th grid row.
+   No text. State communicated through opacity and pulse animation.
+   Physical card metaphor: the chip IS the action. Host page never owns it. */
+
+.cc-card-action {
+  padding: 0 16px 13px;
+  display: flex;
+  align-items: center;
+}
+
+.cc-card-action[hidden] { display: none; }
+
+/* Chip element — ~EMV proportions, no text */
+.cc-card-chip {
+  width: 34px;
+  height: 26px;
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: transparent;
+  padding: 0;
+  display: block;
+  flex-shrink: 0;
+  position: relative;
+  transition: border-color 0.2s, opacity 0.2s;
+}
+
+/* Subtle horizontal mid-line — suggests chip contact geometry without faking the chip */
+.cc-card-chip::before {
+  content: "";
+  position: absolute;
+  left: 5px;
+  right: 5px;
+  top: 50%;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.18;
+  transform: translateY(-50%);
+}
+
+/* Waiting: no amount entered yet — slow pulse, cursor default (not actionable) */
+@keyframes cc-chip-pulse {
+  0%, 100% { opacity: 0.28; }
+  50%       { opacity: 0.58; }
+}
+
+.cc-card-chip--waiting {
+  animation: cc-chip-pulse 2.6s ease-in-out infinite;
+  cursor: default;
+}
+
+/* Ready: amount confirmed, wallet can be invoked */
+.cc-card-chip--ready {
+  border-color: rgba(255, 255, 255, 0.45);
+  cursor: pointer;
+}
+.cc-card-chip--ready:hover {
+  border-color: rgba(255, 255, 255, 0.72);
+}
+
+/* Active: wallet prompt open / confirming — chip held, no further input */
+.cc-card-chip--active {
+  opacity: 0.42;
+  cursor: default;
+}
+
+/* Done: terminal state, chip recedes — transaction complete or failed+retryable */
+.cc-card-chip--done {
+  opacity: 0.16;
+  cursor: default;
+}
+
+/* Dark card — chip */
+.cc-card--dark .cc-card-chip          { border-color: var(--cc-card-dark-border); color: var(--cc-card-dark-fg); }
+.cc-card--dark .cc-card-chip--ready   { border-color: rgba(242, 242, 240, 0.48); }
+.cc-card--dark .cc-card-chip--ready:hover { border-color: rgba(242, 242, 240, 0.75); }
+
+/* Light card — chip */
+.cc-card--light .cc-card-chip          { border-color: rgba(0, 0, 0, 0.16); color: var(--cc-card-light-fg); }
+.cc-card--light .cc-card-chip--ready   { border-color: rgba(0, 0, 0, 0.40); }
+.cc-card--light .cc-card-chip--ready:hover { border-color: rgba(0, 0, 0, 0.65); }
 
 /* ---- Utility ---- */
 .sr-only {
