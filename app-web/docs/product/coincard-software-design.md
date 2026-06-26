@@ -29,6 +29,23 @@ What state is this payment request currently in?
 
 That is a surprisingly powerful primitive. Everything else is scope creep.
 
+### Three products, one object
+
+Coin Card contains three distinct products. Most crypto products build only the third.
+
+**Coin Card as trust object**
+> "Is this destination safe?"
+
+**Coin Card as interaction software**
+> "Let me understand this before I commit."
+
+**Coin Card as transaction surface**
+> "I am ready to act."
+
+This is also the sequence in which trust is earned, not just the sequence in which states are entered. The right to ask for a wallet connection is earned by answering the first two questions first. Skip them and conversion fails — not because the technology is wrong, but because the trust architecture is inverted.
+
+The implementation order in this document follows this sequence deliberately.
+
 ---
 
 ## The iTunes Principle
