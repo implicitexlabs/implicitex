@@ -4920,10 +4920,10 @@ input[type="number"] {
 .card-review-page .cc-card::before {
   content: "";
   position: absolute;
-  bottom: -80px;
-  right: -90px;
-  width: 240px;
-  height: 240px;
+  bottom: -50px;
+  right: -70px;
+  width: 300px;
+  height: 300px;
   background-image: url("/components/images/web3-construction.svg");
   background-size: 100% 100%;
   background-repeat: no-repeat;
@@ -4944,12 +4944,12 @@ input[type="number"] {
   opacity: 0.028;
 }
 
-/* Portrait: narrower card — push further outside so less corner bleeds in */
+/* Portrait: narrower card — move up and center-right so substrate reads as lower-half field texture */
 .card-review-page .cc-card--portrait::before {
-  bottom: -90px;
-  right: -100px;
-  width: 220px;
-  height: 220px;
+  bottom: -20px;
+  right: -70px;
+  width: 280px;
+  height: 280px;
 }
 
 /* Portrait geometry modifier */
