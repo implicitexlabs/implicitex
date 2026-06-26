@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Coin Card — Phase 1 Prototype</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500&family=Orbitron:wght@600;700&family=Oxanium:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+
+    /* ---- Reset ---- */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ---- Host page simulation ---- */
+    body {
+      background: #17171a;
+      color: rgba(242, 242, 240, 0.60);
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      line-height: 1.7;
+      min-height: 100vh;
+    }
+
+    .proto-shell {
+      max-width: 660px;
+      margin: 0 auto;
+      padding: 3.5rem 1.5rem 6rem;
+    }
+
+    .proto-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 3rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .proto-header-title {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: rgba(242, 242, 240, 0.28);
+    }
+
+    .proto-header-phase {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.10em;
+      color: rgba(242, 242, 240, 0.18);
+    }
+
+    /* ---- Simulated host content ---- */
+    .host-section {
+      margin-bottom: 1.5rem;
+    }
+
+    .host-section p {
+      color: rgba(242, 242, 240, 0.50);
+      margin-bottom: 1rem;
+      font-size: 14.5px;
+    }
+
+    .host-section p:last-child { margin-bottom: 0; }
+
+    /* Widget floated into content */
+    .widget-float {
+      float: right;
+      margin: 0.25rem 0 1.25rem 1.75rem;
+      clear: right;
+    }
+
+    .widget-hint {
+      margin-top: 0.5rem;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(242, 242, 240, 0.18);
+      text-align: right;
+    }
+
+    .clearfix::after { content: ""; display: table; clear: both; }
+
+    /* ---- THE COIN CARD WIDGET ---- */
+    /*
+      Self-contained. No dependency on host page variables.
+      All values are explicit so this block can be extracted
+      verbatim into widget.js later.
+    */
+
+    .cc-widget {
+      position: relative;
+      width: 286px;
+      height: 172px;
+      background: #0c0c0a;
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      border-radius: 2px;
+      overflow: hidden;
+      cursor: default;
+      /* Oscilloscope Law: no solicitation — no animation on the container itself */
+      transition:
+        border-color 0.22s ease,
+        background   0.22s ease,
+        box-shadow   0.22s ease;
+      box-shadow:
+        0 4px 24px rgba(0, 0, 0, 0.50),
+        0 1px 4px  rgba(0, 0, 0, 0.28);
+    }
+
+    /* 0ms response — border lifts, background lifts ~2% */
+    .cc-widget:hover {
+      border-color: rgba(255, 255, 255, 0.24);
+      background: #0e0e0c;
+      box-shadow:
+        0 6px 32px rgba(0, 0, 0, 0.58),
+        0 2px 6px  rgba(0, 0, 0, 0.32);
+    }
+
+    /* Breathing edge — right side.
+       Every ~12s: briefly widens to 2px / 40% opacity.
+       Communicates aliveness. Does not solicit. */
+    .cc-widget::after {
+      content: "";
+      position: absolute;
+      right: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 1px;
+      height: 26px;
+      background: rgba(242, 242, 240, 1);
+      opacity: 0.18;
+      animation: cc-breathe 11.5s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    @keyframes cc-breathe {
+      0%, 38%, 100% { width: 1px; height: 26px; opacity: 0.18; }
+      48%            { width: 2px; height: 30px; opacity: 0.42; }
+      58%            { width: 1px; height: 26px; opacity: 0.18; }
+    }
+
+    /* ---- Block field ---- */
+    /* Upper-left quadrant. Asymmetric placement reads as data, not decoration. */
+    .cc-blocks {
+      position: absolute;
+      top: 13px;
+      left: 13px;
+      display: grid;
+      grid-template-columns: repeat(4, 7px);
+      grid-template-rows: repeat(6, 7px);
+      gap: 2.5px;
+      pointer-events: none;
+      /* Blocks become slightly more active on hover — handled by JS */
+    }
+
+    .cc-block {
+      width: 7px;
+      height: 7px;
+      background: rgba(242, 242, 240, 1);
+      /* Each block has its own opacity, transitioned by JS */
+      transition: opacity var(--block-dur, 1.7s) ease;
+    }
+
+    /* ---- Body — primary copy ---- */
+    .cc-body {
+      position: absolute;
+      /* sits in right/center area, below block field row */
+      top: 0;
+      right: 14px;
+      bottom: 38px;
+      left: 60px; /* clear of block field */
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: flex-end;
+      gap: 7px;
+    }
+
+    /* Primary rotating copy */
+    .cc-primary {
+      font-family: 'Oxanium', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      color: rgba(242, 242, 240, 0.88);
+      line-height: 1.25;
+      text-align: right;
+      transition: opacity 0.5s ease;
+    }
+
+    /* Affordance — fades in after 500ms sustained hover.
+       No verb. No CTA. A destination indicator only. */
+    .cc-affordance {
+      font-family: 'Oxanium', sans-serif;
+      font-size: 9.5px;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      color: rgba(242, 242, 240, 0.42);
+      text-align: right;
+      opacity: 0;
+      pointer-events: none;
+      /* 500ms delay before fade-in — sustained attention required */
+      transition: opacity 0.28s ease 0.5s;
+      line-height: 1;
+    }
+
+    .cc-widget:hover .cc-affordance {
+      opacity: 1;
+    }
+
+    /* ---- Footer ---- */
+    .cc-footer {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 34px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 13px;
+      transition: border-color 0.22s ease;
+    }
+
+    .cc-widget:hover .cc-footer {
+      border-top-color: rgba(255, 255, 255, 0.11);
+    }
+
+    /* ¢OIN CARD mark */
+    .cc-mark {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 8.5px;
+      font-weight: 700;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: rgba(242, 242, 240, 0.50);
+    }
+
+    /* Powered by ImplicitEx — most subdued element */
+    .cc-attr {
+      font-family: 'Inter', sans-serif;
+      font-size: 8px;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      color: rgba(242, 242, 240, 0.20);
+    }
+
+    /* ---- State timeline ---- */
+    .cc-timeline {
+      margin-top: 2.5rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .cc-timeline-item {
+      padding: 1rem 0.75rem;
+      border-right: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .cc-timeline-item:last-child { border-right: none; }
+
+    .cc-timeline-ms {
+      display: block;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.12em;
+      color: rgba(242, 242, 240, 0.22);
+      margin-bottom: 5px;
+    }
+
+    .cc-timeline-label {
+      display: block;
+      font-family: 'Oxanium', sans-serif;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      color: rgba(242, 242, 240, 0.55);
+      margin-bottom: 5px;
+    }
+
+    .cc-timeline-desc {
+      display: block;
+      font-size: 11.5px;
+      color: rgba(242, 242, 240, 0.28);
+      line-height: 1.55;
+    }
+
+    .cc-timeline-item.deferred .cc-timeline-label,
+    .cc-timeline-item.deferred .cc-timeline-desc {
+      color: rgba(242, 242, 240, 0.15);
+      font-style: italic;
+    }
+
+    /* ---- Law reference ---- */
+    .cc-laws {
+      margin-top: 2rem;
+      padding: 1rem;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .cc-law {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9.5px;
+      line-height: 1.6;
+      color: rgba(242, 242, 240, 0.22);
+    }
+
+    .cc-law strong {
+      display: block;
+      color: rgba(242, 242, 240, 0.35);
+      letter-spacing: 0.06em;
+      margin-bottom: 3px;
+      font-size: 9px;
+      text-transform: uppercase;
+    }
+
+  </style>
+</head>
+<body>
+
+  <div class="proto-shell">
+
+    <div class="proto-header">
+      <span class="proto-header-title">Coin Card — Phase 1 Prototype</span>
+      <span class="proto-header-phase">Dormant · Hover response</span>
+    </div>
+
+    <!-- Simulated host page content with widget embedded -->
+    <div class="host-section clearfix">
+
+      <div class="widget-float">
+        <div class="cc-widget" role="region" aria-label="Coin Card — USDC transfers">
+
+          <!-- 24-block ambient field, upper-left, generated by JS -->
+          <div class="cc-blocks" id="ccBlocks" aria-hidden="true"></div>
+
+          <div class="cc-body">
+            <!-- Primary copy: rotates between two statements every 9s -->
+            <p class="cc-primary" id="ccPrimary">USDC ACCEPTED HERE</p>
+            <!-- Affordance: appears after 500ms sustained hover, no verb -->
+            <p class="cc-affordance" aria-hidden="true">USDC transfers &rarr;</p>
+          </div>
+
+          <div class="cc-footer">
+            <span class="cc-mark">&#162;OIN CARD</span>
+            <span class="cc-attr">Powered by ImplicitEx</span>
+          </div>
+
+        </div>
+        <p class="widget-hint">Hover the card</p>
+      </div>
+
+      <p>This transfer was completed on Polygon at block 67,441,892. The recipient was verified against the ImplicitEx registry prior to wallet authorization. No funds were held by any intermediary at any point during settlement.</p>
+      <p>The on-chain record is permanently available and can be independently verified using any Polygon block explorer. The Coin Card identifies the canonical destination and confirms it has not been revoked or modified since issuance.</p>
+      <p>Additional transfers can be initiated at any time using the same Coin Card. Registry records are version-controlled and any change to the recipient address results in a new card issuance, not a modification of an existing record.</p>
+
+    </div>
+
+    <!-- Interaction state timeline -->
+    <div class="cc-timeline">
+      <div class="cc-timeline-item">
+        <span class="cc-timeline-ms">0 ms</span>
+        <span class="cc-timeline-label">Acknowledges</span>
+        <span class="cc-timeline-desc">Border contrast rises. Background lifts 2%. Blocks edge toward faster activity. The card noticed. It does not announce this.</span>
+      </div>
+      <div class="cc-timeline-item">
+        <span class="cc-timeline-ms">500 ms</span>
+        <span class="cc-timeline-label">Points</span>
+        <span class="cc-timeline-desc">"USDC transfers →" fades in. No verb. A destination indicator. Sustained attention confirmed before the card speaks.</span>
+      </div>
+      <div class="cc-timeline-item deferred">
+        <span class="cc-timeline-ms">800 ms</span>
+        <span class="cc-timeline-label">Unfolds</span>
+        <span class="cc-timeline-desc">Investigation state. Verification checklist. No wallet demand. Phase 2 — not yet built.</span>
+      </div>
+    </div>
+
+    <!-- Law reference -->
+    <div class="cc-laws">
+      <div class="cc-law">
+        <strong>Oscilloscope Law</strong>
+        The card responds to observation. It does not solicit it.
+      </div>
+      <div class="cc-law">
+        <strong>Host Sovereignty Law</strong>
+        The card never interrupts the host experience.
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // ---- Block field — 24 blocks, upper-left, opacity only ----
+    // Spec: 3–8s randomized interval, 1–3 simultaneous changes,
+    //       1.5–2.0s transition per block, never synchronized.
+
+    const container = document.getElementById('ccBlocks');
+    const TOTAL = 24;
+    const blocks = [];
+
+    for (let i = 0; i < TOTAL; i++) {
+      const b = document.createElement('div');
+      b.className = 'cc-block';
+      // Randomize initial opacity across a wide range
+      b.style.opacity = (0.07 + Math.random() * 0.58).toFixed(2);
+      container.appendChild(b);
+      blocks.push(b);
+    }
+
+    function pulse() {
+      // 1–3 blocks change per cycle
+      const n = 1 + Math.floor(Math.random() * 3);
+      const chosen = new Set();
+      while (chosen.size < n) chosen.add(Math.floor(Math.random() * TOTAL));
+
+      chosen.forEach(i => {
+        // Transition duration: 1.5–2.0s per spec
+        const dur = (1.5 + Math.random() * 0.5).toFixed(2) + 's';
+        blocks[i].style.setProperty('--block-dur', dur);
+        blocks[i].style.opacity = (0.06 + Math.random() * 0.62).toFixed(2);
+      });
+
+      // Next cycle: 3–8s randomized
+      setTimeout(pulse, 3000 + Math.random() * 5000);
+    }
+
+    // Stagger first fire so initial load doesn't look synchronized
+    setTimeout(pulse, 800 + Math.random() * 2200);
+
+    // ---- Copy rotation ----
+    // State A: USDC ACCEPTED HERE (location + asset)
+    // State B: VERIFIED RECIPIENT (trust + safety)
+    // Timing: 8s visible, ~1s dissolve (0.5s fade-out + change + 0.5s fade-in)
+
+    const primary = document.getElementById('ccPrimary');
+    const STATES = ['USDC ACCEPTED HERE', 'VERIFIED RECIPIENT'];
+    let stateIdx = 0;
+
+    function rotateCopy() {
+      primary.style.opacity = '0';
+      setTimeout(() => {
+        stateIdx = (stateIdx + 1) % STATES.length;
+        primary.textContent = STATES[stateIdx];
+        primary.style.opacity = '';
+      }, 500);
+    }
+
+    // 8s visible + 1s dissolve = 9s total interval
+    setInterval(rotateCopy, 9000);
+  </script>
+
+</body>
+</html>
