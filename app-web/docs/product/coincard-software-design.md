@@ -5,7 +5,11 @@
 
 ---
 
-> **The Coin Card is never trying to get your attention. It is simply awake when you decide to give it your attention.**
+> **Coin Card does not seek attention. It waits to be invited.**
+
+---
+
+> *The Coin Card is never trying to get your attention. It is simply awake when you decide to give it your attention.*
 
 ---
 
