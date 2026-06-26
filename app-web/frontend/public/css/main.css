@@ -4902,56 +4902,6 @@ input[type="number"] {
   --cc-card-light-verified-dot:    #1a6e3f;
 }
 
-/* ---- WEB3 construction mark — review surface substrate (card-review.html only) ----
-   Pseudo-element extends physically beyond the card boundary; overflow:hidden clips it.
-   Only a partial lower-right corner of the mark bleeds into the card — no full mark
-   visible inside, no readable logo block, no layout impact.
-   Scoped to .card-review-page so production card.html is completely unaffected. ---- */
-
-.card-review-page .cc-card {
-  overflow: hidden;
-}
-
-.card-review-page .cc-card > * {
-  position: relative;
-  z-index: 1;
-}
-
-.card-review-page .cc-card::before {
-  content: "";
-  position: absolute;
-  bottom: -50px;
-  right: -70px;
-  width: 300px;
-  height: 300px;
-  background-image: url("/components/images/web3-construction.svg");
-  background-size: 100% 100%;
-  background-repeat: no-repeat;
-  opacity: 0.028;
-  pointer-events: none;
-  user-select: none;
-  z-index: 0;
-}
-
-/* Light card: dark mark on warm-paper surface */
-.card-review-page .cc-card--light::before {
-  opacity: 0.028;
-}
-
-/* Dark card: inverted mark on dark surface */
-.card-review-page .cc-card--dark::before {
-  filter: invert(1);
-  opacity: 0.028;
-}
-
-/* Portrait: narrower card — move up and center-right so substrate reads as lower-half field texture */
-.card-review-page .cc-card--portrait::before {
-  bottom: -20px;
-  right: -70px;
-  width: 280px;
-  height: 280px;
-}
-
 /* Portrait geometry modifier */
 .cc-card--portrait {
   max-width: var(--cc-card-portrait-max);
@@ -5075,6 +5025,201 @@ input[type="number"] {
 
 /* Light card — revoked note */
 .cc-card--light .cc-card-revoked-note { color: var(--cc-card-light-dim); }
+
+/* ---- Coin Card status extensions — transaction states ---- */
+.cc-card-status--pending   { color: var(--telemetry-amber); }
+.cc-card-status--submitted { color: var(--telemetry-amber); }
+.cc-card-status--confirmed { color: var(--white); }
+.cc-card-status--failed    { color: var(--warn); }
+
+.cc-card-status-dot--pending   { background: var(--telemetry-amber); }
+.cc-card-status-dot--submitted { background: var(--telemetry-amber); }
+.cc-card-status-dot--confirmed { background: var(--white); }
+.cc-card-status-dot--failed    { background: var(--warn); }
+
+/* Dark card — status extensions */
+.cc-card--dark .cc-card-status--pending,
+.cc-card--dark .cc-card-status--submitted  { color: var(--telemetry-amber); }
+.cc-card--dark .cc-card-status--confirmed  { color: var(--cc-card-dark-fg); }
+.cc-card--dark .cc-card-status--failed     { color: var(--warn); }
+.cc-card--dark .cc-card-status-dot--pending,
+.cc-card--dark .cc-card-status-dot--submitted { background: var(--telemetry-amber); }
+.cc-card--dark .cc-card-status-dot--confirmed { background: var(--cc-card-dark-verified-dot); }
+.cc-card--dark .cc-card-status-dot--failed    { background: var(--warn); }
+
+/* Light card — status extensions */
+.cc-card--light .cc-card-status--pending,
+.cc-card--light .cc-card-status--submitted { color: var(--telemetry-amber); }
+.cc-card--light .cc-card-status--confirmed { color: var(--cc-card-light-fg); }
+.cc-card--light .cc-card-status--failed    { color: var(--warn); }
+.cc-card--light .cc-card-status-dot--pending,
+.cc-card--light .cc-card-status-dot--submitted { background: var(--telemetry-amber); }
+.cc-card--light .cc-card-status-dot--confirmed { background: var(--cc-card-light-verified-dot); }
+.cc-card--light .cc-card-status-dot--failed    { background: var(--warn); }
+
+/* ---- Coin Card transaction content ---- */
+
+/* Mode label — operation type above amount (SEND USDC / REVIEW / etc.) */
+.cc-card-tx-label {
+  font-family: var(--font-ui);
+  font-size: 8px;
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 6px;
+}
+
+/* Protected amount field — credential data well, issuer-controlled boundary */
+.cc-card-amount-field {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 2px;
+  padding: 5px 8px;
+  margin: 0 0 8px;
+}
+
+.cc-card-amount-field:focus-within {
+  border-color: rgba(255, 255, 255, 0.36);
+}
+
+/* Input element — bare inside the issuer-bounded box */
+.cc-card-amount-input {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.01em;
+  color: var(--white);
+  background: transparent;
+  border: none;
+  outline: none;
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  line-height: 1;
+  -moz-appearance: textfield;
+}
+.cc-card-amount-input::-webkit-outer-spin-button,
+.cc-card-amount-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+.cc-card-amount-input::placeholder { opacity: 0.28; }
+
+/* USDC unit lock — fixed by issuer, not user-editable */
+.cc-card-amount-unit-lock {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  flex-shrink: 0;
+  align-self: flex-end;
+  padding-bottom: 1px;
+}
+
+/* Dark card — amount field */
+.cc-card--dark .cc-card-amount-field          { border-color: var(--cc-card-dark-border); }
+.cc-card--dark .cc-card-amount-field:focus-within { border-color: rgba(242, 242, 240, 0.42); }
+.cc-card--dark .cc-card-amount-input          { color: var(--cc-card-dark-fg); }
+.cc-card--dark .cc-card-amount-unit-lock      { color: var(--cc-card-dark-muted); }
+
+/* Light card — amount field */
+.cc-card--light .cc-card-amount-field          { border-color: rgba(0, 0, 0, 0.12); }
+.cc-card--light .cc-card-amount-field:focus-within { border-color: rgba(0, 0, 0, 0.32); }
+.cc-card--light .cc-card-amount-input          { color: var(--cc-card-light-fg); }
+.cc-card--light .cc-card-amount-unit-lock      { color: var(--cc-card-light-muted); }
+
+/* Primary amount */
+.cc-card-tx-amount {
+  font-family: var(--font-mono);
+  font-size: 20px;
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.01em;
+  color: var(--white);
+  margin: 0 0 8px;
+  line-height: 1;
+}
+
+.cc-card-tx-unit {
+  font-size: 11px;
+  font-weight: var(--weight-normal);
+  letter-spacing: 0.06em;
+  opacity: 0.5;
+  margin-left: 3px;
+}
+
+/* Fee and total rows */
+.cc-card-tx-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  margin: 2px 0;
+}
+
+.cc-card-tx-row-value {
+  color: var(--dim);
+}
+
+/* Transaction hash */
+.cc-card-tx-hash {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  margin: 6px 0 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Error / failure message */
+.cc-card-tx-error {
+  font-family: var(--font-ui);
+  font-size: 9px;
+  letter-spacing: 0.02em;
+  color: var(--warn);
+  margin: 4px 0 0;
+}
+
+/* Waiting indicator */
+.cc-card-tx-spinner {
+  display: block;
+  width: 12px;
+  height: 12px;
+  border: 1.5px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  opacity: 0.35;
+  animation: cc-spin 0.9s linear infinite;
+  margin: 4px 0 8px;
+}
+
+@keyframes cc-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Dark card — transaction content */
+.cc-card--dark .cc-card-tx-label     { color: var(--cc-card-dark-muted); }
+.cc-card--dark .cc-card-tx-amount    { color: var(--cc-card-dark-fg); }
+.cc-card--dark .cc-card-tx-row       { color: var(--cc-card-dark-muted); }
+.cc-card--dark .cc-card-tx-row-value { color: var(--cc-card-dark-dim); }
+.cc-card--dark .cc-card-tx-hash      { color: var(--cc-card-dark-muted); }
+.cc-card--dark .cc-card-tx-error     { color: var(--warn); }
+.cc-card--dark .cc-card-tx-spinner   { color: var(--cc-card-dark-muted); }
+
+/* Light card — transaction content */
+.cc-card--light .cc-card-tx-label     { color: var(--cc-card-light-muted); }
+.cc-card--light .cc-card-tx-amount    { color: var(--cc-card-light-fg); }
+.cc-card--light .cc-card-tx-row       { color: var(--cc-card-light-muted); }
+.cc-card--light .cc-card-tx-row-value { color: var(--cc-card-light-dim); }
+.cc-card--light .cc-card-tx-hash      { color: var(--cc-card-light-muted); }
+.cc-card--light .cc-card-tx-error     { color: var(--warn); }
+.cc-card--light .cc-card-tx-spinner   { color: var(--cc-card-light-muted); }
 
 /* ---- Utility ---- */
 .sr-only {
