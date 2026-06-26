@@ -80,7 +80,11 @@ The correct sequence is: consume content → find it valuable → notice a trust
 
 This explains why the dormant state is a sign rather than software. Signs wait. They do not compete for attention with the thing they are adjacent to. The host content completes its thought first. Then the card is discovered.
 
-Placement that violates this sequence (card before title, card before content, card before the user has oriented to the experience) does not fail because it looks wrong. It fails because it misrepresents what Coin Card is.
+Placement that violates this sequence — card before title, card before content, card before the user has oriented to the experience — does not fail because it looks wrong. It fails because it violates the moral order of the interface:
+
+> First create value. Then provide a mechanism for exchange.
+
+This is one of the oldest principles of commerce. Coin Card's placement logic is not a UX preference. It is an expression of that principle.
 
 ### The two laws
 
@@ -474,6 +478,18 @@ This is closer to a passport, a certificate, or a business card than it is to a 
 The irony of this design approach: **the less Coin Card does, the more important every tiny interaction becomes.** When the surface is constrained, every hover state, every transition, every typography choice, every button press carries the full weight of the product.
 
 That is the iTunes lesson applied to crypto.
+
+---
+
+## V1 Form Factor — Locked
+
+> **A wide, dormant trust sign that appears only after the host content has completed its argument.**
+
+This is the primary V1 form factor. It is not a donation widget, a payment embed, or a CTA button. It is a sign — in the oldest sense of that word. It marks a place where a thing can happen, after the user has already decided they care about the place.
+
+**Compact** (286×172) remains available for contexts without video — pure article, link-in-bio, text-only pages — but it is a secondary form factor. Its primary risk is that right-floated rectangular bordered objects have been trained into the user's visual system as advertisement units for 25 years. That conditioning may override the design regardless of quality.
+
+**Wide companion** (full-width, ~110px) below host content is the primary form factor. It has a natural reason to exist, arrives at the correct moment in the sequence, and reads as a sign rather than an interruption.
 
 ---
 
