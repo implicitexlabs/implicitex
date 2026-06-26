@@ -1254,6 +1254,17 @@ body.portal-active #nav {
   flex: 1;
   min-width: 0;
 }
+@media (max-width: 480px) {
+  .transfer-portal.is-minimized .portal-header-cue {
+    font-size: 0;
+  }
+  .transfer-portal.is-minimized .portal-header-cue::before {
+    content: attr(data-short);
+    font-family: var(--font-mono);
+    font-size: var(--size-xs);
+    letter-spacing: 0.06em;
+  }
+}
 
 /* Portal subcopy — visible when expanded, hidden when collapsed */
 .portal-header-sub {
