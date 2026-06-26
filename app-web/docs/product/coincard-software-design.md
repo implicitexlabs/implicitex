@@ -179,7 +179,7 @@ These are not UI states in the traditional sense. They are **user intent states*
 
 | State | User is doing | Card does |
 |---|---|---|
-| Dormant | Noticing | Breathing |
+| Dormant | Noticing | Waiting |
 | Investigating | Reading | Explaining |
 | Transacting | Acting | Assisting |
 
@@ -204,14 +204,30 @@ This law explains every non-interruption decision in Coin Card: why hover expand
 
 ## The Dormant State
 
-The dormant card must solve an unusual design problem: **how to communicate that this is interactive software without behaving like an advertisement.**
+The dormant state does not communicate that the card is interactive.
+
+That is not its job.
+
+Its job is to communicate:
+
+> This place is trustworthy. Something can happen here. I'll wait.
+
+The decision to investigate belongs to the user. The card does not invite, prompt, or suggest. It waits. When the user chooses to look, the card responds. Not before.
+
+This resolves what initially seemed like a design problem — *how to communicate interactivity without soliciting* — by eliminating the premise. The dormant state is not trying to communicate interactivity. It is communicating trustworthiness and availability. Interactivity reveals itself only when the user approaches.
+
+A sign does not tell you to walk into the restaurant. It tells you: this is a restaurant. The decision to enter belongs to you.
+
+---
 
 Most web components use one of two strategies:
 
 - **Banner:** "Click me."
 - **Application:** "Use me."
 
-Coin Card attempts a third category: **"Investigate me."**
+Coin Card V1 is a third category: **a sign.**
+
+> "This is a place where USDC transfers happen. The destination is verified. I'll be here."
 
 ### Copy rotation — locked
 
