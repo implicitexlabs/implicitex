@@ -525,6 +525,54 @@
       <p>The on-chain record is permanent and independently verifiable. No fee was collected by any exchange. The only cost was the 1% ImplicitEx protocol fee and a negligible Polygon gas amount — typically under one cent.</p>
     </div>
 
+    <hr class="eval-divider">
+
+
+    <!-- ============================================================
+         CONTEXT C — Wide card, after content completes its thought
+         Expected winner: host content finishes first, card discovered second
+         Sequence: video → title → description → Coin Card
+         ============================================================ -->
+    <div class="context-label">
+      <span class="context-label-name">Context C — Wide, below title + description</span>
+      <span class="context-label-dim">Expected winner</span>
+    </div>
+
+    <!-- Video placeholder -->
+    <div class="yt-embed">
+      <div class="yt-play">
+        <svg viewBox="0 0 10 12"><polygon points="1,1 9,6 1,11"/></svg>
+      </div>
+      <span class="yt-caption">640 × 360 — simulated embed</span>
+    </div>
+
+    <!-- Title + description complete their thought first -->
+    <div class="video-meta">
+      <p class="video-title">How Direct USDC Transfers Work — No Exchange Required</p>
+      <p class="video-sub">14,802 views · 3 days ago · Creator Channel</p>
+    </div>
+
+    <div class="article-body" style="margin-bottom: 1.25rem;">
+      <p>This transfer required no exchange, no conversion, and no custodial account. The sender held USDC on Polygon, the recipient published a verified Coin Card, and the transfer settled directly between wallets in a single transaction.</p>
+      <p>The on-chain record is permanent and independently verifiable. No fee was collected by any exchange. The only cost was the 1% ImplicitEx protocol fee and a negligible Polygon gas amount — typically under one cent.</p>
+    </div>
+
+    <!-- Card appears after content has finished -->
+    <div class="card-below-video">
+      <div class="cc-widget cc-widget--wide" role="region" aria-label="Coin Card">
+        <div class="cc-blocks" data-blocks="wide-c" aria-hidden="true"></div>
+        <div class="cc-body">
+          <p class="cc-primary" data-copy>USDC ACCEPTED HERE</p>
+          <p class="cc-affordance" aria-hidden="true">USDC transfers &rarr;</p>
+        </div>
+        <div class="cc-footer">
+          <span class="cc-mark">&#162;OIN CARD</span>
+          <span class="cc-attr">Powered by ImplicitEx</span>
+        </div>
+      </div>
+      <p class="card-below-hint">Hover the card</p>
+    </div>
+
   </div><!-- /page -->
 
   <script>
@@ -558,11 +606,14 @@
       setTimeout(pulse, 600 + Math.random() * 2000);
     }
 
-    // Init both block fields (staggered so they're never synchronized)
+    // Init all block fields — staggered so they're never synchronized
     initBlocks(document.querySelector('[data-blocks="compact"]'), 4, 6);
     setTimeout(() => {
       initBlocks(document.querySelector('[data-blocks="wide"]'), 6, 4);
     }, 1100);
+    setTimeout(() => {
+      initBlocks(document.querySelector('[data-blocks="wide-c"]'), 6, 4);
+    }, 2300);
 
     // ---- Copy rotation — shared ----
     // Both cards rotate independently, staggered
@@ -582,8 +633,9 @@
     }
 
     const copyEls = document.querySelectorAll('[data-copy]');
-    initRotation(copyEls[0], 9000);          // compact — first rotation at 9s
-    initRotation(copyEls[1], 9000 + 3700);   // wide — staggered, never synchronized
+    initRotation(copyEls[0], 9000);           // compact — first rotation at 9s
+    initRotation(copyEls[1], 9000 + 3700);    // wide B — staggered
+    initRotation(copyEls[2], 9000 + 6100);    // wide C — further staggered
   </script>
 
 </body>
