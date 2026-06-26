@@ -1064,16 +1064,16 @@ body.portal-active #nav {
   position: absolute;
   top: -14px;
   right: -14px;
-  width: 16px;
-  height: 16px;
-  opacity: 0.65;
+  width: 18px;
+  height: 18px;
+  opacity: 0.72;
   pointer-events: none;
   z-index: 3;
   border-color: var(--dim);
   border-style: solid;
   border-width: 0;
-  border-top-width: 1.5px;
-  border-right-width: 1.5px;
+  border-top-width: 2px;
+  border-right-width: 2px;
 }
 
 /* Bottom-left tick */
@@ -1082,16 +1082,16 @@ body.portal-active #nav {
   position: absolute;
   bottom: -14px;
   left: -14px;
-  width: 16px;
-  height: 16px;
-  opacity: 0.65;
+  width: 18px;
+  height: 18px;
+  opacity: 0.72;
   pointer-events: none;
   z-index: 3;
   border-color: var(--dim);
   border-style: solid;
   border-width: 0;
-  border-bottom-width: 1.5px;
-  border-left-width: 1.5px;
+  border-bottom-width: 2px;
+  border-left-width: 2px;
 }
 
 /* ---- Portal controls — square tabs anchored to upper-right of portal border ---- */
@@ -1337,8 +1337,8 @@ body.portal-active #nav {
 /* Control labels — small mono identifiers inside each button */
 .portal-ctrl-label {
   font-family: var(--font-mono);
-  font-size: 9px;
-  letter-spacing: 0.10em;
+  font-size: 10px;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   white-space: nowrap;
   pointer-events: none;
@@ -1387,9 +1387,9 @@ body.portal-active #nav {
 .transfer-portal::after {
   content: "";
   position: absolute;
-  width: 16px;
-  height: 16px;
-  opacity: 0.65;
+  width: 18px;
+  height: 18px;
+  opacity: 0.72;
   pointer-events: none;
   z-index: 3;
   border-color: var(--dim);
@@ -1399,14 +1399,14 @@ body.portal-active #nav {
 .transfer-portal::before {
   top: -14px;
   left: -14px;
-  border-top-width: 1.5px;
-  border-left-width: 1.5px;
+  border-top-width: 2px;
+  border-left-width: 2px;
 }
 .transfer-portal::after {
   bottom: -14px;
   right: -14px;
-  border-bottom-width: 1.5px;
-  border-right-width: 1.5px;
+  border-bottom-width: 2px;
+  border-right-width: 2px;
 }
 
 /* Collapsed portal inverts against page theme — functions as a featured instrument */
@@ -3888,9 +3888,9 @@ h1 + .gs-section-head {
   .transfer-portal::after,
   .portal-zone::before,
   .portal-zone::after {
-    width: 12px;
-    height: 12px;
-    opacity: 0.6;
+    width: 14px;
+    height: 14px;
+    opacity: 0.65;
   }
   .transfer-portal::before {
     top: -10px;
