@@ -1053,7 +1053,7 @@ body.portal-active #nav {
 /* ---- Portal controls — square tabs anchored to upper-right of portal border ---- */
 .portal-controls {
   max-width: var(--ix-interface-max);
-  margin: clamp(2rem, 5vh, 3.5rem) auto -2px; /* -2px overlaps portal top border by full tab border */
+  margin: clamp(2.5rem, 6vh, 4rem) auto -2px; /* -2px overlaps portal top border by full tab border */
   display: flex;
   justify-content: flex-end;
   align-items: flex-end;
@@ -1149,7 +1149,7 @@ body.portal-active #nav {
 .modules {
   box-sizing: border-box;
   max-width: var(--ix-interface-max);
-  margin: 0 auto;
+  margin: 0 auto clamp(2rem, 5vh, 3.5rem);
   padding: 1px;
   position: relative;
   z-index: 1;
@@ -1335,16 +1335,17 @@ body.portal-active #nav {
   grid-template-columns: 1fr;
 }
 
-/* Corner instrument ticks — frame the portal as a contained object.
+/* Corner instrument ticks — perimeter markers around the portal's protected zone.
+   Positioned outside the frame to act as keep-clear brackets, not border ornament.
    Diagonal pair (top-left / bottom-right) in both collapsed and expanded states.
    var(--dim) adapts to page theme; no separate light/dark rule needed. */
 .transfer-portal::before,
 .transfer-portal::after {
   content: "";
   position: absolute;
-  width: 8px;
-  height: 8px;
-  opacity: 0.45;
+  width: 16px;
+  height: 16px;
+  opacity: 0.65;
   pointer-events: none;
   z-index: 3;
   border-color: var(--dim);
@@ -1352,16 +1353,16 @@ body.portal-active #nav {
   border-width: 0;
 }
 .transfer-portal::before {
-  top: -3px;
-  left: -3px;
-  border-top-width: 1px;
-  border-left-width: 1px;
+  top: -14px;
+  left: -14px;
+  border-top-width: 1.5px;
+  border-left-width: 1.5px;
 }
 .transfer-portal::after {
-  bottom: -3px;
-  right: -3px;
-  border-bottom-width: 1px;
-  border-right-width: 1px;
+  bottom: -14px;
+  right: -14px;
+  border-bottom-width: 1.5px;
+  border-right-width: 1.5px;
 }
 
 /* Collapsed portal inverts against page theme — functions as a featured instrument */
@@ -3831,7 +3832,23 @@ h1 + .gs-section-head {
 
   .modules {
     grid-template-columns: 1fr;
-    margin-inline: 1rem;
+    margin-inline: 1.25rem; /* extra clearance for tick markers */
+  }
+
+  /* Ticks still sit outside but with tighter offset so they don't clip viewport */
+  .transfer-portal::before,
+  .transfer-portal::after {
+    width: 12px;
+    height: 12px;
+    opacity: 0.6;
+  }
+  .transfer-portal::before {
+    top: -10px;
+    left: -10px;
+  }
+  .transfer-portal::after {
+    bottom: -10px;
+    right: -10px;
   }
 
   .tx-meta-grid {
