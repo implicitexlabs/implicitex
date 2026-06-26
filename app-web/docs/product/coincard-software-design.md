@@ -2,7 +2,10 @@
 
 **Status:** Design foundation — pre-implementation  
 **Date:** 2026-06-26  
-**Session:** 2:00 AM — direction-setting, not speculative
+
+---
+
+> **The Coin Card is never trying to get your attention. It is simply awake when you decide to give it your attention.**
 
 ---
 
@@ -45,6 +48,27 @@ Coin Card contains three distinct products. Most crypto products build only the 
 This is also the sequence in which trust is earned, not just the sequence in which states are entered. The right to ask for a wallet connection is earned by answering the first two questions first. Skip them and conversion fails — not because the technology is wrong, but because the trust architecture is inverted.
 
 The implementation order in this document follows this sequence deliberately.
+
+---
+
+## The Oscilloscope Law
+
+> **The card responds to observation. It does not solicit it.**
+
+This is the governing design law for every interaction decision in Coin Card. It eliminates entire categories of options before they reach debate:
+
+| Candidate behavior | Solicits or responds? | Decision |
+|---|---|---|
+| Pulsing border | Solicits | Rejected |
+| Animated arrow on hover | Solicits | Rejected |
+| Explanatory copy ("Hover to explore") | Solicits | Rejected |
+| Block field opacity changes on cursor approach | Responds | Permitted |
+| Border contrast increase on hover | Responds | Permitted |
+| Copy appearing after 500ms of sustained attention | Responds | Permitted |
+
+The name comes from the oscilloscope: you approach the instrument, you don't press anything, and it simply appears ready. It does not announce itself. It rewards the decision to look at it.
+
+Any future design proposal that cannot pass this test — *is this soliciting attention or responding to it?* — does not belong in Coin Card.
 
 ---
 
@@ -174,9 +198,19 @@ The transition should be below conscious notice. The user should feel: *oh, this
 
 ### Block animation
 
-Left side of the card. A grid of blocks (approximately 24, arranged asymmetrically).
+**Locked decisions:**
 
-Every few seconds, 2–3 blocks alter opacity:
+```
+Count:              24
+Position:           Upper left quadrant only — asymmetric, not centered
+Update frequency:   3–8 seconds, randomized, never synchronized
+Simultaneous:       1–3 blocks per change
+Transition:         1.5–2.0 seconds per block change
+```
+
+Asymmetric placement is deliberate. Centered or symmetric reads as decoration. Off-center reads as data.
+
+Every change: 1–3 blocks alter opacity values only.
 
 ```
 Before:   █ ░ ▒      After:   ▒ ░ █
@@ -184,7 +218,7 @@ Before:   █ ░ ▒      After:   ▒ ░ █
           ░ ▒ █               ░ █ ▒
 ```
 
-**Rules:**
+**Rules — no exceptions:**
 - No translation
 - No scaling
 - No pulsing
@@ -220,30 +254,61 @@ Note: **COIN CARD** is secondary, not primary. The user needs to understand the 
 
 ## The Hover State
 
-### What should NOT happen
+### Entry timeline
 
-- The card should not immediately expand
-- The user should not be asked to connect a wallet
-- Nothing should be demanded
+**0ms — cursor arrives**
 
-### What should happen
+Nothing expands. Nothing appears. The card acknowledges observation:
 
-The card sharpens. Incrementally. Over ~250ms:
+- Border contrast increases ~15%
+- Block field becomes slightly more active (change frequency edges toward upper range)
+- Background lifts ~2%
+- Typography sharpens slightly
 
-1. Border contrast increases
-2. Blocks briefly brighten
-3. Typography sharpens slightly
-4. A single affordance appears:
+The card noticed. It does not announce this.
+
+**500ms — sustained attention confirmed**
+
+One line fades in. No verb. No instruction. A destination indicator:
 
 ```
-Explore transfer options →
+USDC transfers →
 ```
 
-Not a button. Not a CTA. Just an affordance — a directional signal.
+The card has already said "USDC ACCEPTED HERE." The user knows the subject. The arrow points to more. The user decides whether to follow.
 
-After ~250ms, the card unfolds into the investigation state.
+If "USDC transfers →" proves too spare in testing, the next least-intrusive alternative is:
 
-The cursor itself becomes the invitation. The user chose to approach. The card chose to respond.
+```
+Transfer details →
+```
+
+Try the arrow form first.
+
+**800ms — user has decided to investigate**
+
+The card unfolds into the investigation state.
+
+The cursor is the invitation. The user chose to approach. The card chose to respond.
+
+### Exit — attention withdrawn
+
+The card does not immediately forget it was investigated.
+
+- Collapse to dormant at **1.2× the entry duration** (a slightly slower return than the approach)
+- Block field remains at elevated activity for **8–10 seconds** post-hover, then returns to base range
+- No snap. No abrupt reset.
+
+The slower collapse also serves a practical purpose: if the cursor drifts off accidentally, the user has a brief window to return without losing the investigation state.
+
+### The law applied
+
+Every element of the hover state passes the oscilloscope test:
+
+- Border contrast increase: responds ✓
+- Block activity increase: responds ✓  
+- "USDC transfers →" appearing after 500ms: responds ✓
+- Animated arrow flashing on cursor entry: solicits ✗ — not in Coin Card
 
 ---
 
