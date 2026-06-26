@@ -1307,6 +1307,13 @@ body.portal-active #nav {
   grid-column: 1 / -1;
 }
 
+/* Right column: 02 Network + 03 Verification stacked */
+.mod-col {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
 .mod-tag {
   display: block;
   font-family: var(--font-ui);
