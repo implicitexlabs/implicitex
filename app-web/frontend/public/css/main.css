@@ -1236,6 +1236,19 @@ body.portal-active #nav {
   color: var(--dim);
 }
 
+/* Conversion cue — visible only when portal is collapsed */
+.portal-header-cue {
+  display: none;
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  letter-spacing: 0.10em;
+  color: var(--dim);
+  margin-left: 0.75rem;
+}
+.transfer-portal.is-minimized .portal-header-cue {
+  display: inline;
+}
+
 /* Portal header controls — collapse and close, inside the header bar */
 .portal-header-controls {
   display: flex;

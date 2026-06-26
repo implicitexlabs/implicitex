@@ -2069,12 +2069,28 @@
 
   function restorePortal() {
     if (!els.modules) return;
+    // If portal was mounted minimized (default state), first expansion triggers
+    // full page activation — hero recedes, portal-active asserts.
+    if (!document.body.classList.contains('portal-active')) {
+      if (els.howItWorks) els.howItWorks.setAttribute('hidden', '');
+      document.body.classList.add('portal-active');
+    }
     els.modules.classList.remove('is-minimized');
     if (els.portalMinimizedTray) els.portalMinimizedTray.setAttribute('hidden', '');
     if (els.modulesMinimize) {
       els.modulesMinimize.setAttribute('aria-expanded', 'true');
       els.modulesMinimize.setAttribute('aria-label', 'Collapse transfer portal');
     }
+  }
+
+  // Mount portal visible but collapsed — default page-load state.
+  // howItWorks stays visible; portal-active NOT set until user expands.
+  // Passive wallet reconnect does not auto-expand.
+  function mountPortalMinimized() {
+    if (!els.modules) return;
+    if (els.portalControls) els.portalControls.removeAttribute('hidden');
+    els.modules.removeAttribute('hidden');
+    minimizePortal();
   }
 
   function closePortalWithAnimation() {
@@ -4667,6 +4683,8 @@
   renderPreflight();
   if (window.location.hash === '#transfer') {
     setTimeout(openTransferPortal, 60);
+  } else {
+    mountPortalMinimized();
   }
   window.addEventListener('ix:receipts-changed', function () {
     renderReceiptHistory();
