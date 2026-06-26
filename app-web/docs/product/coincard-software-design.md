@@ -70,6 +70,21 @@ The name comes from the oscilloscope: you approach the instrument, you don't pre
 
 Any future design proposal that cannot pass this test — *is this soliciting attention or responding to it?* — does not belong in Coin Card.
 
+### The two laws
+
+These two laws operate together. Every design decision in Coin Card is governed by one or both.
+
+**Oscilloscope Law**
+> The card responds to observation. It does not solicit it.
+
+**Host Sovereignty Law**
+> The card never interrupts the host experience.
+
+The Oscilloscope Law governs the relationship between the card and the user.
+The Host Sovereignty Law governs the relationship between the card and the page it inhabits.
+
+A feature proposal that passes both laws belongs in Coin Card. A proposal that fails either does not.
+
 ---
 
 ## The iTunes Principle
@@ -154,18 +169,20 @@ These are not UI states in the traditional sense. They are **user intent states*
 
 The card's job in each state is different. The transition between them should feel inevitable, not prompted.
 
-### The core rule
+### The Host Sovereignty Law
 
-**Coin Card never interrupts.**
+> **The card never interrupts the host experience.**
+
+The host page remains sovereign. Coin Card is a guest inside someone else's experience.
 
 - Watching a video: the video keeps playing
 - Reading an article: the page never shifts
 - Listening to a podcast: the audio never stops
-- Hovering Coin Card: the experience expands locally
+- Hovering Coin Card: the experience expands locally, never globally
 
 No navigation. No modal. No redirect. No popup. No wallet prompt until the user is ready.
 
-This is the principle that separates Coin Card from every crypto widget in existence. Crypto widgets say: *Connect your wallet immediately.* Coin Card says: *Before you do anything, let me explain what this is.*
+This law explains every non-interruption decision in Coin Card: why hover expands in place, why the collapse is slow, why the block field stays active after attention is withdrawn, why the wallet button lives outside the iframe. The host content is always primary. Coin Card earns its place by never asserting itself above the experience it inhabits.
 
 ---
 
@@ -180,21 +197,30 @@ Most web components use one of two strategies:
 
 Coin Card attempts a third category: **"Investigate me."**
 
-### Copy rotation
-
-The dormant state rotates between two statements:
+### Copy rotation — locked
 
 ```
-State A:  USDC ACCEPTED HERE
-State B:  DIRECT USDC TRANSFERS
+State A:   USDC ACCEPTED HERE
+State B:   VERIFIED RECIPIENT
 ```
+
+State A answers: *what happens here — location and asset.*
+State B answers: *is this safe — trust and verification.*
+
+No imperative. No verb in State B. "USDC" does not repeat in State B because State A already established it; the user reads them in sequence.
+
+Rejected candidates:
+- `SEND USDC` — imperative, solicits action (oscilloscope law)
+- `TRANSFER WITH USDC` — imperative, solicits action
+- `DIRECT USDC TRANSFERS` — answers *how it works*, which belongs in the investigation state, not the trust object
+- `USDC TRANSFERS AVAILABLE` — "available" is weak; implies passive waiting, not active verification
 
 Timing:
 - 8 seconds visible
 - 1 second dissolve
 - 8 seconds visible
 
-The transition should be below conscious notice. The user should feel: *oh, this thing is alive* — not *I see a rotating banner*.
+The transition should be below conscious notice. The user should feel: *this thing is alive* — not *I see a rotating banner*.
 
 ### Block animation
 
