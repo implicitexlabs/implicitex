@@ -122,7 +122,7 @@
 
   function renderNoCard() {
     setStatus('No card', '');
-    ['cardIdRow','cardRecipientRow','cardChainRow',
+    ['cardIdRow','cardOwnerRow','cardRecipientRow','cardChainRow',
      'cardTokenRow','cardDomainRow','cardRegistryRow'].forEach(hideRow);
     var footer = el('cardVerifyFooter');
     if (footer) footer.hidden = true;
@@ -132,7 +132,7 @@
     setStatus('Invalid card', 'failed');
     showRow('cardIdRow', 'cardIdDisplay', cardId || '(malformed)');
     showRow('cardRegistryRow', 'cardRegistryDisplay', 'Rejected — invalid ID');
-    ['cardRecipientRow','cardChainRow','cardTokenRow','cardDomainRow'].forEach(hideRow);
+    ['cardOwnerRow','cardRecipientRow','cardChainRow','cardTokenRow','cardDomainRow'].forEach(hideRow);
     var footer = el('cardVerifyFooter');
     if (footer) footer.hidden = true;
   }
@@ -140,6 +140,7 @@
   function renderUnverified(card) {
     setStatus('Card detected — not verified', 'unverified');
     showRow('cardIdRow', 'cardIdDisplay', card.cardId);
+    hideRow('cardOwnerRow');
     if (card.recipient) {
       showRow('cardRecipientRow', 'cardRecipientDisplay',
         truncateAddress(card.recipient), card.recipient);
@@ -170,13 +171,22 @@
     setStatus('Card detected — not verified', 'unverified');
     showRow('cardIdRow', 'cardIdDisplay', card.cardId);
     showRow('cardRegistryRow', 'cardRegistryDisplay', 'Record not found');
-    ['cardRecipientRow','cardChainRow','cardTokenRow','cardDomainRow'].forEach(hideRow);
+    ['cardOwnerRow','cardRecipientRow','cardChainRow','cardTokenRow','cardDomainRow'].forEach(hideRow);
     renderVerifyFooter(card.cardId);
   }
 
   function renderVerified(card, manifest) {
     setStatus('Verified', 'verified');
     showRow('cardIdRow', 'cardIdDisplay', manifest.cardId);
+    var owner = manifest.owner;
+    if (owner && owner.name) {
+      var ownerLabel = owner.domain
+        ? owner.name + ' (' + owner.domain + ')'
+        : owner.name;
+      showRow('cardOwnerRow', 'cardOwnerDisplay', ownerLabel);
+    } else {
+      hideRow('cardOwnerRow');
+    }
     var addr = manifest.recipient;
     showRow('cardRecipientRow', 'cardRecipientDisplay',
       truncateAddress(addr), addr);
@@ -199,13 +209,14 @@
     setStatus('Revoked', 'failed');
     showRow('cardIdRow', 'cardIdDisplay', manifest.cardId);
     showRow('cardRegistryRow', 'cardRegistryDisplay', 'Revoked');
-    ['cardRecipientRow','cardChainRow','cardTokenRow','cardDomainRow'].forEach(hideRow);
+    ['cardOwnerRow','cardRecipientRow','cardChainRow','cardTokenRow','cardDomainRow'].forEach(hideRow);
     renderVerifyFooter(manifest.cardId);
   }
 
   function renderMismatch(card, manifest) {
     setStatus('Verification failed', 'failed');
     showRow('cardIdRow', 'cardIdDisplay', card.cardId);
+    hideRow('cardOwnerRow');
     // Show claimed recipient so the sender knows what was in the link
     if (card.recipient) {
       showRow('cardRecipientRow', 'cardRecipientDisplay',
@@ -262,6 +273,12 @@
     }
     if (!manifest.cardId || !manifest.recipient || !manifest.chainId || !manifest.token) {
       return { ok: false, reason: 'missing-required-fields' };
+    }
+    // owner is optional but must be a valid object if present
+    if (manifest.owner !== undefined && manifest.owner !== null) {
+      if (typeof manifest.owner !== 'object' || !manifest.owner.name) {
+        return { ok: false, reason: 'owner-malformed' };
+      }
     }
     return { ok: true };
   }
@@ -352,6 +369,7 @@
       token:              card.token,
       name:               card.name,
       source:             card.source,
+      owner:              (manifest && manifest.owner) || null,
       manifest:           manifest || null,
       verificationStatus: verificationStatus,
       sourceType:         sourceType,
