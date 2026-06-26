@@ -479,6 +479,39 @@ The wallet button is the threshold between observer and participant. That thresh
 
 ---
 
+## Trust Construction Sequence
+
+*Discovered during the `owner` field implementation — 2026-06-26.*
+
+The verification panel row order is not a UI design preference. It is an epistemological sequence. Each row must be established before the next row can be trusted.
+
+| Row | Question answered |
+|---|---|
+| Status | Is this object valid? |
+| Card ID | Which object am I examining? |
+| Issued by | Who is asserting authority? |
+| Recipient | Where will value go? |
+| Chain | On what network? |
+| Token | In what asset? |
+
+Inverting any two rows creates an implicit claim that a later fact can be trusted before an earlier fact has been established.
+
+For example, placing Recipient before Issued by communicates: *"Here is the destination — now let me tell you who claims it's the destination."* That is backwards. The claim cannot be trusted before the authority has been established.
+
+**The constitutional formulation:**
+
+> You cannot trust a destination before you have established who is making the claim about it.
+
+This is not a cryptocurrency design principle. It is how trust construction works in almost every human system: identity → authority → claim → mechanism. The verification panel inherits this sequence from the underlying model, not from visual design taste.
+
+**The UI is not presenting information. The UI is constructing trust.**
+
+Once that framing is clear, the row order stops being a matter of design preference forever. Any future proposal to reorder, collapse, or abbreviate the panel must be evaluated against the trust sequence, not against visual aesthetics.
+
+Note: the `owner` field — `Issued by` — is what makes this sequence complete. Without it, the panel could show a destination but could not establish the authority behind the claim. The schema arrived at the correct row order once `owner` existed. The interface revealed the trust sequence; it did not impose it.
+
+---
+
 ## Verified Payment Identity Object
 
 What the card ultimately presents:
