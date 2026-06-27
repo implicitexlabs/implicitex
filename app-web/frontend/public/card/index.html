@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Coin Card</title>
+  <meta name="robots" content="noindex">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500&family=Orbitron:wght@700&family=Oxanium:wght@500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="card.css">
+</head>
+<body>
+
+<div class="cc-frame" id="ccFrame" data-state="BOOT" role="region" aria-label="Coin Card transfer surface">
+
+  <!-- MANIFEST_LOADING -->
+  <div class="cc-loading" id="ccLoading" aria-live="polite">
+    <span class="cc-loading-text">Checking registry…</span>
+  </div>
+
+  <!-- ERROR / REVOKED -->
+  <div class="cc-error" id="ccError" role="alert">
+    <p class="cc-error-message" id="ccErrorMessage">—</p>
+    <p class="cc-error-sub" id="ccErrorSub"></p>
+  </div>
+
+  <!-- VERIFIED → TRANSFER_INTENT_READY: card surface -->
+  <div class="cc-card" id="ccCard">
+
+    <!-- Header: status + credential -->
+    <div class="cc-header">
+      <span class="cc-header-left">
+        <span class="cc-status-dot" id="ccStatusDot" aria-hidden="true"></span>
+        <span class="cc-status-label" id="ccStatusLabel">—</span>
+      </span>
+      <span class="cc-credential" id="ccCredential"></span>
+    </div>
+
+    <!-- Trust construction sequence — epistemological order -->
+    <div class="cc-trust">
+      <div class="cc-trust-row">
+        <span class="cc-trust-k">ISSUED BY</span>
+        <span class="cc-trust-v" id="ccOwner">—</span>
+      </div>
+      <div class="cc-trust-row">
+        <span class="cc-trust-k">RECIPIENT</span>
+        <span class="cc-trust-v cc-mono" id="ccRecipient" title="">—</span>
+      </div>
+      <div class="cc-trust-row">
+        <span class="cc-trust-k">NETWORK</span>
+        <span class="cc-trust-v" id="ccNetwork">—</span>
+      </div>
+    </div>
+
+    <!-- Amount surface: VERIFIED → TRANSFER_INTENT_READY -->
+    <div class="cc-amount-surface" id="ccAmountSurface">
+
+      <!-- user-input mode: editable amount field -->
+      <div class="cc-amount-row" id="ccAmountInputRow">
+        <label class="cc-amount-label" for="ccAmountInput">AMOUNT</label>
+        <div class="cc-amount-field">
+          <input
+            class="cc-amount-input"
+            id="ccAmountInput"
+            type="number"
+            min="0"
+            step="0.01"
+            placeholder="0.00"
+            autocomplete="off"
+            inputmode="decimal"
+            aria-label="Transfer amount in USDC"
+          >
+          <span class="cc-amount-token" id="ccAmountToken">USDC</span>
+        </div>
+      </div>
+
+      <!-- locked mode: fixed amount display -->
+      <div class="cc-locked-row" id="ccLockedAmountRow">
+        <span class="cc-amount-label">AMOUNT</span>
+        <span class="cc-locked-value" id="ccLockedAmount">—</span>
+      </div>
+
+      <!-- Fee + total — visible when amount is valid -->
+      <div class="cc-fee-rows" id="ccFeeRows">
+        <div class="cc-fee-row">
+          <span class="cc-fee-k">Fee</span>
+          <span class="cc-fee-v" id="ccFeeValue">—</span>
+        </div>
+        <div class="cc-fee-row cc-total-row">
+          <span class="cc-fee-k">Total sent</span>
+          <span class="cc-fee-v cc-total-v" id="ccTotalValue">—</span>
+        </div>
+      </div>
+
+    </div><!-- /.cc-amount-surface -->
+
+    <!-- Action: disabled until TRANSFER_INTENT_READY -->
+    <div class="cc-action">
+      <button class="cc-send-btn" id="ccSendBtn" type="button" disabled aria-label="Transfer USDC with ImplicitEx">
+        Transfer with ImplicitEx →
+      </button>
+    </div>
+
+    <!-- Revoked notice — shown instead of amount surface when revoked -->
+    <div class="cc-revoked-notice" id="ccRevokedNotice">
+      <p class="cc-revoked-text">This Coin Card has been revoked. Do not use it to initiate a transfer.</p>
+    </div>
+
+  </div><!-- /.cc-card -->
+
+  <!-- Footer: always visible once card is loaded -->
+  <div class="cc-footer" id="ccFooter">
+    <span class="cc-mark">&#162;OIN CARD</span>
+    <span class="cc-attr">Powered by ImplicitEx</span>
+  </div>
+
+</div><!-- /.cc-frame -->
+
+<script src="card.js"></script>
+</body>
+</html>

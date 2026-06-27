@@ -1,0 +1,133 @@
+{
+  "$schema": "https://json-schema.org/draft/07/schema#",
+  "title": "Coin Card Manifest",
+  "description": "Signed registry record for an ImplicitEx Coin Card. Defines the canonical recipient, accepted asset, network, and ownership claim for a verified payment identity.",
+  "type": "object",
+  "required": ["schema", "cardId", "status", "owner", "recipient", "chainId", "token", "createdAt"],
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "type": "string",
+      "const": "implicitex.coincard.v1",
+      "description": "Schema identifier. Must be 'implicitex.coincard.v1'."
+    },
+    "cardId": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9_-]{3,80}$",
+      "description": "Unique card identifier. Letters, digits, underscores, hyphens. 3–80 chars. Used as the URL path segment and registry file key."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["active", "revoked"],
+      "description": "'active' = valid for transfer. 'revoked' = card invalid; the card surface must refuse transfer and hide the recipient."
+    },
+    "owner": {
+      "type": "object",
+      "required": ["name", "domain"],
+      "additionalProperties": false,
+      "description": "Authority over this Coin Card. Who controls the payment identity. Distinct from recipient (where funds settle) and displayName (human label).",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Human-readable name of the issuing authority."
+        },
+        "domain": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Domain of the issuing authority. Used for trust display."
+        }
+      }
+    },
+    "displayName": {
+      "type": "string",
+      "description": "Public-facing label shown to senders. May differ from owner.name."
+    },
+    "displayCredential": {
+      "type": "string",
+      "description": "Short credential string shown on the card face (e.g. 'CC IMPLICITEX DEMO AB3919')."
+    },
+    "recipient": {
+      "type": "string",
+      "pattern": "^0x[0-9a-fA-F]{40}$",
+      "description": "Canonical EVM wallet address that receives USDC. The card never becomes a payment surface until this field is verified from the registry."
+    },
+    "chainId": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "EVM chain ID (e.g. 137 = Polygon Mainnet). chainId is authoritative; chainName is informational."
+    },
+    "chainName": {
+      "type": "string",
+      "description": "Human-readable chain name. Informational only."
+    },
+    "token": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Accepted token symbol (e.g. 'USDC')."
+    },
+    "amountMode": {
+      "type": "string",
+      "enum": ["user-input", "locked"],
+      "default": "user-input",
+      "description": "'user-input': sender specifies the amount. 'locked': amount is fixed by the card issuer and cannot be changed."
+    },
+    "lockedAmount": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Fixed transfer amount in token units (e.g. 25.00 = 25 USDC). Required when amountMode is 'locked'."
+    },
+    "sourceDomain": {
+      "type": "string",
+      "description": "Domain where this card is intended to be embedded. Informational in V1."
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of card issuance."
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of last manifest update."
+    },
+    "revokedAt": {
+      "description": "ISO 8601 timestamp of revocation. Null if not revoked.",
+      "oneOf": [
+        { "type": "string", "format": "date-time" },
+        { "type": "null" }
+      ]
+    },
+    "signature": {
+      "type": "object",
+      "description": "Cryptographic signature over the manifest. Not required for V1 static registry. Required for distributed or user-issued cards.",
+      "required": ["algorithm", "value", "signedAt", "signerDomain"],
+      "additionalProperties": false,
+      "properties": {
+        "algorithm": {
+          "type": "string",
+          "description": "Signing algorithm (e.g. 'Ed25519', 'secp256k1')."
+        },
+        "value": {
+          "type": "string",
+          "description": "Base64-encoded signature over the canonical manifest JSON."
+        },
+        "signedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the signature was created."
+        },
+        "signerDomain": {
+          "type": "string",
+          "description": "Domain of the signing authority. Must match owner.domain for V1."
+        }
+      }
+    }
+  },
+  "if": {
+    "properties": { "amountMode": { "const": "locked" } }
+  },
+  "then": {
+    "required": ["lockedAmount"]
+  }
+}
