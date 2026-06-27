@@ -736,6 +736,40 @@
     }
 
 
+    /* ─── PREFLIGHT STATUS ──────────────────────────────────────────
+       Operational copy between totals and action row.
+       One failing gate shown at a time, priority order:
+         no_provider → no_wallet → wrong_network → no_amount
+           → insufficient_balance → ready
+    ─────────────────────────────────────────────────────────────── */
+
+    .cc-preflight-row {
+      padding: 7px 22px;
+      border-top: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .cc-preflight-head {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 7.5px;
+      letter-spacing: 0.11em;
+      text-transform: uppercase;
+      color: rgba(242, 242, 240, 0.36);
+      display: block;
+    }
+
+    .cc-preflight-sub {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 7px;
+      letter-spacing: 0.05em;
+      color: rgba(242, 242, 240, 0.20);
+      display: block;
+      margin-top: 2px;
+    }
+
+    /* READY — amber: verified state condition */
+    .cc-preflight-row--ready .cc-preflight-head { color: #D4A017; }
+
+
     /* ─── VARIANT 1: HORIZONTAL DECAL ────────────────────────────── */
 
     .cc-badge--decal {
@@ -1005,12 +1039,18 @@
 
                 </div>
 
+                <!-- PREFLIGHT STATUS — one failing gate condition at a time -->
+                <div class="cc-preflight-row" id="cc-preflight">
+                  <span class="cc-preflight-head" id="preflight-head">No wallet connected</span>
+                  <span class="cc-preflight-sub"  id="preflight-sub">Connect wallet to continue.</span>
+                </div>
+
                 <div class="cc-action-row">
                   <button class="cc-wallet-btn" id="wallet-btn">
                     Connect Wallet
                   </button>
                   <button class="cc-send-btn" id="send-btn" disabled aria-disabled="true">
-                    Send USDC →
+                    Send wiring pending
                   </button>
                 </div>
 
@@ -1190,30 +1230,156 @@
       updateSendState();
     }
 
-    amountInput.addEventListener('input', updateTotals);
+    amountInput.addEventListener('input', () => { updateTotals(); updatePreflight(); });
 
 
-    // ── Wallet button + Send state (artifact simulation) ──────────────
+    // ── Execution preflight — Slice 1 ────────────────────────────────
+    //
+    // Real wallet connect. Real chain detection. Real USDC balance.
+    // No transfer execution yet — that is Slice 2.
+    //
+    // Gate: manifest VERIFIED
+    //   AND wallet connected
+    //   AND chain === Polygon 137 (0x89)
+    //   AND amount > 0
+    //   AND USDC balance >= amount
+    //
+    // All five must pass before Send enables.
+
+    const POLYGON_CHAIN_HEX = '0x89'; // chainId 137
+    const USDC_CONTRACT = '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359'; // Circle native USDC, Polygon mainnet
 
     const walletBtn = document.getElementById('wallet-btn');
     const sendBtn   = document.getElementById('send-btn');
-    let walletConnected = false;
 
-    function updateSendState() {
-      const hasAmount = (parseFloat(amountInput.value) || 0) > 0;
-      const ready = walletConnected && hasAmount;
-      sendBtn.disabled = !ready;
-      sendBtn.setAttribute('aria-disabled', String(!ready));
+    let connectedAccount = null;
+    let walletChainId    = null;
+    let usdcBalance      = 0;
+
+    // ── Preflight copy map ────────────────────────────────────────────
+
+    const PREFLIGHT_COPY = {
+      no_provider:          { head: 'No wallet detected',        sub: 'Install MetaMask to continue.' },
+      no_wallet:            { head: 'No wallet connected',       sub: 'Connect wallet to continue.' },
+      wallet_pending:       { head: 'Connecting',                sub: 'Approve the connection request.' },
+      wrong_network:        { head: 'Wrong network',             sub: 'Switch to Polygon to continue.' },
+      no_amount:            { head: 'Enter amount',              sub: 'Amount must be greater than 0.' },
+      insufficient_balance: { head: 'Insufficient USDC balance', sub: 'Reduce amount or fund wallet.' },
+      ready:                { head: 'Ready',                     sub: 'Verified destination. Wallet ready. Amount valid.' },
+    };
+
+    const preflightRow  = document.getElementById('cc-preflight');
+    const preflightHead = document.getElementById('preflight-head');
+    const preflightSub  = document.getElementById('preflight-sub');
+
+    function setPreflight(state) {
+      const copy = PREFLIGHT_COPY[state] || PREFLIGHT_COPY.no_wallet;
+      if (preflightHead) preflightHead.textContent = copy.head;
+      if (preflightSub)  preflightSub.textContent  = copy.sub;
+      if (preflightRow) {
+        preflightRow.className = 'cc-preflight-row'
+          + (state === 'ready' ? ' cc-preflight-row--ready' : '');
+      }
+      // Slice 1: Send stays disabled. READY is proved by the preflight row.
+      // Slice 2 wires approval/transfer and enables Send on confirmed READY.
     }
 
-    walletBtn.addEventListener('click', () => {
-      if (!walletConnected) {
-        walletConnected = true;
-        walletBtn.textContent = 'Connected ✓';
-        walletBtn.disabled    = true;
-        updateSendState();
+    function updatePreflight() {
+      if (!window.ethereum)    { setPreflight('no_provider');          return; }
+      if (!connectedAccount)   { setPreflight('no_wallet');            return; }
+      if (walletChainId !== POLYGON_CHAIN_HEX) { setPreflight('wrong_network'); return; }
+      const amt = parseFloat(amountInput.value) || 0;
+      if (amt <= 0)            { setPreflight('no_amount');            return; }
+      if (amt > usdcBalance)   { setPreflight('insufficient_balance'); return; }
+      setPreflight('ready');
+    }
+
+    // ── USDC balance fetch (raw eth_call, no ethers.js dependency) ───
+
+    async function fetchUsdcBalance() {
+      if (!connectedAccount || !window.ethereum) { usdcBalance = 0; return; }
+      try {
+        // balanceOf(address) selector: keccak256 first 4 bytes = 0x70a08231
+        const calldata = '0x70a08231'
+          + connectedAccount.replace('0x', '').toLowerCase().padStart(64, '0');
+        const result = await window.ethereum.request({
+          method: 'eth_call',
+          params: [{ to: USDC_CONTRACT, data: calldata }, 'latest'],
+        });
+        // Result is 32-byte hex uint256; USDC has 6 decimals
+        usdcBalance = (result && result !== '0x')
+          ? Number(BigInt(result)) / 1e6
+          : 0;
+      } catch {
+        usdcBalance = 0;
       }
-    });
+    }
+
+    // ── Wallet connect ────────────────────────────────────────────────
+
+    async function connectWallet() {
+      if (!window.ethereum) { setPreflight('no_provider'); return; }
+
+      setPreflight('wallet_pending');
+      walletBtn.disabled    = true;
+      walletBtn.textContent = 'Connecting…';
+
+      try {
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        connectedAccount = (accounts && accounts[0]) || null;
+
+        if (!connectedAccount) {
+          walletBtn.disabled    = false;
+          walletBtn.textContent = 'Connect Wallet';
+          setPreflight('no_wallet');
+          return;
+        }
+
+        walletBtn.textContent = 'Connected · ' + abbrev(connectedAccount);
+
+        // Chain check
+        const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+        walletChainId = chainId;
+
+        // Balance fetch if on correct chain
+        if (chainId === POLYGON_CHAIN_HEX) await fetchUsdcBalance();
+
+        updatePreflight();
+      } catch (err) {
+        // User rejected connection or other error
+        connectedAccount      = null;
+        walletBtn.disabled    = false;
+        walletBtn.textContent = 'Connect Wallet';
+        setPreflight('no_wallet');
+      }
+    }
+
+    walletBtn.addEventListener('click', connectWallet);
+
+    // ── Chain + account change listeners ─────────────────────────────
+
+    if (window.ethereum) {
+      window.ethereum.on('chainChanged', async chainId => {
+        walletChainId = chainId;
+        usdcBalance   = 0;
+        if (chainId === POLYGON_CHAIN_HEX && connectedAccount) await fetchUsdcBalance();
+        updatePreflight();
+      });
+
+      window.ethereum.on('accountsChanged', async accounts => {
+        connectedAccount = (accounts && accounts[0]) || null;
+        usdcBalance      = 0;
+        if (!connectedAccount) {
+          walletBtn.disabled    = false;
+          walletBtn.textContent = 'Connect Wallet';
+          setPreflight('no_wallet');
+        } else {
+          walletBtn.textContent = 'Connected · ' + abbrev(connectedAccount);
+          if (walletChainId === POLYGON_CHAIN_HEX) await fetchUsdcBalance();
+          updatePreflight();
+        }
+      });
+    }
 
 
     // ── SETTLE state ──────────────────────────────────────────────────
@@ -1249,12 +1415,8 @@
       polyLink.setAttribute('aria-disabled', 'true');
     }
 
-    sendBtn.addEventListener('click', () => {
-      const amt = parseFloat(amountInput.value) || 0;
-      if (!sendBtn.disabled && verifiedManifest && amt > 0) {
-        toSettle(amt, verifiedManifest);
-      }
-    });
+    // sendBtn click → Slice 2 (approval + transfer execution).
+    // SETTLE is unreachable in Slice 1. No handler wired here.
 
 
     // ── Registry fetch ────────────────────────────────────────────────
@@ -1362,6 +1524,9 @@
         applyVerified(m);
       })
       .catch(() => applyDegraded('UNAVAILABLE', 'unavailable'));
+
+    // Initialize preflight display (panel hidden until TRANSACT, but state set)
+    updatePreflight();
 
   </script>
 
