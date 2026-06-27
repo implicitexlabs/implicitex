@@ -878,8 +878,8 @@ body.portal-active #nav {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   border: 1px solid var(--border-2);
   flex-shrink: 0;
