@@ -870,6 +870,15 @@ body.portal-active #nav {
   letter-spacing: -0.02em;
 }
 
+.usdc-icon {
+  display: inline-block;
+  width: 22px;
+  height: 22px;
+  image-rendering: pixelated;
+  vertical-align: -0.15em;
+  margin-left: 0.2em;
+}
+
 .product-intro-copy {
   font-size: var(--size-lg);
   font-weight: var(--weight-regular);
