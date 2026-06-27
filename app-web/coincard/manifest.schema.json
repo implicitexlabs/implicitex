@@ -77,6 +77,23 @@
       "minimum": 0,
       "description": "Fixed transfer amount in token units (e.g. 25.00 = 25 USDC). Required when amountMode is 'locked'."
     },
+    "tokenDecimals": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 18,
+      "description": "Decimal places for the accepted token (e.g. 6 for USDC on Polygon). Used for display precision."
+    },
+    "feeBps": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 10000,
+      "description": "Fee in basis points charged by ImplicitEx on this card (e.g. 250 = 2.5%). Overrides the default chain fee when present."
+    },
+    "allowedParentOrigins": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "description": "Origins permitted to embed this card via iframe. Use ['*'] for open distribution. The card validates postMessage senders against this list."
+    },
     "sourceDomain": {
       "type": "string",
       "description": "Domain where this card is intended to be embedded. Informational in V1."

@@ -39,7 +39,8 @@
     '1':     'Ethereum',
   };
 
-  /* Fee config inline — not imported from chains.js (isolated iframe) */
+  /* Fee config inline — not imported from chains.js (isolated iframe).
+   * manifest.feeBps overrides chain default when present. */
   var CHAIN_FEE_BPS  = { 137: 100, 80002: 100, 1: 30 };
   var CHAIN_MIN_USDC = { 137: 1,   80002: 1,   1: 1  };
   var CHAIN_MAX_USDC = { 137: 250, 80002: 250, 1: 250 };
@@ -88,6 +89,15 @@
   window.addEventListener('message', function (event) {
     var msg = event.data;
     if (!msg || msg.source !== 'coincard-host') return;
+
+    /* Origin check — validate against manifest.allowedParentOrigins.
+     * Runs after manifest is loaded; silently drops early messages. */
+    if (state.manifest) {
+      var allowed = state.manifest.allowedParentOrigins || [];
+      var origin  = event.origin || '';
+      if (!allowed.includes('*') && !allowed.includes(origin)) return;
+    }
+
     /* Reserved for host → iframe messages (theme, context, etc.) */
   });
 
@@ -174,7 +184,10 @@
   }
 
   function applyAmount(amount, chainId) {
-    var bps    = CHAIN_FEE_BPS[chainId] || 100;
+    /* manifest.feeBps takes precedence over chain default */
+    var bps    = (state.manifest && state.manifest.feeBps != null)
+                   ? state.manifest.feeBps
+                   : (CHAIN_FEE_BPS[chainId] || 100);
     var fee    = parseFloat((amount * bps / 10000).toFixed(6));
     var total  = parseFloat((amount + fee).toFixed(6));
     var min    = CHAIN_MIN_USDC[chainId] || 1;
