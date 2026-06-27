@@ -84,9 +84,10 @@
 
        STATE SEQUENCE:  BADGE → INSPECT → TRANSACT → SETTLE
        CSS CLASSES:     .cc-wrapper (base)
-                        .is-open    (panel visible)
-                        .is-transact (transact mode)
+                        .is-open         (panel visible)
+                        .is-transact     (transact mode)
                         .is-details-open (full rows visible in transact)
+                        .is-settle       (proof state — replaces transact controls)
 
        TRANSACT MODEL (locked 2026-06-27):
        — TRANSACT may compress INSPECT, but may not erase it.
@@ -288,8 +289,8 @@
       border-top: 1px solid rgba(255, 255, 255, 0.06);
     }
 
-    /* Hidden in INSPECT, shown in TRANSACT */
-    .cc-wrapper:not(.is-transact) .cc-compact-strip { display: none; }
+    /* Hidden in INSPECT, shown in TRANSACT and SETTLE */
+    .cc-wrapper:not(.is-transact):not(.is-settle) .cc-compact-strip { display: none; }
 
     .cc-compact-credential {
       display: flex;
@@ -358,9 +359,10 @@
       border-top: 1px solid rgba(255, 255, 255, 0.06);
     }
 
-    /* In TRANSACT, full rows are hidden unless details are open */
+    /* In TRANSACT, full rows are hidden unless details are open. In SETTLE, always hidden. */
     .cc-wrapper.is-transact .cc-full-rows { display: none; }
     .cc-wrapper.is-transact.is-details-open .cc-full-rows { display: block; }
+    .cc-wrapper.is-settle .cc-full-rows { display: none; }
 
     /* In TRANSACT+details, no extra top border — compact strip is above */
     .cc-wrapper.is-transact.is-details-open .cc-full-rows {
@@ -474,8 +476,9 @@
       border-color: rgba(255, 255, 255, 0.30);
     }
 
-    /* In TRANSACT+details, the proceed button is redundant — hide it */
+    /* In TRANSACT+details or SETTLE, the proceed button is not shown */
     .cc-wrapper.is-transact .cc-proceed-btn { display: none; }
+    .cc-wrapper.is-settle .cc-proceed-btn { display: none; }
 
 
     /* ─── TRANSACT SECTION ───────────────────────────────────────── */
@@ -631,6 +634,108 @@
     }
 
 
+    /* ─── SETTLE SECTION ───────────────────────────────────────── */
+    /*
+      Proof state. Replaces TRANSACT controls.
+      Compact strip remains — SETTLE confirms what TRANSACT declared.
+      Rule: SETTLE proves. It does not celebrate.
+    */
+
+    /* Hidden until SETTLE state */
+    .cc-wrapper:not(.is-settle) .cc-settle-section { display: none; }
+
+    .cc-settle-section {
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      padding: 14px 22px 16px;
+    }
+
+    .cc-settle-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+
+    .cc-settle-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #D4A017;
+      flex-shrink: 0;
+    }
+
+    .cc-settle-confirmed-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 7.5px;
+      letter-spacing: 0.11em;
+      text-transform: uppercase;
+      color: rgba(242, 242, 240, 0.45);
+    }
+
+    .cc-settle-amount {
+      font-family: 'Oxanium', sans-serif;
+      font-size: 24px;
+      font-weight: 700;
+      color: rgba(242, 242, 240, 0.90);
+      line-height: 1.1;
+      margin-bottom: 4px;
+    }
+
+    .cc-settle-meta {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 8px;
+      letter-spacing: 0.05em;
+      color: rgba(242, 242, 240, 0.32);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .cc-settle-sep {
+      color: rgba(242, 242, 240, 0.16);
+    }
+
+    .cc-settle-detail-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 0;
+      border-top: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .cc-settle-detail-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 7.5px;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+      color: rgba(242, 242, 240, 0.24);
+    }
+
+    .cc-settle-detail-value {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px;
+      color: rgba(242, 242, 240, 0.44);
+    }
+
+    .cc-settle-link-row {
+      margin-top: 10px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .cc-settle-link {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 8px;
+      letter-spacing: 0.07em;
+      color: rgba(242, 242, 240, 0.32);
+      text-decoration: none;
+      transition: color 0.15s;
+      pointer-events: none; /* disabled until real tx hash wired */
+    }
+
+
     /* ─── VARIANT 1: HORIZONTAL DECAL ────────────────────────────── */
 
     .cc-badge--decal {
@@ -729,7 +834,7 @@
 
     <div class="artifact-header">
       <p class="artifact-eyebrow">Coin Card · Lane A · Acceptance Mark Artifact · 2026-06-27</p>
-      <p class="artifact-test">BADGE → INSPECT → TRANSACT. Click the decal to inspect. "Enter amount" to proceed to TRANSACT. "credential details" to re-expand the full rows.</p>
+      <p class="artifact-test">BADGE → INSPECT → TRANSACT → SETTLE. Click the Decal to inspect. "Enter amount →" to proceed. Connect Wallet → enter amount → Send USDC → SETTLE. "credential details" re-expands full rows in TRANSACT.</p>
     </div>
 
 
@@ -839,6 +944,35 @@
 
               </div><!-- /.cc-full-rows -->
 
+              <!-- SETTLE SECTION — proof state, post-send -->
+              <div class="cc-settle-section">
+                <div class="cc-settle-header">
+                  <span class="cc-settle-dot" aria-hidden="true"></span>
+                  <span class="cc-settle-confirmed-label">Transfer Confirmed</span>
+                </div>
+                <div class="cc-settle-amount" id="settle-amount">—</div>
+                <div class="cc-settle-meta">
+                  <span id="settle-recipient">—</span>
+                  <span class="cc-settle-sep" aria-hidden="true">·</span>
+                  <span id="settle-network-token">—</span>
+                  <span class="cc-settle-sep" aria-hidden="true">·</span>
+                  <span id="settle-dest">—</span>
+                </div>
+                <div class="cc-settle-detail-row">
+                  <span class="cc-settle-detail-label">Fee</span>
+                  <span class="cc-settle-detail-value" id="settle-fee">—</span>
+                </div>
+                <div class="cc-settle-detail-row">
+                  <span class="cc-settle-detail-label">Total sent</span>
+                  <span class="cc-settle-detail-value" id="settle-total">—</span>
+                </div>
+                <div class="cc-settle-link-row">
+                  <a class="cc-settle-link" id="settle-polygonscan" href="#" target="_blank" rel="noopener noreferrer">
+                    View on PolygonScan ↗
+                  </a>
+                </div>
+              </div><!-- /.cc-settle-section -->
+
               <!-- TRANSACT SECTION — manifest-gated -->
               <div class="cc-transact-section">
 
@@ -946,8 +1080,8 @@
         Full rows collapse to compact verified-destination strip. "credential details" toggle re-expands them. TRANSACT may compress INSPECT, but may not erase it.
       </div>
       <div class="badge-rule">
-        <strong>Next state</strong>
-        SETTLE: transfer confirmed, amount, recipient, Polygon tx link. The card becomes a proof object, not just a payment surface.
+        <strong>SETTLE</strong>
+        Transfer confirmed · amount · recipient · Polygon tx hash link. The card becomes a proof object. Connect Wallet → amount → Send USDC → SETTLE.
       </div>
     </div>
 
@@ -986,18 +1120,18 @@
 
     function toInspect() {
       wrapper.classList.add('is-open');
-      wrapper.classList.remove('is-transact', 'is-details-open');
+      wrapper.classList.remove('is-transact', 'is-details-open', 'is-settle');
       setPanelOpen(true);
     }
 
     function toTransact() {
       wrapper.classList.add('is-open', 'is-transact');
-      wrapper.classList.remove('is-details-open');
+      wrapper.classList.remove('is-details-open', 'is-settle');
       setPanelOpen(true);
     }
 
     function closeAll() {
-      wrapper.classList.remove('is-open', 'is-transact', 'is-details-open');
+      wrapper.classList.remove('is-open', 'is-transact', 'is-details-open', 'is-settle');
       setPanelOpen(false);
       detailsToggle.setAttribute('aria-expanded', 'false');
     }
@@ -1053,20 +1187,73 @@
         feeDisplay.textContent   = pct + '% · — USDC';
         totalDisplay.textContent = '— USDC';
       }
+      updateSendState();
     }
 
     amountInput.addEventListener('input', updateTotals);
 
 
-    // ── Wallet button (artifact placeholder) ──────────────────────────
+    // ── Wallet button + Send state (artifact simulation) ──────────────
 
     const walletBtn = document.getElementById('wallet-btn');
     const sendBtn   = document.getElementById('send-btn');
+    let walletConnected = false;
+
+    function updateSendState() {
+      const hasAmount = (parseFloat(amountInput.value) || 0) > 0;
+      const ready = walletConnected && hasAmount;
+      sendBtn.disabled = !ready;
+      sendBtn.setAttribute('aria-disabled', String(!ready));
+    }
 
     walletBtn.addEventListener('click', () => {
-      // Artifact: wallet connection not wired. Show state only.
-      walletBtn.textContent = 'Wallet not wired in artifact';
-      walletBtn.disabled    = true;
+      if (!walletConnected) {
+        walletConnected = true;
+        walletBtn.textContent = 'Connected ✓';
+        walletBtn.disabled    = true;
+        updateSendState();
+      }
+    });
+
+
+    // ── SETTLE state ──────────────────────────────────────────────────
+    //
+    // Artifact tx hash — simulates confirmed Polygon transaction.
+    // In production, this hash comes from the chain event after transfer execution.
+
+    // Tx hash placeholder — not a real hash. Real hash wired after wallet execution.
+    const ARTIFACT_TX_LABEL = 'tx-not-wired · artifact';
+
+    function toSettle(amount, manifest) {
+      const fee   = amount * feeBps / 10000;
+      const total = amount + fee;
+
+      wrapper.classList.add('is-open', 'is-settle');
+      wrapper.classList.remove('is-transact', 'is-details-open');
+      setPanelOpen(true);
+
+      const chain = manifest.chainName
+        || CHAIN_NAMES_MAP[String(manifest.chainId)]
+        || 'Chain ' + manifest.chainId;
+
+      $('settle-amount').textContent       = amount.toFixed(2) + ' USDC';
+      $('settle-recipient').textContent    = manifest.displayName || abbrev(manifest.recipient);
+      $('settle-network-token').textContent= chain + ' · ' + (manifest.token || '').toUpperCase();
+      $('settle-dest').textContent         = abbrev(manifest.recipient);
+      $('settle-fee').textContent          = fee.toFixed(2) + ' USDC';
+      $('settle-total').textContent        = total.toFixed(2) + ' USDC';
+
+      const polyLink = $('settle-polygonscan');
+      polyLink.textContent = 'PolygonScan proof link · ' + ARTIFACT_TX_LABEL;
+      polyLink.href        = '#';
+      polyLink.setAttribute('aria-disabled', 'true');
+    }
+
+    sendBtn.addEventListener('click', () => {
+      const amt = parseFloat(amountInput.value) || 0;
+      if (!sendBtn.disabled && verifiedManifest && amt > 0) {
+        toSettle(amt, verifiedManifest);
+      }
     });
 
 
