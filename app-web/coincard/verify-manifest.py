@@ -99,12 +99,15 @@ def validate(manifest_path: Path, schema: dict) -> bool:
         # Unknown chainId is a warning, not an error (forward compatibility)
 
     # 5. amountMode consistency
-    amount_mode    = data.get("amountMode", "user-input")
+    amount_mode    = data.get("amountMode", "sender_input")
     locked_amount  = data.get("lockedAmount")
+    valid_modes    = {"sender_input", "locked", "suggested"}
+    if amount_mode not in valid_modes:
+        errors.append(f"amountMode: {amount_mode!r} is not a valid value; expected one of {sorted(valid_modes)}")
     if amount_mode == "locked" and locked_amount is None:
         errors.append("amountMode is 'locked' but lockedAmount is absent")
-    if amount_mode == "user-input" and locked_amount is not None:
-        errors.append("amountMode is 'user-input' but lockedAmount is set (ambiguous)")
+    if amount_mode in ("sender_input", "suggested") and locked_amount is not None:
+        errors.append(f"amountMode is {amount_mode!r} but lockedAmount is set (ambiguous)")
 
     # 6. allowedParentOrigins entry format
     origins = data.get("allowedParentOrigins", [])

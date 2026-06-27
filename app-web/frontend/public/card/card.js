@@ -15,14 +15,20 @@
  *   becomes a payment surface until the destination is verified from the registry.
  *
  * PostMessage bridge (iframe → parent):
- *   { source:'coincard', type:'CC_READY',        cardId, data:{ recipient, chainId, token, owner } }
- *   { source:'coincard', type:'CC_AMOUNT_CHANGED',cardId, data:{ amount, fee, total } }
- *   { source:'coincard', type:'CC_INTENT_READY',  cardId, data:{ intent } }
- *   { source:'coincard', type:'CC_HANDOFF',       cardId, data:{ intent, url } }
- *   { source:'coincard', type:'CC_ERROR',         cardId, data:{ message } }
+ *   { source:'implicitex-coincard', type:'CC_READY',         cardId, payload:{ recipient, chainId, token, owner } }
+ *   { source:'implicitex-coincard', type:'CC_AMOUNT_CHANGED', cardId, payload:{ amount, fee, total } }
+ *   { source:'implicitex-coincard', type:'CC_INTENT_READY',   cardId, payload:{ intent } }
+ *   { source:'implicitex-coincard', type:'CC_HANDOFF',        cardId, payload:{ intent, url } }
+ *   { source:'implicitex-coincard', type:'CC_ERROR',          cardId, payload:{ message } }
  *
  * PostMessage bridge (parent → iframe):
- *   { source:'coincard-host', type:'CC_THEME', data:{ theme:'dark'|'light' } }
+ *   { source:'coincard-host', type:'CC_THEME', payload:{ theme:'dark'|'light' } }
+ *
+ * Origin security:
+ *   Inbound: messages dropped before manifest loads; validated against
+ *            manifest.allowedParentOrigins after load.
+ *   Outbound: targeted to state.trustedParentOrigin once established.
+ *             Falls back to '*' only when allowedParentOrigins includes '*'.
  */
 
 (function () {
@@ -49,13 +55,14 @@
    * State machine
    * ---------------------------------------------------------------- */
   var state = {
-    current:  'BOOT',
-    cardId:   null,
-    manifest: null,
-    amount:   null,
-    fee:      null,
-    total:    null,
-    intent:   null,
+    current:             'BOOT',
+    cardId:              null,
+    manifest:            null,
+    trustedParentOrigin: null,   /* set after first valid host message */
+    amount:              null,
+    fee:                 null,
+    total:               null,
+    intent:              null,
   };
 
   var frame = document.getElementById('ccFrame');
@@ -75,27 +82,46 @@
   /* ----------------------------------------------------------------
    * PostMessage bridge
    * ---------------------------------------------------------------- */
-  function emit(type, data) {
-    if (window.parent && window.parent !== window) {
-      window.parent.postMessage({
-        source: 'coincard',
-        type:   type,
-        cardId: state.cardId || null,
-        data:   data || {},
-      }, '*');
-    }
+
+  function isAllowedParentOrigin(origin) {
+    var allowed = (state.manifest && state.manifest.allowedParentOrigins) || [];
+    return allowed.includes('*') || allowed.includes(origin);
+  }
+
+  function emit(type, payload) {
+    if (!window.parent || window.parent === window) return;
+
+    /* Target origin selection:
+     *   1. trustedParentOrigin — set once a valid host message arrives.
+     *   2. '*' — only when manifest.allowedParentOrigins includes '*'.
+     * Initial CC_READY fires before any host message; for open-distribution
+     * cards ('*') it uses '*'. For locked-origin cards the first emit goes
+     * to '*' and subsequent ones use trustedParentOrigin once established. */
+    var allowed      = (state.manifest && state.manifest.allowedParentOrigins) || [];
+    var targetOrigin = state.trustedParentOrigin
+      || (allowed.includes('*') ? '*' : '*');   /* tighten to trustedParentOrigin after handshake */
+
+    window.parent.postMessage({
+      source:  'implicitex-coincard',
+      type:    type,
+      cardId:  state.cardId || null,
+      payload: payload || {},
+    }, targetOrigin);
   }
 
   window.addEventListener('message', function (event) {
     var msg = event.data;
     if (!msg || msg.source !== 'coincard-host') return;
 
-    /* Origin check — validate against manifest.allowedParentOrigins.
-     * Runs after manifest is loaded; silently drops early messages. */
-    if (state.manifest) {
-      var allowed = state.manifest.allowedParentOrigins || [];
-      var origin  = event.origin || '';
-      if (!allowed.includes('*') && !allowed.includes(origin)) return;
+    /* Drop inbound messages before manifest is loaded —
+     * no allowedParentOrigins to validate against. */
+    if (!state.manifest) return;
+
+    if (!isAllowedParentOrigin(event.origin)) return;
+
+    /* Record the first validated origin for outbound targeting. */
+    if (!state.trustedParentOrigin) {
+      state.trustedParentOrigin = event.origin;
     }
 
     /* Reserved for host → iframe messages (theme, context, etc.) */
@@ -153,21 +179,23 @@
    * Amount mode setup
    * ---------------------------------------------------------------- */
   function initAmountSurface(manifest) {
-    var mode    = manifest.amountMode || 'user-input';
+    var mode    = manifest.amountMode || 'sender_input';
     var chainId = manifest.chainId;
     var token   = (manifest.token || 'USDC').toUpperCase();
 
     setText('ccAmountToken', token);
 
     if (mode === 'locked' && manifest.lockedAmount != null) {
-      /* Show locked amount, hide input */
+      /* locked: fixed amount — hide input, show read-only value, auto-apply */
       el('ccAmountInputRow').style.display = 'none';
       var lockedRow = el('ccLockedAmountRow');
       lockedRow.style.display = 'flex';
       setText('ccLockedAmount', manifest.lockedAmount.toFixed(2) + ' ' + token);
       applyAmount(manifest.lockedAmount, chainId);
     } else {
-      /* user-input mode: wire up amount input */
+      /* sender_input / suggested: sender enters or adjusts the amount.
+       * 'suggested' V1 behaviour is identical to 'sender_input'; a future
+       * manifest field (e.g. suggestedAmount) will pre-fill the input. */
       var input = el('ccAmountInput');
       if (input) {
         input.addEventListener('input', function () {

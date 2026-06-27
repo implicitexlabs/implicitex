@@ -141,7 +141,7 @@
     /* Safety: only accept messages from the expected Coin Card origin.
      * In production, replace '*' with 'https://implicitex.com'. */
     var msg = event.data;
-    if (!msg || msg.source !== 'coincard') return;
+    if (!msg || msg.source !== 'implicitex-coincard') return;
 
     if (first) {
       log.innerHTML = '';
@@ -164,7 +164,7 @@
       entry.className += ' event-entry--error';
     }
 
-    entry.textContent = '[' + msg.type + '] ' + JSON.stringify(msg.data || {}, null, 0);
+    entry.textContent = '[' + msg.type + '] ' + JSON.stringify(msg.payload || {}, null, 0);
     log.appendChild(entry);
   });
 

@@ -13,7 +13,7 @@
   "chainName": "Polygon",
   "token": "USDC",
   "tokenDecimals": 6,
-  "amountMode": "user-input",
+  "amountMode": "sender_input",
   "feeBps": 250,
   "allowedParentOrigins": ["*"],
   "sourceDomain": "implicitex.com",

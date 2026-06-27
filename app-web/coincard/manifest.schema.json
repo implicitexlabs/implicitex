@@ -68,9 +68,9 @@
     },
     "amountMode": {
       "type": "string",
-      "enum": ["user-input", "locked"],
-      "default": "user-input",
-      "description": "'user-input': sender specifies the amount. 'locked': amount is fixed by the card issuer and cannot be changed."
+      "enum": ["sender_input", "locked", "suggested"],
+      "default": "sender_input",
+      "description": "'sender_input': the USDC sender specifies the amount. 'locked': amount is fixed by the card issuer. 'suggested': a non-binding suggested amount is shown; sender may change it."
     },
     "lockedAmount": {
       "type": "number",
