@@ -66,7 +66,6 @@
       margin-bottom: 1rem;
     }
 
-    /* White surface simulates a real host-page context */
     .variant-stage {
       background: #ffffff;
       padding: 2.5rem 2rem;
@@ -83,27 +82,25 @@
 
     /* ═══════════════════════════════════════════════════════════════
        COIN CARD BADGE SYSTEM
-       Self-contained. All values are explicit.
+       Self-contained. All values explicit.
        Intended to be extracted verbatim into widget CSS.
 
        BADGE STATE CONTRACT (locked 2026-06-27):
-       — Static at rest.
-       — No breathing edge. No copy rotation. No block field.
-       — Card surface does not animate.
-       — One motion only: rare rimlight across the lettermark.
-       — Rimlight = quiet capability signal. Not decoration.
+       — Static at rest. No breathing edge. No copy rotation.
+       — No block field. Card surface does not animate.
+       — One motion: rare rimlight on lettermark only.
 
        INSPECT STATE CONTRACT (2026-06-27):
-       — Reveals credential details only: recipient, status, network,
-         token, destination, issuing authority.
-       — No amount field. No wallet connect. No fee. No send button.
+       — Reveals credential facts from live registry manifest.
+       — No amount. No wallet. No fee. No send controls.
        — BADGE appearance unchanged at rest.
-       — Desktop: hover previews (hint text), click/Enter pins open.
-       — Mobile: tap opens.
-       — Escape + click-outside closes.
+       — VERIFIED: full credential rows from manifest.
+       — REVOKED / UNAVAILABLE: routing rows hidden, status only.
+       — "Credential-safe degraded state" — the card cannot claim
+         verified status if the manifest does not support that claim.
     ═══════════════════════════════════════════════════════════════ */
 
-    /* ─── WRAPPER (Decal-only — surrounds badge + inspect panel) ─── */
+    /* ─── WRAPPER ────────────────────────────────────────────────── */
 
     .cc-wrapper {
       display: flex;
@@ -126,14 +123,13 @@
       cursor: default;
     }
 
-    /* Interactive variant — Decal with INSPECT */
     .cc-badge--interactive {
       cursor: pointer;
-      border-radius: 2px 2px 0 0; /* square bottom when panel exists */
+      border-radius: 2px 2px 0 0;
     }
 
     .cc-wrapper:not(.is-open) .cc-badge--interactive {
-      border-radius: 2px; /* restore full radius when panel is closed */
+      border-radius: 2px;
     }
 
     /* Inset border overlay */
@@ -191,11 +187,7 @@
     }
 
 
-    /* ─── HOVER HINT (Decal only, desktop only) ──────────────────── */
-    /*
-      Appears after 400ms sustained hover. Hidden when panel is open.
-      Not a CTA. A destination indicator. No verb.
-    */
+    /* ─── HOVER HINT ─────────────────────────────────────────────── */
 
     .cc-hint {
       position: absolute;
@@ -216,7 +208,6 @@
       opacity: 1;
     }
 
-    /* Hide hint immediately when panel opens */
     .cc-wrapper.is-open .cc-hint {
       opacity: 0;
       transition: none;
@@ -276,14 +267,6 @@
 
 
     /* ─── INSPECT PANEL ──────────────────────────────────────────── */
-    /*
-      Expands below the badge on open. Same background — one surface.
-      CSS grid 0fr→1fr for smooth height animation (no max-height hack).
-
-      INSPECT discipline:
-      Credential details only. No amount. No wallet. No fee. No send.
-      "Lifting the corner of a credential, not opening a checkout drawer."
-    */
 
     .cc-inspect-panel {
       display: grid;
@@ -296,22 +279,20 @@
     }
 
     .cc-inspect-inner {
-      min-height: 0;     /* required for 0fr grid trick */
+      min-height: 0;
       overflow: hidden;
       background: #0c0c0a;
       border: 1px solid rgba(255, 255, 255, 0.08);
-      border-top: none;  /* seam with badge handled by separator row */
+      border-top: none;
       border-radius: 0 0 2px 2px;
     }
 
-    /* Separator between BADGE surface and INSPECT rows */
     .cc-inspect-sep {
       height: 1px;
       background: rgba(255, 255, 255, 0.06);
-      margin: 0 0 2px;
+      margin-bottom: 2px;
     }
 
-    /* Credential rows */
     .cc-inspect-rows {
       padding: 4px 0 6px;
     }
@@ -322,6 +303,11 @@
       align-items: center;
       padding: 6px 18px 6px 22px;
       gap: 16px;
+    }
+
+    /* Rows are hidden by JS in degraded states */
+    .cc-inspect-row[hidden] {
+      display: none;
     }
 
     .cc-inspect-label {
@@ -342,7 +328,7 @@
       text-align: right;
     }
 
-    /* Technical values — address, network codes */
+    /* Technical values — address */
     .cc-inspect-value--mono {
       font-family: 'IBM Plex Mono', monospace;
       font-size: 9px;
@@ -351,7 +337,7 @@
       color: rgba(242, 242, 240, 0.65);
     }
 
-    /* VERIFIED status — accent dot signals state (locked color usage) */
+    /* VERIFIED state — accent dot (accent = state only, VERIFIED is a state) */
     .cc-inspect-value--verified {
       display: flex;
       align-items: center;
@@ -362,8 +348,35 @@
       width: 5px;
       height: 5px;
       border-radius: 50%;
-      background: #D4A017;   /* accent = state only — VERIFIED is a state */
+      background: #D4A017;
       flex-shrink: 0;
+    }
+
+    /*
+      REVOKED — red. Not amber.
+      Amber = attention. Red = critical.
+      A revoked card means: do not route value here.
+      That is a critical state, not a caution.
+    */
+    .cc-inspect-value--revoked {
+      font-family: 'Oxanium', sans-serif;
+      font-size: 10px;
+      font-weight: 600;
+      color: rgba(210, 70, 55, 0.90);
+      text-align: right;
+    }
+
+    /*
+      UNAVAILABLE — gray. The registry could not be reached or the
+      manifest is invalid. Do not assert VERIFIED, do not assert REVOKED.
+      Show nothing that implies the destination is trustworthy.
+    */
+    .cc-inspect-value--unavailable {
+      font-family: 'Oxanium', sans-serif;
+      font-size: 10px;
+      font-weight: 500;
+      color: rgba(242, 242, 240, 0.30);
+      text-align: right;
     }
 
     /* Footer attribution */
@@ -506,9 +519,6 @@
         width: 100%;
         max-width: 340px;
       }
-      .cc-inspect-inner {
-        /* Panel inherits wrapper width automatically */
-      }
       .variant-stage {
         padding: 1.75rem 1.25rem;
         justify-content: center;
@@ -536,13 +546,8 @@
       <p class="variant-label">Variant 1 — Horizontal Decal · hover or tap to inspect credential</p>
       <div class="variant-stage">
 
-        <!--
-          .cc-wrapper contains the badge AND the inspect panel.
-          is-open class controls the expand state.
-        -->
         <div class="cc-wrapper" id="decal-wrapper">
 
-          <!-- BADGE — interactive, becomes the trigger for INSPECT -->
           <div class="cc-badge cc-badge--decal cc-badge--interactive"
                id="decal-badge"
                role="button"
@@ -557,7 +562,6 @@
               <span class="cc-micro">POLYGON · USDC</span>
             </div>
 
-            <!-- Hover hint — desktop only, hidden when panel is open -->
             <span class="cc-hint" aria-hidden="true">credential details</span>
 
             <div class="cc-mark-wrap" id="mark-decal">
@@ -567,9 +571,8 @@
                    aria-hidden="true">
             </div>
 
-          </div><!-- /.cc-badge -->
+          </div>
 
-          <!-- INSPECT PANEL — expands below the badge -->
           <div class="cc-inspect-panel"
                id="decal-panel"
                role="region"
@@ -578,54 +581,54 @@
 
             <div class="cc-inspect-inner">
 
-              <!-- Separator between badge surface and inspect rows -->
               <div class="cc-inspect-sep" aria-hidden="true"></div>
 
               <div class="cc-inspect-rows">
 
-                <div class="cc-inspect-row">
+                <div class="cc-inspect-row" id="irow-recipient">
                   <span class="cc-inspect-label">Recipient</span>
-                  <span class="cc-inspect-value">ImplicitEx Demo Treasury</span>
+                  <span class="cc-inspect-value" id="ival-recipient">—</span>
                 </div>
 
-                <div class="cc-inspect-row">
+                <div class="cc-inspect-row" id="irow-registry">
                   <span class="cc-inspect-label">Registry</span>
-                  <span class="cc-inspect-value cc-inspect-value--verified">
-                    <span class="cc-verify-dot" aria-hidden="true"></span>
-                    VERIFIED
+                  <span class="cc-inspect-value cc-inspect-value--verified" id="ival-registry">
+                    <span class="cc-verify-dot" id="imark-dot" aria-hidden="true"></span>
+                    <span id="ival-registry-text">—</span>
                   </span>
                 </div>
 
-                <div class="cc-inspect-row">
+                <div class="cc-inspect-row" id="irow-network">
                   <span class="cc-inspect-label">Network</span>
-                  <span class="cc-inspect-value">Polygon</span>
+                  <span class="cc-inspect-value" id="ival-network">—</span>
                 </div>
 
-                <div class="cc-inspect-row">
+                <div class="cc-inspect-row" id="irow-token">
                   <span class="cc-inspect-label">Token</span>
-                  <span class="cc-inspect-value">USDC</span>
+                  <span class="cc-inspect-value" id="ival-token">—</span>
                 </div>
 
-                <div class="cc-inspect-row">
+                <div class="cc-inspect-row" id="irow-destination">
                   <span class="cc-inspect-label">Destination</span>
-                  <span class="cc-inspect-value cc-inspect-value--mono">0xa7cE…3919</span>
+                  <span class="cc-inspect-value cc-inspect-value--mono"
+                        id="ival-destination">—</span>
                 </div>
 
-              </div><!-- /.cc-inspect-rows -->
-
-              <div class="cc-inspect-footer">
-                <span class="cc-inspect-attr">Verified by ImplicitEx</span>
               </div>
 
-            </div><!-- /.cc-inspect-inner -->
-          </div><!-- /.cc-inspect-panel -->
+              <div class="cc-inspect-footer">
+                <span class="cc-inspect-attr" id="iattr-verified"></span>
+              </div>
 
-        </div><!-- /.cc-wrapper -->
-      </div><!-- /.variant-stage -->
-    </div><!-- /.variant -->
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
 
 
-    <!-- ═══ VARIANT 2: COMPACT PAYMENT MARK — STATIC BADGE ═════════ -->
+    <!-- ═══ VARIANT 2: COMPACT — STATIC BADGE ══════════════════════ -->
 
     <div class="variant">
       <p class="variant-label">Variant 2 — Compact Payment Mark · email signature · link-in-bio · small footer</p>
@@ -682,25 +685,23 @@
       </div>
       <div class="badge-rule">
         <strong>INSPECT state contract</strong>
-        Credential details only. Recipient, registry status, network, token, destination. No amount. No wallet. No fee. No send. BADGE appearance unchanged.
+        Credential facts from live manifest only. No amount. No wallet. No fee. No send. Routing rows hidden if manifest cannot be verified.
       </div>
       <div class="badge-rule">
-        <strong>Interaction model</strong>
-        Desktop: hover previews hint, click pins open. Mobile: tap opens. Escape or click-outside closes. Keyboard: Enter/Space to open, Escape to close.
+        <strong>Degraded state rule</strong>
+        REVOKED → red, routing hidden. UNAVAILABLE → gray, routing hidden. The card cannot claim verified status if the manifest does not support that claim.
       </div>
       <div class="badge-rule">
         <strong>Next state</strong>
-        BADGE → INSPECT → TRANSACT → SETTLE. INSPECT proves destination before the user commits intent. TRANSACT fields appear only after deliberate engagement.
+        BADGE → INSPECT → TRANSACT → SETTLE. TRANSACT emerges only from a verified manifest. The badge earns the right to the form.
       </div>
     </div>
 
-  </div><!-- /.artifact-shell -->
+  </div>
 
 
   <script>
-    // ── Rimlight stagger ─────────────────────────────────────────────
-    // Negative delay starts each animation at a random point in its
-    // cycle — avoids synchronized glints across variants on page load.
+    // ── Rimlight stagger ──────────────────────────────────────────────
 
     const marks = [
       { id: 'mark-decal',   period: 13 },
@@ -735,38 +736,172 @@
       panel.setAttribute('aria-hidden', 'true');
     }
 
-    function toggleInspect() {
+    badge.addEventListener('click', () => {
       wrapper.classList.contains('is-open') ? closeInspect() : openInspect();
-    }
-
-    // Click / tap on badge
-    badge.addEventListener('click', toggleInspect);
-
-    // Keyboard: Enter or Space to toggle
-    badge.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        toggleInspect();
-      }
-      if (e.key === 'Escape') {
-        closeInspect();
-      }
     });
 
-    // Escape from anywhere closes
-    document.addEventListener('keydown', (e) => {
+    badge.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); badge.click(); }
+      if (e.key === 'Escape') closeInspect();
+    });
+
+    document.addEventListener('keydown', e => {
       if (e.key === 'Escape' && wrapper.classList.contains('is-open')) {
         closeInspect();
         badge.focus();
       }
     });
 
-    // Click outside wrapper closes
-    document.addEventListener('click', (e) => {
+    document.addEventListener('click', e => {
       if (wrapper.classList.contains('is-open') && !wrapper.contains(e.target)) {
         closeInspect();
       }
     });
+
+
+    // ── Registry fetch ────────────────────────────────────────────────
+    //
+    // Mirrors coincard.js validation contract:
+    //   schema check → status check → required fields → render
+    //
+    // Degraded state rules:
+    //   REVOKED     → red status, all routing rows hidden
+    //   UNAVAILABLE → gray status, all routing rows hidden
+    //
+    // Routing rows (recipient, network, token, destination) are NEVER
+    // shown in a degraded state. The card cannot imply a trusted
+    // destination when the manifest does not confirm it.
+
+    const CARD_ID = 'cc_demo_implicitex';
+
+    const CHAIN_NAMES_MAP = {
+      '137':   'Polygon',
+      '80002': 'Polygon Amoy',
+      '1':     'Ethereum',
+    };
+
+    const $ = id => document.getElementById(id);
+
+    function abbrevAddr(addr) {
+      if (!addr || addr.length < 12) return addr;
+      return addr.slice(0, 6) + '\u2026' + addr.slice(-4);
+    }
+
+    function hideRoutingRows() {
+      ['irow-recipient', 'irow-network', 'irow-token', 'irow-destination']
+        .forEach(id => {
+          const row = $(id);
+          if (row) row.hidden = true;
+        });
+    }
+
+    function applyVerified(manifest) {
+      // Recipient
+      const recipientEl = $('ival-recipient');
+      if (recipientEl) {
+        recipientEl.textContent = manifest.displayName
+          || abbrevAddr(manifest.recipient);
+      }
+
+      // Registry — amber dot + VERIFIED
+      const registryEl  = $('ival-registry');
+      const dotEl        = $('imark-dot');
+      const registryText = $('ival-registry-text');
+      if (registryEl)   registryEl.className = 'cc-inspect-value cc-inspect-value--verified';
+      if (dotEl)         dotEl.style.display = '';
+      if (registryText) registryText.textContent = 'VERIFIED';
+
+      // Network
+      const chainName = manifest.chainName
+        || CHAIN_NAMES_MAP[String(manifest.chainId)]
+        || 'Chain ' + manifest.chainId;
+      const networkEl = $('ival-network');
+      if (networkEl) networkEl.textContent = chainName;
+
+      // Token
+      const tokenEl = $('ival-token');
+      if (tokenEl) tokenEl.textContent = (manifest.token || '').toUpperCase();
+
+      // Destination
+      const destEl = $('ival-destination');
+      if (destEl) {
+        destEl.textContent = abbrevAddr(manifest.recipient);
+        destEl.title       = manifest.recipient;
+      }
+
+      // Show all routing rows
+      ['irow-recipient', 'irow-network', 'irow-token', 'irow-destination']
+        .forEach(id => {
+          const row = $(id);
+          if (row) row.hidden = false;
+        });
+
+      // Footer attribution
+      const attr = $('iattr-verified');
+      if (attr) {
+        const ownerName = manifest.owner && manifest.owner.name
+          ? manifest.owner.name
+          : 'ImplicitEx';
+        attr.textContent = 'Verified by ' + ownerName;
+      }
+    }
+
+    function applyDegraded(statusText, cssClass) {
+      hideRoutingRows();
+
+      const dotEl        = $('imark-dot');
+      const registryEl   = $('ival-registry');
+      const registryText = $('ival-registry-text');
+      const attr         = $('iattr-verified');
+
+      if (dotEl)         dotEl.style.display = 'none';
+      if (registryEl)    registryEl.className = 'cc-inspect-value cc-inspect-value--' + cssClass;
+      if (registryText)  registryText.textContent = statusText;
+      if (attr)          attr.textContent = '';
+    }
+
+    function validateManifest(manifest) {
+      if (manifest.schema !== 'implicitex.coincard.v1') return 'schema-mismatch';
+      if (manifest.cardId !== CARD_ID)                   return 'card-id-mismatch';
+      if (!manifest.recipient || !manifest.chainId || !manifest.token) return 'missing-fields';
+      if (manifest.owner !== undefined && manifest.owner !== null) {
+        if (typeof manifest.owner !== 'object' || !manifest.owner.name) return 'owner-malformed';
+      }
+      return null; // valid
+    }
+
+    fetch('/registry/coincards/' + CARD_ID + '.json')
+      .then(res => {
+        if (res.status === 404) return { _notFound: true };
+        if (!res.ok) throw new Error('http-' + res.status);
+        return res.json();
+      })
+      .then(manifest => {
+        if (manifest._notFound) {
+          applyDegraded('UNAVAILABLE', 'unavailable');
+          return;
+        }
+
+        if (manifest.status === 'revoked') {
+          applyDegraded('REVOKED', 'revoked');
+          return;
+        }
+
+        const validationError = validateManifest(manifest);
+        if (validationError) {
+          applyDegraded('UNAVAILABLE', 'unavailable');
+          return;
+        }
+
+        if (manifest.status !== 'active') {
+          applyDegraded('UNAVAILABLE', 'unavailable');
+          return;
+        }
+
+        applyVerified(manifest);
+      })
+      .catch(() => applyDegraded('UNAVAILABLE', 'unavailable'));
+
   </script>
 
 </body>
