@@ -5552,6 +5552,46 @@ input[type="number"] {
 .cc-card--light .cc-card-chip--ready   { border-color: rgba(0, 0, 0, 0.40); }
 .cc-card--light .cc-card-chip--ready:hover { border-color: rgba(0, 0, 0, 0.65); }
 
+/* ---- Use case ticker ---- */
+.use-case-ticker {
+  overflow: hidden;
+  border-top: 1px solid var(--border);
+  padding: 11px 0;
+}
+
+.use-case-ticker:hover .use-case-track {
+  animation-play-state: paused;
+}
+
+.use-case-track {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  width: max-content;
+  animation: ticker-scroll 90s linear infinite;
+}
+
+@keyframes ticker-scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.ticker-item {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.22);
+  padding: 0 var(--sp-5);
+}
+
+.ticker-sep {
+  display: inline-block;
+  width: 1px;
+  height: 11px;
+  background: var(--border);
+  flex-shrink: 0;
+}
+
 /* ---- Utility ---- */
 .sr-only {
   position: absolute;
