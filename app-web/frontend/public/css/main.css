@@ -5584,6 +5584,10 @@ input[type="number"] {
   text-align: center;
 }
 
+.audience-rail__header .section-kicker {
+  margin-top: 2rem;
+}
+
 .audience-rail__eyebrow {
   margin: 0 0 0.75rem;
   font-family: var(--font-ui);
