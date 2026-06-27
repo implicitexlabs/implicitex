@@ -71,7 +71,7 @@
       background: #ffffff;
       padding: 2.5rem 2rem;
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: flex-start;
       border: 1px solid rgba(0, 0, 0, 0.06);
     }
@@ -92,8 +92,26 @@
        — Card surface does not animate.
        — One motion only: rare rimlight across the lettermark.
        — Rimlight = quiet capability signal. Not decoration.
-         "This is a live payment credential, but it respects the host page."
+
+       INSPECT STATE CONTRACT (2026-06-27):
+       — Reveals credential details only: recipient, status, network,
+         token, destination, issuing authority.
+       — No amount field. No wallet connect. No fee. No send button.
+       — BADGE appearance unchanged at rest.
+       — Desktop: hover previews (hint text), click/Enter pins open.
+       — Mobile: tap opens.
+       — Escape + click-outside closes.
     ═══════════════════════════════════════════════════════════════ */
+
+    /* ─── WRAPPER (Decal-only — surrounds badge + inspect panel) ─── */
+
+    .cc-wrapper {
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      width: fit-content;
+    }
+
 
     /* ─── SHARED BADGE BASE ──────────────────────────────────────── */
 
@@ -106,7 +124,16 @@
       align-items: center;
       flex-shrink: 0;
       cursor: default;
-      /* Inset border via ::before — no layout shift on hover */
+    }
+
+    /* Interactive variant — Decal with INSPECT */
+    .cc-badge--interactive {
+      cursor: pointer;
+      border-radius: 2px 2px 0 0; /* square bottom when panel exists */
+    }
+
+    .cc-wrapper:not(.is-open) .cc-badge--interactive {
+      border-radius: 2px; /* restore full radius when panel is closed */
     }
 
     /* Inset border overlay */
@@ -115,14 +142,20 @@
       position: absolute;
       inset: 0;
       border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 2px;
+      border-radius: inherit;
       pointer-events: none;
       transition: border-color 0.22s ease;
       z-index: 3;
     }
 
-    .cc-badge:hover::before {
+    .cc-badge:hover::before,
+    .cc-badge:focus-visible::before {
       border-color: rgba(255, 255, 255, 0.20);
+    }
+
+    .cc-badge:focus-visible {
+      outline: 2px solid rgba(255, 255, 255, 0.40);
+      outline-offset: 2px;
     }
 
 
@@ -158,22 +191,46 @@
     }
 
 
-    /* ─── LETTERMARK ─────────────────────────────────────────────── */
+    /* ─── HOVER HINT (Decal only, desktop only) ──────────────────── */
     /*
-      Positioned at the right edge, sized beyond the card boundary.
-      The card's overflow:hidden crops it.
-
-      This is authority architecture:
-      The mark is not a logo sitting politely inside the frame.
-      It presses into the boundary — it belongs to a larger system.
+      Appears after 400ms sustained hover. Hidden when panel is open.
+      Not a CTA. A destination indicator. No verb.
     */
+
+    .cc-hint {
+      position: absolute;
+      bottom: 9px;
+      left: 22px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 7.5px;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+      color: rgba(242, 242, 240, 0.24);
+      opacity: 0;
+      pointer-events: none;
+      z-index: 2;
+      transition: opacity 0.18s ease 0.4s;
+    }
+
+    .cc-badge--interactive:hover .cc-hint {
+      opacity: 1;
+    }
+
+    /* Hide hint immediately when panel opens */
+    .cc-wrapper.is-open .cc-hint {
+      opacity: 0;
+      transition: none;
+    }
+
+
+    /* ─── LETTERMARK ─────────────────────────────────────────────── */
 
     .cc-mark-wrap {
       position: absolute;
       right: 0;
       top: 50%;
       transform: translateY(-50%);
-      overflow: hidden;   /* clips the rimlight to the mark area */
+      overflow: hidden;
       z-index: 1;
       flex-shrink: 0;
     }
@@ -184,21 +241,6 @@
 
 
     /* ─── RIMLIGHT CAPABILITY SIGNAL ─────────────────────────────── */
-    /*
-      A rare, low-opacity sliver of light crawling across the face
-      of the lettermark. Signals liveness without advertising it.
-
-      Rules:
-      — Lettermark only. Card surface stays still.
-      — No position shift, scale, bounce, pulse, glow, or bloom.
-      — Opacity restrained. Reads as a glint, not a flash.
-      — Fires every 10–14s (period set per variant in JS).
-      — Duration ~800–1000ms at the set periods.
-      — Disabled under prefers-reduced-motion.
-      — Hover makes it slightly more legible, still restrained.
-
-      "quiet capability signal" — locked 2026-06-27
-    */
 
     .cc-mark-wrap::after {
       content: '';
@@ -223,32 +265,126 @@
         animation: cc-rimlight var(--rimlight-period, 12s) ease-in-out infinite;
         animation-delay: var(--rimlight-delay, -4s);
       }
-
-      /* On hover, rimlight becomes fractionally more visible */
-      .cc-badge:hover .cc-mark-wrap::after {
-        --rimlight-opacity-boost: 0.06;
-      }
     }
 
-    /*
-      Sweep window: 87–95% of total period.
-      At 12s: 1.04s sweep. At 13s: 1.04s. At 11s: 0.88s.
-      All within the 700–1200ms spec.
-    */
     @keyframes cc-rimlight {
-      0%,  86%  { transform: translateX(-200%); opacity: 0;   }
-      88%        { transform: translateX(-200%); opacity: 1;   }
-      95%        { transform: translateX(250%);  opacity: 1;   }
-      97%, 100%  { transform: translateX(250%);  opacity: 0;   }
+      0%,  86%  { transform: translateX(-200%); opacity: 0; }
+      88%        { transform: translateX(-200%); opacity: 1; }
+      95%        { transform: translateX(250%);  opacity: 1; }
+      97%, 100%  { transform: translateX(250%);  opacity: 0; }
+    }
+
+
+    /* ─── INSPECT PANEL ──────────────────────────────────────────── */
+    /*
+      Expands below the badge on open. Same background — one surface.
+      CSS grid 0fr→1fr for smooth height animation (no max-height hack).
+
+      INSPECT discipline:
+      Credential details only. No amount. No wallet. No fee. No send.
+      "Lifting the corner of a credential, not opening a checkout drawer."
+    */
+
+    .cc-inspect-panel {
+      display: grid;
+      grid-template-rows: 0fr;
+      transition: grid-template-rows 0.24s ease;
+    }
+
+    .cc-wrapper.is-open .cc-inspect-panel {
+      grid-template-rows: 1fr;
+    }
+
+    .cc-inspect-inner {
+      min-height: 0;     /* required for 0fr grid trick */
+      overflow: hidden;
+      background: #0c0c0a;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-top: none;  /* seam with badge handled by separator row */
+      border-radius: 0 0 2px 2px;
+    }
+
+    /* Separator between BADGE surface and INSPECT rows */
+    .cc-inspect-sep {
+      height: 1px;
+      background: rgba(255, 255, 255, 0.06);
+      margin: 0 0 2px;
+    }
+
+    /* Credential rows */
+    .cc-inspect-rows {
+      padding: 4px 0 6px;
+    }
+
+    .cc-inspect-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 18px 6px 22px;
+      gap: 16px;
+    }
+
+    .cc-inspect-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 7.5px;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+      color: rgba(242, 242, 240, 0.28);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .cc-inspect-value {
+      font-family: 'Oxanium', sans-serif;
+      font-size: 10px;
+      font-weight: 600;
+      color: rgba(242, 242, 240, 0.80);
+      text-align: right;
+    }
+
+    /* Technical values — address, network codes */
+    .cc-inspect-value--mono {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px;
+      font-weight: 400;
+      letter-spacing: 0.04em;
+      color: rgba(242, 242, 240, 0.65);
+    }
+
+    /* VERIFIED status — accent dot signals state (locked color usage) */
+    .cc-inspect-value--verified {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .cc-verify-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #D4A017;   /* accent = state only — VERIFIED is a state */
+      flex-shrink: 0;
+    }
+
+    /* Footer attribution */
+    .cc-inspect-footer {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding: 6px 18px 10px 22px;
+      border-top: 1px solid rgba(255, 255, 255, 0.04);
+      margin-top: 2px;
+    }
+
+    .cc-inspect-attr {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 7.5px;
+      letter-spacing: 0.10em;
+      color: rgba(242, 242, 240, 0.18);
     }
 
 
     /* ─── VARIANT 1: HORIZONTAL DECAL ────────────────────────────── */
-    /*
-      Long acceptance bar. Footer, invoice, payment page, website header.
-      The mark overflows the card height top and bottom — and right edge.
-      Lettermark is authority, not logo.
-    */
 
     .cc-badge--decal {
       width: 460px;
@@ -264,8 +400,8 @@
 
     .cc-badge--decal .cc-mark-wrap {
       width:  88px;
-      height: 88px;   /* 16px taller than card — crops top + bottom */
-      right: -18px;   /* 18px past card edge — crops right */
+      height: 88px;
+      right: -18px;
     }
 
     .cc-badge--decal .cc-mark-img {
@@ -276,10 +412,6 @@
 
 
     /* ─── VARIANT 2: COMPACT PAYMENT MARK ────────────────────────── */
-    /*
-      Invoice corner, email signature, link-in-bio, small footer badge.
-      Same message, tighter proportions. Must read at a glance.
-    */
 
     .cc-badge--compact {
       width: 216px;
@@ -307,11 +439,6 @@
 
 
     /* ─── VARIANT 3: FEATURE CARD ────────────────────────────────── */
-    /*
-      Landing page, embedded merchant section, editorial placement.
-      Lettermark dominates the right half — not a logo, an authority object.
-      More breathing room. More premium feel.
-    */
 
     .cc-badge--feature {
       width: 380px;
@@ -332,17 +459,17 @@
     .cc-badge--feature .cc-mark-wrap {
       width:  196px;
       height: 196px;
-      right: -52px;    /* deeply cropped — mark is dominant, not decorative */
+      right: -52px;
     }
 
     .cc-badge--feature .cc-mark-img {
       width:  196px;
       height: 196px;
-      opacity: 0.60;   /* slightly subdued — at this size, full opacity is too dense */
+      opacity: 0.60;
     }
 
 
-    /* ─── BADGE STATE REFERENCE ──────────────────────────────────── */
+    /* ─── REFERENCE BLOCK ────────────────────────────────────────── */
 
     .badge-rules {
       margin-top: 3.5rem;
@@ -373,10 +500,14 @@
     /* ─── RESPONSIVE ─────────────────────────────────────────────── */
 
     @media (max-width: 560px) {
+      .cc-wrapper,
       .cc-badge--decal,
       .cc-badge--feature {
         width: 100%;
         max-width: 340px;
+      }
+      .cc-inspect-inner {
+        /* Panel inherits wrapper width automatically */
       }
       .variant-stage {
         padding: 1.75rem 1.25rem;
@@ -399,31 +530,102 @@
     </div>
 
 
-    <!-- ═══ VARIANT 1: HORIZONTAL DECAL ════════════════════════════ -->
+    <!-- ═══ VARIANT 1: HORIZONTAL DECAL — BADGE + INSPECT ══════════ -->
 
     <div class="variant">
-      <p class="variant-label">Variant 1 — Horizontal Decal · footer · payment page · invoice</p>
+      <p class="variant-label">Variant 1 — Horizontal Decal · hover or tap to inspect credential</p>
       <div class="variant-stage">
-        <div class="cc-badge cc-badge--decal"
-             role="img"
-             aria-label="USDC accepted here. Verified by ImplicitEx on Polygon.">
-          <div class="cc-copy" aria-hidden="true">
-            <span class="cc-primary">USDC accepted here</span>
-            <span class="cc-secondary">Verified by ImplicitEx</span>
-            <span class="cc-micro">POLYGON · USDC</span>
-          </div>
-          <div class="cc-mark-wrap" id="mark-decal">
-            <img class="cc-mark-img"
-                 src="/components/images/lettermark-white.svg"
-                 alt=""
-                 aria-hidden="true">
-          </div>
-        </div>
-      </div>
-    </div>
+
+        <!--
+          .cc-wrapper contains the badge AND the inspect panel.
+          is-open class controls the expand state.
+        -->
+        <div class="cc-wrapper" id="decal-wrapper">
+
+          <!-- BADGE — interactive, becomes the trigger for INSPECT -->
+          <div class="cc-badge cc-badge--decal cc-badge--interactive"
+               id="decal-badge"
+               role="button"
+               tabindex="0"
+               aria-expanded="false"
+               aria-controls="decal-panel"
+               aria-label="USDC payment credential — activate to inspect">
+
+            <div class="cc-copy" aria-hidden="true">
+              <span class="cc-primary">USDC accepted here</span>
+              <span class="cc-secondary">Verified by ImplicitEx</span>
+              <span class="cc-micro">POLYGON · USDC</span>
+            </div>
+
+            <!-- Hover hint — desktop only, hidden when panel is open -->
+            <span class="cc-hint" aria-hidden="true">credential details</span>
+
+            <div class="cc-mark-wrap" id="mark-decal">
+              <img class="cc-mark-img"
+                   src="/components/images/lettermark-white.svg"
+                   alt=""
+                   aria-hidden="true">
+            </div>
+
+          </div><!-- /.cc-badge -->
+
+          <!-- INSPECT PANEL — expands below the badge -->
+          <div class="cc-inspect-panel"
+               id="decal-panel"
+               role="region"
+               aria-label="Payment credential details"
+               aria-hidden="true">
+
+            <div class="cc-inspect-inner">
+
+              <!-- Separator between badge surface and inspect rows -->
+              <div class="cc-inspect-sep" aria-hidden="true"></div>
+
+              <div class="cc-inspect-rows">
+
+                <div class="cc-inspect-row">
+                  <span class="cc-inspect-label">Recipient</span>
+                  <span class="cc-inspect-value">ImplicitEx Demo Treasury</span>
+                </div>
+
+                <div class="cc-inspect-row">
+                  <span class="cc-inspect-label">Registry</span>
+                  <span class="cc-inspect-value cc-inspect-value--verified">
+                    <span class="cc-verify-dot" aria-hidden="true"></span>
+                    VERIFIED
+                  </span>
+                </div>
+
+                <div class="cc-inspect-row">
+                  <span class="cc-inspect-label">Network</span>
+                  <span class="cc-inspect-value">Polygon</span>
+                </div>
+
+                <div class="cc-inspect-row">
+                  <span class="cc-inspect-label">Token</span>
+                  <span class="cc-inspect-value">USDC</span>
+                </div>
+
+                <div class="cc-inspect-row">
+                  <span class="cc-inspect-label">Destination</span>
+                  <span class="cc-inspect-value cc-inspect-value--mono">0xa7cE…3919</span>
+                </div>
+
+              </div><!-- /.cc-inspect-rows -->
+
+              <div class="cc-inspect-footer">
+                <span class="cc-inspect-attr">Verified by ImplicitEx</span>
+              </div>
+
+            </div><!-- /.cc-inspect-inner -->
+          </div><!-- /.cc-inspect-panel -->
+
+        </div><!-- /.cc-wrapper -->
+      </div><!-- /.variant-stage -->
+    </div><!-- /.variant -->
 
 
-    <!-- ═══ VARIANT 2: COMPACT PAYMENT MARK ════════════════════════ -->
+    <!-- ═══ VARIANT 2: COMPACT PAYMENT MARK — STATIC BADGE ═════════ -->
 
     <div class="variant">
       <p class="variant-label">Variant 2 — Compact Payment Mark · email signature · link-in-bio · small footer</p>
@@ -447,7 +649,7 @@
     </div>
 
 
-    <!-- ═══ VARIANT 3: FEATURE CARD ════════════════════════════════ -->
+    <!-- ═══ VARIANT 3: FEATURE CARD — STATIC BADGE ═════════════════ -->
 
     <div class="variant">
       <p class="variant-label">Variant 3 — Feature Card · landing page · embedded merchant section</p>
@@ -471,36 +673,35 @@
     </div>
 
 
-    <!-- ═══ BADGE STATE RULES ═══════════════════════════════════════ -->
+    <!-- ═══ STATE REFERENCE ══════════════════════════════════════════ -->
 
     <div class="badge-rules">
       <div class="badge-rule">
         <strong>BADGE state contract</strong>
-        Static at rest. No breathing edge. No copy rotation. No block field. No border pulse. Card surface does not animate.
+        Static at rest. No breathing edge. No copy rotation. No block field. Card surface does not animate. Rimlight on lettermark only.
       </div>
       <div class="badge-rule">
-        <strong>Quiet capability signal</strong>
-        Rare rimlight sweeps across the lettermark only. ~900ms. Every 10–14s. Low opacity. Disabled under prefers-reduced-motion. The card whispers that it is alive; it does not announce it.
+        <strong>INSPECT state contract</strong>
+        Credential details only. Recipient, registry status, network, token, destination. No amount. No wallet. No fee. No send. BADGE appearance unchanged.
       </div>
       <div class="badge-rule">
-        <strong>Design test</strong>
-        Without hover, without reading animation — does this clearly say "this business accepts USDC through ImplicitEx"?
+        <strong>Interaction model</strong>
+        Desktop: hover previews hint, click pins open. Mobile: tap opens. Escape or click-outside closes. Keyboard: Enter/Space to open, Escape to close.
       </div>
       <div class="badge-rule">
         <strong>Next state</strong>
-        BADGE → INSPECT → TRANSACT → SETTLE. Inspection reveals trust details, not payment fields. Transaction fields appear only after deliberate engagement. The badge earns the right to the form.
+        BADGE → INSPECT → TRANSACT → SETTLE. INSPECT proves destination before the user commits intent. TRANSACT fields appear only after deliberate engagement.
       </div>
     </div>
 
-  </div>
+  </div><!-- /.artifact-shell -->
 
 
   <script>
-    /*
-      Stagger rimlight animation delays so variants don't fire together.
-      Negative delay starts each animation at a random point in its cycle
-      — avoids a synchronized flash on page load.
-    */
+    // ── Rimlight stagger ─────────────────────────────────────────────
+    // Negative delay starts each animation at a random point in its
+    // cycle — avoids synchronized glints across variants on page load.
+
     const marks = [
       { id: 'mark-decal',   period: 13 },
       { id: 'mark-compact', period: 11 },
@@ -513,6 +714,58 @@
       const delay = -(Math.random() * period).toFixed(2);
       el.style.setProperty('--rimlight-period', period + 's');
       el.style.setProperty('--rimlight-delay',  delay  + 's');
+    });
+
+
+    // ── INSPECT open/close ────────────────────────────────────────────
+
+    const wrapper = document.getElementById('decal-wrapper');
+    const badge   = document.getElementById('decal-badge');
+    const panel   = document.getElementById('decal-panel');
+
+    function openInspect() {
+      wrapper.classList.add('is-open');
+      badge.setAttribute('aria-expanded', 'true');
+      panel.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeInspect() {
+      wrapper.classList.remove('is-open');
+      badge.setAttribute('aria-expanded', 'false');
+      panel.setAttribute('aria-hidden', 'true');
+    }
+
+    function toggleInspect() {
+      wrapper.classList.contains('is-open') ? closeInspect() : openInspect();
+    }
+
+    // Click / tap on badge
+    badge.addEventListener('click', toggleInspect);
+
+    // Keyboard: Enter or Space to toggle
+    badge.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        toggleInspect();
+      }
+      if (e.key === 'Escape') {
+        closeInspect();
+      }
+    });
+
+    // Escape from anywhere closes
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && wrapper.classList.contains('is-open')) {
+        closeInspect();
+        badge.focus();
+      }
+    });
+
+    // Click outside wrapper closes
+    document.addEventListener('click', (e) => {
+      if (wrapper.classList.contains('is-open') && !wrapper.contains(e.target)) {
+        closeInspect();
+      }
     });
   </script>
 
