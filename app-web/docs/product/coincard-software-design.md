@@ -13,6 +13,22 @@
 
 ---
 
+## What Makes a Principle Constitutional
+
+A constitutional principle is not invented. It is discovered.
+
+The test: **Was this principle chosen because we liked it, or did it emerge because the underlying reality was modeled correctly?**
+
+If a principle was chosen, it is a preference. It can be revised when taste changes.
+
+If a principle was discovered — if it appeared once the model became complete, and it was true before we named it — it is constitutional. It can only be violated, not revised.
+
+The principles in this document are constitutional. They survived every design iteration, every prototype, every implementation discovery. They did not emerge from deliberation about aesthetics. They emerged because once the object was understood correctly, certain arrangements became necessary and others became impossible.
+
+The visible test: a constitutional principle explains why its alternative is not merely worse — it explains why the alternative is a different kind of thing.
+
+---
+
 ## The Thesis
 
 Coin Card is not a widget.
@@ -506,9 +522,35 @@ This is not a cryptocurrency design principle. It is how trust construction work
 
 **The UI is not presenting information. The UI is constructing trust.**
 
-Once that framing is clear, the row order stops being a matter of design preference forever. Any future proposal to reorder, collapse, or abbreviate the panel must be evaluated against the trust sequence, not against visual aesthetics.
+The panel rows are not a layout. They are the visible projection of the underlying trust graph:
 
-Note: the `owner` field — `Issued by` — is what makes this sequence complete. Without it, the panel could show a destination but could not establish the authority behind the claim. The schema arrived at the correct row order once `owner` existed. The interface revealed the trust sequence; it did not impose it.
+```
+Validity
+    ↓
+Identity of object
+    ↓
+Authority over object
+    ↓
+Claimed destination
+    ↓
+Execution environment
+    ↓
+Asset transferred
+```
+
+This is why:
+- `Recipient` cannot move upward. The destination cannot be trusted before the authority is established.
+- `Issued by` cannot be collapsed. Removing it severs the authority node from the graph.
+- `Status` cannot be hidden. Validity is the precondition for everything below it.
+- `Chain` and `Token` are not interchangeable. The execution environment precedes the asset specification.
+
+These are not layout constraints. They are constraints on what constitutes a valid trust proof. A reordered panel is not an alternative design — it is a malformed proof.
+
+The `owner` field is what made the sequence complete. Without it, the panel could show a destination but could not establish the authority behind the claim. Once `owner` existed, the correct order revealed itself. Nobody placed `Issued by` above `Recipient` because it looked better. The model became complete, and the sequence emerged.
+
+**The interface revealed the trust sequence; it did not impose it.**
+
+That is how you know the sequence is constitutional.
 
 ---
 
