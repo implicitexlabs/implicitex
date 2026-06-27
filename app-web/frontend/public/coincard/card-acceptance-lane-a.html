@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Coin Card — Lane A Acceptance Mark Artifact</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500&family=Oxanium:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+
+    /* ---- Reset ---- */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ---- Artifact shell — light host-page simulation ---- */
+    body {
+      background: #f0f0ee;
+      color: #1a1a18;
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      line-height: 1.7;
+      min-height: 100vh;
+    }
+
+    .artifact-shell {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 4rem 2rem 7rem;
+    }
+
+    .artifact-header {
+      margin-bottom: 4rem;
+      padding-bottom: 1.25rem;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.10);
+    }
+
+    .artifact-eyebrow {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: rgba(0, 0, 0, 0.28);
+      margin-bottom: 0.75rem;
+    }
+
+    .artifact-test {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11.5px;
+      color: rgba(0, 0, 0, 0.48);
+      line-height: 1.6;
+      font-style: italic;
+      max-width: 520px;
+    }
+
+    /* ---- Variant sections ---- */
+    .variant {
+      margin-bottom: 3.5rem;
+    }
+
+    .variant-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 8.5px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: rgba(0, 0, 0, 0.24);
+      margin-bottom: 1rem;
+    }
+
+    /* White surface simulates a real host-page context */
+    .variant-stage {
+      background: #ffffff;
+      padding: 2.5rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      border: 1px solid rgba(0, 0, 0, 0.06);
+    }
+
+    .variant-stage--center {
+      justify-content: center;
+    }
+
+
+    /* ═══════════════════════════════════════════════════════════════
+       COIN CARD BADGE SYSTEM
+       Self-contained. All values are explicit.
+       Intended to be extracted verbatim into widget CSS.
+
+       BADGE STATE CONTRACT (locked 2026-06-27):
+       — Static at rest.
+       — No breathing edge. No copy rotation. No block field.
+       — Card surface does not animate.
+       — One motion only: rare rimlight across the lettermark.
+       — Rimlight = quiet capability signal. Not decoration.
+         "This is a live payment credential, but it respects the host page."
+    ═══════════════════════════════════════════════════════════════ */
+
+    /* ─── SHARED BADGE BASE ──────────────────────────────────────── */
+
+    .cc-badge {
+      position: relative;
+      background: #0c0c0a;
+      overflow: hidden;
+      border-radius: 2px;
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+      cursor: default;
+      /* Inset border via ::before — no layout shift on hover */
+    }
+
+    /* Inset border overlay */
+    .cc-badge::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 2px;
+      pointer-events: none;
+      transition: border-color 0.22s ease;
+      z-index: 3;
+    }
+
+    .cc-badge:hover::before {
+      border-color: rgba(255, 255, 255, 0.20);
+    }
+
+
+    /* ─── COPY BLOCK ─────────────────────────────────────────────── */
+
+    .cc-copy {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .cc-primary {
+      font-family: 'Oxanium', sans-serif;
+      font-weight: 600;
+      color: rgba(242, 242, 240, 0.92);
+      line-height: 1.2;
+    }
+
+    .cc-secondary {
+      font-family: 'Oxanium', sans-serif;
+      font-weight: 500;
+      color: rgba(242, 242, 240, 0.36);
+      line-height: 1;
+    }
+
+    .cc-micro {
+      font-family: 'IBM Plex Mono', monospace;
+      font-weight: 400;
+      color: rgba(242, 242, 240, 0.20);
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+    }
+
+
+    /* ─── LETTERMARK ─────────────────────────────────────────────── */
+    /*
+      Positioned at the right edge, sized beyond the card boundary.
+      The card's overflow:hidden crops it.
+
+      This is authority architecture:
+      The mark is not a logo sitting politely inside the frame.
+      It presses into the boundary — it belongs to a larger system.
+    */
+
+    .cc-mark-wrap {
+      position: absolute;
+      right: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      overflow: hidden;   /* clips the rimlight to the mark area */
+      z-index: 1;
+      flex-shrink: 0;
+    }
+
+    .cc-mark-img {
+      display: block;
+    }
+
+
+    /* ─── RIMLIGHT CAPABILITY SIGNAL ─────────────────────────────── */
+    /*
+      A rare, low-opacity sliver of light crawling across the face
+      of the lettermark. Signals liveness without advertising it.
+
+      Rules:
+      — Lettermark only. Card surface stays still.
+      — No position shift, scale, bounce, pulse, glow, or bloom.
+      — Opacity restrained. Reads as a glint, not a flash.
+      — Fires every 10–14s (period set per variant in JS).
+      — Duration ~800–1000ms at the set periods.
+      — Disabled under prefers-reduced-motion.
+      — Hover makes it slightly more legible, still restrained.
+
+      "quiet capability signal" — locked 2026-06-27
+    */
+
+    .cc-mark-wrap::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 30%;
+      height: 100%;
+      background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.16) 50%,
+        transparent 100%
+      );
+      transform: translateX(-200%);
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      .cc-mark-wrap::after {
+        animation: cc-rimlight var(--rimlight-period, 12s) ease-in-out infinite;
+        animation-delay: var(--rimlight-delay, -4s);
+      }
+
+      /* On hover, rimlight becomes fractionally more visible */
+      .cc-badge:hover .cc-mark-wrap::after {
+        --rimlight-opacity-boost: 0.06;
+      }
+    }
+
+    /*
+      Sweep window: 87–95% of total period.
+      At 12s: 1.04s sweep. At 13s: 1.04s. At 11s: 0.88s.
+      All within the 700–1200ms spec.
+    */
+    @keyframes cc-rimlight {
+      0%,  86%  { transform: translateX(-200%); opacity: 0;   }
+      88%        { transform: translateX(-200%); opacity: 1;   }
+      95%        { transform: translateX(250%);  opacity: 1;   }
+      97%, 100%  { transform: translateX(250%);  opacity: 0;   }
+    }
+
+
+    /* ─── VARIANT 1: HORIZONTAL DECAL ────────────────────────────── */
+    /*
+      Long acceptance bar. Footer, invoice, payment page, website header.
+      The mark overflows the card height top and bottom — and right edge.
+      Lettermark is authority, not logo.
+    */
+
+    .cc-badge--decal {
+      width: 460px;
+      height: 72px;
+      padding-left: 22px;
+    }
+
+    .cc-badge--decal .cc-copy { gap: 5px; }
+
+    .cc-badge--decal .cc-primary   { font-size: 16px; }
+    .cc-badge--decal .cc-secondary { font-size: 9.5px; margin-top: 1px; }
+    .cc-badge--decal .cc-micro     { font-size: 7.5px; margin-top: 3px; }
+
+    .cc-badge--decal .cc-mark-wrap {
+      width:  88px;
+      height: 88px;   /* 16px taller than card — crops top + bottom */
+      right: -18px;   /* 18px past card edge — crops right */
+    }
+
+    .cc-badge--decal .cc-mark-img {
+      width:  88px;
+      height: 88px;
+      opacity: 0.72;
+    }
+
+
+    /* ─── VARIANT 2: COMPACT PAYMENT MARK ────────────────────────── */
+    /*
+      Invoice corner, email signature, link-in-bio, small footer badge.
+      Same message, tighter proportions. Must read at a glance.
+    */
+
+    .cc-badge--compact {
+      width: 216px;
+      height: 44px;
+      padding-left: 13px;
+    }
+
+    .cc-badge--compact .cc-copy { gap: 3px; }
+
+    .cc-badge--compact .cc-primary   { font-size: 10.5px; }
+    .cc-badge--compact .cc-secondary { font-size: 7px; }
+    .cc-badge--compact .cc-micro     { font-size: 6.5px; margin-top: 2px; }
+
+    .cc-badge--compact .cc-mark-wrap {
+      width:  52px;
+      height: 52px;
+      right: -10px;
+    }
+
+    .cc-badge--compact .cc-mark-img {
+      width:  52px;
+      height: 52px;
+      opacity: 0.68;
+    }
+
+
+    /* ─── VARIANT 3: FEATURE CARD ────────────────────────────────── */
+    /*
+      Landing page, embedded merchant section, editorial placement.
+      Lettermark dominates the right half — not a logo, an authority object.
+      More breathing room. More premium feel.
+    */
+
+    .cc-badge--feature {
+      width: 380px;
+      height: 188px;
+      padding: 28px 0 28px 28px;
+      align-items: flex-start;
+    }
+
+    .cc-badge--feature .cc-copy {
+      gap: 10px;
+      max-width: 200px;
+    }
+
+    .cc-badge--feature .cc-primary   { font-size: 21px; line-height: 1.15; }
+    .cc-badge--feature .cc-secondary { font-size: 11px; }
+    .cc-badge--feature .cc-micro     { font-size: 8.5px; margin-top: 4px; }
+
+    .cc-badge--feature .cc-mark-wrap {
+      width:  196px;
+      height: 196px;
+      right: -52px;    /* deeply cropped — mark is dominant, not decorative */
+    }
+
+    .cc-badge--feature .cc-mark-img {
+      width:  196px;
+      height: 196px;
+      opacity: 0.60;   /* slightly subdued — at this size, full opacity is too dense */
+    }
+
+
+    /* ─── BADGE STATE REFERENCE ──────────────────────────────────── */
+
+    .badge-rules {
+      margin-top: 3.5rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid rgba(0, 0, 0, 0.09);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem 2rem;
+    }
+
+    .badge-rule {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9.5px;
+      line-height: 1.65;
+      color: rgba(0, 0, 0, 0.36);
+    }
+
+    .badge-rule strong {
+      display: block;
+      color: rgba(0, 0, 0, 0.52);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-size: 8px;
+      margin-bottom: 5px;
+    }
+
+
+    /* ─── RESPONSIVE ─────────────────────────────────────────────── */
+
+    @media (max-width: 560px) {
+      .cc-badge--decal,
+      .cc-badge--feature {
+        width: 100%;
+        max-width: 340px;
+      }
+      .variant-stage {
+        padding: 1.75rem 1.25rem;
+        justify-content: center;
+      }
+      .badge-rules {
+        grid-template-columns: 1fr;
+      }
+    }
+
+  </style>
+</head>
+<body>
+
+  <div class="artifact-shell">
+
+    <div class="artifact-header">
+      <p class="artifact-eyebrow">Coin Card · Lane A · Acceptance Mark Artifact · 2026-06-27</p>
+      <p class="artifact-test">At rest, without hover, without animation, without inputs — does this clearly read as "this business accepts USDC through ImplicitEx"?</p>
+    </div>
+
+
+    <!-- ═══ VARIANT 1: HORIZONTAL DECAL ════════════════════════════ -->
+
+    <div class="variant">
+      <p class="variant-label">Variant 1 — Horizontal Decal · footer · payment page · invoice</p>
+      <div class="variant-stage">
+        <div class="cc-badge cc-badge--decal"
+             role="img"
+             aria-label="USDC accepted here. Verified by ImplicitEx on Polygon.">
+          <div class="cc-copy" aria-hidden="true">
+            <span class="cc-primary">USDC accepted here</span>
+            <span class="cc-secondary">Verified by ImplicitEx</span>
+            <span class="cc-micro">POLYGON · USDC</span>
+          </div>
+          <div class="cc-mark-wrap" id="mark-decal">
+            <img class="cc-mark-img"
+                 src="/components/images/lettermark-white.svg"
+                 alt=""
+                 aria-hidden="true">
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ═══ VARIANT 2: COMPACT PAYMENT MARK ════════════════════════ -->
+
+    <div class="variant">
+      <p class="variant-label">Variant 2 — Compact Payment Mark · email signature · link-in-bio · small footer</p>
+      <div class="variant-stage">
+        <div class="cc-badge cc-badge--compact"
+             role="img"
+             aria-label="USDC accepted here. Verified by ImplicitEx on Polygon.">
+          <div class="cc-copy" aria-hidden="true">
+            <span class="cc-primary">USDC accepted here</span>
+            <span class="cc-secondary">Verified by ImplicitEx</span>
+            <span class="cc-micro">POLYGON · USDC</span>
+          </div>
+          <div class="cc-mark-wrap" id="mark-compact">
+            <img class="cc-mark-img"
+                 src="/components/images/lettermark-white.svg"
+                 alt=""
+                 aria-hidden="true">
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ═══ VARIANT 3: FEATURE CARD ════════════════════════════════ -->
+
+    <div class="variant">
+      <p class="variant-label">Variant 3 — Feature Card · landing page · embedded merchant section</p>
+      <div class="variant-stage variant-stage--center">
+        <div class="cc-badge cc-badge--feature"
+             role="img"
+             aria-label="USDC accepted here. Verified by ImplicitEx on Polygon.">
+          <div class="cc-copy" aria-hidden="true">
+            <span class="cc-primary">USDC accepted here</span>
+            <span class="cc-secondary">Verified by ImplicitEx</span>
+            <span class="cc-micro">POLYGON · USDC</span>
+          </div>
+          <div class="cc-mark-wrap" id="mark-feature">
+            <img class="cc-mark-img"
+                 src="/components/images/lettermark-white.svg"
+                 alt=""
+                 aria-hidden="true">
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ═══ BADGE STATE RULES ═══════════════════════════════════════ -->
+
+    <div class="badge-rules">
+      <div class="badge-rule">
+        <strong>BADGE state contract</strong>
+        Static at rest. No breathing edge. No copy rotation. No block field. No border pulse. Card surface does not animate.
+      </div>
+      <div class="badge-rule">
+        <strong>Quiet capability signal</strong>
+        Rare rimlight sweeps across the lettermark only. ~900ms. Every 10–14s. Low opacity. Disabled under prefers-reduced-motion. The card whispers that it is alive; it does not announce it.
+      </div>
+      <div class="badge-rule">
+        <strong>Design test</strong>
+        Without hover, without reading animation — does this clearly say "this business accepts USDC through ImplicitEx"?
+      </div>
+      <div class="badge-rule">
+        <strong>Next state</strong>
+        BADGE → INSPECT → TRANSACT → SETTLE. Inspection reveals trust details, not payment fields. Transaction fields appear only after deliberate engagement. The badge earns the right to the form.
+      </div>
+    </div>
+
+  </div>
+
+
+  <script>
+    /*
+      Stagger rimlight animation delays so variants don't fire together.
+      Negative delay starts each animation at a random point in its cycle
+      — avoids a synchronized flash on page load.
+    */
+    const marks = [
+      { id: 'mark-decal',   period: 13 },
+      { id: 'mark-compact', period: 11 },
+      { id: 'mark-feature', period: 14 },
+    ];
+
+    marks.forEach(({ id, period }) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const delay = -(Math.random() * period).toFixed(2);
+      el.style.setProperty('--rimlight-period', period + 's');
+      el.style.setProperty('--rimlight-delay',  delay  + 's');
+    });
+  </script>
+
+</body>
+</html>
