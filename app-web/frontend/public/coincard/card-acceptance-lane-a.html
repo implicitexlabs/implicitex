@@ -7,6 +7,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500&family=Oxanium:wght@500;600;700&display=swap" rel="stylesheet">
+  <!-- ethers@6.13.4 — same version as wallet.js; CDN already on CSP allowlist -->
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
   <style>
 
     /* ---- Reset ---- */
@@ -1050,7 +1052,7 @@
                     Connect Wallet
                   </button>
                   <button class="cc-send-btn" id="send-btn" disabled aria-disabled="true">
-                    Send wiring pending
+                    Send USDC →
                   </button>
                 </div>
 
@@ -1227,7 +1229,6 @@
         feeDisplay.textContent   = pct + '% · — USDC';
         totalDisplay.textContent = '— USDC';
       }
-      updateSendState();
     }
 
     amountInput.addEventListener('input', () => { updateTotals(); updatePreflight(); });
@@ -1246,8 +1247,21 @@
     //
     // All five must pass before Send enables.
 
-    const POLYGON_CHAIN_HEX = '0x89'; // chainId 137
-    const USDC_CONTRACT = '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359'; // Circle native USDC, Polygon mainnet
+    const POLYGON_CHAIN_HEX  = '0x89'; // chainId 137
+    const USDC_CONTRACT      = '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359'; // Circle native USDC, Polygon mainnet
+    const TRANSFER_CONTRACT  = '0x5015841D6E665e63Ea174aD6b8FeF854026dE0C0'; // ImplicitExTransfer, Polygon mainnet
+
+    // Minimal ABIs — only the calls this artifact makes.
+    const USDC_ABI = [
+      'function balanceOf(address owner) view returns (uint256)',
+      'function allowance(address owner, address spender) view returns (uint256)',
+      'function approve(address spender, uint256 amount) returns (bool)',
+    ];
+
+    const TRANSFER_ABI = [
+      'function transferWithFee(address recipient, uint256 amount, bool feeOnTop) returns (bytes32)',
+      'event TransferExecuted(address indexed sender, address indexed recipient, uint256 amount, uint256 fee, bytes32 indexed transferId)',
+    ];
 
     const walletBtn = document.getElementById('wallet-btn');
     const sendBtn   = document.getElementById('send-btn');
@@ -1259,14 +1273,31 @@
     // ── Preflight copy map ────────────────────────────────────────────
 
     const PREFLIGHT_COPY = {
-      no_provider:          { head: 'No wallet detected',        sub: 'Install MetaMask to continue.' },
-      no_wallet:            { head: 'No wallet connected',       sub: 'Connect wallet to continue.' },
-      wallet_pending:       { head: 'Connecting',                sub: 'Approve the connection request.' },
-      wrong_network:        { head: 'Wrong network',             sub: 'Switch to Polygon to continue.' },
-      no_amount:            { head: 'Enter amount',              sub: 'Amount must be greater than 0.' },
-      insufficient_balance: { head: 'Insufficient USDC balance', sub: 'Reduce amount or fund wallet.' },
-      ready:                { head: 'Ready',                     sub: 'Verified destination. Wallet ready. Amount valid.' },
+      // Pre-conditions — must be resolved before Send can enable
+      no_provider:           { head: 'No wallet detected',        sub: 'Install MetaMask to continue.' },
+      no_wallet:             { head: 'No wallet connected',       sub: 'Connect wallet to continue.' },
+      wallet_pending:        { head: 'Connecting',                sub: 'Approve the connection request.' },
+      wrong_network:         { head: 'Wrong network',             sub: 'Switch to Polygon to continue.' },
+      no_amount:             { head: 'Enter amount',              sub: 'Amount must be greater than 0.' },
+      insufficient_balance:  { head: 'Insufficient USDC balance', sub: 'Reduce amount or fund wallet.' },
+      // Gate cleared
+      ready:                 { head: 'Ready',                     sub: 'Verified destination. Wallet ready. Amount valid.' },
+      // Execution states — Slice 2
+      approval_pending:      { head: 'Approval pending',          sub: 'Approve USDC in your wallet.' },
+      approval_confirming:   { head: 'Approval confirming',       sub: 'Waiting for Polygon confirmation.' },
+      approval_rejected:     { head: 'Approval rejected',         sub: 'No transfer was submitted.' },
+      credential_changed:    { head: 'Credential changed',        sub: 'Reopen credential details before sending.' },
+      credential_unavailable:{ head: 'Credential unavailable',    sub: 'This card cannot send until verification is restored.' },
+      transfer_pending:      { head: 'Transfer pending',          sub: 'Sign the transfer in your wallet.' },
+      transfer_unconfirmed:  { head: 'Transfer submitted',        sub: 'Waiting for Polygon confirmation.' },
+      transfer_rejected:     { head: 'Transfer rejected',         sub: 'No funds were moved.' },
+      transfer_failed:       { head: 'Transfer failed',           sub: 'Check wallet and try again.' },
     };
+
+    // States where Send is enabled (READY + retryable failures)
+    const SEND_ENABLED_STATES = new Set([
+      'ready', 'approval_rejected', 'transfer_rejected', 'transfer_failed',
+    ]);
 
     const preflightRow  = document.getElementById('cc-preflight');
     const preflightHead = document.getElementById('preflight-head');
@@ -1280,8 +1311,9 @@
         preflightRow.className = 'cc-preflight-row'
           + (state === 'ready' ? ' cc-preflight-row--ready' : '');
       }
-      // Slice 1: Send stays disabled. READY is proved by the preflight row.
-      // Slice 2 wires approval/transfer and enables Send on confirmed READY.
+      const canSend = SEND_ENABLED_STATES.has(state);
+      sendBtn.disabled = !canSend;
+      sendBtn.setAttribute('aria-disabled', String(!canSend));
     }
 
     function updatePreflight() {
@@ -1387,10 +1419,7 @@
     // Artifact tx hash — simulates confirmed Polygon transaction.
     // In production, this hash comes from the chain event after transfer execution.
 
-    // Tx hash placeholder — not a real hash. Real hash wired after wallet execution.
-    const ARTIFACT_TX_LABEL = 'tx-not-wired · artifact';
-
-    function toSettle(amount, manifest) {
+    function toSettle(amount, manifest, txHash) {
       const fee   = amount * feeBps / 10000;
       const total = amount + fee;
 
@@ -1402,21 +1431,167 @@
         || CHAIN_NAMES_MAP[String(manifest.chainId)]
         || 'Chain ' + manifest.chainId;
 
-      $('settle-amount').textContent       = amount.toFixed(2) + ' USDC';
-      $('settle-recipient').textContent    = manifest.displayName || abbrev(manifest.recipient);
-      $('settle-network-token').textContent= chain + ' · ' + (manifest.token || '').toUpperCase();
-      $('settle-dest').textContent         = abbrev(manifest.recipient);
-      $('settle-fee').textContent          = fee.toFixed(2) + ' USDC';
-      $('settle-total').textContent        = total.toFixed(2) + ' USDC';
+      $('settle-amount').textContent        = amount.toFixed(2) + ' USDC';
+      $('settle-recipient').textContent     = manifest.displayName || abbrev(manifest.recipient);
+      $('settle-network-token').textContent = chain + ' · ' + (manifest.token || '').toUpperCase();
+      $('settle-dest').textContent          = abbrev(manifest.recipient);
+      $('settle-fee').textContent           = fee.toFixed(2) + ' USDC';
+      $('settle-total').textContent         = total.toFixed(2) + ' USDC';
 
       const polyLink = $('settle-polygonscan');
-      polyLink.textContent = 'PolygonScan proof link · ' + ARTIFACT_TX_LABEL;
-      polyLink.href        = '#';
-      polyLink.setAttribute('aria-disabled', 'true');
+      if (txHash) {
+        const abbrevHash = txHash.slice(0, 10) + '\u2026' + txHash.slice(-6);
+        polyLink.textContent         = 'View on PolygonScan · ' + abbrevHash + ' \u2197';
+        polyLink.href                = 'https://polygonscan.com/tx/' + txHash;
+        polyLink.style.pointerEvents = 'auto';
+        polyLink.removeAttribute('aria-disabled');
+      } else {
+        polyLink.textContent = 'PolygonScan proof link · tx-not-wired · artifact';
+        polyLink.href        = '#';
+        // CSS pointer-events: none applies
+      }
     }
 
-    // sendBtn click → Slice 2 (approval + transfer execution).
-    // SETTLE is unreachable in Slice 1. No handler wired here.
+
+    // ── Send handler — Slice 2 execution ──────────────────────────────
+    //
+    // SETTLE is only reachable from a confirmed receipt + real tx.hash.
+    // Every failure path stays in TRANSACT with operational copy.
+    // All wallet rejection, approval rejection, transfer rejection,
+    // and unconfirmed paths remain in TRANSACT.
+
+    sendBtn.addEventListener('click', async () => {
+      if (sendBtn.disabled || !verifiedManifest) return;
+
+      // ── JIT revalidation — wallet, chain, balance, AND manifest ──────
+      // Do not trust any stale state: card may have been revoked or changed
+      // between when TRANSACT opened and when Send is clicked.
+
+      const freshChainId = await window.ethereum.request({ method: 'eth_chainId' });
+      walletChainId = freshChainId;
+      await fetchUsdcBalance();
+
+      const amt = parseFloat(amountInput.value) || 0;
+      if (!connectedAccount || freshChainId !== POLYGON_CHAIN_HEX || amt <= 0 || amt > usdcBalance) {
+        updatePreflight();
+        return;
+      }
+
+      // Refetch and re-validate the registry manifest
+      let freshManifest;
+      try {
+        const res = await fetch('/registry/coincards/' + CARD_ID + '.json');
+        if (!res.ok) throw new Error('fetch-failed');
+        freshManifest = await res.json();
+      } catch {
+        setPreflight('credential_unavailable');
+        return;
+      }
+
+      // Validate: same schema, same card, still active, fields intact, recipient/chain/token unchanged
+      const invalid =
+        freshManifest._notFound
+        || freshManifest.schema    !== 'implicitex.coincard.v1'
+        || freshManifest.cardId    !== CARD_ID
+        || freshManifest.status    === 'revoked'
+        || freshManifest.status    !== 'active'
+        || !freshManifest.recipient || !freshManifest.chainId || !freshManifest.token;
+
+      if (invalid) {
+        setPreflight('credential_unavailable');
+        return;
+      }
+
+      // Confirm destination, chain, and token still match what was verified
+      const unchanged =
+        freshManifest.recipient.toLowerCase() === verifiedManifest.recipient.toLowerCase()
+        && String(freshManifest.chainId) === String(verifiedManifest.chainId)
+        && freshManifest.token.toUpperCase() === verifiedManifest.token.toUpperCase();
+
+      if (!unchanged) {
+        setPreflight('credential_changed');
+        return;
+      }
+
+      // Update verifiedManifest to the freshly confirmed state
+      verifiedManifest = freshManifest;
+
+      // ── BigInt-native debit math ──────────────────────────────────────
+      // Approval and transfer use exact integer arithmetic — no float rounding.
+      // Display (fee/total rows) keeps formatted values; execution uses wei.
+      const amountWei = ethers.parseUnits(amountInput.value.trim() || '0', 6);
+      const feeWei    = amountWei * BigInt(feeBps) / 10000n;
+      const debitWei  = amountWei + feeWei; // full sender debit for approve()
+
+      let provider, signer, usdc, transfer;
+      try {
+        provider = new ethers.BrowserProvider(window.ethereum);
+        signer   = await provider.getSigner();
+        usdc     = new ethers.Contract(USDC_CONTRACT,    USDC_ABI,     signer);
+        transfer = new ethers.Contract(TRANSFER_CONTRACT, TRANSFER_ABI, signer);
+      } catch {
+        setPreflight('transfer_failed');
+        return;
+      }
+
+      // ── Allowance check ───────────────────────────────────────────
+      let allowance;
+      try {
+        allowance = await usdc.allowance(connectedAccount, TRANSFER_CONTRACT);
+      } catch {
+        setPreflight('transfer_failed');
+        return;
+      }
+
+      // ── Approval (if needed) ──────────────────────────────────────
+      if (allowance < debitWei) {
+        setPreflight('approval_pending');
+        let approveTx;
+        try {
+          approveTx = await usdc.approve(TRANSFER_CONTRACT, debitWei);
+        } catch {
+          setPreflight('approval_rejected');
+          return;
+        }
+        setPreflight('approval_confirming');
+        try {
+          await approveTx.wait();
+        } catch {
+          setPreflight('approval_rejected');
+          return;
+        }
+      }
+
+      // ── Transfer ──────────────────────────────────────────────────
+      setPreflight('transfer_pending');
+      let tx;
+      try {
+        tx = await transfer.transferWithFee(
+          verifiedManifest.recipient,
+          amountWei,
+          true, // feeOnTop — sender pays fee above recipient amount
+        );
+      } catch {
+        setPreflight('transfer_rejected');
+        return;
+      }
+
+      setPreflight('transfer_unconfirmed');
+      let receipt;
+      try {
+        receipt = await tx.wait();
+      } catch {
+        setPreflight('transfer_failed');
+        return;
+      }
+
+      // ── SETTLE — only from confirmed receipt + real tx hash ───────
+      if (receipt && receipt.status === 1 && receipt.hash) {
+        toSettle(amt, verifiedManifest, receipt.hash);
+      } else {
+        setPreflight('transfer_failed');
+      }
+    });
 
 
     // ── Registry fetch ────────────────────────────────────────────────
