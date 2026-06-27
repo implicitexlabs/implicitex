@@ -11,6 +11,8 @@
 
     /* ---- Reset ---- */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    /* Ensure [hidden] always wins regardless of display declarations */
+    [hidden] { display: none !important; }
 
     /* ---- Artifact shell — light host-page simulation ---- */
     body {
@@ -53,9 +55,7 @@
     }
 
     /* ---- Variant sections ---- */
-    .variant {
-      margin-bottom: 3.5rem;
-    }
+    .variant { margin-bottom: 3.5rem; }
 
     .variant-label {
       font-family: 'IBM Plex Mono', monospace;
@@ -75,29 +75,25 @@
       border: 1px solid rgba(0, 0, 0, 0.06);
     }
 
-    .variant-stage--center {
-      justify-content: center;
-    }
+    .variant-stage--center { justify-content: center; }
 
 
     /* ═══════════════════════════════════════════════════════════════
        COIN CARD BADGE SYSTEM
        Self-contained. All values explicit.
-       Intended to be extracted verbatim into widget CSS.
 
-       BADGE STATE CONTRACT (locked 2026-06-27):
-       — Static at rest. No breathing edge. No copy rotation.
-       — No block field. Card surface does not animate.
-       — One motion: rare rimlight on lettermark only.
+       STATE SEQUENCE:  BADGE → INSPECT → TRANSACT → SETTLE
+       CSS CLASSES:     .cc-wrapper (base)
+                        .is-open    (panel visible)
+                        .is-transact (transact mode)
+                        .is-details-open (full rows visible in transact)
 
-       INSPECT STATE CONTRACT (2026-06-27):
-       — Reveals credential facts from live registry manifest.
-       — No amount. No wallet. No fee. No send controls.
-       — BADGE appearance unchanged at rest.
-       — VERIFIED: full credential rows from manifest.
-       — REVOKED / UNAVAILABLE: routing rows hidden, status only.
-       — "Credential-safe degraded state" — the card cannot claim
-         verified status if the manifest does not support that claim.
+       TRANSACT MODEL (locked 2026-06-27):
+       — TRANSACT may compress INSPECT, but may not erase it.
+       — Full rows collapse to compact strip when TRANSACT opens.
+       — "credential details" toggle re-expands full rows above controls.
+       — TRANSACT is gated: manifest must be VERIFIED (active + all fields).
+       — REVOKED / UNAVAILABLE → no proceed, no TRANSACT, ever.
     ═══════════════════════════════════════════════════════════════ */
 
     /* ─── WRAPPER ────────────────────────────────────────────────── */
@@ -132,7 +128,6 @@
       border-radius: 2px;
     }
 
-    /* Inset border overlay */
     .cc-badge::before {
       content: '';
       position: absolute;
@@ -204,14 +199,8 @@
       transition: opacity 0.18s ease 0.4s;
     }
 
-    .cc-badge--interactive:hover .cc-hint {
-      opacity: 1;
-    }
-
-    .cc-wrapper.is-open .cc-hint {
-      opacity: 0;
-      transition: none;
-    }
+    .cc-badge--interactive:hover .cc-hint { opacity: 1; }
+    .cc-wrapper.is-open .cc-hint { opacity: 0; transition: none; }
 
 
     /* ─── LETTERMARK ─────────────────────────────────────────────── */
@@ -226,25 +215,19 @@
       flex-shrink: 0;
     }
 
-    .cc-mark-img {
-      display: block;
-    }
+    .cc-mark-img { display: block; }
 
 
-    /* ─── RIMLIGHT CAPABILITY SIGNAL ─────────────────────────────── */
+    /* ─── RIMLIGHT ───────────────────────────────────────────────── */
 
     .cc-mark-wrap::after {
       content: '';
       position: absolute;
-      top: 0;
-      left: 0;
+      top: 0; left: 0;
       width: 30%;
       height: 100%;
       background: linear-gradient(
-        90deg,
-        transparent 0%,
-        rgba(255, 255, 255, 0.16) 50%,
-        transparent 100%
+        90deg, transparent 0%, rgba(255,255,255,0.16) 50%, transparent 100%
       );
       transform: translateX(-200%);
       pointer-events: none;
@@ -266,7 +249,7 @@
     }
 
 
-    /* ─── INSPECT PANEL ──────────────────────────────────────────── */
+    /* ─── PANEL EXPAND (0fr → 1fr) ───────────────────────────────── */
 
     .cc-inspect-panel {
       display: grid;
@@ -287,15 +270,104 @@
       border-radius: 0 0 2px 2px;
     }
 
-    .cc-inspect-sep {
-      height: 1px;
-      background: rgba(255, 255, 255, 0.06);
-      margin-bottom: 2px;
+
+    /* ─── COMPACT STRIP (TRANSACT state only) ────────────────────── */
+    /*
+      The verified-destination anchor when TRANSACT is open.
+      Full inspection rows collapse to this strip.
+      "credential details" toggle re-expands full rows above controls.
+      Rule: TRANSACT may compress INSPECT, but may not erase it.
+    */
+
+    .cc-compact-strip {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 18px 10px 22px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
     }
 
-    .cc-inspect-rows {
-      padding: 4px 0 6px;
+    /* Hidden in INSPECT, shown in TRANSACT */
+    .cc-wrapper:not(.is-transact) .cc-compact-strip { display: none; }
+
+    .cc-compact-credential {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
     }
+
+    .cc-compact-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .cc-compact-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #D4A017;
+      flex-shrink: 0;
+    }
+
+    .cc-compact-verified-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 7.5px;
+      letter-spacing: 0.11em;
+      text-transform: uppercase;
+      color: rgba(242, 242, 240, 0.45);
+    }
+
+    .cc-compact-name {
+      font-family: 'Oxanium', sans-serif;
+      font-size: 10px;
+      font-weight: 600;
+      color: rgba(242, 242, 240, 0.80);
+    }
+
+    .cc-compact-meta {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 8px;
+      letter-spacing: 0.05em;
+      color: rgba(242, 242, 240, 0.32);
+    }
+
+    .cc-details-toggle {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 7.5px;
+      letter-spacing: 0.11em;
+      text-transform: uppercase;
+      color: rgba(242, 242, 240, 0.28);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      white-space: nowrap;
+      flex-shrink: 0;
+      margin-top: 2px;
+      transition: color 0.15s ease;
+    }
+
+    .cc-details-toggle:hover { color: rgba(242, 242, 240, 0.52); }
+
+
+    /* ─── FULL ROWS (INSPECT + TRANSACT+details) ─────────────────── */
+
+    .cc-full-rows {
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    /* In TRANSACT, full rows are hidden unless details are open */
+    .cc-wrapper.is-transact .cc-full-rows { display: none; }
+    .cc-wrapper.is-transact.is-details-open .cc-full-rows { display: block; }
+
+    /* In TRANSACT+details, no extra top border — compact strip is above */
+    .cc-wrapper.is-transact.is-details-open .cc-full-rows {
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .cc-inspect-rows { padding: 4px 0 6px; }
 
     .cc-inspect-row {
       display: flex;
@@ -303,11 +375,6 @@
       align-items: center;
       padding: 6px 18px 6px 22px;
       gap: 16px;
-    }
-
-    /* Rows are hidden by JS in degraded states */
-    .cc-inspect-row[hidden] {
-      display: none;
     }
 
     .cc-inspect-label {
@@ -328,7 +395,6 @@
       text-align: right;
     }
 
-    /* Technical values — address */
     .cc-inspect-value--mono {
       font-family: 'IBM Plex Mono', monospace;
       font-size: 9px;
@@ -337,7 +403,7 @@
       color: rgba(242, 242, 240, 0.65);
     }
 
-    /* VERIFIED state — accent dot (accent = state only, VERIFIED is a state) */
+    /* VERIFIED — amber dot. Accent = state only. VERIFIED is a state. */
     .cc-inspect-value--verified {
       display: flex;
       align-items: center;
@@ -352,12 +418,7 @@
       flex-shrink: 0;
     }
 
-    /*
-      REVOKED — red. Not amber.
-      Amber = attention. Red = critical.
-      A revoked card means: do not route value here.
-      That is a critical state, not a caution.
-    */
+    /* REVOKED — red. Critical: do not route value here. */
     .cc-inspect-value--revoked {
       font-family: 'Oxanium', sans-serif;
       font-size: 10px;
@@ -366,11 +427,7 @@
       text-align: right;
     }
 
-    /*
-      UNAVAILABLE — gray. The registry could not be reached or the
-      manifest is invalid. Do not assert VERIFIED, do not assert REVOKED.
-      Show nothing that implies the destination is trustworthy.
-    */
+    /* UNAVAILABLE — gray. Registry unreachable or manifest invalid. */
     .cc-inspect-value--unavailable {
       font-family: 'Oxanium', sans-serif;
       font-size: 10px;
@@ -379,11 +436,11 @@
       text-align: right;
     }
 
-    /* Footer attribution */
+    /* Footer: attribution left, proceed right */
     .cc-inspect-footer {
       display: flex;
       align-items: center;
-      justify-content: flex-end;
+      justify-content: space-between;
       padding: 6px 18px 10px 22px;
       border-top: 1px solid rgba(255, 255, 255, 0.04);
       margin-top: 2px;
@@ -396,6 +453,183 @@
       color: rgba(242, 242, 240, 0.18);
     }
 
+    /* Proceed: visible only when manifest VERIFIED, hidden otherwise */
+    .cc-proceed-btn {
+      font-family: 'Oxanium', sans-serif;
+      font-size: 8.5px;
+      font-weight: 600;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      color: rgba(242, 242, 240, 0.52);
+      background: none;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 1px;
+      padding: 5px 10px;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+    }
+
+    .cc-proceed-btn:hover {
+      color: rgba(242, 242, 240, 0.82);
+      border-color: rgba(255, 255, 255, 0.30);
+    }
+
+    /* In TRANSACT+details, the proceed button is redundant — hide it */
+    .cc-wrapper.is-transact .cc-proceed-btn { display: none; }
+
+
+    /* ─── TRANSACT SECTION ───────────────────────────────────────── */
+    /*
+      Visible only in TRANSACT mode.
+      Contains: amount / fee / total rows + wallet/send buttons.
+      Gated: never rendered if manifest is not VERIFIED.
+    */
+
+    .cc-transact-section {
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    /* Hidden until TRANSACT state */
+    .cc-wrapper:not(.is-transact) .cc-transact-section { display: none; }
+
+    .cc-transact-rows { padding: 6px 0 4px; }
+
+    .cc-transact-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 5px 18px 5px 22px;
+      gap: 12px;
+    }
+
+    .cc-transact-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 7.5px;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+      color: rgba(242, 242, 240, 0.28);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    /* Amount input row */
+    .cc-amount-wrap {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .cc-amount-input {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 14px;
+      font-weight: 500;
+      color: rgba(242, 242, 240, 0.90);
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 1px;
+      padding: 4px 8px;
+      width: 96px;
+      text-align: right;
+      outline: none;
+      transition: border-color 0.15s, background 0.15s;
+      -moz-appearance: textfield;
+    }
+
+    .cc-amount-input:focus {
+      border-color: rgba(255, 255, 255, 0.28);
+      background: rgba(255, 255, 255, 0.09);
+    }
+
+    .cc-amount-input::-webkit-outer-spin-button,
+    .cc-amount-input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    .cc-amount-unit {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 8px;
+      letter-spacing: 0.08em;
+      color: rgba(242, 242, 240, 0.32);
+    }
+
+    /* Fee and total values */
+    .cc-transact-value {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px;
+      color: rgba(242, 242, 240, 0.48);
+      text-align: right;
+    }
+
+    .cc-transact-value--total {
+      color: rgba(242, 242, 240, 0.78);
+      font-weight: 500;
+    }
+
+    /* Action row */
+    .cc-action-row {
+      display: flex;
+      gap: 8px;
+      padding: 8px 18px 12px 22px;
+      border-top: 1px solid rgba(255, 255, 255, 0.04);
+      margin-top: 4px;
+    }
+
+    .cc-wallet-btn {
+      flex: 1;
+      font-family: 'Oxanium', sans-serif;
+      font-size: 8.5px;
+      font-weight: 600;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      color: rgba(242, 242, 240, 0.72);
+      background: none;
+      border: 1px solid rgba(255, 255, 255, 0.20);
+      border-radius: 1px;
+      padding: 9px 0;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+    }
+
+    .cc-wallet-btn:hover:not(:disabled) {
+      color: rgba(242, 242, 240, 0.92);
+      border-color: rgba(255, 255, 255, 0.40);
+    }
+
+    .cc-wallet-btn:disabled {
+      color: rgba(242, 242, 240, 0.30);
+      border-color: rgba(255, 255, 255, 0.08);
+      cursor: default;
+    }
+
+    .cc-send-btn {
+      flex: 1;
+      font-family: 'Oxanium', sans-serif;
+      font-size: 8.5px;
+      font-weight: 700;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      color: #0c0c0a;
+      background: rgba(242, 242, 240, 0.88);
+      border: 1px solid transparent;
+      border-radius: 1px;
+      padding: 9px 0;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .cc-send-btn:hover:not(:disabled) {
+      background: rgba(242, 242, 240, 1);
+    }
+
+    /* Disabled — awaiting wallet connection */
+    .cc-send-btn:disabled {
+      color: rgba(242, 242, 240, 0.22);
+      background: rgba(242, 242, 240, 0.07);
+      border-color: rgba(255, 255, 255, 0.08);
+      cursor: not-allowed;
+    }
+
 
     /* ─── VARIANT 1: HORIZONTAL DECAL ────────────────────────────── */
 
@@ -406,22 +640,12 @@
     }
 
     .cc-badge--decal .cc-copy { gap: 5px; }
-
     .cc-badge--decal .cc-primary   { font-size: 16px; }
     .cc-badge--decal .cc-secondary { font-size: 9.5px; margin-top: 1px; }
     .cc-badge--decal .cc-micro     { font-size: 7.5px; margin-top: 3px; }
 
-    .cc-badge--decal .cc-mark-wrap {
-      width:  88px;
-      height: 88px;
-      right: -18px;
-    }
-
-    .cc-badge--decal .cc-mark-img {
-      width:  88px;
-      height: 88px;
-      opacity: 0.72;
-    }
+    .cc-badge--decal .cc-mark-wrap { width: 88px; height: 88px; right: -18px; }
+    .cc-badge--decal .cc-mark-img  { width: 88px; height: 88px; opacity: 0.72; }
 
 
     /* ─── VARIANT 2: COMPACT PAYMENT MARK ────────────────────────── */
@@ -433,22 +657,12 @@
     }
 
     .cc-badge--compact .cc-copy { gap: 3px; }
-
     .cc-badge--compact .cc-primary   { font-size: 10.5px; }
     .cc-badge--compact .cc-secondary { font-size: 7px; }
     .cc-badge--compact .cc-micro     { font-size: 6.5px; margin-top: 2px; }
 
-    .cc-badge--compact .cc-mark-wrap {
-      width:  52px;
-      height: 52px;
-      right: -10px;
-    }
-
-    .cc-badge--compact .cc-mark-img {
-      width:  52px;
-      height: 52px;
-      opacity: 0.68;
-    }
+    .cc-badge--compact .cc-mark-wrap { width: 52px; height: 52px; right: -10px; }
+    .cc-badge--compact .cc-mark-img  { width: 52px; height: 52px; opacity: 0.68; }
 
 
     /* ─── VARIANT 3: FEATURE CARD ────────────────────────────────── */
@@ -460,26 +674,13 @@
       align-items: flex-start;
     }
 
-    .cc-badge--feature .cc-copy {
-      gap: 10px;
-      max-width: 200px;
-    }
-
+    .cc-badge--feature .cc-copy    { gap: 10px; max-width: 200px; }
     .cc-badge--feature .cc-primary   { font-size: 21px; line-height: 1.15; }
     .cc-badge--feature .cc-secondary { font-size: 11px; }
     .cc-badge--feature .cc-micro     { font-size: 8.5px; margin-top: 4px; }
 
-    .cc-badge--feature .cc-mark-wrap {
-      width:  196px;
-      height: 196px;
-      right: -52px;
-    }
-
-    .cc-badge--feature .cc-mark-img {
-      width:  196px;
-      height: 196px;
-      opacity: 0.60;
-    }
+    .cc-badge--feature .cc-mark-wrap { width: 196px; height: 196px; right: -52px; }
+    .cc-badge--feature .cc-mark-img  { width: 196px; height: 196px; opacity: 0.60; }
 
 
     /* ─── REFERENCE BLOCK ────────────────────────────────────────── */
@@ -515,17 +716,9 @@
     @media (max-width: 560px) {
       .cc-wrapper,
       .cc-badge--decal,
-      .cc-badge--feature {
-        width: 100%;
-        max-width: 340px;
-      }
-      .variant-stage {
-        padding: 1.75rem 1.25rem;
-        justify-content: center;
-      }
-      .badge-rules {
-        grid-template-columns: 1fr;
-      }
+      .cc-badge--feature { width: 100%; max-width: 340px; }
+      .variant-stage { padding: 1.75rem 1.25rem; justify-content: center; }
+      .badge-rules { grid-template-columns: 1fr; }
     }
 
   </style>
@@ -536,18 +729,19 @@
 
     <div class="artifact-header">
       <p class="artifact-eyebrow">Coin Card · Lane A · Acceptance Mark Artifact · 2026-06-27</p>
-      <p class="artifact-test">At rest, without hover, without animation, without inputs — does this clearly read as "this business accepts USDC through ImplicitEx"?</p>
+      <p class="artifact-test">BADGE → INSPECT → TRANSACT. Click the decal to inspect. "Enter amount" to proceed to TRANSACT. "credential details" to re-expand the full rows.</p>
     </div>
 
 
-    <!-- ═══ VARIANT 1: HORIZONTAL DECAL — BADGE + INSPECT ══════════ -->
+    <!-- ═══ VARIANT 1: HORIZONTAL DECAL — BADGE + INSPECT + TRANSACT ══ -->
 
     <div class="variant">
-      <p class="variant-label">Variant 1 — Horizontal Decal · hover or tap to inspect credential</p>
+      <p class="variant-label">Variant 1 — Horizontal Decal · full state sequence</p>
       <div class="variant-stage">
 
         <div class="cc-wrapper" id="decal-wrapper">
 
+          <!-- BADGE -->
           <div class="cc-badge cc-badge--decal cc-badge--interactive"
                id="decal-badge"
                role="button"
@@ -555,75 +749,143 @@
                aria-expanded="false"
                aria-controls="decal-panel"
                aria-label="USDC payment credential — activate to inspect">
-
             <div class="cc-copy" aria-hidden="true">
               <span class="cc-primary">USDC accepted here</span>
               <span class="cc-secondary">Verified by ImplicitEx</span>
               <span class="cc-micro">POLYGON · USDC</span>
             </div>
-
             <span class="cc-hint" aria-hidden="true">credential details</span>
-
             <div class="cc-mark-wrap" id="mark-decal">
-              <img class="cc-mark-img"
-                   src="/components/images/lettermark-white.svg"
-                   alt=""
-                   aria-hidden="true">
+              <img class="cc-mark-img" src="/components/images/lettermark-white.svg" alt="" aria-hidden="true">
             </div>
-
           </div>
 
+          <!-- PANEL -->
           <div class="cc-inspect-panel"
                id="decal-panel"
                role="region"
-               aria-label="Payment credential details"
+               aria-label="Payment credential"
                aria-hidden="true">
 
             <div class="cc-inspect-inner">
 
-              <div class="cc-inspect-sep" aria-hidden="true"></div>
+              <!--
+                DOM ORDER:  compact-strip → full-rows → transact-section
+                INSPECT:    compact-strip hidden / full-rows shown / transact hidden
+                TRANSACT:   compact-strip shown / full-rows hidden / transact shown
+                TRANSACT+d: compact-strip shown / full-rows shown  / transact shown
+              -->
 
-              <div class="cc-inspect-rows">
-
-                <div class="cc-inspect-row" id="irow-recipient">
-                  <span class="cc-inspect-label">Recipient</span>
-                  <span class="cc-inspect-value" id="ival-recipient">—</span>
+              <!-- COMPACT STRIP — TRANSACT anchor -->
+              <div class="cc-compact-strip">
+                <div class="cc-compact-credential">
+                  <div class="cc-compact-status">
+                    <span class="cc-compact-dot" aria-hidden="true"></span>
+                    <span class="cc-compact-verified-label">VERIFIED</span>
+                    <span class="cc-compact-name" id="compact-name">—</span>
+                  </div>
+                  <div class="cc-compact-meta" id="compact-meta">—</div>
                 </div>
-
-                <div class="cc-inspect-row" id="irow-registry">
-                  <span class="cc-inspect-label">Registry</span>
-                  <span class="cc-inspect-value cc-inspect-value--verified" id="ival-registry">
-                    <span class="cc-verify-dot" id="imark-dot" aria-hidden="true"></span>
-                    <span id="ival-registry-text">—</span>
-                  </span>
-                </div>
-
-                <div class="cc-inspect-row" id="irow-network">
-                  <span class="cc-inspect-label">Network</span>
-                  <span class="cc-inspect-value" id="ival-network">—</span>
-                </div>
-
-                <div class="cc-inspect-row" id="irow-token">
-                  <span class="cc-inspect-label">Token</span>
-                  <span class="cc-inspect-value" id="ival-token">—</span>
-                </div>
-
-                <div class="cc-inspect-row" id="irow-destination">
-                  <span class="cc-inspect-label">Destination</span>
-                  <span class="cc-inspect-value cc-inspect-value--mono"
-                        id="ival-destination">—</span>
-                </div>
-
+                <button class="cc-details-toggle"
+                        id="details-toggle"
+                        aria-expanded="false"
+                        aria-controls="decal-full-rows">
+                  credential details
+                </button>
               </div>
 
-              <div class="cc-inspect-footer">
-                <span class="cc-inspect-attr" id="iattr-verified"></span>
-              </div>
+              <!-- FULL ROWS — INSPECT view + TRANSACT details expansion -->
+              <div class="cc-full-rows" id="decal-full-rows">
 
-            </div>
-          </div>
+                <div class="cc-inspect-rows">
 
-        </div>
+                  <div class="cc-inspect-row" id="irow-recipient">
+                    <span class="cc-inspect-label">Recipient</span>
+                    <span class="cc-inspect-value" id="ival-recipient">—</span>
+                  </div>
+
+                  <div class="cc-inspect-row" id="irow-registry">
+                    <span class="cc-inspect-label">Registry</span>
+                    <span class="cc-inspect-value cc-inspect-value--verified" id="ival-registry">
+                      <span class="cc-verify-dot" id="imark-dot" aria-hidden="true"></span>
+                      <span id="ival-registry-text">—</span>
+                    </span>
+                  </div>
+
+                  <div class="cc-inspect-row" id="irow-network">
+                    <span class="cc-inspect-label">Network</span>
+                    <span class="cc-inspect-value" id="ival-network">—</span>
+                  </div>
+
+                  <div class="cc-inspect-row" id="irow-token">
+                    <span class="cc-inspect-label">Token</span>
+                    <span class="cc-inspect-value" id="ival-token">—</span>
+                  </div>
+
+                  <div class="cc-inspect-row" id="irow-destination">
+                    <span class="cc-inspect-label">Destination</span>
+                    <span class="cc-inspect-value cc-inspect-value--mono" id="ival-destination">—</span>
+                  </div>
+
+                </div>
+
+                <div class="cc-inspect-footer">
+                  <span class="cc-inspect-attr" id="iattr-verified"></span>
+                  <!-- Proceed: only rendered after manifest VERIFIED -->
+                  <button class="cc-proceed-btn" id="proceed-btn" hidden>
+                    Enter amount →
+                  </button>
+                </div>
+
+              </div><!-- /.cc-full-rows -->
+
+              <!-- TRANSACT SECTION — manifest-gated -->
+              <div class="cc-transact-section">
+
+                <div class="cc-transact-rows">
+
+                  <div class="cc-transact-row">
+                    <label class="cc-transact-label" for="cc-amount">Amount</label>
+                    <div class="cc-amount-wrap">
+                      <input class="cc-amount-input"
+                             id="cc-amount"
+                             type="number"
+                             min="0"
+                             step="0.01"
+                             placeholder="0.00"
+                             inputmode="decimal"
+                             aria-label="Transfer amount in USDC">
+                      <span class="cc-amount-unit" aria-hidden="true">USDC</span>
+                    </div>
+                  </div>
+
+                  <div class="cc-transact-row">
+                    <span class="cc-transact-label">Fee</span>
+                    <span class="cc-transact-value" id="fee-display">2.5% · — USDC</span>
+                  </div>
+
+                  <div class="cc-transact-row">
+                    <span class="cc-transact-label">Total</span>
+                    <span class="cc-transact-value cc-transact-value--total" id="total-display">— USDC</span>
+                  </div>
+
+                </div>
+
+                <div class="cc-action-row">
+                  <button class="cc-wallet-btn" id="wallet-btn">
+                    Connect Wallet
+                  </button>
+                  <button class="cc-send-btn" id="send-btn" disabled aria-disabled="true">
+                    Send USDC →
+                  </button>
+                </div>
+
+              </div><!-- /.cc-transact-section -->
+
+            </div><!-- /.cc-inspect-inner -->
+          </div><!-- /.cc-inspect-panel -->
+
+        </div><!-- /.cc-wrapper -->
       </div>
     </div>
 
@@ -631,10 +893,9 @@
     <!-- ═══ VARIANT 2: COMPACT — STATIC BADGE ══════════════════════ -->
 
     <div class="variant">
-      <p class="variant-label">Variant 2 — Compact Payment Mark · email signature · link-in-bio · small footer</p>
+      <p class="variant-label">Variant 2 — Compact Payment Mark · static</p>
       <div class="variant-stage">
-        <div class="cc-badge cc-badge--compact"
-             role="img"
+        <div class="cc-badge cc-badge--compact" role="img"
              aria-label="USDC accepted here. Verified by ImplicitEx on Polygon.">
           <div class="cc-copy" aria-hidden="true">
             <span class="cc-primary">USDC accepted here</span>
@@ -642,10 +903,7 @@
             <span class="cc-micro">POLYGON · USDC</span>
           </div>
           <div class="cc-mark-wrap" id="mark-compact">
-            <img class="cc-mark-img"
-                 src="/components/images/lettermark-white.svg"
-                 alt=""
-                 aria-hidden="true">
+            <img class="cc-mark-img" src="/components/images/lettermark-white.svg" alt="" aria-hidden="true">
           </div>
         </div>
       </div>
@@ -655,10 +913,9 @@
     <!-- ═══ VARIANT 3: FEATURE CARD — STATIC BADGE ═════════════════ -->
 
     <div class="variant">
-      <p class="variant-label">Variant 3 — Feature Card · landing page · embedded merchant section</p>
+      <p class="variant-label">Variant 3 — Feature Card · static</p>
       <div class="variant-stage variant-stage--center">
-        <div class="cc-badge cc-badge--feature"
-             role="img"
+        <div class="cc-badge cc-badge--feature" role="img"
              aria-label="USDC accepted here. Verified by ImplicitEx on Polygon.">
           <div class="cc-copy" aria-hidden="true">
             <span class="cc-primary">USDC accepted here</span>
@@ -666,10 +923,7 @@
             <span class="cc-micro">POLYGON · USDC</span>
           </div>
           <div class="cc-mark-wrap" id="mark-feature">
-            <img class="cc-mark-img"
-                 src="/components/images/lettermark-white.svg"
-                 alt=""
-                 aria-hidden="true">
+            <img class="cc-mark-img" src="/components/images/lettermark-white.svg" alt="" aria-hidden="true">
           </div>
         </div>
       </div>
@@ -680,20 +934,20 @@
 
     <div class="badge-rules">
       <div class="badge-rule">
-        <strong>BADGE state contract</strong>
-        Static at rest. No breathing edge. No copy rotation. No block field. Card surface does not animate. Rimlight on lettermark only.
+        <strong>BADGE / INSPECT</strong>
+        BADGE static at rest. INSPECT reveals credential facts from live manifest. No routing rows in REVOKED or UNAVAILABLE states.
       </div>
       <div class="badge-rule">
-        <strong>INSPECT state contract</strong>
-        Credential facts from live manifest only. No amount. No wallet. No fee. No send. Routing rows hidden if manifest cannot be verified.
+        <strong>TRANSACT gate</strong>
+        "Enter amount" appears only when manifest is VERIFIED. REVOKED and UNAVAILABLE never expose TRANSACT. The verified manifest is the gate, not the UI.
       </div>
       <div class="badge-rule">
-        <strong>Degraded state rule</strong>
-        REVOKED → red, routing hidden. UNAVAILABLE → gray, routing hidden. The card cannot claim verified status if the manifest does not support that claim.
+        <strong>TRANSACT compression rule</strong>
+        Full rows collapse to compact verified-destination strip. "credential details" toggle re-expands them. TRANSACT may compress INSPECT, but may not erase it.
       </div>
       <div class="badge-rule">
         <strong>Next state</strong>
-        BADGE → INSPECT → TRANSACT → SETTLE. TRANSACT emerges only from a verified manifest. The badge earns the right to the form.
+        SETTLE: transfer confirmed, amount, recipient, Polygon tx link. The card becomes a proof object, not just a payment surface.
       </div>
     </div>
 
@@ -703,13 +957,10 @@
   <script>
     // ── Rimlight stagger ──────────────────────────────────────────────
 
-    const marks = [
-      { id: 'mark-decal',   period: 13 },
-      { id: 'mark-compact', period: 11 },
-      { id: 'mark-feature', period: 14 },
-    ];
-
-    marks.forEach(({ id, period }) => {
+    [{ id: 'mark-decal', period: 13 },
+     { id: 'mark-compact', period: 11 },
+     { id: 'mark-feature', period: 14 }]
+    .forEach(({ id, period }) => {
       const el = document.getElementById(id);
       if (!el) return;
       const delay = -(Math.random() * period).toFixed(2);
@@ -718,156 +969,196 @@
     });
 
 
-    // ── INSPECT open/close ────────────────────────────────────────────
+    // ── State machine ─────────────────────────────────────────────────
 
-    const wrapper = document.getElementById('decal-wrapper');
-    const badge   = document.getElementById('decal-badge');
-    const panel   = document.getElementById('decal-panel');
+    const wrapper      = document.getElementById('decal-wrapper');
+    const badge        = document.getElementById('decal-badge');
+    const panel        = document.getElementById('decal-panel');
+    const proceedBtn   = document.getElementById('proceed-btn');
+    const detailsToggle= document.getElementById('details-toggle');
+    const compactName  = document.getElementById('compact-name');
+    const compactMeta  = document.getElementById('compact-meta');
 
-    function openInspect() {
+    function setPanelOpen(open) {
+      badge.setAttribute('aria-expanded', String(open));
+      panel.setAttribute('aria-hidden',   String(!open));
+    }
+
+    function toInspect() {
       wrapper.classList.add('is-open');
-      badge.setAttribute('aria-expanded', 'true');
-      panel.setAttribute('aria-hidden', 'false');
+      wrapper.classList.remove('is-transact', 'is-details-open');
+      setPanelOpen(true);
     }
 
-    function closeInspect() {
-      wrapper.classList.remove('is-open');
-      badge.setAttribute('aria-expanded', 'false');
-      panel.setAttribute('aria-hidden', 'true');
+    function toTransact() {
+      wrapper.classList.add('is-open', 'is-transact');
+      wrapper.classList.remove('is-details-open');
+      setPanelOpen(true);
     }
 
-    badge.addEventListener('click', () => {
-      wrapper.classList.contains('is-open') ? closeInspect() : openInspect();
-    });
+    function closeAll() {
+      wrapper.classList.remove('is-open', 'is-transact', 'is-details-open');
+      setPanelOpen(false);
+      detailsToggle.setAttribute('aria-expanded', 'false');
+    }
 
+    const isOpen     = () => wrapper.classList.contains('is-open');
+    const isTransact = () => wrapper.classList.contains('is-transact');
+
+    // Badge click: toggle inspect / close
+    badge.addEventListener('click', () => { isOpen() ? closeAll() : toInspect(); });
     badge.addEventListener('keydown', e => {
       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); badge.click(); }
-      if (e.key === 'Escape') closeInspect();
     });
 
+    // Proceed: INSPECT → TRANSACT (gated by verifiedManifest)
+    proceedBtn.addEventListener('click', () => {
+      if (verifiedManifest) toTransact();
+    });
+
+    // Details toggle: expand/collapse full rows within TRANSACT
+    detailsToggle.addEventListener('click', () => {
+      const open = wrapper.classList.toggle('is-details-open');
+      detailsToggle.setAttribute('aria-expanded', String(open));
+    });
+
+    // Escape: close from anywhere
     document.addEventListener('keydown', e => {
-      if (e.key === 'Escape' && wrapper.classList.contains('is-open')) {
-        closeInspect();
-        badge.focus();
-      }
+      if (e.key === 'Escape' && isOpen()) { closeAll(); badge.focus(); }
     });
 
+    // Click outside: close
     document.addEventListener('click', e => {
-      if (wrapper.classList.contains('is-open') && !wrapper.contains(e.target)) {
-        closeInspect();
+      if (isOpen() && !wrapper.contains(e.target)) closeAll();
+    });
+
+
+    // ── Amount → live fee / total ─────────────────────────────────────
+
+    let feeBps = 250; // overridden from manifest
+
+    const amountInput  = document.getElementById('cc-amount');
+    const feeDisplay   = document.getElementById('fee-display');
+    const totalDisplay = document.getElementById('total-display');
+
+    function updateTotals() {
+      const amt = parseFloat(amountInput.value) || 0;
+      const pct = (feeBps / 100).toFixed(1);
+      if (amt > 0) {
+        const fee   = (amt * feeBps / 10000).toFixed(2);
+        const total = (amt + parseFloat(fee)).toFixed(2);
+        feeDisplay.textContent   = pct + '% · ' + fee   + ' USDC';
+        totalDisplay.textContent = total + ' USDC';
+      } else {
+        feeDisplay.textContent   = pct + '% · — USDC';
+        totalDisplay.textContent = '— USDC';
       }
+    }
+
+    amountInput.addEventListener('input', updateTotals);
+
+
+    // ── Wallet button (artifact placeholder) ──────────────────────────
+
+    const walletBtn = document.getElementById('wallet-btn');
+    const sendBtn   = document.getElementById('send-btn');
+
+    walletBtn.addEventListener('click', () => {
+      // Artifact: wallet connection not wired. Show state only.
+      walletBtn.textContent = 'Wallet not wired in artifact';
+      walletBtn.disabled    = true;
     });
 
 
     // ── Registry fetch ────────────────────────────────────────────────
     //
-    // Mirrors coincard.js validation contract:
-    //   schema check → status check → required fields → render
-    //
-    // Degraded state rules:
-    //   REVOKED     → red status, all routing rows hidden
-    //   UNAVAILABLE → gray status, all routing rows hidden
-    //
-    // Routing rows (recipient, network, token, destination) are NEVER
-    // shown in a degraded state. The card cannot imply a trusted
-    // destination when the manifest does not confirm it.
+    // Mirrors coincard.js validation contract.
+    // Degraded state: routing rows hidden, proceed button hidden.
+    // REVOKED → red status. UNAVAILABLE → gray status.
 
     const CARD_ID = 'cc_demo_implicitex';
 
     const CHAIN_NAMES_MAP = {
-      '137':   'Polygon',
-      '80002': 'Polygon Amoy',
-      '1':     'Ethereum',
+      '137': 'Polygon', '80002': 'Polygon Amoy', '1': 'Ethereum',
     };
 
     const $ = id => document.getElementById(id);
 
-    function abbrevAddr(addr) {
+    let verifiedManifest = null;
+
+    function abbrev(addr) {
       if (!addr || addr.length < 12) return addr;
       return addr.slice(0, 6) + '\u2026' + addr.slice(-4);
     }
 
+    function setRegistryValue(text, cssClass) {
+      const el    = $('ival-registry');
+      const dot   = $('imark-dot');
+      const label = $('ival-registry-text');
+      if (el)    el.className = 'cc-inspect-value cc-inspect-value--' + cssClass;
+      if (dot)   dot.style.display = (cssClass === 'verified') ? '' : 'none';
+      if (label) label.textContent = text;
+    }
+
     function hideRoutingRows() {
       ['irow-recipient', 'irow-network', 'irow-token', 'irow-destination']
-        .forEach(id => {
-          const row = $(id);
-          if (row) row.hidden = true;
-        });
+        .forEach(id => { const r = $(id); if (r) r.hidden = true; });
     }
 
     function applyVerified(manifest) {
-      // Recipient
-      const recipientEl = $('ival-recipient');
-      if (recipientEl) {
-        recipientEl.textContent = manifest.displayName
-          || abbrevAddr(manifest.recipient);
-      }
+      verifiedManifest = manifest;
+      feeBps = manifest.feeBps || 250;
 
-      // Registry — amber dot + VERIFIED
-      const registryEl  = $('ival-registry');
-      const dotEl        = $('imark-dot');
-      const registryText = $('ival-registry-text');
-      if (registryEl)   registryEl.className = 'cc-inspect-value cc-inspect-value--verified';
-      if (dotEl)         dotEl.style.display = '';
-      if (registryText) registryText.textContent = 'VERIFIED';
+      // Full rows
+      $('ival-recipient').textContent = manifest.displayName || abbrev(manifest.recipient);
+      setRegistryValue('VERIFIED', 'verified');
 
-      // Network
-      const chainName = manifest.chainName
+      const chain = manifest.chainName
         || CHAIN_NAMES_MAP[String(manifest.chainId)]
         || 'Chain ' + manifest.chainId;
-      const networkEl = $('ival-network');
-      if (networkEl) networkEl.textContent = chainName;
+      $('ival-network').textContent = chain;
+      $('ival-token').textContent   = (manifest.token || '').toUpperCase();
 
-      // Token
-      const tokenEl = $('ival-token');
-      if (tokenEl) tokenEl.textContent = (manifest.token || '').toUpperCase();
-
-      // Destination
       const destEl = $('ival-destination');
-      if (destEl) {
-        destEl.textContent = abbrevAddr(manifest.recipient);
-        destEl.title       = manifest.recipient;
-      }
+      destEl.textContent = abbrev(manifest.recipient);
+      destEl.title       = manifest.recipient;
 
-      // Show all routing rows
       ['irow-recipient', 'irow-network', 'irow-token', 'irow-destination']
-        .forEach(id => {
-          const row = $(id);
-          if (row) row.hidden = false;
-        });
+        .forEach(id => { const r = $(id); if (r) r.hidden = false; });
 
-      // Footer attribution
-      const attr = $('iattr-verified');
-      if (attr) {
-        const ownerName = manifest.owner && manifest.owner.name
-          ? manifest.owner.name
-          : 'ImplicitEx';
-        attr.textContent = 'Verified by ' + ownerName;
-      }
+      const ownerName = manifest.owner && manifest.owner.name
+        ? manifest.owner.name : 'ImplicitEx';
+      $('iattr-verified').textContent = 'Verified by ' + ownerName;
+
+      // Show proceed button (INSPECT → TRANSACT gate)
+      proceedBtn.hidden = false;
+
+      // Compact strip
+      compactName.textContent = manifest.displayName || abbrev(manifest.recipient);
+      compactMeta.textContent = chain + ' · '
+        + (manifest.token || '').toUpperCase() + ' · '
+        + abbrev(manifest.recipient);
+
+      // Update live fee label
+      updateTotals();
     }
 
     function applyDegraded(statusText, cssClass) {
+      verifiedManifest = null;
       hideRoutingRows();
-
-      const dotEl        = $('imark-dot');
-      const registryEl   = $('ival-registry');
-      const registryText = $('ival-registry-text');
-      const attr         = $('iattr-verified');
-
-      if (dotEl)         dotEl.style.display = 'none';
-      if (registryEl)    registryEl.className = 'cc-inspect-value cc-inspect-value--' + cssClass;
-      if (registryText)  registryText.textContent = statusText;
-      if (attr)          attr.textContent = '';
+      setRegistryValue(statusText, cssClass);
+      $('iattr-verified').textContent = '';
+      proceedBtn.hidden = true;
     }
 
-    function validateManifest(manifest) {
-      if (manifest.schema !== 'implicitex.coincard.v1') return 'schema-mismatch';
-      if (manifest.cardId !== CARD_ID)                   return 'card-id-mismatch';
-      if (!manifest.recipient || !manifest.chainId || !manifest.token) return 'missing-fields';
-      if (manifest.owner !== undefined && manifest.owner !== null) {
-        if (typeof manifest.owner !== 'object' || !manifest.owner.name) return 'owner-malformed';
+    function validateManifest(m) {
+      if (m.schema !== 'implicitex.coincard.v1')          return 'schema-mismatch';
+      if (m.cardId !== CARD_ID)                            return 'card-id-mismatch';
+      if (!m.recipient || !m.chainId || !m.token)          return 'missing-fields';
+      if (m.owner != null) {
+        if (typeof m.owner !== 'object' || !m.owner.name) return 'owner-malformed';
       }
-      return null; // valid
+      return null;
     }
 
     fetch('/registry/coincards/' + CARD_ID + '.json')
@@ -876,29 +1167,12 @@
         if (!res.ok) throw new Error('http-' + res.status);
         return res.json();
       })
-      .then(manifest => {
-        if (manifest._notFound) {
-          applyDegraded('UNAVAILABLE', 'unavailable');
-          return;
-        }
-
-        if (manifest.status === 'revoked') {
-          applyDegraded('REVOKED', 'revoked');
-          return;
-        }
-
-        const validationError = validateManifest(manifest);
-        if (validationError) {
-          applyDegraded('UNAVAILABLE', 'unavailable');
-          return;
-        }
-
-        if (manifest.status !== 'active') {
-          applyDegraded('UNAVAILABLE', 'unavailable');
-          return;
-        }
-
-        applyVerified(manifest);
+      .then(m => {
+        if (m._notFound)                         { applyDegraded('UNAVAILABLE', 'unavailable'); return; }
+        if (m.status === 'revoked')               { applyDegraded('REVOKED',     'revoked');     return; }
+        if (validateManifest(m))                  { applyDegraded('UNAVAILABLE', 'unavailable'); return; }
+        if (m.status !== 'active')                { applyDegraded('UNAVAILABLE', 'unavailable'); return; }
+        applyVerified(m);
       })
       .catch(() => applyDegraded('UNAVAILABLE', 'unavailable'));
 
