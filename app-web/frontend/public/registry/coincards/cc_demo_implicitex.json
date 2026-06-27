@@ -14,10 +14,10 @@
   "token": "USDC",
   "tokenDecimals": 6,
   "amountMode": "sender_input",
-  "feeBps": 250,
+  "feeBps": 100,
   "allowedParentOrigins": ["*"],
   "sourceDomain": "implicitex.com",
   "createdAt": "2026-06-25T00:00:00Z",
-  "updatedAt": "2026-06-26T00:00:00Z",
+  "updatedAt": "2026-06-27T00:00:00Z",
   "revokedAt": null
 }
