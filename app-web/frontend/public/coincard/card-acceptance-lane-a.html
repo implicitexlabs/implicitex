@@ -394,6 +394,7 @@
     .cc-inspect-label {
       font-family: 'IBM Plex Mono', monospace;
       font-size: 7.5px;
+      font-weight: 600;
       letter-spacing: 0.13em;
       text-transform: uppercase;
       color: rgba(242, 242, 240, 0.58);
@@ -520,6 +521,7 @@
     .cc-transact-label {
       font-family: 'IBM Plex Mono', monospace;
       font-size: 7.5px;
+      font-weight: 600;
       letter-spacing: 0.13em;
       text-transform: uppercase;
       color: rgba(242, 242, 240, 0.58);
@@ -720,6 +722,7 @@
     .cc-settle-detail-label {
       font-family: 'IBM Plex Mono', monospace;
       font-size: 7.5px;
+      font-weight: 600;
       letter-spacing: 0.13em;
       text-transform: uppercase;
       color: rgba(242, 242, 240, 0.58);
@@ -763,6 +766,7 @@
     .cc-preflight-head {
       font-family: 'IBM Plex Mono', monospace;
       font-size: 7.5px;
+      font-weight: 600;
       letter-spacing: 0.11em;
       text-transform: uppercase;
       color: rgba(242, 242, 240, 0.68);
@@ -810,7 +814,7 @@
       pointer-events: none;
       flex-shrink: 0;
     }
-    .cc-mark-wrap--decal .cc-mark-img { width: 88px; height: 88px; opacity: 0.05; }
+    .cc-mark-wrap--decal .cc-mark-img { width: 88px; height: 88px; opacity: 0.07; }
 
 
     /* ─── VARIANT 2: COMPACT PAYMENT MARK ────────────────────────── */
@@ -827,7 +831,7 @@
     .cc-badge--compact .cc-micro     { font-size: 6.5px; margin-top: 2px; }
 
     .cc-badge--compact .cc-mark-wrap { width: 52px; height: 52px; right: -10px; }
-    .cc-badge--compact .cc-mark-img  { width: 52px; height: 52px; opacity: 0.05; }
+    .cc-badge--compact .cc-mark-img  { width: 52px; height: 52px; opacity: 0.07; }
 
 
     /* ─── VARIANT 3: FEATURE CARD ────────────────────────────────── */
@@ -845,7 +849,7 @@
     .cc-badge--feature .cc-micro     { font-size: 8.5px; margin-top: 4px; }
 
     .cc-badge--feature .cc-mark-wrap { width: 196px; height: 196px; right: -52px; }
-    .cc-badge--feature .cc-mark-img  { width: 196px; height: 196px; opacity: 0.05; }
+    .cc-badge--feature .cc-mark-img  { width: 196px; height: 196px; opacity: 0.07; }
 
 
     /* ─── REFERENCE BLOCK ────────────────────────────────────────── */
@@ -1098,10 +1102,9 @@
       <p class="variant-label">Variant 2 — Compact Payment Mark · static</p>
       <div class="variant-stage">
         <div class="cc-badge cc-badge--compact" role="img"
-             aria-label="USDC accepted here. Verified by ImplicitEx on Polygon.">
+             aria-label="USDC accepted here. Polygon · USDC.">
           <div class="cc-copy" aria-hidden="true">
             <span class="cc-primary">USDC accepted here</span>
-            <span class="cc-secondary">Verified by ImplicitEx</span>
             <span class="cc-micro">POLYGON · USDC</span>
           </div>
           <div class="cc-mark-wrap" id="mark-compact">
