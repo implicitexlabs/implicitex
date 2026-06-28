@@ -1691,7 +1691,7 @@
 
       const ownerName = manifest.owner && manifest.owner.name
         ? manifest.owner.name : 'ImplicitEx';
-      $('iattr-verified').textContent = 'Verified by ' + ownerName;
+      $('iattr-verified').textContent = manifest.sourceDomain || ownerName.toLowerCase() + '.com';
 
       // Show proceed button (INSPECT → TRANSACT gate)
       proceedBtn.hidden = false;
