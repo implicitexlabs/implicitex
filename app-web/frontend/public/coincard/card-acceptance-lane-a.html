@@ -889,18 +889,44 @@
     }
     .cc-mark-wrap--decal .cc-mark-img { width: 72px; height: 72px; opacity: 0.45; }
 
-    /* "Powered by IMPLICITEX" — right zone stacked attribution, always visible */
+    /* "Powered by IMPLICITEX" — right zone stacked attribution, expanded state only */
     .cc-right-attribution {
       position: absolute;
       right: var(--cc-mark-inset);
       top: calc(var(--cc-mark-inset) + 72px + 6px); /* flush below lettermark */
-      display: flex;
+      display: none;
       flex-direction: column;
       align-items: center;  /* centered under lettermark */
       gap: 4px;
       pointer-events: none;
       z-index: 3;
       width: 72px; /* match lettermark width so centering aligns */
+    }
+    .cc-wrapper.is-open .cc-right-attribution { display: flex; }
+
+    /* "Powered by [wordmark]" in badge left column — collapsed state only */
+    .cc-badge-poweredby {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .cc-wrapper.is-open .cc-badge-poweredby { display: none; }
+
+    .cc-poweredby-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 8px;
+      letter-spacing: 0.08em;
+      color: rgba(255, 255, 255, 0.55);
+      white-space: nowrap;
+    }
+
+    .cc-poweredby-wordmark {
+      display: inline-block;
+      height: 10px;
+      width: auto;
+      filter: brightness(0) invert(1);
+      opacity: 0.58;
+      vertical-align: middle;
     }
 
     .cc-right-poweredby {
@@ -1034,6 +1060,13 @@
                      aria-hidden="true">
                 <span class="cc-badge-coincard-cta" aria-hidden="true">Create your Coin Card</span>
               </a>
+              <div class="cc-badge-poweredby">
+                <span class="cc-poweredby-label">Powered by</span>
+                <img class="cc-poweredby-wordmark"
+                     src="/components/images/wordmark-white.svg"
+                     alt=""
+                     aria-hidden="true">
+              </div>
               <span class="cc-micro">POLYGON · USDC</span>
             </div>
             <span class="cc-hint" aria-hidden="true">credential details</span>
