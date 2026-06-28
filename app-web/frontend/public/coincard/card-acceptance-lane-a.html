@@ -250,34 +250,56 @@
     .cc-mark-img { display: block; }
 
 
-    /* ─── RIMLIGHT ───────────────────────────────────────────────── */
+    /* ─── AMBIENT GLOW ──────────────────────────────────────────── */
+    /*
+      Radial glow contained within the lettermark clip (overflow:hidden on wrap).
+      Breathes in and out — signals life, not decoration.
+      No sweep, no direction — just quiet luminance rising and falling.
+    */
 
+    /* Base: hidden by default. Only shown when mask-image is supported.
+       Prevents rectangular glow fallback on browsers that don't support CSS masks. */
     .cc-mark-wrap::after {
       content: '';
       position: absolute;
-      top: 0; left: 0;
-      width: 30%;
-      height: 100%;
-      background: linear-gradient(
-        90deg, transparent 0%, rgba(255,255,255,0.16) 50%, transparent 100%
-      );
-      transform: translateX(-200%);
+      inset: 0;
+      opacity: 0;
       pointer-events: none;
       z-index: 2;
+      display: none;
+    }
+
+    @supports ((-webkit-mask-image: linear-gradient(#000, #000)) or (mask-image: linear-gradient(#000, #000))) {
+      .cc-mark-wrap::after {
+        display: block;
+        background: radial-gradient(
+          ellipse at 52% 46%,
+          rgba(255, 255, 255, 0.22) 0%,
+          rgba(255, 255, 255, 0.08) 42%,
+          transparent 72%
+        );
+        -webkit-mask-image: url('/components/images/lettermark-white.svg');
+                mask-image: url('/components/images/lettermark-white.svg');
+        -webkit-mask-repeat: no-repeat;
+                mask-repeat: no-repeat;
+        -webkit-mask-size: contain;
+                mask-size: contain;
+        -webkit-mask-position: center;
+                mask-position: center;
+      }
     }
 
     @media (prefers-reduced-motion: no-preference) {
       .cc-mark-wrap::after {
-        animation: cc-rimlight var(--rimlight-period, 12s) ease-in-out infinite;
-        animation-delay: var(--rimlight-delay, -4s);
+        animation: cc-ambient-glow var(--glow-period, 16s) ease-in-out infinite;
+        animation-delay: var(--glow-delay, 0s);
       }
     }
 
-    @keyframes cc-rimlight {
-      0%,  86%  { transform: translateX(-200%); opacity: 0; }
-      88%        { transform: translateX(-200%); opacity: 1; }
-      95%        { transform: translateX(250%);  opacity: 1; }
-      97%, 100%  { transform: translateX(250%);  opacity: 0; }
+    @keyframes cc-ambient-glow {
+      0%, 28%   { opacity: 0; }   /* rest — card is quiet */
+      52%       { opacity: 1; }   /* peak luminance — slow rise */
+      76%, 100% { opacity: 0; }   /* decay — back to quiet */
     }
 
 
@@ -828,7 +850,7 @@
       transform: translateY(-50%);
       width: 88px;
       height: 88px;
-      overflow: hidden; /* keeps rimlight animation clipped to mark bounds */
+      overflow: hidden; /* contains ambient glow within lettermark bounds */
       z-index: 3;       /* above panel background and rows */
       pointer-events: none;
       flex-shrink: 0;
@@ -1179,17 +1201,17 @@
 
 
   <script>
-    // ── Rimlight stagger ──────────────────────────────────────────────
+    // ── Ambient glow stagger ──────────────────────────────────────────
 
-    [{ id: 'mark-decal', period: 13 },
-     { id: 'mark-compact', period: 11 },
-     { id: 'mark-feature', period: 14 }]
+    [{ id: 'mark-decal', period: 17 },
+     { id: 'mark-compact', period: 15 },
+     { id: 'mark-feature', period: 19 }]
     .forEach(({ id, period }) => {
       const el = document.getElementById(id);
       if (!el) return;
       const delay = -(Math.random() * period).toFixed(2);
-      el.style.setProperty('--rimlight-period', period + 's');
-      el.style.setProperty('--rimlight-delay',  delay  + 's');
+      el.style.setProperty('--glow-period', period + 's');
+      el.style.setProperty('--glow-delay',  delay  + 's');
     });
 
 
