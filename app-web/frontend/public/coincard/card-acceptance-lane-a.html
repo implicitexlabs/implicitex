@@ -958,10 +958,10 @@
                tabindex="0"
                aria-expanded="false"
                aria-controls="decal-panel"
-               aria-label="USDC accepted here. Verified by ImplicitEx. Polygon USDC. Activate to inspect credential details.">
+               aria-label="USDC accepted here. Powered by ImplicitEx. Polygon USDC. Activate to inspect route details.">
             <div class="cc-copy" aria-hidden="true">
               <span class="cc-primary">USDC accepted here</span>
-              <span class="cc-secondary">Verified by <img class="cc-wordmark-inline" src="/components/images/wordmark-white.svg" alt="" aria-hidden="true"></span>
+              <span class="cc-secondary">Powered by <img class="cc-wordmark-inline" src="/components/images/wordmark-white.svg" alt="" aria-hidden="true"></span>
               <span class="cc-micro">POLYGON · USDC</span>
             </div>
             <span class="cc-hint" aria-hidden="true">credential details</span>
@@ -988,7 +988,7 @@
                 <div class="cc-compact-credential">
                   <div class="cc-compact-status">
                     <span class="cc-compact-dot" aria-hidden="true"></span>
-                    <span class="cc-compact-verified-label">VERIFIED</span>
+                    <span class="cc-compact-verified-label">ROUTE ACTIVE</span>
                     <span class="cc-compact-name" id="compact-name">—</span>
                   </div>
                   <div class="cc-compact-meta" id="compact-meta">—</div>
@@ -1012,7 +1012,7 @@
                   </div>
 
                   <div class="cc-inspect-row" id="irow-registry">
-                    <span class="cc-inspect-label">Registry</span>
+                    <span class="cc-inspect-label">Route</span>
                     <span class="cc-inspect-value cc-inspect-value--verified" id="ival-registry">
                       <span class="cc-verify-dot" id="imark-dot" aria-hidden="true"></span>
                       <span id="ival-registry-text">—</span>
@@ -1162,10 +1162,10 @@
       <p class="variant-label">Variant 3 — Feature Card · static</p>
       <div class="variant-stage variant-stage--center">
         <div class="cc-badge cc-badge--feature" role="img"
-             aria-label="USDC accepted here. Verified by ImplicitEx on Polygon.">
+             aria-label="USDC accepted here. Powered by ImplicitEx. Polygon USDC.">
           <div class="cc-copy" aria-hidden="true">
             <span class="cc-primary">USDC accepted here</span>
-            <span class="cc-secondary">Verified by <img class="cc-wordmark-inline" src="/components/images/wordmark-white.svg" alt="" aria-hidden="true"></span>
+            <span class="cc-secondary">Powered by <img class="cc-wordmark-inline" src="/components/images/wordmark-white.svg" alt="" aria-hidden="true"></span>
             <span class="cc-micro">POLYGON · USDC</span>
           </div>
           <div class="cc-mark-wrap" id="mark-feature">
@@ -1730,7 +1730,7 @@
 
       // Full rows
       $('ival-recipient').textContent = manifest.displayName || abbrev(manifest.recipient);
-      setRegistryValue('VERIFIED', 'verified');
+      setRegistryValue('ROUTE ACTIVE', 'verified');
 
       const chain = manifest.chainName
         || CHAIN_NAMES_MAP[String(manifest.chainId)]
