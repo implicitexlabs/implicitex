@@ -1,7 +1,7 @@
 # Coin Card Lane A — Surface Smoke
 **Date:** 2026-06-28
 **Surface:** implicitex.com/coincard/card-acceptance-lane-a.html
-**Commit under test:** 2208f60 (footer: COIN CARD issuer mark links to coincard.implicitex.com with hover CTA)
+**Commit under test:** 00c7b62 (refine: COIN CARD logo to badge, boost contrast on evidence outputs, remove footer duplicate)
 **Scope:** Surface regression only — footer link, hover CTA, visual integrity, card trust behavior.
 **Not in scope:** Wallet connection, real USDC transfer (see coincard-lane-a-smoke-2026-06-27.md for wallet smoke).
 
@@ -22,16 +22,18 @@
 
 ---
 
-## S2 — Footer Issuer Mark
+## S2 — Badge COIN CARD Lockup
 
 | Check | Expected | Result |
 |---|---|---|
-| COIN CARD logo visible in INSPECT footer (lower left) | Yes | |
-| Logo opacity consistent with muted tier | Yes (≈0.58) | |
-| Logo is an anchor element | Yes | |
-| Anchor `href` | `https://coincard.implicitex.com` | |
-| Anchor opens in new tab | Yes (`target="_blank"`) | |
-| No domain text (`implicitex.com`) in footer | Absent | |
+| "USDC accepted here" visible as primary line | Yes | |
+| COIN CARD logo visible directly below primary line | Yes | |
+| Logo height visually larger than before (14px, was 9px) | Yes | |
+| Logo opacity — clearly readable, not ghost-tier | Yes (≈0.72) | |
+| No COIN CARD logo in the INSPECT panel footer | Absent (removed) | |
+| INSPECT footer contains only the proceed button (right-aligned) | Yes | |
+| POLYGON · USDC micro copy below COIN CARD logo | Yes | |
+| ImplicitEx lettermark upper right — unchanged | Yes | |
 
 **Outcome:** PASS / FAIL
 
@@ -41,12 +43,14 @@
 
 | Check | Expected | Result |
 |---|---|---|
-| Hover over footer mark — logo disappears | Yes | |
-| "Create your Coin Card" text appears on hover | Yes | |
+| Hover over COIN CARD logo in badge — logo disappears | Yes | |
+| `coincard.implicitex.com` URL text appears on hover | Yes | |
 | Text font | IBM Plex Mono | |
-| Text weight | Medium (500) — visibly bolder than muted tier | |
-| Text color on hover | Stepped up from muted (secondary tier) | |
-| Mouse-off — logo reappears, CTA disappears | Yes | |
+| Text weight | Medium (500) | |
+| Text color | Secondary tier (0.88) | |
+| Mouse-off — logo reappears, URL text disappears | Yes | |
+| Clicking logo opens coincard.implicitex.com in new tab | Yes | |
+| Clicking logo does NOT open the INSPECT panel | Yes (stopPropagation) | |
 | No layout shift during swap | Yes | |
 
 **Outcome:** PASS / FAIL
