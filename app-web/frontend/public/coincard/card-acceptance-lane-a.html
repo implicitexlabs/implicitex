@@ -186,12 +186,14 @@
       line-height: 1;
     }
 
-    /* inline authority mark within .cc-secondary — "ImplicitEx" distinct from "Verified by" */
-    .cc-wordmark-inline {
-      font-family: 'Oxanium', sans-serif;
-      font-weight: 700;
-      color: rgba(242, 242, 240, 0.96);
-      letter-spacing: 0.01em;
+    /* ImplicitEx wordmark SVG inline with "Verified by" — scales with parent em */
+    img.cc-wordmark-inline {
+      display: inline-block;
+      height: 0.72em;    /* proportional to secondary font-size */
+      width: auto;
+      vertical-align: -0.07em; /* optical baseline alignment */
+      margin-left: 0.1em;
+      opacity: 0.95;
     }
 
     .cc-micro {
@@ -928,7 +930,7 @@
                aria-label="USDC payment credential — activate to inspect">
             <div class="cc-copy" aria-hidden="true">
               <span class="cc-primary">USDC accepted here</span>
-              <span class="cc-secondary">Verified by <span class="cc-wordmark-inline">ImplicitEx</span></span>
+              <span class="cc-secondary">Verified by <img class="cc-wordmark-inline" src="/components/images/wordmark-white.svg" alt="ImplicitEx"></span>
               <span class="cc-micro">POLYGON · USDC</span>
             </div>
             <span class="cc-hint" aria-hidden="true">credential details</span>
@@ -1132,7 +1134,7 @@
              aria-label="USDC accepted here. Verified by ImplicitEx on Polygon.">
           <div class="cc-copy" aria-hidden="true">
             <span class="cc-primary">USDC accepted here</span>
-            <span class="cc-secondary">Verified by <span class="cc-wordmark-inline">ImplicitEx</span></span>
+            <span class="cc-secondary">Verified by <img class="cc-wordmark-inline" src="/components/images/wordmark-white.svg" alt="ImplicitEx"></span>
             <span class="cc-micro">POLYGON · USDC</span>
           </div>
           <div class="cc-mark-wrap" id="mark-feature">
