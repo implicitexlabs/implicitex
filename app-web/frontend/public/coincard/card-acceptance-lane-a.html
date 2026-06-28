@@ -533,7 +533,7 @@
       white-space: nowrap;
     }
 
-    /* .cc-badge-poweredby removed — attribution moved to right zone (.cc-right-attribution) */
+    /* Attribution: right zone (.cc-right-attribution) always visible; left badge shows "Powered by" collapsed only */
 
     .cc-badge-coincard:hover .cc-badge-coincard-logo    { display: none; }
     .cc-badge-coincard:hover .cc-badge-coincard-cta     { display: block; }
@@ -889,12 +889,12 @@
     }
     .cc-mark-wrap--decal .cc-mark-img { width: 72px; height: 72px; opacity: 0.45; }
 
-    /* "Powered by IMPLICITEX" — right zone stacked attribution, expanded state only */
+    /* "Powered by IMPLICITEX" — right zone stacked attribution, always visible */
     .cc-right-attribution {
       position: absolute;
       right: var(--cc-mark-inset);
       top: calc(var(--cc-mark-inset) + 72px + 6px); /* flush below lettermark */
-      display: none;
+      display: flex;
       flex-direction: column;
       align-items: center;  /* centered under lettermark */
       gap: 4px;
@@ -902,7 +902,6 @@
       z-index: 3;
       width: 72px; /* match lettermark width so centering aligns */
     }
-    .cc-wrapper.is-open .cc-right-attribution { display: flex; }
 
     /* "Powered by [wordmark]" in badge left column — collapsed state only */
     .cc-badge-poweredby {
@@ -1124,15 +1123,6 @@
                     </span>
                   </div>
 
-                  <div class="cc-inspect-row" id="irow-network">
-                    <span class="cc-inspect-label">Network</span>
-                    <span class="cc-inspect-value" id="ival-network">—</span>
-                  </div>
-
-                  <div class="cc-inspect-row" id="irow-token">
-                    <span class="cc-inspect-label">Token</span>
-                    <span class="cc-inspect-value" id="ival-token">—</span>
-                  </div>
 
                   <div class="cc-inspect-row" id="irow-destination">
                     <span class="cc-inspect-label">Destination</span>
@@ -1504,7 +1494,7 @@
       no_amount:             { head: 'Enter amount',              sub: 'Amount must be greater than 0.' },
       insufficient_balance:  { head: 'Insufficient USDC balance', sub: 'Reduce amount or fund wallet.' },
       // Gate cleared
-      ready:                 { head: 'Ready',                     sub: 'Verified destination. Wallet ready. Amount valid.' },
+      ready:                 { head: 'Ready',                     sub: 'Valid destination. Wallet connected. Amount valid.' },
       // Execution states — Slice 2
       approval_pending:      { head: 'Approval pending',          sub: 'Approve USDC in your wallet.' },
       approval_confirming:   { head: 'Approval confirming',       sub: 'Waiting for Polygon confirmation.' },
@@ -1849,7 +1839,7 @@
     }
 
     function hideRoutingRows() {
-      ['irow-recipient', 'irow-network', 'irow-token', 'irow-destination']
+      ['irow-recipient', 'irow-destination']
         .forEach(id => { const r = $(id); if (r) r.hidden = true; });
     }
 
@@ -1864,14 +1854,12 @@
       const chain = manifest.chainName
         || CHAIN_NAMES_MAP[String(manifest.chainId)]
         || 'Chain ' + manifest.chainId;
-      $('ival-network').textContent = chain;
-      $('ival-token').textContent   = (manifest.token || '').toUpperCase();
 
       const destEl = $('ival-destination');
       destEl.textContent = abbrev(manifest.recipient);
       destEl.title       = manifest.recipient;
 
-      ['irow-recipient', 'irow-network', 'irow-token', 'irow-destination']
+      ['irow-recipient', 'irow-destination']
         .forEach(id => { const r = $(id); if (r) r.hidden = false; });
 
       // Show proceed button (INSPECT → TRANSACT gate)
