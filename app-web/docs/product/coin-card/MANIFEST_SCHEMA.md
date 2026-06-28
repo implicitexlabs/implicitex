@@ -75,7 +75,6 @@ Required top-level shape:
     "decimals": 6
   },
   "created_at": "2026-06-28T00:00:00Z",
-  "expires_at": "2027-06-28T00:00:00Z",
   "issuer": {
     "type": "wallet",
     "address": "0x0000000000000000000000000000000000000000"
@@ -98,7 +97,6 @@ Required top-level shape:
 | `network` | object | Blockchain network for the destination |
 | `asset` | object | Payment asset for the destination |
 | `created_at` | string | UTC timestamp when the payload was created |
-| `expires_at` | string | UTC timestamp after which the payload is no longer currently valid |
 | `issuer` | object | Entity or wallet authorizing the payload |
 | `signature` | object | Creator signature over the canonical payload excluding `signature` |
 
@@ -145,12 +143,15 @@ Permitted `subject.type` values:
 
 ```text
 person
+creator
 organization
 project
 merchant
 ```
 
 `subject.name` MUST be plain text.
+
+Additional subject types require a schema version revision.
 
 ### `recipient`
 
@@ -212,12 +213,6 @@ Example:
 2026-06-28T00:00:00Z
 ```
 
-### `expires_at`
-
-`expires_at` MUST be an RFC 3339 UTC timestamp later than `created_at`.
-
-Expiration is part of the signed meaning. A verifier MUST reject an expired payload as not currently valid.
-
 ### `issuer`
 
 `issuer` identifies the signer authority for the payload.
@@ -266,10 +261,17 @@ Optional fields MUST remain plain data. They MUST NOT contain HTML, CSS, JavaScr
 | `description` | string | Plain-language identity context |
 | `website` | string | HTTPS URL associated with the subject |
 | `avatar_uri` | string | HTTPS or content-addressed avatar reference |
-| `verification_uri` | string | HTTPS URL for independent verification context |
+| `reference_uri` | string | HTTPS URL for supporting public context |
 | `metadata_uri` | string | HTTPS or content-addressed extended metadata reference |
+| `expires_at` | string | UTC timestamp after which the payload is no longer intrinsically current |
 
 Optional fields do not broaden the trust claim. They may provide context, but they do not establish business legitimacy, moral trustworthiness, legal compliance, transfer success, or reputation.
+
+`reference_uri` is not a trust authority. It may point to supporting public context, but it does not verify the Coin Card.
+
+When `expires_at` is absent, the payload has no intrinsic expiration. Registry status and revocation state may still invalidate operational use.
+
+When `expires_at` is present, it MUST be an RFC 3339 UTC timestamp later than `created_at`. Expiration is part of the signed meaning. A verifier MUST reject an expired payload as not currently valid.
 
 ## Canonicalization Rules
 
@@ -289,6 +291,10 @@ Rules:
 - Unknown nested fields MUST be rejected.
 - The `signature` field MUST be excluded from the signed object.
 - The `signature` field MUST be included in the complete manifest.
+
+V1 prioritizes deterministic validation over forward compatibility. Unknown fields are rejected so implementers cannot silently attach new trust claims to an old schema.
+
+Arrays are excluded in V1 to eliminate ordering ambiguity in the initial canonicalization model.
 
 The canonical payload MUST NOT include:
 
@@ -321,7 +327,6 @@ Example signed object:
   },
   "card_id": "coincard:creator:brandon-lehman",
   "created_at": "2026-06-28T00:00:00Z",
-  "expires_at": "2027-06-28T00:00:00Z",
   "issuer": {
     "address": "0x0000000000000000000000000000000000000000",
     "type": "wallet"
@@ -363,8 +368,8 @@ Validators MUST reject a manifest when any of the following are true:
 - `asset.contract` is invalid
 - `asset.decimals` is invalid
 - timestamps are malformed
-- `expires_at` is not later than `created_at`
-- payload has expired
+- `expires_at` is present and not later than `created_at`
+- `expires_at` is present and the payload has expired
 - `issuer.type` is unsupported
 - `issuer.address` is invalid
 - `signature.type` is unsupported
@@ -409,7 +414,7 @@ A validator MUST be able to derive these evidence outputs from a valid manifest:
 | Signature scheme | `signature.type` |
 | Signature validity | canonical payload + `signature.value` |
 | Created timestamp | `created_at` |
-| Expiration timestamp | `expires_at` |
+| Expiration timestamp | `expires_at`, when present |
 | Payload hash | canonical signed object bytes |
 | Manifest version | `version` |
 | Card identifier | `card_id` |
