@@ -15,7 +15,7 @@
     :root {
       --cc-card-inset: 20px;   /* uniform interior safe area on all four sides */
       --cc-card-radius: 12px;  /* credit/debit card corner radius */
-      --cc-decal-mark-center-y: 44px; /* vertical center of badge zone (padding:20px + copy~47px) / 2 */
+      --cc-mark-inset: 14px;   /* lettermark inset from card edge — fully within bounds */
 
       /* Text value tiers — functional text never below 0.58; decorative can go lower */
       --cc-text-primary:   rgba(242, 242, 240, 0.96); /* title, amounts */
@@ -514,21 +514,50 @@
 
     .cc-badge-coincard-logo {
       display: block;
-      height: 14px;
+      height: 12px; /* compact/feature default */
       width: auto;
       filter: brightness(0) invert(1);
-      opacity: 0.72;
+      opacity: 0.75;
       transition: opacity 0.15s ease;
     }
+
+    /* Larger in the main decal badge where there is space */
+    .cc-badge--decal .cc-badge-coincard-logo { height: 20px; opacity: 0.82; }
 
     .cc-badge-coincard-cta {
       display: none;
       font-family: 'IBM Plex Mono', monospace;
-      font-size: 9px;
+      font-size: 10px;
       font-weight: 500;
-      letter-spacing: 0.08em;
+      letter-spacing: 0.07em;
       color: var(--cc-text-secondary);
       white-space: nowrap;
+    }
+
+    /* "Powered by [wordmark]" in badge — visible when collapsed, hidden when expanded */
+    .cc-badge-poweredby {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: 1px;
+    }
+    .cc-wrapper.is-open .cc-badge-poweredby { display: none; }
+
+    .cc-poweredby-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 7.5px;
+      letter-spacing: 0.08em;
+      color: rgba(242, 242, 240, 0.50);
+      white-space: nowrap;
+    }
+
+    .cc-poweredby-wordmark {
+      display: inline-block;
+      height: 9px;
+      width: auto;
+      filter: brightness(0) invert(1);
+      opacity: 0.55;
+      vertical-align: middle;
     }
 
     .cc-badge-coincard:hover .cc-badge-coincard-logo    { display: none; }
@@ -864,7 +893,7 @@
     }
 
     /* constrain copy so it stays in the left safe area, clear of the mark */
-    .cc-badge--decal .cc-copy { gap: 5px; max-width: 310px; }
+    .cc-badge--decal .cc-copy { gap: 6px; max-width: 340px; }
     .cc-badge--decal .cc-primary   { font-size: 16px; }
     .cc-badge--decal .cc-secondary { font-size: 9.5px; margin-top: 1px; }
     .cc-badge--decal .cc-micro     { font-size: 7.5px; margin-top: 3px; }
@@ -872,17 +901,48 @@
     /* Decal mark lives in the wrapper, not the badge — paints above panel background */
     .cc-mark-wrap--decal {
       position: absolute;
-      right: -18px;    /* right bleed — wrapper overflow:hidden clips it */
-      top: var(--cc-decal-mark-center-y); /* named: center of badge zone */
-      transform: translateY(-50%);
-      width: 88px;
-      height: 88px;
+      right: var(--cc-mark-inset);  /* fully within card bounds — not cropped */
+      top: var(--cc-mark-inset);
+      transform: none;
+      width: 72px;
+      height: 72px;
       overflow: hidden; /* contains ambient glow within lettermark bounds */
       z-index: 3;       /* above panel background and rows */
       pointer-events: none;
       flex-shrink: 0;
     }
-    .cc-mark-wrap--decal .cc-mark-img { width: 88px; height: 88px; opacity: 0.07; }
+    .cc-mark-wrap--decal .cc-mark-img { width: 72px; height: 72px; opacity: 0.45; }
+
+    /* "Powered by IMPLICITEX" — right zone attribution, shown in expanded state */
+    .cc-right-attribution {
+      position: absolute;
+      right: var(--cc-mark-inset);
+      top: calc(var(--cc-mark-inset) + 72px + 8px); /* below lettermark */
+      display: none;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 3px;
+      pointer-events: none;
+      z-index: 3;
+    }
+    .cc-wrapper.is-open .cc-right-attribution { display: flex; }
+
+    .cc-right-poweredby {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 6.5px;
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+      color: rgba(242, 242, 240, 0.40);
+      white-space: nowrap;
+    }
+
+    .cc-right-wordmark {
+      display: block;
+      height: 10px;
+      width: auto;
+      filter: brightness(0) invert(1);
+      opacity: 0.55;
+    }
 
 
     /* ─── VARIANT 2: COMPACT PAYMENT MARK ────────────────────────── */
@@ -898,8 +958,8 @@
     .cc-badge--compact .cc-secondary { font-size: 7px; }
     .cc-badge--compact .cc-micro     { font-size: 6.5px; margin-top: 2px; }
 
-    .cc-badge--compact .cc-mark-wrap { width: 52px; height: 52px; right: -10px; }
-    .cc-badge--compact .cc-mark-img  { width: 52px; height: 52px; opacity: 0.07; }
+    .cc-badge--compact .cc-mark-wrap { width: 44px; height: 44px; right: 10px; top: 50%; transform: translateY(-50%); }
+    .cc-badge--compact .cc-mark-img  { width: 44px; height: 44px; opacity: 0.45; }
 
 
     /* ─── VARIANT 3: FEATURE CARD ────────────────────────────────── */
@@ -916,8 +976,8 @@
     .cc-badge--feature .cc-secondary { font-size: 11px; }
     .cc-badge--feature .cc-micro     { font-size: 8.5px; margin-top: 4px; }
 
-    .cc-badge--feature .cc-mark-wrap { width: 196px; height: 196px; right: -52px; }
-    .cc-badge--feature .cc-mark-img  { width: 196px; height: 196px; opacity: 0.07; }
+    .cc-badge--feature .cc-mark-wrap { width: 160px; height: 160px; right: 20px; top: 50%; transform: translateY(-50%); }
+    .cc-badge--feature .cc-mark-img  { width: 160px; height: 160px; opacity: 0.45; }
 
 
     /* ─── REFERENCE BLOCK ────────────────────────────────────────── */
@@ -998,6 +1058,13 @@
                      aria-hidden="true">
                 <span class="cc-badge-coincard-cta" aria-hidden="true">coincard.implicitex.com</span>
               </a>
+              <div class="cc-badge-poweredby">
+                <span class="cc-poweredby-label">Powered by</span>
+                <img class="cc-poweredby-wordmark"
+                     src="/components/images/wordmark-white.svg"
+                     alt=""
+                     aria-hidden="true">
+              </div>
               <span class="cc-micro">POLYGON · USDC</span>
             </div>
             <span class="cc-hint" aria-hidden="true">credential details</span>
@@ -1165,6 +1232,15 @@
           <!-- LETTERMARK — last child: paints above badge and panel backgrounds -->
           <div class="cc-mark-wrap cc-mark-wrap--decal" id="mark-decal" aria-hidden="true">
             <img class="cc-mark-img" src="/components/images/lettermark-white.svg" alt="">
+          </div>
+
+          <!-- RIGHT ATTRIBUTION — "Powered by IMPLICITEX", shown only in expanded state -->
+          <div class="cc-right-attribution" aria-hidden="true">
+            <span class="cc-right-poweredby">Powered by</span>
+            <img class="cc-right-wordmark"
+                 src="/components/images/wordmark-white.svg"
+                 alt=""
+                 aria-hidden="true">
           </div>
 
         </div><!-- /.cc-wrapper -->
