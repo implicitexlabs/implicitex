@@ -370,21 +370,21 @@
       font-size: 7.5px;
       letter-spacing: 0.11em;
       text-transform: uppercase;
-      color: rgba(242, 242, 240, 0.58);
+      color: rgba(242, 242, 240, 0.70);
     }
 
     .cc-compact-name {
       font-family: 'Oxanium', sans-serif;
       font-size: 10px;
       font-weight: 600;
-      color: rgba(242, 242, 240, 0.80);
+      color: rgba(242, 242, 240, 0.90);
     }
 
     .cc-compact-meta {
       font-family: 'IBM Plex Mono', monospace;
       font-size: 8px;
       letter-spacing: 0.05em;
-      color: rgba(242, 242, 240, 0.46);
+      color: rgba(242, 242, 240, 0.68);
     }
 
     .cc-details-toggle {
@@ -392,7 +392,7 @@
       font-size: 7.5px;
       letter-spacing: 0.11em;
       text-transform: uppercase;
-      color: rgba(242, 242, 240, 0.44);
+      color: rgba(242, 242, 240, 0.60);
       background: none;
       border: none;
       cursor: pointer;
@@ -403,7 +403,7 @@
       transition: color 0.15s ease;
     }
 
-    .cc-details-toggle:hover { color: rgba(242, 242, 240, 0.66); }
+    .cc-details-toggle:hover { color: rgba(242, 242, 240, 0.80); }
 
 
     /* ─── FULL ROWS (INSPECT + TRANSACT+details) ─────────────────── */
@@ -492,51 +492,49 @@
       text-align: right;
     }
 
-    /* Footer: attribution left, proceed right */
+    /* Footer: proceed button right-aligned */
     .cc-inspect-footer {
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: flex-end;
       padding: 6px 20px 10px;
       border-top: 1px solid rgba(255, 255, 255, 0.04);
       margin-top: 2px;
     }
 
-    /* Footer issuer mark — COIN CARD logo linking to coincard.implicitex.com */
-    .cc-footer-mark {
+    /* Badge COIN CARD logo — sits below "USDC accepted here" in the badge copy block.
+       Links to coincard.implicitex.com. Hover swaps logo for URL text.
+       stopPropagation in JS prevents click from also opening INSPECT. */
+    .cc-badge-coincard {
       display: inline-flex;
       align-items: center;
       text-decoration: none;
-      flex-shrink: 0;
+      margin-top: 1px;
     }
 
-    .cc-inspect-attr {
+    .cc-badge-coincard-logo {
       display: block;
-      height: 9px;
+      height: 14px;
       width: auto;
-      /* SVG uses currentColor — invert + opacity to match --cc-text-muted (0.58) on dark surface */
       filter: brightness(0) invert(1);
-      opacity: 0.58;
+      opacity: 0.72;
       transition: opacity 0.15s ease;
     }
 
-    .cc-footer-cta {
+    .cc-badge-coincard-cta {
       display: none;
       font-family: 'IBM Plex Mono', monospace;
-      font-size: 7.5px;
+      font-size: 9px;
       font-weight: 500;
-      letter-spacing: 0.10em;
-      color: var(--cc-text-muted);
+      letter-spacing: 0.08em;
+      color: var(--cc-text-secondary);
       white-space: nowrap;
-      transition: color 0.15s ease;
     }
 
-    .cc-footer-mark:hover .cc-inspect-attr { display: none; }
-    .cc-footer-mark:hover .cc-footer-cta   { display: block; }
-    .cc-footer-mark:focus-visible .cc-inspect-attr { display: none; }
-    .cc-footer-mark:focus-visible .cc-footer-cta   { display: block; }
-    .cc-footer-mark:hover .cc-footer-cta,
-    .cc-footer-mark:focus-visible .cc-footer-cta   { color: var(--cc-text-secondary); }
+    .cc-badge-coincard:hover .cc-badge-coincard-logo    { display: none; }
+    .cc-badge-coincard:hover .cc-badge-coincard-cta     { display: block; }
+    .cc-badge-coincard:focus-visible .cc-badge-coincard-logo { display: none; }
+    .cc-badge-coincard:focus-visible .cc-badge-coincard-cta  { display: block; }
 
     /* Proceed: visible only when manifest VERIFIED, hidden otherwise */
     .cc-proceed-btn {
@@ -637,7 +635,7 @@
       font-family: 'IBM Plex Mono', monospace;
       font-size: 8px;
       letter-spacing: 0.08em;
-      color: rgba(242, 242, 240, 0.46);
+      color: rgba(242, 242, 240, 0.62);
     }
 
     /* Fee and total values */
@@ -769,7 +767,7 @@
       font-family: 'IBM Plex Mono', monospace;
       font-size: 8px;
       letter-spacing: 0.05em;
-      color: rgba(242, 242, 240, 0.48);
+      color: rgba(242, 242, 240, 0.66);
       margin-bottom: 12px;
       display: flex;
       align-items: center;
@@ -847,7 +845,7 @@
       font-family: 'IBM Plex Mono', monospace;
       font-size: 7px;
       letter-spacing: 0.05em;
-      color: var(--cc-text-muted); /* 0.58 */
+      color: rgba(242, 242, 240, 0.72);
       display: block;
       margin-top: 2px;
     }
@@ -987,10 +985,19 @@
                tabindex="0"
                aria-expanded="false"
                aria-controls="decal-panel"
-               aria-label="USDC accepted here. Powered by ImplicitEx. Polygon USDC. Activate to inspect route details.">
+               aria-label="USDC accepted here. Coin Card. Polygon USDC. Activate to inspect route details.">
             <div class="cc-copy" aria-hidden="true">
               <span class="cc-primary">USDC accepted here</span>
-              <span class="cc-secondary">Powered by <img class="cc-wordmark-inline" src="/components/images/wordmark-white.svg" alt="" aria-hidden="true"></span>
+              <a class="cc-badge-coincard"
+                 href="https://coincard.implicitex.com"
+                 target="_blank"
+                 rel="noopener noreferrer">
+                <img class="cc-badge-coincard-logo"
+                     src="/components/images/coincard-logo.svg"
+                     alt=""
+                     aria-hidden="true">
+                <span class="cc-badge-coincard-cta" aria-hidden="true">coincard.implicitex.com</span>
+              </a>
               <span class="cc-micro">POLYGON · USDC</span>
             </div>
             <span class="cc-hint" aria-hidden="true">credential details</span>
@@ -1066,17 +1073,6 @@
                 </div>
 
                 <div class="cc-inspect-footer">
-                  <a class="cc-footer-mark"
-                     href="https://coincard.implicitex.com"
-                     target="_blank"
-                     rel="noopener noreferrer"
-                     aria-label="Create your Coin Card at coincard.implicitex.com">
-                    <img class="cc-inspect-attr"
-                         src="/components/images/coincard-logo.svg"
-                         alt=""
-                         aria-hidden="true">
-                    <span class="cc-footer-cta" aria-hidden="true">Create your Coin Card</span>
-                  </a>
                   <!-- Proceed: only rendered after manifest VERIFIED -->
                   <button class="cc-proceed-btn" id="proceed-btn" hidden>
                     Enter amount →
@@ -1182,9 +1178,15 @@
       <p class="variant-label">Variant 2 — Compact Payment Mark · static</p>
       <div class="variant-stage">
         <div class="cc-badge cc-badge--compact" role="img"
-             aria-label="USDC accepted here. Polygon · USDC.">
+             aria-label="USDC accepted here. Coin Card. Powered by ImplicitEx. Polygon · USDC.">
           <div class="cc-copy" aria-hidden="true">
             <span class="cc-primary">USDC accepted here</span>
+            <img class="cc-badge-coincard-logo"
+                 src="/components/images/coincard-logo.svg"
+                 alt=""
+                 aria-hidden="true"
+                 style="margin-top:2px;">
+            <span class="cc-secondary">Powered by <img class="cc-wordmark-inline" src="/components/images/wordmark-white.svg" alt="" aria-hidden="true"></span>
             <span class="cc-micro">POLYGON · USDC</span>
           </div>
           <div class="cc-mark-wrap" id="mark-compact">
@@ -1201,10 +1203,15 @@
       <p class="variant-label">Variant 3 — Feature Card · static</p>
       <div class="variant-stage variant-stage--center">
         <div class="cc-badge cc-badge--feature" role="img"
-             aria-label="USDC accepted here. Powered by ImplicitEx. Polygon USDC.">
+             aria-label="USDC accepted here. Coin Card. Powered by ImplicitEx. Polygon USDC.">
           <div class="cc-copy" aria-hidden="true">
             <span class="cc-primary">USDC accepted here</span>
-            <span class="cc-secondary">Powered by <img class="cc-wordmark-inline" src="/components/images/wordmark-white.svg" alt="" aria-hidden="true"></span>
+            <img class="cc-badge-coincard-logo"
+                 src="/components/images/coincard-logo.svg"
+                 alt=""
+                 aria-hidden="true"
+                 style="margin-top:2px;">
+            <span class="cc-secondary" style="margin-top:2px;">Powered by <img class="cc-wordmark-inline" src="/components/images/wordmark-white.svg" alt="" aria-hidden="true"></span>
             <span class="cc-micro">POLYGON · USDC</span>
           </div>
           <div class="cc-mark-wrap" id="mark-feature">
@@ -1289,6 +1296,11 @@
 
     const isOpen     = () => wrapper.classList.contains('is-open');
     const isTransact = () => wrapper.classList.contains('is-transact');
+
+    // COIN CARD logo link in badge — stop propagation so clicking it
+    // navigates to coincard.implicitex.com without also toggling INSPECT.
+    const badgeCoincard = badge.querySelector('.cc-badge-coincard');
+    if (badgeCoincard) badgeCoincard.addEventListener('click', e => e.stopPropagation());
 
     // Badge click: toggle inspect / close
     badge.addEventListener('click', () => { isOpen() ? closeAll() : toInspect(); });
