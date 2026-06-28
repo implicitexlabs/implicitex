@@ -264,16 +264,16 @@ SETTLE     → transfer-gated, requires confirmed transaction
 
 Visual changes between states must reflect the semantic significance of the transition. TRANSACT compresses INSPECT — but may not erase it. SETTLE proves — it does not celebrate.
 
-**The test:** Can the user, at any state, answer these questions without zooming or searching?
+**The test:** Each state answers a specific user question. Can the user answer that question without zooming or searching?
 
 ```text
-Where is this money going?
-How much will I send?
-What does the system guarantee?
-What does the system not guarantee?
+BADGE      → Who can I pay here?
+INSPECT    → Who exactly am I paying?
+TRANSACT   → What exactly am I committing to?
+SETTLE     → What evidence exists that this happened?
 ```
 
-If the answer to any of these requires visual effort, the state presentation has failed.
+If the state's answer requires visual effort, the state presentation has failed.
 
 ---
 
@@ -320,23 +320,85 @@ The ambient glow — white breathing slowly — is the correct interaction signa
 
 ---
 
+## Principle 10 — Information Geography
+
+**Density may change between states. Geography should rhyme.**
+
+Each zone has a stable identity:
+
+```text
+right zone  = authority (who stands behind this system)
+left zone   = activity (what is happening right now)
+```
+
+This organization does not change between states. The right zone is not repurposed. The left zone is not replaced — it changes density to serve the current question.
+
+**What "density change" means:**
+
+Recipient in INSPECT appears as a labeled evidence row:
+
+```text
+RECIPIENT
+ImplicitEx Demo Treasury
+```
+
+Recipient in TRANSACT appears as a compact strip anchor:
+
+```text
+● ROUTE ACTIVE  |  ImplicitEx Demo Treasury
+```
+
+These are the same information at different densities. The user learns: "recipient is always top-left." They do not need to hunt for it when the state changes.
+
+**What "geography violation" means:**
+
+Moving the authority seal to the left when expanded. Moving the amount display to the header in one state and the footer in another. Hiding and revealing content in ways that require the user to relearn the layout.
+
+**The rule:**
+
+> State transitions may change what information is displayed and how densely it is presented.  
+> They may not change where categories of information live.
+
+**Application to future form factors:**
+
+Every future Coin Card variant — vertical, compact, embedded, mobile, publisher — must answer:
+
+```text
+Where is authority?
+Where is activity?
+```
+
+before making any layout decision. The answer must be consistent with this geography across the product.
+
+**Information repetition rule:**
+
+Information may repeat across states only if repetition adds new confidence at that state. It may not repeat because there is space available. INSPECT excludes Network and Token because they were established in the credential layer. SETTLE includes them because a proof record requires completeness.
+
+```text
+INSPECT  = decision support (what the user needs to commit)
+SETTLE   = evidentiary archive (what happened, in full)
+```
+
+---
+
 ## Design Test
 
 When evaluating any Coin Card design decision, apply this test in order:
 
 ```text
-1. Is the evidence readable without zoom or effort?              (Principle 0, 1)
-2. Does the composition follow the two-zone hierarchy?           (Principle 2)
-3. Is each brand element present exactly once?                   (Principle 3)
-4. Does color appear only within defined semantic roles?         (Principle 4)
-5. Is typography assigned to the correct tier?                   (Principle 5)
-6. Does spacing reflect semantic grouping?                       (Principle 6)
-7. Does this state earn its visual weight?                       (Principle 7)
-8. Are interactive affordances informational, not promotional?   (Principle 8)
-9. Does interaction signaling use transition, not decoration?    (Principle 9)
+1.  Is the evidence readable without zoom or effort?              (Principle 0, 1)
+2.  Does the composition follow the two-zone hierarchy?           (Principle 2)
+3.  Is each brand element present exactly once?                   (Principle 3)
+4.  Does color appear only within defined semantic roles?         (Principle 4)
+5.  Is typography assigned to the correct tier?                   (Principle 5)
+6.  Does spacing reflect semantic grouping?                       (Principle 6)
+7.  Does this state answer its specific user question?            (Principle 7)
+8.  Are interactive affordances informational, not promotional?   (Principle 8)
+9.  Does interaction signaling use transition, not decoration?    (Principle 9)
+10. Does density change without geography changing?               (Principle 10)
 ```
 
-A design that passes all nine tests may still be wrong — but it is unlikely to be wrong in the ways that damage trust.
+A design that passes all ten tests may still be wrong — but it is unlikely to be wrong in the ways that damage trust.
 
 ---
 
@@ -349,9 +411,14 @@ The following decisions are recorded as precedents, established through implemen
 | COIN CARD logo in badge copy block, not footer | Hierarchy: product identity belongs with the claim, not in attribution zone | 00c7b62 |
 | ImplicitEx lettermark upper-right, fully visible (not cropped) | Authority mark must be readable, not decorative wallpaper | 94f667a |
 | Lettermark opacity 0.45 | Visible as institutional seal; does not compete with transaction | 94f667a |
-| "Powered by" in badge (collapsed) / right zone (expanded) | Different statements: product attribution vs. infrastructure operating | 94f667a |
+| Right zone authority seal always visible (both states) | Right = authority, Left = activity; geography does not change between states | 29283c6 |
+| "Powered by" in badge left column (collapsed only) | Credential provenance: left zone, collapses when left becomes operational | 29283c6 |
+| "Powered by IMPLICITEX" in right zone (always) | Authority seal: fixed geography regardless of card state | 29283c6 |
+| Network and Token removed from INSPECT rows | Decision support needs no repetition of rails already established in badge | 29283c6 |
+| Network and Token retained in SETTLE record | Evidentiary archive requires completeness; SETTLE ≠ INSPECT | 29283c6 |
+| "Valid destination" not "Verified destination" in preflight | Operational validity, not moral endorsement — trust boundaries must be explicit | 29283c6 |
 | Amber used only for verified/active state | Color = semantic category, not emphasis | established |
-| "coincard.implicitex.com" on hover, not "Create your Coin Card" | Hover is informational, not promotional | 00c7b62 |
+| "coincard.implicitex.com" on hover, not promotional CTA | Hover is informational, not promotional (Principle 8) | 00c7b62 |
 | stopPropagation on COIN CARD logo click | Logo navigates; badge click opens INSPECT — two distinct interactions | 00c7b62 |
 | No color adoption at card level before platform decision | Color enters system top-down | 00c7b62 |
 | Ambient glow white → midtone, no color | Interaction signal: "active", not "marketing" | established |
