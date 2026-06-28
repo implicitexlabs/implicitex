@@ -525,9 +525,9 @@
 
     .cc-badge-coincard-cta {
       display: none;
-      font-family: 'Oxanium', sans-serif;
+      font-family: 'IBM Plex Mono', monospace; /* technical reference — informational, not promotional */
       font-size: 11px;
-      font-weight: 600;
+      font-weight: 500;
       letter-spacing: 0.04em;
       color: var(--cc-text-secondary);
       white-space: nowrap;
@@ -939,8 +939,10 @@
 
     .cc-right-wordmark {
       display: block;
-      height: 11px;
-      width: auto;
+      width: 100%;         /* constrained to container — prevents right-edge clip */
+      height: auto;        /* maintain natural aspect ratio */
+      max-height: 14px;    /* cap: prevents outsized height if wordmark is narrow */
+      object-fit: contain;
       filter: brightness(0) invert(1);
       opacity: 0.60;
     }
@@ -1057,7 +1059,7 @@
                      src="/components/images/coincard-logo.svg"
                      alt=""
                      aria-hidden="true">
-                <span class="cc-badge-coincard-cta" aria-hidden="true">Create your Coin Card</span>
+                <span class="cc-badge-coincard-cta" aria-hidden="true">coincard.implicitex.com</span>
               </a>
               <div class="cc-badge-poweredby">
                 <span class="cc-poweredby-label">Powered by</span>
