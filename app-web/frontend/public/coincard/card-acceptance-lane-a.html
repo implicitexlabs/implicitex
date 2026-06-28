@@ -503,10 +503,12 @@
     }
 
     .cc-inspect-attr {
-      font-family: 'IBM Plex Mono', monospace;
-      font-size: 7.5px;
-      letter-spacing: 0.10em;
-      color: var(--cc-text-muted); /* 0.58 — footer source, quiet but readable */
+      display: block;
+      height: 9px;
+      width: auto;
+      /* SVG uses currentColor — invert + opacity to match --cc-text-muted (0.58) on dark surface */
+      filter: brightness(0) invert(1);
+      opacity: 0.58;
     }
 
     /* Proceed: visible only when manifest VERIFIED, hidden otherwise */
@@ -1037,7 +1039,10 @@
                 </div>
 
                 <div class="cc-inspect-footer">
-                  <span class="cc-inspect-attr" id="iattr-verified"></span>
+                  <img class="cc-inspect-attr"
+                       src="/components/images/coincard-logo.svg"
+                       alt="COIN CARD"
+                       aria-hidden="true">
                   <!-- Proceed: only rendered after manifest VERIFIED -->
                   <button class="cc-proceed-btn" id="proceed-btn" hidden>
                     Enter amount →
@@ -1745,10 +1750,6 @@
       ['irow-recipient', 'irow-network', 'irow-token', 'irow-destination']
         .forEach(id => { const r = $(id); if (r) r.hidden = false; });
 
-      const ownerName = manifest.owner && manifest.owner.name
-        ? manifest.owner.name : 'ImplicitEx';
-      $('iattr-verified').textContent = manifest.sourceDomain || ownerName.toLowerCase() + '.com';
-
       // Show proceed button (INSPECT → TRANSACT gate)
       proceedBtn.hidden = false;
 
@@ -1766,7 +1767,6 @@
       verifiedManifest = null;
       hideRoutingRows();
       setRegistryValue(statusText, cssClass);
-      $('iattr-verified').textContent = '';
       proceedBtn.hidden = true;
     }
 
