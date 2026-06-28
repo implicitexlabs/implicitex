@@ -290,22 +290,53 @@ The distinction: a user hovering over the COIN CARD logo is trying to understand
 
 ---
 
+## Principle 9 — Interaction Signaling Through State Transition
+
+**Interactive affordances should be communicated through state transition, not decorative emphasis.**
+
+Permitted interaction signals:
+
+```text
+opacity transition      — presence and receptiveness
+contrast transition     — focus and activation
+hover replacement       — revealing information (Principle 8)
+ambient glow shift      — life signal: this object is active
+```
+
+Prohibited interaction signals:
+
+```text
+flash                   — attention-seeking
+pulse                   — anxious rhythm
+scale                   — theatrical emphasis
+bounce                  — playful, not institutional
+saturated color         — brand accent used as UX decoration
+ornamental animation    — complexity that does not carry meaning
+```
+
+**Why this matters:** A payment credential that signals interactivity through restraint communicates: this object is stable and trustworthy. A credential that signals interactivity through spectacle communicates: this object is selling something.
+
+The ambient glow — white breathing slowly — is the correct interaction signal. It says: this object is alive. It does not say: look at me.
+
+---
+
 ## Design Test
 
 When evaluating any Coin Card design decision, apply this test in order:
 
 ```text
-1. Is the evidence readable without zoom or effort?         (Principle 0, 1)
-2. Does the composition follow the two-zone hierarchy?      (Principle 2)
-3. Is each brand element present exactly once?             (Principle 3)
-4. Does color appear only within defined semantic roles?    (Principle 4)
-5. Is typography assigned to the correct tier?             (Principle 5)
-6. Does spacing reflect semantic grouping?                 (Principle 6)
-7. Does this state earn its visual weight?                 (Principle 7)
-8. Are interactive affordances informational, not promotional? (Principle 8)
+1. Is the evidence readable without zoom or effort?              (Principle 0, 1)
+2. Does the composition follow the two-zone hierarchy?           (Principle 2)
+3. Is each brand element present exactly once?                   (Principle 3)
+4. Does color appear only within defined semantic roles?         (Principle 4)
+5. Is typography assigned to the correct tier?                   (Principle 5)
+6. Does spacing reflect semantic grouping?                       (Principle 6)
+7. Does this state earn its visual weight?                       (Principle 7)
+8. Are interactive affordances informational, not promotional?   (Principle 8)
+9. Does interaction signaling use transition, not decoration?    (Principle 9)
 ```
 
-A design that passes all eight tests may still be wrong — but it is unlikely to be wrong in the ways that damage trust.
+A design that passes all nine tests may still be wrong — but it is unlikely to be wrong in the ways that damage trust.
 
 ---
 
@@ -316,8 +347,11 @@ The following decisions are recorded as precedents, established through implemen
 | Decision | Rationale | Commit |
 |---|---|---|
 | COIN CARD logo in badge copy block, not footer | Hierarchy: product identity belongs with the claim, not in attribution zone | 00c7b62 |
-| ImplicitEx lettermark upper-right, largest element | Issuer authority mark; non-negotiable composition anchor | pre-00c7b62 |
+| ImplicitEx lettermark upper-right, fully visible (not cropped) | Authority mark must be readable, not decorative wallpaper | 94f667a |
+| Lettermark opacity 0.45 | Visible as institutional seal; does not compete with transaction | 94f667a |
+| "Powered by" in badge (collapsed) / right zone (expanded) | Different statements: product attribution vs. infrastructure operating | 94f667a |
 | Amber used only for verified/active state | Color = semantic category, not emphasis | established |
 | "coincard.implicitex.com" on hover, not "Create your Coin Card" | Hover is informational, not promotional | 00c7b62 |
 | stopPropagation on COIN CARD logo click | Logo navigates; badge click opens INSPECT — two distinct interactions | 00c7b62 |
 | No color adoption at card level before platform decision | Color enters system top-down | 00c7b62 |
+| Ambient glow white → midtone, no color | Interaction signal: "active", not "marketing" | established |
