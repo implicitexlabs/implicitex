@@ -1287,14 +1287,38 @@
     const feeDisplay   = document.getElementById('fee-display');
     const totalDisplay = document.getElementById('total-display');
 
+    // BigInt-native USDC math — mirrors execution path exactly.
+    // No float rounding. USDC has 6 decimals; all math in integer units.
+
+    function parseUsdcUnits(value) {
+      const raw = String(value || '').trim();
+      if (!raw || Number(raw) <= 0) return 0n;
+      try { return ethers.parseUnits(raw, 6); } catch { return 0n; }
+    }
+
+    function calcFeeWei(amountWei) {
+      return amountWei * BigInt(feeBps) / 10000n;
+    }
+
+    // Trim trailing zeros beyond two decimal places; always show at least two.
+    // 0.105 → "0.105" | 0.10 → "0.10" | 1.00 → "1.00"
+    function formatUsdcExact(units) {
+      const formatted = ethers.formatUnits(units, 6);
+      const [whole, frac = ''] = formatted.split('.');
+      const trimmed = frac.replace(/0+$/, '');
+      if (!trimmed)             return `${whole}.00`;
+      if (trimmed.length <= 2)  return `${whole}.${trimmed.padEnd(2, '0')}`;
+      return `${whole}.${trimmed}`;
+    }
+
     function updateTotals() {
-      const amt = parseFloat(amountInput.value) || 0;
+      const amountWei = parseUsdcUnits(amountInput.value);
       const pct = (feeBps / 100).toFixed(1);
-      if (amt > 0) {
-        const fee   = (amt * feeBps / 10000).toFixed(2);
-        const total = (amt + parseFloat(fee)).toFixed(2);
-        feeDisplay.textContent   = pct + '% · ' + fee   + ' USDC';
-        totalDisplay.textContent = total + ' USDC';
+      if (amountWei > 0n) {
+        const feeWei   = calcFeeWei(amountWei);
+        const debitWei = amountWei + feeWei;
+        feeDisplay.textContent   = pct + '% · ' + formatUsdcExact(feeWei)   + ' USDC';
+        totalDisplay.textContent = formatUsdcExact(debitWei) + ' USDC';
       } else {
         feeDisplay.textContent   = pct + '% · — USDC';
         totalDisplay.textContent = '— USDC';
@@ -1489,9 +1513,10 @@
     // Artifact tx hash — simulates confirmed Polygon transaction.
     // In production, this hash comes from the chain event after transfer execution.
 
-    function toSettle(amount, manifest, txHash) {
-      const fee   = amount * feeBps / 10000;
-      const total = amount + fee;
+    // amountWei: BigInt in USDC units (6 decimals) — must match the approved/transferred amount.
+    function toSettle(amountWei, manifest, txHash) {
+      const feeWei   = calcFeeWei(amountWei);
+      const debitWei = amountWei + feeWei;
 
       wrapper.classList.add('is-open', 'is-settle');
       wrapper.classList.remove('is-transact', 'is-details-open');
@@ -1501,12 +1526,12 @@
         || CHAIN_NAMES_MAP[String(manifest.chainId)]
         || 'Chain ' + manifest.chainId;
 
-      $('settle-amount').textContent        = amount.toFixed(2) + ' USDC';
+      $('settle-amount').textContent        = formatUsdcExact(amountWei)  + ' USDC';
       $('settle-recipient').textContent     = manifest.displayName || abbrev(manifest.recipient);
       $('settle-network-token').textContent = chain + ' · ' + (manifest.token || '').toUpperCase();
       $('settle-dest').textContent          = abbrev(manifest.recipient);
-      $('settle-fee').textContent           = fee.toFixed(2) + ' USDC';
-      $('settle-total').textContent         = total.toFixed(2) + ' USDC';
+      $('settle-fee').textContent           = formatUsdcExact(feeWei)     + ' USDC';
+      $('settle-total').textContent         = formatUsdcExact(debitWei)   + ' USDC';
 
       const polyLink = $('settle-polygonscan');
       if (txHash) {
@@ -1657,7 +1682,7 @@
 
       // ── SETTLE — only from confirmed receipt + real tx hash ───────
       if (receipt && receipt.status === 1 && receipt.hash) {
-        toSettle(amt, verifiedManifest, receipt.hash);
+        toSettle(amountWei, verifiedManifest, receipt.hash);
       } else {
         setPreflight('transfer_failed');
       }
