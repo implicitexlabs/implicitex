@@ -502,6 +502,14 @@
       margin-top: 2px;
     }
 
+    /* Footer issuer mark — COIN CARD logo linking to coincard.implicitex.com */
+    .cc-footer-mark {
+      display: inline-flex;
+      align-items: center;
+      text-decoration: none;
+      flex-shrink: 0;
+    }
+
     .cc-inspect-attr {
       display: block;
       height: 9px;
@@ -509,7 +517,26 @@
       /* SVG uses currentColor — invert + opacity to match --cc-text-muted (0.58) on dark surface */
       filter: brightness(0) invert(1);
       opacity: 0.58;
+      transition: opacity 0.15s ease;
     }
+
+    .cc-footer-cta {
+      display: none;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 7.5px;
+      font-weight: 500;
+      letter-spacing: 0.10em;
+      color: var(--cc-text-muted);
+      white-space: nowrap;
+      transition: color 0.15s ease;
+    }
+
+    .cc-footer-mark:hover .cc-inspect-attr { display: none; }
+    .cc-footer-mark:hover .cc-footer-cta   { display: block; }
+    .cc-footer-mark:focus-visible .cc-inspect-attr { display: none; }
+    .cc-footer-mark:focus-visible .cc-footer-cta   { display: block; }
+    .cc-footer-mark:hover .cc-footer-cta,
+    .cc-footer-mark:focus-visible .cc-footer-cta   { color: var(--cc-text-secondary); }
 
     /* Proceed: visible only when manifest VERIFIED, hidden otherwise */
     .cc-proceed-btn {
@@ -1039,10 +1066,17 @@
                 </div>
 
                 <div class="cc-inspect-footer">
-                  <img class="cc-inspect-attr"
-                       src="/components/images/coincard-logo.svg"
-                       alt="COIN CARD"
-                       aria-hidden="true">
+                  <a class="cc-footer-mark"
+                     href="https://coincard.implicitex.com"
+                     target="_blank"
+                     rel="noopener noreferrer"
+                     aria-label="Create your Coin Card at coincard.implicitex.com">
+                    <img class="cc-inspect-attr"
+                         src="/components/images/coincard-logo.svg"
+                         alt=""
+                         aria-hidden="true">
+                    <span class="cc-footer-cta" aria-hidden="true">Create your Coin Card</span>
+                  </a>
                   <!-- Proceed: only rendered after manifest VERIFIED -->
                   <button class="cc-proceed-btn" id="proceed-btn" hidden>
                     Enter amount →
