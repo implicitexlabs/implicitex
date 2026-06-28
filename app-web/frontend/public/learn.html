@@ -931,7 +931,10 @@
           var sidebar = document.getElementById('learnSidebar');
           if (sidebar) sidebar.classList.remove('is-open');
           var mobileToggle = document.getElementById('learnMobileToggle');
-          if (mobileToggle) mobileToggle.setAttribute('aria-expanded', 'false');
+          if (mobileToggle) {
+            mobileToggle.setAttribute('aria-expanded', 'false');
+            mobileToggle.textContent = 'Browse Topics';
+          }
         }
       });
     }
