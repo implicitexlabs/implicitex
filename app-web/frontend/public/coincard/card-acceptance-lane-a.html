@@ -16,6 +16,15 @@
       --cc-card-inset: 20px;   /* uniform interior safe area on all four sides */
       --cc-card-radius: 12px;  /* credit/debit card corner radius */
       --cc-decal-mark-center-y: 44px; /* vertical center of badge zone (padding:20px + copy~47px) / 2 */
+
+      /* Text value tiers — functional text never below 0.58; decorative can go lower */
+      --cc-text-primary:   rgba(242, 242, 240, 0.96); /* title, amounts */
+      --cc-text-secondary: rgba(242, 242, 240, 0.88); /* verifier line, row values */
+      --cc-text-label:     rgba(242, 242, 240, 0.72); /* micro / network copy */
+      --cc-text-meta:      rgba(242, 242, 240, 0.70); /* row labels (uppercase mono) */
+      --cc-text-muted:     rgba(242, 242, 240, 0.58); /* footer, subcopy */
+      --cc-text-disabled:  rgba(242, 242, 240, 0.36); /* disabled controls */
+      --cc-text-ghost:     rgba(242, 242, 240, 0.34); /* decorative only */
     }
 
     /* ---- Reset ---- */
@@ -175,31 +184,31 @@
     .cc-primary {
       font-family: 'Oxanium', sans-serif;
       font-weight: 600;
-      color: rgba(242, 242, 240, 0.92);
+      color: var(--cc-text-primary);
       line-height: 1.2;
     }
 
     .cc-secondary {
       font-family: 'Oxanium', sans-serif;
       font-weight: 600;
-      color: rgba(242, 242, 240, 0.92);
+      color: var(--cc-text-secondary);
       line-height: 1;
     }
 
     /* ImplicitEx wordmark SVG inline with "Verified by" — scales with parent em */
     img.cc-wordmark-inline {
       display: inline-block;
-      height: 0.72em;    /* proportional to secondary font-size */
+      height: 0.78em;    /* slightly larger — wordmark is identity, not motif */
       width: auto;
       vertical-align: -0.07em; /* optical baseline alignment */
       margin-left: 0.1em;
-      opacity: 0.95;
+      opacity: 1; /* inline wordmark is proof, not decoration */
     }
 
     .cc-micro {
       font-family: 'IBM Plex Mono', monospace;
       font-weight: 500;
-      color: rgba(242, 242, 240, 0.68);
+      color: var(--cc-text-label); /* 0.72 — functional network/token copy */
       letter-spacing: 0.09em;
       text-transform: uppercase;
     }
@@ -407,7 +416,7 @@
       font-weight: 600;
       letter-spacing: 0.13em;
       text-transform: uppercase;
-      color: rgba(242, 242, 240, 0.58);
+      color: var(--cc-text-meta); /* 0.70 */
       white-space: nowrap;
       flex-shrink: 0;
     }
@@ -416,7 +425,7 @@
       font-family: 'Oxanium', sans-serif;
       font-size: 10px;
       font-weight: 600;
-      color: rgba(242, 242, 240, 0.80);
+      color: var(--cc-text-secondary); /* 0.88 — payment facts */
       text-align: right;
     }
 
@@ -425,7 +434,7 @@
       font-size: 9px;
       font-weight: 400;
       letter-spacing: 0.04em;
-      color: rgba(242, 242, 240, 0.65);
+      color: var(--cc-text-secondary); /* 0.88 — address is a payment fact */
     }
 
     /* VERIFIED — amber dot. Accent = state only. VERIFIED is a state. */
@@ -475,7 +484,7 @@
       font-family: 'IBM Plex Mono', monospace;
       font-size: 7.5px;
       letter-spacing: 0.10em;
-      color: rgba(242, 242, 240, 0.34);
+      color: var(--cc-text-muted); /* 0.58 — footer source, quiet but readable */
     }
 
     /* Proceed: visible only when manifest VERIFIED, hidden otherwise */
@@ -534,7 +543,7 @@
       font-weight: 600;
       letter-spacing: 0.13em;
       text-transform: uppercase;
-      color: rgba(242, 242, 240, 0.58);
+      color: var(--cc-text-meta); /* 0.70 */
       white-space: nowrap;
       flex-shrink: 0;
     }
@@ -584,12 +593,12 @@
     .cc-transact-value {
       font-family: 'IBM Plex Mono', monospace;
       font-size: 9px;
-      color: rgba(242, 242, 240, 0.60);
+      color: var(--cc-text-secondary); /* 0.88 — payment facts */
       text-align: right;
     }
 
     .cc-transact-value--total {
-      color: rgba(242, 242, 240, 0.78);
+      color: var(--cc-text-primary); /* 0.96 — total is the most critical number */
       font-weight: 500;
     }
 
@@ -735,13 +744,13 @@
       font-weight: 600;
       letter-spacing: 0.13em;
       text-transform: uppercase;
-      color: rgba(242, 242, 240, 0.58);
+      color: var(--cc-text-meta); /* 0.70 */
     }
 
     .cc-settle-detail-value {
       font-family: 'IBM Plex Mono', monospace;
       font-size: 9px;
-      color: rgba(242, 242, 240, 0.58);
+      color: var(--cc-text-secondary); /* 0.88 — proof facts */
     }
 
     .cc-settle-link-row {
@@ -754,7 +763,7 @@
       font-family: 'IBM Plex Mono', monospace;
       font-size: 8px;
       letter-spacing: 0.07em;
-      color: rgba(242, 242, 240, 0.48);
+      color: var(--cc-text-muted); /* 0.58 */
       text-decoration: none;
       transition: color 0.15s;
       pointer-events: none; /* disabled until real tx hash wired */
@@ -779,7 +788,7 @@
       font-weight: 600;
       letter-spacing: 0.11em;
       text-transform: uppercase;
-      color: rgba(242, 242, 240, 0.68);
+      color: var(--cc-text-label); /* 0.72 */
       display: block;
     }
 
@@ -787,7 +796,7 @@
       font-family: 'IBM Plex Mono', monospace;
       font-size: 7px;
       letter-spacing: 0.05em;
-      color: rgba(242, 242, 240, 0.48);
+      color: var(--cc-text-muted); /* 0.58 */
       display: block;
       margin-top: 2px;
     }
