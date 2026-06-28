@@ -57,7 +57,7 @@
           <span class="wallet-chevron" aria-hidden="true"></span>
         </button>
         <div class="wallet-menu-panel" id="walletMenuPanel" hidden>
-          <p class="wallet-menu-title">Wallet connected</p>
+          <p class="wallet-menu-title">Wallet account</p>
           <p class="wallet-menu-address" id="walletFullAddress"></p>
           <button class="wallet-menu-action" id="copyAddressBtn" type="button">Copy address</button>
           <button class="wallet-menu-action" id="switchNetworkBtn" type="button" hidden>Switch to Polygon</button>
@@ -178,8 +178,25 @@
     </div>
     <h1>News</h1>
     <p id="newsSubhead" class="updated"></p>
-    <!-- Articles rendered by js/news-data.js -->
-    <div id="newsArticles"></div>
+    <div id="newsArticles">
+      <article class="news-article" id="soft-launch-june-2026">
+        <p class="updated" style="margin-bottom:0.5rem">
+          <time datetime="2026-06-02">June 2, 2026</time>
+          &nbsp;&middot;&nbsp; implicitex.com
+        </p>
+        <h2>Live transfer smoke complete</h2>
+        <p>
+          ImplicitEx transfer execution is live on Polygon mainnet under a
+          limited soft-launch scope. The hardened contract has been deployed,
+          source-verified, and smoke-tested on-chain with real USDC.
+        </p>
+        <p>
+          Current launch controls: 1% platform fee, 250 USDC soft-launch cap,
+          non-custodial wallet execution, and continued production readiness
+          review. No custody. No escrow. Funds move directly between wallets.
+        </p>
+      </article>
+    </div>
     <a class="back" href="/">Return to ImplicitEx</a>
   </main>
 

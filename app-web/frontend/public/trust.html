@@ -57,7 +57,7 @@
           <span class="wallet-chevron" aria-hidden="true"></span>
         </button>
         <div class="wallet-menu-panel" id="walletMenuPanel" hidden>
-          <p class="wallet-menu-title">Wallet connected</p>
+          <p class="wallet-menu-title">Wallet account</p>
           <p class="wallet-menu-address" id="walletFullAddress"></p>
           <button class="wallet-menu-action" id="copyAddressBtn" type="button">Copy address</button>
           <button class="wallet-menu-action" id="switchNetworkBtn" type="button" hidden>Switch to Polygon</button>
@@ -162,8 +162,8 @@
       the contract address, treasury address, fee model, verified transaction record,
       and step-by-step verification instructions that allow anyone to independently
       confirm how ImplicitEx operates — before and after a transfer. No account
-      required. No login required. Every claim on this page has a corresponding
-      on-chain record or public source.
+      required. No login required. Core contract, fee, treasury, and transaction
+      claims can be independently checked on-chain or against public sources.
     </p>
 
     <h2>Platform Status</h2>
@@ -248,7 +248,9 @@
       entered. The sender pays the transfer amount plus 1%. The recipient receives
       the exact amount entered. The 1% fee is routed to the treasury address in
       the same on-chain transaction as the transfer — there is no separate fee
-      collection step. The contract retains zero USDC after every transfer.
+      collection step. The contract is designed to route the recipient amount
+      and fee in the same execution path and should not retain USDC after
+      standard transfer execution.
     </p>
 
     <dl class="v-facts">
@@ -261,8 +263,8 @@
         <dd>Treasury address above — not the contract</dd>
       </div>
       <div class="v-fact">
-        <dt>Contract retains</dt>
-        <dd>0 USDC after every transfer</dd>
+        <dt>Contract balance</dt>
+        <dd>Designed not to retain USDC after standard transfer execution</dd>
       </div>
       <div class="v-fact">
         <dt>Transfer cap</dt>
