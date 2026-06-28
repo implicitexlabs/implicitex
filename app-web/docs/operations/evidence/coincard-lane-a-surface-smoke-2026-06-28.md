@@ -1,7 +1,7 @@
 # Coin Card Lane A — Surface Smoke
 **Date:** 2026-06-28
 **Surface:** implicitex.com/coincard/card-acceptance-lane-a.html
-**Commit under test:** af52068 (fix: restore attribution state separation — collapsed owns left, expanded owns right zone)
+**Commit under test:** 29283c6 (fix: right zone always visible, remove redundant inspect rows, update preflight copy)
 **Scope:** Surface regression only — footer link, hover CTA, visual integrity, card trust behavior.
 **Not in scope:** Wallet connection, real USDC transfer (see coincard-lane-a-smoke-2026-06-27.md for wallet smoke).
 
@@ -28,11 +28,11 @@
 |---|---|---|
 | "USDC accepted here" — primary, largest left element | Yes | |
 | COIN CARD logo — directly below primary | Yes | |
-| "Powered by [IMPLICITEX wordmark]" — below COIN CARD logo | Yes | |
+| "Powered by [IMPLICITEX wordmark]" — below COIN CARD logo (left, credential provenance) | Yes | |
 | "POLYGON · USDC" — below Powered by | Yes | |
 | ImplicitEx lettermark — upper right, fully within card bounds | Yes | |
-| No "Powered by IMPLICITEX" in right zone when collapsed | Absent | |
-| No duplicate COIN CARD logo or duplicate attribution | Absent | |
+| Right zone: lettermark + "Powered by" + IMPLICITEX wordmark (authority seal) | Yes | |
+| No duplicate COIN CARD logo | Absent | |
 
 **Outcome:** PASS / FAIL
 
@@ -42,9 +42,9 @@
 |---|---|---|
 | Click badge — INSPECT panel opens | Yes | |
 | "Powered by [wordmark]" disappears from left column | Yes | |
-| Right zone shows: lettermark + "Powered by" + IMPLICITEX wordmark | Yes | |
-| Left column retains: USDC accepted here / COIN CARD / POLYGON · USDC | Yes | |
-| No "Powered by" in both left and right simultaneously | Confirmed | |
+| Right zone retains: lettermark + "Powered by" + IMPLICITEX wordmark | Yes | |
+| Left column shows: USDC accepted here / COIN CARD / POLYGON · USDC | Yes | |
+| INSPECT rows: Recipient / Route / Destination (no Network or Token rows) | Yes | |
 
 **Outcome:** PASS / FAIL
 
