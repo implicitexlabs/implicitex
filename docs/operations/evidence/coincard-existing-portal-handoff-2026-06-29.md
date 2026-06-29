@@ -209,6 +209,24 @@ Visual smoke confirmed 2026-06-29. Portal hierarchy restored:
 
 **Status:** PASS — staging smoke 2026-06-29
 
+#### Custom domain smoke (portal.implicitex.com)
+
+| Check | Result |
+|-------|--------|
+| HTTPS / HTTP2 200 | PASS |
+| HSTS (`strict-transport-security`) present | PASS |
+| `noindex` meta — not indexed (correct) | PASS |
+| `#modules` — no `hidden` attribute | PASS |
+| `aria-expanded="true"` on minimize button | PASS |
+| Brand bar centered | PASS |
+| Global nav suppressed | PASS |
+| `IX.focusTransferPortal()` auto-expand present | PASS |
+| Inline CONNECT WALLET present | PASS |
+| Legal / Terms / Privacy footer | PASS |
+| CSP header correct | PASS |
+
+**Status:** PASS — custom domain smoke 2026-06-29
+
 #### Key bug resolved
 
 `openTransferPortal()` only unsets `hidden` — does not remove `is-minimized`.
@@ -219,7 +237,7 @@ Portal-index.html auto-expand script changed to use `IX.focusTransferPortal()`.
 
 ### Current limitations
 
-- `portal.implicitex.com` SSL certificate minting in progress — custom domain smoke pending.
+- `portal.implicitex.com` SSL green — custom domain smoke PASS 2026-06-29.
 - Test 5 (failure states) not yet run — requires network simulation or temporary registry manipulation.
 - Wallet smoke (MetaMask desktop, MetaMask mobile, Coinbase Wallet) not yet run for the Coin Card intake path.
 
