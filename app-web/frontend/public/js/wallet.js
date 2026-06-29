@@ -1825,7 +1825,8 @@
     ];
     if (txHash)            lines.push('Transaction: ' + txHash);
     if (receipt.blockNumber) lines.push('Block:       ' + Number(receipt.blockNumber).toLocaleString());
-    if (receipt.createdAt)   lines.push('Timestamp:   ' + formatReceiptTime(receipt.createdAt));
+    const confirmedAt = receipt.resolvedAt || receipt.updatedAt || receipt.createdAt;
+    if (confirmedAt)          lines.push('Timestamp:   ' + formatReceiptTime(confirmedAt));
     if (receipt.purposeTag)  lines.push('Purpose:     ' + purposeLabel(receipt.purposeTag));
     if (receipt.referenceId) lines.push('Reference:   ' + receipt.referenceId);
     lines.push('');
