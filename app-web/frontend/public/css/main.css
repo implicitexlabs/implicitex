@@ -2183,28 +2183,54 @@ body.portal-active #nav {
   color: var(--dim);
 }
 
-.gas-chart {
-  width: 100%;
-  height: 48px;
+.gas-chart-frame {
   margin-bottom: var(--sp-2);
+}
+
+.gas-chart-yunit {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  color: var(--dim);
+  margin-bottom: 2px;
+}
+
+.gas-chart-area {
+  position: relative;
+  height: 48px;
+  border-left: 1px solid rgba(242, 242, 240, 0.15);
+  border-bottom: 1px solid rgba(242, 242, 240, 0.15);
   color: var(--dim);
   overflow: hidden;
 }
 
-.gas-chart svg {
+.gas-chart-area svg {
   display: block;
   width: 100%;
   height: 100%;
 }
 
-.gas-chart.is-pending {
+.gas-chart-area.is-pending {
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.gas-chart.is-pending::after {
+.gas-chart-area.is-pending::after {
   content: 'Collecting…';
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  color: var(--dim);
+}
+
+.gas-chart-xlabel {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 2px;
+  padding-left: 2px;
+}
+
+.gas-chart-xlabel span {
   font-family: var(--font-mono);
   font-size: var(--size-xs);
   color: var(--dim);
