@@ -2197,6 +2197,19 @@ body.portal-active #nav {
   height: 100%;
 }
 
+.gas-chart.is-pending {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gas-chart.is-pending::after {
+  content: 'Collecting…';
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  color: var(--dim);
+}
+
 .data-k {
   font-family: var(--font-ui);   /* row label */
   font-size: var(--size-sm);

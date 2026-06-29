@@ -4571,12 +4571,23 @@
   }
 
   function renderGasChart() {
-    if (!els.gasChart || gasSampleBuffer.length < 2) return;
+    if (!els.gasChart) return;
 
-    // Bucket into up to 60 display bars regardless of sample count
-    const N_BARS = 60;
+    // Fixed coordinate space — bars anchor to the right edge as samples arrive.
+    // Early samples appear on the right; the chart fills left over time.
+    const FIXED_W = 240, H = 48;
+    const BAR_W = 3, BAR_GAP = 1, N_BARS = 60;
+
+    if (gasSampleBuffer.length < 2) {
+      els.gasChart.classList.add('is-pending');
+      els.gasChart.innerHTML = '';
+      return;
+    }
+
+    els.gasChart.classList.remove('is-pending');
+
     const samples = gasSampleBuffer;
-    const count = Math.min(N_BARS, samples.length);
+    const count   = Math.min(N_BARS, samples.length);
     const buckets = [];
     for (let i = 0; i < count; i++) {
       const start = Math.floor(i * samples.length / count);
@@ -4593,20 +4604,19 @@
     const hi    = maxV + pad;
     const range = hi - lo;
 
-    // SVG: 4px per bar slot (3px bar + 1px gap), 48px tall
-    const BAR_W = 3, BAR_GAP = 1, H = 48;
-    const svgW  = count * (BAR_W + BAR_GAP);
+    // Anchor to the right edge — newest bar is always rightmost
+    const xOffset = FIXED_W - count * (BAR_W + BAR_GAP);
 
     const bars = buckets.map((val, i) => {
       const norm  = (val - lo) / range;
       const barH  = Math.max(2, Math.round(norm * (H - 4)) + 4);
-      const x     = i * (BAR_W + BAR_GAP);
+      const x     = xOffset + i * (BAR_W + BAR_GAP);
       const y     = H - barH;
       return `<rect x="${x}" y="${y}" width="${BAR_W}" height="${barH}" fill="currentColor"/>`;
     }).join('');
 
     els.gasChart.innerHTML =
-      `<svg viewBox="0 0 ${svgW} ${H}" preserveAspectRatio="none" ` +
+      `<svg viewBox="0 0 ${FIXED_W} ${H}" preserveAspectRatio="none" ` +
       `xmlns="http://www.w3.org/2000/svg" aria-hidden="true">${bars}</svg>`;
   }
 
