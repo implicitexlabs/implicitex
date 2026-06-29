@@ -870,40 +870,52 @@
       align-items: flex-start;
     }
 
-    /* constrain copy so it stays in the left safe area, clear of the mark */
-    .cc-badge--decal .cc-copy { gap: 8px; max-width: 340px; }
+    /* constrain copy so it stays in the left zone — left.width = W - 2P - G - S = 307px
+       W=460, P=20, G=16, S=97  →  460 - 40 - 16 - 97 = 307 */
+    .cc-badge--decal .cc-copy { gap: 8px; max-width: 307px; }
     .cc-badge--decal .cc-primary   { font-size: 20px; }
     .cc-badge--decal .cc-secondary { font-size: 11px; margin-top: 1px; }
     .cc-badge--decal .cc-micro     { font-size: 9px; margin-top: 2px; }
 
-    /* Decal mark lives in the wrapper, not the badge — paints above panel background */
-    .cc-mark-wrap--decal {
-      position: absolute;
-      right: var(--cc-mark-inset);  /* fully within card bounds — not cropped */
-      top: var(--cc-mark-inset);
-      transform: none;
-      width: 48px;   /* reduced from 72px — authority mark without consuming attribution space */
-      height: 48px;
-      overflow: hidden; /* contains ambient glow within lettermark bounds */
-      z-index: 3;       /* above panel background and rows */
-      pointer-events: none;
-      flex-shrink: 0;
-    }
-    .cc-mark-wrap--decal .cc-mark-img { width: 48px; height: 48px; opacity: 0.45; }
+    /* ─── AUTHORITY SQUARE ───────────────────────────────────────────
+       Unified right-zone container. Lettermark + Powered by + IMPLICITEX
+       are children of this square — they cannot drift apart.
 
-    /* "Powered by IMPLICITEX" — right zone stacked attribution, always visible */
-    .cc-right-attribution {
+       Coordinate derivation (spec):
+         S = card.height - 2 * P = 137 - 40 = 97px
+         authority.x = card.width - P - S = 460 - 20 - 97 = 343px
+         → right: P = 20px achieves this from the right edge
+
+       left zone ends at:  20 + 307 = 327px
+       gap G = 16px
+       authority begins at: 343px
+       327 + 16 = 343  ✓  no collision
+    ──────────────────────────────────────────────────────────────── */
+    .cc-authority-square {
       position: absolute;
-      right: var(--cc-mark-inset);
-      top: calc(var(--cc-mark-inset) + 48px + 6px); /* flush below lettermark (48px) */
+      right: var(--cc-card-inset);  /* P — flush to content boundary, not card edge */
+      top: var(--cc-card-inset);    /* P */
+      width: 97px;    /* S = card.height - 2P */
+      height: 97px;   /* S — true square, height-limited by card */
       display: flex;
       flex-direction: column;
-      align-items: center;  /* centered under lettermark */
-      gap: 4px;
+      align-items: center;    /* horizontal centering of all three elements */
+      justify-content: center; /* vertical centering of stack within square */
       pointer-events: none;
       z-index: 3;
-      width: 72px; /* match lettermark width so centering aligns */
     }
+
+    /* Lettermark — in-flow inside authority square; override base class absolute positioning */
+    .cc-mark-wrap--decal {
+      position: static;   /* in-flow flex child — square handles positioning */
+      transform: none;
+      width: 44px;        /* spec: lettermark.width = 44px */
+      height: 44px;       /* spec: lettermark.height = 44px */
+      overflow: hidden;   /* contains ambient glow within lettermark bounds */
+      flex-shrink: 0;
+      pointer-events: none;
+    }
+    .cc-mark-wrap--decal .cc-mark-img { width: 44px; height: 44px; opacity: 0.45; }
 
     /* "Powered by [wordmark]" in badge left column — collapsed state only */
     .cc-badge-poweredby {
@@ -931,6 +943,7 @@
     }
 
     .cc-right-poweredby {
+      margin-top: 7px;  /* gap1: lettermark → Powered by */
       font-family: 'IBM Plex Mono', monospace;
       font-size: 6px;
       letter-spacing: 0.12em;
@@ -940,10 +953,12 @@
     }
 
     .cc-right-wordmark {
+      margin-top: 5px;    /* gap2: Powered by → IMPLICITEX */
+      max-width: 90px;    /* hard cap — wordmark cannot exit authority square */
       font-family: 'Oxanium', sans-serif;
       font-size: 12px;
       font-weight: 700;
-      letter-spacing: 0.10em;
+      letter-spacing: 0.04em;  /* reduced from 0.10em — fits within 90px constraint */
       color: rgba(255, 255, 255, 0.65);
       text-align: center;
       white-space: nowrap;
@@ -1225,13 +1240,12 @@
             </div><!-- /.cc-inspect-inner -->
           </div><!-- /.cc-inspect-panel -->
 
-          <!-- LETTERMARK — last child: paints above badge and panel backgrounds -->
-          <div class="cc-mark-wrap cc-mark-wrap--decal" id="mark-decal" aria-hidden="true">
-            <img class="cc-mark-img" src="/components/images/lettermark-white.svg" alt="">
-          </div>
-
-          <!-- RIGHT ATTRIBUTION — authority seal: lettermark + "Powered by IMPLICITEX", always visible -->
-          <div class="cc-right-attribution" aria-hidden="true">
+          <!-- AUTHORITY SQUARE — unified container; lettermark + Powered by + IMPLICITEX cannot drift -->
+          <!-- x=343 y=20 w=97 h=97 — derived: right:P top:P width:S height:S where S=H-2P=97 -->
+          <div class="cc-authority-square" aria-hidden="true">
+            <div class="cc-mark-wrap cc-mark-wrap--decal" id="mark-decal">
+              <img class="cc-mark-img" src="/components/images/lettermark-white.svg" alt="">
+            </div>
             <span class="cc-right-poweredby">Powered by</span>
             <span class="cc-right-wordmark">IMPLICITEX</span>
           </div>
