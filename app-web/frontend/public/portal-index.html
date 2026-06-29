@@ -466,6 +466,21 @@
             <span class="data-toggle-icon" aria-hidden="true"></span>
           </button>
           <div class="data-row-detail" id="gasRowDetail" hidden>
+            <p class="gas-chart-title">GAS TREND · GWEI · LAST 5 MIN</p>
+            <div class="gas-chart-frame" aria-label="Gas trend over time">
+              <div class="gas-chart-yaxis">
+                <span id="gasAxisMax">—</span>
+                <span id="gasAxisMid">—</span>
+                <span id="gasAxisMin">0</span>
+              </div>
+              <div class="gas-chart-plot" id="gasChart">
+                <div class="gas-chart-pending">DATA COLLECTION…</div>
+              </div>
+              <div class="gas-chart-xaxis">
+                <span id="gasAxisStart">−5m</span>
+                <span id="gasAxisNow">NOW</span>
+              </div>
+            </div>
             <div class="gas-detail-row">
               <span class="gas-detail-k">Low</span>
               <span class="gas-detail-v" id="gasLow">—</span>
