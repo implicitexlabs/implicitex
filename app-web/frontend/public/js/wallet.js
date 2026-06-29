@@ -2090,7 +2090,12 @@
     if (!els.modules) return;
     if (els.portalControls) els.portalControls.removeAttribute('hidden');
     els.modules.removeAttribute('hidden');
-    minimizePortal();
+    // On direct portal shell, start expanded rather than collapsed.
+    if (document.body.matches('[data-portal-shell="direct"]')) {
+      restorePortal();
+    } else {
+      minimizePortal();
+    }
   }
 
   function closePortalWithAnimation() {
@@ -2549,6 +2554,9 @@
   }
 
   function hideTransferModules() {
+    // On direct portal shell (portal.implicitex.com), the portal IS the page.
+    // Never hide it — wallet state changes must not blank the page.
+    if (document.body.matches('[data-portal-shell="direct"]')) return;
     if (els.modules) els.modules.setAttribute('hidden', '');
     if (els.portalControls) els.portalControls.setAttribute('hidden', '');
     document.body.classList.remove('portal-active');
