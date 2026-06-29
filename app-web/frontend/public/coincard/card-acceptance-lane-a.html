@@ -906,15 +906,17 @@
     }
 
     /* Specificity guard — authority square is the sole positioning authority for its children.
-       Base .cc-mark-wrap sets position:absolute; this selector wins over the modifier alone. */
+       Base .cc-mark-wrap sets position:absolute; this selector wins over the modifier alone.
+       position:relative (not static) — keeps element in flex flow AND retains positioning
+       context so ::after pseudo-element is clipped by overflow:hidden within 44×44 bounds. */
     .cc-authority-square .cc-mark-wrap {
-      position: static;
+      position: relative;
       transform: none;
     }
 
     /* Lettermark — in-flow inside authority square */
     .cc-mark-wrap--decal {
-      position: static;   /* belt-and-suspenders; guard above is the definitive rule */
+      position: relative; /* relative = in-flow + positioning context; static breaks ::after containment */
       transform: none;
       width: 44px;        /* spec: lettermark.width = 44px */
       height: 44px;       /* spec: lettermark.height = 44px */
