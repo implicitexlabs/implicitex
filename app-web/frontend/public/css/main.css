@@ -6186,3 +6186,36 @@ input[type="number"] {
 #layoutToggle[data-layout="stacked"] .portal-layout-icon--stacked {
   display: block;
 }
+
+/* ================================================================
+   DIRECT PORTAL — MOBILE RESPONSIVE
+   This block must stay at the end of main.css, after the layout
+   toggle attribute rules above. The specificity tie on
+   .modules[data-portal-layout="columns"] resolves by cascade
+   position — later wins — so placement here is load-bearing.
+   ================================================================ */
+@media (max-width: 760px) {
+  /* Override the layout toggle: force single column on mobile
+     regardless of the data-portal-layout attribute value. */
+  .modules[data-portal-layout="columns"] {
+    grid-template-columns: 1fr;
+  }
+
+  /* Panels must not impose desktop minimum widths */
+  .mod {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  /* Subcopy bar: wrap rather than overflow */
+  .portal-header-sub {
+    white-space: normal;
+    overflow-wrap: break-word;
+    padding: 0.5rem 1rem;
+  }
+
+  /* Contain any stray overflow at the shell level */
+  body[data-portal-shell="direct"] {
+    overflow-x: hidden;
+  }
+}

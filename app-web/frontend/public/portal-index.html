@@ -110,6 +110,43 @@
     .portal-legal-footer a:hover {
       color: var(--white);
     }
+
+    /* ---- Mobile: direct portal header stacks at 760px ---- */
+    @media (max-width: 760px) {
+      /* Allow brand and right group to break onto separate rows */
+      [data-portal-shell="direct"] .portal-header {
+        flex-wrap: wrap;
+        padding: 0.75rem 1rem;
+        row-gap: var(--sp-2);
+      }
+
+      /* Brand stays on row 1 at its natural width */
+      [data-portal-shell="direct"] .portal-header-brand {
+        flex-shrink: 0;
+        min-width: 0;
+        max-width: 100%;
+      }
+
+      /* Right group (title + controls) always breaks to row 2, full width */
+      [data-portal-shell="direct"] .portal-header-right {
+        margin-left: 0;
+        flex-basis: 100%;
+        border-top: 1px solid var(--border);
+        padding-top: var(--sp-2);
+      }
+
+      /* Controls: drop left separator, allow wrapping */
+      [data-portal-shell="direct"] .portal-header-controls {
+        border-left: none;
+        padding-left: 0;
+        flex-wrap: wrap;
+      }
+
+      /* Title: tighten right padding */
+      [data-portal-shell="direct"] .portal-header-title {
+        padding-right: var(--sp-2);
+      }
+    }
   </style>
 </head>
 <body data-portal-shell="direct">
