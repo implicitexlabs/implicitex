@@ -1344,7 +1344,7 @@ body.portal-active #nav {
   background: transparent;
   border: 1px solid var(--border-2);
   cursor: pointer;
-  color: rgba(242, 242, 240, 0.75);
+  color: var(--dim);
   padding: 0 9px;
   gap: 5px;
   transition: color 0.12s, border-color 0.12s, background 0.12s;

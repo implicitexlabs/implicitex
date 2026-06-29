@@ -51,7 +51,7 @@
       font-weight: 600;
       letter-spacing: 0.12em;
       text-transform: uppercase;
-      color: rgba(242, 242, 240, 0.75);
+      color: var(--dim);
       background: transparent;
       border: 1px solid var(--border-2);
       cursor: pointer;
@@ -132,8 +132,8 @@
         <!-- Theme toggle — manual light/dark -->
         <button class="portal-ctrl-btn" id="themeToggle" type="button" aria-label="Switch to light theme" aria-pressed="false">
           <svg class="portal-ctrl-icon" width="12" height="12" viewBox="0 0 14 14" aria-hidden="true" focusable="false">
-            <path d="M7 1 A6 6 0 0 0 7 13 Z" fill="currentColor"/>
-            <path d="M7 1 A6 6 0 0 1 7 13 Z" fill="transparent"/>
+            <path d="M7 1 A6 6 0 0 0 7 13 Z" fill="var(--white)"/>
+            <path d="M7 1 A6 6 0 0 1 7 13 Z" fill="var(--bg)"/>
             <circle cx="7" cy="7" r="6" fill="none" stroke="currentColor" stroke-width="1.5"/>
           </svg>
         </button>
