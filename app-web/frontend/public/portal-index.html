@@ -147,6 +147,15 @@
         padding-right: var(--sp-2);
       }
     }
+
+    /* ---- Compact: hide TRANSFER PORTAL title at 680px and below ----
+       Brand + controls carry the header. Subcopy row establishes
+       portal context. Title re-appears above 680px. */
+    @media (max-width: 680px) {
+      [data-portal-shell="direct"] .portal-header-title {
+        display: none;
+      }
+    }
   </style>
 </head>
 <body data-portal-shell="direct">
