@@ -18,6 +18,9 @@ No second portal. No duplicate wallet logic.
 | `d8bd53f` | repair Transfer Portal hierarchy and layout controls |
 | `1302861` | fix layout toggle — icons, CSS-driven state, grid-column fix |
 | `2f4cc65` | unify portal control icon suite — 2px SVG family |
+| `5615190` | fix portal controls theme color tokens — all controls now use `var(--dim)` |
+| `f6156da` | portal: expand by default, center brand bar, add legal footer |
+| `1b1f1de` | portal: use `focusTransferPortal()` to clear `is-minimized` on load |
 
 ### Changed files
 
@@ -180,9 +183,43 @@ Visual smoke confirmed 2026-06-29. Portal hierarchy restored:
 
 ---
 
+---
+
+### Lane B — portal.implicitex.com shell
+
+**Firebase site:** `implicitex-portal` (created 2026-06-29)
+**Default URL:** `https://implicitex-portal.web.app/` — content smoke PASS
+**Custom domain:** `portal.implicitex.com` — SSL minting in progress
+
+#### portal-index.html shell: content smoke (implicitex-portal.web.app)
+
+| Check | Expected | Status |
+|-------|----------|--------|
+| Portal loads fully expanded | No collapsed/minimized first state | PASS |
+| Chevron starts in expanded orientation | `aria-expanded="true"` | PASS |
+| Minimize / expand cycle | Collapses and restores correctly | PASS |
+| Layout toggle | Columns ↔ stacked, persists via localStorage | PASS |
+| Brand bar centered | ImplicitEx mark + wordmark, top center | PASS |
+| Global nav suppressed | No site nav, no hamburger | PASS |
+| Theme controls in portal header | Clock + theme toggle visible and functional | PASS |
+| Controls flip on light theme | All controls use `var(--dim)` — token-aware | PASS |
+| Inline CONNECT WALLET | Visible in Transfer module, no passive prompt | PASS |
+| Legal footer | Legal · Terms · Privacy — single centered line | PASS |
+| No passive wallet prompt | Wallet not auto-connected | PASS |
+
+**Status:** PASS — staging smoke 2026-06-29
+
+#### Key bug resolved
+
+`openTransferPortal()` only unsets `hidden` — does not remove `is-minimized`.
+`focusTransferPortal()` explicitly calls `restorePortal()` when minimized.
+Portal-index.html auto-expand script changed to use `IX.focusTransferPortal()`.
+
+---
+
 ### Current limitations
 
-- `portal.implicitex.com` not yet deployed. `firebase.json` uses deploy targets; `implicitex-portal` site must be created in Firebase console before production portal deploy.
+- `portal.implicitex.com` SSL certificate minting in progress — custom domain smoke pending.
 - Test 5 (failure states) not yet run — requires network simulation or temporary registry manipulation.
 - Wallet smoke (MetaMask desktop, MetaMask mobile, Coinbase Wallet) not yet run for the Coin Card intake path.
 
