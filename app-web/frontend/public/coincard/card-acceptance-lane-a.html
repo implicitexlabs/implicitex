@@ -905,9 +905,16 @@
       z-index: 3;
     }
 
-    /* Lettermark — in-flow inside authority square; override base class absolute positioning */
+    /* Specificity guard — authority square is the sole positioning authority for its children.
+       Base .cc-mark-wrap sets position:absolute; this selector wins over the modifier alone. */
+    .cc-authority-square .cc-mark-wrap {
+      position: static;
+      transform: none;
+    }
+
+    /* Lettermark — in-flow inside authority square */
     .cc-mark-wrap--decal {
-      position: static;   /* in-flow flex child — square handles positioning */
+      position: static;   /* belt-and-suspenders; guard above is the definitive rule */
       transform: none;
       width: 44px;        /* spec: lettermark.width = 44px */
       height: 44px;       /* spec: lettermark.height = 44px */
