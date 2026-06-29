@@ -24,6 +24,7 @@
       padding: 2rem 2rem 0;
       display: flex;
       align-items: center;
+      justify-content: center;
     }
     .portal-brand-link {
       display: inline-flex;
@@ -74,6 +75,28 @@
       right: auto;
       top: calc(100% + 4px);
     }
+
+    /* Legal footer */
+    .portal-legal-footer {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 1.5rem;
+      padding: 1.5rem 2rem 2rem;
+    }
+    .portal-legal-footer a {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--dim);
+      text-decoration: none;
+      transition: color 0.12s;
+    }
+    .portal-legal-footer a:hover {
+      color: var(--white);
+    }
   </style>
 </head>
 <body>
@@ -117,7 +140,7 @@
 
   <div class="portal-zone">
 
-  <section class="modules transfer-portal" id="modules" aria-label="Transfer Portal" data-transaction-window hidden>
+  <section class="modules transfer-portal" id="modules" aria-label="Transfer Portal" data-transaction-window>
     <div class="portal-header">
       <span class="portal-header-title">Transfer Portal</span>
       <div class="portal-header-controls">
@@ -150,7 +173,7 @@
             <rect x="0" y="9" width="12" height="2" fill="currentColor"/>
           </svg>
         </button>
-        <button class="portal-ctrl-btn" id="modulesMinimize" type="button" aria-expanded="false" aria-label="Expand transfer portal">
+        <button class="portal-ctrl-btn" id="modulesMinimize" type="button" aria-expanded="true" aria-label="Minimize transfer portal">
           <svg class="portal-ctrl-icon portal-ctrl-chevron" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" focusable="false">
             <polyline points="2,4.5 6,8.5 10,4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
@@ -546,6 +569,13 @@
   </div><!-- /portal-zone -->
 
   </main>
+
+  <!-- Legal footer -->
+  <footer class="portal-legal-footer" aria-label="Legal">
+    <a href="/legal.html">Legal</a>
+    <a href="/terms.html">Terms</a>
+    <a href="/privacy.html">Privacy</a>
+  </footer>
 
   <!-- Scripts — same as index.html minus canvas.js, feeds.js, news-data.js -->
   <script
