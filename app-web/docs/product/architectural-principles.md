@@ -67,6 +67,37 @@ No step in this hierarchy can substitute for any other. A verified registry reco
 
 ---
 
+## 7. Evidence Over Trust
+
+ImplicitEx should minimize the amount of trust users must place in ImplicitEx itself. Whenever possible, the system should provide user-held, portable, and independently verifiable evidence of identity, intent, and execution. Verification artifacts must be available at the moment trust is required, not introduced after the fact.
+
+Most payment systems ask users to trust one of: the company, the bank, or the platform. ImplicitEx operates on a fourth model: trust the evidence.
+
+**The test:** Does this feature increase the user's ability to verify the transfer without trusting ImplicitEx? If yes, it strengthens the evidence layer. If no, it is UX polish — useful, but not architecturally load-bearing.
+
+**The hard discipline:** Evidence has to be present at the moment the user needs it — not retroactively added after trust is broken. The order is fixed:
+
+1. Make the claim.
+2. Provide the evidence.
+3. Only then ask the user to act.
+
+**Evidence layer inventory (as of 2026-06-29):**
+
+| Artifact                  | Purpose                           |
+|---------------------------|-----------------------------------|
+| Coin Card                 | Identity evidence                 |
+| Receipt ID                | Stable reference evidence         |
+| Confirmed Transfer block  | Execution evidence                |
+| Proof Packet              | Portable evidence                 |
+| Explorer link             | Independent verification          |
+| Block number              | Chain anchoring                   |
+| Receipt persistence       | User custody of evidence          |
+| Copy Receipt              | Human-readable evidence           |
+
+**Corollary:** The strongest version of ImplicitEx may be the one that requires the least trust in ImplicitEx itself. Unlike reputation systems or third-party approvals, the evidence layer is an asset ImplicitEx owns regardless of what third parties decide.
+
+---
+
 ## How to use these principles
 
 These principles answer future questions before they arise. When a feature is proposed:
@@ -76,5 +107,7 @@ These principles answer future questions before they arise. When a feature is pr
 3. Does it move the widget toward a payment engine rather than a distribution surface? → Principle 3 blocks it.
 4. Does it make claims that cannot be verified on-chain or through public records? → Principle 4 blocks it.
 5. Does it create a new brand surface that is disconnected from the entity graph? → Principle 5 flags it for correction.
+6. Does it blur the line between verified recipient record and payment execution? → Principle 6 blocks it.
+7. Does it increase the evidence available to users, or does it ask them to trust ImplicitEx instead? → Principle 7 is the test.
 
 Proposals that strengthen these principles should be prioritized. Proposals that require violating them require an architectural argument, not just a product argument.
