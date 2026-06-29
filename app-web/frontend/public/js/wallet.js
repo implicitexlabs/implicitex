@@ -492,8 +492,11 @@
     walletChoiceMetaMask:     document.getElementById('walletChoiceMetaMask'),
     walletChoiceWalletConnect: document.getElementById('walletChoiceWalletConnect'),
     confirmedTransferBlock: document.getElementById('confirmedTransferBlock'),
+    verifStatus:            document.getElementById('verifStatus'),
     verifReceiptId:         document.getElementById('verifReceiptId'),
     verifAmount:            document.getElementById('verifAmount'),
+    verifFee:               document.getElementById('verifFee'),
+    verifTotal:             document.getElementById('verifTotal'),
     verifRecipient:         document.getElementById('verifRecipient'),
     verifNetwork:           document.getElementById('verifNetwork'),
     verifTxHash:            document.getElementById('verifTxHash'),
@@ -1997,8 +2000,11 @@
 
     const txHash = confirmed.transferHash || confirmed.hash;
 
+    if (els.verifStatus)     els.verifStatus.textContent     = 'CONFIRMED';
     if (els.verifReceiptId)  els.verifReceiptId.textContent  = formatReceiptId(confirmed);
-    if (els.verifAmount)     els.verifAmount.textContent     = confirmed.amount ? confirmed.amount + ' USDC' : '—';
+    if (els.verifAmount)     els.verifAmount.textContent     = confirmed.amount    ? confirmed.amount    + ' USDC' : '—';
+    if (els.verifFee)        els.verifFee.textContent        = confirmed.fee       ? confirmed.fee       + ' USDC' : '—';
+    if (els.verifTotal)      els.verifTotal.textContent      = confirmed.totalDebit ? confirmed.totalDebit + ' USDC' : '—';
     if (els.verifRecipient)  els.verifRecipient.textContent  = confirmed.recipient ? shortAddr(confirmed.recipient) : '—';
     if (els.verifNetwork)    els.verifNetwork.textContent    = confirmed.network || chainLabel(confirmed.chainId) || '—';
     if (els.verifTxHash)     els.verifTxHash.textContent     = txHash ? shortHash(txHash) : '—';
