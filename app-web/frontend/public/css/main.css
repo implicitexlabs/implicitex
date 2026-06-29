@@ -2183,17 +2183,83 @@ body.portal-active #nav {
   color: var(--dim);
 }
 
-.gas-chart {
-  width: 100%;
-  margin-bottom: var(--sp-3);
-  padding-bottom: var(--sp-3);
-  border-bottom: 1px solid rgba(242, 242, 240, 0.12);
+.gas-chart-title {
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--dim);
+  margin: 0 0 var(--sp-2);
 }
 
-.gas-chart svg {
+.gas-chart-frame {
+  display: grid;
+  grid-template-columns: 42px 1fr;
+  grid-template-rows: 64px 14px;
+  column-gap: 8px;
+  row-gap: 4px;
+  margin-bottom: var(--sp-3);
+  padding-bottom: var(--sp-3);
+  border-bottom: 1px solid var(--border);
+}
+
+.gas-chart-yaxis {
+  grid-column: 1;
+  grid-row: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  color: var(--dim);
+  text-align: right;
+}
+
+.gas-chart-plot {
+  grid-column: 2;
+  grid-row: 1;
+  position: relative;
+  height: 64px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+  color: var(--dim);
+}
+
+.gas-chart-plot::before {
+  content: "";
+  position: absolute;
+  inset: 50% 0 auto;
+  border-top: 1px solid var(--border);
+  opacity: 0.45;
+}
+
+.gas-chart-plot svg {
   display: block;
   width: 100%;
-  height: auto;
+  height: 100%;
+}
+
+.gas-chart-xaxis {
+  grid-column: 2;
+  grid-row: 2;
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  color: var(--dim);
+  text-transform: uppercase;
+}
+
+.gas-chart-pending {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  letter-spacing: 0.12em;
+  color: var(--dim);
+  text-transform: uppercase;
 }
 
 .data-k {

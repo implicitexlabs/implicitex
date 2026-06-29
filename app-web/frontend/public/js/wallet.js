@@ -481,6 +481,10 @@
     gasTrend:     document.getElementById('gasTrend'),
     gasSamples:   document.getElementById('gasSamples'),
     gasChart:     document.getElementById('gasChart'),
+    gasAxisMax:   document.getElementById('gasAxisMax'),
+    gasAxisMid:   document.getElementById('gasAxisMid'),
+    gasAxisMin:   document.getElementById('gasAxisMin'),
+    gasAxisStart: document.getElementById('gasAxisStart'),
     walletChoiceOverlay:      document.getElementById('walletChoiceOverlay'),
     walletChoiceClose:        document.getElementById('walletChoiceClose'),
     walletChoiceBackdrop:     document.getElementById('walletChoiceBackdrop'),
@@ -4537,19 +4541,20 @@
   // Gas sample accumulator — session-local only, no persistence.
   // Feeds the expandable Gas price detail row.
   // ----------------------------------------------------------------
-  const GAS_SAMPLE_MAX = 240; // 2 hours at 30s polling
-  const gasSampleBuffer = []; // { standard: number, ts: number }
+  const GAS_SAMPLE_MAX      = 240;              // 2 hours at 30s polling — buffer ceiling
+  const GAS_CHART_WINDOW_MS = 5 * 60 * 1000;   // 5-minute visible window for the chart
+  const gasSampleBuffer     = [];               // { t: number, v: number }
 
   function pushGasSample(standard) {
     if (!Number.isFinite(standard)) return;
-    gasSampleBuffer.push({ standard, ts: Date.now() });
+    gasSampleBuffer.push({ t: Date.now(), v: Number(standard) });
     if (gasSampleBuffer.length > GAS_SAMPLE_MAX) gasSampleBuffer.shift();
   }
 
   function calcGasTrend() {
     if (gasSampleBuffer.length < 2) return 'Collecting';
-    const first = gasSampleBuffer[0].standard;
-    const last  = gasSampleBuffer[gasSampleBuffer.length - 1].standard;
+    const first = gasSampleBuffer[0].v;
+    const last  = gasSampleBuffer[gasSampleBuffer.length - 1].v;
     const threshold = 5; // Gwei — below this delta is noise, not trend
     if (last > first + threshold) return 'Rising';
     if (last < first - threshold) return 'Falling';
@@ -4558,7 +4563,7 @@
 
   function renderGasDetail() {
     if (!gasSampleBuffer.length) return;
-    const vals = gasSampleBuffer.map(s => s.standard);
+    const vals = gasSampleBuffer.map(s => s.v);
     const low  = Math.min(...vals);
     const high = Math.max(...vals);
     const avg  = vals.reduce((a, b) => a + b, 0) / vals.length;
@@ -4573,84 +4578,41 @@
   function renderGasChart() {
     if (!els.gasChart) return;
 
-    // Fixed SVG coordinate space — axes never move, only bar heights scale.
-    // viewBox scales to container width via width="100%" / height="auto".
-    const VW = 280, VH = 96;
-    const ML = 34, MR = 4, MT = 6, MB = 18; // margins for axes
-    const CX = ML, CY = MT;
-    const CW = VW - ML - MR;   // chart area width
-    const CH = VH - MT - MB;   // chart area height
-    const BAR_W = 3, BAR_GAP = 1;
+    const now     = Date.now();
+    const visible = gasSampleBuffer.filter(s => now - s.t <= GAS_CHART_WINDOW_MS);
+    const hasData = visible.length >= 2;
 
-    const COL_DIM   = 'rgba(242,242,240,0.58)';
-    const COL_AXIS  = 'rgba(242,242,240,0.18)';
-    const LS        = `font-family:monospace;font-size:7.5px;fill:${COL_DIM}`;
+    // Always update Y-axis labels — frame stays populated in all states
+    const scaleMax = hasData ? Math.max(...visible.map(s => s.v)) : 0;
+    if (els.gasAxisMax) els.gasAxisMax.textContent = hasData ? formatGwei(scaleMax)         : '—';
+    if (els.gasAxisMid) els.gasAxisMid.textContent = hasData ? formatGwei(scaleMax / 2)     : '—';
+    // gasAxisMin is always '0' — set in HTML
 
-    // Three Y-axis tick positions: top, mid, bottom of chart area
-    const tickYs = [CY, CY + CH / 2, CY + CH];
+    els.gasChart.classList.toggle('is-pending', !hasData);
 
-    function buildAxes(yLabels) {
-      const yLine = `<line x1="${CX}" y1="${CY}" x2="${CX}" y2="${CY + CH}" stroke="${COL_AXIS}" stroke-width="1"/>`;
-      const xLine = `<line x1="${CX}" y1="${CY + CH}" x2="${CX + CW}" y2="${CY + CH}" stroke="${COL_AXIS}" stroke-width="1"/>`;
-      const ticks = tickYs.map((ty, i) =>
-        `<line x1="${CX - 4}" y1="${ty}" x2="${CX}" y2="${ty}" stroke="${COL_AXIS}" stroke-width="1"/>` +
-        `<text x="${CX - 6}" y="${ty + 3}" text-anchor="end" style="${LS}">${yLabels[i]}</text>`
-      ).join('');
-      const xLabels =
-        `<text x="${CX + 2}"    y="${VH - 3}" text-anchor="start" style="${LS}">← 2h</text>` +
-        `<text x="${CX + CW}"   y="${VH - 3}" text-anchor="end"   style="${LS}">Now</text>`;
-      return yLine + xLine + ticks + xLabels;
-    }
-
-    // Pending state — axes present, placeholder ticks, collecting notice inside chart area
-    if (gasSampleBuffer.length < 2) {
-      const notice =
-        `<text x="${CX + CW / 2}" y="${CY + CH / 2 + 3}" ` +
-        `text-anchor="middle" style="${LS}">Collecting…</text>`;
-      els.gasChart.innerHTML =
-        `<svg viewBox="0 0 ${VW} ${VH}" width="100%" xmlns="http://www.w3.org/2000/svg" ` +
-        `aria-label="Gas price chart, collecting data">` +
-        buildAxes(['—', '—', '—']) + notice + `</svg>`;
+    if (!hasData) {
+      els.gasChart.innerHTML = '<div class="gas-chart-pending">DATA COLLECTION…</div>';
       return;
     }
 
-    // Bucket samples into up to N_BARS display bars
-    const N_BARS = Math.floor(CW / (BAR_W + BAR_GAP));
-    const samples = gasSampleBuffer;
-    const count   = Math.min(N_BARS, samples.length);
-    const buckets = [];
-    for (let i = 0; i < count; i++) {
-      const start = Math.floor(i * samples.length / count);
-      const end   = Math.floor((i + 1) * samples.length / count);
-      const slice = samples.slice(start, end);
-      buckets.push(slice.reduce((a, s) => a + s.standard, 0) / slice.length);
-    }
+    // Plot dimensions — fixed viewBox, bars positioned by real timestamp
+    const PLOT_W = 300, PLOT_H = 64, BAR_W = 3;
 
-    const minV = Math.min(...buckets);
-    const maxV = Math.max(...buckets);
-    // 10% headroom; floor the range so flat data still renders as bars
-    const pad   = Math.max((maxV - minV) * 0.1, 2);
-    const lo    = Math.max(0, minV - pad);
-    const hi    = maxV + pad;
-    const range = hi - lo;
-
-    // Y-axis tick labels: hi (top) → mid → lo (bottom)
-    const yLabels = [formatGwei(hi), formatGwei((lo + hi) / 2), formatGwei(lo)];
-
-    // Bars — right-anchored so newest reading is always at the right edge
-    const xOffset = CX + CW - count * (BAR_W + BAR_GAP);
-    const bars = buckets.map((val, i) => {
-      const norm  = (val - lo) / range;
-      const barH  = Math.max(2, Math.round(norm * (CH - 2)) + 2);
-      const x     = xOffset + i * (BAR_W + BAR_GAP);
-      const y     = CY + CH - barH;
-      return `<rect x="${x}" y="${y}" width="${BAR_W}" height="${barH}" fill="${COL_DIM}"/>`;
+    const bars = visible.map(s => {
+      const age   = now - s.t;
+      const xNorm = 1 - (age / GAS_CHART_WINDOW_MS);       // 0 = oldest, 1 = now
+      const x     = Math.round(xNorm * (PLOT_W - BAR_W));
+      const barH  = s.v > 0
+        ? Math.max(1, Math.round((s.v / scaleMax) * PLOT_H))
+        : 0;
+      const y = PLOT_H - barH;
+      return `<rect x="${x}" y="${y}" width="${BAR_W}" height="${barH}" fill="currentColor"/>`;
     }).join('');
 
     els.gasChart.innerHTML =
-      `<svg viewBox="0 0 ${VW} ${VH}" width="100%" xmlns="http://www.w3.org/2000/svg" ` +
-      `aria-label="Gas price chart">` +
-      buildAxes(yLabels) + bars + `</svg>`;
+      `<svg viewBox="0 0 ${PLOT_W} ${PLOT_H}" width="100%" height="100%" ` +
+      `preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">` +
+      bars + `</svg>`;
   }
 
   function pollNetworkData() {
