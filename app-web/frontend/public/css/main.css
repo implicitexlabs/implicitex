@@ -1469,18 +1469,35 @@ body.portal-active #nav {
    Light theme collapses to dark card (#1a1917) — global invert/fill rules make the
    white wordmark black and the brandmark dark: both invisible. Restore white assets.
    Dark theme collapses to light card (#f0ede8) — white wordmark and white brandmark
-   are invisible on the pale background. Force dark assets. */
+   are invisible on the pale background. Force dark assets.
+   color override on .portal-header-brand ensures currentColor is correct for the
+   brandmark SVG and any future element inside the brand anchor. */
+[data-theme="light"] .transfer-portal.is-minimized .portal-header-brand {
+  color: #f2f2f0;
+}
 [data-theme="light"] .transfer-portal.is-minimized img.wordmark {
   filter: none;
 }
 [data-theme="light"] .transfer-portal.is-minimized .brandmark path {
   fill: #f2f2f0;
 }
+[data-theme="dark"] .transfer-portal.is-minimized .portal-header-brand {
+  color: #1a1917;
+}
 [data-theme="dark"] .transfer-portal.is-minimized img.wordmark {
   filter: invert(1);
 }
 [data-theme="dark"] .transfer-portal.is-minimized .brandmark path {
   fill: #1a1917;
+}
+/* Collapsed mobile: the row-separator border-top on .portal-header-right uses
+   var(--border) which is near-invisible on the inverted collapsed card.
+   Override to a legible hairline for each theme state. */
+[data-theme="light"] .transfer-portal.is-minimized .portal-header-right {
+  border-top-color: rgba(255, 255, 255, 0.12);
+}
+[data-theme="dark"] .transfer-portal.is-minimized .portal-header-right {
+  border-top-color: rgba(0, 0, 0, 0.12);
 }
 
 /* Collapsed: .portal-header stays visible; everything else hides */
