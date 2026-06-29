@@ -491,6 +491,15 @@
     walletChoiceBackdrop:     document.getElementById('walletChoiceBackdrop'),
     walletChoiceMetaMask:     document.getElementById('walletChoiceMetaMask'),
     walletChoiceWalletConnect: document.getElementById('walletChoiceWalletConnect'),
+    confirmedTransferBlock: document.getElementById('confirmedTransferBlock'),
+    verifReceiptId:         document.getElementById('verifReceiptId'),
+    verifAmount:            document.getElementById('verifAmount'),
+    verifRecipient:         document.getElementById('verifRecipient'),
+    verifNetwork:           document.getElementById('verifNetwork'),
+    verifTxHash:            document.getElementById('verifTxHash'),
+    verifBlock:             document.getElementById('verifBlock'),
+    verifTimestamp:         document.getElementById('verifTimestamp'),
+    verifTransferActions:   document.getElementById('verifTransferActions'),
   };
 
   // ----------------------------------------------------------------
@@ -1952,6 +1961,76 @@
 
       return item;
     }));
+  }
+
+  /**
+   * Populate the 03 — Verification confirmed transfer proof block.
+   *
+   * Scans all receipts (active + archive) for the most recent CONFIRMED
+   * one. If found, surfaces it as execution proof alongside the Coin Card
+   * identity proof. Hidden until at least one confirmed receipt exists.
+   *
+   * Call on load and on ix:receipts-changed.
+   */
+  function renderConfirmedTransferBlock() {
+    if (!els.confirmedTransferBlock) return;
+    if (!window.IX || !window.IX.receipts) {
+      els.confirmedTransferBlock.hidden = true;
+      return;
+    }
+    const confirmed = window.IX.receipts.listAll().find(
+      r => r.state === (IX_TRANSFER_STATES && IX_TRANSFER_STATES.CONFIRMED)
+    );
+    if (!confirmed) {
+      els.confirmedTransferBlock.hidden = true;
+      return;
+    }
+
+    const txHash = confirmed.transferHash || confirmed.hash;
+
+    if (els.verifReceiptId)  els.verifReceiptId.textContent  = formatReceiptId(confirmed);
+    if (els.verifAmount)     els.verifAmount.textContent     = confirmed.amount ? confirmed.amount + ' USDC' : '—';
+    if (els.verifRecipient)  els.verifRecipient.textContent  = confirmed.recipient ? shortAddr(confirmed.recipient) : '—';
+    if (els.verifNetwork)    els.verifNetwork.textContent    = confirmed.network || chainLabel(confirmed.chainId) || '—';
+    if (els.verifTxHash)     els.verifTxHash.textContent     = txHash ? shortHash(txHash) : '—';
+    if (els.verifBlock)      els.verifBlock.textContent      = confirmed.blockNumber ? String(confirmed.blockNumber) : '—';
+    if (els.verifTimestamp)  els.verifTimestamp.textContent  = formatReceiptTime(confirmed.resolvedAt || confirmed.updatedAt || confirmed.createdAt);
+
+    if (els.verifTransferActions) {
+      const actions = [];
+
+      if (confirmed.explorerUrl && txHash) {
+        const link = document.createElement('a');
+        link.className = 'receipt-link';
+        link.href = confirmed.explorerUrl;
+        link.target = '_blank';
+        link.rel = 'noopener';
+        link.textContent = 'View on explorer';
+        actions.push(link);
+      }
+
+      const copyBtn = document.createElement('button');
+      copyBtn.type = 'button';
+      copyBtn.className = 'receipt-copy-btn';
+      copyBtn.textContent = 'Copy receipt';
+      copyBtn.addEventListener('click', function () {
+        copyReceiptSummary(confirmed, copyBtn);
+      });
+      actions.push(copyBtn);
+
+      const proofBtn = document.createElement('button');
+      proofBtn.type = 'button';
+      proofBtn.className = 'receipt-proof-btn';
+      proofBtn.textContent = 'Export proof packet';
+      proofBtn.addEventListener('click', function () {
+        downloadProofPacket(confirmed);
+      });
+      actions.push(proofBtn);
+
+      els.verifTransferActions.replaceChildren(...actions);
+    }
+
+    els.confirmedTransferBlock.hidden = false;
   }
 
   /**
@@ -4849,6 +4928,7 @@
   pollNetworkData();
   resetBalanceDisplay('Not connected');
   renderReceiptHistory();
+  renderConfirmedTransferBlock();
   renderRecipientIntel();
   renderPreflight();
   if (window.location.hash === '#transfer') {
@@ -4858,6 +4938,7 @@
   }
   window.addEventListener('ix:receipts-changed', function () {
     renderReceiptHistory();
+    renderConfirmedTransferBlock();
     renderRecipientIntel();
     renderPreflight();
   });

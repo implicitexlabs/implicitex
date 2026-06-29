@@ -570,6 +570,43 @@
       <div class="card-verify-footer" id="cardVerifyFooter" hidden>
         <a class="card-verify-link" href="/verify.html" id="cardVerifyLink">Verify independently →</a>
       </div>
+
+      <!-- CONFIRMED TRANSFER — execution proof, shown only when a confirmed receipt exists -->
+      <div class="verif-transfer-block" id="confirmedTransferBlock" hidden>
+        <div class="verif-transfer-divider"></div>
+        <p class="verif-transfer-heading">CONFIRMED TRANSFER</p>
+        <div class="data-table">
+          <div class="data-row">
+            <span class="data-k">Receipt</span>
+            <span class="data-v" id="verifReceiptId">—</span>
+          </div>
+          <div class="data-row">
+            <span class="data-k">Amount</span>
+            <span class="data-v" id="verifAmount">—</span>
+          </div>
+          <div class="data-row">
+            <span class="data-k">Recipient</span>
+            <span class="data-v" id="verifRecipient">—</span>
+          </div>
+          <div class="data-row">
+            <span class="data-k">Network</span>
+            <span class="data-v" id="verifNetwork">—</span>
+          </div>
+          <div class="data-row">
+            <span class="data-k">Tx hash</span>
+            <span class="data-v" id="verifTxHash">—</span>
+          </div>
+          <div class="data-row">
+            <span class="data-k">Block</span>
+            <span class="data-v" id="verifBlock">—</span>
+          </div>
+          <div class="data-row">
+            <span class="data-k">Confirmed</span>
+            <span class="data-v" id="verifTimestamp">—</span>
+          </div>
+        </div>
+        <div class="verif-transfer-actions" id="verifTransferActions"></div>
+      </div>
     </div>
 
     </div><!-- /.mod-col -->

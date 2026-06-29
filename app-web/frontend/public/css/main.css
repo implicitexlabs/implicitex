@@ -2322,6 +2322,26 @@ body.portal-active #nav {
 .card-status--unverified { color: var(--telemetry-amber-dim); }
 .card-status--failed     { color: var(--warn); }
 
+/* 03 — Verification: confirmed transfer proof block */
+.verif-transfer-divider {
+  border-top: 1px solid var(--border);
+  margin: 1.25rem 0 1rem;
+}
+.verif-transfer-heading {
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: var(--sp-3);
+}
+.verif-transfer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: var(--sp-3);
+}
+
 /* Feed list */
 .feed-list { display: flex; flex-direction: column; }
 
