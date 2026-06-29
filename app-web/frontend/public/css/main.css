@@ -1350,46 +1350,25 @@ body.portal-active #nav {
   transition: color 0.12s, border-color 0.12s, background 0.12s;
 }
 
-/* Control labels — small mono identifiers inside each button */
-.portal-ctrl-label {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  white-space: nowrap;
+/* Portal control icons — unified SVG suite, 12×12 viewbox, 2px weight */
+.portal-ctrl-icon {
+  display: block;
+  flex-shrink: 0;
   pointer-events: none;
 }
-#modulesMinimize[aria-expanded="false"] .portal-ctrl-label::before { content: "EXPAND"; }
-#modulesMinimize[aria-expanded="true"]  .portal-ctrl-label::before { content: "MINIMIZE"; }
+
+/* Chevron rotates when portal is expanded */
+.portal-ctrl-chevron {
+  transition: transform 0.16s ease;
+}
+#modulesMinimize[aria-expanded="true"] .portal-ctrl-chevron {
+  transform: rotate(180deg);
+}
 
 .portal-ctrl-btn:hover {
   color: var(--white);
   border-color: var(--white);
   background: var(--surface-2);
-}
-
-.portal-ctrl-arrow {
-  width: 0;
-  height: 0;
-  border-left: 4px solid transparent;
-  border-right: 4px solid transparent;
-  border-top: 5px solid currentColor;
-  transition: transform 0.16s ease;
-  pointer-events: none;
-}
-
-#modulesMinimize[aria-expanded="true"] .portal-ctrl-arrow {
-  transform: rotate(180deg);
-}
-
-.portal-ctrl-x {
-  font-family: var(--font-ui);
-  font-size: 13px;
-  font-weight: var(--weight-bold);
-  color: inherit;
-  line-height: 1;
-  display: block;
-  pointer-events: none;
 }
 
 .transfer-portal.is-minimized {
@@ -6119,11 +6098,6 @@ input[type="number"] {
 }
 
 /* Layout icon visibility — shows current state, click toggles */
-.portal-layout-icon {
-  display: block;
-  flex-shrink: 0;
-  pointer-events: none;
-}
 .portal-layout-icon--stacked {
   display: none;
 }

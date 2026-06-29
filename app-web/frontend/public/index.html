@@ -332,25 +332,28 @@
       <span class="portal-header-title">Transfer Portal</span>
       <div class="portal-header-controls">
         <button class="portal-ctrl-btn" id="layoutToggle" type="button" data-layout="columns" aria-label="Switch to stacked layout">
-          <!-- columns icon — two vertical bars; visible when layout = columns -->
-          <svg class="portal-layout-icon portal-layout-icon--columns" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" focusable="false">
-            <rect x="0" y="0" width="4" height="12" fill="currentColor"/>
-            <rect x="8" y="0" width="4" height="12" fill="currentColor"/>
+          <!-- columns icon — two 2px vertical bars; visible when layout = columns -->
+          <svg class="portal-ctrl-icon portal-layout-icon portal-layout-icon--columns" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" focusable="false">
+            <rect x="2" y="1" width="2" height="10" fill="currentColor"/>
+            <rect x="8" y="1" width="2" height="10" fill="currentColor"/>
           </svg>
-          <!-- stacked icon — three horizontal bars; visible when layout = stacked -->
-          <svg class="portal-layout-icon portal-layout-icon--stacked" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" focusable="false">
-            <rect x="0" y="0.5" width="12" height="2.5" fill="currentColor"/>
-            <rect x="0" y="4.75" width="12" height="2.5" fill="currentColor"/>
-            <rect x="0" y="9" width="12" height="2.5" fill="currentColor"/>
+          <!-- stacked icon — three 2px horizontal bars; visible when layout = stacked -->
+          <svg class="portal-ctrl-icon portal-layout-icon portal-layout-icon--stacked" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" focusable="false">
+            <rect x="0" y="1" width="12" height="2" fill="currentColor"/>
+            <rect x="0" y="5" width="12" height="2" fill="currentColor"/>
+            <rect x="0" y="9" width="12" height="2" fill="currentColor"/>
           </svg>
         </button>
         <button class="portal-ctrl-btn" id="modulesMinimize" type="button" aria-expanded="false" aria-label="Expand transfer portal">
-          <span class="portal-ctrl-label" aria-hidden="true"></span>
-          <span class="portal-ctrl-arrow" aria-hidden="true"></span>
+          <svg class="portal-ctrl-icon portal-ctrl-chevron" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" focusable="false">
+            <polyline points="2,4.5 6,8.5 10,4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
         </button>
         <button class="portal-ctrl-btn" id="modulesClose" type="button" aria-label="Close transfer portal">
-          <span class="portal-ctrl-label" aria-hidden="true">CLOSE</span>
-          <span class="portal-ctrl-x" aria-hidden="true">×</span>
+          <svg class="portal-ctrl-icon" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" focusable="false">
+            <line x1="2.5" y1="2.5" x2="9.5" y2="9.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <line x1="9.5" y1="2.5" x2="2.5" y2="9.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
         </button>
       </div>
     </div>
