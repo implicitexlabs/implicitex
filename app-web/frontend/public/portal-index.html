@@ -3,21 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Non-custodial USDC transfers on Polygon. Transparent 1% platform fee.">
-  <meta property="og:url" content="https://implicitex.com/">
-  <meta property="og:type" content="website">
-  <meta property="og:title" content="ImplicitEx — Send USDC without platform custody.">
-  <meta property="og:description" content="Peer-to-peer USDC transfers on Polygon. Non-custodial. 1% platform fee.">
-  <meta property="og:image" content="https://implicitex.com/components/images/og-primary.png">
-  <meta property="og:image:width" content="1200">
-  <meta property="og:image:height" content="628">
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:site" content="@implicitex">
-  <meta name="twitter:title" content="ImplicitEx — Send USDC without platform custody.">
-  <meta name="twitter:description" content="Peer-to-peer USDC transfers on Polygon. Non-custodial. 1% platform fee.">
-  <meta name="twitter:image" content="https://implicitex.com/components/images/og-primary.png">
-  <link rel="canonical" href="https://implicitex.com/">
-  <title>ImplicitEx — Send USDC without platform custody.</title>
+  <meta name="description" content="ImplicitEx Transfer Portal — direct wallet-to-wallet USDC transfers on Polygon.">
+  <meta name="robots" content="noindex">
+  <link rel="canonical" href="https://portal.implicitex.com/">
+  <title>ImplicitEx — Transfer Portal</title>
   <link rel="icon" href="assets/icons/favicon.ico" sizes="any">
   <link rel="icon" href="assets/icons/favicon-32x32.png" type="image/png" sizes="32x32">
   <link rel="icon" href="assets/icons/favicon-16x16.png" type="image/png" sizes="16x16">
@@ -27,69 +16,18 @@
   <link rel="stylesheet" href="components/companion/companion.css">
   <link rel="stylesheet" href="components/telemetry/telemetry.css">
   <link rel="manifest" href="manifest.json">
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@graph": [
-      {
-        "@type": "Organization",
-        "@id": "https://implicitex.com/#organization",
-        "name": "ImplicitEx",
-        "url": "https://implicitex.com",
-        "logo": {
-          "@type": "ImageObject",
-          "url": "https://implicitex.com/components/images/og-primary.png",
-          "width": 1200,
-          "height": 628
-        },
-        "description": "Non-custodial wallet-to-wallet USDC transfers on Polygon. Transparent 1% platform fee. Publicly verifiable on-chain.",
-        "parentOrganization": {
-          "@type": "Organization",
-          "name": "Aden Media Group LLC",
-          "url": "https://adenmediagroup.com"
-        },
-        "sameAs": [
-          "https://x.com/implicitex",
-          "https://github.com/implicitexlabs",
-          "https://www.linkedin.com/in/implicitex/"
-        ]
-      },
-      {
-        "@type": "WebSite",
-        "@id": "https://implicitex.com/#website",
-        "url": "https://implicitex.com",
-        "name": "ImplicitEx",
-        "description": "Non-custodial USDC transfers on Polygon.",
-        "publisher": { "@id": "https://implicitex.com/#organization" }
-      },
-      {
-        "@type": "SoftwareApplication",
-        "@id": "https://implicitex.com/#app",
-        "name": "ImplicitEx",
-        "url": "https://implicitex.com",
-        "applicationCategory": "FinanceApplication",
-        "operatingSystem": "Web",
-        "description": "Wallet-to-wallet USDC transfers on Polygon. Non-custodial, 1% platform fee, publicly verifiable.",
-        "publisher": { "@id": "https://implicitex.com/#organization" }
-      }
-    ]
-  }
-  </script>
 </head>
 <body>
 
-  <!-- NAV -->
+  <!-- NAV — same as index.html; wallet.js drives all state -->
   <nav id="nav">
     <a href="/" class="logo" aria-label="ImplicitEx home">
-      <!-- Brandmark SVG -->
       <svg class="brandmark" width="25" height="25" viewBox="0 0 25 25" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
         <path d="M18.4,21.48L2.64,5.73l.43-.43,15.76,15.76s1.3,1.3,2.79-.19.21-2.77.21-2.77L6.05,2.32l.43-.43,4.07,4.07,1.38,1.38,1.28-1.28,4.28-4.28.43.43-5.56,5.56,2.98,2.98,5.56-5.56.43.43-5.56,5.56,1.28,1.28,5.56-5.56s1.28-1.28-.21-2.77-2.79-.19-2.79-.19l-4.26,4.26-.43-.43,4.26-4.26s1.3-1.3-.19-2.79-2.77-.21-2.77-.21l-4.28,4.28L7.75.62s-1.28-1.28-2.77.21-.19,2.79-.19,2.79l15.76,15.76-.43.43L4.37,4.05s-1.3-1.3-2.79.19-.11,2.87-.11,2.87l15.68,15.68-.43.43-5.56-5.56-5.54,5.54-.43-.43,5.54-5.54-2.98-2.98-5.54,5.54-.43-.43,5.54-5.54-1.28-1.28L.51,18.08s-1.28,1.28.21,2.77,2.79.19,2.79.19l4.23-4.23.43.43-4.23,4.23s-1.3,1.3.19,2.79,2.77.21,2.77.21l4.26-4.26,4.28,4.28s1.28,1.28,2.77-.21.19-2.79.19-2.79Z" fill="#f2f2f0"/>
       </svg>
-      <!-- Wordmark SVG — hidden on mobile via CSS -->
       <img class="wordmark" src="/components/images/wordmark-white.svg" alt="" aria-hidden="true">
     </a>
     <div class="nav-right">
-      
       <button class="clock-toggle" id="clockToggle" type="button" aria-label="Set theme by time of day">
         <svg class="clock-icon" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
           <circle cx="7" cy="7" r="6" fill="none" stroke="currentColor" stroke-width="1.2"/>
@@ -99,19 +37,14 @@
       </button>
       <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch to light theme" aria-pressed="false">
         <svg class="theme-icon" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
-          <!-- Left half: contrasting fill -->
           <path d="M7 1 A6 6 0 0 0 7 13 Z" fill="var(--white)"/>
-          <!-- Right half: background fill -->
           <path d="M7 1 A6 6 0 0 1 7 13 Z" fill="var(--bg)"/>
-          <!-- Circle border -->
           <circle cx="7" cy="7" r="6" fill="none" stroke="currentColor" stroke-width="1.2"/>
         </svg>
       </button>
       <span class="nav-status">Polygon · Live</span>
       <a class="send-usdc-link" href="#transfer" onclick="if (window.IX && IX.focusTransferPortal) { IX.focusTransferPortal(); return false; }">Transfer Portal</a>
-      <button class="connect-btn" id="connectBtn" onclick="IX.connect()">
-        Connect Wallet
-      </button>
+      <button class="connect-btn" id="connectBtn" onclick="IX.connect()">Connect Wallet</button>
       <div class="wallet-menu" id="walletMenu" hidden>
         <button class="wallet-menu-trigger" id="walletMenuTrigger" type="button" aria-expanded="false" aria-controls="walletMenuPanel" aria-label="Wallet account menu">
           <span class="wallet-dot" aria-hidden="true"></span>
@@ -127,7 +60,6 @@
           <button class="wallet-menu-action wallet-menu-action--danger" id="disconnectBtn" type="button">Disconnect</button>
         </div>
       </div>
-      <!-- Hamburger — mobile only, hidden on desktop via CSS -->
       <button class="hamburger-btn" id="hamburgerBtn" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
         <svg width="18" height="14" viewBox="0 0 18 14" aria-hidden="true">
           <rect y="0"  width="18" height="1.8" fill="currentColor"/>
@@ -138,7 +70,7 @@
     </div>
   </nav>
 
-  <!-- MOBILE MENU OVERLAY -->
+  <!-- MOBILE MENU — same as index.html -->
   <div class="mobile-menu" id="mobileMenu" role="dialog" aria-modal="true" aria-label="Site menu" hidden>
     <div class="mobile-menu-inner">
       <div class="mobile-menu-head">
@@ -150,69 +82,38 @@
           </svg>
         </button>
       </div>
-
-      <!-- Wallet section -->
       <section class="mobile-menu-section" aria-label="Wallet">
         <p class="mobile-menu-label">Wallet</p>
         <p class="mobile-menu-status" id="menuWalletStatus">No wallet connected.</p>
         <p class="mobile-menu-sender" id="menuSenderDisplay" hidden></p>
         <p class="mobile-menu-network" id="menuNetworkDisplay" hidden></p>
         <div class="mobile-menu-actions">
-          <button class="mobile-menu-btn mobile-menu-btn--primary" id="menuConnectBtn" type="button">
-            Connect Wallet
-          </button>
-          <button class="mobile-menu-btn" id="menuSwitchBtn" type="button" hidden>
-            Switch Account
-          </button>
-          <button class="mobile-menu-btn mobile-menu-btn--danger" id="menuDisconnectBtn" type="button" hidden>
-            Disconnect
-          </button>
+          <button class="mobile-menu-btn mobile-menu-btn--primary" id="menuConnectBtn" type="button">Connect Wallet</button>
+          <button class="mobile-menu-btn" id="menuSwitchBtn" type="button" hidden>Switch Account</button>
+          <button class="mobile-menu-btn mobile-menu-btn--danger" id="menuDisconnectBtn" type="button" hidden>Disconnect</button>
         </div>
       </section>
-
-      <!-- Transaction section -->
       <section class="mobile-menu-section" aria-label="Transaction">
         <p class="mobile-menu-label">Transaction</p>
-        <button class="mobile-menu-btn mobile-menu-btn--primary" id="menuOpenPortalBtn" type="button">
-          Transfer Portal
-        </button>
+        <button class="mobile-menu-btn mobile-menu-btn--primary" id="menuOpenPortalBtn" type="button">Transfer Portal</button>
         <p class="mobile-menu-portal-note">Open the USDC transfer interface.</p>
       </section>
-
-      <!-- Navigation links -->
       <section class="mobile-menu-section" aria-label="Navigation">
         <p class="mobile-menu-label">Site</p>
         <nav class="mobile-menu-links">
+          <a href="https://implicitex.com/">ImplicitEx.com</a>
           <a href="/start.html">Start</a>
-          <a href="/about.html">About</a>
           <a href="/faq.html">FAQ</a>
-          <a href="/learn.html">Learn</a>
           <a href="/verify.html">Verify</a>
-          <a href="/log.html">Devlog</a>
           <a href="/terms.html">Terms</a>
           <a href="/privacy.html">Privacy</a>
-          <a href="/legal.html">Legal</a>
-          <a href="/jurisdictions.html">Access</a>
-          <a href="/news.html">News</a>
-          <a href="/contact.html">Contact</a>
-        </nav>
-      </section>
-
-      <!-- Social links — separated from site navigation -->
-      <section class="mobile-menu-section" aria-label="Social">
-        <p class="mobile-menu-label">Social</p>
-        <nav class="mobile-menu-links">
-          <a href="https://x.com/implicitex" target="_blank" rel="noopener">X</a>
-          <a href="https://github.com/implicitexlabs" target="_blank" rel="noopener">GitHub</a>
         </nav>
       </section>
     </div>
-    <!-- Backdrop — tap to close -->
     <div class="mobile-menu-backdrop" id="mobileMenuBackdrop" aria-hidden="true"></div>
   </div>
 
   <!-- WALLET CHOICE OVERLAY -->
-  <!-- Shown when Connect Wallet is tapped on a device without an injected provider. -->
   <div class="wallet-choice" id="walletChoiceOverlay" role="dialog" aria-modal="true" aria-label="Choose wallet" hidden>
     <div class="wallet-choice-backdrop" id="walletChoiceBackdrop" aria-hidden="true"></div>
     <div class="wallet-choice-inner">
@@ -234,100 +135,14 @@
     </div>
   </div>
 
+  <!-- DIRECT PORTAL SURFACE — no hero, no marketing, portal open immediately -->
   <main class="landing-main">
 
-
-  <!-- HERO -->
-  <section class="hero" aria-label="ImplicitEx introduction">
-    <canvas id="worldCanvas" aria-hidden="true"></canvas>
-    <div class="hero-inner">
-      <!-- Rotating hero: Identity → Utility → Verification -->
-      <div class="hero-slides" aria-live="polite" aria-atomic="true">
-
-        <!-- Slide 1: Identity -->
-        <div class="hero-slide is-active" aria-hidden="false">
-          <div class="hero-slide-brand">
-            <img class="hero-slide-lettermark" src="/components/images/lettermark-white.svg" alt="ImplicitEx">
-            <img class="hero-slide-wordmark" src="/components/images/wordmark-white.svg" alt="" aria-hidden="true">
-          </div>
-          <p class="hero-slide-headline">Wallet-to-wallet<br>USDC transfers.</p>
-          <p class="hero-slide-sub">Non-custodial by design.<br>Publicly verifiable on-chain.</p>
-        </div>
-
-        <!-- Slide 2: Utility -->
-        <div class="hero-slide" aria-hidden="true">
-          <div class="hero-slide-brand">
-            <img class="hero-slide-lettermark" src="/components/images/lettermark-white.svg" alt="ImplicitEx">
-            <img class="hero-slide-wordmark" src="/components/images/wordmark-white.svg" alt="" aria-hidden="true">
-          </div>
-          <h1 class="hero-slide-headline">Built for direct<br>USDC settlement.</h1>
-          <p class="hero-slide-sub">Funds stay in your wallet<br>until confirmed on-chain.</p>
-        </div>
-
-        <!-- Slide 3: Verification -->
-        <div class="hero-slide" aria-hidden="true">
-          <div class="hero-slide-brand">
-            <img class="hero-slide-lettermark" src="/components/images/lettermark-white.svg" alt="ImplicitEx">
-            <img class="hero-slide-wordmark" src="/components/images/wordmark-white.svg" alt="" aria-hidden="true">
-          </div>
-          <p class="hero-slide-headline">Contract. Fee.<br>Transfer.</p>
-          <p class="hero-slide-sub">Simple transaction flow.<br>Independently verifiable.</p>
-        </div>
-
-      </div>
-
-      <div class="stat-strip" aria-label="Key statistics">
-        <div class="stat-item">
-          <span class="stat-val">1%</span>
-          <span class="stat-label">Platform fee</span>
-        </div>
-        <div class="stat-sep" aria-hidden="true"></div>
-        <div class="stat-item">
-          <span class="stat-val">USDC</span>
-          <span class="stat-label">Polygon</span>
-        </div>
-        <div class="stat-sep" aria-hidden="true"></div>
-        <a class="stat-item stat-link stat-gas" href="https://polygonscan.com/gastracker" target="_blank" rel="noopener" aria-label="View live Polygon gas prices on PolygonScan">
-          <span class="stat-val gas-tiers gas-live" id="gasHeroVal">
-            <span>—</span>
-            <span>|</span>
-            <span>—</span>
-            <span>|</span>
-            <span>—</span>
-          </span>
-          <span class="stat-label">Gwei</span>
-        </a>
-        <div class="stat-sep" aria-hidden="true"></div>
-        <div class="stat-item">
-          <span class="stat-val">Non-custodial</span>
-          <span class="stat-label">Your wallet</span>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- PRODUCT INTRO -->
-  <section class="product-intro">
-    <p class="product-intro-statement">
-      <span class="usdc-badge" aria-hidden="true"><img class="usdc-icon" src="/assets/icons/usdc.svg" alt=""></span>
-      Send and Receive USDC.
-    </p>
-
-    <p class="product-intro-copy">
-      Receive USDC directly to your wallet on Polygon with a transparent 1% platform fee
-      and a verifiable on-chain record. Use the Transfer Portal below to prepare, review,
-      and verify the transfer before sending.
-    </p>
-  </section>
-  <!-- Transfer anchor -->
   <div class="transfer-anchor" id="transfer" aria-hidden="true"></div>
 
-  <!-- Portal zone — perimeter wrapper that provides four-corner tick markers -->
   <div class="portal-zone">
 
-  <!-- Transfer Portal — default collapsed instrument -->
   <section class="modules transfer-portal" id="modules" aria-label="Transfer Portal" data-transaction-window hidden>
-    <!-- Portal header — always visible in both expanded and collapsed states -->
     <div class="portal-header">
       <span class="portal-header-title">Transfer Portal</span>
       <div class="portal-header-controls">
@@ -343,7 +158,7 @@
     </div>
     <p class="portal-header-sub">TRANSFER DETAILS &middot; NETWORK STATE &middot; RECIPIENT VERIFICATION</p>
 
-    <!-- Coin Card intake banner — shown when portal opened via Coin Card handoff -->
+    <!-- Coin Card intake banner — shown when opened via Coin Card handoff -->
     <div class="cc-intake" id="ccIntake" hidden aria-live="polite" aria-label="Coin Card handoff status">
       <div class="cc-intake-inner">
         <span class="cc-intake-mark" aria-hidden="true">¢</span>
@@ -432,9 +247,7 @@
           <input type="checkbox" id="txConfirmAck">
           <span>I confirm the recipient, amount, fee, and total debit. Transfers confirmed on-chain cannot be reversed.</span>
         </label>
-        <button class="tx-btn" id="txBtn" onclick="IX.handleTxAction()">
-          Review Transfer
-        </button>
+        <button class="tx-btn" id="txBtn" onclick="IX.handleTxAction()">Review Transfer</button>
         <button class="tx-btn tx-btn--cancel" id="txCancelReview" type="button" aria-label="Return to editing transfer details" hidden>
           Edit Details
         </button>
@@ -531,7 +344,6 @@
     <!-- Right column: 02 Network + 03 Verification -->
     <div class="mod-col">
 
-    <!-- 02 Network -->
     <div class="mod">
       <span class="mod-tag">02 — Network</span>
       <p class="mod-title">Gas &amp; Chain Data</p>
@@ -597,7 +409,6 @@
       </div>
     </div>
 
-    <!-- 03 Verification -->
     <div class="mod" id="verificationMod">
       <span class="mod-tag">03 — Verification</span>
       <p class="mod-title">Coin Card Verification</p>
@@ -642,7 +453,7 @@
 
     </div><!-- /.mod-col -->
 
-    <!-- Transaction Companion Tray — owned by the Transfer Portal -->
+    <!-- Transaction Companion Tray -->
     <div id="companion" class="companion" role="complementary" aria-label="Transaction status">
       <div class="companion-bar" id="companionBar" role="button" tabindex="0"
            aria-expanded="false" aria-controls="companionDetail"
@@ -677,7 +488,7 @@
       </div>
     </div>
 
-    <!-- TELEMETRY — owned by the Transfer Portal -->
+    <!-- Telemetry -->
     <section class="telemetry" id="telemetry" aria-label="System telemetry">
       <div class="telemetry-bar" id="telemetryBar"
            role="button" tabindex="0"
@@ -690,22 +501,18 @@
       </div>
       <div class="telemetry-panel" id="telemetryPanel" hidden aria-hidden="true">
         <div class="telemetry-body">
-
           <div class="telemetry-section" id="telemetrySectionStatus">
             <div class="telemetry-section-label">Status</div>
             <div class="telemetry-rows" id="telemetryStatusRows"></div>
           </div>
-
           <div class="telemetry-section" id="telemetrySectionDetails">
             <div class="telemetry-section-label">Details</div>
             <div class="telemetry-rows" id="telemetryDetailsRows"></div>
           </div>
-
           <div class="telemetry-section" id="telemetrySectionGuidance">
             <div class="telemetry-section-label">Guidance</div>
             <div class="telemetry-rows" id="telemetryGuidanceRows"></div>
           </div>
-
         </div>
       </div>
     </section>
@@ -714,274 +521,16 @@
 
   </div><!-- /portal-zone -->
 
-  <!-- HOW IT WORKS -->
-  <section class="how-it-works" id="howItWorks" aria-labelledby="howItWorksTitle">
-    <div class="section-kicker reveal-copy" id="howItWorksTitle">How it works</div>
-    <div class="flow-grid">
-      <details class="flow-step reveal-copy">
-        <summary>
-          <span class="flow-num">01 — Connect</span>
-          <p>Your wallet, your keys. No account required.</p>
-          <p class="flow-note">
-            Need a wallet? Start with the
-            <a href="/faq.html#wallet-usdc">wallet setup FAQ</a>.
-          </p>
-          <span class="flow-toggle" aria-hidden="true"></span>
-        </summary>
-        <div class="flow-more">
-          <div class="flow-more-inner">
-            ImplicitEx connects through your browser wallet. The platform does not
-            ask for an email account, password, seed phrase, or private key.
-          </div>
-        </div>
-      </details>
-      <details class="flow-step reveal-copy">
-        <summary>
-          <span class="flow-num">02 — Send</span>
-          <p>Enter a recipient address and amount. The 1% platform fee is added on top — the recipient receives the full amount you enter.</p>
-          <span class="flow-toggle" aria-hidden="true"></span>
-        </summary>
-        <div class="flow-more">
-          <div class="flow-more-inner">
-            The transfer preview shows the recipient, amount, platform fee, and total
-            debit before any wallet action. You pay the amount plus the fee. The
-            recipient receives the full amount.
-          </div>
-        </div>
-      </details>
-      <details class="flow-step reveal-copy">
-        <summary>
-          <span class="flow-num">03 — Confirm</span>
-          <p>Two wallet confirmations: one to authorize, one to send. Authorization alone does not move funds.</p>
-          <span class="flow-toggle" aria-hidden="true"></span>
-        </summary>
-        <div class="flow-more">
-          <div class="flow-more-inner">
-            The first wallet prompt authorizes the ImplicitEx contract to transfer
-            the exact USDC amount. The second sends it. ImplicitEx records the
-            transfer in your receipt history and provides links to verify the
-            transaction on Polygon.
-          </div>
-        </div>
-      </details>
-    </div>
-  </section>
-
-  <script>
-  (function () {
-    'use strict';
-    document.querySelectorAll('.flow-step').forEach(function (det) {
-      var summary = det.querySelector('summary');
-      var more    = det.querySelector('.flow-more');
-      var inner   = det.querySelector('.flow-more-inner');
-      if (!summary || !more || !inner) return;
-
-      summary.addEventListener('click', function (e) {
-        if (e.target.closest('a')) return;
-        e.preventDefault();
-
-        if (det.open) {
-          /* ── Closing ── */
-          more.style.height     = more.scrollHeight + 'px';
-          more.style.overflow   = 'hidden';
-          inner.style.opacity   = '0';
-          inner.style.transition = 'opacity 0.12s ease';
-          requestAnimationFrame(function () {
-            more.style.transition = 'height 0.28s ease';
-            more.style.height     = '0';
-          });
-          function onClose(ev) {
-            if (ev.propertyName !== 'height') return;
-            det.removeAttribute('open');
-            more.style.cssText  = '';
-            inner.style.cssText = '';
-            more.removeEventListener('transitionend', onClose);
-          }
-          more.addEventListener('transitionend', onClose);
-
-        } else {
-          /* ── Opening ── */
-          det.setAttribute('open', '');
-          more.style.height   = '0';
-          more.style.overflow = 'hidden';
-          inner.style.opacity = '0';
-          var target = more.scrollHeight;
-          requestAnimationFrame(function () {
-            more.style.transition = 'height 0.3s ease';
-            more.style.height     = target + 'px';
-            setTimeout(function () {
-              inner.style.transition = 'opacity 0.22s ease';
-              inner.style.opacity    = '1';
-            }, 80);
-          });
-          function onOpen(ev) {
-            if (ev.propertyName !== 'height') return;
-            more.style.cssText  = '';
-            inner.style.cssText = '';
-            more.removeEventListener('transitionend', onOpen);
-          }
-          more.addEventListener('transitionend', onOpen);
-        }
-      });
-    });
-  }());
-  </script>
-
-
   </main>
 
-  <!-- SUPPORT -->
-  <section class="support-preview" aria-labelledby="supportTitle">
-    <div class="section-kicker" id="supportTitle">Support</div>
-    <div class="support-grid">
-      <a class="support-card" href="/start.html">
-        <span class="support-card-label">Start</span>
-        <p class="support-card-desc">New to crypto wallets? Covers everything you need before your first transfer — wallet setup, USDC on Polygon, and step-by-step instructions.</p>
-        <span class="support-card-arrow" aria-hidden="true">Read guide →</span>
-      </a>
-      <a class="support-card" href="/faq.html">
-        <span class="support-card-label">FAQ</span>
-        <p class="support-card-desc">Common questions about transfers, fees, wallet requirements, and how ImplicitEx handles transactions on-chain.</p>
-        <span class="support-card-arrow" aria-hidden="true">View questions →</span>
-      </a>
-      <a class="support-card" href="/learn.html">
-        <span class="support-card-label">Learn</span>
-        <p class="support-card-desc">Guides and definitions for first-time crypto users. Covers wallets, USDC, gas fees, and how on-chain transactions work.</p>
-        <span class="support-card-arrow" aria-hidden="true">Explore topics →</span>
-      </a>
-    </div>
-  </section>
-
-  <!-- NEWS -->
-  <section class="news-preview" id="news" aria-labelledby="newsTitle">
-    <div class="section-kicker" id="newsTitle">News</div>
-    <div class="news-grid" id="newsGrid">
-      <!-- Populated from js/news-data.js -->
-    </div>
-    <div class="news-preview-foot">
-      <a class="news-view-all" href="/news.html">All articles →</a>
-    </div>
-  </section>
-
-  <!-- AUDIENCE RAIL -->
-  <section class="audience-rail" aria-labelledby="audience-rail-title">
-    <div class="audience-rail__header">
-      <div class="hero-slide-brand">
-        <img class="hero-slide-lettermark" src="/components/images/lettermark-white.svg" alt="ImplicitEx">
-        <img class="hero-slide-wordmark" src="/components/images/wordmark-white.svg" alt="" aria-hidden="true">
-      </div>
-      <div class="section-kicker" id="audience-rail-title">For people and teams who need a cleaner way to move value.</div>
-    </div>
-
-    <div class="audience-rail__viewport" aria-label="Audience examples">
-      <div class="audience-rail__track">
-        <span>Freelancers</span>
-        <span>Creators</span>
-        <span>Contractors</span>
-        <span>Remote teams</span>
-        <span>Communities</span>
-        <span>Families</span>
-        <span>Small businesses</span>
-        <span>Educators</span>
-        <span>Donation pages</span>
-        <span>Independent sellers</span>
-        <span>Invoice clients</span>
-        <span>International collaborators</span>
-        <!-- duplicate for seamless loop -->
-        <span aria-hidden="true">Freelancers</span>
-        <span aria-hidden="true">Creators</span>
-        <span aria-hidden="true">Contractors</span>
-        <span aria-hidden="true">Remote teams</span>
-        <span aria-hidden="true">Communities</span>
-        <span aria-hidden="true">Families</span>
-        <span aria-hidden="true">Small businesses</span>
-        <span aria-hidden="true">Educators</span>
-        <span aria-hidden="true">Donation pages</span>
-        <span aria-hidden="true">Independent sellers</span>
-        <span aria-hidden="true">Invoice clients</span>
-        <span aria-hidden="true">International collaborators</span>
-      </div>
-    </div>
-  </section>
-
-  <!-- FOOTER -->
-  <footer>
-    <div class="f-inner">
-      <div class="f-brand">
-        <div class="f-brand-lockup">
-          <img src="/components/images/lettermark-white.svg" alt="" aria-hidden="true" class="f-brand-mark">
-          <img src="/components/images/wordmark-white.svg" alt="ImplicitEx" class="f-brand-word">
-        </div>
-        <span class="f-tagline">Wallet-to-wallet<br class="f-tagline-br"> USDC transfers.</span>
-      </div>
-      <nav class="f-links" aria-label="Footer links">
-        <div class="f-group">
-          <span class="f-group-label">Product</span>
-          <a href="/start.html">Start</a>
-          <a href="/faq.html">FAQ</a>
-          <a href="/learn.html">Learn</a>
-          <a href="/verify.html">Verify</a>
-          <a href="/log.html">Devlog</a>
-        </div>
-        <div class="f-group">
-          <span class="f-group-label">Legal</span>
-          <a href="/terms.html">Terms</a>
-          <a href="/privacy.html">Privacy</a>
-          <a href="/legal.html">Legal</a>
-        </div>
-        <div class="f-group">
-          <span class="f-group-label">Support</span>
-          <a href="/contact.html">Contact</a>
-          <a href="/jurisdictions.html">Access</a>
-        </div>
-        <div class="f-group">
-          <span class="f-group-label">Company</span>
-          <a href="/about.html">About</a>
-          <a href="/media.html">Media</a>
-          <a href="/brand.html">Brand</a>
-          <a href="/news.html">News</a>
-        </div>
-        <div class="f-group">
-          <span class="f-group-label">Social</span>
-          <a href="https://x.com/implicitex" target="_blank" rel="noopener">X</a>
-          <a href="https://www.linkedin.com/in/implicitex/" target="_blank" rel="noopener">LinkedIn</a>
-          <a href="https://github.com/implicitexlabs" target="_blank" rel="noopener">GitHub</a>
-        </div>
-      </nav>
-      <div class="f-bottom">
-        <span class="f-net is-live" id="networkBadge">Polygon live</span>
-        <span class="f-copy">&#169; <a href="https://adenmediagroup.com" target="_blank" rel="noopener noreferrer">Aden Media Group, LLC</a></span>
-      </div>
-    </div>
-  </footer>
-
+  <!-- Scripts — same as index.html minus canvas.js, feeds.js, news-data.js -->
   <script
     src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"
     integrity="sha384-6Zl0Pc8zjSz8KvmNeXRvUQgY4ryFb+BwDvKCmLYcBME0joAaru491tQgi9B7zsMM"
     crossorigin="anonymous"
   ></script>
-  <script src="js/news-data.js"></script>
-  <script>
-  (function () {
-    var grid = document.getElementById('newsGrid');
-    if (!grid || !window.IX_NEWS || !IX_NEWS.length) return;
-    var items = IX_NEWS.slice(-3).reverse(); /* newest first */
-    grid.innerHTML = items.map(function (a) {
-      return '<div class="news-card">' +
-        '<span class="news-card-meta">' +
-          '<time datetime="' + a.dateIso + '">' + a.date + '</time>' +
-          ' &nbsp;·&nbsp; ' + (a.category === 'Platform' ? 'implicitex.com' : a.category) +
-        '</span>' +
-        '<p class="news-card-title">' + a.title + '</p>' +
-        '<p class="news-card-lede">' + a.lede + '</p>' +
-        '<a class="news-card-more" href="/news.html#' + a.id + '">Continue reading \u2192</a>' +
-        '</div>';
-    }).join('');
-  }());
-  </script>
   <script src="config/chains.js"></script>
   <script src="js/walletconnect-provider.js"></script>
-  <script src="js/canvas.js"></script>
   <script src="js/transfer-status.js"></script>
   <script src="js/error-classifier.js"></script>
   <script src="js/receipt-schema.js"></script>
@@ -992,12 +541,21 @@
   <script src="js/consent.js"></script>
   <script src="js/wallet.js"></script>
   <script src="js/coincard.js"></script>
-  <script src="js/feeds.js"></script>
   <script src="js/app.js"></script>
   <script src="js/mobile-menu.js"></script>
   <script src="components/companion/companion.js"></script>
   <script src="js/telemetry.js"></script>
   <script src="js/rehydrate.js"></script>
   <script src="js/coincard-handoff.js"></script>
+
+  <!-- Auto-open: portal-index.html serves the portal as the primary surface -->
+  <script>
+  (function () {
+    if (window.IX && typeof IX.openTransferPortal === 'function') {
+      IX.openTransferPortal();
+    }
+  }());
+  </script>
+
 </body>
 </html>

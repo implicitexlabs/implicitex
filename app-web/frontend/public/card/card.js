@@ -271,23 +271,30 @@
   }
 
   /* ----------------------------------------------------------------
-   * Handoff — V1: navigate parent to ImplicitEx transfer portal
+   * Handoff — V1: route sender to the existing ImplicitEx Transfer Portal.
+   *
+   * URL contract:
+   *   cc     = registry key (canonical). Portal fetches the manifest to
+   *            resolve recipient — never trusts a to= param from the URL.
+   *   amount = sender intent (prefill hint only; sender reviews before sending).
+   *   src    = provenance marker so the portal knows this came from a Coin Card.
+   *
+   * The portal resolves all other fields (recipient, token, chain) from the
+   * registry manifest keyed by cc. Nothing critical travels in the URL.
    * ---------------------------------------------------------------- */
   function doHandoff() {
     if (!state.intent) return;
     var intent = state.intent;
-    var params = new URLSearchParams({
-      cc:    intent.cardId,
-      to:    intent.recipient,
-      chain: String(intent.chainId),
-      token: intent.token,
-    });
-    var url = 'https://implicitex.com/?' + params.toString();
+
+    var params = new URLSearchParams({ cc: intent.cardId, src: 'coincard' });
+    if (intent.amount != null) params.set('amount', String(intent.amount));
+
+    var url = 'https://implicitex.com/?' + params.toString() + '#transfer';
 
     transition('HANDOFF');
     emit('CC_HANDOFF', { intent: intent, url: url });
 
-    /* If parent does not intercept CC_HANDOFF, open transfer portal */
+    /* If parent does not intercept CC_HANDOFF, open the portal */
     setTimeout(function () {
       window.open(url, '_blank', 'noopener');
     }, 120);

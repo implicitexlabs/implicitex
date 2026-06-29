@@ -6031,3 +6031,66 @@ input[type="number"] {
   white-space: nowrap;
   border: 0;
 }
+
+/* ================================================================
+   COIN CARD INTAKE BANNER
+   Shown inside the Transfer Portal when opened via a Coin Card
+   handoff. Proves provenance. Does not drive execution.
+   ================================================================ */
+
+.cc-intake {
+  border-bottom: 1px solid var(--border);
+  padding: var(--sp-3) var(--sp-4);
+}
+
+.cc-intake[hidden] { display: none; }
+
+.cc-intake-inner {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+/* ¢ mark — visual anchor */
+.cc-intake-mark {
+  font-family: var(--font-mono);
+  font-size: 1.25rem;
+  font-weight: var(--weight-bold);
+  color: var(--accent);
+  flex-shrink: 0;
+  line-height: 1;
+  user-select: none;
+}
+
+.cc-intake-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+/* Card ID + label line */
+.cc-intake-label {
+  font-family: var(--font-ui);
+  font-size: var(--size-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--white);
+  margin: 0;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Registry verification state badge */
+.cc-intake-status {
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.cc-intake-status[data-verify-state="pending"]  { color: var(--dim); }
+.cc-intake-status[data-verify-state="verified"] { color: var(--accent); }
+.cc-intake-status[data-verify-state="warn"]     { color: var(--dim); }
+.cc-intake-status[data-verify-state="mismatch"] { color: var(--warn); }
