@@ -2183,6 +2183,20 @@ body.portal-active #nav {
   color: var(--dim);
 }
 
+.gas-chart {
+  width: 100%;
+  height: 48px;
+  margin-bottom: var(--sp-2);
+  color: var(--dim);
+  overflow: hidden;
+}
+
+.gas-chart svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
 .data-k {
   font-family: var(--font-ui);   /* row label */
   font-size: var(--size-sm);

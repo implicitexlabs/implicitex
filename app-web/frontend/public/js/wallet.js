@@ -480,6 +480,7 @@
     gasHigh:      document.getElementById('gasHigh'),
     gasTrend:     document.getElementById('gasTrend'),
     gasSamples:   document.getElementById('gasSamples'),
+    gasChart:     document.getElementById('gasChart'),
     walletChoiceOverlay:      document.getElementById('walletChoiceOverlay'),
     walletChoiceClose:        document.getElementById('walletChoiceClose'),
     walletChoiceBackdrop:     document.getElementById('walletChoiceBackdrop'),
@@ -4536,7 +4537,7 @@
   // Gas sample accumulator — session-local only, no persistence.
   // Feeds the expandable Gas price detail row.
   // ----------------------------------------------------------------
-  const GAS_SAMPLE_MAX = 20;
+  const GAS_SAMPLE_MAX = 240; // 2 hours at 30s polling
   const gasSampleBuffer = []; // { standard: number, ts: number }
 
   function pushGasSample(standard) {
@@ -4567,6 +4568,46 @@
     if (els.gasHigh)    els.gasHigh.textContent    = formatGwei(high) + ' Gwei';
     if (els.gasTrend)   els.gasTrend.textContent   = calcGasTrend();
     if (els.gasSamples) els.gasSamples.textContent = gasSampleBuffer.length + ' / ' + GAS_SAMPLE_MAX;
+  }
+
+  function renderGasChart() {
+    if (!els.gasChart || gasSampleBuffer.length < 2) return;
+
+    // Bucket into up to 60 display bars regardless of sample count
+    const N_BARS = 60;
+    const samples = gasSampleBuffer;
+    const count = Math.min(N_BARS, samples.length);
+    const buckets = [];
+    for (let i = 0; i < count; i++) {
+      const start = Math.floor(i * samples.length / count);
+      const end   = Math.floor((i + 1) * samples.length / count);
+      const slice = samples.slice(start, end);
+      buckets.push(slice.reduce((a, s) => a + s.standard, 0) / slice.length);
+    }
+
+    const minV = Math.min(...buckets);
+    const maxV = Math.max(...buckets);
+    // Keep 10% padding above; floor the range so flat data still renders as bars
+    const pad   = Math.max((maxV - minV) * 0.1, 2);
+    const lo    = Math.max(0, minV - pad);
+    const hi    = maxV + pad;
+    const range = hi - lo;
+
+    // SVG: 4px per bar slot (3px bar + 1px gap), 48px tall
+    const BAR_W = 3, BAR_GAP = 1, H = 48;
+    const svgW  = count * (BAR_W + BAR_GAP);
+
+    const bars = buckets.map((val, i) => {
+      const norm  = (val - lo) / range;
+      const barH  = Math.max(2, Math.round(norm * (H - 4)) + 4);
+      const x     = i * (BAR_W + BAR_GAP);
+      const y     = H - barH;
+      return `<rect x="${x}" y="${y}" width="${BAR_W}" height="${barH}" fill="currentColor"/>`;
+    }).join('');
+
+    els.gasChart.innerHTML =
+      `<svg viewBox="0 0 ${svgW} ${H}" preserveAspectRatio="none" ` +
+      `xmlns="http://www.w3.org/2000/svg" aria-hidden="true">${bars}</svg>`;
   }
 
   function pollNetworkData() {
@@ -4610,6 +4651,7 @@
 
         pushGasSample(tiers.standard);
         renderGasDetail();
+        renderGasChart();
       } catch (err) {
         renderHeroGas({ standard: NaN, fast: NaN, rapid: NaN });
         if (els.gweiDisplay)        els.gweiDisplay.textContent        = 'Unavailable';
