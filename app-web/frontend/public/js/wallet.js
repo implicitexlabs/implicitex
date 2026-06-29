@@ -485,6 +485,7 @@
     gasAxisMid:   document.getElementById('gasAxisMid'),
     gasAxisMin:   document.getElementById('gasAxisMin'),
     gasAxisStart: document.getElementById('gasAxisStart'),
+    gasAxisNow:   document.getElementById('gasAxisNow'),
     walletChoiceOverlay:      document.getElementById('walletChoiceOverlay'),
     walletChoiceClose:        document.getElementById('walletChoiceClose'),
     walletChoiceBackdrop:     document.getElementById('walletChoiceBackdrop'),
@@ -4583,9 +4584,10 @@
     const hasData = visible.length >= 2;
 
     // Always update Y-axis labels — frame stays populated in all states
-    const scaleMax = hasData ? Math.max(...visible.map(s => s.v)) : 0;
-    if (els.gasAxisMax) els.gasAxisMax.textContent = hasData ? formatGwei(scaleMax)         : '—';
-    if (els.gasAxisMid) els.gasAxisMid.textContent = hasData ? formatGwei(scaleMax / 2)     : '—';
+    const maxVisible = hasData ? Math.max(...visible.map(s => s.v), 0) : 0;
+    const scaleMax   = maxVisible > 0 ? maxVisible : 1; // defensive denominator
+    if (els.gasAxisMax) els.gasAxisMax.textContent = hasData ? formatGwei(maxVisible)        : '—';
+    if (els.gasAxisMid) els.gasAxisMid.textContent = hasData ? formatGwei(maxVisible / 2)    : '—';
     // gasAxisMin is always '0' — set in HTML
 
     els.gasChart.classList.toggle('is-pending', !hasData);
