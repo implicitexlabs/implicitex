@@ -602,11 +602,11 @@
   <script src="js/rehydrate.js"></script>
   <script src="js/coincard-handoff.js"></script>
 
-  <!-- Auto-open: portal-index.html serves the portal as the primary surface -->
+  <!-- Auto-expand: portal-index.html is the primary surface — start expanded, not minimized -->
   <script>
   (function () {
-    if (window.IX && typeof IX.openTransferPortal === 'function') {
-      IX.openTransferPortal();
+    if (window.IX && typeof IX.focusTransferPortal === 'function') {
+      IX.focusTransferPortal();
     }
   }());
   </script>
