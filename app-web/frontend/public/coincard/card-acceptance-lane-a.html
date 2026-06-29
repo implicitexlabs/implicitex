@@ -940,11 +940,13 @@
     }
 
     .cc-right-wordmark {
-      display: block;
-      width: 100%;   /* constrained to container — no horizontal overflow */
-      height: auto;  /* natural aspect ratio at constrained width — no max-height cap */
-      filter: brightness(0) invert(1);
-      opacity: 0.65; /* slightly more prominent than subordinate "Powered by" label */
+      font-family: 'Oxanium', sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.10em;
+      color: rgba(255, 255, 255, 0.65);
+      text-align: center;
+      white-space: nowrap;
     }
 
 
@@ -1231,10 +1233,7 @@
           <!-- RIGHT ATTRIBUTION — authority seal: lettermark + "Powered by IMPLICITEX", always visible -->
           <div class="cc-right-attribution" aria-hidden="true">
             <span class="cc-right-poweredby">Powered by</span>
-            <img class="cc-right-wordmark"
-                 src="/components/images/wordmark-white.svg"
-                 alt=""
-                 aria-hidden="true">
+            <span class="cc-right-wordmark">IMPLICITEX</span>
           </div>
 
         </div><!-- /.cc-wrapper -->
