@@ -2519,7 +2519,7 @@
     document.body.classList.add('portal-active');
 
     els.modules.removeAttribute('hidden');
-    if (shouldScroll) {
+    if (shouldScroll && !document.body.matches('[data-portal-shell="direct"]')) {
       setTimeout(() => {
         els.modules.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 280);
@@ -2547,10 +2547,12 @@
       // Portal is collapsed — expand it
       restorePortal();
     }
-    // In all cases, scroll portal into view
-    setTimeout(() => {
-      els.modules.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 60);
+    // On direct portal shell the portal IS the page — no scroll needed
+    if (!document.body.matches('[data-portal-shell="direct"]')) {
+      setTimeout(() => {
+        els.modules.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 60);
+    }
   }
 
   function hideTransferModules() {
