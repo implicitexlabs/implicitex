@@ -116,12 +116,29 @@ test:analytics           PASS  24/24
 test:consent             PASS  15/15
 ```
 
+### Remote checks — staging (implicitex-236f2.web.app)
+
+Deployed to staging. All curl checks pass:
+
+| Check | Result |
+|-------|--------|
+| `coincard-handoff.js` served (HTTP 200) | PASS |
+| Registry manifest `cc_demo_implicitex.json` valid | PASS — `active`, recipient `0xa7cE4232...` |
+| `index.html` loads `coincard-handoff.js` | PASS — 1 reference |
+| `#ccIntake` banner in `index.html` DOM | PASS — `hidden` attribute set by default |
+| `portal-index.html` served (HTTP 200) | PASS |
+| `card.js` `doHandoff()` URL targets `implicitex.com/?...#transfer` | PASS |
+| `coincard-handoff.js` trust rule live | PASS — CARD_ID_RE guard confirmed |
+| `portal-index.html` has no hero/marketing markup | PASS — comment only |
+| `portal-index.html` auto-open script present | PASS — 2 lines (guard + call) |
+| `index.html` does NOT have auto-open script | PASS — 0 references |
+
 ---
 
 ### Current limitations
 
-- `portal.implicitex.com` not yet deployed. `portal-index.html` and `firebase.json` multi-site config are ready; Firebase console site creation (`implicitex-portal`) required before deploy.
-- Browser smoke (Tests 1, 2, 3, 5) pending — requires live deploy or local server.
+- `portal.implicitex.com` not yet deployed. `firebase.json` uses deploy targets; `implicitex-portal` site must be created in Firebase console before production portal deploy.
+- Browser smoke (Tests 1, 2, 3, 5) pending — staging URL available at `https://implicitex-236f2.web.app/?cc=cc_demo_implicitex&amount=5&src=coincard#transfer`.
 - Wallet smoke (MetaMask desktop, MetaMask mobile, Coinbase Wallet) not yet run for the Coin Card intake path.
 
 ---

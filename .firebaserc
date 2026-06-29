@@ -2,5 +2,19 @@
   "projects": {
     "default": "implicitex-236f2",
     "production": "implicitex"
+  },
+  "targets": {
+    "implicitex-236f2": {
+      "hosting": {
+        "main":   ["implicitex-236f2"],
+        "portal": ["implicitex-236f2"]
+      }
+    },
+    "implicitex": {
+      "hosting": {
+        "main":   ["implicitex"],
+        "portal": ["implicitex-portal"]
+      }
+    }
   }
 }
