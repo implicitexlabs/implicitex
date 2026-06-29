@@ -19,22 +19,34 @@
   <style>
     /* ---- Portal shell overrides (portal-index.html only) ---- */
 
-    /* Brand bar — minimal identity above the portal, no site nav */
-    .portal-brand-bar {
-      padding: 2rem 2rem 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .portal-brand-link {
+    /* Brand integrated into portal header — left side of the header bar */
+    [data-portal-shell="direct"] .portal-header-brand {
       display: inline-flex;
       align-items: center;
-      gap: 18px;
+      gap: 14px;
       text-decoration: none;
+      color: var(--white);
+      flex-shrink: 0;
     }
-    .portal-brand-link .wordmark {
-      height: 18px;
+    [data-portal-shell="direct"] .portal-header-brand .wordmark {
+      height: 16px;
       width: auto;
+    }
+    /* Show correct wordmark per theme */
+    .wordmark--light { display: none; }
+    [data-theme="light"] .wordmark--dark { display: none; }
+    [data-theme="light"] .wordmark--light { display: block; }
+
+    /* Right group: title + controls — pushed to far right as a unit */
+    [data-portal-shell="direct"] .portal-header-right {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      margin-left: auto;
+    }
+    /* Reset controls auto-margin — the right group carries the push */
+    [data-portal-shell="direct"] .portal-header-controls {
+      margin-left: 0;
     }
 
     /* Inline wallet row inside 01 Transfer module */
@@ -101,16 +113,6 @@
 </head>
 <body data-portal-shell="direct">
 
-  <!-- PORTAL BRAND BAR — minimal identity strip, no site nav -->
-  <div class="portal-brand-bar">
-    <a href="https://implicitex.com" class="portal-brand-link" aria-label="ImplicitEx">
-      <svg class="brandmark" width="25" height="25" viewBox="0 0 25 25" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
-        <path d="M18.4,21.48L2.64,5.73l.43-.43,15.76,15.76s1.3,1.3,2.79-.19.21-2.77.21-2.77L6.05,2.32l.43-.43,4.07,4.07,1.38,1.38,1.28-1.28,4.28-4.28.43.43-5.56,5.56,2.98,2.98,5.56-5.56.43.43-5.56,5.56,1.28,1.28,5.56-5.56s1.28-1.28-.21-2.77-2.79-.19-2.79-.19l-4.26,4.26-.43-.43,4.26-4.26s1.3-1.3-.19-2.79-2.77-.21-2.77-.21l-4.28,4.28L7.75.62s-1.28-1.28-2.77.21-.19,2.79-.19,2.79l15.76,15.76-.43.43L4.37,4.05s-1.3-1.3-2.79.19-.11,2.87-.11,2.87l15.68,15.68-.43.43-5.56-5.56-5.54,5.54-.43-.43,5.54-5.54-2.98-2.98-5.54,5.54-.43-.43,5.54-5.54-1.28-1.28L.51,18.08s-1.28,1.28.21,2.77,2.79.19,2.79.19l4.23-4.23.43.43-4.23,4.23s-1.3,1.3.19,2.79,2.77.21,2.77.21l4.26-4.26,4.28,4.28s1.28,1.28,2.77-.21.19-2.79.19-2.79Z" fill="#f2f2f0"/>
-      </svg>
-      <img class="wordmark" src="/components/images/wordmark-white.svg" alt="" aria-hidden="true">
-    </a>
-  </div>
-
   <!-- WALLET CHOICE OVERLAY -->
   <div class="wallet-choice" id="walletChoiceOverlay" role="dialog" aria-modal="true" aria-label="Choose wallet" hidden>
     <div class="wallet-choice-backdrop" id="walletChoiceBackdrop" aria-hidden="true"></div>
@@ -142,6 +144,16 @@
 
   <section class="modules transfer-portal" id="modules" aria-label="Transfer Portal" data-transaction-window>
     <div class="portal-header">
+      <!-- Left: brand identity — trust anchor at first glance -->
+      <a href="https://implicitex.com" class="portal-header-brand" aria-label="ImplicitEx">
+        <svg class="brandmark" width="22" height="22" viewBox="0 0 25 25" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+          <path d="M18.4,21.48L2.64,5.73l.43-.43,15.76,15.76s1.3,1.3,2.79-.19.21-2.77.21-2.77L6.05,2.32l.43-.43,4.07,4.07,1.38,1.38,1.28-1.28,4.28-4.28.43.43-5.56,5.56,2.98,2.98,5.56-5.56.43.43-5.56,5.56,1.28,1.28,5.56-5.56s1.28-1.28-.21-2.77-2.79-.19-2.79-.19l-4.26,4.26-.43-.43,4.26-4.26s1.3-1.3-.19-2.79-2.77-.21-2.77-.21l-4.28,4.28L7.75.62s-1.28-1.28-2.77.21-.19,2.79-.19,2.79l15.76,15.76-.43.43L4.37,4.05s-1.3-1.3-2.79.19-.11,2.87-.11,2.87l15.68,15.68-.43.43-5.56-5.56-5.54,5.54-.43-.43,5.54-5.54-2.98-2.98-5.54,5.54-.43-.43,5.54-5.54-1.28-1.28L.51,18.08s-1.28,1.28.21,2.77,2.79.19,2.79.19l4.23-4.23.43.43-4.23,4.23s-1.3,1.3.19,2.79,2.77.21,2.77.21l4.26-4.26,4.28,4.28s1.28,1.28,2.77-.21.19-2.79.19-2.79Z" fill="currentColor"/>
+        </svg>
+        <img class="wordmark wordmark--dark" src="/components/images/wordmark-white.svg" alt="" aria-hidden="true">
+        <img class="wordmark wordmark--light" src="/components/images/wordmark-black.svg" alt="" aria-hidden="true">
+      </a>
+      <!-- Right: portal identity + controls (future functions dropdown slots here) -->
+      <div class="portal-header-right">
       <span class="portal-header-title">Transfer Portal</span>
       <div class="portal-header-controls">
         <!-- Clock toggle — time-based theme; viewBox keeps 14×14 for app.js hand rotation (rotate pivot at 7,7) -->
@@ -185,6 +197,7 @@
           </svg>
         </button>
       </div>
+      </div><!-- /.portal-header-right -->
     </div>
     <p class="portal-header-sub">TRANSFER DETAILS &middot; NETWORK STATE &middot; RECIPIENT VERIFICATION</p>
 
