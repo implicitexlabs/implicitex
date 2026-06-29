@@ -502,14 +502,17 @@
     }
 
     /* Badge COIN CARD logo — sits below "USDC accepted here" in the badge copy block.
-       Links to coincard.implicitex.com. Hover swaps logo for URL text.
+       Links to coincard.implicitex.com. Hover fades logo out, URL text in.
+       CSS grid single-cell stacking: both children share one layout area.
+       Container sized by the larger element. No display swap — no reflow ever.
        stopPropagation in JS prevents click from also opening INSPECT. */
     .cc-badge-coincard {
-      display: inline-flex;
+      display: inline-grid;  /* single-cell grid stacks both children in same area */
       align-items: center;
       text-decoration: none;
       margin-top: 1px;
     }
+    .cc-badge-coincard > * { grid-area: 1 / 1; } /* logo and CTA occupy same cell */
 
     .cc-badge-coincard-logo {
       display: block;
@@ -517,15 +520,15 @@
       width: auto;
       filter: brightness(0) invert(1);
       opacity: 0.75;
-      transition: opacity 0.15s ease;
+      transition: opacity 150ms ease;
     }
-
     /* Larger in the main decal badge where there is space */
     .cc-badge--decal .cc-badge-coincard-logo { height: 20px; opacity: 0.82; }
 
     .cc-badge-coincard-cta {
-      display: none;
-      font-family: 'IBM Plex Mono', monospace; /* technical reference — informational, not promotional */
+      opacity: 0;  /* invisible by default — in flow, space reserved, no reflow */
+      transition: opacity 150ms ease;
+      font-family: 'IBM Plex Mono', monospace;
       font-size: 11px;
       font-weight: 500;
       letter-spacing: 0.04em;
@@ -533,12 +536,11 @@
       white-space: nowrap;
     }
 
-    /* Attribution: right zone (.cc-right-attribution) always visible; left badge shows "Powered by" collapsed only */
-
-    .cc-badge-coincard:hover .cc-badge-coincard-logo    { display: none; }
-    .cc-badge-coincard:hover .cc-badge-coincard-cta     { display: block; }
-    .cc-badge-coincard:focus-visible .cc-badge-coincard-logo { display: none; }
-    .cc-badge-coincard:focus-visible .cc-badge-coincard-cta  { display: block; }
+    /* Attribution: right zone always visible; left badge "Powered by" collapsed only */
+    .cc-badge-coincard:hover       .cc-badge-coincard-logo { opacity: 0; }
+    .cc-badge-coincard:focus-visible .cc-badge-coincard-logo { opacity: 0; }
+    .cc-badge-coincard:hover       .cc-badge-coincard-cta { opacity: 1; }
+    .cc-badge-coincard:focus-visible .cc-badge-coincard-cta { opacity: 1; }
 
     /* Proceed: visible only when manifest VERIFIED, hidden otherwise */
     .cc-proceed-btn {
@@ -880,20 +882,20 @@
       right: var(--cc-mark-inset);  /* fully within card bounds — not cropped */
       top: var(--cc-mark-inset);
       transform: none;
-      width: 72px;
-      height: 72px;
+      width: 52px;   /* reduced from 72px — lettermark readable without dominating attribution */
+      height: 52px;
       overflow: hidden; /* contains ambient glow within lettermark bounds */
       z-index: 3;       /* above panel background and rows */
       pointer-events: none;
       flex-shrink: 0;
     }
-    .cc-mark-wrap--decal .cc-mark-img { width: 72px; height: 72px; opacity: 0.45; }
+    .cc-mark-wrap--decal .cc-mark-img { width: 52px; height: 52px; opacity: 0.45; }
 
     /* "Powered by IMPLICITEX" — right zone stacked attribution, always visible */
     .cc-right-attribution {
       position: absolute;
       right: var(--cc-mark-inset);
-      top: calc(var(--cc-mark-inset) + 72px + 6px); /* flush below lettermark */
+      top: calc(var(--cc-mark-inset) + 52px + 6px); /* flush below lettermark (52px) */
       display: flex;
       flex-direction: column;
       align-items: center;  /* centered under lettermark */
@@ -1054,11 +1056,11 @@
               <a class="cc-badge-coincard"
                  href="https://coincard.implicitex.com"
                  target="_blank"
-                 rel="noopener noreferrer">
+                 rel="noopener noreferrer"
+                 aria-label="COIN CARD">
                 <img class="cc-badge-coincard-logo"
                      src="/components/images/coincard-logo.svg"
-                     alt=""
-                     aria-hidden="true">
+                     alt="">
                 <span class="cc-badge-coincard-cta" aria-hidden="true">coincard.implicitex.com</span>
               </a>
               <div class="cc-badge-poweredby">
