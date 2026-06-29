@@ -16,101 +16,76 @@
   <link rel="stylesheet" href="components/companion/companion.css">
   <link rel="stylesheet" href="components/telemetry/telemetry.css">
   <link rel="manifest" href="manifest.json">
+  <style>
+    /* ---- Portal shell overrides (portal-index.html only) ---- */
+
+    /* Brand bar — minimal identity above the portal, no site nav */
+    .portal-brand-bar {
+      padding: 2rem 2rem 0;
+      display: flex;
+      align-items: center;
+    }
+    .portal-brand-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 18px;
+      text-decoration: none;
+    }
+    .portal-brand-link .wordmark {
+      height: 18px;
+      width: auto;
+    }
+
+    /* Inline wallet row inside 01 Transfer module */
+    .portal-wallet-inline {
+      display: flex;
+      align-items: center;
+      margin-top: var(--sp-3);
+      position: relative;
+    }
+
+    /* CONNECT WALLET — matches portal control button family */
+    .portal-connect-inline {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(242, 242, 240, 0.75);
+      background: transparent;
+      border: 1px solid var(--border-2);
+      cursor: pointer;
+      padding: 0 9px;
+      height: 24px;
+      display: inline-flex;
+      align-items: center;
+      transition: color 0.12s, border-color 0.12s, background 0.12s;
+    }
+    .portal-connect-inline:hover {
+      color: var(--white);
+      border-color: var(--white);
+      background: var(--surface-2);
+    }
+    .portal-connect-inline[hidden] { display: none; }
+
+    /* Wallet menu panel — anchors to .portal-wallet-inline (position:relative) */
+    .portal-wallet-inline .wallet-menu-panel {
+      left: 0;
+      right: auto;
+      top: calc(100% + 4px);
+    }
+  </style>
 </head>
 <body>
 
-  <!-- NAV — same as index.html; wallet.js drives all state -->
-  <nav id="nav">
-    <a href="/" class="logo" aria-label="ImplicitEx home">
+  <!-- PORTAL BRAND BAR — minimal identity strip, no site nav -->
+  <div class="portal-brand-bar">
+    <a href="https://implicitex.com" class="portal-brand-link" aria-label="ImplicitEx">
       <svg class="brandmark" width="25" height="25" viewBox="0 0 25 25" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
         <path d="M18.4,21.48L2.64,5.73l.43-.43,15.76,15.76s1.3,1.3,2.79-.19.21-2.77.21-2.77L6.05,2.32l.43-.43,4.07,4.07,1.38,1.38,1.28-1.28,4.28-4.28.43.43-5.56,5.56,2.98,2.98,5.56-5.56.43.43-5.56,5.56,1.28,1.28,5.56-5.56s1.28-1.28-.21-2.77-2.79-.19-2.79-.19l-4.26,4.26-.43-.43,4.26-4.26s1.3-1.3-.19-2.79-2.77-.21-2.77-.21l-4.28,4.28L7.75.62s-1.28-1.28-2.77.21-.19,2.79-.19,2.79l15.76,15.76-.43.43L4.37,4.05s-1.3-1.3-2.79.19-.11,2.87-.11,2.87l15.68,15.68-.43.43-5.56-5.56-5.54,5.54-.43-.43,5.54-5.54-2.98-2.98-5.54,5.54-.43-.43,5.54-5.54-1.28-1.28L.51,18.08s-1.28,1.28.21,2.77,2.79.19,2.79.19l4.23-4.23.43.43-4.23,4.23s-1.3,1.3.19,2.79,2.77.21,2.77.21l4.26-4.26,4.28,4.28s1.28,1.28,2.77-.21.19-2.79.19-2.79Z" fill="#f2f2f0"/>
       </svg>
       <img class="wordmark" src="/components/images/wordmark-white.svg" alt="" aria-hidden="true">
     </a>
-    <div class="nav-right">
-      <button class="clock-toggle" id="clockToggle" type="button" aria-label="Set theme by time of day">
-        <svg class="clock-icon" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
-          <circle cx="7" cy="7" r="6" fill="none" stroke="currentColor" stroke-width="1.2"/>
-          <line id="clockHourHand" x1="7" y1="7" x2="7" y2="4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-          <line id="clockMinuteHand" x1="7" y1="7" x2="7" y2="2.5" stroke="currentColor" stroke-width="1" stroke-linecap="round"/>
-        </svg>
-      </button>
-      <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch to light theme" aria-pressed="false">
-        <svg class="theme-icon" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
-          <path d="M7 1 A6 6 0 0 0 7 13 Z" fill="var(--white)"/>
-          <path d="M7 1 A6 6 0 0 1 7 13 Z" fill="var(--bg)"/>
-          <circle cx="7" cy="7" r="6" fill="none" stroke="currentColor" stroke-width="1.2"/>
-        </svg>
-      </button>
-      <span class="nav-status">Polygon · Live</span>
-      <a class="send-usdc-link" href="#transfer" onclick="if (window.IX && IX.focusTransferPortal) { IX.focusTransferPortal(); return false; }">Transfer Portal</a>
-      <button class="connect-btn" id="connectBtn" onclick="IX.connect()">Connect Wallet</button>
-      <div class="wallet-menu" id="walletMenu" hidden>
-        <button class="wallet-menu-trigger" id="walletMenuTrigger" type="button" aria-expanded="false" aria-controls="walletMenuPanel" aria-label="Wallet account menu">
-          <span class="wallet-dot" aria-hidden="true"></span>
-          <span class="wallet-addr" id="walletAddr"></span>
-          <span class="wallet-chevron" aria-hidden="true"></span>
-        </button>
-        <div class="wallet-menu-panel" id="walletMenuPanel" hidden>
-          <p class="wallet-menu-title">Wallet account</p>
-          <p class="wallet-menu-address" id="walletFullAddress"></p>
-          <button class="wallet-menu-action" id="copyAddressBtn" type="button">Copy address</button>
-          <button class="wallet-menu-action" id="switchNetworkBtn" type="button" hidden>Switch to Polygon</button>
-          <button class="wallet-menu-action" id="switchAccountBtn" type="button">Switch account</button>
-          <button class="wallet-menu-action wallet-menu-action--danger" id="disconnectBtn" type="button">Disconnect</button>
-        </div>
-      </div>
-      <button class="hamburger-btn" id="hamburgerBtn" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
-        <svg width="18" height="14" viewBox="0 0 18 14" aria-hidden="true">
-          <rect y="0"  width="18" height="1.8" fill="currentColor"/>
-          <rect y="6"  width="18" height="1.8" fill="currentColor"/>
-          <rect y="12" width="18" height="1.8" fill="currentColor"/>
-        </svg>
-      </button>
-    </div>
-  </nav>
-
-  <!-- MOBILE MENU — same as index.html -->
-  <div class="mobile-menu" id="mobileMenu" role="dialog" aria-modal="true" aria-label="Site menu" hidden>
-    <div class="mobile-menu-inner">
-      <div class="mobile-menu-head">
-        <span class="mobile-menu-title">Menu</span>
-        <button class="mobile-menu-close" id="mobileMenuClose" type="button" aria-label="Close menu">
-          <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
-            <line x1="1" y1="1" x2="13" y2="13" stroke="currentColor" stroke-width="1.6"/>
-            <line x1="13" y1="1" x2="1" y2="13" stroke="currentColor" stroke-width="1.6"/>
-          </svg>
-        </button>
-      </div>
-      <section class="mobile-menu-section" aria-label="Wallet">
-        <p class="mobile-menu-label">Wallet</p>
-        <p class="mobile-menu-status" id="menuWalletStatus">No wallet connected.</p>
-        <p class="mobile-menu-sender" id="menuSenderDisplay" hidden></p>
-        <p class="mobile-menu-network" id="menuNetworkDisplay" hidden></p>
-        <div class="mobile-menu-actions">
-          <button class="mobile-menu-btn mobile-menu-btn--primary" id="menuConnectBtn" type="button">Connect Wallet</button>
-          <button class="mobile-menu-btn" id="menuSwitchBtn" type="button" hidden>Switch Account</button>
-          <button class="mobile-menu-btn mobile-menu-btn--danger" id="menuDisconnectBtn" type="button" hidden>Disconnect</button>
-        </div>
-      </section>
-      <section class="mobile-menu-section" aria-label="Transaction">
-        <p class="mobile-menu-label">Transaction</p>
-        <button class="mobile-menu-btn mobile-menu-btn--primary" id="menuOpenPortalBtn" type="button">Transfer Portal</button>
-        <p class="mobile-menu-portal-note">Open the USDC transfer interface.</p>
-      </section>
-      <section class="mobile-menu-section" aria-label="Navigation">
-        <p class="mobile-menu-label">Site</p>
-        <nav class="mobile-menu-links">
-          <a href="https://implicitex.com/">ImplicitEx.com</a>
-          <a href="/start.html">Start</a>
-          <a href="/faq.html">FAQ</a>
-          <a href="/verify.html">Verify</a>
-          <a href="/terms.html">Terms</a>
-          <a href="/privacy.html">Privacy</a>
-        </nav>
-      </section>
-    </div>
-    <div class="mobile-menu-backdrop" id="mobileMenuBackdrop" aria-hidden="true"></div>
   </div>
 
   <!-- WALLET CHOICE OVERLAY -->
@@ -146,6 +121,22 @@
     <div class="portal-header">
       <span class="portal-header-title">Transfer Portal</span>
       <div class="portal-header-controls">
+        <!-- Clock toggle — time-based theme; viewBox keeps 14×14 for app.js hand rotation (rotate pivot at 7,7) -->
+        <button class="portal-ctrl-btn" id="clockToggle" type="button" aria-label="Set theme by time of day">
+          <svg class="portal-ctrl-icon" width="12" height="12" viewBox="0 0 14 14" aria-hidden="true" focusable="false">
+            <circle cx="7" cy="7" r="6" fill="none" stroke="currentColor" stroke-width="1.5"/>
+            <line id="clockHourHand" x1="7" y1="7" x2="7" y2="4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            <line id="clockMinuteHand" x1="7" y1="7" x2="7" y2="2.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <!-- Theme toggle — manual light/dark -->
+        <button class="portal-ctrl-btn" id="themeToggle" type="button" aria-label="Switch to light theme" aria-pressed="false">
+          <svg class="portal-ctrl-icon" width="12" height="12" viewBox="0 0 14 14" aria-hidden="true" focusable="false">
+            <path d="M7 1 A6 6 0 0 0 7 13 Z" fill="currentColor"/>
+            <path d="M7 1 A6 6 0 0 1 7 13 Z" fill="transparent"/>
+            <circle cx="7" cy="7" r="6" fill="none" stroke="currentColor" stroke-width="1.5"/>
+          </svg>
+        </button>
         <button class="portal-ctrl-btn" id="layoutToggle" type="button" data-layout="columns" aria-label="Switch to stacked layout">
           <!-- columns icon — two 2px vertical bars; visible when layout = columns -->
           <svg class="portal-ctrl-icon portal-layout-icon portal-layout-icon--columns" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" focusable="false">
@@ -191,6 +182,25 @@
         <div class="fee-row" aria-live="polite">
           <span class="fee-label">Connected sender</span>
           <span class="fee-val" id="senderAddressDisplay">—</span>
+        </div>
+        <!-- Inline wallet connect — portal.implicitex.com self-contained experience -->
+        <div class="portal-wallet-inline">
+          <button class="portal-connect-inline" id="connectBtn" type="button" onclick="IX.connect()">CONNECT WALLET</button>
+          <div class="wallet-menu" id="walletMenu" hidden>
+            <button class="wallet-menu-trigger" id="walletMenuTrigger" type="button" aria-expanded="false" aria-controls="walletMenuPanel" aria-label="Wallet account menu">
+              <span class="wallet-dot" aria-hidden="true"></span>
+              <span class="wallet-addr" id="walletAddr"></span>
+              <span class="wallet-chevron" aria-hidden="true"></span>
+            </button>
+            <div class="wallet-menu-panel" id="walletMenuPanel" hidden>
+              <p class="wallet-menu-title">Wallet account</p>
+              <p class="wallet-menu-address" id="walletFullAddress"></p>
+              <button class="wallet-menu-action" id="copyAddressBtn" type="button">Copy address</button>
+              <button class="wallet-menu-action" id="switchNetworkBtn" type="button" hidden>Switch to Polygon</button>
+              <button class="wallet-menu-action" id="switchAccountBtn" type="button">Switch account</button>
+              <button class="wallet-menu-action wallet-menu-action--danger" id="disconnectBtn" type="button">Disconnect</button>
+            </div>
+          </div>
         </div>
         <input
           class="tx-field tx-field--primary"
