@@ -1978,9 +1978,17 @@
       els.confirmedTransferBlock.hidden = true;
       return;
     }
-    const confirmed = window.IX.receipts.listAll().find(
-      r => r.state === (IX_TRANSFER_STATES && IX_TRANSFER_STATES.CONFIRMED)
-    );
+    // Filter → sort newest-first → take first. listAll() is already newest-first
+    // in practice (archive uses unshift), but the explicit sort makes the intent
+    // durable against any future change to listAll() internals.
+    const confirmedState = IX_TRANSFER_STATES && IX_TRANSFER_STATES.CONFIRMED;
+    const confirmed = window.IX.receipts.listAll()
+      .filter(r => r.state === confirmedState)
+      .sort(function (a, b) {
+        const ta = new Date(a.resolvedAt || a.updatedAt || a.createdAt).getTime();
+        const tb = new Date(b.resolvedAt || b.updatedAt || b.createdAt).getTime();
+        return tb - ta;
+      })[0] || null;
     if (!confirmed) {
       els.confirmedTransferBlock.hidden = true;
       return;
