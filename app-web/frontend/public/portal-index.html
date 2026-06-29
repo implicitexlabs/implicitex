@@ -404,40 +404,40 @@
         <div class="tx-timeline" id="txTimeline" hidden></div>
       </div>
 
-      <div class="fee-explanation">
-        <p class="fee-explanation-label">Fee &amp; Routing</p>
+      <details class="fee-explanation">
+        <summary class="fee-explanation-label">Fee &amp; Routing</summary>
         <p class="fee-explanation-body">
           The recipient amount and total wallet debit are different. The total debit is
           recipient amount plus platform fee. Approval, when needed, must cover the full
           total debit. Approval alone does not send funds.
         </p>
-      </div>
+      </details>
 
-      <div class="fee-explanation">
-        <p class="fee-explanation-label">Preview Discipline</p>
+      <details class="fee-explanation">
+        <summary class="fee-explanation-label">Preview Discipline</summary>
         <p class="fee-explanation-body">
           Preview data is refreshed from the contract before any wallet prompt. Recipient,
           network, pause state, contract address, and USDC token checks remain separate
           execution gates.
         </p>
-      </div>
+      </details>
 
-      <div class="fee-explanation">
-        <p class="fee-explanation-label">Network Note</p>
+      <details class="fee-explanation">
+        <summary class="fee-explanation-label">Network Note</summary>
         <p class="fee-explanation-body">
           This transfer uses USDC on Polygon. Do not use this form to send Bitcoin,
           Ethereum mainnet USDC, bank USD, or unsupported assets. A valid-looking
           address does not prove the recipient controls it.
         </p>
-      </div>
+      </details>
 
-      <div class="fee-explanation">
-        <p class="fee-explanation-label">Direct Send Warning</p>
+      <details class="fee-explanation">
+        <summary class="fee-explanation-label">Direct Send Warning</summary>
         <p class="fee-explanation-body">
           Do not send USDC directly to the ImplicitEx contract address. Direct transfers
           may be unrecoverable. See <a href="/legal.html">Legal</a> for current notices.
         </p>
-      </div>
+      </details>
 
       <div class="receipt-history" aria-label="Recent transaction attempts">
         <p class="receipt-history-label">Receipts</p>

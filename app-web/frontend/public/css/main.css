@@ -1989,13 +1989,52 @@ body.portal-active #nav {
   padding-top: 12px;
 }
 
+/* Remove browser-default <summary> marker */
+.fee-explanation > summary { list-style: none; }
+.fee-explanation > summary::-webkit-details-marker { display: none; }
+.fee-explanation > summary::marker { display: none; }
+
 .fee-explanation-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
   font-family: var(--font-ui);
   font-size: var(--size-sm);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--dim);
-  margin-bottom: 6px;
+  margin-bottom: 0;
+  transition: color 0.12s;
+}
+
+/* Border-triangle arrow — same family as .data-toggle-icon and .companion-toggle */
+.fee-explanation-label::after {
+  content: '';
+  display: inline-block;
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 5px solid var(--dim);
+  flex-shrink: 0;
+  margin-left: 6px;
+  transition: transform 0.18s ease-out, border-top-color 0.12s;
+}
+
+.fee-explanation-label:hover,
+.fee-explanation-label:focus-visible {
+  color: var(--white);
+}
+
+.fee-explanation-label:hover::after,
+.fee-explanation-label:focus-visible::after {
+  border-top-color: var(--white);
+}
+
+.fee-explanation[open] .fee-explanation-label::after {
+  transform: rotate(180deg);
 }
 
 .fee-explanation-body {
@@ -2003,6 +2042,7 @@ body.portal-active #nav {
   font-size: var(--size-sm);
   color: var(--white);
   line-height: var(--leading-body);
+  margin-top: 6px;
 }
 
 .fee-explanation-body a {
