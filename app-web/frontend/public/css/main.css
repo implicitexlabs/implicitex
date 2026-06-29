@@ -6101,6 +6101,7 @@ input[type="number"] {
 /* ================================================================
    PORTAL LAYOUT TOGGLE
    data-portal-layout on #modules switches columns ↔ stacked.
+   Icon visibility is driven by data-layout on the button itself.
    Mobile is always stacked regardless (see responsive block).
    ================================================================ */
 
@@ -6110,4 +6111,25 @@ input[type="number"] {
 
 .modules[data-portal-layout="columns"] {
   grid-template-columns: repeat(2, 1fr);
+}
+
+/* cc-intake banner must span full width regardless of column count */
+.cc-intake {
+  grid-column: 1 / -1;
+}
+
+/* Layout icon visibility — shows current state, click toggles */
+.portal-layout-icon {
+  display: block;
+  flex-shrink: 0;
+  pointer-events: none;
+}
+.portal-layout-icon--stacked {
+  display: none;
+}
+#layoutToggle[data-layout="stacked"] .portal-layout-icon--columns {
+  display: none;
+}
+#layoutToggle[data-layout="stacked"] .portal-layout-icon--stacked {
+  display: block;
 }

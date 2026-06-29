@@ -146,8 +146,18 @@
     <div class="portal-header">
       <span class="portal-header-title">Transfer Portal</span>
       <div class="portal-header-controls">
-        <button class="portal-ctrl-btn" id="layoutToggle" type="button" aria-label="Toggle portal layout">
-          <span class="portal-ctrl-label portal-ctrl-layout-label" aria-hidden="true">LAYOUT: COLUMNS</span>
+        <button class="portal-ctrl-btn" id="layoutToggle" type="button" data-layout="columns" aria-label="Switch to stacked layout">
+          <!-- columns icon — two vertical bars; visible when layout = columns -->
+          <svg class="portal-layout-icon portal-layout-icon--columns" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" focusable="false">
+            <rect x="0" y="0" width="4" height="12" fill="currentColor"/>
+            <rect x="8" y="0" width="4" height="12" fill="currentColor"/>
+          </svg>
+          <!-- stacked icon — three horizontal bars; visible when layout = stacked -->
+          <svg class="portal-layout-icon portal-layout-icon--stacked" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" focusable="false">
+            <rect x="0" y="0.5" width="12" height="2.5" fill="currentColor"/>
+            <rect x="0" y="4.75" width="12" height="2.5" fill="currentColor"/>
+            <rect x="0" y="9" width="12" height="2.5" fill="currentColor"/>
+          </svg>
         </button>
         <button class="portal-ctrl-btn" id="modulesMinimize" type="button" aria-expanded="false" aria-label="Expand transfer portal">
           <span class="portal-ctrl-label" aria-hidden="true"></span>
@@ -564,13 +574,14 @@
     var STORAGE_KEY = 'ix-portal-layout';
     var modules = document.getElementById('modules');
     var btn     = document.getElementById('layoutToggle');
-    var lbl     = btn && btn.querySelector('.portal-ctrl-layout-label');
-    var current = 'columns';
 
     function applyLayout(mode) {
-      current = mode;
-      if (modules) modules.dataset.portalLayout = mode;
-      if (lbl) lbl.textContent = mode === 'columns' ? 'LAYOUT: COLUMNS' : 'LAYOUT: STACKED';
+      if (modules) modules.setAttribute('data-portal-layout', mode);
+      if (btn) {
+        btn.setAttribute('data-layout', mode);
+        btn.setAttribute('aria-label',
+          mode === 'columns' ? 'Switch to stacked layout' : 'Switch to columns layout');
+      }
       try { localStorage.setItem(STORAGE_KEY, mode); } catch (e) {}
     }
 
@@ -581,7 +592,8 @@
 
     if (btn) {
       btn.addEventListener('click', function () {
-        applyLayout(current === 'columns' ? 'stacked' : 'columns');
+        var next = (btn.getAttribute('data-layout') === 'columns') ? 'stacked' : 'columns';
+        applyLayout(next);
       });
     }
   }());
