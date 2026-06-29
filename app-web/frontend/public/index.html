@@ -331,6 +331,9 @@
     <div class="portal-header">
       <span class="portal-header-title">Transfer Portal</span>
       <div class="portal-header-controls">
+        <button class="portal-ctrl-btn" id="layoutToggle" type="button" aria-label="Toggle portal layout">
+          <span class="portal-ctrl-label portal-ctrl-layout-label" aria-hidden="true">LAYOUT: COLUMNS</span>
+        </button>
         <button class="portal-ctrl-btn" id="modulesMinimize" type="button" aria-expanded="false" aria-label="Expand transfer portal">
           <span class="portal-ctrl-label" aria-hidden="true"></span>
           <span class="portal-ctrl-arrow" aria-hidden="true"></span>
@@ -346,11 +349,9 @@
     <!-- Coin Card intake banner — shown when portal opened via Coin Card handoff -->
     <div class="cc-intake" id="ccIntake" hidden aria-live="polite" aria-label="Coin Card handoff status">
       <div class="cc-intake-inner">
-        <span class="cc-intake-mark" aria-hidden="true">¢</span>
-        <div class="cc-intake-body">
-          <p class="cc-intake-label" id="ccIntakeLabel">—</p>
-          <span class="cc-intake-status" id="ccIntakeStatus" data-verify-state="pending">CHECKING REGISTRY</span>
-        </div>
+        <span class="cc-intake-badge" aria-hidden="true">COIN CARD</span>
+        <p class="cc-intake-label" id="ccIntakeLabel">—</p>
+        <span class="cc-intake-status" id="ccIntakeStatus" data-verify-state="pending">CHECKING REGISTRY</span>
       </div>
     </div>
 
@@ -999,5 +1000,33 @@
   <script src="js/telemetry.js"></script>
   <script src="js/rehydrate.js"></script>
   <script src="js/coincard-handoff.js"></script>
+  <script>
+  /* Portal layout toggle — persists across sessions */
+  (function () {
+    var STORAGE_KEY = 'ix-portal-layout';
+    var modules = document.getElementById('modules');
+    var btn     = document.getElementById('layoutToggle');
+    var lbl     = btn && btn.querySelector('.portal-ctrl-layout-label');
+    var current = 'columns';
+
+    function applyLayout(mode) {
+      current = mode;
+      if (modules) modules.dataset.portalLayout = mode;
+      if (lbl) lbl.textContent = mode === 'columns' ? 'LAYOUT: COLUMNS' : 'LAYOUT: STACKED';
+      try { localStorage.setItem(STORAGE_KEY, mode); } catch (e) {}
+    }
+
+    try {
+      var saved = localStorage.getItem(STORAGE_KEY);
+      applyLayout((saved === 'stacked' || saved === 'columns') ? saved : 'columns');
+    } catch (e) { applyLayout('columns'); }
+
+    if (btn) {
+      btn.addEventListener('click', function () {
+        applyLayout(current === 'columns' ? 'stacked' : 'columns');
+      });
+    }
+  }());
+  </script>
 </body>
 </html>

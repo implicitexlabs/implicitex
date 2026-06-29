@@ -1340,14 +1340,14 @@ body.portal-active #nav {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 22px;
+  height: 24px;
   background: transparent;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-2);
   cursor: pointer;
-  color: var(--dim);
-  padding: 0 6px;
+  color: rgba(242, 242, 240, 0.75);
+  padding: 0 9px;
   gap: 5px;
-  transition: color 0.12s, border-color 0.12s;
+  transition: color 0.12s, border-color 0.12s, background 0.12s;
 }
 
 /* Control labels — small mono identifiers inside each button */
@@ -1365,6 +1365,7 @@ body.portal-active #nav {
 .portal-ctrl-btn:hover {
   color: var(--white);
   border-color: var(--white);
+  background: var(--surface-2);
 }
 
 .portal-ctrl-arrow {
@@ -6034,63 +6035,79 @@ input[type="number"] {
 
 /* ================================================================
    COIN CARD INTAKE BANNER
-   Shown inside the Transfer Portal when opened via a Coin Card
-   handoff. Proves provenance. Does not drive execution.
+   Thin contextual strip above the three modules. Proves provenance.
+   Does not drive execution. Not a layout participant.
    ================================================================ */
 
 .cc-intake {
   border-bottom: 1px solid var(--border);
-  padding: var(--sp-3) var(--sp-4);
+  padding: 6px var(--sp-4);
 }
 
 .cc-intake[hidden] { display: none; }
 
+/* Single-row strip: badge | label (grows) | status */
 .cc-intake-inner {
   display: flex;
   align-items: center;
   gap: var(--sp-3);
 }
 
-/* ¢ mark — visual anchor */
-.cc-intake-mark {
+/* COIN CARD text badge */
+.cc-intake-badge {
   font-family: var(--font-mono);
-  font-size: 1.25rem;
-  font-weight: var(--weight-bold);
-  color: var(--accent);
+  font-size: var(--size-xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--white);
+  border: 1px solid var(--border-2);
+  padding: 2px 6px;
+  white-space: nowrap;
   flex-shrink: 0;
-  line-height: 1;
   user-select: none;
 }
 
-.cc-intake-body {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-/* Card ID + label line */
+/* Card owner label — grows to fill available width */
 .cc-intake-label {
   font-family: var(--font-ui);
   font-size: var(--size-sm);
   font-weight: var(--weight-semibold);
   color: var(--white);
   margin: 0;
+  flex: 1;
+  min-width: 0;
   letter-spacing: 0.02em;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-/* Registry verification state badge */
+/* Registry verification state — right-aligned in the strip */
 .cc-intake-status {
   font-family: var(--font-mono);
   font-size: var(--size-xs);
   letter-spacing: 0.14em;
   text-transform: uppercase;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .cc-intake-status[data-verify-state="pending"]  { color: var(--dim); }
 .cc-intake-status[data-verify-state="verified"] { color: var(--accent); }
 .cc-intake-status[data-verify-state="warn"]     { color: var(--dim); }
 .cc-intake-status[data-verify-state="mismatch"] { color: var(--warn); }
+
+/* ================================================================
+   PORTAL LAYOUT TOGGLE
+   data-portal-layout on #modules switches columns ↔ stacked.
+   Mobile is always stacked regardless (see responsive block).
+   ================================================================ */
+
+.modules[data-portal-layout="stacked"] {
+  grid-template-columns: 1fr;
+}
+
+.modules[data-portal-layout="columns"] {
+  grid-template-columns: repeat(2, 1fr);
+}
