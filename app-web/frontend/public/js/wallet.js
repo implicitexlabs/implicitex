@@ -4569,7 +4569,17 @@
 
   function renderGasDetail() {
     const visible = getVisibleGasSamples();
-    if (!visible.length) return;
+
+    if (!visible.length) {
+      if (els.gasLow)     els.gasLow.textContent     = '—';
+      if (els.gasAvg)     els.gasAvg.textContent     = '—';
+      if (els.gasHigh)    els.gasHigh.textContent    = '—';
+      if (els.gasTrend)   els.gasTrend.textContent   = 'Collecting';
+      if (els.gasSamples) els.gasSamples.textContent = '0 visible';
+      renderGasChart();
+      return;
+    }
+
     const vals = visible.map(s => s.v);
     const low  = Math.min(...vals);
     const high = Math.max(...vals);
@@ -4579,7 +4589,7 @@
     if (els.gasAvg)     els.gasAvg.textContent     = formatGwei(avg)  + ' Gwei';
     if (els.gasHigh)    els.gasHigh.textContent    = formatGwei(high) + ' Gwei';
     if (els.gasTrend)   els.gasTrend.textContent   = calcGasTrend(visible);
-    if (els.gasSamples) els.gasSamples.textContent = visible.length + ' / ' + GAS_SAMPLE_MAX;
+    if (els.gasSamples) els.gasSamples.textContent = visible.length + ' visible';
   }
 
   function renderGasChart() {
