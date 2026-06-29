@@ -4573,19 +4573,49 @@
   function renderGasChart() {
     if (!els.gasChart) return;
 
-    // Fixed coordinate space — bars anchor to the right edge as samples arrive.
-    // Early samples appear on the right; the chart fills left over time.
-    const FIXED_W = 240, H = 48;
-    const BAR_W = 3, BAR_GAP = 1, N_BARS = 60;
+    // Fixed SVG coordinate space — axes never move, only bar heights scale.
+    // viewBox scales to container width via width="100%" / height="auto".
+    const VW = 280, VH = 96;
+    const ML = 34, MR = 4, MT = 6, MB = 18; // margins for axes
+    const CX = ML, CY = MT;
+    const CW = VW - ML - MR;   // chart area width
+    const CH = VH - MT - MB;   // chart area height
+    const BAR_W = 3, BAR_GAP = 1;
 
+    const COL_DIM   = 'rgba(242,242,240,0.58)';
+    const COL_AXIS  = 'rgba(242,242,240,0.18)';
+    const LS        = `font-family:monospace;font-size:7.5px;fill:${COL_DIM}`;
+
+    // Three Y-axis tick positions: top, mid, bottom of chart area
+    const tickYs = [CY, CY + CH / 2, CY + CH];
+
+    function buildAxes(yLabels) {
+      const yLine = `<line x1="${CX}" y1="${CY}" x2="${CX}" y2="${CY + CH}" stroke="${COL_AXIS}" stroke-width="1"/>`;
+      const xLine = `<line x1="${CX}" y1="${CY + CH}" x2="${CX + CW}" y2="${CY + CH}" stroke="${COL_AXIS}" stroke-width="1"/>`;
+      const ticks = tickYs.map((ty, i) =>
+        `<line x1="${CX - 4}" y1="${ty}" x2="${CX}" y2="${ty}" stroke="${COL_AXIS}" stroke-width="1"/>` +
+        `<text x="${CX - 6}" y="${ty + 3}" text-anchor="end" style="${LS}">${yLabels[i]}</text>`
+      ).join('');
+      const xLabels =
+        `<text x="${CX + 2}"    y="${VH - 3}" text-anchor="start" style="${LS}">← 2h</text>` +
+        `<text x="${CX + CW}"   y="${VH - 3}" text-anchor="end"   style="${LS}">Now</text>`;
+      return yLine + xLine + ticks + xLabels;
+    }
+
+    // Pending state — axes present, placeholder ticks, collecting notice inside chart area
     if (gasSampleBuffer.length < 2) {
-      els.gasChart.classList.add('is-pending');
-      els.gasChart.innerHTML = '';
+      const notice =
+        `<text x="${CX + CW / 2}" y="${CY + CH / 2 + 3}" ` +
+        `text-anchor="middle" style="${LS}">Collecting…</text>`;
+      els.gasChart.innerHTML =
+        `<svg viewBox="0 0 ${VW} ${VH}" width="100%" xmlns="http://www.w3.org/2000/svg" ` +
+        `aria-label="Gas price chart, collecting data">` +
+        buildAxes(['—', '—', '—']) + notice + `</svg>`;
       return;
     }
 
-    els.gasChart.classList.remove('is-pending');
-
+    // Bucket samples into up to N_BARS display bars
+    const N_BARS = Math.floor(CW / (BAR_W + BAR_GAP));
     const samples = gasSampleBuffer;
     const count   = Math.min(N_BARS, samples.length);
     const buckets = [];
@@ -4598,26 +4628,29 @@
 
     const minV = Math.min(...buckets);
     const maxV = Math.max(...buckets);
-    // Keep 10% padding above; floor the range so flat data still renders as bars
+    // 10% headroom; floor the range so flat data still renders as bars
     const pad   = Math.max((maxV - minV) * 0.1, 2);
     const lo    = Math.max(0, minV - pad);
     const hi    = maxV + pad;
     const range = hi - lo;
 
-    // Anchor to the right edge — newest bar is always rightmost
-    const xOffset = FIXED_W - count * (BAR_W + BAR_GAP);
+    // Y-axis tick labels: hi (top) → mid → lo (bottom)
+    const yLabels = [formatGwei(hi), formatGwei((lo + hi) / 2), formatGwei(lo)];
 
+    // Bars — right-anchored so newest reading is always at the right edge
+    const xOffset = CX + CW - count * (BAR_W + BAR_GAP);
     const bars = buckets.map((val, i) => {
       const norm  = (val - lo) / range;
-      const barH  = Math.max(2, Math.round(norm * (H - 4)) + 4);
+      const barH  = Math.max(2, Math.round(norm * (CH - 2)) + 2);
       const x     = xOffset + i * (BAR_W + BAR_GAP);
-      const y     = H - barH;
-      return `<rect x="${x}" y="${y}" width="${BAR_W}" height="${barH}" fill="currentColor"/>`;
+      const y     = CY + CH - barH;
+      return `<rect x="${x}" y="${y}" width="${BAR_W}" height="${barH}" fill="${COL_DIM}"/>`;
     }).join('');
 
     els.gasChart.innerHTML =
-      `<svg viewBox="0 0 ${FIXED_W} ${H}" preserveAspectRatio="none" ` +
-      `xmlns="http://www.w3.org/2000/svg" aria-hidden="true">${bars}</svg>`;
+      `<svg viewBox="0 0 ${VW} ${VH}" width="100%" xmlns="http://www.w3.org/2000/svg" ` +
+      `aria-label="Gas price chart">` +
+      buildAxes(yLabels) + bars + `</svg>`;
   }
 
   function pollNetworkData() {
