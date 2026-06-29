@@ -4552,10 +4552,15 @@
     if (gasSampleBuffer.length > GAS_SAMPLE_MAX) gasSampleBuffer.shift();
   }
 
-  function calcGasTrend() {
-    if (gasSampleBuffer.length < 2) return 'Collecting';
-    const first = gasSampleBuffer[0].v;
-    const last  = gasSampleBuffer[gasSampleBuffer.length - 1].v;
+  // Single source of truth for the visible window — used by chart, detail, and trend.
+  function getVisibleGasSamples(now = Date.now()) {
+    return gasSampleBuffer.filter(s => now - s.t <= GAS_CHART_WINDOW_MS);
+  }
+
+  function calcGasTrend(visible) {
+    if (!visible || visible.length < 2) return 'Collecting';
+    const first = visible[0].v;
+    const last  = visible[visible.length - 1].v;
     const threshold = 5; // Gwei — below this delta is noise, not trend
     if (last > first + threshold) return 'Rising';
     if (last < first - threshold) return 'Falling';
@@ -4563,8 +4568,9 @@
   }
 
   function renderGasDetail() {
-    if (!gasSampleBuffer.length) return;
-    const vals = gasSampleBuffer.map(s => s.v);
+    const visible = getVisibleGasSamples();
+    if (!visible.length) return;
+    const vals = visible.map(s => s.v);
     const low  = Math.min(...vals);
     const high = Math.max(...vals);
     const avg  = vals.reduce((a, b) => a + b, 0) / vals.length;
@@ -4572,15 +4578,15 @@
     if (els.gasLow)     els.gasLow.textContent     = formatGwei(low)  + ' Gwei';
     if (els.gasAvg)     els.gasAvg.textContent     = formatGwei(avg)  + ' Gwei';
     if (els.gasHigh)    els.gasHigh.textContent    = formatGwei(high) + ' Gwei';
-    if (els.gasTrend)   els.gasTrend.textContent   = calcGasTrend();
-    if (els.gasSamples) els.gasSamples.textContent = gasSampleBuffer.length + ' / ' + GAS_SAMPLE_MAX;
+    if (els.gasTrend)   els.gasTrend.textContent   = calcGasTrend(visible);
+    if (els.gasSamples) els.gasSamples.textContent = visible.length + ' / ' + GAS_SAMPLE_MAX;
   }
 
   function renderGasChart() {
     if (!els.gasChart) return;
 
     const now     = Date.now();
-    const visible = gasSampleBuffer.filter(s => now - s.t <= GAS_CHART_WINDOW_MS);
+    const visible = getVisibleGasSamples(now);
     const hasData = visible.length >= 2;
 
     // Always update Y-axis labels — frame stays populated in all states
