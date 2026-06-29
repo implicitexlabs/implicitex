@@ -2071,7 +2071,16 @@ body.portal-active #nav {
   margin-top: 4px;
 }
 
-.receipt-proof-btn {
+.receipt-id-row {
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  color: var(--dim);
+  letter-spacing: 0.08em;
+  margin-bottom: 4px;
+}
+
+.receipt-proof-btn,
+.receipt-copy-btn {
   appearance: none;
   background: transparent;
   border: 0;
@@ -2084,8 +2093,16 @@ body.portal-active #nav {
 }
 
 .receipt-proof-btn:hover,
-.receipt-proof-btn:focus-visible {
+.receipt-proof-btn:focus-visible,
+.receipt-copy-btn:hover,
+.receipt-copy-btn:focus-visible {
   border-bottom-color: var(--white);
+}
+
+.receipt-copy-btn:disabled {
+  color: var(--dim);
+  border-bottom-color: transparent;
+  cursor: default;
 }
 
 

@@ -1784,6 +1784,68 @@
     }
   }
 
+  // Derive a short user-facing receipt handle.
+  // When a confirmed tx hash exists, build from it so the ID is verifiable.
+  // Falls back to the stored receipt.id suffix (random hex portion).
+  function formatReceiptId(receipt) {
+    const txHash = receipt.transferHash || receipt.hash;
+    if (txHash) {
+      return 'IX-' + String(txHash).replace(/^0x/i, '').slice(0, 8).toUpperCase();
+    }
+    if (receipt.id) {
+      return 'IX-' + String(receipt.id).slice(-8).toUpperCase();
+    }
+    return '—';
+  }
+
+  // Plain-text receipt summary suitable for clipboard / email / invoice.
+  // Memo is intentionally excluded — it is local-only and not for sharing.
+  function formatReceiptSummaryText(receipt) {
+    const txHash = receipt.transferHash || receipt.hash;
+    const lines = [
+      'ImplicitEx Transfer Receipt',
+      '',
+      'Receipt ID:  ' + formatReceiptId(receipt),
+      'Status:      ' + (receipt.state || '—'),
+      'Network:     ' + (receipt.network || '—'),
+      'Amount:      ' + (receipt.amount   ? receipt.amount    + ' USDC' : '—'),
+      'Fee:         ' + (receipt.fee      ? receipt.fee       + ' USDC' : '—'),
+      'Total:       ' + (receipt.totalDebit ? receipt.totalDebit + ' USDC' : '—'),
+      'Recipient:   ' + (receipt.recipient || '—'),
+      'Sender:      ' + (receipt.sender   || '—'),
+    ];
+    if (txHash)            lines.push('Transaction: ' + txHash);
+    if (receipt.blockNumber) lines.push('Block:       ' + Number(receipt.blockNumber).toLocaleString());
+    if (receipt.createdAt)   lines.push('Timestamp:   ' + formatReceiptTime(receipt.createdAt));
+    if (receipt.purposeTag)  lines.push('Purpose:     ' + purposeLabel(receipt.purposeTag));
+    if (receipt.referenceId) lines.push('Reference:   ' + receipt.referenceId);
+    lines.push('');
+    if (receipt.explorerUrl) lines.push('Verify: ' + receipt.explorerUrl);
+    return lines.join('\n');
+  }
+
+  function copyReceiptSummary(receipt, btn) {
+    const text = formatReceiptSummaryText(receipt);
+    const originalText = btn.textContent;
+
+    function onCopied() {
+      btn.textContent = 'Copied';
+      btn.disabled = true;
+      setTimeout(function () {
+        btn.textContent = originalText;
+        btn.disabled = false;
+      }, 1500);
+    }
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(onCopied).catch(function () {
+        setStatus('Copy unavailable. Export the proof packet instead.');
+      });
+    } else {
+      setStatus('Copy unavailable. Export the proof packet instead.');
+    }
+  }
+
   function renderReceiptHistory() {
     if (!els.receiptHistory) return;
     const receipts = window.IX && window.IX.receipts
@@ -1814,6 +1876,10 @@
 
       head.append(stateLabel, time);
 
+      const idRow = document.createElement('p');
+      idRow.className = 'receipt-id-row';
+      idRow.textContent = formatReceiptId(receipt);
+
       const meta = document.createElement('p');
       meta.className = 'receipt-meta';
       const purpose = receipt.purposeTag ? ` · ${purposeLabel(receipt.purposeTag)}` : '';
@@ -1827,7 +1893,7 @@
         'Outcome not yet resolved.'
       );
 
-      item.append(head, meta, message);
+      item.append(head, idRow, meta, message);
 
       const txHash = receipt.transferHash || receipt.hash;
       const receiptActions = document.createElement('div');
@@ -1841,6 +1907,17 @@
         link.rel = 'noopener';
         link.textContent = `Verify on explorer ${shortHash(txHash)}`;
         receiptActions.append(link);
+      }
+
+      if (receipt.state === (IX_TRANSFER_STATES && IX_TRANSFER_STATES.CONFIRMED)) {
+        const copyButton = document.createElement('button');
+        copyButton.type = 'button';
+        copyButton.className = 'receipt-copy-btn';
+        copyButton.textContent = 'Copy receipt';
+        copyButton.addEventListener('click', function () {
+          copyReceiptSummary(receipt, copyButton);
+        });
+        receiptActions.append(copyButton);
       }
 
       const proofButton = document.createElement('button');
