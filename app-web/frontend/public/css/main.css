@@ -2413,8 +2413,61 @@ body.portal-active #nav {
 .verif-transfer-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: var(--sp-2);
   margin-top: var(--sp-3);
+}
+
+/* Receipt actions in confirmed transfer block — boxed instrument controls.
+   Scoped to .verif-transfer-actions so the receipt history list in 01
+   (which shares .receipt-link / .receipt-copy-btn / .receipt-proof-btn)
+   is not affected. */
+.verif-transfer-actions .receipt-link,
+.verif-transfer-actions .receipt-link:link,
+.verif-transfer-actions .receipt-link:visited,
+.verif-transfer-actions .receipt-copy-btn,
+.verif-transfer-actions .receipt-proof-btn {
+  display: inline-flex;
+  align-items: center;
+  appearance: none;
+  background: transparent;
+  border: 1px solid var(--border-2);
+  border-bottom: 1px solid var(--border-2);  /* override bottom-border-only from .receipt-link */
+  color: var(--dim);
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  font-weight: var(--weight-medium);
+  letter-spacing: 0.08em;
+  padding: 5px 9px;
+  text-decoration: none;
+  text-transform: uppercase;
+  transition: color 0.12s, border-color 0.12s;
+}
+.verif-transfer-actions .receipt-link:hover,
+.verif-transfer-actions .receipt-link:focus-visible,
+.verif-transfer-actions .receipt-copy-btn:hover,
+.verif-transfer-actions .receipt-copy-btn:focus-visible,
+.verif-transfer-actions .receipt-proof-btn:hover,
+.verif-transfer-actions .receipt-proof-btn:focus-visible {
+  border-color: var(--white);
+  color: var(--white);
+}
+.verif-transfer-actions .receipt-copy-btn:disabled {
+  border-color: var(--border);
+  color: var(--dim);
+  cursor: default;
+  opacity: 0.5;
+}
+@media (max-width: 560px) {
+  .verif-transfer-actions {
+    flex-direction: column;
+  }
+  .verif-transfer-actions .receipt-link,
+  .verif-transfer-actions .receipt-copy-btn,
+  .verif-transfer-actions .receipt-proof-btn {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
 /* Feed list */
