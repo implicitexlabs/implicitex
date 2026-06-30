@@ -1816,6 +1816,7 @@
     const txHash = receipt.transferHash || receipt.hash;
     const lines = [
       'ImplicitEx Transfer Receipt',
+      'Local receipt generated from confirmed on-chain transfer.',
       '',
       'Receipt ID:  ' + formatReceiptId(receipt),
       'Status:      ' + (receipt.state || '—'),

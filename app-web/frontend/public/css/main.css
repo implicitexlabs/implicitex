@@ -2408,6 +2408,13 @@ body.portal-active #nav {
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--accent);
+  margin-bottom: var(--sp-1);
+}
+.verif-transfer-sub {
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  letter-spacing: 0.04em;
+  color: var(--dim);
   margin-bottom: var(--sp-3);
 }
 .verif-transfer-actions {
