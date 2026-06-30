@@ -1,10 +1,32 @@
 # ImplicitEx Launch Gate
 
-## Current Status — 2026-05-29
+## Current Status — 2026-06-30
 
 ```
 Launch status: PRE-BROWSER-QA
-Recorded: 2026-05-29 (updated from 2026-05-23)
+Recorded: 2026-06-30 (updated from 2026-05-29)
+
+SESSION WORK — 2026-06-30 (portal agent-readability + trust/legal lane):
+  ✅ /llms.txt added at portal.implicitex.com — plain-text product description for AI
+     assistants; includes agent guardrail (must not initiate/submit without wallet confirm)
+  ✅ JSON-LD WebApplication schema added to portal <head>
+  ✅ data-agent-step/purpose/requires-wallet/requires-user-confirmation on all 3 modules
+  ✅ data-agent-action on txBtn, synced dynamically across all state transitions:
+     review-transfer (DRAFT), submit-onchain-transfer (REVIEW_READY), reset on cancel
+  ✅ Assistant guidance note visible on portal (above receipts)
+  ✅ Portal footer restructured: LEGAL / TRUST / AGENT+INDEX / CONTACT groups
+  ✅ Non-custodial statement above footer links
+  ✅ 7 new trust/legal pages live on implicitex.com:
+     risk-disclosure, fee-disclosure, contract-addresses, acceptable-use,
+     security, status, metadata — all with "Last updated: June 30, 2026"
+  ✅ All 7 pages added to sitemap.xml with appropriate priorities/changefreq
+  ✅ Static check: 1830 local references — all pass
+  ✅ Both hosting targets deployed: hosting[implicitex] + hosting[implicitex-portal]
+  ✅ Live smoke: portal footer, llms.txt, and all 7 pages confirmed HTTP/2 200
+  Commits: efa63f4 → fe3a169 → debea0c (branch: gate3-production-frontend-qa)
+
+  COUPLED TRUST SURFACES — update together on contract/fee/network/pause changes:
+    contract-addresses.html / fee-disclosure.html / status.html / llms.txt / sitemap.xml
 
 COMPLETED:
   ✅ Contract deployed: 0x5015841D6E665e63Ea174aD6b8FeF854026dE0C0
