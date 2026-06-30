@@ -6,6 +6,39 @@
   <meta name="description" content="ImplicitEx Transfer Portal — direct wallet-to-wallet USDC transfers on Polygon.">
   <meta name="robots" content="noindex">
   <link rel="canonical" href="https://portal.implicitex.com/">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "ImplicitEx Transfer Portal",
+    "url": "https://portal.implicitex.com",
+    "description": "Direct wallet-to-wallet USDC transfer interface on Polygon. Connect a Web3 wallet, enter a recipient address and amount, review network and recipient verification state, then confirm through your wallet. No custody. No account required.",
+    "applicationCategory": "FinanceApplication",
+    "operatingSystem": "Web",
+    "isAccessibleForFree": true,
+    "featureList": [
+      "Direct wallet-to-wallet USDC transfers on Polygon",
+      "Real-time gas price and RPC latency monitoring",
+      "Coin Card recipient verification",
+      "Transfer receipt and proof-of-execution logging",
+      "1% platform fee with full disclosure before wallet confirmation"
+    ],
+    "offers": {
+      "@type": "Offer",
+      "description": "1% platform fee on all transfers. No subscription or account required."
+    },
+    "provider": {
+      "@type": "Organization",
+      "name": "ImplicitEx",
+      "url": "https://implicitex.com"
+    },
+    "audience": {
+      "@type": "Audience",
+      "audienceType": "Web3 wallet holders sending USDC on Polygon"
+    },
+    "sameAs": ["https://implicitex.com"]
+  }
+  </script>
   <title>ImplicitEx — Transfer Portal</title>
   <link rel="icon" href="assets/icons/favicon.ico" sizes="any">
   <link rel="icon" href="assets/icons/favicon-32x32.png" type="image/png" sizes="32x32">
@@ -87,6 +120,19 @@
       left: 0;
       right: auto;
       top: calc(100% + 4px);
+    }
+
+    /* Assistant guidance note */
+    .agent-guidance-note {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      color: var(--dim);
+      border-left: 2px solid var(--border-2);
+      padding: 0.5rem 0.75rem;
+      margin: 0.75rem 0 0;
+      line-height: 1.6;
     }
 
     /* Legal footer */
@@ -257,7 +303,10 @@
     </div>
 
     <!-- 01 Transfer -->
-    <div class="mod">
+    <div class="mod"
+      data-agent-step="1"
+      data-agent-purpose="Collect transfer details: wallet connection, recipient address, USDC amount, and optional purpose tag."
+      data-agent-requires-wallet="true">
       <span class="mod-tag">01 — Transfer</span>
       <p class="mod-title">Send USDC</p>
       <div class="tx-form">
@@ -353,7 +402,9 @@
           <input type="checkbox" id="txConfirmAck">
           <span>I confirm the recipient, amount, fee, and total debit. Transfers confirmed on-chain cannot be reversed.</span>
         </label>
-        <button class="tx-btn" id="txBtn" onclick="IX.handleTxAction()">Review Transfer</button>
+        <button class="tx-btn" id="txBtn" onclick="IX.handleTxAction()"
+          data-agent-action="review-transfer"
+          data-agent-requires-user-confirmation="true">Review Transfer</button>
         <button class="tx-btn tx-btn--cancel" id="txCancelReview" type="button" aria-label="Return to editing transfer details" hidden>
           Edit Details
         </button>
@@ -439,6 +490,10 @@
         </p>
       </details>
 
+      <p class="agent-guidance-note" aria-label="Assistant guidance">
+        Using an AI assistant? Ask it to help verify the recipient address, fee, network state, and contract before you confirm. Assistants may explain state and guide review — final confirmation must happen in your wallet.
+      </p>
+
       <div class="receipt-history" aria-label="Recent transaction attempts">
         <p class="receipt-history-label">Receipts</p>
         <div id="receiptHistory" class="receipt-history-list">
@@ -450,7 +505,9 @@
     <!-- Right column: 02 Network + 03 Verification -->
     <div class="mod-col">
 
-    <div class="mod">
+    <div class="mod"
+      data-agent-step="2"
+      data-agent-purpose="Expose network, gas price, RPC latency, contract address, and chain status before execution.">
       <span class="mod-tag">02 — Network</span>
       <p class="mod-title">Gas &amp; Chain Data</p>
       <div class="data-table">
@@ -530,7 +587,9 @@
       </div>
     </div>
 
-    <div class="mod" id="verificationMod">
+    <div class="mod" id="verificationMod"
+      data-agent-step="3"
+      data-agent-purpose="Expose Coin Card registry status and recipient verification signals. Independent verification link available.">
       <span class="mod-tag">03 — Verification</span>
       <p class="mod-title">Coin Card Verification</p>
       <div class="data-table">

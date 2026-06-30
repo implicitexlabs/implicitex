@@ -865,6 +865,7 @@
     const armed = acknowledged && isLiveTransferChain(state.chainId);
 
     els.txBtn.textContent = 'Execute Transfer';
+    els.txBtn.setAttribute('data-agent-action', 'submit-onchain-transfer');
     els.txBtn.disabled = !armed;
     els.txBtn.classList.toggle('tx-btn--armed', armed);
   }
@@ -1035,6 +1036,7 @@
     if (els.txBtn) {
       els.txBtn.disabled = true;
       els.txBtn.textContent = currentButtonLabel();
+      els.txBtn.setAttribute('data-agent-action', 'review-transfer');
       els.txBtn.classList.remove('tx-btn--armed');
     }
     setTransferNote('');
@@ -1074,6 +1076,7 @@
     if (els.txBtn) {
       els.txBtn.disabled = true;
       els.txBtn.textContent = currentButtonLabel();
+      els.txBtn.setAttribute('data-agent-action', 'review-transfer');
       els.txBtn.classList.remove('tx-btn--armed');
     }
     resetReviewAcknowledgement();
@@ -1583,6 +1586,7 @@
     const acknowledged = !!(els.txConfirmAck && els.txConfirmAck.checked);
     const armed = !disabled && acknowledged;
     els.txBtn.textContent = label;
+    els.txBtn.setAttribute('data-agent-action', 'review-transfer');
     els.txBtn.disabled = !armed;
     els.txBtn.classList.toggle('tx-btn--armed', armed);
   }
