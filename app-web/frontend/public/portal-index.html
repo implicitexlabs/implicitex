@@ -135,26 +135,63 @@
       line-height: 1.6;
     }
 
-    /* Legal footer */
-    .portal-legal-footer {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 1.5rem;
-      padding: 1.5rem 2rem 2rem;
+    /* Portal footer */
+    .portal-footer {
+      padding: 1.25rem 2rem 2.5rem;
+      border-top: 1px solid var(--border-1);
     }
-    .portal-legal-footer a {
+    .portal-footer-statement {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 400;
+      letter-spacing: 0.03em;
+      color: var(--dim);
+      text-align: center;
+      line-height: 1.7;
+      margin-bottom: 1.25rem;
+      padding: 0 1rem;
+    }
+    .portal-footer-nav {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1.5rem 3rem;
+    }
+    .portal-footer-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+      min-width: 110px;
+    }
+    .portal-footer-label {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--dim);
+      opacity: 0.55;
+      margin-bottom: 0.2rem;
+    }
+    .portal-footer-group a {
       font-family: var(--font-mono);
       font-size: 10px;
       font-weight: 500;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
+      letter-spacing: 0.05em;
       color: var(--dim);
       text-decoration: none;
       transition: color 0.12s;
     }
-    .portal-legal-footer a:hover {
+    .portal-footer-group a:hover {
       color: var(--white);
+    }
+    @media (max-width: 600px) {
+      .portal-footer-nav {
+        gap: 1.25rem 2rem;
+      }
+      .portal-footer-group {
+        min-width: 90px;
+      }
     }
 
     /* ---- Mobile: direct portal header stacks at 760px ---- */
@@ -753,11 +790,40 @@
 
   </main>
 
-  <!-- Legal footer -->
-  <footer class="portal-legal-footer" aria-label="Legal">
-    <a href="/legal.html">Legal</a>
-    <a href="/terms.html">Terms</a>
-    <a href="/privacy.html">Privacy</a>
+  <!-- Portal footer -->
+  <footer class="portal-footer" aria-label="Portal information">
+    <p class="portal-footer-statement">ImplicitEx is non-custodial. Transfers are confirmed by the sender's wallet and cannot be reversed once confirmed on-chain.</p>
+    <nav class="portal-footer-nav" aria-label="Footer links">
+      <div class="portal-footer-group">
+        <span class="portal-footer-label">Legal</span>
+        <a href="/terms.html">Terms</a>
+        <a href="/privacy.html">Privacy</a>
+        <a href="/legal.html">Legal</a>
+        <a href="/risk-disclosure.html">Risk Disclosure</a>
+        <a href="/fee-disclosure.html">Fee &amp; Network</a>
+        <a href="/acceptable-use.html">Acceptable Use</a>
+      </div>
+      <div class="portal-footer-group">
+        <span class="portal-footer-label">Trust</span>
+        <a href="/contract-addresses.html">Contract Addresses</a>
+        <a href="/security.html">Security</a>
+        <a href="/status.html">Status</a>
+        <a href="/verify.html">Coin Card Verification</a>
+      </div>
+      <div class="portal-footer-group">
+        <span class="portal-footer-label">Agent / Index</span>
+        <a href="/llms.txt">llms.txt</a>
+        <a href="/robots.txt">robots.txt</a>
+        <a href="/sitemap.xml">sitemap.xml</a>
+        <a href="/metadata.html">Metadata</a>
+      </div>
+      <div class="portal-footer-group">
+        <span class="portal-footer-label">Contact</span>
+        <a href="/contact.html">Support</a>
+        <a href="mailto:connect@implicitex.com">Legal Contact</a>
+        <a href="/security.html">Report a Security Issue</a>
+      </div>
+    </nav>
   </footer>
 
   <!-- Scripts — same as index.html minus canvas.js, feeds.js, news-data.js -->
