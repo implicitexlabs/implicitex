@@ -1,6 +1,6 @@
 # ImplicitEx MVP Roadmap
 
-Last updated: 2026-06-16
+Last updated: 2026-06-30
 Branch: gate3-production-frontend-qa
 
 ---
@@ -504,6 +504,93 @@ Do not design for this before Layer 2 ships and generates real data.
 deferred behind the harder problem of proving the transfer engine works. The widget
 depends on that proof. Once Gate 5 is complete and real transfers are flowing, the
 creator widget becomes the most natural first revenue-producing expansion.
+
+---
+
+### Layer 4 — Coin Card tiers
+
+Full specification: `docs/product/coincard-tiers.md`
+
+Coin Card is the public identity object that makes ImplicitEx useful before
+large transaction volume exists. Each tier escalates trust, verification, and
+operational responsibility.
+
+```
+Tier 1 — Free        Embeddable payment card. Fee rate TBD (reconcile with platform policy). No account.
+Tier 2 — Registered  Verified domain + brand. Annual subscription.
+Tier 3 — Business    Multiple cards, receipts, export, assisted setup.
+Tier 4 — Advanced    Escrow / conditional release. Deferred — legal review required.
+```
+
+**Non-custodial doctrine applies at every tier:**
+
+> ImplicitEx verifies payment intent and records transfer proof; it does not
+> custody funds, maintain user balances, or control user wallets.
+
+**Economic bridge function:**
+
+Transaction revenue at 1% requires $2.5M in volume to produce $25,000/year.
+
+Coin Card Business setup services require 33 customers at $750 to reach the
+same threshold.
+
+Layer 4 (Tiers 2 and 3) is the primary revenue path while transaction volume
+is still building. It does not require waiting for platform scale.
+
+**Preconditions:**
+
+- Coin Card Free embed is stable in production (Lane A smoke complete)
+- Publisher flow exists for Registered tier (domain verification, manifest signing)
+- Aden Media Group setup offer is defined and priced
+
+**Status:** Free tier visual and transaction-state surfaces are partially implemented (Lane A
+smoke surfaces, verify page, publisher MVP). Public self-serve Free tier is not complete
+until embed configuration, card creation, and onboarding flow exist for a recipient who
+has never spoken to anyone from ImplicitEx. Registered and Business tiers not started.
+Start Registered only after Free tier earns at least one real external embed use case.
+
+---
+
+### Layer 5 — Agent distribution system
+
+Full specification: `docs/strategy/marketing/agent-system.md`
+
+**Mandate:** human-scale outreach does not work for a 1% fee business. Agents
+replace repetitive reach. Humans retain strategic judgment.
+
+The agent system is not a mass DM campaign. It is a precision tool that gets
+better before it gets bigger.
+
+```
+Market Scout Agent   — finds prospects already experiencing the problem
+Fit Scoring Agent    — ranks by pain signal and tier match
+Offer Agent          — maps prospect to niche landing page and message
+Copy Agent           — writes personalized first-contact drafts for human review
+Landing Page Agent   — generates and maintains niche-specific pages
+Onboarding Agent     — guides card creation and first embed
+Support Agent        — handles common post-onboarding questions
+Relationship Agent   — maintains CRM across all contacts and interactions
+```
+
+**Automation sequence (do not skip steps):**
+
+1. Research one niche (50–500 prospects)
+2. Score by fit
+3. Build niche landing page
+4. Send first 20–50 messages (agent drafts, human approves)
+5. Measure reply rate
+6. Use objections to improve offer and copy
+7. Only then scale volume in that niche
+
+**Preconditions:**
+
+- Mac Studio provisioned with agent runtime (Ollama + orchestrator + pgvector)
+- At least one niche landing page live
+- Coin Card Free available for immediate onboarding
+- MEMORY.md and agent instruction files written for each agent role
+
+**Status:** Not started. Correctly deferred behind Layer 4 (need the product
+before building the distribution machine).
 
 ---
 
