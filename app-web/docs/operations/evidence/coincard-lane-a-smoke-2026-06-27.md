@@ -9,6 +9,34 @@
 
 ---
 
+## Pre-Smoke Visual Finding
+
+**Date recorded:** 2026-06-30
+**Classification:** Product clarity defect — does not block on-chain execution smoke
+
+Coin Card badge variants (Decal, Compact, Feature) show layout and hierarchy defects:
+- "USDC accepted here," COIN CARD logo image, "Powered by ImplicitEx," network/token
+  label, and ImplicitEx lettermark all compete at similar visual weight
+- Recipient identity is absent from the badge face (only visible after INSPECT opens)
+- "Powered by" attribution appears twice (left copy block + authority square)
+- Feature card (Variant 3) lettermark is 160×160px in a 380×188px card — poster scale
+- Result: card does not explain itself to a first-time sender without narration
+
+**Gate status:** execution smoke may proceed. Product clarity is a separate gate.
+
+**Pre-smoke card-face correction (2026-06-30):** Lane A visual hierarchy rebuilt before
+on-chain smoke because the previous badge face did not communicate recipient identity and
+had duplicate attribution elements. Execution logic, state machine, transfer math, manifest
+verification, and receipt behavior are unchanged.
+Two questions being answered separately:
+1. Does approve → transfer → settle execute correctly? ← this smoke
+2. Does the card explain itself without private narration? ← blocked by visual defect above
+
+Rebuild spec: `docs/product/coincard-badge-rebuild.md`
+Rebuild implemented: 2026-06-30 (Variant 1 only; Variants 2 and 3 deferred)
+
+---
+
 ## Rejection Sequence (run before happy path)
 
 **Rule:** Rejection tests must pass before the happy-path transfer. No USDC is spent during this sequence.

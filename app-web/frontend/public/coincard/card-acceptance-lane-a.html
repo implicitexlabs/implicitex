@@ -213,6 +213,32 @@
       text-transform: uppercase;
     }
 
+    /* Badge face — recipient identity line (Variant 1 only) */
+    .cc-recipient-name {
+      font-family: 'Oxanium', sans-serif;
+      font-weight: 500;
+      font-size: 13px;
+      color: var(--cc-text-secondary); /* 0.92 — below headline, above micro */
+      line-height: 1.2;
+    }
+
+    /* Badge face — quiet attribution at bottom of copy block */
+    .cc-attribution {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: auto; /* pushes to bottom of copy column when copy has height */
+    }
+
+    .cc-attribution .cc-poweredby-label,
+    .cc-attribution .cc-poweredby-name {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 8px;
+      letter-spacing: 0.08em;
+      color: rgba(255, 255, 255, 0.42);
+      white-space: nowrap;
+    }
+
 
     /* ─── HOVER HINT ─────────────────────────────────────────────── */
 
@@ -865,66 +891,105 @@
 
     .cc-badge--decal {
       width: 460px;
-      /* uniform card inset on all four sides — lettermark is absolutely positioned and does not consume this space */
-      padding: var(--cc-card-inset);
-      align-items: flex-start;
+      min-height: 137px;
+      padding: 20px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 116px;
+      column-gap: 16px;
+      align-items: stretch;
     }
 
-    /* constrain copy so it stays in the left zone — left.width = W - 2P - G - S = 307px
-       W=460, P=20, G=16, S=97  →  460 - 40 - 16 - 97 = 307 */
-    .cc-badge--decal .cc-copy { gap: 8px; max-width: 307px; }
-    .cc-badge--decal .cc-primary   { font-size: 20px; }
-    .cc-badge--decal .cc-secondary { font-size: 11px; margin-top: 1px; }
-    .cc-badge--decal .cc-micro     { font-size: 9px; margin-top: 2px; }
-
-    /* ─── AUTHORITY SQUARE ───────────────────────────────────────────
-       Unified right-zone container. Lettermark + Powered by + IMPLICITEX
-       are children of this square — they cannot drift apart.
-
-       Coordinate derivation (spec):
-         S = card.height - 2 * P = 137 - 40 = 97px
-         authority.x = card.width - P - S = 460 - 20 - 97 = 343px
-         → right: P = 20px achieves this from the right edge
-
-       left zone ends at:  20 + 307 = 327px
-       gap G = 16px
-       authority begins at: 343px
-       327 + 16 = 343  ✓  no collision
-    ──────────────────────────────────────────────────────────────── */
-    .cc-authority-square {
-      position: absolute;
-      right: var(--cc-card-inset);  /* P — flush to content boundary, not card edge */
-      top: var(--cc-card-inset);    /* P */
-      width: 97px;    /* S = card.height - 2P */
-      height: 97px;   /* S — true square, height-limited by card */
+    .cc-badge--decal .cc-copy {
+      min-width: 0;
+      height: 97px;   /* inner card height: 137 - 2×20 */
       display: flex;
       flex-direction: column;
-      align-items: center;    /* horizontal centering of all three elements */
-      justify-content: center; /* vertical centering of stack within square */
+      gap: 6px;
+    }
+    .cc-badge--decal .cc-primary        { font-size: 18px; line-height: 1.1; }
+    .cc-badge--decal .cc-recipient-name { font-size: 13px; line-height: 1.15; }
+    .cc-badge--decal .cc-micro          { font-size: 9px;  margin-top: 2px; }
+    .cc-badge--decal .cc-attribution    { margin-top: auto; }
+
+    /* ─── RIGHT AUTHORITY LANE ───────────────────────────────────────
+       Dedicated upper-right logo lane. Stacked lockup, centered in the lane.
+       No absolute positioning. No drift.
+    ──────────────────────────────────────────────────────────────── */
+    .cc-authority-square {
+      width: 116px;
+      height: 97px;
+      position: relative;
+      z-index: 2;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 2px;
       pointer-events: none;
-      z-index: 3;
     }
 
-    /* Specificity guard — authority square is the sole positioning authority for its children.
-       Base .cc-mark-wrap sets position:absolute; this selector wins over the modifier alone.
-       position:relative (not static) — keeps element in flex flow AND retains positioning
-       context so ::after pseudo-element is clipped by overflow:hidden within 44×44 bounds. */
+    .cc-authority-lockup {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      width: 100%;
+    }
+
     .cc-authority-square .cc-mark-wrap {
       position: relative;
+      width: 34px;
+      height: 34px;
       transform: none;
+      overflow: visible; /* bloom extends slightly beyond mark bounds */
     }
 
-    /* Lettermark — in-flow inside authority square */
+    /* Lettermark — part of upper-right logo lockup */
     .cc-mark-wrap--decal {
-      position: relative; /* relative = in-flow + positioning context; static breaks ::after containment */
+      position: relative;
       transform: none;
-      width: 44px;        /* spec: lettermark.width = 44px */
-      height: 44px;       /* spec: lettermark.height = 44px */
-      overflow: hidden;   /* contains ambient glow within lettermark bounds */
+      width: 34px;
+      height: 34px;
+      overflow: visible;  /* bloom, not clip */
       flex-shrink: 0;
       pointer-events: none;
     }
-    .cc-mark-wrap--decal .cc-mark-img { width: 44px; height: 44px; opacity: 0.45; }
+
+    /* Override global masked glow — decal uses soft radial bloom instead */
+    .cc-mark-wrap--decal::after {
+      content: '';
+      position: absolute;
+      inset: -10px;
+      background: radial-gradient(
+        circle,
+        rgba(255, 255, 255, 0.18) 0%,
+        rgba(255, 255, 255, 0.08) 38%,
+        rgba(255, 255, 255, 0)    72%
+      );
+      filter: blur(6px);
+      opacity: 0.7;
+      z-index: 0;
+      display: block; /* override global display:none */
+      animation: none; /* no breathe on the bloom — static presence */
+      -webkit-mask-image: none; /* cancel global mask-image override */
+              mask-image: none;
+    }
+
+    .cc-mark-wrap--decal .cc-mark-img {
+      position: relative;
+      z-index: 1;       /* mark sits above bloom */
+      width: 34px;
+      height: 34px;
+      opacity: 0.30;
+    }
+
+    .cc-authority-wordmark {
+      display: block;
+      width: 96px;
+      height: auto;
+      filter: brightness(0) invert(1);
+      opacity: 0.38;
+    }
 
     /* "Powered by [wordmark]" in badge left column — collapsed state only */
     .cc-badge-poweredby {
@@ -1074,29 +1139,28 @@
                tabindex="0"
                aria-expanded="false"
                aria-controls="decal-panel"
-               aria-label="USDC accepted here. Coin Card. Polygon USDC. Activate to inspect route details.">
+               aria-label="USDC accepted here. Activate to inspect route details.">
             <div class="cc-copy" aria-hidden="true">
               <span class="cc-primary">USDC accepted here</span>
-              <a class="cc-badge-coincard"
-                 href="https://coincard.implicitex.com"
-                 target="_blank"
-                 rel="noopener noreferrer"
-                 aria-label="COIN CARD">
-                <img class="cc-badge-coincard-logo"
-                     src="/components/images/coincard-logo.svg"
-                     alt="">
-                <span class="cc-badge-coincard-cta" aria-hidden="true">coincard.implicitex.com</span>
-              </a>
-              <div class="cc-badge-poweredby">
+              <span class="cc-recipient-name" id="badge-recipient">—</span>
+              <span class="cc-micro">POLYGON · USDC</span>
+              <div class="cc-attribution">
                 <span class="cc-poweredby-label">Powered by</span>
-                <img class="cc-poweredby-wordmark"
+                <span class="cc-poweredby-name">ImplicitEx</span>
+              </div>
+            </div>
+            <span class="cc-hint" aria-hidden="true">credential details</span>
+            <div class="cc-authority-square" aria-hidden="true">
+              <div class="cc-authority-lockup">
+                <div class="cc-mark-wrap cc-mark-wrap--decal" id="mark-decal">
+                  <img class="cc-mark-img" src="/components/images/lettermark-white.svg" alt="">
+                </div>
+                <img class="cc-authority-wordmark"
                      src="/components/images/wordmark-white.svg"
                      alt=""
                      aria-hidden="true">
               </div>
-              <span class="cc-micro">POLYGON · USDC</span>
             </div>
-            <span class="cc-hint" aria-hidden="true">credential details</span>
           </div>
 
           <!-- PANEL -->
@@ -1248,16 +1312,6 @@
 
             </div><!-- /.cc-inspect-inner -->
           </div><!-- /.cc-inspect-panel -->
-
-          <!-- AUTHORITY SQUARE — unified container; lettermark + Powered by + IMPLICITEX cannot drift -->
-          <!-- x=343 y=20 w=97 h=97 — derived: right:P top:P width:S height:S where S=H-2P=97 -->
-          <div class="cc-authority-square" aria-hidden="true">
-            <div class="cc-mark-wrap cc-mark-wrap--decal" id="mark-decal">
-              <img class="cc-mark-img" src="/components/images/lettermark-white.svg" alt="">
-            </div>
-            <span class="cc-right-poweredby">Powered by</span>
-            <span class="cc-right-wordmark">IMPLICITEX</span>
-          </div>
 
         </div><!-- /.cc-wrapper -->
       </div>
@@ -1870,6 +1924,12 @@
     function applyVerified(manifest) {
       verifiedManifest = manifest;
       feeBps = manifest.feeBps || 250;
+
+      // Badge face — recipient identity (visible without opening INSPECT)
+      const badgeRecipient = $('badge-recipient');
+      if (badgeRecipient) {
+        badgeRecipient.textContent = manifest.displayName || abbrev(manifest.recipient);
+      }
 
       // Full rows
       $('ival-recipient').textContent = manifest.displayName || abbrev(manifest.recipient);
