@@ -140,6 +140,16 @@ COPY (upper-left) → → → → → →
 
 This is not accidental. The eye enters at the claim, moves to the rule, finds the seal certifying the claim. The conclusion is the mark.
 
+### The Seal Editorial Rule
+
+> **If the seal appears to be lending authority to a weak statement, the statement must be rewritten.**
+>
+> The seal certifies truth. It does not manufacture importance.
+
+In practice: if a composition feels like it "works" only because the lettermark is present — if removing the seal would expose the copy as generic — the copy is wrong. The seal should be the final confirmation of something that already stands. A descriptor (`PROFESSIONAL USDC PAYMENTS.`) does not stand. A proposition (`USDC FOR WORK, NOT SPECULATION.`) does.
+
+This is the single most useful editorial test in the campaign system. Apply it to every future card before production.
+
 ### What Asymmetry Communicates
 
 Symmetric compositions feel designed. Asymmetric compositions feel engineered. The difference is whether the eye perceives craft or calculation. ImplicitEx surfaces should feel calculated — like the layout was derived from the requirements, not composed by hand.

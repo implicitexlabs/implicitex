@@ -184,13 +184,14 @@ function rule(x1, y1, x2, y2) {
 function attribution(x, y, width, anchor = 'left') {
   const s     = width / 201.89;
   const wmH   = Math.ceil(14.7 * s);   // rendered height of wordmark
-  const subY  = y + wmH + 10;
+  const routeBaselineGap = 24;          // text y is a baseline, not a top edge
+  const subY  = y + wmH + routeBaselineGap;
   const tAnchor = anchor === 'center' ? 'middle' : anchor === 'right' ? 'end' : 'start';
   const subFill = 'rgba(255,255,255,0.26)';
   return [
     wm(x, y, width, anchor),
     tx(x, subY, 'USDC  ·  POLYGON  ·  NON-CUSTODIAL',
-      { font: 'Oxanium', size: 13, weight: 500, fill: subFill, anchor: tAnchor, ls: 4 }),
+      { font: 'Oxanium', size: 12, weight: 500, fill: subFill, anchor: tAnchor, ls: 3.2 }),
   ].join('\n');
 }
 
@@ -304,17 +305,19 @@ const cards = [
   },
 
   // ── A3 ─────────────────────────────────────────────────────────────────────
-  // "PAY FREELANCERS IN MINUTES."
+  // "PAY CONTRACTORS. ANYWHERE."
+  // Rewritten from "PAY FREELANCERS IN MINUTES." — "in minutes" was a speculative
+  // latency claim. "PAY CONTRACTORS. ANYWHERE." mirrors the imperative+scope structure
+  // of A2 (SEND DOLLARS. ANYWHERE.) while targeting B2B use case.
   // Layout: COPY upper-left (claim) ─── FULL RULE ─── SEAL lower-right (certification)
   // Grid background — operational context, no geography
-  // Most negative space of the series. The large black field between claim and seal.
   {
     id: 'a3',
     fn: () => doc(W, H, [
       grid(W, H, 0.028),
       // Claim — upper left
-      tx(PX, 262, 'PAY FREELANCERS', { size: 84, ls: 1 }),
-      tx(PX, 358, 'IN MINUTES.',     { size: 84, ls: 1, fill: DIM }),
+      tx(PX, 262, 'PAY CONTRACTORS.', { size: 84, ls: 1 }),
+      tx(PX, 358, 'ANYWHERE.',        { size: 84, ls: 1, fill: DIM }),
       // Full-width structural rule — separates claim from certification zone
       rule(PX, 414, W - PX, 414),
       // Certification seal — lower right (maximum diagonal distance from claim)
@@ -393,21 +396,23 @@ const cards = [
   },
 
   // ── A7 ─────────────────────────────────────────────────────────────────────
-  // "PROFESSIONAL USDC PAYMENTS."
-  // Layout: COPY left (full width, three lines) ─── RULE ─── SEAL below rule, right
-  // No left-right split here. Copy takes the full width, seal drops below.
-  // Map: full canvas. The world is the backdrop for professional infrastructure.
+  // "SUBMIT. EXECUTE. VERIFY."
+  // Retired: "PROFESSIONAL USDC PAYMENTS." — a descriptor, not a proposition.
+  // Replacement: the transaction model stated directly. SUBMIT = intent,
+  // EXECUTE = on-chain execution, VERIFY = independent verification.
+  // Same three-beat structure as A4/A8 but names the mechanism, not the outcome.
+  // Map: full canvas. The transaction sequence operates against global infrastructure.
   {
     id: 'a7',
     fn: () => doc(W, H, [
       worldMap(W, H, 0.80),
-      // Claim — left-aligned, three lines, large
-      tx(PX, 258, 'PROFESSIONAL', { size: 82, ls: 2 }),
-      tx(PX, 350, 'USDC',         { size: 82, weight: 800, ls: 2 }),
-      tx(PX, 442, 'PAYMENTS.',    { size: 82, weight: 800, ls: 2, fill: DIM }),
+      // Transaction model — three beats, left-aligned
+      tx(PX, 258, 'SUBMIT.',  { size: 82, ls: 2 }),
+      tx(PX, 350, 'EXECUTE.', { size: 82, weight: 800, ls: 2 }),
+      tx(PX, 442, 'VERIFY.',  { size: 82, weight: 800, ls: 2, fill: DIM }),
       // Full-width rule
       rule(PX, 498, W - PX, 498),
-      // Seal — below rule, right-offset (asymmetric: copy is left-anchored, seal right-offset)
+      // Seal — below rule, right-offset
       lm(1240, 638, 230),
       attribution(PX, 748, 210),
     ].join('\n')),
@@ -461,11 +466,12 @@ const cards = [
   },
 
   // ── A10 ────────────────────────────────────────────────────────────────────
-  // "SIMPLE TRANSACTION FLOW. INDEPENDENTLY VERIFIABLE."
-  // Layout: RULE ─── SEAL (bracketed, large) ─── RULE ─── COPY (technical spec)
-  // Deliberately breaks "seal concludes" — this is a DIAGRAM, not a narrative.
-  // The seal is the SUBJECT of the diagram. The copy below are technical specifications.
-  // Think: schematic. Operating manual page. Aviation instrument legend.
+  // "CONTRACT. FEE. TRANSFER."
+  // Retired: "SIMPLE TRANSACTION FLOW. / INDEPENDENTLY VERIFIABLE." — two claims,
+  // neither earned by the composition. Replacement: three system primitives stated as
+  // flat facts. CONTRACT = the approval, FEE = the cost (transparent), TRANSFER = the
+  // settlement. Native to the ImplicitEx language. No qualifiers. No promises.
+  // Layout: RULE ─── SEAL (bracketed, large) ─── RULE ─── SYSTEM PRIMITIVES below
   {
     id: 'a10',
     fn: () => doc(W, H, [
@@ -476,10 +482,11 @@ const cards = [
       lm(MID_X, 360, 244),
       // Bottom bracket rule
       rule(PX, 534, W - PX, 534),
-      // Technical specifications — Oxanium, wide tracking, below diagram
-      tx(MID_X, 600, 'SIMPLE TRANSACTION FLOW.',   { font: 'Oxanium', size: 32, weight: 500, anchor: 'middle', ls: 10 }),
-      tx(MID_X, 645, 'INDEPENDENTLY VERIFIABLE.',  { font: 'Oxanium', size: 32, weight: 500, anchor: 'middle', fill: DIM, ls: 10 }),
-      attribution(MID_X, 748, 220, 'center'),
+      // System primitives — Oxanium, wide tracking, below diagram
+      tx(MID_X, 600, 'CONTRACT.',  { font: 'Oxanium', size: 32, weight: 500, anchor: 'middle', ls: 10 }),
+      tx(MID_X, 645, 'FEE.',       { font: 'Oxanium', size: 32, weight: 500, anchor: 'middle', fill: DIM, ls: 10 }),
+      tx(MID_X, 690, 'TRANSFER.',  { font: 'Oxanium', size: 32, weight: 500, anchor: 'middle', ls: 10 }),
+      attribution(MID_X, 760, 220, 'center'),
     ].join('\n')),
   },
 

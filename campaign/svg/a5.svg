@@ -24,5 +24,5 @@
 <polygon points="162.93 13.86 176.09 13.86 176.09 11.2 165.62 11.2 165.62 8.69 176.09 8.69 176.09 6.03 165.62 6.03 165.62 3.5 176.09 3.5 176.09 .84 162.93 .84 162.93 13.86" fill="#FFF"/>
 <polygon points="184.96 .84 188.74 .84 201.89 13.86 198.11 13.86" fill="#FFF"/>
 <polygon points="198.11 .84 201.89 .84 188.74 13.86 184.96 13.86" fill="#FFF"/></g>
-<text x="120" y="774" font-family="'Oxanium',sans-serif" font-weight="500" font-size="13" fill="rgba(255,255,255,0.26)" text-anchor="start" letter-spacing="4">USDC  ·  POLYGON  ·  NON-CUSTODIAL</text>
+<text x="120" y="788" font-family="'Oxanium',sans-serif" font-weight="500" font-size="12" fill="rgba(255,255,255,0.26)" text-anchor="start" letter-spacing="3.2">USDC  ·  POLYGON  ·  NON-CUSTODIAL</text>
 </svg>
