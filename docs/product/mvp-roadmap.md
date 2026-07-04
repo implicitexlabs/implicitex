@@ -23,6 +23,10 @@ No reversal claim
 **Scope boundary:** do not add swaps, embedded wallets, fiat ramps, accounts, analytics dashboards,
 session restore polish, AI features, or social login before live-transfer smoke is complete.
 
+**Future expansion note:** preserve Polygon USDC as the reference route, then add
+USDT0 through an approved asset-route registry. See
+`docs/product/usdt0-integration-plan.md`.
+
 ---
 
 ## Launch gate sequence
