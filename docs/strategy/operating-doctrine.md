@@ -154,6 +154,13 @@ Value creation and awareness are not separate lanes. The marketing is a window
 into the machine while the machine keeps getting better. Showing the infrastructure
 working, in public, with real numbers, is the activity.
 
+**ImplicitEx does not market trust. It presents evidence.**
+
+The difference is not rhetorical — it is architectural. Trust requires believing the
+source. Evidence requires only a block explorer. Every campaign asset, receipt, proof
+page, and public record is evidence first and marketing second. The promotional
+surface and the evidence surface are the same object.
+
 ---
 
 ## The ambition

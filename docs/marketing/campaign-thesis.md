@@ -1,6 +1,6 @@
 # ImplicitEx Visual Campaign Thesis
 
-**Version:** 1.2  
+**Version:** 1.3  
 **Date:** 2026-07-04  
 **Applies to:** Twitter/X campaign, website hero, Coin Card, receipts, documentation, investor decks, mobile
 
@@ -329,6 +329,57 @@ The world map + asymmetric zone structure is the canonical deck layout. Copy zon
 ### Mobile
 
 On 390px wide canvas, the horizontal zone structure collapses to vertical stack: copy → rule → seal. The seal still concludes. The rule still separates. Negative space contracts proportionally but does not disappear.
+
+---
+
+## Two Classes of Campaign Assets
+
+The Evidence category exposes a structural distinction that applies to all campaign surfaces.
+
+### Static Assets — Produced Beforehand
+
+Copy composed in advance. Describes how the system behaves in general. True at any point in time.
+
+```
+USDC FOR WORK, NOT SPECULATION.
+SEND DOLLARS. ANYWHERE.
+NO CUSTODIAL ACCOUNT REQUIRED.
+```
+
+These are the cards in Series A. They can be scheduled, batched, and published on any cadence independent of product events.
+
+### Generated Assets — Produced from Events
+
+Copy that derives from a specific transaction. Cannot be invented. Cannot be backdated. The event must have occurred before the asset can exist.
+
+```
+TRANSFER VERIFIED.
+
+NETWORK:    POLYGON
+AMOUNT:     25.00 USDC
+BLOCK:      83724953
+SETTLED:    2026-07-04 19:22 UTC
+```
+
+Generated assets are not advertisements. They are artifacts. The promotional surface and the evidence surface are the same object.
+
+### The Pipeline This Implies
+
+```
+Transfer occurs
+      ↓
+Receipt generated
+      ↓
+Campaign artifact generated
+      ↓
+Share card exported
+      ↓
+Social post published
+```
+
+This pipeline does not currently exist in the ImplicitEx build system. But it is the logical extension of the evidence doctrine. When it exists, the marketing surface will literally derive from the transaction surface — the same data, the same timestamp, the same block hash. The campaign becomes cryptographically adjacent to the on-chain record.
+
+That is not a marketing strategy. That is a proof system.
 
 ---
 
