@@ -1,6 +1,6 @@
 # ImplicitEx Visual Campaign Thesis
 
-**Version:** 1.1  
+**Version:** 1.2  
 **Date:** 2026-07-04  
 **Applies to:** Twitter/X campaign, website hero, Coin Card, receipts, documentation, investor decks, mobile
 
@@ -123,9 +123,9 @@ Rules:
 
 ---
 
-## Copy Grammar — Three Categories
+## Copy Grammar — Four Categories
 
-ImplicitEx copy works when it belongs to one of three categories. Anything outside these categories is likely a descriptor, an adjective, or a marketing phrase — and will fail the foundational rule.
+ImplicitEx copy works when it belongs to one of four categories. Anything outside these categories is likely a descriptor, an adjective, or a marketing phrase — and will fail the foundational rule.
 
 ### 1. Declarative Truth
 
@@ -162,6 +162,24 @@ ONE WALLET. ONE PAYMENT. ONE RECEIPT.
 ```
 
 The test: are these the actual primitives of the transaction model? If they are, no further justification is required. The system's architecture is the authority.
+
+### 4. Evidence
+
+Operational telemetry. The system reporting its own state in its own output format. Not a claim about what ImplicitEx does — a transcription of what it did.
+
+```
+TRANSFER VERIFIED.
+POLYGON MAINNET.
+RECEIPT GENERATED.
+CONTRACT EXECUTED.
+BLOCK CONFIRMED.
+```
+
+Evidence statements are the strongest category because they cannot be disputed. A claim requires trust. Evidence requires only a block explorer.
+
+The test: is this the literal output of the system? Could a user independently verify this string against an on-chain record? If yes, it's evidence. If it requires ImplicitEx's word to be meaningful, it is not evidence — it is a claim.
+
+Note: evidence statements belong primarily on receipts, the engineering log, and surfaces that accompany a completed transaction. They are not campaign copy in isolation — they become campaign copy when they appear on a card that exists because the transaction happened. The distinction: the evidence must be real, not illustrative.
 
 ---
 
@@ -342,4 +360,6 @@ Safe-area audit runs automatically during `render.py`. Content elements must sta
 
 The campaign should feel like it was produced by the system, not produced about the system. When the world map in the card and the world map in the live product are the same algorithm — that is not a detail. That is the whole point.
 
-**ImplicitEx does not advertise that it works. It shows evidence that it works. The campaign is evidence.**
+ImplicitEx does not market trust. It presents evidence. The difference is not rhetorical — it is architectural. Trust requires believing the source. Evidence requires only a block explorer.
+
+**ImplicitEx does not claim authority. It presents evidence. The campaign itself is evidence.**
