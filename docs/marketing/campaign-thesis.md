@@ -1,7 +1,7 @@
 # ImplicitEx Visual Campaign Thesis
 
-**Version:** 1.0  
-**Date:** 2026-07-03  
+**Version:** 1.1  
+**Date:** 2026-07-04  
 **Applies to:** Twitter/X campaign, website hero, Coin Card, receipts, documentation, investor decks, mobile
 
 ---
@@ -11,6 +11,20 @@
 This is the visual philosophy that governs all ImplicitEx marketing surfaces. It was derived from building a 10-card Twitter/X campaign at 1600×900px and discovering which compositional decisions made the work feel like infrastructure and which made it feel like advertising.
 
 This is not a style guide. It is a set of constraints that produce a specific character. The character is: **a financial operating system that exists, not a startup introducing itself.**
+
+---
+
+## The Foundational Rule
+
+> **The seal does not create authority. The statement must already possess authority before the seal arrives.**
+
+This rule governs everything. It explains why revisions work and why the original versions didn't. It is more fundamental than any layout principle.
+
+In practice: remove the seal from any composition. Read the copy alone. If it still stands — if it sounds like something a system would output, not something a marketing team would write — the seal is permitted to certify it. If the copy collapses without the seal, the copy must be rewritten.
+
+A descriptor (`PROFESSIONAL USDC PAYMENTS.`) does not stand. A proposition (`USDC FOR WORK, NOT SPECULATION.`) does. A category label collapses. A system primitive (`CONTRACT. FEE. TRANSFER.`) does not.
+
+Apply this test before any card enters production.
 
 ---
 
@@ -109,6 +123,58 @@ Rules:
 
 ---
 
+## Copy Grammar — Three Categories
+
+ImplicitEx copy works when it belongs to one of three categories. Anything outside these categories is likely a descriptor, an adjective, or a marketing phrase — and will fail the foundational rule.
+
+### 1. Declarative Truth
+
+A statement of operational fact. Verifiable. Not contingent on ImplicitEx's claims about itself.
+
+```
+USDC FOR WORK, NOT SPECULATION.
+NO CUSTODIAL ACCOUNT REQUIRED.
+YOUR WALLET. YOUR FUNDS. YOUR TRANSFER.
+```
+
+The test: could this sentence appear verbatim in the protocol documentation? If yes, it's a declarative truth.
+
+### 2. Operational Command
+
+An imperative with no qualifier, no promise, no hype. States what the system performs.
+
+```
+SEND DOLLARS. ANYWHERE.
+PAY CONTRACTORS. ANYWHERE.
+RECEIVE PAYMENT. VERIFY ON-CHAIN.
+```
+
+The test: does this sentence describe an action the system actually executes? If removing a word makes it stronger, remove it.
+
+### 3. System Primitives
+
+The names of the mechanisms. No verbs. No explanation. The system speaks in its own technical vocabulary.
+
+```
+CONTRACT. FEE. TRANSFER.
+SUBMIT. EXECUTE. VERIFY.
+ONE WALLET. ONE PAYMENT. ONE RECEIPT.
+```
+
+The test: are these the actual primitives of the transaction model? If they are, no further justification is required. The system's architecture is the authority.
+
+---
+
+### What Consistently Fails
+
+- **Adjectives:** `PROFESSIONAL`, `SIMPLE`, `FAST`, `SECURE` — these are claims that require proof, not primitives that are self-evident
+- **Descriptors:** `PROFESSIONAL USDC PAYMENTS` — names a category, not a condition
+- **Performance claims:** `IN MINUTES`, `INSTANT`, `REAL-TIME` — latency is not universally guaranteed and dates immediately
+- **Marketing phrases:** `THE FUTURE OF PAYMENTS`, `BUILT FOR TEAMS` — every fintech since 2015 has this copy
+- **Explanations:** copy that tells the reader what to think about the product rather than stating what the product does
+
+---
+
 ## Compositional Architecture
 
 ### The Asymmetric Column Model
@@ -140,16 +206,6 @@ COPY (upper-left) → → → → → →
 
 This is not accidental. The eye enters at the claim, moves to the rule, finds the seal certifying the claim. The conclusion is the mark.
 
-### The Seal Editorial Rule
-
-> **If the seal appears to be lending authority to a weak statement, the statement must be rewritten.**
->
-> The seal certifies truth. It does not manufacture importance.
-
-In practice: if a composition feels like it "works" only because the lettermark is present — if removing the seal would expose the copy as generic — the copy is wrong. The seal should be the final confirmation of something that already stands. A descriptor (`PROFESSIONAL USDC PAYMENTS.`) does not stand. A proposition (`USDC FOR WORK, NOT SPECULATION.`) does.
-
-This is the single most useful editorial test in the campaign system. Apply it to every future card before production.
-
 ### What Asymmetry Communicates
 
 Symmetric compositions feel designed. Asymmetric compositions feel engineered. The difference is whether the eye perceives craft or calculation. ImplicitEx surfaces should feel calculated — like the layout was derived from the requirements, not composed by hand.
@@ -158,45 +214,58 @@ Symmetric compositions feel designed. Asymmetric compositions feel engineered. T
 
 ## Editorial Ranking — Series A (10-Card Campaign)
 
-Ranked against three criteria: compositional integrity, copy durability, seal-concludes discipline.
+Ranked against three criteria: compositional integrity, copy durability, seal-concludes discipline. Reflects v1.1 revised copy (A3, A7, A10 rewritten; see commit history for retired versions).
+
+### Tier S+ — Identity Cards
+
+These are not just strong cards. They are the product's self-definition. Each could stand alone as an answer to the question "what is ImplicitEx?"
+
+**A2 — SEND DOLLARS. ANYWHERE.**  
+The clearest operational command in the set. Imperative + scope, no qualifiers. The vertical rule and eastern hemisphere zone-clip reinforce the claim without illustrating it. Composition is the strongest execution in the series.
+
+**A8 — YOUR WALLET. YOUR FUNDS. YOUR TRANSFER.**  
+The mission statement. Three-part sovereignty declaration — each fragment is objectively true, independently. The centered composition works because the message itself has symmetry. The only card where centering is correct.
 
 ### Tier S — Publish Immediately
 
 **A1 — USDC FOR WORK, NOT SPECULATION.**  
-The anchor card. The sentence draws the sharpest product boundary in the set. World map full canvas. Diagonal read path clean.
+The anchor card. Draws the sharpest product boundary in the set — what ImplicitEx is for, and what it explicitly is not. Declarative truth. World map full canvas.
 
 **A4 — ONE WALLET. ONE PAYMENT. ONE RECEIPT.**  
-Anaphora builds compression. The triple structure in Orbitron reads as a system specification. Eastern hemisphere clip behind seal. Best execution of the zone-clip technique.
-
-**A6 — RECEIVE PAYMENT. VERIFY ON-CHAIN.**  
-Two-line composition with register shift (Orbitron headline + Oxanium specification). Proves the typographic hierarchy works. The on-chain verification claim is the sharpest product edge in the copy deck.
-
-**A8 — YOUR WALLET. YOUR FUNDS. YOUR TRANSFER.**  
-Centered composition — the only card where the seal is centered rather than lower-right. Works because the copy is a three-part sovereignty statement; centering the seal makes it a constitutional moment, not a certification.
+Anaphora as system specification. Three-beat structure names the exact artifact sequence of a completed transaction. Eastern hemisphere clip behind seal. Best execution of the zone-clip technique.
 
 **A9 — NO CUSTODIAL ACCOUNT REQUIRED.**  
-The most institutional sentence in the set. The negative construction (`NO CUSTODIAL`) is a product spec, not a feature claim. Eastern hemisphere behind the seal. Best seal placement proportionally.
+The most institutional sentence in the set. Negative construction is a product spec. The eastern hemisphere concentrates behind the seal — the map fills the space where the custodian would be. The seal replaces the bank.
 
-### Tier A — Minor Refinement Candidates
-
-**A2 — SEND DOLLARS. ANYWHERE.**  
-Composition is excellent — the vertical rule and eastern hemisphere zone-clip both work. Copy is slightly generic; "send dollars anywhere" is also a Venmo claim. Could be strengthened with a constraint: `SEND DOLLARS. ANYWHERE POLYGON RUNS.` or archived for a Series B iteration.
+### Tier A — Strong Cards, One Watch Item Each
 
 **A5 — KEEP PROJECT BUDGETS SEPARATE.**  
-Topographic texture background and the typographic weight break (large/small scale contrast) make this the most distinctive composition technically. "Keep project budgets separate" is a B2B use case statement with no equivalent in consumer crypto.
+A B2B use-case statement with no equivalent in consumer crypto. Topographic texture and the typographic weight contrast (large/small scale) make this the most distinctive composition technically.
 
-### Tier B — Copy Rewrite Required
+**A6 — RECEIVE PAYMENT. VERIFY ON-CHAIN.**  
+Two-line composition with register shift: Orbitron command → Oxanium specification. Proves the typographic hierarchy works. Watch item: `VERIFY` also appears in A7; if both publish in the same window, the verification theme reads twice.
 
-**A3 — PAY FREELANCERS IN MINUTES.**  
-"In minutes" is a latency claim — speculative, unverifiable, and immediately date-able. The grid texture background is the weakest of the three texture options. The copy should become a durability claim: `PAY FREELANCERS. WALLET TO WALLET.` or split into a separate card about the absence of intermediaries.
+**A7 — SUBMIT. EXECUTE. VERIFY.**  
+Names the transaction model directly. System primitives in sequence: intent → execution → verification. The world map full canvas grounds the mechanism in global infrastructure. Watch item: same `VERIFY` overlap with A6 — stagger publication.
 
-**A10 — SIMPLE TRANSACTION FLOW. / INDEPENDENTLY VERIFIABLE.**  
-Two architectural claims that each deserve their own card. A10 as built is the closest thing to a technical specification card in the set — which has value, but the two-claim structure dilutes both. Recommend splitting: one card for `INDEPENDENTLY VERIFIABLE.` (Tier S quality), one card for `SIMPLE TRANSACTION FLOW.` (may not stand alone — reconsider).
+**A3 — PAY CONTRACTORS. ANYWHERE.**  
+Pairs grammatically with A2 (`SEND DOLLARS. ANYWHERE.`) — they now read as a system language, not isolated cards. B2B use-case complement to the general-purpose A2.
 
-### Tier C — Archive
+### Tier B — Hold for Series B
 
-**A7 — PROFESSIONAL USDC PAYMENTS.**  
-"Professional payments" belongs to every fintech competitor. The word `PROFESSIONAL` does no work that the seal does not already do — and the seal does it without words. The composition is also the most symmetric in the set. Archive; do not publish.
+**A10 — CONTRACT. FEE. TRANSFER.**  
+The most technically pure card in the set. Three system primitives, no verbs, no explanation. The bracketed seal composition (rule / seal / rule / specs) is formally correct. Held at Tier B because the audience for this level of abstraction is narrower — developers, protocol researchers, not general users. Reconsider for a technical-audience series.
+
+### Retired
+
+**Original A3 — PAY FREELANCERS IN MINUTES.**  
+"In minutes" is a latency claim — speculative, unverifiable, immediately date-able. Replaced.
+
+**Original A7 — PROFESSIONAL USDC PAYMENTS.**  
+A descriptor. "Professional payments" belongs to every fintech competitor. The seal was doing more work than the copy deserved. Replaced.
+
+**Original A10 — SIMPLE TRANSACTION FLOW. / INDEPENDENTLY VERIFIABLE.**  
+Two claims that diluted each other. Neither earned the seal independently. Replaced.
 
 ---
 
