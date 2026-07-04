@@ -3,6 +3,14 @@
 Type system, spacing, and visual conventions for the ImplicitEx web front-end.
 Reference this document when adding new UI elements or pages.
 
+For high-level brand direction and the next homepage concept, see:
+
+- `docs/brand/visual-doctrine-v1.md`
+- `docs/brand/homepage-concept-v1.md`
+
+Those documents are directional doctrine. This file records current production
+patterns and lower-level implementation references.
+
 ---
 
 ## Font Families
