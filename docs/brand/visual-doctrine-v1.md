@@ -1,7 +1,8 @@
 # ImplicitEx Visual Doctrine V1
 
 Date: 2026-07-04
-Status: Directional doctrine. Do not apply as a sitewide CSS sweep.
+Status: Refinement doctrine. Do not apply as a sitewide CSS sweep or a
+homepage replacement mandate.
 
 ## North Star
 
@@ -26,6 +27,17 @@ The desired response is:
 ```text
 This looks unusually serious. There is evidence behind the interface.
 ```
+
+The refinement target is:
+
+```text
+Elegant utility: substantial capability presented with restraint, precision,
+and confidence.
+```
+
+The current ImplicitEx site is directionally correct. This doctrine exists to
+remove drift in typography, spacing, alignment, motion, and component finish,
+not to replace the site's architecture.
 
 ## Native Doctrine
 
@@ -87,6 +99,30 @@ Not AI-startup wallpaper.
 A public-facing transaction system that feels engineered, monitored, and
 independently inspectable.
 
+## Protected Existing System
+
+This doctrine governs refinement of the existing ImplicitEx system. It does not
+authorize a wholesale homepage redesign.
+
+Protected elements:
+
+- the rotating hero stays
+- the Transfer Portal remains the central thesis and primary page object
+- the Transfer Portal must not be crowded by operational tickers, large
+  statistics, or decorative telemetry around its perimeter
+- the current black-and-gold identity remains
+- numbered instrumentation language remains
+- Coin Card and verification remain part of the broader system
+- existing page architecture and content order are preserved unless a specific
+  usability defect justifies change
+- no broad font replacement merely to resemble another company
+- no sitewide corner-radius change without component-by-component review
+- no new background texture by default
+- no invented metrics or visual scale theater
+
+Structural changes require separate approval. Refinement work should begin with
+discrepancy diagnosis, not redesign.
+
 ## Visual Formula
 
 ```text
@@ -147,6 +183,14 @@ game interface. Keep it disciplined.
 Large type should earn authority through scale, contrast, spacing, and factual
 clarity, not by imitating a specific company's font weight.
 
+The first typography task is not replacement. It is consistency:
+
+- identify every semantic role already present
+- compare family, weight, size, line height, letter spacing, transform, and
+  mobile overrides
+- find duplicate or conflicting renderings of the same role
+- recommend canonical tokens only after the discrepancy is documented
+
 ## Color Doctrine
 
 Protect the current black restrained environment and gold confirmation language.
@@ -203,7 +247,7 @@ SOURCE VERIFIED
 
 A public ImplicitEx page should establish reality before asking for adoption.
 
-Recommended order:
+Recommended conceptual order:
 
 1. Mission
 2. Operational state
@@ -211,8 +255,111 @@ Recommended order:
 4. Evidence
 5. Access / user fit
 
-This reverses normal startup marketing. The system proves that it exists before
-explaining who should use it.
+This is not a mandate to reorder the current homepage. It is a hierarchy test:
+the existing page should prove that the system exists before it asks for
+adoption.
+
+The Transfer Portal should have a protected visual perimeter. Other content
+should introduce it and then get out of its way.
+
+## Refinement Lanes
+
+Work should proceed as an audit before implementation.
+
+### 1. Typography Consistency
+
+Inventory:
+
+- hero statement
+- rotating hero phrase
+- supporting paragraph
+- navigation
+- section headline
+- section eyebrow
+- module label
+- button label
+- data value
+- contract address
+- status text
+- legal and instructional copy
+
+Compare:
+
+- font family
+- font weight
+- font size
+- line height
+- letter spacing
+- text transform
+- maximum line width
+- mobile overrides
+
+### 2. Spacing Rhythm
+
+Audit:
+
+- header to hero
+- hero line to supporting copy
+- supporting copy to action
+- hero to Transfer Portal
+- protected portal perimeter
+- portal interior padding
+- module-to-module spacing
+- section heading to body
+- section-to-section separation
+- final section to footer
+- mobile collapsed states
+
+Generous spacing does not mean everything moves farther apart. It means major
+ideas receive more space than minor relationships.
+
+### 3. Motion Quality
+
+Audit:
+
+- hero text rotation
+- crossfade duration
+- layout shift during rotating phrases
+- portal expand and collapse
+- module reveal behavior
+- button hover and press states
+- navigation hover states
+- status transitions
+- wallet connection state changes
+- mobile-menu opening
+- copy-success feedback
+- receipt and verification state changes
+- loading indicators
+- reduced-motion behavior
+
+Target timing bands:
+
+- micro-interactions: 120-180 ms
+- controls and panel transitions: 200-300 ms
+- hero phrase transitions: 450-700 ms
+- operational pulses: deliberate and infrequent
+
+Use one or two shared easing curves. Avoid each component inventing its own
+motion language.
+
+### 4. Component Finish
+
+Audit:
+
+- button heights
+- border widths
+- component radii by class
+- icon stroke consistency
+- vertical centering of text and icons
+- hover-state subtlety
+- adjacent-control padding
+- muted color consistency
+- accessible focus states
+- active, verified, warning, and disabled state semantics
+- mobile-control polish
+
+Elegant utility usually comes from eliminating many small inconsistencies rather
+than making one dramatic redesign.
 
 ## What To Avoid
 
@@ -270,8 +417,18 @@ Use it without surrendering control.
 
 ## Implementation Rule
 
-Before changing sitewide CSS, produce one homepage concept that demonstrates
-this doctrine. Evaluate the concept against this question:
+Before changing sitewide CSS, produce a discrepancy report for the current
+homepage. Cite selectors, files, current values, conflicting values, and
+recommended canonical tokens.
+
+Do not alter homepage architecture, rotating hero concept, Transfer Portal
+hierarchy, copy, colors, or content order during the audit.
+
+After the audit is reviewed, create one isolated refinement surface demonstrating
+approved typography, spacing, alignment, and motion corrections while preserving
+the current homepage architecture.
+
+Evaluate any refinement against this question:
 
 ```text
 Does this make ImplicitEx feel like an engineered, inspectable settlement

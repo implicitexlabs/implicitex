@@ -1,14 +1,17 @@
-# Homepage Concept V1 — Civilian Mission Control
+# Homepage Refinement Surface V1 — Elegant Utility Calibration
 
 Date: 2026-07-04
-Status: Concept brief. Not an implementation patch.
+Status: Refinement brief. Not an implementation patch.
 Doctrine: `docs/brand/visual-doctrine-v1.md`
 
 ## Objective
 
-Create one homepage concept before any sitewide CSS sweep.
+Create one isolated refinement surface before any sitewide CSS sweep.
 
-The concept should make ImplicitEx feel like:
+The refinement surface should preserve the current homepage architecture while
+demonstrating corrected typography, spacing, alignment, and motion.
+
+Internal design direction:
 
 ```text
 Civilian Mission Control for Direct Settlement
@@ -17,16 +20,50 @@ Civilian Mission Control for Direct Settlement
 This phrase is internal design direction, not recommended public headline copy.
 Public copy should stay simpler and more literal.
 
+The practical aesthetic target:
+
+```text
+Elegant utility: substantial capability presented with restraint, precision,
+and confidence.
+```
+
 The homepage should not imitate xAI, SpaceX, X, Terafab, or any other company.
 It should share only the deeper family traits of ambition stated plainly,
 restraint, operational evidence, and visible proof that something real exists.
 
-## First Viewport
+## Protected Architecture
+
+Do not replace the current homepage structure in this phase.
+
+Protected:
+
+- rotating hero concept
+- current black-and-gold identity
+- Transfer Portal as central thesis and primary page object
+- portal hierarchy and visual perimeter
+- current content order unless a specific defect is documented
+- existing evidence, verification, receipt, and status surfaces
+- Coin Card's place in the broader system
+
+Do not add:
+
+- operational ticker crowding the Transfer Portal
+- large decorative statistics around the portal
+- new background texture by default
+- broad font replacement
+- sitewide radius reset
+- invented metrics or visual scale theater
+
+## First Viewport Refinement
 
 The first viewport should establish mission and operational state.
 
-Do not begin with a friendly SaaS value prop. Do not begin with an oversized
-marketing card. Do not begin with feature education.
+The current rotating hero stays. The refinement question is whether the hero's
+type scale, line height, spacing, fade timing, and slide stability feel
+deliberate and calm.
+
+Do not convert the hero into a different composition unless a specific
+usability defect is documented.
 
 Mission statement candidates:
 
@@ -46,9 +83,10 @@ Infrastructure for direct digital settlement.
 The mission voice should be human, monumental, and direct. It should not be
 large Orbitron by default.
 
-## Operational State Strip
+## Operational State
 
-Immediately below the mission, show only real operational facts.
+Operational facts should exist, but they must not crowd the Transfer Portal or
+compete with the hero.
 
 Candidate facts:
 
@@ -68,6 +106,8 @@ Rules:
 - No fake transaction volume.
 - No placeholder partners.
 - If a value cannot be verified or maintained, do not show it.
+- If facts create visual crowding near the Transfer Portal, reduce or relocate
+  them rather than weakening the portal's perimeter.
 
 ## Transfer Instrument
 
@@ -89,6 +129,10 @@ The portal should retain the existing strengths:
 - corner ticks
 - monospaced data
 - visible contract, network, receipt, status, and telemetry concepts
+
+The Transfer Portal does not need more objects around it. The surrounding page
+needs enough restraint that the portal feels inevitable when the visitor reaches
+it.
 
 ## Evidence Layer
 
@@ -167,17 +211,17 @@ Color should communicate state, not decoration.
 
 No full-body decorative dot grid unless a specific instrument panel needs it.
 
-## Homepage Structure
+## Preserved Homepage Structure
 
 ```text
-1. Mission
-   Large direct statement.
+1. Mission / rotating hero
+   Preserve concept. Refine typography, spacing, and motion.
 
 2. Operational State
-   Real current facts only.
+   Real current facts only. Do not crowd the portal.
 
 3. Transfer Instrument
-   Portal as primary page object.
+   Portal as primary page object. Protect perimeter.
 
 4. Evidence
    Contract, fee, source, receipt, Coin Card, status.
@@ -215,7 +259,7 @@ Receipts preserve what happened at transaction time.
 
 ## Acceptance Criteria
 
-The concept passes if a first-time visitor can answer:
+The refinement passes if a first-time visitor can answer:
 
 - What is ImplicitEx?
 - Is it live or conceptual?
@@ -225,7 +269,16 @@ The concept passes if a first-time visitor can answer:
 - How can a transfer be verified?
 - Where is the evidence?
 
-The concept fails if it mainly communicates:
+The refinement also passes only if:
+
+- the rotating hero remains recognizable as the existing ImplicitEx hero
+- the Transfer Portal remains visually central and uncrowded
+- typography roles are more consistent than before
+- spacing hierarchy feels calmer and more deliberate
+- motion feels smooth without becoming theatrical
+- component states feel related across the page
+
+The refinement fails if it mainly communicates:
 
 - crypto startup aesthetics
 - borrowed Musk-company identity
@@ -233,6 +286,7 @@ The concept fails if it mainly communicates:
 - inflated scale
 - decorative complexity
 - trust claims without evidence
+- homepage replacement rather than homepage refinement
 
 ## Non-Goals
 
@@ -240,10 +294,11 @@ Do not implement in this phase:
 
 - sitewide CSS sweep
 - new homepage deployment
+- homepage architecture replacement
 - new metrics dashboard
 - fake operational counters
 - multi-chain visual language
 - token expansion language
 - Coin Card marketing page
 
-One homepage concept first. Then evaluate.
+One isolated refinement surface first. Then evaluate.

@@ -7,6 +7,7 @@ For high-level brand direction and the next homepage concept, see:
 
 - `docs/brand/visual-doctrine-v1.md`
 - `docs/brand/homepage-concept-v1.md`
+- `docs/brand/homepage-refinement-audit-protocol-v1.md`
 
 Those documents are directional doctrine. This file records current production
 patterns and lower-level implementation references.
