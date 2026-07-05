@@ -3063,6 +3063,235 @@ h1 + .gs-section-head {
   margin: 0.15rem 0 0.85rem 1.25rem;
 }
 
+.faq-shell {
+  column-count: unset;
+  display: block;
+  max-width: none;
+  padding: calc(var(--nav-h) + 4.5rem) clamp(1rem, 2vw, 1.5rem) 5rem;
+  --faq-reading-width: 760px;
+  --faq-copy-size: 1.0625rem;
+  --faq-copy-line: 1.65;
+}
+
+.faq-page {
+  max-width: var(--faq-reading-width);
+  margin: 0 auto;
+}
+
+.faq-page > * {
+  max-width: none;
+}
+
+.faq-shell h1 {
+  font-size: clamp(2rem, 4vw, 2.75rem);
+  line-height: 1.06;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  text-align: left;
+  margin: 0 0 1rem;
+  padding: 0 0 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.faq-lede {
+  margin: 0 0 1rem;
+  color: var(--dim);
+  font-size: var(--faq-copy-size);
+  line-height: var(--faq-copy-line);
+}
+
+.faq-shell .faq-warning {
+  margin: 0 0 1.5rem;
+  padding: 1rem 1.1rem;
+  background: var(--surface);
+  border: 1px solid var(--border-2);
+  color: var(--white);
+  font-size: var(--faq-copy-size);
+  line-height: var(--faq-copy-line);
+}
+
+.faq-topic-nav,
+.faq-related-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+}
+
+.faq-topic-nav {
+  margin: 0 0 1.8rem;
+  padding-bottom: 1.1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.faq-topic-nav a,
+.faq-related-links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--white);
+  font-family: var(--font-ui);
+  font-size: var(--size-sm);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.08em;
+  text-decoration: none;
+  text-transform: uppercase;
+  transition: border-color 0.12s, color 0.12s, background 0.12s;
+}
+
+.faq-topic-nav a:hover,
+.faq-topic-nav a:focus-visible,
+.faq-related-links a:hover,
+.faq-related-links a:focus-visible {
+  color: var(--white);
+  border-color: var(--white);
+  background: var(--surface-2);
+}
+
+.faq-topic {
+  margin-top: 2.5rem;
+}
+
+.faq-topic h2 {
+  margin: 0 0 1rem;
+  padding: 1.25rem 0 0;
+  border-top: 1px solid var(--border);
+  border-bottom: none;
+  font-size: clamp(1.2rem, 2vw, 1.5rem);
+  line-height: 1.12;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: var(--weight-bold);
+}
+
+.faq-topic:first-of-type h2 {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+.faq-item {
+  border-top: 1px solid var(--border);
+  padding: 0.95rem 0;
+}
+
+.faq-item:last-of-type {
+  border-bottom: 1px solid var(--border);
+}
+
+.faq-item > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  list-style: none;
+  cursor: pointer;
+}
+
+.faq-item > summary::-webkit-details-marker,
+.faq-item > summary::marker {
+  display: none;
+}
+
+.faq-item > summary::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-right: 1.5px solid var(--muted);
+  border-bottom: 1.5px solid var(--muted);
+  transform: rotate(45deg);
+  flex-shrink: 0;
+  margin-bottom: 2px;
+}
+
+.faq-item[open] > summary::after {
+  transform: rotate(-135deg);
+  border-color: var(--white);
+  margin-bottom: -2px;
+}
+
+.faq-item > summary:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: 5px;
+  border-radius: 4px;
+}
+
+.faq-question {
+  color: var(--white);
+  font-family: var(--font-body);
+  font-size: var(--size-lg);
+  font-weight: var(--weight-semibold);
+  line-height: 1.2;
+}
+
+.faq-answer {
+  padding-top: 1rem;
+}
+
+.faq-answer p,
+.faq-answer li {
+  color: var(--dim);
+  font-size: var(--faq-copy-size);
+  line-height: var(--faq-copy-line);
+}
+
+.faq-answer p {
+  margin: 0 0 0.85rem;
+}
+
+.faq-answer ul,
+.faq-answer ol {
+  margin: 0.15rem 0 0.85rem 1.25rem;
+}
+
+.faq-answer li {
+  margin-bottom: 0.35rem;
+}
+
+.faq-answer strong {
+  color: var(--white);
+}
+
+.faq-answer a {
+  color: var(--white);
+}
+
+.faq-related {
+  margin-top: 2.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
+}
+
+.faq-related .faq-related-links {
+  margin-top: 0.35rem;
+}
+
+@media (max-width: 640px) {
+  .faq-shell {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .faq-shell h1 {
+    font-size: clamp(1.8rem, 9vw, 2.25rem);
+  }
+
+  .faq-topic-nav,
+  .faq-related-links {
+    gap: 0.4rem 0.5rem;
+  }
+
+  .faq-question {
+    font-size: 1rem;
+  }
+
+  .faq-item > summary {
+    gap: 0.25rem 0.5rem;
+  }
+}
+
 /* ----------------------------------------------------------------
    Engineering Log
    Single-column layout; table spans full content width.
