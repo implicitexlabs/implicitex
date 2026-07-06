@@ -34,6 +34,7 @@
       usdcAddress: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359',
       contractAddress: '0x5015841D6E665e63Ea174aD6b8FeF854026dE0C0',
       nativeCurrency: { name: 'POL', symbol: 'POL', decimals: 18 },
+      feeBps:      100,   /* 1% platform fee */
     },
   };
 
@@ -94,6 +95,24 @@
    * ---------------------------------------------------------------- */
   function chainConfig(chainId) {
     return CHAINS[chainId] || null;
+  }
+
+  /* ----------------------------------------------------------------
+   * calculateFee — single authority for platform fee math
+   *
+   * rawAmount  BigInt  USDC in base units (6 decimals)
+   * chainId    number  numeric chain ID
+   * feeBps     number? optional override (manifest-scoped rate); if
+   *                    omitted the chain's default feeBps is used
+   *
+   * Returns { fee: BigInt, total: BigInt } where total = rawAmount + fee.
+   * Integer division throughout — no float rounding ambiguity.
+   * ---------------------------------------------------------------- */
+  function calculateFee(rawAmount, chainId, feeBps) {
+    var cfg = CHAINS[chainId];
+    var bps = BigInt(feeBps != null ? feeBps : ((cfg && cfg.feeBps != null) ? cfg.feeBps : 100));
+    var fee = (rawAmount * bps) / 10000n;
+    return { fee: fee, total: rawAmount + fee };
   }
 
   /* ----------------------------------------------------------------
@@ -228,6 +247,7 @@
     waitForReceipt:  waitForReceipt,
     chainConfig:     chainConfig,
     toRawUsdc:       toRawUsdc,
+    calculateFee:    calculateFee,
   };
 
 })();

@@ -56,9 +56,8 @@
     '1':     'Ethereum',
   };
 
-  /* Fee config inline — not imported from chains.js (isolated iframe).
-   * manifest.feeBps overrides chain default when present. */
-  var CHAIN_FEE_BPS  = { 137: 100, 80002: 100, 1: 30 };
+  /* Fee calculation is delegated to window.IX_EXECUTE.calculateFee().
+   * manifest.feeBps is passed as an override when present. */
   var CHAIN_MIN_USDC = { 137: 1,   80002: 1,   1: 1  };
   var CHAIN_MAX_USDC = { 137: 250, 80002: 250, 1: 250 };
 
@@ -259,12 +258,14 @@
   }
 
   function applyAmount(amount, chainId) {
-    /* manifest.feeBps takes precedence over chain default */
-    var bps    = (state.manifest && state.manifest.feeBps != null)
-                   ? state.manifest.feeBps
-                   : (CHAIN_FEE_BPS[chainId] || 100);
-    var fee    = parseFloat((amount * bps / 10000).toFixed(6));
-    var total  = parseFloat((amount + fee).toFixed(6));
+    /* Delegate fee math to the Execution Service — single authority.
+     * manifest.feeBps is passed as an override when present. */
+    var feeBps    = (state.manifest && state.manifest.feeBps != null)
+                     ? state.manifest.feeBps : null;
+    var rawAmount = window.IX_EXECUTE.toRawUsdc(amount);
+    var feeResult = window.IX_EXECUTE.calculateFee(rawAmount, chainId, feeBps);
+    var fee       = Number(feeResult.fee)   / 1e6;
+    var total     = Number(feeResult.total) / 1e6;
     var min    = CHAIN_MIN_USDC[chainId] || 1;
     var max    = CHAIN_MAX_USDC[chainId] || 250;
 

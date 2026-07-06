@@ -1141,14 +1141,9 @@
     return `${sign}${whole.toString()}.${frac.slice(0, decimals).padEnd(decimals, '0')}`;
   }
 
-  function draftFeeBasisPoints(chainConfig) {
-    return BigInt((chainConfig && chainConfig.feeBasisPoints) || 100);
-  }
-
   function buildDraftSummary(recipient, amountStr, amountFloat, chainConfig) {
     const rawAmount = parseUsdcAmount(amountStr);
-    const fee = (rawAmount * draftFeeBasisPoints(chainConfig)) / 10000n;
-    const totalDebit = rawAmount + fee;
+    const { fee, total: totalDebit } = window.IX_EXECUTE.calculateFee(rawAmount, chainConfig && chainConfig.chainId);
     const balance = state.usdcBalanceRaw;
     return {
       recipient,
