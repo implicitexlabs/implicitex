@@ -140,7 +140,44 @@ Examples:
 
 ## 8. An instrument owns its identity. A workflow owns its state.
 
-A payment instrument — a Coin Card, a receipt, a credential object — owns a permanent identity region. That region never changes based on execution progress. A workflow — wallet connection, approval, transfer, confirmation — is stateful. The two must never be confused in design or implementation.
+This principle operates at two levels. The levels are not equal. The product boundary is resolved first. The implementation boundary is resolved within it.
+
+### Product boundary (resolve first)
+
+**Where does this feature live?**
+
+```
+Coin Card (payment instrument)
+    owns:
+    • identity
+    • transaction
+    • receipt
+
+Transfer Portal (inspection console)
+    owns:
+    • inspection
+    • verification
+    • diagnostics
+    • advanced controls
+```
+
+**Coin Card is a complete payment instrument. The Transfer Portal is an optional inspection and verification console. Every payment must be completable without leaving the Coin Card.**
+
+**The hard invariant:** The Transfer Portal never becomes a required step in completing a payment. This is stronger than "the Portal does not execute." A Portal that does not execute but must be visited before execution still violates the product boundary. The Portal is always optional, always secondary, always reachable from the instrument — never the other way around.
+
+Both products consume the same execution engine (`window.IX_EXECUTE`) independently. Neither calls the other.
+
+**The decision filter:**
+
+- Does this feature help a user understand, verify, or diagnose a transfer? → Console feature.
+- Does it execute, approve, submit, or confirm a transfer? → Instrument feature.
+- Does it require the Portal to be visited before or during a transfer? → This violates the product boundary regardless of where the code lives.
+
+### Implementation boundary (resolve second, within Coin Card)
+
+**Within the Coin Card, is this identity or workflow?**
+
+A payment instrument owns a permanent identity region. That region never changes based on execution progress. A workflow — wallet connection, approval, transfer, confirmation — is stateful. The two must never be confused in design or implementation.
 
 **The distinction:**
 
@@ -153,8 +190,6 @@ A payment instrument — a Coin Card, a receipt, a credential object — owns a 
 | Network / token | Receipt generation |
 | Brand mark | Error recovery |
 | Attribution | |
-
-Identity belongs to the instrument regardless of what the workflow is doing. The workflow reflects progress; the instrument reflects what it is. These are two different questions with two different answer sources.
 
 **The Coin Card architecture (reference implementation):**
 
@@ -182,34 +217,38 @@ Coin Card
 
 The execution engine is infrastructure that serves the transaction surface. The transaction surface reflects its progress. The identity shell is unaffected by either.
 
-This separation matters when execution engines multiply (MetaMask today, WalletConnect and Safe later): the UI doesn't change because the instrument's identity doesn't change.
-
-**The test:** When a feature is proposed, ask:
-
-- Does it belong to the instrument? → It goes in the identity shell. No state control.
-- Does it belong to the workflow? → It goes in the transaction surface. State-controlled.
-- Does it belong to neither? → It may be infrastructure or a separate product.
-
 **Corollary:** State rules in CSS, JavaScript, and server logic should never target identity shell elements. If a rule asks "hide the recipient address during EXECUTE_PENDING," it has violated the instrument boundary before a line of code is written.
 
-**The product boundary (orthogonal to the above):** An instrument owns the transaction. A console owns the explanation.
+**The test:** When a feature is proposed, ask — in order:
 
-This is a product-level distinction, separate from the identity/workflow implementation boundary above. They are orthogonal and together explain the full architecture:
+1. Does it belong to the instrument or the console? → Product boundary.
+2. Within the instrument: is it identity or workflow? → Implementation boundary.
 
-| Boundary | Applies to | Rule |
-|---|---|---|
-| Identity / Workflow | Implementation | Instrument identity is never state-controlled |
-| Instrument / Console | Product | A payment never leaves the payment instrument |
+---
 
-**Coin Card is a complete payment instrument.** The Transfer Portal is an optional inspection and verification console. Every payment must be completable without leaving the Coin Card.
+## 9. Every product has exactly one primary surface.
 
-Both products consume the same execution engine (`window.IX_EXECUTE`) independently. Neither routes through the other. This means:
+For Coin Card, the primary surface is the Coin Card. Secondary surfaces exist — Transfer Portal, Explorer, Receipt, Registry, Logs — but none of them are required for the normal payment path.
 
-- The Transfer Portal may observe, verify, diagnose, replay, and explain a transfer — but it does not execute one.
-- The Coin Card may complete a transfer without opening the Portal.
-- When execution engines multiply (WalletConnect, Safe, Ledger), neither instrument nor console UI changes — because execution is infrastructure, not product.
+A secondary surface that becomes required for the normal path has displaced the primary surface. That is a product boundary violation even if no code moved.
 
-**The decision filter for Portal features:** Does this feature help a user understand, verify, or diagnose a transfer? → Console feature. Does it execute, approve, or submit a transfer? → That belongs in the instrument, not the console.
+**The Coin Card surface hierarchy:**
+
+```
+Primary surface (required for payment):
+    Coin Card
+
+Secondary surfaces (optional, reachable from the primary):
+    Transfer Portal  — advanced inspection and verification
+    Explorer         — independent on-chain confirmation
+    Receipt          — portable proof artifact
+    Registry         — recipient identity record
+    Logs             — engineering and operations
+```
+
+**The test:** Can a sender complete the normal happy path — connect wallet, set amount, approve, transfer, receive confirmation — without leaving the primary surface? If the answer is no, a secondary surface has become required. That is the failure mode this principle exists to prevent.
+
+**Why this matters:** Feature creep almost never announces itself as a product boundary violation. It arrives as a convenience: "We could show more detail if we linked to the Portal here." The link is optional. Then it becomes "We should require Portal confirmation for large transfers." Now the Portal is required. The principle draws the line before that drift begins.
 
 ---
 
@@ -224,6 +263,7 @@ These principles answer future questions before they arise. When a feature is pr
 5. Does it create a new brand surface that is disconnected from the entity graph? → Principle 5 flags it for correction.
 6. Does it blur route evidence, recipient identity evidence, and payment execution? → Principle 6 blocks it.
 7. Does it increase the evidence available to users, or does it ask them to trust ImplicitEx instead? → Principle 7 is the test.
-8. Does it add identity to a workflow, or does it add workflow behavior to an instrument's identity region? → Principle 8 (identity/workflow boundary) blocks it. Does it require a transfer to route through a console, or a console to execute? → Principle 8 (instrument/console boundary) blocks it.
+8. Does this feature belong to the payment instrument or the inspection console? → Principle 8 (product boundary) decides first. Within the instrument: does it belong to the identity shell or the transaction surface? → Principle 8 (implementation boundary) decides second. Does the Portal become required at any point in the payment path? → Principle 8 blocks it regardless of where the code lives.
+9. Can the sender complete the normal happy path without leaving the primary surface? → Principle 9 is the test. If a secondary surface is required, the primary surface has been displaced.
 
 Proposals that strengthen these principles should be prioritized. Proposals that require violating them require an architectural argument, not just a product argument.

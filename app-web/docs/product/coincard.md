@@ -1,9 +1,15 @@
 # Coin Card — Product Specification and Trust Model
 
+Coin Card is a complete payment instrument. The Transfer Portal is an optional
+inspection and verification console. Every payment must be completable without
+leaving the Coin Card.
+
+---
+
 **Status:** V1 architecture frozen for implementation
 **Built:** 2026-06-25  
-**Updated:** 2026-07-04
-**Architectural authority:** Architectural Principles §3 and §6
+**Updated:** 2026-07-06
+**Architectural authority:** Architectural Principles §8 and §9
 
 V1 trust boundaries are frozen as of 2026-07-04. Implementation may change
 mechanics, but not the route-vs-recipient verification boundary, evidence
@@ -13,13 +19,10 @@ supremacy order, or off-chain-only treatment of purpose labels.
 
 ## What Coin Card Is
 
-Coin Card is a complete payment instrument. The Transfer Portal is an optional
-inspection and verification console. Every payment must be completable without
-leaving the Coin Card.
-
 A payment never leaves the payment instrument. Both Coin Card and the Transfer
 Portal consume the same execution engine independently. Neither routes through
-the other.
+the other. The Transfer Portal never becomes a required step in completing a
+payment.
 
 Free Coin Card answers one question: "What supported route and host-supplied
 recipient address is this card presenting?"
