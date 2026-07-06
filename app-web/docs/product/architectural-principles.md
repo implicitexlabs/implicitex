@@ -260,44 +260,69 @@ If someone fixes gas estimation, there is exactly one place where that fix is ma
 
 **The test:** When a capability improvement is made, how many *independent implementations* must change? Legitimate layering across files is acceptable — a capability that naturally spans a loader, a validator, and a cache is not duplicated. But if the algorithm itself exists twice, a second authority has been created. That is the thing to eliminate.
 
-**The canonical authority table for ImplicitEx platform capabilities:**
+**No surface may become the authority for a platform capability.** Coin Card is not the authority for fee math, wallet connection, execution, or registry parsing. The Transfer Portal is not either. Those belong to platform services. The surfaces are consumers. This is the architectural constraint that prevents business logic from drifting back into UI code.
 
-| Capability | Single authority |
-|---|---|
-| Execution (approve, transfer) | Execution Service → `window.IX_EXECUTE` |
-| Fee calculation | Execution Service → fee module |
-| Wallet connection | Execution Service → `window.IX_EXECUTE` |
-| Chain switching | Execution Service → `window.IX_EXECUTE` |
-| Registry manifest loading | Registry Service → single loader |
-| Recipient verification | `coincard.js` → `window.IX.coincard` |
-| Receipt generation | `receipt-store.js` → `window.IX.receipts` |
-| Transfer state machine | `transfer-status.js` → `IX_TRANSFER_STATES` |
+**Platform Services layer:**
+
+```
+Platform Services
+    │
+    ├── Execution Service   — connectWallet, switchChain, calculateFee,
+    │                         approve, executeTransfer, waitForReceipt
+    ├── Registry Service    — loadCard(cardId) → validated manifest
+    ├── Receipt Service     — create, update, archive, rehydrate
+    └── State Service       — IX_TRANSFER_STATES, ALLOWED_TRANSITIONS
+```
+
+Every UI surface is a consumer of this layer, not an owner of any part of it:
+
+```
+Coin Card ─────────────────────┐
+Transfer Portal ────────────── Platform Services
+Verify Page ───────────────────┤
+Publisher ─────────────────────┘
+```
+
+The platform is not Coin Card. The platform is not the Portal. They are clients.
+
+**The canonical authority table:**
+
+| Capability | Platform service | Current status |
+|---|---|---|
+| Execution (approve, transfer) | Execution Service | Coin Card: correct. Portal: bypasses service (HIGH). |
+| Fee calculation | Execution Service | Two implementations, different math (MEDIUM). |
+| Wallet connection | Execution Service | Three implementations (MEDIUM). |
+| Chain switching | Execution Service | Two implementations (LOW). |
+| Registry manifest loading | Registry Service | Four independent fetchers (HIGH). |
+| Recipient verification | Registry Service | `coincard.js` only — acceptable interim. |
+| Receipt generation | Receipt Service | `receipt-store.js` — already clean. |
+| Transfer state machine | State Service | `transfer-status.js` — already clean. |
 
 **On the Execution Service:**
 
-The authority for execution-related capabilities (`connectWallet`, `switchChain`, `calculateFee`, `approve`, `executeTransfer`, `waitForReceipt`) belongs to a platform-level Execution Service — not to the Coin Card, not to the Transfer Portal, and not to any implementation file that a surface happens to own. The current `ix-execute.js` is the seed of this service. It is not yet the service itself.
+The authority for execution belongs to a platform-level service — not to the Coin Card, not to the Transfer Portal, and not to any implementation file that a surface happens to own. The current `ix-execute.js` is the seed of this service. It is not yet the service itself.
 
-The distinction matters because execution is no longer a Coin Card feature. It is platform infrastructure. When WalletConnect, Safe, and Ledger arrive, they are Execution Service features — Coin Card and Portal both benefit from them simultaneously, without either surface changing.
+Files are implementation details. Services are architectural concepts. Five years from now the implementation may be `execution-service.ts`, multiple modules, a WebAssembly bridge, or a hardware wallet adapter. The architecture does not change because the implementation does. When WalletConnect, Safe, and Ledger arrive, they are Execution Service features — Coin Card and Portal both benefit from them simultaneously, without either surface changing.
 
-The reference pattern for what this should look like: `receipt-store.js` and `transfer-status.js`. Both were designed before multiple surfaces existed. Both expose a single responsibility. Both are called by everything; neither knows who is calling. That is what the Execution Service should become.
+The reference pattern: `receipt-store.js` and `transfer-status.js`. Both were designed before multiple surfaces existed. Both expose a single responsibility. Both are called by everything; neither knows who is calling. That is what the Execution Service should become.
 
 **Known authority violations as of 2026-07-06 (consolidation roadmap):**
 
-Three stages. The stages are ordered by risk and by dependency — Stage 2 cannot be cleanly done without Stage 1, and Stage 3 is independent of both.
+Three stages, ordered by risk and dependency. Stage 2 depends on Stage 1. Stage 3 is independent.
 
 *Stage 1 — Execution authority (highest risk):*
 
-`wallet.js` constructs its own ethers.js Contract instances and calls `approve()` and `transferWithFee()` directly — bypassing the Execution Service entirely. This creates a second execution path with independent error handling, gas estimation, retry logic, and no path to future engine support. Fix: define the Execution Service contract (`connectWallet`, `switchChain`, `calculateFee`, `approve`, `executeTransfer`, `waitForReceipt`) and route `wallet.js` through it. This also collapses the wallet connection and chain switching violations.
+`wallet.js` constructs its own ethers.js Contract instances and calls `approve()` and `transferWithFee()` directly — bypassing the Execution Service entirely. This creates a second execution path with independent error handling, gas estimation, retry logic, and no path to future engine support. Fix: define the Execution Service contract and route `wallet.js` through it. This also collapses the wallet connection and chain switching violations.
 
-*Stage 2 — Fee authority (medium risk):*
+*Stage 2 — Fee authority (medium risk, depends on Stage 1):*
 
 `card.js` calculates fees in floating-point with hardcoded BPS defaults. `wallet.js` calculates fees in BigInt from chainConfig. A user may see one fee displayed and a different fee submitted. Fix: move fee calculation into the Execution Service. Both surfaces call `calculateFee(amount, chainId)`. One result, one rounding strategy.
 
 *Stage 3 — Registry authority (high structural risk, independent of Stages 1–2):*
 
-`card.js`, `coincard.js`, `coincard-handoff.js`, and `verify.js` each fetch the registry manifest independently, each with slightly different validation logic. Schema changes require four updates; validation bugs exist in an unpredictable subset. Fix: a Registry Service exposes `loadCard(cardId)` → validated manifest. Every surface consumes that. Schema validation, caching, version negotiation, and future signature verification happen once.
+`card.js`, `coincard.js`, `coincard-handoff.js`, and `verify.js` each fetch the registry manifest independently, with diverging validation logic. Schema changes require four updates. Fix: Registry Service exposes `loadCard(cardId)` → validated manifest. Schema validation, caching, version negotiation, and future signature verification happen once.
 
-**Corollary:** Before adding a new capability, locate its single authority. If none exists, create the authority first. Adding a capability to a surface that bypasses the platform service creates a fourth or fifth authority and accelerates the divergence that Stage 1–3 are trying to close.
+**Corollary:** Before adding a new capability, locate its single authority. If none exists, create the authority first. No surface may implement what belongs to a platform service.
 
 ---
 
@@ -314,6 +339,29 @@ These principles answer future questions before they arise. When a feature is pr
 7. Does it increase the evidence available to users, or does it ask them to trust ImplicitEx instead? → Principle 7 is the test.
 8. Does this feature belong to the payment instrument or the inspection console? → Principle 8 (product boundary) decides first. Within the instrument: does it belong to the identity shell or the transaction surface? → Principle 8 (implementation boundary) decides second. Does the Portal become required at any point in the payment path? → Principle 8 blocks it regardless of where the code lives.
 9. Can the sender complete the normal happy path without leaving the primary surface? → Principle 9 is the test. If a secondary surface is required, the primary surface has been displaced.
-10. Does this improvement require changes to more than one file? → Principle 10 flags a missing single authority. Create the authority first, then make the improvement.
+10. Does this improvement require changes to more than one independent implementation? → Principle 10 flags a missing single authority. Does this feature put platform capability inside a UI surface? → Principle 10 blocks it: no surface may become the authority for a platform capability.
 
 Proposals that strengthen these principles should be prioritized. Proposals that require violating them require an architectural argument, not just a product argument.
+
+---
+
+## The unifying philosophy
+
+All ten principles are expressions of one pattern:
+
+> **Move responsibility to the layer that naturally owns it.**
+
+| Responsibility | Natural owner |
+|---|---|
+| Typographic role | Semantic type system |
+| Recipient identity | Manifest / registry |
+| Transfer execution | Coin Card (payment instrument) |
+| Inspection and verification | Transfer Portal (console) |
+| Execution mechanics | Execution Service (platform) |
+| Manifest validation | Registry Service (platform) |
+| Receipt lifecycle | Receipt Service (platform) |
+| State transitions | State Service (platform) |
+
+When responsibility is in the right layer, improvements in that layer propagate to all consumers. When responsibility is in the wrong layer — UI code owning business logic, surfaces owning platform capabilities — improvements are local, drift is inevitable, and the system becomes harder to reason about with each addition.
+
+This is why the product becomes more coherent as ambiguities are removed: each clarification returns a responsibility to the layer that naturally owns it, and the architecture simplifies rather than grows.
