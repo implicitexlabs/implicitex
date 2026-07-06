@@ -4,6 +4,8 @@
 
 These are not implementation details. They are constitutional rules that govern future product decisions. When a feature proposal arrives, the question is: does it strengthen these principles or weaken them?
 
+**Adding new principles:** Before adding a Principle 11 or beyond, ask: can this idea be derived from the existing ten principles? If yes, it belongs as a corollary or example under an existing principle, not as a new one. A new principle is warranted only when the idea cannot be derived from what already exists. This discipline keeps the doctrine from becoming an encyclopedia.
+
 ---
 
 ## 1. Transfers execute only on ImplicitEx-controlled surfaces.
@@ -347,9 +349,13 @@ Proposals that strengthen these principles should be prioritized. Proposals that
 
 ## The unifying philosophy
 
-All ten principles are expressions of one pattern:
+All ten principles are expressions of two related ideas, in order:
+
+> **Every responsibility has one natural owner.**
 
 > **Move responsibility to the layer that naturally owns it.**
+
+The order matters. The first question is identification: who should own this? Only after that is answered does reorganization begin. Skipping the first question turns architectural work into a game of moving code between folders — the code moves, but the responsibility stays wherever it happened to land.
 
 | Responsibility | Natural owner |
 |---|---|
@@ -364,4 +370,15 @@ All ten principles are expressions of one pattern:
 
 When responsibility is in the right layer, improvements in that layer propagate to all consumers. When responsibility is in the wrong layer — UI code owning business logic, surfaces owning platform capabilities — improvements are local, drift is inevitable, and the system becomes harder to reason about with each addition.
 
-This is why the product becomes more coherent as ambiguities are removed: each clarification returns a responsibility to the layer that naturally owns it, and the architecture simplifies rather than grows.
+**The methodology these principles produce:**
+
+1. Find the smallest inconsistency.
+2. Identify the responsibility involved.
+3. Determine its natural owner.
+4. Move the responsibility.
+5. Remove the duplicate.
+6. Repeat.
+
+This is not a refactoring procedure. It is how the product develops. Every improvement in this system — semantic typography, identity leading address, Coin Card as instrument, Portal as console, Execution Service, Registry Service — followed the same six steps. The architecture simplifies rather than grows because each step removes an ambiguity rather than adding a capability.
+
+**The doctrine is predictive, not descriptive.** It does not only record decisions that have been made. It answers questions before code is written. "Should Safe support be implemented in Coin Card?" — No. Safe is an execution capability. It belongs in the Execution Service. Coin Card consumes it. That answer requires no discussion because the principle already resolved it. That is the sign of a mature architectural doctrine: it reduces future design uncertainty rather than cataloguing past decisions.
