@@ -88,6 +88,42 @@ identification + movement). Not a new principle.
 
 ---
 
+## calculateFee return value — future enrichment candidate
+
+**Type: Observation** — Do not implement until the return value grows naturally.
+
+`IX_EXECUTE.calculateFee()` currently returns `{ fee: BigInt, total: BigInt }`. A richer value object would make the result self-describing:
+
+```javascript
+{
+  rawAmount,    // input, for verification
+  fee,          // BigInt
+  total,        // BigInt
+  basisPoints,  // number — the BPS used (chain default or override)
+  chainId,      // number — which chain resolved the BPS
+}
+```
+
+When this object becomes canonical, logging, receipt attachment, analytics, and debugging all consume the same structure rather than reconstructing context from call-site variables.
+
+**When to act:** when a second consumer needs `basisPoints` or `rawAmount` from the result, or when receipt schema adds a fee-calculation audit field.
+
+---
+
+## Chain Authority — emerging platform service
+
+**Type: Pattern** — Visible after Stage 2. Do not build until Stage 3 is complete.
+
+The Execution Service CHAINS config already owns: `rpcUrl`, `explorerUrl`, `contractAddress`, `usdcAddress`, `nativeCurrency`, `feeBps`. As the system grows, it will likely also need to own: gas policy, decimals, chain display name, chain capabilities (e.g. EIP-1559, ERC-4337), supported token list.
+
+That is the shape of a Chain Registry — not configuration embedded in the Execution Service, but a platform service that the Execution Service consumes alongside everything else.
+
+**The pattern that makes this visible:** every time a new capability is added (fee math, gas estimation, multi-chain), the CHAINS config grows. When CHAINS config is the bottleneck for adding a new chain, the service boundary is ready to be drawn.
+
+**When to act:** after Stage 3 (Registry Service). A Chain Registry and a Registry Service are separate services with complementary responsibilities — Chain Registry owns network topology, Registry Service owns recipient identity.
+
+---
+
 ## Execution authority audit checklist
 
 **Type: Pattern** — Run this after any change to execution-related code to confirm no second execution path has been introduced.
