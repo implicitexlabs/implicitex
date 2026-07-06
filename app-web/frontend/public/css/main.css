@@ -64,8 +64,8 @@
 
   /* ---- Typefaces ---- */
   --font-body:    'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --font-ui:      'Oxanium', system-ui, sans-serif;
-  --font-display: 'Orbitron', 'Oxanium', system-ui, sans-serif;
+  --font-ui:      'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-display: 'Orbitron', system-ui, sans-serif;
   --font-mono:    'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
   /* Legacy aliases — kept during migration; new selectors should use --font-* names */
   --sans:    var(--font-ui);
@@ -4484,6 +4484,29 @@ h1 + .gs-section-head {
   line-height: var(--leading-ui);
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+.jurisdiction-references {
+  margin: 1rem 0 2rem 1.25rem;
+  padding: 0;
+}
+
+.jurisdiction-references li {
+  font-family: var(--font-body);
+  font-size: var(--size-sm);
+  color: var(--dim);
+  line-height: 1.6;
+  margin-bottom: 0.75rem;
+}
+
+.jurisdiction-references a {
+  color: var(--dim);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.jurisdiction-references a:hover {
+  color: var(--white);
 }
 
 /* ---- Shell gutter — restore side padding below the interface max + gutter threshold.
