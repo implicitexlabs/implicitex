@@ -160,9 +160,17 @@
 
   </div><!-- /.cc-card -->
 
-  <!-- Footer: always visible once card is loaded -->
+  <!-- Footer: always visible once card is loaded.
+       Identity shell rule: footer persists through all states, including
+       all execution states. The ¢OIN CARD mark is SECONDARY in the
+       visual hierarchy — canonical SVG stamp, not plain text. -->
   <div class="cc-footer" id="ccFooter">
-    <span class="cc-mark">&#162;OIN CARD</span>
+    <img src="/components/images/coincard-logo.svg"
+         alt="Coin Card"
+         class="cc-mark"
+         width="98"
+         height="14"
+         aria-label="Coin Card">
     <span class="cc-attr">Powered by ImplicitEx</span>
   </div>
 

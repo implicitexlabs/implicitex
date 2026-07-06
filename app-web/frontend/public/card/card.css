@@ -4,22 +4,29 @@
  * All values are explicit. This file may be extracted verbatim
  * for distribution alongside card.js and index.html.
  *
+ * Identity shell rule (ironclad):
+ *   .cc-header, .cc-trust, and .cc-footer are structural — they persist
+ *   through every state. No state rule may hide them. Transaction states
+ *   change the CONTENTS inside the card, not the card's identity shell.
+ *
  * States (set on #ccFrame data-state attribute):
  *   BOOT                  → blank
  *   MANIFEST_LOADING      → loading indicator
- *   VERIFIED              → trust rows + amount input
- *   AMOUNT_READY          → trust rows + amount + fee preview
- *   TRANSFER_INTENT_READY → trust rows + amount + fee + send button active
- *   REVOKED               → trust rows + revocation notice
+ *   VERIFIED              → shell + gift view (pre-sender-mode)
+ *                           shell + amount input (sender mode)
+ *   AMOUNT_READY          → shell + amount + fee preview
+ *   TRANSFER_INTENT_READY → shell + amount + fee + send button active
+ *   REVOKED               → shell + revocation notice
  *   ERROR                 → error message
- *   CONNECTING            → wallet connect in progress
- *   WRONG_NETWORK         → wallet on wrong chain
- *   SWITCHING_NETWORK     → chain switch in progress
- *   READY_TO_SEND         → confirm panel shown, awaiting user confirmation
- *   APPROVE_PENDING       → USDC approval submitted, awaiting receipt
- *   EXECUTE_PENDING       → transferWithFee submitted, awaiting receipt
- *   CONFIRMED             → transfer on-chain confirmed
- *   (HANDOFF removed — card now executes in-card via IX_EXECUTE)
+ *   --- execution states: shell always visible ---
+ *   CONNECTING            → shell + spinner (wallet connect in progress)
+ *   WRONG_NETWORK         → shell + switch prompt
+ *   SWITCHING_NETWORK     → shell + switching indicator
+ *   READY_TO_SEND         → shell + confirm panel (awaiting confirmation)
+ *   APPROVE_PENDING       → shell + exec status (USDC approval pending)
+ *   EXECUTE_PENDING       → shell + exec status (transfer pending)
+ *   CONFIRMED             → shell + confirmed panel + explorer link
+ *   (HANDOFF removed — card executes in-card via window.IX_EXECUTE)
  */
 
 /* ---- Reset ---- */
@@ -429,13 +436,17 @@ html, body {
   border-top: 1px solid var(--cc-border);
   margin-top: auto;
 }
+/* Canonical SVG logotype — coincard-logo.svg uses fill="currentColor"
+ * which defaults to black when loaded as <img>. filter:invert(1) makes
+ * it white on the dark card surface. opacity sets the secondary hierarchy
+ * weight: visible but subordinate to the trust signal above. */
 .cc-mark {
-  font-family: var(--cc-display);
-  font-size: 8px;
-  font-weight: 700;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  color: rgba(242, 242, 240, 0.50);
+  display: block;
+  width: 98px;
+  height: 14px;
+  flex-shrink: 0;
+  opacity: 0.65;
+  filter: invert(1);
 }
 .cc-attr {
   font-family: var(--cc-body);
@@ -444,7 +455,22 @@ html, body {
   color: var(--cc-text-dim);
 }
 
-/* ---- Execution states — card and footer visible ---- */
+/* ---- Execution states — identity shell is structural, not state-dependent ----
+ *
+ * The card shell consists of three permanent elements:
+ *   .cc-header   — status + credential (trust signal)
+ *   .cc-trust    — ISSUED BY / CARD HOLDER / RECIPIENT / NETWORK rows
+ *   .cc-footer   — ¢OIN CARD mark + "Powered by ImplicitEx"
+ *
+ * Rule: transaction states may change the card CONTENTS (amount surface,
+ * confirm panel, exec status, confirmed panel), but never the identity shell.
+ * The shell is always visible when .cc-card is visible. No state rule should
+ * ever hide .cc-header, .cc-trust, or .cc-footer.
+ *
+ * .cc-header and .cc-trust have no state-based hiding rules and are
+ * inherited from flex layout — they render whenever .cc-card is display:flex.
+ * .cc-footer is explicitly shown for all active states below.
+ */
 [data-state="CONNECTING"] .cc-card, [data-state="WRONG_NETWORK"] .cc-card,
 [data-state="SWITCHING_NETWORK"] .cc-card, [data-state="READY_TO_SEND"] .cc-card,
 [data-state="APPROVE_PENDING"] .cc-card, [data-state="EXECUTE_PENDING"] .cc-card,
