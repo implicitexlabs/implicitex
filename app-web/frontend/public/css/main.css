@@ -3275,7 +3275,7 @@ h1 + .gs-section-head {
   }
 
   .faq-shell h1 {
-    font-size: clamp(1.8rem, 9vw, 2.25rem);
+    font-size: var(--size-base);
   }
 
   .faq-topic-nav,
