@@ -1,38 +1,25 @@
-/* card.js — Coin Card iframe state machine + in-card execution
+/* card.js — Coin Card iframe state machine
  *
  * States:
  *   BOOT                  → initializing, reading card ID from URL path
  *   MANIFEST_LOADING      → fetching /registry/coincards/<id>.json
- *   VERIFIED              → manifest valid; trust rows populated; gift section shown
+ *   VERIFIED              → manifest valid and active; trust rows populated
  *   AMOUNT_READY          → valid amount entered; fee calculated
- *   TRANSFER_INTENT_READY → intent constructed; "Connect Wallet" button active
- *   CONNECTING            → eth_requestAccounts in flight
- *   WRONG_NETWORK         → wallet connected; wrong chain; offer switch
- *   SWITCHING_NETWORK     → wallet_switchEthereumChain in flight
- *   READY_TO_SEND         → connected, correct chain; confirm panel shown
- *   APPROVE_PENDING       → USDC approve() tx submitted; awaiting confirmation
- *   EXECUTE_PENDING       → transferWithFee() tx submitted; awaiting confirmation
- *   CONFIRMED             → transfer confirmed on-chain; explorer link shown
+ *   TRANSFER_INTENT_READY → intent object constructed; send button active
  *   REVOKED               → manifest status === 'revoked'; transfer blocked
+ *   HANDOFF               → sender confirmed; posting intent to parent / redirecting
  *   ERROR                 → any unrecoverable failure
- *
- * Execution model:
- *   The card is the complete transaction surface. No redirect to the Transfer
- *   Portal. Execution uses the manifest recipient locked from the registry —
- *   never from user input. Two-step flow: approve USDC spend, then
- *   transferWithFee on the ImplicitEx contract.
  *
  * Trust model:
  *   Registry manifest is evidence. URL path is transport. The card never
  *   becomes a payment surface until the destination is verified from the registry.
  *
  * PostMessage bridge (iframe → parent):
- *   { source:'implicitex-coincard', type:'CC_READY',          cardId, payload:{ recipient, chainId, token, owner } }
- *   { source:'implicitex-coincard', type:'CC_AMOUNT_CHANGED',  cardId, payload:{ amount, fee, total } }
- *   { source:'implicitex-coincard', type:'CC_INTENT_READY',    cardId, payload:{ intent } }
- *   { source:'implicitex-coincard', type:'CC_READY_TO_SEND',   cardId, payload:{ sender, intent } }
- *   { source:'implicitex-coincard', type:'CC_CONFIRMED',       cardId, payload:{ txHash, sender, intent } }
- *   { source:'implicitex-coincard', type:'CC_ERROR',           cardId, payload:{ message } }
+ *   { source:'implicitex-coincard', type:'CC_READY',         cardId, payload:{ recipient, chainId, token, owner } }
+ *   { source:'implicitex-coincard', type:'CC_AMOUNT_CHANGED', cardId, payload:{ amount, fee, total } }
+ *   { source:'implicitex-coincard', type:'CC_INTENT_READY',   cardId, payload:{ intent } }
+ *   { source:'implicitex-coincard', type:'CC_HANDOFF',        cardId, payload:{ intent, url } }
+ *   { source:'implicitex-coincard', type:'CC_ERROR',          cardId, payload:{ message } }
  *
  * PostMessage bridge (parent → iframe):
  *   { source:'coincard-host', type:'CC_THEME', payload:{ theme:'dark'|'light' } }
@@ -64,54 +51,6 @@
   var CHAIN_MIN_USDC = { 137: 1,   80002: 1,   1: 1  };
   var CHAIN_MAX_USDC = { 137: 250, 80002: 250, 1: 250 };
 
-  /* Execution config — inline, mirroring config/chains.js.
-   * Card is isolated from the host page so cannot read window.IX_CHAINS. */
-  var CHAIN_EXEC = {
-    137: {
-      name:            'Polygon',
-      chainHex:        '0x89',
-      usdcAddress:     '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359',
-      contractAddress: '0x5015841D6E665e63Ea174aD6b8FeF854026dE0C0',
-      explorerUrl:     'https://polygonscan.com',
-      rpcUrls:         ['https://polygon-bor-rpc.publicnode.com'],
-    },
-  };
-
-  /* ----------------------------------------------------------------
-   * ABI encoding — vanilla JS, no ethers.js dependency.
-   * Selectors computed from keccak256 of canonical function signatures.
-   * ---------------------------------------------------------------- */
-  var APPROVE_SELECTOR      = '095ea7b3'; /* approve(address,uint256)          */
-  var TRANSFER_FEE_SELECTOR = '08acece2'; /* transferWithFee(address,uint256)  */
-
-  function padHex32(hex) {
-    return hex.replace(/^0x/i, '').toLowerCase().padStart(64, '0');
-  }
-
-  function encodeApprove(spender, amountBigInt) {
-    return '0x'
-      + APPROVE_SELECTOR
-      + padHex32(spender)
-      + amountBigInt.toString(16).padStart(64, '0');
-  }
-
-  function encodeTransferWithFee(recipient, amountBigInt) {
-    return '0x'
-      + TRANSFER_FEE_SELECTOR
-      + padHex32(recipient)
-      + amountBigInt.toString(16).padStart(64, '0');
-  }
-
-  /* Convert float USDC amount to raw uint256 (6 decimals).
-   * Uses string math to avoid float precision issues. */
-  function toRawUsdc(floatVal) {
-    var s      = floatVal.toFixed(6);
-    var parts  = s.split('.');
-    var whole  = BigInt(parts[0] || '0');
-    var frac   = BigInt((parts[1] || '000000').padEnd(6, '0').slice(0, 6));
-    return whole * 1000000n + frac;
-  }
-
   /* ----------------------------------------------------------------
    * State machine
    * ---------------------------------------------------------------- */
@@ -119,12 +58,11 @@
     current:             'BOOT',
     cardId:              null,
     manifest:            null,
-    trustedParentOrigin: null,
+    trustedParentOrigin: null,   /* set after first valid host message */
     amount:              null,
     fee:                 null,
     total:               null,
     intent:              null,
-    sender:              null,   /* connected wallet address */
   };
 
   var frame = document.getElementById('ccFrame');
@@ -153,9 +91,15 @@
   function emit(type, payload) {
     if (!window.parent || window.parent === window) return;
 
+    /* Target origin selection:
+     *   1. trustedParentOrigin — set once a valid host message arrives.
+     *   2. '*' — only when manifest.allowedParentOrigins includes '*'.
+     * Initial CC_READY fires before any host message; for open-distribution
+     * cards ('*') it uses '*'. For locked-origin cards the first emit goes
+     * to '*' and subsequent ones use trustedParentOrigin once established. */
     var allowed      = (state.manifest && state.manifest.allowedParentOrigins) || [];
     var targetOrigin = state.trustedParentOrigin
-      || (allowed.includes('*') ? '*' : '*');
+      || (allowed.includes('*') ? '*' : '*');   /* tighten to trustedParentOrigin after handshake */
 
     window.parent.postMessage({
       source:  'implicitex-coincard',
@@ -168,9 +112,19 @@
   window.addEventListener('message', function (event) {
     var msg = event.data;
     if (!msg || msg.source !== 'coincard-host') return;
+
+    /* Drop inbound messages before manifest is loaded —
+     * no allowedParentOrigins to validate against. */
     if (!state.manifest) return;
+
     if (!isAllowedParentOrigin(event.origin)) return;
-    if (!state.trustedParentOrigin) state.trustedParentOrigin = event.origin;
+
+    /* Record the first validated origin for outbound targeting. */
+    if (!state.trustedParentOrigin) {
+      state.trustedParentOrigin = event.origin;
+    }
+
+    /* Reserved for host → iframe messages (theme, context, etc.) */
   });
 
   /* ----------------------------------------------------------------
@@ -193,12 +147,14 @@
 
       var firstName = manifest.displayName.split(' ')[0];
 
+      /* Personalize gift text */
       var giftText = el('ccGiftText');
       if (giftText) {
         giftText.textContent = 'This Coin Card was created so support can reach '
           + manifest.displayName + ' directly.';
       }
 
+      /* Personalize reveal button */
       var revealBtn = el('ccRevealBtn');
       if (revealBtn) {
         revealBtn.textContent = 'Send USDC to ' + firstName + ' \u2192';
@@ -228,7 +184,9 @@
 
     /* Status dot + label */
     var dot = el('ccStatusDot');
-    if (dot) dot.className = 'cc-status-dot cc-status-dot--verified';
+    if (dot) {
+      dot.className = 'cc-status-dot cc-status-dot--verified';
+    }
     setText('ccStatusLabel', 'Verified');
   }
 
@@ -250,12 +208,16 @@
     setText('ccAmountToken', token);
 
     if (mode === 'locked' && manifest.lockedAmount != null) {
+      /* locked: fixed amount — hide input, show read-only value, auto-apply */
       el('ccAmountInputRow').style.display = 'none';
       var lockedRow = el('ccLockedAmountRow');
       lockedRow.style.display = 'flex';
       setText('ccLockedAmount', manifest.lockedAmount.toFixed(2) + ' ' + token);
       applyAmount(manifest.lockedAmount, chainId);
     } else {
+      /* sender_input / suggested: sender enters or adjusts the amount.
+       * 'suggested' V1 behaviour is identical to 'sender_input'; a future
+       * manifest field (e.g. suggestedAmount) will pre-fill the input. */
       var input = el('ccAmountInput');
       if (input) {
         input.addEventListener('input', function () {
@@ -272,13 +234,14 @@
   }
 
   function applyAmount(amount, chainId) {
-    var bps   = (state.manifest && state.manifest.feeBps != null)
-                  ? state.manifest.feeBps
-                  : (CHAIN_FEE_BPS[chainId] || 100);
-    var fee   = parseFloat((amount * bps / 10000).toFixed(6));
-    var total = parseFloat((amount + fee).toFixed(6));
-    var min   = CHAIN_MIN_USDC[chainId] || 1;
-    var max   = CHAIN_MAX_USDC[chainId] || 250;
+    /* manifest.feeBps takes precedence over chain default */
+    var bps    = (state.manifest && state.manifest.feeBps != null)
+                   ? state.manifest.feeBps
+                   : (CHAIN_FEE_BPS[chainId] || 100);
+    var fee    = parseFloat((amount * bps / 10000).toFixed(6));
+    var total  = parseFloat((amount + fee).toFixed(6));
+    var min    = CHAIN_MIN_USDC[chainId] || 1;
+    var max    = CHAIN_MAX_USDC[chainId] || 250;
 
     if (amount < min || amount > max) {
       clearFee();
@@ -290,8 +253,8 @@
     state.fee    = fee;
     state.total  = total;
 
-    setText('ccFeeValue',   fee.toFixed(6) + ' ' + (state.manifest.token || 'USDC').toUpperCase());
-    setText('ccTotalValue', total.toFixed(6) + ' ' + (state.manifest.token || 'USDC').toUpperCase());
+    setText('ccFeeValue',   fee.toFixed(2) + ' ' + (state.manifest.token || 'USDC').toUpperCase());
+    setText('ccTotalValue', total.toFixed(2) + ' ' + (state.manifest.token || 'USDC').toUpperCase());
 
     transition('AMOUNT_READY');
     buildIntent();
@@ -303,10 +266,9 @@
     state.fee    = null;
     state.total  = null;
     state.intent = null;
-    state.sender = null;
     setText('ccFeeValue',   '\u2014');
     setText('ccTotalValue', '\u2014');
-    setSendBtnLabel('Connect Wallet \u2192', true);
+    setAttr('ccSendBtn', 'disabled', true);
   }
 
   /* ----------------------------------------------------------------
@@ -326,283 +288,38 @@
       owner:     m.owner || null,
     };
     transition('TRANSFER_INTENT_READY');
-    setSendBtnLabel('Connect Wallet \u2192', false);
+    setAttr('ccSendBtn', 'disabled', false);
     emit('CC_INTENT_READY', { intent: state.intent });
   }
 
   /* ----------------------------------------------------------------
-   * Send button label helper
+   * Handoff — V1: route sender to the existing ImplicitEx Transfer Portal.
+   *
+   * URL contract:
+   *   cc     = registry key (canonical). Portal fetches the manifest to
+   *            resolve recipient — never trusts a to= param from the URL.
+   *   amount = sender intent (prefill hint only; sender reviews before sending).
+   *   src    = provenance marker so the portal knows this came from a Coin Card.
+   *
+   * The portal resolves all other fields (recipient, token, chain) from the
+   * registry manifest keyed by cc. Nothing critical travels in the URL.
    * ---------------------------------------------------------------- */
-  function setSendBtnLabel(text, disabled) {
-    var btn = el('ccSendBtn');
-    if (!btn) return;
-    btn.textContent = text;
-    btn.disabled    = !!disabled;
-  }
-
-  /* ----------------------------------------------------------------
-   * Wallet connection flow
-   * ---------------------------------------------------------------- */
-  function connectWallet() {
-    if (!window.ethereum) {
-      renderError('No wallet detected', 'Install MetaMask to send USDC on this card.');
-      return;
-    }
-
-    transition('CONNECTING');
-    setSendBtnLabel('Connecting\u2026', true);
-
-    window.ethereum.request({ method: 'eth_requestAccounts' })
-      .then(function (accounts) {
-        if (!accounts || !accounts[0]) {
-          transition('TRANSFER_INTENT_READY');
-          setSendBtnLabel('Connect Wallet \u2192', false);
-          return;
-        }
-
-        state.sender = accounts[0];
-
-        /* Self-send guard — warn if sender is also the card holder */
-        if (state.manifest) {
-          var isSelfSend = state.sender.toLowerCase() === state.manifest.recipient.toLowerCase();
-          var warn = el('ccSelfSendWarn');
-          if (warn) warn.classList.toggle('is-active', isSelfSend);
-        }
-
-        return window.ethereum.request({ method: 'eth_chainId' });
-      })
-      .then(function (chainIdHex) {
-        if (chainIdHex == null) return; /* accounts guard above failed — already handled */
-
-        var detectedChainId  = parseInt(chainIdHex, 16);
-        var manifestChainId  = state.manifest && state.manifest.chainId;
-        var cfg              = CHAIN_EXEC[manifestChainId];
-
-        if (detectedChainId !== manifestChainId) {
-          transition('WRONG_NETWORK');
-          var targetName = cfg ? cfg.name : ('chain ' + manifestChainId);
-          setSendBtnLabel('Switch to ' + targetName + ' \u2192', false);
-          return;
-        }
-
-        showConfirmPanel();
-      })
-      .catch(function (err) {
-        if (err && err.code === 4001) {
-          /* User declined the connection prompt */
-          transition('TRANSFER_INTENT_READY');
-          setSendBtnLabel('Connect Wallet \u2192', false);
-          return;
-        }
-        renderError('Wallet error', err && err.message);
-      });
-  }
-
-  function switchToManifestChain() {
-    var manifestChainId = state.manifest && state.manifest.chainId;
-    var cfg             = CHAIN_EXEC[manifestChainId];
-
-    if (!cfg) {
-      renderError('Unsupported network', 'chainId ' + manifestChainId);
-      return;
-    }
-
-    transition('SWITCHING_NETWORK');
-    setSendBtnLabel('Switching\u2026', true);
-
-    window.ethereum.request({
-      method: 'wallet_switchEthereumChain',
-      params: [{ chainId: cfg.chainHex }],
-    })
-    .then(function () {
-      showConfirmPanel();
-    })
-    .catch(function (err) {
-      if (err && err.code === 4902) {
-        /* Chain not added to wallet — add it, then continue */
-        return window.ethereum.request({
-          method: 'wallet_addEthereumChain',
-          params: [{
-            chainId:             cfg.chainHex,
-            chainName:           cfg.name,
-            nativeCurrency:      { name: 'MATIC', symbol: 'MATIC', decimals: 18 },
-            rpcUrls:             cfg.rpcUrls,
-            blockExplorerUrls:   [cfg.explorerUrl],
-          }],
-        }).then(showConfirmPanel);
-      }
-      /* User declined the switch */
-      transition('WRONG_NETWORK');
-      setSendBtnLabel('Switch to ' + cfg.name + ' \u2192', false);
-    });
-  }
-
-  function showConfirmPanel() {
-    if (!state.intent || !state.sender || !state.manifest) {
-      transition('TRANSFER_INTENT_READY');
-      setSendBtnLabel('Connect Wallet \u2192', false);
-      return;
-    }
-
+  function doHandoff() {
+    if (!state.intent) return;
     var intent = state.intent;
-    var token  = (state.manifest.token || 'USDC').toUpperCase();
-    var bps    = state.manifest.feeBps != null ? state.manifest.feeBps : 100;
 
-    var senderShort = state.sender.slice(0, 6) + '\u2026' + state.sender.slice(-4);
-    var recipShort  = intent.recipient.slice(0, 6) + '\u2026' + intent.recipient.slice(-4);
+    var params = new URLSearchParams({ cc: intent.cardId, src: 'coincard' });
+    if (intent.amount != null) params.set('amount', String(intent.amount));
 
-    setText('ccConfirmSender',    senderShort);
-    setText('ccConfirmRecipient', recipShort);
-    setText('ccConfirmAmount',    intent.amount.toFixed(6) + ' ' + token);
-    setText('ccConfirmFee',       intent.fee.toFixed(6) + ' ' + token);
-    setText('ccConfirmTotal',     intent.total.toFixed(6) + ' ' + token);
+    var url = 'https://implicitex.com/?' + params.toString() + '#transfer';
 
-    var senderEl = el('ccConfirmSender');
-    if (senderEl) senderEl.title = state.sender;
-    var recipEl = el('ccConfirmRecipient');
-    if (recipEl) recipEl.title = intent.recipient;
+    transition('HANDOFF');
+    emit('CC_HANDOFF', { intent: intent, url: url });
 
-    /* Fee label: show percentage */
-    var feeLabel = el('ccConfirmFeeLabel');
-    if (feeLabel) feeLabel.textContent = 'FEE (' + (bps / 100) + '%)';
-
-    transition('READY_TO_SEND');
-    setSendBtnLabel('Confirm Send \u2192', false);
-
-    emit('CC_READY_TO_SEND', { sender: state.sender, intent: intent });
-  }
-
-  /* ----------------------------------------------------------------
-   * Execution: approve + transferWithFee
-   * ---------------------------------------------------------------- */
-  function startExecution() {
-    if (!state.intent || !state.sender || !state.manifest) return;
-
-    var intent         = state.intent;
-    var manifestChainId = state.manifest.chainId;
-    var cfg            = CHAIN_EXEC[manifestChainId];
-
-    if (!cfg) {
-      renderError('Unsupported network', 'chainId ' + manifestChainId);
-      return;
-    }
-
-    var amountRaw = toRawUsdc(intent.amount);
-    var totalRaw  = toRawUsdc(intent.total);
-
-    /* Step 1 — approve USDC spend (totalDebit = amount + fee) */
-    transition('APPROVE_PENDING');
-    setSendBtnLabel('Approving\u2026', true);
-    setText('ccExecText', 'Confirm USDC approval in your wallet\u2026');
-
-    window.ethereum.request({
-      method: 'eth_sendTransaction',
-      params: [{
-        from: state.sender,
-        to:   cfg.usdcAddress,
-        data: encodeApprove(cfg.contractAddress, totalRaw),
-      }],
-    })
-    .then(function (approveTxHash) {
-      setText('ccExecText', 'USDC approval submitted. Waiting for confirmation\u2026');
-      return waitForTx(approveTxHash);
-    })
-    .then(function (approveReceipt) {
-      if (parseInt(approveReceipt.status, 16) !== 1) {
-        throw new Error('approve-failed');
-      }
-
-      /* Step 2 — transferWithFee(recipient, amount) */
-      transition('EXECUTE_PENDING');
-      setSendBtnLabel('Sending\u2026', true);
-      setText('ccExecText', 'Confirm transfer in your wallet\u2026');
-
-      return window.ethereum.request({
-        method: 'eth_sendTransaction',
-        params: [{
-          from: state.sender,
-          to:   cfg.contractAddress,
-          data: encodeTransferWithFee(intent.recipient, amountRaw),
-        }],
-      });
-    })
-    .then(function (transferTxHash) {
-      setText('ccExecText', 'Transfer submitted. Waiting for on-chain confirmation\u2026');
-      return waitForTx(transferTxHash)
-        .then(function (receipt) { return { receipt: receipt, hash: transferTxHash }; });
-    })
-    .then(function (result) {
-      if (parseInt(result.receipt.status, 16) !== 1) {
-        throw new Error('transfer-failed');
-      }
-
-      /* Confirmed */
-      var txLink = el('ccTxLink');
-      if (txLink) {
-        txLink.href = cfg.explorerUrl.replace(/\/$/, '') + '/tx/' + result.hash;
-        txLink.textContent = 'View on ' + cfg.name.split(' ')[0] + 'scan \u2192';
-      }
-      transition('CONFIRMED');
-
-      emit('CC_CONFIRMED', {
-        txHash: result.hash,
-        sender: state.sender,
-        intent: intent,
-      });
-    })
-    .catch(function (err) {
-      if (err && err.code === 4001) {
-        /* User declined wallet prompt — return to READY_TO_SEND */
-        transition('READY_TO_SEND');
-        setSendBtnLabel('Confirm Send \u2192', false);
-        setText('ccExecText', '\u2014');
-        return;
-      }
-      var msg = err && err.message || 'Transfer failed';
-      renderError(msg.length > 60 ? msg.slice(0, 60) + '\u2026' : msg);
-    });
-  }
-
-  /* Poll MetaMask for transaction receipt until confirmed or timeout. */
-  function waitForTx(hash) {
-    return new Promise(function (resolve, reject) {
-      var attempts = 0;
-      var timer = setInterval(function () {
-        window.ethereum.request({
-          method: 'eth_getTransactionReceipt',
-          params: [hash],
-        })
-        .then(function (receipt) {
-          if (receipt) {
-            clearInterval(timer);
-            resolve(receipt);
-            return;
-          }
-          if (++attempts >= 90) { /* 3 min at 2s intervals */
-            clearInterval(timer);
-            reject(new Error('tx-timeout'));
-          }
-        })
-        .catch(function () {
-          if (++attempts >= 90) {
-            clearInterval(timer);
-            reject(new Error('tx-timeout'));
-          }
-        });
-      }, 2000);
-    });
-  }
-
-  /* ----------------------------------------------------------------
-   * Send button — state-driven dispatcher
-   * ---------------------------------------------------------------- */
-  function handleSendClick() {
-    switch (state.current) {
-      case 'TRANSFER_INTENT_READY': connectWallet();         break;
-      case 'WRONG_NETWORK':         switchToManifestChain(); break;
-      case 'READY_TO_SEND':         startExecution();        break;
-      default: break;
-    }
+    /* If parent does not intercept CC_HANDOFF, open the portal */
+    setTimeout(function () {
+      window.open(url, '_blank', 'noopener');
+    }, 120);
   }
 
   /* ----------------------------------------------------------------
@@ -702,13 +419,13 @@
    * ---------------------------------------------------------------- */
   function initSendButton() {
     var btn = el('ccSendBtn');
-    if (btn) btn.addEventListener('click', handleSendClick);
+    if (btn) btn.addEventListener('click', doHandoff);
   }
 
   /* ----------------------------------------------------------------
    * Init — read card ID from URL path
-   *   URL: https://implicitex.com/card/antoine
-   *   pathname.split('/') → ['', 'card', 'antoine']
+   *   URL: https://implicitex.com/card/cc_demo_implicitex
+   *   pathname.split('/') → ['', 'card', 'cc_demo_implicitex']
    * ---------------------------------------------------------------- */
   function init() {
     initRevealButton();

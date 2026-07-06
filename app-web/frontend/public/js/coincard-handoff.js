@@ -49,10 +49,6 @@
   }
 
   /* ---- Prefill Transfer Portal fields from manifest ---- */
-  /* TRUST RULE: manifest.recipient is the destination address — the wallet
-   * that will RECEIVE funds. It must NEVER populate any sender field,
-   * connected-wallet display, or wallet-context input. Only txRecipient
-   * (the locked TO address) may receive this value. */
   function prefillPortal(manifest) {
     /* Recipient — from registry only, never from URL */
     var recipientEl = el('txRecipient');
