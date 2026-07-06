@@ -105,10 +105,51 @@
 
     </div><!-- /.cc-amount-surface -->
 
+    <!-- Self-send warning — shown when connected wallet === manifest recipient -->
+    <div class="cc-selfsend-warn" id="ccSelfSendWarn">
+      <p class="cc-selfsend-text">You appear to be the card holder. Share this URL with someone who wants to support you.</p>
+    </div>
+
+    <!-- Confirm panel — READY_TO_SEND -->
+    <div class="cc-confirm-panel" id="ccConfirmPanel">
+      <div class="cc-confirm-row">
+        <span class="cc-confirm-k">FROM</span>
+        <span class="cc-confirm-v cc-mono" id="ccConfirmSender">—</span>
+      </div>
+      <div class="cc-confirm-row">
+        <span class="cc-confirm-k">TO</span>
+        <span class="cc-confirm-v cc-mono" id="ccConfirmRecipient">—</span>
+      </div>
+      <div class="cc-confirm-row cc-confirm-row--sep">
+        <span class="cc-confirm-k">SENDING</span>
+        <span class="cc-confirm-v cc-mono" id="ccConfirmAmount">—</span>
+      </div>
+      <div class="cc-confirm-row">
+        <span class="cc-confirm-k" id="ccConfirmFeeLabel">FEE (1%)</span>
+        <span class="cc-confirm-v cc-mono" id="ccConfirmFee">—</span>
+      </div>
+      <div class="cc-confirm-row">
+        <span class="cc-confirm-k">TOTAL</span>
+        <span class="cc-confirm-v cc-mono" id="ccConfirmTotal">—</span>
+      </div>
+    </div>
+
+    <!-- Execution status — APPROVE_PENDING, EXECUTE_PENDING -->
+    <div class="cc-exec-status" id="ccExecStatus">
+      <p class="cc-exec-text" id="ccExecText">—</p>
+    </div>
+
+    <!-- Confirmed — CONFIRMED -->
+    <div class="cc-confirmed" id="ccConfirmed">
+      <span class="cc-confirmed-label">Transfer confirmed</span>
+      <a class="cc-tx-link" id="ccTxLink" href="#" target="_blank" rel="noopener noreferrer">View on Explorer →</a>
+      <a class="cc-portal-link" id="ccPortalLink" href="https://implicitex.com" target="_blank" rel="noopener noreferrer">Advanced verification →</a>
+    </div>
+
     <!-- Action: disabled until TRANSFER_INTENT_READY -->
     <div class="cc-action">
-      <button class="cc-send-btn" id="ccSendBtn" type="button" disabled aria-label="Transfer USDC with ImplicitEx">
-        Transfer with ImplicitEx →
+      <button class="cc-send-btn" id="ccSendBtn" type="button" disabled aria-label="Connect wallet to send USDC">
+        Connect Wallet →
       </button>
     </div>
 
@@ -127,6 +168,7 @@
 
 </div><!-- /.cc-frame -->
 
+<script src="/js/ix-execute.js"></script>
 <script src="card.js"></script>
 </body>
 </html>

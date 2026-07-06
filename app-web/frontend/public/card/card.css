@@ -12,7 +12,14 @@
  *   TRANSFER_INTENT_READY → trust rows + amount + fee + send button active
  *   REVOKED               → trust rows + revocation notice
  *   ERROR                 → error message
- *   HANDOFF               → send button loading
+ *   CONNECTING            → wallet connect in progress
+ *   WRONG_NETWORK         → wallet on wrong chain
+ *   SWITCHING_NETWORK     → chain switch in progress
+ *   READY_TO_SEND         → confirm panel shown, awaiting user confirmation
+ *   APPROVE_PENDING       → USDC approval submitted, awaiting receipt
+ *   EXECUTE_PENDING       → transferWithFee submitted, awaiting receipt
+ *   CONFIRMED             → transfer on-chain confirmed
+ *   (HANDOFF removed — card now executes in-card via IX_EXECUTE)
  */
 
 /* ---- Reset ---- */
@@ -71,36 +78,28 @@ html, body {
 /* MANIFEST_LOADING */
 [data-state="MANIFEST_LOADING"] .cc-loading { display: flex; }
 
-/* VERIFIED, AMOUNT_READY, TRANSFER_INTENT_READY, HANDOFF */
+/* VERIFIED, AMOUNT_READY, TRANSFER_INTENT_READY */
 [data-state="VERIFIED"] .cc-card,
 [data-state="AMOUNT_READY"] .cc-card,
 [data-state="TRANSFER_INTENT_READY"] .cc-card,
-[data-state="HANDOFF"] .cc-card,
 [data-state="REVOKED"] .cc-card { display: flex; }
 
 [data-state="VERIFIED"] .cc-footer,
 [data-state="AMOUNT_READY"] .cc-footer,
 [data-state="TRANSFER_INTENT_READY"] .cc-footer,
-[data-state="HANDOFF"] .cc-footer,
 [data-state="REVOKED"] .cc-footer,
 [data-state="ERROR"] .cc-footer { display: flex; }
 
 /* ERROR */
 [data-state="ERROR"] .cc-error { display: flex; }
 
-/* Fee rows — only when amount is valid */
+/* Fee rows — only when amount is valid (pre-execution states) */
 .cc-fee-rows { display: none; }
 [data-state="AMOUNT_READY"] .cc-fee-rows,
-[data-state="TRANSFER_INTENT_READY"] .cc-fee-rows,
-[data-state="HANDOFF"] .cc-fee-rows { display: flex; }
+[data-state="TRANSFER_INTENT_READY"] .cc-fee-rows { display: flex; }
 
 /* Send button active only at TRANSFER_INTENT_READY */
-[data-state="TRANSFER_INTENT_READY"] .cc-send-btn,
-[data-state="HANDOFF"] .cc-send-btn { opacity: 1; }
-[data-state="HANDOFF"] .cc-send-btn {
-  cursor: wait;
-  pointer-events: none;
-}
+[data-state="TRANSFER_INTENT_READY"] .cc-send-btn { opacity: 1; }
 
 /* REVOKED: hide amount surface and action */
 [data-state="REVOKED"] .cc-amount-surface,
@@ -444,3 +443,65 @@ html, body {
   letter-spacing: 0.02em;
   color: var(--cc-text-dim);
 }
+
+/* ---- Execution states — card and footer visible ---- */
+[data-state="CONNECTING"] .cc-card, [data-state="WRONG_NETWORK"] .cc-card,
+[data-state="SWITCHING_NETWORK"] .cc-card, [data-state="READY_TO_SEND"] .cc-card,
+[data-state="APPROVE_PENDING"] .cc-card, [data-state="EXECUTE_PENDING"] .cc-card,
+[data-state="CONFIRMED"] .cc-card { display: flex; }
+
+[data-state="CONNECTING"] .cc-footer, [data-state="WRONG_NETWORK"] .cc-footer,
+[data-state="SWITCHING_NETWORK"] .cc-footer, [data-state="READY_TO_SEND"] .cc-footer,
+[data-state="APPROVE_PENDING"] .cc-footer, [data-state="EXECUTE_PENDING"] .cc-footer,
+[data-state="CONFIRMED"] .cc-footer { display: flex; }
+
+/* Amount surface hidden once execution begins */
+[data-state="CONNECTING"] .cc-amount-surface, [data-state="WRONG_NETWORK"] .cc-amount-surface,
+[data-state="SWITCHING_NETWORK"] .cc-amount-surface, [data-state="READY_TO_SEND"] .cc-amount-surface,
+[data-state="APPROVE_PENDING"] .cc-amount-surface, [data-state="EXECUTE_PENDING"] .cc-amount-surface,
+[data-state="CONFIRMED"] .cc-amount-surface { display: none; }
+
+/* Fee rows hidden once execution begins */
+[data-state="CONNECTING"] .cc-fee-rows, [data-state="WRONG_NETWORK"] .cc-fee-rows,
+[data-state="SWITCHING_NETWORK"] .cc-fee-rows, [data-state="READY_TO_SEND"] .cc-fee-rows,
+[data-state="APPROVE_PENDING"] .cc-fee-rows, [data-state="EXECUTE_PENDING"] .cc-fee-rows,
+[data-state="CONFIRMED"] .cc-fee-rows { display: none !important; }
+
+/* Send button: active at WRONG_NETWORK and READY_TO_SEND */
+[data-state="WRONG_NETWORK"] .cc-send-btn, [data-state="READY_TO_SEND"] .cc-send-btn { opacity: 1; }
+
+/* Send button: in-flight states */
+[data-state="CONNECTING"] .cc-send-btn, [data-state="SWITCHING_NETWORK"] .cc-send-btn,
+[data-state="APPROVE_PENDING"] .cc-send-btn, [data-state="EXECUTE_PENDING"] .cc-send-btn {
+  opacity: 1; cursor: wait; pointer-events: none;
+}
+
+/* Hide action at CONFIRMED */
+[data-state="CONFIRMED"] .cc-action { display: none; }
+
+/* ---- Confirm panel ---- */
+.cc-confirm-panel { display: none; flex-direction: column; padding: 14px 14px 12px; gap: 8px; border-bottom: 1px solid var(--cc-border); }
+[data-state="READY_TO_SEND"] .cc-confirm-panel { display: flex; }
+.cc-confirm-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.cc-confirm-row--sep { margin-top: 4px; padding-top: 8px; border-top: 1px solid var(--cc-border); }
+.cc-confirm-k { font-family: var(--cc-mono); font-size: 8px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--cc-text-dim); flex-shrink: 0; padding-top: 1px; }
+.cc-confirm-v { font-family: var(--cc-mono); font-size: 10px; letter-spacing: 0.04em; color: var(--cc-text); text-align: right; word-break: break-all; }
+
+/* ---- Self-send warning ---- */
+.cc-selfsend-warn { display: none; padding: 10px 14px; background: rgba(212,160,23,0.07); border-bottom: 1px solid rgba(212,160,23,0.18); }
+.cc-selfsend-warn.is-active { display: flex; }
+.cc-selfsend-text { font-family: var(--cc-body); font-size: 11px; color: var(--cc-amber); line-height: 1.5; }
+
+/* ---- Exec status ---- */
+.cc-exec-status { display: none; padding: 12px 14px; border-bottom: 1px solid var(--cc-border); }
+[data-state="APPROVE_PENDING"] .cc-exec-status, [data-state="EXECUTE_PENDING"] .cc-exec-status { display: flex; }
+.cc-exec-text { font-family: var(--cc-mono); font-size: 10px; letter-spacing: 0.06em; color: var(--cc-text-mid); line-height: 1.5; }
+
+/* ---- Confirmed ---- */
+.cc-confirmed { display: none; flex-direction: column; padding: 14px; gap: 8px; border-bottom: 1px solid var(--cc-border); }
+[data-state="CONFIRMED"] .cc-confirmed { display: flex; }
+.cc-confirmed-label { font-family: var(--cc-ui); font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--cc-green); }
+.cc-tx-link { font-family: var(--cc-mono); font-size: 10px; letter-spacing: 0.06em; color: var(--cc-text-mid); text-decoration: none; }
+.cc-tx-link:hover { color: var(--cc-text); }
+.cc-portal-link { font-family: var(--cc-mono); font-size: 9px; letter-spacing: 0.06em; color: var(--cc-text-low); text-decoration: none; }
+.cc-portal-link:hover { color: var(--cc-text-mid); }

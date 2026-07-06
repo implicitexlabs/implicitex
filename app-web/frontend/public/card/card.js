@@ -7,8 +7,18 @@
  *   AMOUNT_READY          → valid amount entered; fee calculated
  *   TRANSFER_INTENT_READY → intent object constructed; send button active
  *   REVOKED               → manifest status === 'revoked'; transfer blocked
- *   HANDOFF               → sender confirmed; posting intent to parent / redirecting
+ *   CONNECTING            → wallet connect in progress (eth_requestAccounts)
+ *   WRONG_NETWORK         → wallet connected but on wrong chain
+ *   SWITCHING_NETWORK     → chain switch in progress
+ *   READY_TO_SEND         → confirm panel shown; awaiting user confirmation
+ *   APPROVE_PENDING       → USDC approval submitted, waiting for receipt
+ *   EXECUTE_PENDING       → transferWithFee submitted, waiting for receipt
+ *   CONFIRMED             → transfer on-chain confirmed; explorer link shown
  *   ERROR                 → any unrecoverable failure
+ *
+ * Note: HANDOFF state removed. The card now executes the transfer in-card
+ * via window.IX_EXECUTE (js/ix-execute.js). The Transfer Portal is surfaced
+ * as an "Advanced verification →" link in the CONFIRMED state only.
  *
  * Trust model:
  *   Registry manifest is evidence. URL path is transport. The card never
@@ -18,7 +28,8 @@
  *   { source:'implicitex-coincard', type:'CC_READY',         cardId, payload:{ recipient, chainId, token, owner } }
  *   { source:'implicitex-coincard', type:'CC_AMOUNT_CHANGED', cardId, payload:{ amount, fee, total } }
  *   { source:'implicitex-coincard', type:'CC_INTENT_READY',   cardId, payload:{ intent } }
- *   { source:'implicitex-coincard', type:'CC_HANDOFF',        cardId, payload:{ intent, url } }
+ *   { source:'implicitex-coincard', type:'CC_READY_TO_SEND',  cardId, payload:{ sender, intent } }
+ *   { source:'implicitex-coincard', type:'CC_CONFIRMED',      cardId, payload:{ txHash, sender, intent } }
  *   { source:'implicitex-coincard', type:'CC_ERROR',          cardId, payload:{ message } }
  *
  * PostMessage bridge (parent → iframe):
@@ -63,6 +74,7 @@
     fee:                 null,
     total:               null,
     intent:              null,
+    sender:              null,
   };
 
   var frame = document.getElementById('ccFrame');
@@ -268,7 +280,7 @@
     state.intent = null;
     setText('ccFeeValue',   '\u2014');
     setText('ccTotalValue', '\u2014');
-    setAttr('ccSendBtn', 'disabled', true);
+    setSendBtnLabel('Connect Wallet \u2192', true);
   }
 
   /* ----------------------------------------------------------------
@@ -289,40 +301,156 @@
     };
     transition('TRANSFER_INTENT_READY');
     setAttr('ccSendBtn', 'disabled', false);
+    setSendBtnLabel('Connect Wallet \u2192', false);
     emit('CC_INTENT_READY', { intent: state.intent });
   }
 
   /* ----------------------------------------------------------------
-   * Handoff — V1: route sender to the existing ImplicitEx Transfer Portal.
-   *
-   * URL contract:
-   *   cc     = registry key (canonical). Portal fetches the manifest to
-   *            resolve recipient — never trusts a to= param from the URL.
-   *   amount = sender intent (prefill hint only; sender reviews before sending).
-   *   src    = provenance marker so the portal knows this came from a Coin Card.
-   *
-   * The portal resolves all other fields (recipient, token, chain) from the
-   * registry manifest keyed by cc. Nothing critical travels in the URL.
+   * Send button label helper
    * ---------------------------------------------------------------- */
-  function doHandoff() {
-    if (!state.intent) return;
+  function setSendBtnLabel(text, disabled) {
+    var btn = el('ccSendBtn');
+    if (!btn) return;
+    btn.textContent = text;
+    btn.disabled = !!disabled;
+  }
+
+  /* ----------------------------------------------------------------
+   * In-card execution — calls window.IX_EXECUTE
+   * ---------------------------------------------------------------- */
+
+  function connectWallet() {
+    if (!window.IX_EXECUTE) { renderError('Execution module unavailable'); return; }
+    if (!window.ethereum) { renderError('No wallet detected', 'Install MetaMask to send USDC.'); return; }
+    transition('CONNECTING');
+    setSendBtnLabel('Connecting\u2026', true);
+    window.IX_EXECUTE.connectWallet()
+      .then(function(address) {
+        state.sender = address;
+        var warn = el('ccSelfSendWarn');
+        if (warn && state.manifest) {
+          warn.classList.toggle('is-active', address.toLowerCase() === state.manifest.recipient.toLowerCase());
+        }
+        return window.IX_EXECUTE.getChainId();
+      })
+      .then(function(chainId) {
+        var manifestChainId = state.manifest && state.manifest.chainId;
+        var cfg = window.IX_EXECUTE.chainConfig(manifestChainId);
+        if (chainId !== manifestChainId) {
+          transition('WRONG_NETWORK');
+          setSendBtnLabel('Switch to ' + (cfg ? cfg.name : 'correct network') + ' \u2192', false);
+          return;
+        }
+        showConfirmPanel();
+      })
+      .catch(function(err) {
+        if (err && err.code === 4001) {
+          transition('TRANSFER_INTENT_READY');
+          setSendBtnLabel('Connect Wallet \u2192', false);
+          return;
+        }
+        renderError('Wallet error', err && err.message);
+      });
+  }
+
+  function switchNetwork() {
+    if (!window.IX_EXECUTE) return;
+    var manifestChainId = state.manifest && state.manifest.chainId;
+    transition('SWITCHING_NETWORK');
+    setSendBtnLabel('Switching\u2026', true);
+    window.IX_EXECUTE.switchChain(manifestChainId)
+      .then(showConfirmPanel)
+      .catch(function(err) {
+        if (err && err.code === 4001) {
+          var cfg = window.IX_EXECUTE.chainConfig(manifestChainId);
+          transition('WRONG_NETWORK');
+          setSendBtnLabel('Switch to ' + (cfg ? cfg.name : 'correct network') + ' \u2192', false);
+          return;
+        }
+        renderError('Network switch failed', err && err.message);
+      });
+  }
+
+  function showConfirmPanel() {
+    if (!state.intent || !state.sender || !state.manifest) {
+      transition('TRANSFER_INTENT_READY');
+      setSendBtnLabel('Connect Wallet \u2192', false);
+      return;
+    }
     var intent = state.intent;
+    var token = (state.manifest.token || 'USDC').toUpperCase();
+    var bps = state.manifest.feeBps != null ? state.manifest.feeBps : 100;
+    setText('ccConfirmSender', state.sender.slice(0,6) + '\u2026' + state.sender.slice(-4));
+    setText('ccConfirmRecipient', intent.recipient.slice(0,6) + '\u2026' + intent.recipient.slice(-4));
+    setText('ccConfirmAmount', intent.amount.toFixed(6) + ' ' + token);
+    setText('ccConfirmFee', intent.fee.toFixed(6) + ' ' + token);
+    setText('ccConfirmTotal', intent.total.toFixed(6) + ' ' + token);
+    var sEl = el('ccConfirmSender'); if (sEl) sEl.title = state.sender;
+    var rEl = el('ccConfirmRecipient'); if (rEl) rEl.title = intent.recipient;
+    var fEl = el('ccConfirmFeeLabel'); if (fEl) fEl.textContent = 'FEE (' + (bps/100) + '%)';
+    transition('READY_TO_SEND');
+    setSendBtnLabel('Confirm Send \u2192', false);
+    emit('CC_READY_TO_SEND', { sender: state.sender, intent: intent });
+  }
 
-    var params = new URLSearchParams({ cc: intent.cardId, src: 'coincard' });
-    if (intent.amount != null) params.set('amount', String(intent.amount));
+  function startExecution() {
+    if (!state.intent || !state.sender || !state.manifest || !window.IX_EXECUTE) return;
+    var intent = state.intent;
+    var chainId = state.manifest.chainId;
+    var cfg = window.IX_EXECUTE.chainConfig(chainId);
+    if (!cfg) { renderError('Unsupported network', 'chainId ' + chainId); return; }
+    var amountRaw = window.IX_EXECUTE.toRawUsdc(intent.amount);
+    var totalRaw  = window.IX_EXECUTE.toRawUsdc(intent.total);
+    transition('APPROVE_PENDING');
+    setSendBtnLabel('Approving\u2026', true);
+    setText('ccExecText', 'Confirm USDC approval in your wallet\u2026');
+    window.IX_EXECUTE.approve(chainId, state.sender, totalRaw)
+      .then(function(hash) {
+        setText('ccExecText', 'Approval submitted. Waiting for confirmation\u2026');
+        return window.IX_EXECUTE.waitForReceipt(hash);
+      })
+      .then(function(receipt) {
+        if (parseInt(receipt.status, 16) !== 1) throw new Error('APPROVE_FAILED');
+        transition('EXECUTE_PENDING');
+        setSendBtnLabel('Sending\u2026', true);
+        setText('ccExecText', 'Confirm transfer in your wallet\u2026');
+        return window.IX_EXECUTE.transferWithFee(chainId, state.sender, intent.recipient, amountRaw);
+      })
+      .then(function(hash) {
+        setText('ccExecText', 'Transfer submitted. Waiting for on-chain confirmation\u2026');
+        return window.IX_EXECUTE.waitForReceipt(hash).then(function(r) { return { receipt: r, hash: hash }; });
+      })
+      .then(function(result) {
+        if (parseInt(result.receipt.status, 16) !== 1) throw new Error('TRANSFER_FAILED');
+        var txLink = el('ccTxLink');
+        if (txLink) txLink.href = cfg.explorerUrl + '/tx/' + result.hash;
+        var portalLink = el('ccPortalLink');
+        if (portalLink) portalLink.href = 'https://implicitex.com/?cc=' + state.cardId + '&src=coincard';
+        transition('CONFIRMED');
+        emit('CC_CONFIRMED', { txHash: result.hash, sender: state.sender, intent: intent });
+      })
+      .catch(function(err) {
+        if (err && err.code === 4001) {
+          transition('READY_TO_SEND');
+          setSendBtnLabel('Confirm Send \u2192', false);
+          setText('ccExecText', '\u2014');
+          return;
+        }
+        var msg = err && err.message || 'Transfer failed';
+        renderError(msg.length > 60 ? msg.slice(0,60) + '\u2026' : msg);
+      });
+  }
 
-    var url = 'https://implicitex.com/?' + params.toString() + '#transfer';
-
-    transition('HANDOFF');
-    emit('CC_HANDOFF', { intent: intent, url: url });
-
-    /* If parent does not intercept CC_HANDOFF, navigate to the portal.
-     * Same-tab navigation preserves the linear flow and allows Back to return
-     * to the card. Phase 2 will embed the portal inline so the card stays
-     * visible, but same-tab is the lowest-risk continuity fix for now. */
-    setTimeout(function () {
-      window.location.href = url;
-    }, 120);
+  /* ----------------------------------------------------------------
+   * Send button dispatcher
+   * ---------------------------------------------------------------- */
+  function handleSendClick() {
+    switch (state.current) {
+      case 'TRANSFER_INTENT_READY': connectWallet();   break;
+      case 'WRONG_NETWORK':         switchNetwork();   break;
+      case 'READY_TO_SEND':         startExecution();  break;
+      default: break;
+    }
   }
 
   /* ----------------------------------------------------------------
@@ -422,7 +550,7 @@
    * ---------------------------------------------------------------- */
   function initSendButton() {
     var btn = el('ccSendBtn');
-    if (btn) btn.addEventListener('click', doHandoff);
+    if (btn) btn.addEventListener('click', handleSendClick);
   }
 
   /* ----------------------------------------------------------------
