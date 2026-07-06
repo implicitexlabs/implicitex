@@ -88,6 +88,47 @@ identification + movement). Not a new principle.
 
 ---
 
+## Execution authority audit checklist
+
+**Type: Pattern** — Run this after any change to execution-related code to confirm no second execution path has been introduced.
+
+For each search: if the result appears *only* in `js/ix-execute.js` (and in comments elsewhere), the authority is clean. Any non-comment hit outside `ix-execute.js` is a violation.
+
+```
+grep -rn "eth_sendTransaction"        js/ config/ card/   # writes only — must be ix-execute.js
+grep -rn "wallet_switchEthereumChain" js/ config/ card/   # must be ix-execute.js
+grep -rn "eth_requestAccounts"        js/ config/ card/   # must be ix-execute.js (known violations: wallet.js, coincard-publisher)
+grep -rn "\.approve("                 js/ config/ card/   # writes: must call window.IX_EXECUTE.approve()
+grep -rn "transferWithFee("           js/ config/ card/   # writes: must call window.IX_EXECUTE.transferWithFee()
+```
+
+**Stage 1 baseline (2026-07-06, commit 127e8a8):**
+
+| Search | Expected | Status |
+|---|---|---|
+| `eth_sendTransaction` | `ix-execute.js` only | ✅ |
+| `.approve(` writes | `window.IX_EXECUTE.approve()` at both call sites | ✅ |
+| `transferWithFee(` writes | `window.IX_EXECUTE.transferWithFee()` at both call sites | ✅ |
+| `wallet_switchEthereumChain` | `ix-execute.js` — `wallet.js:3021` is a known violation (Stage 1 roadmap item) | ⚠️ known |
+| `eth_requestAccounts` | `ix-execute.js` — `wallet.js` and `coincard-publisher*.js` are known violations | ⚠️ known |
+
+Known violations are tracked violations from the authority audit — not regressions introduced by Stage 1.
+
+**Smoke test checklist (live wallet required):**
+
+- [ ] Connect wallet (MetaMask)
+- [ ] Wrong network → switch to Polygon via IX_EXECUTE
+- [ ] Approve USDC — confirm IX_EXECUTE.approve() fires (console: `[IX] invoking transferWithFee`)
+- [ ] Execute transfer — confirm IX_EXECUTE.transferWithFee() fires
+- [ ] Wait for receipt — confirm IX_EXECUTE.waitForReceipt() polls correctly
+- [ ] Receipt reconciliation — receipt persisted in localStorage, visible in receipt list
+- [ ] Reject approval → REJECTED state
+- [ ] Reject transfer → REJECTED state
+- [ ] Insufficient balance → gate catches before wallet prompt
+- [ ] Insufficient allowance → approval step requested
+
+---
+
 ## Doctrine review log
 
 | Date | Trigger | Notes reviewed | Outcome |
