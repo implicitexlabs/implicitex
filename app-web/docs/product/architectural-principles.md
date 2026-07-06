@@ -258,34 +258,46 @@ Not shared code. Single authority.
 
 If someone fixes gas estimation, there is exactly one place where that fix is made. If fee math changes, there is one function that changes. If the registry schema changes, there is one loader that handles it. Duplication is not a style concern — it is a correctness concern. When the same capability has two implementations, one of them accumulates improvements the other never receives.
 
-**The canonical authority table for ImplicitEx capabilities:**
+**The test:** When a capability improvement is made, how many *independent implementations* must change? Legitimate layering across files is acceptable — a capability that naturally spans a loader, a validator, and a cache is not duplicated. But if the algorithm itself exists twice, a second authority has been created. That is the thing to eliminate.
+
+**The canonical authority table for ImplicitEx platform capabilities:**
 
 | Capability | Single authority |
 |---|---|
-| Execution (approve, transfer) | `ix-execute.js` → `window.IX_EXECUTE` |
-| Registry manifest loading | Registry module (single loader, not per-page) |
-| Fee calculation | Fee module (single function, not per-surface) |
+| Execution (approve, transfer) | Execution Service → `window.IX_EXECUTE` |
+| Fee calculation | Execution Service → fee module |
+| Wallet connection | Execution Service → `window.IX_EXECUTE` |
+| Chain switching | Execution Service → `window.IX_EXECUTE` |
+| Registry manifest loading | Registry Service → single loader |
 | Recipient verification | `coincard.js` → `window.IX.coincard` |
-| Wallet connection | `ix-execute.js` → `window.IX_EXECUTE` |
-| Chain switching | `ix-execute.js` → `window.IX_EXECUTE` |
 | Receipt generation | `receipt-store.js` → `window.IX.receipts` |
 | Transfer state machine | `transfer-status.js` → `IX_TRANSFER_STATES` |
 
-Any surface that bypasses the single authority for a capability — constructing its own ethers.js contracts, re-implementing fee math, fetching the registry directly — has created a second authority. That second authority will diverge.
+**On the Execution Service:**
 
-**The test:** When a capability improvement is made, how many files must change? If the answer is more than one, the capability has more than one implementation.
+The authority for execution-related capabilities (`connectWallet`, `switchChain`, `calculateFee`, `approve`, `executeTransfer`, `waitForReceipt`) belongs to a platform-level Execution Service — not to the Coin Card, not to the Transfer Portal, and not to any implementation file that a surface happens to own. The current `ix-execute.js` is the seed of this service. It is not yet the service itself.
 
-**Known authority violations as of 2026-07-06 (to be resolved before new capabilities are added):**
+The distinction matters because execution is no longer a Coin Card feature. It is platform infrastructure. When WalletConnect, Safe, and Ledger arrive, they are Execution Service features — Coin Card and Portal both benefit from them simultaneously, without either surface changing.
 
-| Capability | Violation | Risk |
-|---|---|---|
-| Execution | `wallet.js` constructs ethers.js contracts directly instead of calling `IX_EXECUTE` | High — error handling, gas estimation, and future engine support diverge |
-| Registry loading | `card.js`, `coincard.js`, `coincard-handoff.js`, `verify.js` each fetch independently | High — schema changes require four updates; validation logic already diverges |
-| Fee calculation | `card.js` (float, hardcoded BPS defaults) and `wallet.js` (BigInt, chainConfig BPS) | Medium — displayed fee and on-chain fee could differ |
-| Wallet connection | `ix-execute.js`, `wallet.js`, `coincard-publisher.js` each call `eth_requestAccounts` | Medium — `wallet.js` includes permission negotiation not present in others |
-| Chain switching | `ix-execute.js` and `wallet.js` each call `wallet_switchEthereumChain` | Low — nearly identical today, but maintenance burden |
+The reference pattern for what this should look like: `receipt-store.js` and `transfer-status.js`. Both were designed before multiple surfaces existed. Both expose a single responsibility. Both are called by everything; neither knows who is calling. That is what the Execution Service should become.
 
-**Corollary:** Before a capability is improved, locate its single authority. If none exists yet, the first step of the improvement is to create one.
+**Known authority violations as of 2026-07-06 (consolidation roadmap):**
+
+Three stages. The stages are ordered by risk and by dependency — Stage 2 cannot be cleanly done without Stage 1, and Stage 3 is independent of both.
+
+*Stage 1 — Execution authority (highest risk):*
+
+`wallet.js` constructs its own ethers.js Contract instances and calls `approve()` and `transferWithFee()` directly — bypassing the Execution Service entirely. This creates a second execution path with independent error handling, gas estimation, retry logic, and no path to future engine support. Fix: define the Execution Service contract (`connectWallet`, `switchChain`, `calculateFee`, `approve`, `executeTransfer`, `waitForReceipt`) and route `wallet.js` through it. This also collapses the wallet connection and chain switching violations.
+
+*Stage 2 — Fee authority (medium risk):*
+
+`card.js` calculates fees in floating-point with hardcoded BPS defaults. `wallet.js` calculates fees in BigInt from chainConfig. A user may see one fee displayed and a different fee submitted. Fix: move fee calculation into the Execution Service. Both surfaces call `calculateFee(amount, chainId)`. One result, one rounding strategy.
+
+*Stage 3 — Registry authority (high structural risk, independent of Stages 1–2):*
+
+`card.js`, `coincard.js`, `coincard-handoff.js`, and `verify.js` each fetch the registry manifest independently, each with slightly different validation logic. Schema changes require four updates; validation bugs exist in an unpredictable subset. Fix: a Registry Service exposes `loadCard(cardId)` → validated manifest. Every surface consumes that. Schema validation, caching, version negotiation, and future signature verification happen once.
+
+**Corollary:** Before adding a new capability, locate its single authority. If none exists, create the authority first. Adding a capability to a surface that bypasses the platform service creates a fourth or fifth authority and accelerates the divergence that Stage 1–3 are trying to close.
 
 ---
 
