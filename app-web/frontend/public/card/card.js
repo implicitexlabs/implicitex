@@ -145,10 +145,18 @@
       var holderRow = el('ccCardHolderRow');
       if (holderRow) holderRow.classList.add('is-populated');
 
-      /* Personalize the reveal button with first name */
+      var firstName = manifest.displayName.split(' ')[0];
+
+      /* Personalize gift text */
+      var giftText = el('ccGiftText');
+      if (giftText) {
+        giftText.textContent = 'This Coin Card was created so support can reach '
+          + manifest.displayName + ' directly.';
+      }
+
+      /* Personalize reveal button */
       var revealBtn = el('ccRevealBtn');
       if (revealBtn) {
-        var firstName = manifest.displayName.split(' ')[0];
         revealBtn.textContent = 'Send USDC to ' + firstName + ' \u2192';
       }
     }
