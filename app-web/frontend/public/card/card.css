@@ -34,7 +34,7 @@
   --cc-accent:      rgba(242, 242, 240, 0.72);
   --cc-radius:      2px;
   --cc-mono:        'IBM Plex Mono', monospace;
-  --cc-ui:          'Oxanium', sans-serif;
+  --cc-ui:          'Inter', system-ui, -apple-system, sans-serif;
   --cc-body:        'Inter', sans-serif;
   --cc-display:     'Orbitron', sans-serif;
 }
