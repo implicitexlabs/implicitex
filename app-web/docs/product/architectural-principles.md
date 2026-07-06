@@ -252,6 +252,43 @@ Secondary surfaces (optional, reachable from the primary):
 
 ---
 
+## 10. Every capability has exactly one implementation.
+
+Not shared code. Single authority.
+
+If someone fixes gas estimation, there is exactly one place where that fix is made. If fee math changes, there is one function that changes. If the registry schema changes, there is one loader that handles it. Duplication is not a style concern — it is a correctness concern. When the same capability has two implementations, one of them accumulates improvements the other never receives.
+
+**The canonical authority table for ImplicitEx capabilities:**
+
+| Capability | Single authority |
+|---|---|
+| Execution (approve, transfer) | `ix-execute.js` → `window.IX_EXECUTE` |
+| Registry manifest loading | Registry module (single loader, not per-page) |
+| Fee calculation | Fee module (single function, not per-surface) |
+| Recipient verification | `coincard.js` → `window.IX.coincard` |
+| Wallet connection | `ix-execute.js` → `window.IX_EXECUTE` |
+| Chain switching | `ix-execute.js` → `window.IX_EXECUTE` |
+| Receipt generation | `receipt-store.js` → `window.IX.receipts` |
+| Transfer state machine | `transfer-status.js` → `IX_TRANSFER_STATES` |
+
+Any surface that bypasses the single authority for a capability — constructing its own ethers.js contracts, re-implementing fee math, fetching the registry directly — has created a second authority. That second authority will diverge.
+
+**The test:** When a capability improvement is made, how many files must change? If the answer is more than one, the capability has more than one implementation.
+
+**Known authority violations as of 2026-07-06 (to be resolved before new capabilities are added):**
+
+| Capability | Violation | Risk |
+|---|---|---|
+| Execution | `wallet.js` constructs ethers.js contracts directly instead of calling `IX_EXECUTE` | High — error handling, gas estimation, and future engine support diverge |
+| Registry loading | `card.js`, `coincard.js`, `coincard-handoff.js`, `verify.js` each fetch independently | High — schema changes require four updates; validation logic already diverges |
+| Fee calculation | `card.js` (float, hardcoded BPS defaults) and `wallet.js` (BigInt, chainConfig BPS) | Medium — displayed fee and on-chain fee could differ |
+| Wallet connection | `ix-execute.js`, `wallet.js`, `coincard-publisher.js` each call `eth_requestAccounts` | Medium — `wallet.js` includes permission negotiation not present in others |
+| Chain switching | `ix-execute.js` and `wallet.js` each call `wallet_switchEthereumChain` | Low — nearly identical today, but maintenance burden |
+
+**Corollary:** Before a capability is improved, locate its single authority. If none exists yet, the first step of the improvement is to create one.
+
+---
+
 ## How to use these principles
 
 These principles answer future questions before they arise. When a feature is proposed:
@@ -265,5 +302,6 @@ These principles answer future questions before they arise. When a feature is pr
 7. Does it increase the evidence available to users, or does it ask them to trust ImplicitEx instead? → Principle 7 is the test.
 8. Does this feature belong to the payment instrument or the inspection console? → Principle 8 (product boundary) decides first. Within the instrument: does it belong to the identity shell or the transaction surface? → Principle 8 (implementation boundary) decides second. Does the Portal become required at any point in the payment path? → Principle 8 blocks it regardless of where the code lives.
 9. Can the sender complete the normal happy path without leaving the primary surface? → Principle 9 is the test. If a secondary surface is required, the primary surface has been displaced.
+10. Does this improvement require changes to more than one file? → Principle 10 flags a missing single authority. Create the authority first, then make the improvement.
 
 Proposals that strengthen these principles should be prioritized. Proposals that require violating them require an architectural argument, not just a product argument.
