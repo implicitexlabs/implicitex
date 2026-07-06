@@ -46,22 +46,37 @@ Every asset — pages, widgets, documentation, social presence, press mentions �
 
 ---
 
-## 6. Coin Card is a verified recipient record, not a payment instrument.
+## 6. Coin Card separates payment route evidence from transfer execution.
 
-A Coin Card publishes a registry-confirmed payment intent. ImplicitEx executes the transfer. These are separate acts performed on separate surfaces.
+Coin Card publishes payment intent and route evidence. ImplicitEx executes the
+transfer. These are separate acts performed on separate surfaces.
+
+The free self-hosted Coin Card tier verifies the route, not the recipient
+identity. It may validate the official contract, supported network, supported
+token, address format, fee math, and transaction proof. It must not claim that
+ImplicitEx verified the host, recipient identity, or wallet ownership.
+
+Registered and paid tiers may add recipient, domain, wallet-control, registry,
+signature, and revocation evidence. Those claims require explicit evidence and
+must not be borrowed by the free tier.
 
 The trust hierarchy is fixed:
 
 ```
 URL parameters    — transport (claims only)
-Registry manifest — evidence (canonical recipient confirmed)
+Manifest/registry — evidence (route or identity claim, depending on tier)
 Wallet prompt     — execution (user confirms and signs)
 Chain event       — settlement proof (on-chain, independently verifiable)
 ```
 
-No step in this hierarchy can substitute for any other. A verified registry record does not execute a transfer. A completed transfer does not retroactively verify a registry record. They are distinct claims about distinct acts.
+No step in this hierarchy can substitute for any other. A manifest or registry
+record does not execute a transfer. A completed transfer does not retroactively
+verify a recipient identity. They are distinct claims about distinct acts.
 
-**Corollary:** Coin Card verification must never be presented as proof of payment. Verification confirms the published recipient record. Settlement proof is the on-chain transaction hash.
+**Corollary:** Coin Card verification must never be presented as proof of
+payment. Free-tier verification confirms the route and host-supplied payment
+instructions. Registered-tier verification may confirm a published recipient
+record. Settlement proof is the on-chain transaction hash.
 
 **V1 limitation (2026-06-25):** Registry manifests are public static JSON records served from `/registry/coincards/`. They are not cryptographically signed. Trust is based on HTTPS delivery from the ImplicitEx domain, not on a signature that could be independently verified offline. Cryptographic signing is a future upgrade, not the current state.
 
@@ -81,11 +96,36 @@ Most payment systems ask users to trust one of: the company, the bank, or the pl
 2. Provide the evidence.
 3. Only then ask the user to act.
 
+**Evidence Supremacy Principle:** when evidence sources disagree, the most
+objective and transaction-proximate evidence controls.
+
+Conflict order:
+
+```text
+Blockchain evidence
+        ↓
+Recorded Coin Card evidence at transaction time
+        ↓
+Current host manifest or registry record
+        ↓
+Human testimony
+```
+
+Examples:
+
+- If the current host manifest conflicts with the recorded manifest hash, the
+  recorded transaction-time Coin Card evidence controls the historical claim.
+- If recorded Coin Card evidence conflicts with the confirmed on-chain transfer,
+  the blockchain record controls settlement truth.
+- If a person claims a different intended recipient than the host manifest
+  supplied at transaction time, the recorded Coin Card evidence controls what
+  ImplicitEx presented and executed.
+
 **Evidence layer inventory (as of 2026-06-29):**
 
 | Artifact                  | Purpose                           |
 |---------------------------|-----------------------------------|
-| Coin Card                 | Identity evidence                 |
+| Coin Card                 | Route evidence; identity evidence only when verified/registered |
 | Receipt ID                | Stable reference evidence         |
 | Confirmed Transfer block  | Execution evidence                |
 | Proof Packet              | Portable evidence                 |
@@ -98,6 +138,62 @@ Most payment systems ask users to trust one of: the company, the bank, or the pl
 
 ---
 
+## 8. An instrument owns its identity. A workflow owns its state.
+
+A payment instrument — a Coin Card, a receipt, a credential object — owns a permanent identity region. That region never changes based on execution progress. A workflow — wallet connection, approval, transfer, confirmation — is stateful. The two must never be confused in design or implementation.
+
+**The distinction:**
+
+| Instrument (identity) | Workflow (state) |
+|---|---|
+| Verification status | Wallet connection |
+| Issuer | USDC approval |
+| Card holder name | Transfer execution |
+| Recipient address | Confirmation wait |
+| Network / token | Receipt generation |
+| Brand mark | Error recovery |
+| Attribution | |
+
+Identity belongs to the instrument regardless of what the workflow is doing. The workflow reflects progress; the instrument reflects what it is. These are two different questions with two different answer sources.
+
+**The Coin Card architecture (reference implementation):**
+
+```
+Coin Card
+├── Identity Shell (instrument — never destroyed, never state-controlled)
+│   ├── Header: verification status + credential
+│   ├── Trust: ISSUED BY / CARD HOLDER / RECIPIENT / NETWORK
+│   └── Footer: ¢OIN CARD mark + attribution
+│
+└── Transaction Surface (workflow — state-controlled)
+    ├── Gift view
+    ├── Amount entry
+    ├── Connect / Switch network
+    ├── Confirm panel
+    ├── Execution status
+    └── Receipt
+        │
+        └── Execution Engine (infrastructure — not a visual layer)
+            ├── MetaMask / WalletConnect / Safe
+            ├── USDC approve
+            ├── transferWithFee
+            └── Receipt polling
+```
+
+The execution engine is infrastructure that serves the transaction surface. The transaction surface reflects its progress. The identity shell is unaffected by either.
+
+This separation matters when execution engines multiply (MetaMask today, WalletConnect and Safe later): the UI doesn't change because the instrument's identity doesn't change.
+
+**The test:** When a feature is proposed, ask:
+
+- Does it belong to the instrument? → It goes in the identity shell. No state control.
+- Does it belong to the workflow? → It goes in the transaction surface. State-controlled.
+- Does it belong to neither? → It may be infrastructure or a separate product.
+
+**Corollary:** State rules in CSS, JavaScript, and server logic should never target identity shell elements. If a rule asks "hide the recipient address during EXECUTE_PENDING," it has violated the instrument boundary before a line of code is written.
+
+---
+
 ## How to use these principles
 
 These principles answer future questions before they arise. When a feature is proposed:
@@ -107,7 +203,8 @@ These principles answer future questions before they arise. When a feature is pr
 3. Does it move the widget toward a payment engine rather than a distribution surface? → Principle 3 blocks it.
 4. Does it make claims that cannot be verified on-chain or through public records? → Principle 4 blocks it.
 5. Does it create a new brand surface that is disconnected from the entity graph? → Principle 5 flags it for correction.
-6. Does it blur the line between verified recipient record and payment execution? → Principle 6 blocks it.
+6. Does it blur route evidence, recipient identity evidence, and payment execution? → Principle 6 blocks it.
 7. Does it increase the evidence available to users, or does it ask them to trust ImplicitEx instead? → Principle 7 is the test.
+8. Does it add identity to a workflow, or does it add workflow behavior to an instrument's identity region? → Principle 8 is the boundary.
 
 Proposals that strengthen these principles should be prioritized. Proposals that require violating them require an architectural argument, not just a product argument.

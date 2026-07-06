@@ -190,6 +190,25 @@ html, body {
   color: var(--cc-text-dim);
 }
 
+/* ================================================================
+ * IDENTITY SHELL — immutable structural members of the instrument
+ *
+ * Principle: An instrument owns its identity. A workflow owns its state.
+ *
+ * The following sections (.cc-header, .cc-trust, .cc-footer) are the
+ * identity shell. They are NEVER targeted by state CSS rules. If you
+ * are about to write a rule that hides or shows any of them based on
+ * data-state, stop — that rule violates the architectural invariant.
+ *
+ * Identity shell members:
+ *   .cc-header  — verification status + credential
+ *   .cc-trust   — ISSUED BY / CARD HOLDER / RECIPIENT / NETWORK
+ *   .cc-footer  — ¢OIN CARD mark + Powered by ImplicitEx
+ *
+ * Everything between .cc-trust and .cc-footer is the transaction surface.
+ * That region changes per state. The identity shell does not.
+ * ================================================================ */
+
 /* ---- Card surface ---- */
 .cc-card {
   flex: 1;
@@ -197,7 +216,7 @@ html, body {
   padding: 0;
 }
 
-/* ---- Header ---- */
+/* ---- Header — identity shell member, never state-controlled ---- */
 .cc-header {
   display: flex;
   align-items: center;
@@ -238,7 +257,7 @@ html, body {
   color: var(--cc-text-dim);
 }
 
-/* ---- Trust rows ---- */
+/* ---- Trust rows — identity shell member, never state-controlled ---- */
 .cc-trust {
   display: flex;
   flex-direction: column;
@@ -444,10 +463,10 @@ html, body {
   line-height: 1.55;
 }
 
-/* ---- Footer ---- */
-/* Structural member of .cc-card — always visible when card is visible.
- * No margin-top: auto — footer follows the last visible content element
- * naturally. The card height equals its content; no viewport padding. */
+/* ---- Footer — identity shell member, never state-controlled ---- */
+/* Structural child of .cc-card. Visible whenever the card is visible.
+ * No state rule ever targets this element. No margin-top: auto —
+ * footer follows the last visible content element naturally. */
 .cc-footer {
   display: flex;
   align-items: center;
