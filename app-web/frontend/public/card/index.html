@@ -158,21 +158,19 @@
       <p class="cc-revoked-text">This Coin Card has been revoked. Do not use it to initiate a transfer.</p>
     </div>
 
-  </div><!-- /.cc-card -->
+    <!-- Brand Footer — structural member of the card, not a state.
+         Visible whenever the card is visible. The state machine never
+         asks "should the footer be shown?" — it is always shown. -->
+    <div class="cc-footer" id="ccFooter">
+      <img src="/components/images/coincard-logo.svg"
+           alt="Coin Card"
+           class="cc-mark"
+           width="98"
+           height="14">
+      <span class="cc-attr">Powered by ImplicitEx</span>
+    </div>
 
-  <!-- Footer: always visible once card is loaded.
-       Identity shell rule: footer persists through all states, including
-       all execution states. The ¢OIN CARD mark is SECONDARY in the
-       visual hierarchy — canonical SVG stamp, not plain text. -->
-  <div class="cc-footer" id="ccFooter">
-    <img src="/components/images/coincard-logo.svg"
-         alt="Coin Card"
-         class="cc-mark"
-         width="98"
-         height="14"
-         aria-label="Coin Card">
-    <span class="cc-attr">Powered by ImplicitEx</span>
-  </div>
+  </div><!-- /.cc-card -->
 
 </div><!-- /.cc-frame -->
 

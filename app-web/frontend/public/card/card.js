@@ -79,9 +79,22 @@
 
   var frame = document.getElementById('ccFrame');
 
+  /* States where the card shell is active (visible).
+   * BOOT, MANIFEST_LOADING, and ERROR do not show the shell.
+   * Adding/removing 'is-active' on the frame is the single
+   * mechanism that controls shell visibility — no CSS state
+   * rules are needed for the shell or its structural children. */
+  var SHELL_ACTIVE_STATES = {
+    VERIFIED: true, AMOUNT_READY: true, TRANSFER_INTENT_READY: true,
+    REVOKED: true, CONNECTING: true, WRONG_NETWORK: true,
+    SWITCHING_NETWORK: true, READY_TO_SEND: true,
+    APPROVE_PENDING: true, EXECUTE_PENDING: true, CONFIRMED: true,
+  };
+
   function transition(next) {
     state.current = next;
     frame.dataset.state = next;
+    frame.classList.toggle('is-active', !!SHELL_ACTIVE_STATES[next]);
   }
 
   /* ----------------------------------------------------------------

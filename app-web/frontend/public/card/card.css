@@ -63,42 +63,59 @@ html, body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* ---- Frame: fills iframe ---- */
+/* ---- Frame ---- */
 .cc-frame {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
-  padding: 0;
+  /* No min-height: 100vh — card is natural content height.
+   * Height is determined by the card contents, not the viewport.
+   * The previous min-height caused empty black space below the card
+   * when transaction states showed less content than others. */
 }
 
 /* ---- State visibility ---- */
 
-/* Default: hide everything */
+/* Architectural invariant:
+ *
+ *   Identity is not state. Execution is state.
+ *
+ * The card has three permanent regions — header, trust rows, footer.
+ * They are visible whenever the card is visible. No state rule ever
+ * controls them. The state machine only controls which transaction
+ * panel is shown (the content between trust rows and footer).
+ *
+ * .cc-footer is a structural child of .cc-card. If the card is
+ * visible, the footer is visible. Full stop.
+ */
+
+/* Default: hide loading, error, and card surface */
 .cc-loading,
 .cc-error,
-.cc-card,
-.cc-footer { display: none; }
+.cc-card { display: none; }
 
-/* BOOT: blank */
-[data-state="BOOT"] .cc-loading { display: none; }
+/* BOOT: blank — nothing shown */
 
 /* MANIFEST_LOADING */
 [data-state="MANIFEST_LOADING"] .cc-loading { display: flex; }
 
-/* VERIFIED, AMOUNT_READY, TRANSFER_INTENT_READY */
+/* ERROR */
+[data-state="ERROR"] .cc-error { display: flex; }
+
+/* Card surface: shown for all active states */
 [data-state="VERIFIED"] .cc-card,
 [data-state="AMOUNT_READY"] .cc-card,
 [data-state="TRANSFER_INTENT_READY"] .cc-card,
-[data-state="REVOKED"] .cc-card { display: flex; }
+[data-state="REVOKED"] .cc-card,
+[data-state="CONNECTING"] .cc-card,
+[data-state="WRONG_NETWORK"] .cc-card,
+[data-state="SWITCHING_NETWORK"] .cc-card,
+[data-state="READY_TO_SEND"] .cc-card,
+[data-state="APPROVE_PENDING"] .cc-card,
+[data-state="EXECUTE_PENDING"] .cc-card,
+[data-state="CONFIRMED"] .cc-card { display: flex; }
 
-[data-state="VERIFIED"] .cc-footer,
-[data-state="AMOUNT_READY"] .cc-footer,
-[data-state="TRANSFER_INTENT_READY"] .cc-footer,
-[data-state="REVOKED"] .cc-footer,
-[data-state="ERROR"] .cc-footer { display: flex; }
-
-/* ERROR */
-[data-state="ERROR"] .cc-error { display: flex; }
+/* Footer: no state rules needed — it is a structural child of .cc-card.
+ * It is always visible when the card is visible. */
 
 /* Fee rows — only when amount is valid (pre-execution states) */
 .cc-fee-rows { display: none; }
@@ -428,13 +445,15 @@ html, body {
 }
 
 /* ---- Footer ---- */
+/* Structural member of .cc-card — always visible when card is visible.
+ * No margin-top: auto — footer follows the last visible content element
+ * naturally. The card height equals its content; no viewport padding. */
 .cc-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 9px 14px;
   border-top: 1px solid var(--cc-border);
-  margin-top: auto;
 }
 /* Canonical SVG logotype — coincard-logo.svg uses fill="currentColor"
  * which defaults to black when loaded as <img>. filter:invert(1) makes
@@ -455,43 +474,20 @@ html, body {
   color: var(--cc-text-dim);
 }
 
-/* ---- Execution states — identity shell is structural, not state-dependent ----
- *
- * The card shell consists of three permanent elements:
- *   .cc-header   — status + credential (trust signal)
- *   .cc-trust    — ISSUED BY / CARD HOLDER / RECIPIENT / NETWORK rows
- *   .cc-footer   — ¢OIN CARD mark + "Powered by ImplicitEx"
- *
- * Rule: transaction states may change the card CONTENTS (amount surface,
- * confirm panel, exec status, confirmed panel), but never the identity shell.
- * The shell is always visible when .cc-card is visible. No state rule should
- * ever hide .cc-header, .cc-trust, or .cc-footer.
- *
- * .cc-header and .cc-trust have no state-based hiding rules and are
- * inherited from flex layout — they render whenever .cc-card is display:flex.
- * .cc-footer is explicitly shown for all active states below.
- */
-[data-state="CONNECTING"] .cc-card, [data-state="WRONG_NETWORK"] .cc-card,
-[data-state="SWITCHING_NETWORK"] .cc-card, [data-state="READY_TO_SEND"] .cc-card,
-[data-state="APPROVE_PENDING"] .cc-card, [data-state="EXECUTE_PENDING"] .cc-card,
-[data-state="CONFIRMED"] .cc-card { display: flex; }
+/* ---- Execution states — transaction panel contents only ---- */
 
-[data-state="CONNECTING"] .cc-footer, [data-state="WRONG_NETWORK"] .cc-footer,
-[data-state="SWITCHING_NETWORK"] .cc-footer, [data-state="READY_TO_SEND"] .cc-footer,
-[data-state="APPROVE_PENDING"] .cc-footer, [data-state="EXECUTE_PENDING"] .cc-footer,
-[data-state="CONFIRMED"] .cc-footer { display: flex; }
-
-/* Amount surface hidden once execution begins */
+/* Amount surface: hidden once execution begins.
+ * The state machine shows only the active transaction panel. */
 [data-state="CONNECTING"] .cc-amount-surface, [data-state="WRONG_NETWORK"] .cc-amount-surface,
 [data-state="SWITCHING_NETWORK"] .cc-amount-surface, [data-state="READY_TO_SEND"] .cc-amount-surface,
 [data-state="APPROVE_PENDING"] .cc-amount-surface, [data-state="EXECUTE_PENDING"] .cc-amount-surface,
 [data-state="CONFIRMED"] .cc-amount-surface { display: none; }
 
-/* Fee rows hidden once execution begins */
+/* Fee rows: hidden once execution begins */
 [data-state="CONNECTING"] .cc-fee-rows, [data-state="WRONG_NETWORK"] .cc-fee-rows,
 [data-state="SWITCHING_NETWORK"] .cc-fee-rows, [data-state="READY_TO_SEND"] .cc-fee-rows,
 [data-state="APPROVE_PENDING"] .cc-fee-rows, [data-state="EXECUTE_PENDING"] .cc-fee-rows,
-[data-state="CONFIRMED"] .cc-fee-rows { display: none !important; }
+[data-state="CONFIRMED"] .cc-fee-rows { display: none; }
 
 /* Send button: active at WRONG_NETWORK and READY_TO_SEND */
 [data-state="WRONG_NETWORK"] .cc-send-btn, [data-state="READY_TO_SEND"] .cc-send-btn { opacity: 1; }
