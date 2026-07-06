@@ -373,9 +373,16 @@
       <span class="mod-tag">01 — Transfer</span>
       <p class="mod-title">Send USDC</p>
       <div class="tx-form">
-        <div class="fee-row" aria-live="polite">
-          <span class="fee-label">Connected sender</span>
+        <div class="fee-row tx-sender-row" aria-live="polite">
+          <div class="tx-sender-meta">
+            <span class="fee-label">CONNECTED WALLET</span>
+            <span class="tx-sender-sub">Wallet paying for this transfer</span>
+          </div>
           <span class="fee-val" id="senderAddressDisplay">—</span>
+        </div>
+        <!-- "SENDING TO" label — hidden by default; shown by coincard-handoff when recipient is locked from registry -->
+        <div class="tx-recipient-label" id="txRecipientLabel" hidden>
+          <span class="fee-label">SENDING TO</span>
         </div>
         <input
           class="tx-field tx-field--primary"
@@ -387,6 +394,11 @@
           aria-label="Recipient wallet address"
           aria-describedby="recipientError"
         >
+        <!-- Coin Card recipient context — hidden by default; populated by coincard-handoff after registry verification -->
+        <div class="cc-recipient-context" id="ccRecipientContext" hidden>
+          <span class="cc-recipient-name" id="ccRecipientName">—</span>
+          <span class="cc-recipient-meta" id="ccRecipientMeta">—</span>
+        </div>
         <p class="tx-recipient-error" id="recipientError" aria-live="assertive"></p>
         <div class="intel-panel" id="recipientIntel" aria-live="polite" hidden>
           <p class="intel-label">Recipient</p>

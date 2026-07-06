@@ -49,12 +49,44 @@
   }
 
   /* ---- Prefill Transfer Portal fields from manifest ---- */
+  /* TRUST RULE: manifest.recipient is the destination address — the wallet
+   * that will RECEIVE funds. It must NEVER populate any sender field,
+   * connected-wallet display, or wallet-context input. Only txRecipient
+   * (the locked SENDING TO address) may receive this value. */
   function prefillPortal(manifest) {
     /* Recipient — from registry only, never from URL */
     var recipientEl = el('txRecipient');
     if (recipientEl && manifest.recipient) {
       recipientEl.value = manifest.recipient;
       recipientEl.dispatchEvent(new Event('input', { bubbles: true }));
+
+      /* Lock the field — recipient is fixed from the registry, not user input */
+      recipientEl.readOnly = true;
+      recipientEl.classList.add('tx-field--locked');
+      recipientEl.setAttribute('aria-label',
+        'Recipient wallet address — locked from Coin Card registry');
+
+      /* Show "SENDING TO" label */
+      var labelEl = el('txRecipientLabel');
+      if (labelEl) labelEl.removeAttribute('hidden');
+
+      /* Populate card holder context below the locked field */
+      var nameEl = el('ccRecipientName');
+      var metaEl = el('ccRecipientMeta');
+      var ctxEl  = el('ccRecipientContext');
+
+      if (nameEl) {
+        nameEl.textContent = manifest.displayName
+          || (manifest.owner && manifest.owner.name)
+          || cc;
+      }
+      if (metaEl) {
+        var parts = [];
+        if (manifest.displayCredential) parts.push(manifest.displayCredential);
+        parts.push('Registry verified');
+        metaEl.textContent = parts.join(' \u00b7 ');
+      }
+      if (ctxEl) ctxEl.removeAttribute('hidden');
     }
 
     /* Amount — sender intent hint from URL, not from manifest */

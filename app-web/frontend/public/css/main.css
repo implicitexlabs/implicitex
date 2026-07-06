@@ -6879,6 +6879,62 @@ input[type="number"] {
   grid-column: 1 / -1;
 }
 
+/* ---- Coin Card portal role clarity ---- */
+
+/* Sender row: stacked label + subcopy on the left, address on the right */
+.tx-sender-row { align-items: flex-start; }
+.tx-sender-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.tx-sender-sub {
+  font-family: var(--font-ui);
+  font-size: var(--size-xs);
+  color: var(--dim);
+  letter-spacing: 0.02em;
+}
+
+/* "SENDING TO" label row — shown only during Coin Card handoff */
+.tx-recipient-label {
+  display: flex;
+  align-items: center;
+  padding: 8px 0 4px;
+}
+.tx-recipient-label[hidden] { display: none; }
+
+/* Locked recipient field — address fixed from registry, not editable */
+.tx-field--locked {
+  border-color: var(--accent) !important;
+  cursor: text;
+}
+.tx-field--locked:focus { border-color: var(--accent) !important; }
+
+/* Coin Card recipient context — card holder name + credential + status */
+.cc-recipient-context {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0 8px;
+  gap: 8px;
+}
+.cc-recipient-context[hidden] { display: none; }
+.cc-recipient-name {
+  font-family: var(--font-ui);
+  font-size: var(--size-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--white);
+  letter-spacing: 0.02em;
+}
+.cc-recipient-meta {
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  color: var(--accent);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
 /* Layout icon visibility — shows current state, click toggles */
 .portal-layout-icon--stacked {
   display: none;
