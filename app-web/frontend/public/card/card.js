@@ -316,9 +316,12 @@
     transition('HANDOFF');
     emit('CC_HANDOFF', { intent: intent, url: url });
 
-    /* If parent does not intercept CC_HANDOFF, open the portal */
+    /* If parent does not intercept CC_HANDOFF, navigate to the portal.
+     * Same-tab navigation preserves the linear flow and allows Back to return
+     * to the card. Phase 2 will embed the portal inline so the card stays
+     * visible, but same-tab is the lowest-risk continuity fix for now. */
     setTimeout(function () {
-      window.open(url, '_blank', 'noopener');
+      window.location.href = url;
     }, 120);
   }
 
