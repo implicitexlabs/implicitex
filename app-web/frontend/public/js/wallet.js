@@ -3747,12 +3747,14 @@
       return;
     }
 
-    // --- Build contracts ---
-    let signer;
+    // --- Verify signer identity matches connected account ---
+    // Writes (approve, transferWithFee) go through the Execution Service.
+    // This block confirms the wallet's reported signer matches state.address
+    // before any contract interaction begins.
     try {
-      const provider = new ethers.BrowserProvider(activeProvider);
-      signer = await provider.getSigner(state.address);
-      const signerAddress = await signer.getAddress();
+      const _provider     = new ethers.BrowserProvider(activeProvider);
+      const _signer       = await _provider.getSigner(state.address);
+      const signerAddress = await _signer.getAddress();
       if (signerAddress.toLowerCase() !== state.address.toLowerCase()) {
         clearTransferForm();
         state.address = signerAddress;
@@ -3765,8 +3767,10 @@
       return;
     }
 
-    const usdc       = new ethers.Contract(usdcAddress,     ERC20_ABI,     signer);
-    const implicitex = new ethers.Contract(contractAddress, IMPLICITEX_ABI, signer);
+    // Read-only contract instance — pre-flight queries only (minTransfer, paused, previewTransfer).
+    // Writes go through window.IX_EXECUTE.
+    const implicitex = new ethers.Contract(contractAddress, IMPLICITEX_ABI,
+      new ethers.BrowserProvider(activeProvider));
 
     // --- Amount validation ---
     let rawAmount;
@@ -3902,15 +3906,15 @@
         actionVal:  'Approve the full total debit. Approval alone does not send funds.',
       });
       try {
-        const approveTx = await usdc.approve(contractAddress, totalDebit);
+        const approveHash = await window.IX_EXECUTE.approve(state.chainId, state.address, totalDebit);
         updateReceipt(receiptId, {
-          approvalHash: approveTx.hash,
+          approvalHash: approveHash,
           lastKnownMessage: `USDC authorization submitted for ${totalDebitHuman} USDC total debit. Funds are not sent yet.`,
         });
         setStatus('Step 2 of 2 — transfer confirmation follows.');
         setTxState('pending', 'Authorization submitted.', 'Confirming approval…');
         setTransferNote('Step 1 of 2 — Approval submitted — awaiting chain confirmation…');
-        await approveTx.wait();
+        await window.IX_EXECUTE.waitForReceipt(approveHash);
         // On mobile MetaMask's in-app browser the provider's internal state may
         // not have settled immediately after the approval receipt. A short pause
         // reduces the chance of -32603 on the next wallet prompt.
@@ -4316,10 +4320,10 @@
       });
       console.log('[IX] invoking transferWithFee — recipient:', recipient, 'rawAmount:', rawAmount.toString());
       setStatus('Opening final MetaMask transfer confirmation…');
-      const tx = await implicitex.transferWithFee(recipient, rawAmount);
-      console.log('[IX] transferWithFee returned — hash:', tx && tx.hash);
-      setStatus('Transfer submitted to network: ' + (tx && tx.hash ? tx.hash.slice(0, 12) + '…' : 'no hash'));
-      broadcastHash = tx.hash;
+      const txHash = await window.IX_EXECUTE.transferWithFee(state.chainId, state.address, recipient, rawAmount);
+      console.log('[IX] transferWithFee returned — hash:', txHash);
+      setStatus('Transfer submitted to network: ' + (txHash ? txHash.slice(0, 12) + '…' : 'no hash'));
+      broadcastHash = txHash;
       broadcastUrl = `${chainConfig.explorerUrl}/tx/${broadcastHash}`;
 
       // Persist SUBMITTED + hash atomically before any UI update or flag change.
@@ -4350,9 +4354,9 @@
         eventVal:   'Broadcast to network',
         actionVal:  'Wait for confirmation. Do not retry.',
       });
-      const txReceipt = await tx.wait();
-
-      const txHash     = txReceipt.hash;
+      // IX_EXECUTE.waitForReceipt returns the raw eth_getTransactionReceipt object.
+      // blockNumber arrives as a hex string; parseInt converts it to match receipt schema.
+      const txReceipt  = await window.IX_EXECUTE.waitForReceipt(txHash);
       const receiptUrl = `${chainConfig.explorerUrl}/tx/${txHash}`;
       if (els.txStatus) {
         // explorerUrl is from our own config; txHash is a 0x-prefixed hex from the chain — safe.
@@ -4369,7 +4373,7 @@
         transferHash: txHash,
         hash: txHash,
         explorerUrl: receiptUrl,
-        blockNumber: txReceipt.blockNumber || null,
+        blockNumber: txReceipt.blockNumber ? parseInt(txReceipt.blockNumber, 16) : null,
         lastKnownMessage: 'Transfer confirmed. Funds moved on Polygon.',
       }, OBSERVATION_SOURCES && OBSERVATION_SOURCES.RPC);
       if (window.IX && window.IX.receipts) window.IX.receipts.clearActive();
