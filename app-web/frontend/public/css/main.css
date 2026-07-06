@@ -9,7 +9,7 @@
 
    Type constitution:
      --font-body     Inter / system-ui     prose, legal, FAQ, Learn, any long copy
-     --font-ui       Oxanium               UI chrome: nav, buttons, badges, labels, forms
+     --font-ui       Inter                 UI chrome: nav, buttons, badges, labels, forms
      --font-display  Orbitron              Large headings only. Min --size-xl. Never in body.
      --font-mono     IBM Plex Mono         Technical data only: addresses, hashes, IDs, chain data
 
@@ -28,7 +28,7 @@
      1px borders and hairline visual details may remain raw px.
    ============================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Orbitron:wght@400;500;600;700;800&family=Oxanium:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Orbitron:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
 
 /* ---- Reset ---- */
 *, *::before, *::after {
@@ -167,7 +167,7 @@ body {
 }
 
 /* ---- Global type enforcement ---- */
-/* All interactive elements inherit Oxanium as the UI brand font */
+/* All interactive elements inherit Inter as the UI font */
 button,
 input,
 select,
@@ -908,7 +908,7 @@ body.portal-active #nav {
 }
 
 .section-kicker {
-  font-family: var(--font-ui);  /* kicker label — Oxanium, not Orbitron; too small for display */
+  font-family: var(--font-ui);  /* kicker label — Inter, not Orbitron; too small for display */
   font-size: var(--size-base);
   font-weight: var(--weight-bold);
   letter-spacing: 0.14em;
