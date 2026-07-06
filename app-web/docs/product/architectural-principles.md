@@ -192,6 +192,25 @@ This separation matters when execution engines multiply (MetaMask today, WalletC
 
 **Corollary:** State rules in CSS, JavaScript, and server logic should never target identity shell elements. If a rule asks "hide the recipient address during EXECUTE_PENDING," it has violated the instrument boundary before a line of code is written.
 
+**The product boundary (orthogonal to the above):** An instrument owns the transaction. A console owns the explanation.
+
+This is a product-level distinction, separate from the identity/workflow implementation boundary above. They are orthogonal and together explain the full architecture:
+
+| Boundary | Applies to | Rule |
+|---|---|---|
+| Identity / Workflow | Implementation | Instrument identity is never state-controlled |
+| Instrument / Console | Product | A payment never leaves the payment instrument |
+
+**Coin Card is a complete payment instrument.** The Transfer Portal is an optional inspection and verification console. Every payment must be completable without leaving the Coin Card.
+
+Both products consume the same execution engine (`window.IX_EXECUTE`) independently. Neither routes through the other. This means:
+
+- The Transfer Portal may observe, verify, diagnose, replay, and explain a transfer — but it does not execute one.
+- The Coin Card may complete a transfer without opening the Portal.
+- When execution engines multiply (WalletConnect, Safe, Ledger), neither instrument nor console UI changes — because execution is infrastructure, not product.
+
+**The decision filter for Portal features:** Does this feature help a user understand, verify, or diagnose a transfer? → Console feature. Does it execute, approve, or submit a transfer? → That belongs in the instrument, not the console.
+
 ---
 
 ## How to use these principles
@@ -205,6 +224,6 @@ These principles answer future questions before they arise. When a feature is pr
 5. Does it create a new brand surface that is disconnected from the entity graph? → Principle 5 flags it for correction.
 6. Does it blur route evidence, recipient identity evidence, and payment execution? → Principle 6 blocks it.
 7. Does it increase the evidence available to users, or does it ask them to trust ImplicitEx instead? → Principle 7 is the test.
-8. Does it add identity to a workflow, or does it add workflow behavior to an instrument's identity region? → Principle 8 is the boundary.
+8. Does it add identity to a workflow, or does it add workflow behavior to an instrument's identity region? → Principle 8 (identity/workflow boundary) blocks it. Does it require a transfer to route through a console, or a console to execute? → Principle 8 (instrument/console boundary) blocks it.
 
 Proposals that strengthen these principles should be prioritized. Proposals that require violating them require an architectural argument, not just a product argument.

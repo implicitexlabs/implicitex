@@ -1,16 +1,34 @@
 # Coin Card — Product Specification and Trust Model
 
-**Status:** V1 — static registry, no cryptographic signing  
+**Status:** V1 architecture frozen for implementation
 **Built:** 2026-06-25  
+**Updated:** 2026-07-04
 **Architectural authority:** Architectural Principles §3 and §6
+
+V1 trust boundaries are frozen as of 2026-07-04. Implementation may change
+mechanics, but not the route-vs-recipient verification boundary, evidence
+supremacy order, or off-chain-only treatment of purpose labels.
 
 ---
 
 ## What Coin Card Is
 
-A Coin Card is a registry-backed verified recipient record. It is not a payment instrument. It does not execute transfers.
+Coin Card is a complete payment instrument. The Transfer Portal is an optional
+inspection and verification console. Every payment must be completable without
+leaving the Coin Card.
 
-A Coin Card answers one question: "Is this the canonical recipient for this Card ID?" The Transfer Portal answers a different question: "Did this transfer execute?"
+A payment never leaves the payment instrument. Both Coin Card and the Transfer
+Portal consume the same execution engine independently. Neither routes through
+the other.
+
+Free Coin Card answers one question: "What supported route and host-supplied
+recipient address is this card presenting?"
+
+Registered Coin Card answers a stronger question: "Is this the canonical
+recipient identity and destination for this Card ID?"
+
+The Transfer Portal answers a different question: "How do I inspect, verify, or
+diagnose this transfer?"
 
 ---
 
@@ -18,22 +36,123 @@ A Coin Card answers one question: "Is this the canonical recipient for this Card
 
 ```
 URL parameters    — transport (claims only)
-Registry manifest — evidence (canonical recipient confirmed)
+Manifest/registry — evidence (route or identity claim, depending on tier)
 Wallet prompt     — execution (user confirms and signs)
 Chain event       — settlement proof (on-chain, independently verifiable)
 ```
 
 Each layer is independent. No layer substitutes for another.
 
-- Verification confirms the published recipient record. It does not execute a transfer.
-- A completed transfer does not retroactively verify a registry record.
+- Free-tier verification confirms route evidence and host-supplied payment
+  instructions. It does not verify recipient identity.
+- Registered-tier verification may confirm the published recipient record. It
+  does not execute a transfer.
+- A completed transfer does not retroactively verify a recipient identity or
+  registry record.
 - Settlement proof is the on-chain transaction hash, not the registry manifest.
 
 ---
 
 ## V1 Architecture
 
-### Registry format
+### Free manifest format
+
+Free Coin Card may use a host-controlled manifest such as:
+
+```json
+{
+  "schema": "implicitex.coincard.free.v1",
+  "version": 1,
+  "created": "2026-07-04T18:00:00Z",
+  "updated": "2026-07-04T18:00:00Z",
+  "name": "Aden Media Group",
+  "recipientAddress": "0x0000000000000000000000000000000000000000",
+  "network": "polygon",
+  "token": "USDC",
+  "status": "active"
+}
+```
+
+Free-tier validation checks manifest shape, supported network/token route,
+official ImplicitEx contract path, and recipient address format. It does not
+prove that the address belongs to the host or a named person/business.
+
+Required free manifest fields:
+
+| Field | Meaning |
+|---|---|
+| `schema` | Free Coin Card schema identifier. V1 is `implicitex.coincard.free.v1`. |
+| `version` | Integer manifest version for migration and compatibility checks. |
+| `created` | Host-declared RFC 3339 UTC creation timestamp. Chronology evidence, not cryptographic proof. |
+| `updated` | Host-declared RFC 3339 UTC update timestamp. Chronology evidence, not cryptographic proof. |
+| `name` | Plain-text display name supplied by the host. |
+| `recipientAddress` | Host-supplied recipient wallet address. |
+| `network` | Supported network identifier. V1 launch target: `polygon`. |
+| `token` | Supported token symbol. V1 launch target: `USDC`. |
+| `status` | Host-supplied operational status. V1 allowed values: `active`, `paused`. |
+
+Manifest timestamps help explain chronology during a dispute, but they do not
+prove when a file was actually published or changed. The evidentiary anchor is
+the manifest fingerprint recorded at transaction time and the blockchain
+transaction record.
+
+`purpose` is intentionally deferred from the required V1 manifest. A future
+V1.1 field may allow values such as `donation`, `invoice`, or
+`creator-support`, but purpose labels must remain semantic/off-chain metadata.
+They must not change settlement behavior or expand the trust claim.
+
+### Free-tier evidence hierarchy
+
+Host evidence:
+
+- `coin-card.json`
+- `created`
+- `updated`
+- host website/domain
+
+Coin Card evidence:
+
+- manifest fingerprint/hash
+- Coin Card schema/version
+- route validation result
+- contract address used
+
+Blockchain evidence:
+
+- transaction hash
+- block number
+- timestamp
+- sender
+- recipient
+- amount
+- fee
+
+Burden of proof:
+
+```text
+The host proves what they intended to publish.
+ImplicitEx proves what was presented and executed.
+The blockchain proves what actually happened.
+```
+
+Evidence supremacy:
+
+```text
+Blockchain evidence
+        ↓
+Recorded Coin Card evidence at transaction time
+        ↓
+Current host manifest or registry record
+        ↓
+Human testimony
+```
+
+If sources disagree, the more objective and transaction-proximate evidence
+controls. The current host manifest cannot rewrite what was recorded at
+transaction time. Recorded Coin Card evidence cannot override confirmed
+on-chain settlement.
+
+### Registered registry format
 
 Static JSON manifests served from:
 
@@ -72,9 +191,15 @@ A Coin Card link passes claims as URL parameters:
 /?cc=<cardId>&to=<address>&chain=<chainId>&token=<symbol>
 ```
 
-`cc` alone is sufficient. The registry manifest is the source of truth for `to`, `chain`, and `token`. If `to`, `chain`, or `token` are also present in the URL, they are compared against the manifest. Any mismatch produces `Verification failed`.
+`cc` alone is sufficient for registered Coin Cards. The registry manifest is
+the source of truth for `to`, `chain`, and `token`. If `to`, `chain`, or `token`
+are also present in the URL, they are compared against the manifest. Any
+mismatch produces `Verification failed`.
 
-The registry wins. URL claims do not override it.
+For registered cards, the registry wins. URL claims do not override it. For
+free self-hosted cards, the host manifest controls the displayed recipient
+address and must be treated as host-supplied payment instruction, not ImplicitEx
+recipient verification.
 
 ### Card ID validation
 
@@ -92,7 +217,8 @@ Malformed IDs produce `Invalid card` — no network request is made.
 |---|---|
 | `No card` | No `cc` param present |
 | `Card detected — not verified` | `cc` param present, manifest unavailable |
-| `Verified` | Manifest confirmed, all required fields present, `status: active`, URL claims match |
+| `Route verified` | Free manifest confirmed, route supported, address format valid |
+| `Verified` | Registered manifest confirmed, all required fields present, `status: active`, URL claims match |
 | `Verification failed` | Manifest exists but URL claims mismatch |
 | `Revoked` | `manifest.status === "revoked"` — do not treat as valid |
 | `Invalid card` | Card ID failed regex guard |
@@ -118,7 +244,11 @@ Malformed IDs produce `Invalid card` — no network request is made.
 
 ### Prefill behavior
 
-The recipient field (`txRecipient`) is prefilled from `manifest.recipient` only on `verificationStatus: 'verified'` and `sourceType: 'registry'`. URL-only recipients are never silently prefilled as verified.
+The recipient field (`txRecipient`) is prefilled from `manifest.recipient` only
+on `verificationStatus: 'verified'` and `sourceType: 'registry'` for registered
+cards. Free cards may prefill from the host manifest only with language that
+states the recipient address is host-supplied. URL-only recipients are never
+silently prefilled as verified.
 
 ---
 
@@ -140,7 +270,14 @@ Independent lookup at `/verify.html?cc=<cardId>`. No wallet required. Displays f
 
 **No backend confirmation.** The registry check is a client-side fetch against a static file. There is no server-side rate limiting, fraud detection, or real-time revocation.
 
-**No transfer linkage.** A verified Coin Card record confirms a recipient address. It does not track whether a transfer was made, confirm an amount, or produce a receipt. Settlement proof is always the on-chain transaction hash.
+**Free tier does not verify recipient identity.** It validates route evidence
+and address format only. The host is responsible for the manifest address it
+publishes.
+
+**No transfer linkage.** A registered Coin Card record confirms a recipient
+address according to its evidence tier. It does not by itself track whether a
+transfer was made, confirm an amount, or produce a receipt. Settlement proof is
+always the on-chain transaction hash.
 
 ---
 
@@ -150,7 +287,8 @@ The static registry design was chosen to ship V1 without backend complexity. Fut
 
 - Cryptographic signatures on manifests (verifiable offline or via public key endpoint)
 - Real-time status endpoint (live revocation without file redeployment)
-- Transfer linkage (optional: associate completed transfers with a Card ID for receipt purposes)
+- Transfer linkage (optional: associate completed transfers with a Card ID or
+  manifest fingerprint for receipt purposes)
 
 These are future capabilities. The current system is accurately described as a static public registry, not a cryptographic identity system.
 
