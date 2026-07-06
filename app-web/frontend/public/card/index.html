@@ -43,6 +43,10 @@
         <span class="cc-trust-k">ISSUED BY</span>
         <span class="cc-trust-v" id="ccOwner">—</span>
       </div>
+      <div class="cc-trust-row cc-trust-row--holder" id="ccCardHolderRow">
+        <span class="cc-trust-k">CARD HOLDER</span>
+        <span class="cc-trust-v" id="ccCardHolder">—</span>
+      </div>
       <div class="cc-trust-row">
         <span class="cc-trust-k">RECIPIENT</span>
         <span class="cc-trust-v cc-mono" id="ccRecipient" title="">—</span>
@@ -53,7 +57,13 @@
       </div>
     </div>
 
-    <!-- Amount surface: VERIFIED → TRANSFER_INTENT_READY -->
+    <!-- Gift section — shown to recipient before sender engages -->
+    <div class="cc-gift" id="ccGift">
+      <p class="cc-gift-text">This Coin Card was created to help support reach this recipient.</p>
+      <button class="cc-reveal-btn" id="ccRevealBtn" type="button">Send USDC &#8594;</button>
+    </div>
+
+    <!-- Amount surface: VERIFIED (sender mode) → TRANSFER_INTENT_READY -->
     <div class="cc-amount-surface" id="ccAmountSurface">
 
       <!-- user-input mode: editable amount field -->

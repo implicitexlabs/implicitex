@@ -107,6 +107,24 @@ html, body {
 [data-state="REVOKED"] .cc-action { display: none; }
 [data-state="REVOKED"] .cc-revoked-notice { display: block; }
 
+/* Gift mode (VERIFIED, no sender engagement yet):
+ * Show gift section; hide transaction surface.
+ * Sender mode (data-mode="sender") or advanced states reveal transaction surface. */
+.cc-gift { display: none; }
+
+[data-state="VERIFIED"] .cc-amount-surface,
+[data-state="VERIFIED"] .cc-action { display: none; }
+
+[data-state="VERIFIED"] .cc-gift { display: flex; }
+[data-state="VERIFIED"][data-mode="sender"] .cc-gift { display: none; }
+
+[data-state="VERIFIED"][data-mode="sender"] .cc-amount-surface,
+[data-state="VERIFIED"][data-mode="sender"] .cc-action { display: flex; }
+
+/* CARD HOLDER row — only visible when manifest.displayName is present */
+.cc-trust-row--holder { display: none; }
+.cc-trust-row--holder.is-populated { display: flex; }
+
 /* locked mode: hide input, show locked value */
 .cc-locked-row { display: none; }
 
@@ -228,6 +246,40 @@ html, body {
   font-family: var(--cc-mono) !important;
   font-size: 11px !important;
   letter-spacing: 0.04em !important;
+}
+
+/* ---- Gift section — recipient-first view ---- */
+.cc-gift {
+  flex-direction: column;
+  padding: 16px 14px 14px;
+  gap: 12px;
+  border-bottom: 1px solid var(--cc-border);
+}
+.cc-gift-text {
+  font-family: var(--cc-body);
+  font-size: 12px;
+  color: var(--cc-text-mid);
+  line-height: 1.55;
+}
+.cc-reveal-btn {
+  display: block;
+  width: 100%;
+  padding: 10px 14px;
+  background: rgba(242, 242, 240, 0.06);
+  border: 1px solid rgba(242, 242, 240, 0.18);
+  border-radius: var(--cc-radius);
+  color: rgba(242, 242, 240, 0.88);
+  font-family: var(--cc-ui);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease;
+}
+.cc-reveal-btn:hover {
+  background: rgba(242, 242, 240, 0.10);
+  border-color: rgba(242, 242, 240, 0.28);
 }
 
 /* ---- Amount surface ---- */

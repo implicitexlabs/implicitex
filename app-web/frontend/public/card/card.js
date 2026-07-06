@@ -139,6 +139,20 @@
       : '\u2014';
     setText('ccOwner', ownerText);
 
+    /* Card holder — display name, if present */
+    if (manifest.displayName) {
+      setText('ccCardHolder', manifest.displayName);
+      var holderRow = el('ccCardHolderRow');
+      if (holderRow) holderRow.classList.add('is-populated');
+
+      /* Personalize the reveal button with first name */
+      var revealBtn = el('ccRevealBtn');
+      if (revealBtn) {
+        var firstName = manifest.displayName.split(' ')[0];
+        revealBtn.textContent = 'Send USDC to ' + firstName + ' \u2192';
+      }
+    }
+
     /* Recipient — truncated with full address in title */
     var addr = manifest.recipient || '';
     var recipEl = el('ccRecipient');
@@ -381,6 +395,18 @@
   }
 
   /* ----------------------------------------------------------------
+   * Reveal button — transitions gift view → sender view
+   * ---------------------------------------------------------------- */
+  function initRevealButton() {
+    var btn = el('ccRevealBtn');
+    if (btn) btn.addEventListener('click', function () {
+      frame.dataset.mode = 'sender';
+      var input = el('ccAmountInput');
+      if (input) input.focus();
+    });
+  }
+
+  /* ----------------------------------------------------------------
    * Send button
    * ---------------------------------------------------------------- */
   function initSendButton() {
@@ -394,6 +420,7 @@
    *   pathname.split('/') → ['', 'card', 'cc_demo_implicitex']
    * ---------------------------------------------------------------- */
   function init() {
+    initRevealButton();
     initSendButton();
 
     var parts  = window.location.pathname.split('/').filter(Boolean);
