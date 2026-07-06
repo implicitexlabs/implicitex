@@ -16,7 +16,21 @@ If no: this is evidence a genuinely new principle may have emerged. Evaluate
 whether it is a principle or a consequence of conditions that will eventually
 resolve.
 
-The doctrine is not edited during normal feature work.
+The doctrine is not edited during normal feature work. When you encounter an architectural question mid-implementation, write a note here and finish the implementation. Many ideas that seem fundamental during a coding session turn out to be corollaries once the implementation settles. Let the question survive a little while before promoting it.
+
+---
+
+## Entry taxonomy
+
+| Type | Meaning |
+|---|---|
+| **Observation** | Something noticed during implementation — not yet evaluated. |
+| **Corollary** | A direct consequence of an existing principle — derivable, does not need to become a new principle. |
+| **Pattern** | A behavior recurring across multiple systems — may indicate an emerging principle, or may be a corollary to an existing one. |
+| **Candidate Principle** | An idea that currently cannot be derived from the doctrine. Survives a review cycle before being considered for promotion. |
+| **Rejected** | An idea examined and found to be derivable from existing principles, or otherwise unnecessary. Record the reasoning so it is not re-evaluated. |
+
+Most entries will remain observations or corollaries. A candidate principle that cannot be explained by the existing ten after one review cycle is worth serious consideration. A candidate that can be explained — even partially — is a corollary.
 
 ---
 
