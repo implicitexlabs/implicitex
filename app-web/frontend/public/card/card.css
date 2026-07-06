@@ -7,12 +7,18 @@
  * States (set on #ccFrame data-state attribute):
  *   BOOT                  → blank
  *   MANIFEST_LOADING      → loading indicator
- *   VERIFIED              → trust rows + amount input
+ *   VERIFIED              → trust rows; gift section shown
  *   AMOUNT_READY          → trust rows + amount + fee preview
- *   TRANSFER_INTENT_READY → trust rows + amount + fee + send button active
+ *   TRANSFER_INTENT_READY → trust rows + amount + fee + "Connect Wallet" active
+ *   CONNECTING            → wallet connection in flight
+ *   WRONG_NETWORK         → connected; wrong chain; "Switch to Polygon" active
+ *   SWITCHING_NETWORK     → chain switch in flight
+ *   READY_TO_SEND         → confirm panel shown; "Confirm Send" active
+ *   APPROVE_PENDING       → USDC approve() tx submitted
+ *   EXECUTE_PENDING       → transferWithFee() tx submitted
+ *   CONFIRMED             → on-chain confirmed; explorer link shown
  *   REVOKED               → trust rows + revocation notice
  *   ERROR                 → error message
- *   HANDOFF               → send button loading
  */
 
 /* ---- Reset ---- */
@@ -71,17 +77,29 @@ html, body {
 /* MANIFEST_LOADING */
 [data-state="MANIFEST_LOADING"] .cc-loading { display: flex; }
 
-/* VERIFIED, AMOUNT_READY, TRANSFER_INTENT_READY, HANDOFF */
+/* VERIFIED, AMOUNT_READY, TRANSFER_INTENT_READY, and execution states */
 [data-state="VERIFIED"] .cc-card,
 [data-state="AMOUNT_READY"] .cc-card,
 [data-state="TRANSFER_INTENT_READY"] .cc-card,
-[data-state="HANDOFF"] .cc-card,
+[data-state="CONNECTING"] .cc-card,
+[data-state="WRONG_NETWORK"] .cc-card,
+[data-state="SWITCHING_NETWORK"] .cc-card,
+[data-state="READY_TO_SEND"] .cc-card,
+[data-state="APPROVE_PENDING"] .cc-card,
+[data-state="EXECUTE_PENDING"] .cc-card,
+[data-state="CONFIRMED"] .cc-card,
 [data-state="REVOKED"] .cc-card { display: flex; }
 
 [data-state="VERIFIED"] .cc-footer,
 [data-state="AMOUNT_READY"] .cc-footer,
 [data-state="TRANSFER_INTENT_READY"] .cc-footer,
-[data-state="HANDOFF"] .cc-footer,
+[data-state="CONNECTING"] .cc-footer,
+[data-state="WRONG_NETWORK"] .cc-footer,
+[data-state="SWITCHING_NETWORK"] .cc-footer,
+[data-state="READY_TO_SEND"] .cc-footer,
+[data-state="APPROVE_PENDING"] .cc-footer,
+[data-state="EXECUTE_PENDING"] .cc-footer,
+[data-state="CONFIRMED"] .cc-footer,
 [data-state="REVOKED"] .cc-footer,
 [data-state="ERROR"] .cc-footer { display: flex; }
 
@@ -91,16 +109,25 @@ html, body {
 /* Fee rows — only when amount is valid */
 .cc-fee-rows { display: none; }
 [data-state="AMOUNT_READY"] .cc-fee-rows,
-[data-state="TRANSFER_INTENT_READY"] .cc-fee-rows,
-[data-state="HANDOFF"] .cc-fee-rows { display: flex; }
+[data-state="TRANSFER_INTENT_READY"] .cc-fee-rows { display: flex; }
 
-/* Send button active only at TRANSFER_INTENT_READY */
+/* Send button: active at intent-ready and execution states */
 [data-state="TRANSFER_INTENT_READY"] .cc-send-btn,
-[data-state="HANDOFF"] .cc-send-btn { opacity: 1; }
-[data-state="HANDOFF"] .cc-send-btn {
+[data-state="WRONG_NETWORK"] .cc-send-btn,
+[data-state="READY_TO_SEND"] .cc-send-btn { opacity: 1; }
+
+/* Send button: loading/wait during in-flight states */
+[data-state="CONNECTING"] .cc-send-btn,
+[data-state="SWITCHING_NETWORK"] .cc-send-btn,
+[data-state="APPROVE_PENDING"] .cc-send-btn,
+[data-state="EXECUTE_PENDING"] .cc-send-btn {
+  opacity: 1;
   cursor: wait;
   pointer-events: none;
 }
+
+/* Hide action at CONFIRMED */
+[data-state="CONFIRMED"] .cc-action { display: none; }
 
 /* REVOKED: hide amount surface and action */
 [data-state="REVOKED"] .cc-amount-surface,
@@ -109,7 +136,7 @@ html, body {
 
 /* Gift mode (VERIFIED, no sender engagement yet):
  * Show gift section; hide transaction surface.
- * Sender mode (data-mode="sender") or advanced states reveal transaction surface. */
+ * Sender mode (data-mode="sender") or execution states reveal transaction surface. */
 .cc-gift { display: none; }
 
 [data-state="VERIFIED"] .cc-amount-surface,
@@ -120,6 +147,15 @@ html, body {
 
 [data-state="VERIFIED"][data-mode="sender"] .cc-amount-surface,
 [data-state="VERIFIED"][data-mode="sender"] .cc-action { display: flex; }
+
+/* Execution states: amount surface hidden (confirm panel replaces it) */
+[data-state="CONNECTING"] .cc-amount-surface,
+[data-state="WRONG_NETWORK"] .cc-amount-surface,
+[data-state="SWITCHING_NETWORK"] .cc-amount-surface,
+[data-state="READY_TO_SEND"] .cc-amount-surface,
+[data-state="APPROVE_PENDING"] .cc-amount-surface,
+[data-state="EXECUTE_PENDING"] .cc-amount-surface,
+[data-state="CONFIRMED"] .cc-amount-surface { display: none; }
 
 /* CARD HOLDER row — only visible when manifest.displayName is present */
 .cc-trust-row--holder { display: none; }
@@ -420,6 +456,102 @@ html, body {
   color: var(--cc-red);
   line-height: 1.55;
 }
+
+/* ---- Self-send warning ---- */
+.cc-selfsend-warn {
+  display: none;
+  padding: 10px 14px;
+  background: rgba(212, 160, 23, 0.07);
+  border-bottom: 1px solid rgba(212, 160, 23, 0.18);
+}
+.cc-selfsend-warn.is-active { display: flex; }
+.cc-selfsend-text {
+  font-family: var(--cc-body);
+  font-size: 11px;
+  color: var(--cc-amber);
+  line-height: 1.5;
+}
+
+/* ---- Confirm panel (READY_TO_SEND) ---- */
+.cc-confirm-panel {
+  display: none;
+  flex-direction: column;
+  padding: 14px 14px 12px;
+  gap: 8px;
+  border-bottom: 1px solid var(--cc-border);
+}
+[data-state="READY_TO_SEND"] .cc-confirm-panel { display: flex; }
+
+.cc-confirm-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+.cc-confirm-row--sep {
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 1px solid var(--cc-border);
+}
+.cc-confirm-k {
+  font-family: var(--cc-mono);
+  font-size: 8px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--cc-text-dim);
+  flex-shrink: 0;
+  padding-top: 1px;
+}
+.cc-confirm-v {
+  font-family: var(--cc-mono);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: var(--cc-text);
+  text-align: right;
+  word-break: break-all;
+}
+
+/* ---- Execution status (APPROVE_PENDING, EXECUTE_PENDING) ---- */
+.cc-exec-status {
+  display: none;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--cc-border);
+}
+[data-state="APPROVE_PENDING"] .cc-exec-status,
+[data-state="EXECUTE_PENDING"] .cc-exec-status { display: flex; }
+.cc-exec-text {
+  font-family: var(--cc-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--cc-text-mid);
+  line-height: 1.5;
+}
+
+/* ---- Confirmed (CONFIRMED) ---- */
+.cc-confirmed {
+  display: none;
+  flex-direction: column;
+  padding: 14px;
+  gap: 8px;
+  border-bottom: 1px solid var(--cc-border);
+}
+[data-state="CONFIRMED"] .cc-confirmed { display: flex; }
+.cc-confirmed-label {
+  font-family: var(--cc-ui);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--cc-green);
+}
+.cc-tx-link {
+  font-family: var(--cc-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--cc-text-mid);
+  text-decoration: none;
+}
+.cc-tx-link:hover { color: var(--cc-text); }
 
 /* ---- Footer ---- */
 .cc-footer {
