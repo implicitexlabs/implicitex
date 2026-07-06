@@ -6903,36 +6903,48 @@ input[type="number"] {
 }
 .tx-recipient-label[hidden] { display: none; }
 
-/* Locked recipient field — address fixed from registry, not editable */
+/* Locked recipient field — address is cryptographic proof, subordinated to identity above.
+ * Suppress form-field appearance: no border, no background, small mono text. */
 .tx-field--locked {
-  border-color: var(--accent) !important;
+  font-family: var(--font-mono) !important;
+  font-size: var(--size-xs) !important;
+  color: var(--muted) !important;
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid var(--border) !important;
+  padding: 4px 0 8px !important;
+  border-radius: 0 !important;
+  letter-spacing: 0.06em;
   cursor: text;
 }
-.tx-field--locked:focus { border-color: var(--accent) !important; }
+.tx-field--locked:focus {
+  border-bottom-color: var(--border-2) !important;
+  outline: none !important;
+}
 
-/* Coin Card recipient context — card holder name + credential + status */
+/* Coin Card identity context — name → credential → address (rendered above the input) */
 .cc-recipient-context {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 6px 0 8px;
-  gap: 8px;
+  flex-direction: column;
+  gap: 3px;
+  padding: 8px 0 6px;
 }
 .cc-recipient-context[hidden] { display: none; }
+/* Name: identity headline — largest, most prominent */
 .cc-recipient-name {
   font-family: var(--font-ui);
-  font-size: var(--size-sm);
+  font-size: 15px;
   font-weight: var(--weight-semibold);
   color: var(--white);
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
 }
+/* Credential + status: supporting detail in accent mono */
 .cc-recipient-meta {
   font-family: var(--font-mono);
   font-size: var(--size-xs);
   color: var(--accent);
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  white-space: nowrap;
 }
 
 /* Layout icon visibility — shows current state, click toggles */
