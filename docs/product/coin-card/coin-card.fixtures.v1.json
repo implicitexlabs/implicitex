@@ -1,0 +1,185 @@
+{
+  "schema": "implicitex.coin-card.fixtures.v1",
+  "status": "draft-fixtures",
+  "date": "2026-07-07",
+  "stateContract": "docs/product/coin-card/coin-card.state.v1.json",
+  "fixtures": [
+    {
+      "id": "collapsed-acceptance-mark",
+      "expectLegal": true,
+      "state": {
+        "view": "COLLAPSED",
+        "routeAvailability": "AVAILABLE",
+        "routeValidity": "VALID",
+        "routeMutability": "LOCKED",
+        "networkSupport": "SUPPORTED",
+        "tokenSupport": "SUPPORTED",
+        "amountText": "EMPTY",
+        "amountValidity": "UNKNOWN",
+        "funding": "UNKNOWN",
+        "wallet": "DISCONNECTED",
+        "execution": "IDLE",
+        "receipt": "NONE",
+        "error": "NONE",
+        "activeIntentId": null
+      },
+      "assert": ["outer=216x44", "expand-only", "no-wallet-action"]
+    },
+    {
+      "id": "expanded-empty-amount",
+      "expectLegal": true,
+      "state": {
+        "view": "EXPANDED",
+        "routeAvailability": "AVAILABLE",
+        "routeValidity": "VALID",
+        "routeMutability": "LOCKED",
+        "networkSupport": "SUPPORTED",
+        "tokenSupport": "SUPPORTED",
+        "amountText": "EMPTY",
+        "amountValidity": "UNKNOWN",
+        "funding": "UNKNOWN",
+        "wallet": "DISCONNECTED",
+        "execution": "IDLE",
+        "receipt": "NONE",
+        "error": "NONE",
+        "activeIntentId": null
+      },
+      "assert": ["outer=460x286", "fee=em-dash", "total=em-dash"]
+    },
+    {
+      "id": "preview-ready-disconnected",
+      "expectLegal": true,
+      "state": {
+        "view": "EXPANDED",
+        "routeAvailability": "AVAILABLE",
+        "routeValidity": "VALID",
+        "routeMutability": "LOCKED",
+        "networkSupport": "SUPPORTED",
+        "tokenSupport": "SUPPORTED",
+        "amountText": "SYNTACTICALLY_COMPLETE",
+        "amountValidity": "VALID",
+        "funding": "UNKNOWN",
+        "wallet": "DISCONNECTED",
+        "execution": "PREVIEW_READY",
+        "receipt": "LOCAL_READY",
+        "error": "NONE",
+        "activeIntentId": null
+      },
+      "values": { "amountUnits": "1000000", "feeUnits": "10000", "totalUnits": "1010000" },
+      "assert": ["connect-cta", "no-approval", "amount=1.00 USDC", "fee=0.01 USDC", "total=1.01 USDC"]
+    },
+    {
+      "id": "execution-ready-connected",
+      "expectLegal": true,
+      "state": {
+        "view": "EXPANDED",
+        "routeAvailability": "AVAILABLE",
+        "routeValidity": "VALID",
+        "routeMutability": "LOCKED",
+        "networkSupport": "SUPPORTED",
+        "tokenSupport": "SUPPORTED",
+        "amountText": "SYNTACTICALLY_COMPLETE",
+        "amountValidity": "VALID",
+        "funding": "SUFFICIENT",
+        "wallet": "CONNECTED_READY",
+        "execution": "EXECUTION_READY",
+        "receipt": "LOCAL_READY",
+        "error": "NONE",
+        "activeIntentId": "intent-ready-001"
+      },
+      "values": { "amountUnits": "1000000", "feeUnits": "10000", "totalUnits": "1010000", "sender": "0x1111111111111111111111111111111111111111" },
+      "assert": ["approval-or-transfer-cta", "outer=460x286"]
+    },
+    {
+      "id": "transfer-pending-long-hash",
+      "expectLegal": true,
+      "state": {
+        "view": "EXPANDED",
+        "routeAvailability": "AVAILABLE",
+        "routeValidity": "VALID",
+        "routeMutability": "LOCKED",
+        "networkSupport": "SUPPORTED",
+        "tokenSupport": "SUPPORTED",
+        "amountText": "SYNTACTICALLY_COMPLETE",
+        "amountValidity": "VALID",
+        "funding": "SUFFICIENT",
+        "wallet": "CONNECTED_READY",
+        "execution": "TRANSFER_PENDING",
+        "receipt": "SUBMITTED",
+        "error": "NONE",
+        "activeIntentId": "intent-transfer-001"
+      },
+      "values": { "transferHash": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" },
+      "assert": ["hash-middle-truncated", "pending-precedence"]
+    },
+    {
+      "id": "confirmed-final",
+      "expectLegal": true,
+      "state": {
+        "view": "EXPANDED",
+        "routeAvailability": "AVAILABLE",
+        "routeValidity": "VALID",
+        "routeMutability": "LOCKED",
+        "networkSupport": "SUPPORTED",
+        "tokenSupport": "SUPPORTED",
+        "amountText": "SYNTACTICALLY_COMPLETE",
+        "amountValidity": "VALID",
+        "funding": "UNKNOWN",
+        "wallet": "DISCONNECTED",
+        "execution": "CONFIRMED",
+        "receipt": "FINAL",
+        "error": "NONE",
+        "activeIntentId": "intent-final-001"
+      },
+      "values": { "transferHash": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "receiptStatus": "success" },
+      "assert": ["confirmed-precedence", "no-fund-moving-cta"]
+    },
+    {
+      "id": "illegal-collapsed-execution-ready",
+      "expectLegal": false,
+      "state": {
+        "view": "COLLAPSED",
+        "routeAvailability": "AVAILABLE",
+        "routeValidity": "VALID",
+        "routeMutability": "LOCKED",
+        "networkSupport": "SUPPORTED",
+        "tokenSupport": "SUPPORTED",
+        "amountText": "SYNTACTICALLY_COMPLETE",
+        "amountValidity": "VALID",
+        "funding": "SUFFICIENT",
+        "wallet": "CONNECTED_READY",
+        "execution": "EXECUTION_READY",
+        "receipt": "LOCAL_READY",
+        "error": "NONE",
+        "activeIntentId": "intent-illegal-001"
+      },
+      "assert": ["reject-illegal-vector"]
+    },
+    {
+      "id": "stale-intent-event",
+      "expectLegal": true,
+      "event": {
+        "type": "TRANSFER_RECEIPT_CONFIRMED",
+        "intentId": "intent-old",
+        "activeIntentId": "intent-new"
+      },
+      "assert": ["reject-active-mutation", "archive-reconcile-only-if-matching-receipt"]
+    }
+  ],
+  "requiredFutureFixtures": [
+    "route-unavailable-validity-unknown",
+    "route-invalid-loaded",
+    "amount-temporary-dot",
+    "amount-temporary-trailing-dot",
+    "amount-excess-precision",
+    "funding-insufficient-usdc",
+    "funding-insufficient-gas",
+    "approval-requested",
+    "approval-pending",
+    "approval-confirmed",
+    "transfer-requested",
+    "failed-retryable",
+    "interrupted-retryable",
+    "reconciling"
+  ]
+}

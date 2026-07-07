@@ -1,0 +1,182 @@
+{
+  "name": "implicitex.coin-card.tokens.v1",
+  "schemaVersion": "coin-card.tokens.v1",
+  "status": "normative",
+  "date": "2026-07-02",
+  "units": "css_px",
+  "boxSizing": "border-box",
+  "tolerance": {
+    "token": 0,
+    "renderedCssPx": 0.5
+  },
+  "constants": {
+    "expanded": {
+      "radius": 12,
+      "border": 1,
+      "inset": 20,
+      "dividerWidth": 1,
+      "lettermarkValueShift": {
+        "duration": 8,
+        "easing": "ease-in-out",
+        "neutralColor": "rgb(112, 112, 112)",
+        "brightColor": "rgb(242, 244, 246)",
+        "phaseOffset": 0
+      }
+    },
+    "collapsed": {
+      "dividerWidth": 1,
+      "lettermarkValueShift": {
+        "duration": 9,
+        "easing": "ease-in-out",
+        "neutralColor": "rgb(112, 112, 112)",
+        "brightColor": "rgb(242, 244, 246)",
+        "phaseOffset": -1.8
+      }
+    }
+  },
+  "assets": {
+    "lettermark": {
+      "path": "app-web/frontend/public/components/images/lettermark-white.svg",
+      "sha256": "0a307891baa5fbf519e178b962c2a91b00d3d8c009b1f29a04544bb90c83c3c1",
+      "viewBox": [0, 0, 25, 25],
+      "aspectRatio": 1,
+      "preserveAspectRatio": "xMidYMid meet",
+      "allowedScaleRatio": 1
+    },
+    "implicitexWordmark": {
+      "path": "app-web/frontend/public/components/images/wordmark-white.svg",
+      "sha256": "685f972e54c3241b1ba4e1411ab6e897e1469146991564939fa4bb0f1afe3fdf",
+      "viewBox": [0, 0, 201.89, 14.7],
+      "role": "canonical-brand-wordmark"
+    },
+    "coinCardWordmark": {
+      "path": "app-web/frontend/public/components/images/coincard-logo.svg",
+      "sha256": "82eb9310f77fb921d1e8c216afcfc473482a4e3b27f61a54c968538b7e8b50c3",
+      "viewBox": [0, 0, 392, 56],
+      "role": "canonical-product-wordmark"
+    }
+  },
+  "formFactors": {
+    "collapsedAcceptanceMark": {
+      "outer": { "width": 216, "height": 44 },
+      "grid": {
+        "identityArea": { "x": 0, "y": 0, "width": 172, "height": 44 },
+        "lettermarkCell": { "x": 172, "y": 0, "width": 44, "height": 44 }
+      },
+      "slots": {
+        "primaryClaim": { "x": 12, "y": 7, "width": 128, "height": 14, "baseline": 18 },
+        "networkToken": { "x": 12, "y": 25, "width": 92, "height": 10, "baseline": 33 },
+        "attribution": { "x": 12, "y": 25, "width": 148, "height": 10, "baseline": 33 },
+        "attributionFit": {
+          "poweredByWidth": 58,
+          "gap": 4,
+          "wordmarkHeight": 6,
+          "wordmarkAspectRatio": 13.7340136,
+          "wordmarkWidth": 82.4040816,
+          "totalWidth": 144.4040816
+        },
+        "statusIndicator": { "x": 148, "y": 18, "diameter": 6 },
+        "lettermarkCellDivider": { "x1": 172, "y1": 8, "x2": 172, "y2": 36 },
+        "coinCardWordmarkFit": {
+          "maxWidth": 128,
+          "maxHeight": 12,
+          "renderedWidth": 84,
+          "renderedHeight": 12,
+          "aspectRatio": 7,
+          "objectFit": "contain",
+          "objectPosition": "left center"
+        }
+      },
+      "lettermark": {
+        "box": { "width": 36, "height": 36 },
+        "cell": { "width": 44, "height": 44 },
+        "clearSpace": 4,
+        "position": { "x": 176, "y": 4 }
+      }
+    },
+    "expandedHorizontal": {
+      "outer": { "width": 460, "height": 286 },
+      "planes": {
+        "identityHeader": { "x": 0, "y": 0, "width": 460, "height": 136 },
+        "credential": { "x": 0, "y": 136, "width": 460, "height": 108 },
+        "action": { "x": 0, "y": 244, "width": 460, "height": 42 }
+      },
+      "slots": {
+        "identityHeader": {
+          "primaryClaim": { "x": 20, "y": 20, "width": 300, "height": 20, "baseline": 35 },
+          "recipientName": { "x": 20, "y": 46, "width": 300, "height": 16, "baseline": 58 },
+          "networkToken": { "x": 20, "y": 67, "width": 140, "height": 12, "baseline": 76 },
+          "productIdentity": { "x": 20, "y": 94, "width": 140, "height": 12 },
+          "productIdentityFit": {
+            "maxWidth": 140,
+            "maxHeight": 12,
+            "renderedWidth": 84,
+            "renderedHeight": 12,
+            "aspectRatio": 7,
+            "objectFit": "contain",
+            "objectPosition": "left center"
+          },
+          "attribution": { "x": 20, "y": 111, "width": 180, "height": 10, "baseline": 119 },
+          "headerDivider": { "x1": 20, "y1": 135, "x2": 440, "y2": 135 }
+        },
+        "credential": {
+          "rowHeight": 18,
+          "labelX": 20,
+          "labelWidth": 120,
+          "valueRightEdge": 440,
+          "valueMaxWidth": 260,
+          "rows": [
+            { "id": "recipient", "y": 136, "baseline": 148 },
+            { "id": "route", "y": 154, "baseline": 166 },
+            { "id": "destination", "y": 172, "baseline": 184 },
+            { "id": "amount", "y": 190, "baseline": 202 },
+            { "id": "fee", "y": 208, "baseline": 220 },
+            { "id": "total", "y": 226, "baseline": 238 }
+          ],
+          "credentialDivider": { "x1": 20, "y1": 244, "x2": 440, "y2": 244 }
+        },
+        "action": {
+          "statusIndicator": { "x": 20, "y": 260, "diameter": 6 },
+          "statusText": { "x": 34, "y": 255, "width": 210, "height": 14, "baseline": 266 },
+          "cta": { "x": 302, "y": 254, "width": 138, "height": 22 },
+          "ctaLabel": { "x": 318, "y": 259, "width": 106, "height": 12, "baseline": 268 }
+        }
+      },
+      "inset": { "x": 20, "y": 20 },
+      "border": { "width": 1 },
+      "radius": 12,
+      "lettermark": {
+        "box": { "width": 40, "height": 40 },
+        "position": { "x": 400, "y": 20 },
+        "clearSpaceFromRight": 20,
+        "clearSpaceFromTop": 20
+      }
+    }
+  },
+  "typography": {
+    "primaryClaim": { "family": "Oxanium", "weight": 600, "size": 18, "lineHeight": 1.1 },
+    "recipientName": { "family": "Oxanium", "weight": 500, "size": 13, "lineHeight": 1.15 },
+    "micro": { "family": "IBM Plex Mono", "weight": 500, "size": 9, "letterSpacingEm": 0.09 },
+    "attribution": { "family": "IBM Plex Mono", "weight": 500, "size": 8, "letterSpacingEm": 0.08 }
+  },
+  "overflow": {
+    "recipientName": "single-line-ellipsis",
+    "address": "middle-truncate-6-4",
+    "networkToken": "controlled-enum",
+    "status": "controlled-enum",
+    "error": "controlled-code-and-short-copy"
+  },
+  "ratios": {
+    "expanded": {
+      "lettermarkWidthToCardWidth": 0.0869565,
+      "lettermarkHeightToCardHeight": 0.1398601,
+      "topInsetToWidth": 0.0434783,
+      "topInsetToHeight": 0.0699301,
+      "ctaWidthToCardWidth": 0.3,
+      "ctaHeightToCardHeight": 0.0769231,
+      "headerPlaneToCardHeight": 0.4755245,
+      "credentialPlaneToCardHeight": 0.3776224,
+      "actionPlaneToCardHeight": 0.1468531
+    }
+  }
+}

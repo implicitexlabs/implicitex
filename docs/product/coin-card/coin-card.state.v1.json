@@ -1,0 +1,120 @@
+{
+  "schema": "implicitex.coin-card.state.v1",
+  "status": "draft-contract",
+  "date": "2026-07-07",
+  "authority": {
+    "canonicalDirectory": "docs/product/coin-card",
+    "proseContract": "docs/product/coin-card/COIN_CARD_INVARIANT_CONTRACT.md",
+    "stateMatrix": "docs/product/coin-card/COIN_CARD_STATE_MATRIX.md",
+    "artifact": "docs/product/coin-card/coin-card.artifact.json",
+    "structure": "docs/product/coin-card/coin-card.structure/v1.json",
+    "tokens": "docs/product/coin-card/coin-card.tokens.json"
+  },
+  "geometry": {
+    "collapsed": {
+      "outer": { "width": 216, "height": 44, "provenance": "CANONICAL" },
+      "expandHitTarget": { "x": 0, "y": 0, "width": 216, "height": 44, "provenance": "CANONICAL" }
+    },
+    "expanded": {
+      "outer": { "width": 460, "height": 286, "provenance": "CANONICAL" },
+      "collapseControl": { "x": 420, "y": 20, "width": 20, "height": 20, "provenance": "PROPOSED" }
+    }
+  },
+  "axes": {
+    "view": ["COLLAPSED", "EXPANDED"],
+    "routeAvailability": ["UNAVAILABLE", "AVAILABLE"],
+    "routeValidity": ["UNKNOWN", "INVALID", "VALID"],
+    "routeMutability": ["EDITABLE", "LOCKED"],
+    "networkSupport": ["UNKNOWN", "SUPPORTED", "UNSUPPORTED"],
+    "tokenSupport": ["UNKNOWN", "SUPPORTED", "UNSUPPORTED"],
+    "amountText": ["EMPTY", "TEMPORARY_INCOMPLETE", "SYNTACTICALLY_COMPLETE", "SYNTAX_INVALID"],
+    "amountValidity": ["UNKNOWN", "VALID", "INVALID_CHARACTER", "EXCESS_PRECISION", "BELOW_MINIMUM", "ABOVE_MAXIMUM", "PRECISION_MISMATCH"],
+    "funding": ["UNKNOWN", "SUFFICIENT", "INSUFFICIENT_USDC", "INSUFFICIENT_GAS"],
+    "wallet": ["DISCONNECTED", "CONNECTING", "CONNECTED_WRONG_NETWORK", "CONNECTED_READY", "CONNECTION_FAILED"],
+    "execution": ["IDLE", "PREVIEW_READY", "EXECUTION_READY", "APPROVAL_REQUESTED", "APPROVAL_PENDING", "APPROVAL_CONFIRMED", "TRANSFER_REQUESTED", "TRANSFER_PENDING", "CONFIRMED", "FAILED", "INTERRUPTED", "RECONCILING"],
+    "receipt": ["NONE", "LOCAL_READY", "SUBMITTED", "FINAL"],
+    "error": ["NONE", "ROUTE_ERROR", "FORM_ERROR", "FUNDING_ERROR", "WALLET_ERROR", "EXECUTION_ERROR", "RECONCILIATION_ERROR"]
+  },
+  "amountPolicy": {
+    "inputType": "text",
+    "inputMode": "decimal",
+    "decimals": 6,
+    "maximumAmountUnits": null,
+    "maximumTextLength": {
+      "value": 32,
+      "provenance": "PROPOSED",
+      "effect": "INVALID_CHARACTER if accepted"
+    },
+    "temporaryInputs": ["", ".", "1."],
+    "acceptedExamples": [".5", "0.5", "1", "1.0", "1.000000", "0001.00"],
+    "rejectedExamples": ["1 0", "1,000", "+1", "-1", "1e3", "1.0000001"],
+    "aboveMaximumRule": "Only produce ABOVE_MAXIMUM when maximumAmountUnits is not null."
+  },
+  "formattingExamples": [
+    { "units": "0", "display": "0.00 USDC" },
+    { "units": "1000000", "display": "1.00 USDC" },
+    { "units": "1100000", "display": "1.10 USDC" },
+    { "units": "1000001", "display": "1.000001 USDC" },
+    { "units": "10010", "display": "0.01001 USDC" }
+  ],
+  "renderPrecedence": {
+    "primaryStatus": ["CONFIRMED_OR_RECONCILING", "ACTIVE_EXECUTION", "EXECUTION_FAILURE", "ROUTE_FAILURE", "WALLET_NETWORK_BLOCKER", "FUNDING_BLOCKER", "AMOUNT_VALIDATION", "IDLE_OR_READY"],
+    "cta": ["COLLAPSED_EXPAND_ONLY", "CONFIRMED_NO_FUND_MOVING_ACTION", "PENDING_DISABLED", "RETRYABLE_FAILURE", "BLOCKER_DISABLED", "CONNECT", "SWITCH_NETWORK", "APPROVE_OR_TRANSFER"],
+    "body": ["CONFIRMED_RESULT", "RECONCILIATION_FACTS", "ACTIVE_EXECUTION_FACTS", "FAILURE_FACTS", "ROUTE_ERROR", "EDITABLE_FORM"]
+  },
+  "legalInvariants": [
+    {
+      "id": "preview-ready-requires-valid-route-and-amount",
+      "when": { "execution": "PREVIEW_READY" },
+      "requires": {
+        "routeAvailability": "AVAILABLE",
+        "routeValidity": "VALID",
+        "networkSupport": "SUPPORTED",
+        "tokenSupport": "SUPPORTED",
+        "amountText": "SYNTACTICALLY_COMPLETE",
+        "amountValidity": "VALID"
+      }
+    },
+    {
+      "id": "execution-ready-requires-funding-and-sender",
+      "when": { "execution": "EXECUTION_READY" },
+      "requires": {
+        "view": "EXPANDED",
+        "wallet": "CONNECTED_READY",
+        "funding": "SUFFICIENT",
+        "activeIntentId": "present"
+      }
+    },
+    {
+      "id": "collapsed-cannot-initiate-execution",
+      "when": { "view": "COLLAPSED" },
+      "forbids": ["CONNECT_INITIATED", "APPROVAL_REQUESTED_FROM_VIEW", "TRANSFER_REQUESTED_FROM_VIEW"]
+    },
+    {
+      "id": "transfer-pending-requires-hash",
+      "when": { "execution": "TRANSFER_PENDING" },
+      "requires": { "values.transferHash": "present" }
+    },
+    {
+      "id": "confirmed-requires-final-receipt",
+      "when": { "execution": "CONFIRMED" },
+      "requires": {
+        "values.transferHash": "present",
+        "receipt": "FINAL",
+        "values.receiptStatus": "success"
+      }
+    }
+  ],
+  "correlation": {
+    "requiredEventField": "intentId",
+    "staleEventPolicy": "Reject for active transaction; may reconcile archived receipt only by matching stored intent/hash."
+  },
+  "reset": {
+    "createsNewIntentId": true,
+    "invalidatesPriorIntentEvents": true,
+    "clears": ["amountText", "amountUnits", "feeUnits", "totalUnits"],
+    "preserves": ["lockedRoute", "walletConnectionIfStillValid", "priorReceipts", "viewState"],
+    "mustRecheck": ["allowance", "balance", "gasReadiness", "network"],
+    "focusTarget": "amountInputWhenExpandedAndEditable"
+  }
+}

@@ -1,0 +1,286 @@
+{
+  "schema": "implicitex.coin-card.artifact.v1",
+  "name": "Coin Card Artifact Contract",
+  "status": "constitutional-contract",
+  "date": "2026-07-07",
+  "purpose": "Define the ownership graph Coin Card implementations must satisfy, independent of DOM, class names, layout implementation, or visual checkpoint.",
+  "checkpoint": {
+    "semanticCommit": "6bb6d34",
+    "rebuiltCardCommit": "b1bc58e",
+    "tag": "coincard-instrument-checkpoint-2026-07-06",
+    "checkpointDocument": "app-web/docs/product/coin-card/CURRENT_STATE_2026-07-06.md",
+    "structureContract": "docs/product/coin-card/coin-card.structure/v1.json",
+    "visualReference": "docs/operations/evidence/coincard/2026-07-06-card-execution-shell.png"
+  },
+  "authority": {
+    "sourceOrder": [
+      "gitTag",
+      "artifactGraph",
+      "structureContract",
+      "checkpointDocument",
+      "architectureValidator",
+      "smokeChecklist",
+      "screenshot"
+    ],
+    "notes": [
+      "The artifact graph defines ownership and dependency direction.",
+      "The structure contract defines how a specific implementation version maps onto the graph.",
+      "The screenshot is visual evidence only. It does not define structure, ownership, or product boundaries."
+    ]
+  },
+  "graph": {
+    "nodes": [
+      {
+        "id": "coinCard",
+        "type": "surface",
+        "role": "primary-payment-instrument"
+      },
+      {
+        "id": "identity",
+        "type": "responsibility",
+        "role": "structural-region"
+      },
+      {
+        "id": "transaction",
+        "type": "responsibility",
+        "role": "stateful-workflow-region"
+      },
+      {
+        "id": "receipt",
+        "type": "responsibility",
+        "role": "terminal-evidence-region"
+      },
+      {
+        "id": "transferPortal",
+        "type": "surface",
+        "role": "optional-inspection-console"
+      },
+      {
+        "id": "ixExecute",
+        "type": "service",
+        "role": "execution-engine",
+        "symbol": "window.IX_EXECUTE"
+      },
+      {
+        "id": "wallet",
+        "type": "responsibility",
+        "role": "execution-workflow"
+      },
+      {
+        "id": "approval",
+        "type": "responsibility",
+        "role": "execution-workflow"
+      },
+      {
+        "id": "transfer",
+        "type": "responsibility",
+        "role": "execution-workflow"
+      },
+      {
+        "id": "receiptPolling",
+        "type": "responsibility",
+        "role": "execution-workflow"
+      },
+      {
+        "id": "feeMath",
+        "type": "responsibility",
+        "role": "single-authority"
+      }
+    ],
+    "edges": [
+      {
+        "from": "coinCard",
+        "to": "identity",
+        "relationship": "owns"
+      },
+      {
+        "from": "coinCard",
+        "to": "transaction",
+        "relationship": "owns"
+      },
+      {
+        "from": "coinCard",
+        "to": "receipt",
+        "relationship": "owns"
+      },
+      {
+        "from": "coinCard",
+        "to": "ixExecute",
+        "relationship": "consumes"
+      },
+      {
+        "from": "transferPortal",
+        "to": "ixExecute",
+        "relationship": "consumes"
+      },
+      {
+        "from": "transferPortal",
+        "to": "coinCard",
+        "relationship": "augments"
+      },
+      {
+        "from": "ixExecute",
+        "to": "wallet",
+        "relationship": "owns"
+      },
+      {
+        "from": "ixExecute",
+        "to": "approval",
+        "relationship": "owns"
+      },
+      {
+        "from": "ixExecute",
+        "to": "transfer",
+        "relationship": "owns"
+      },
+      {
+        "from": "ixExecute",
+        "to": "receiptPolling",
+        "relationship": "owns"
+      },
+      {
+        "from": "ixExecute",
+        "to": "feeMath",
+        "relationship": "owns"
+      }
+    ],
+    "forbiddenEdges": [
+      {
+        "from": "coinCard",
+        "to": "transferPortal",
+        "relationship": "depends-on",
+        "reason": "Coin Card payments must complete without the Transfer Portal."
+      },
+      {
+        "from": "coinCard",
+        "to": "transferPortal",
+        "relationship": "routes-payment-through",
+        "reason": "The Portal may inspect or augment; it must never become the payment path."
+      },
+      {
+        "from": "transferPortal",
+        "to": "coinCard",
+        "relationship": "routes-payment-through",
+        "reason": "Both surfaces consume IX_EXECUTE independently."
+      }
+    ]
+  },
+  "regionModel": {
+    "identity": {
+      "role": "structural",
+      "stateControlled": false,
+      "mustPersistAcrossWorkflowStates": true,
+      "examples": [
+        "issuer",
+        "verification status",
+        "recipient identity",
+        "network and token rail",
+        "product or issuer branding"
+      ]
+    },
+    "transaction": {
+      "role": "stateful",
+      "stateControlled": true,
+      "mayChangeAcrossWorkflowStates": true,
+      "examples": [
+        "amount entry",
+        "wallet connection",
+        "network switch",
+        "approval",
+        "transfer execution",
+        "error recovery"
+      ]
+    },
+    "receipt": {
+      "role": "terminal-evidence",
+      "stateControlled": true,
+      "mustTerminateConfirmedTransfer": true,
+      "examples": [
+        "transaction hash",
+        "confirmed amount",
+        "confirmed fee",
+        "explorer link",
+        "receipt or proof packet"
+      ]
+    }
+  },
+  "invariants": [
+    {
+      "id": "complete-payment-instrument",
+      "rule": "Every payment must be completable without leaving the Coin Card."
+    },
+    {
+      "id": "portal-optional",
+      "rule": "The Transfer Portal is optional and must never become a required payment step."
+    },
+    {
+      "id": "direct-execution-engine",
+      "rule": "Coin Card and Transfer Portal consume IX_EXECUTE independently; neither routes through the other."
+    },
+    {
+      "id": "single-execution-owner",
+      "rule": "IX_EXECUTE owns wallet access, approval, transfer, receipt polling, and fee math."
+    },
+    {
+      "id": "single-fee-authority",
+      "rule": "IX_EXECUTE.calculateFee() is the single fee authority for Coin Card and Transfer Portal."
+    },
+    {
+      "id": "identity-regions-are-structural",
+      "rule": "Identity regions are structural. Workflow regions are stateful. Structural regions never disappear. Workflow regions may change."
+    },
+    {
+      "id": "receipt-stays-in-instrument",
+      "rule": "A confirmed transfer must terminate in a Coin Card receipt or confirmation state."
+    }
+  ],
+  "expectedLifecycle": [
+    {
+      "id": "identity-loaded",
+      "ownedBy": "identity",
+      "question": "Who can I pay here?",
+      "fundMovingWriteAllowed": false
+    },
+    {
+      "id": "amount-ready",
+      "ownedBy": "transaction",
+      "question": "What amount am I preparing to send?",
+      "fundMovingWriteAllowed": false
+    },
+    {
+      "id": "transfer-intent-ready",
+      "ownedBy": "transaction",
+      "question": "What exactly am I committing to?",
+      "fundMovingWriteAllowed": false
+    },
+    {
+      "id": "execution-pending",
+      "ownedBy": "transaction",
+      "question": "What execution step is currently in progress?",
+      "fundMovingWriteAllowed": true
+    },
+    {
+      "id": "confirmed",
+      "ownedBy": "receipt",
+      "question": "What evidence exists that this happened?",
+      "fundMovingWriteAllowed": false
+    },
+    {
+      "id": "recovery",
+      "ownedBy": "transaction",
+      "question": "What prevented completion, and what can the sender do next?",
+      "fundMovingWriteAllowed": false
+    }
+  ],
+  "testableAssertions": [
+    "Every ownership edge points to one natural owner.",
+    "No forbidden dependency edge is present in the implementation mapping.",
+    "Coin Card owns identity, transaction, and receipt.",
+    "Transfer Portal augments Coin Card but does not route Coin Card payments.",
+    "IX_EXECUTE owns wallet, approval, transfer, receipt polling, and fee math.",
+    "Identity regions are structural and persist across workflow states.",
+    "Workflow regions may change across workflow states.",
+    "A confirmed transfer terminates inside the Coin Card.",
+    "Screenshots are never treated as structural authority."
+  ]
+}

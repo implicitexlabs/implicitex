@@ -3,6 +3,9 @@
 **Date:** 2026-07-01
 **Status:** Canonical. No implementation decision supersedes this document without an explicit revision.
 
+**Normative geometry layer:** `docs/product/coin-card/coin-card-spec-v1.md`
+**Machine-readable tokens:** `docs/product/coin-card/coin-card.tokens.json`
+
 ---
 
 > **Coin Card is not a widget.**
@@ -11,6 +14,25 @@
 > and externally controlled execution surfaces.
 
 ---
+
+## Authority Chain
+
+The Coin Card Constitution defines responsibility, zone ownership, and state
+meaning. The fixed-format specification defines exact V1 dimensions, coordinates,
+lettermark geometry, overflow behavior, and conformance requirements.
+
+Authority flows as follows:
+
+```text
+coincard-constitution.md
+        -> coin-card-spec-v1.md
+                -> coin-card.tokens.json
+                        -> implementation
+                        -> conformance tests
+                        -> screenshots / smoke evidence
+```
+
+Screenshots and smoke records are evidence. They do not define geometry.
 
 ## Core Principle
 

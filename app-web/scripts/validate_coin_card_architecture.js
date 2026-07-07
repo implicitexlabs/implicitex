@@ -4,10 +4,10 @@ const { validateArchitecture } = require('../../contracts/architecture/validator
 function validateCoinCardArchitecture({ silent = false } = {}) {
   return validateArchitecture({
     repoRoot: path.resolve(__dirname, '../..'),
-    artifactPath: 'app-web/docs/product/coin-card/coin-card.artifact.json',
-    structurePath: 'app-web/docs/product/coin-card/coin-card.structure/v1.json',
-    artifactPathForContract: 'app-web/docs/product/coin-card/coin-card.artifact.json',
-    structurePathForContract: 'app-web/docs/product/coin-card/coin-card.structure/v1.json',
+    artifactPath: 'docs/product/coin-card/coin-card.artifact.json',
+    structurePath: 'docs/product/coin-card/coin-card.structure/v1.json',
+    artifactPathForContract: 'docs/product/coin-card/coin-card.artifact.json',
+    structurePathForContract: 'docs/product/coin-card/coin-card.structure/v1.json',
     silent,
   });
 }
