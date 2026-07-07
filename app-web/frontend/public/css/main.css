@@ -3066,15 +3066,14 @@ h1 + .gs-section-head {
 .faq-shell {
   column-count: unset;
   display: block;
-  max-width: none;
+  max-width: var(--ix-interface-max);
   padding: calc(var(--nav-h) + 4.5rem) clamp(1rem, 2vw, 1.5rem) 5rem;
-  --faq-reading-width: 760px;
   --faq-copy-size: 1.0625rem;
   --faq-copy-line: 1.65;
 }
 
 .faq-page {
-  max-width: var(--faq-reading-width);
+  max-width: none;
   margin: 0 auto;
 }
 
@@ -3091,6 +3090,10 @@ h1 + .gs-section-head {
   margin: 0 0 1rem;
   padding: 0 0 1rem;
   border-bottom: 1px solid var(--border);
+}
+
+.start-shell h1 {
+  text-align: center;
 }
 
 .faq-lede {
