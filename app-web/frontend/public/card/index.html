@@ -7,167 +7,128 @@
   <meta name="robots" content="noindex">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="card.css">
 </head>
 <body>
 
 <div class="cc-frame" id="ccFrame" data-state="BOOT" role="region" aria-label="Coin Card transfer surface">
 
-  <!-- MANIFEST_LOADING -->
+  <!-- BOOT / MANIFEST_LOADING -->
   <div class="cc-loading" id="ccLoading" aria-live="polite">
-    <span class="cc-loading-text">Checking registry…</span>
+    <span>Checking registry&hellip;</span>
   </div>
 
-  <!-- ERROR / REVOKED -->
+  <!-- ERROR: manifest-level (not found, invalid, fetch failure) -->
   <div class="cc-error" id="ccError" role="alert">
-    <p class="cc-error-message" id="ccErrorMessage">—</p>
-    <p class="cc-error-sub" id="ccErrorSub"></p>
+    <p class="cc-error-message" id="ccErrorMessage">&mdash;</p>
+    <p class="cc-error-sub"    id="ccErrorSub"></p>
   </div>
 
-  <!-- VERIFIED → TRANSFER_INTENT_READY: card surface -->
-  <div class="cc-card" id="ccCard">
+  <!-- Card surface: VERIFIED &rarr; CONFIRMED -->
+  <div class="cc-card cc-card--dark" id="ccCard">
 
-    <!-- Header: status + credential -->
-    <div class="cc-header">
-      <span class="cc-header-left">
-        <span class="cc-status-dot" id="ccStatusDot" aria-hidden="true"></span>
-        <span class="cc-status-label" id="ccStatusLabel">—</span>
+    <!-- Top: issuer authority + verification status -->
+    <div class="cc-card-top">
+      <div class="cc-card-issuer">
+        <span class="cc-issuer-art">
+          <img class="cc-issuer-mark cc-art--on-dark"  src="/components/images/lettermark-white.svg" alt="" aria-hidden="true">
+          <img class="cc-issuer-word cc-art--on-dark"  src="/components/images/wordmark-white.svg"   alt="ImplicitEx">
+          <img class="cc-issuer-mark cc-art--on-light" src="/components/images/lettermark-black.svg" alt="" aria-hidden="true">
+          <img class="cc-issuer-word cc-art--on-light" src="/components/images/wordmark-black.svg"   alt="ImplicitEx">
+        </span>
+        <span class="cc-issuer-fallback">IMPLICITEX</span>
+      </div>
+      <span class="cc-card-status cc-card-status--verified" id="ccCardStatus">
+        <span class="cc-card-status-dot cc-card-status-dot--verified" id="ccStatusDot" aria-hidden="true"></span>
+        <span id="ccStatusLabel">Verified</span>
       </span>
-      <span class="cc-credential" id="ccCredential"></span>
     </div>
 
-    <!-- Trust construction sequence — epistemological order -->
-    <div class="cc-trust">
-      <div class="cc-trust-row">
-        <span class="cc-trust-k">ISSUED BY</span>
-        <span class="cc-trust-v" id="ccOwner">—</span>
-      </div>
-      <div class="cc-trust-row cc-trust-row--holder" id="ccCardHolderRow">
-        <span class="cc-trust-k">CARD HOLDER</span>
-        <span class="cc-trust-v" id="ccCardHolder">—</span>
-      </div>
-      <div class="cc-trust-row">
-        <span class="cc-trust-k">RECIPIENT</span>
-        <span class="cc-trust-v cc-mono" id="ccRecipient" title="">—</span>
-      </div>
-      <div class="cc-trust-row">
-        <span class="cc-trust-k">NETWORK</span>
-        <span class="cc-trust-v" id="ccNetwork">—</span>
-      </div>
-    </div>
+    <!-- Body: content zone — one panel visible at a time via CSS data-state rules -->
+    <div class="cc-card-body">
 
-    <!-- Gift section — shown to recipient before sender engages -->
-    <div class="cc-gift" id="ccGift">
-      <p class="cc-gift-text" id="ccGiftText">This Coin Card was created so support can reach this recipient directly.</p>
-      <button class="cc-reveal-btn" id="ccRevealBtn" type="button">Send USDC &#8594;</button>
-    </div>
-
-    <!-- Amount surface: VERIFIED (sender mode) → TRANSFER_INTENT_READY -->
-    <div class="cc-amount-surface" id="ccAmountSurface">
-
-      <!-- user-input mode: editable amount field -->
-      <div class="cc-amount-row" id="ccAmountInputRow">
-        <label class="cc-amount-label" for="ccAmountInput">AMOUNT</label>
-        <div class="cc-amount-field">
-          <input
-            class="cc-amount-input"
-            id="ccAmountInput"
-            type="number"
-            min="0"
-            step="0.01"
-            placeholder="0.00"
-            autocomplete="off"
-            inputmode="decimal"
-            aria-label="Transfer amount in USDC"
-          >
-          <span class="cc-amount-token" id="ccAmountToken">USDC</span>
+      <!-- Input — VERIFIED, AMOUNT_READY, TRANSFER_INTENT_READY, WRONG_NETWORK -->
+      <div class="cc-body-panel" id="ccBodyInput">
+        <p class="cc-card-tx-label" id="ccTxLabel">Send USDC</p>
+        <div class="cc-card-amount-field" id="ccAmountField">
+          <input class="cc-card-amount-input" id="ccAmountInput"
+            type="number" min="0" step="0.01" placeholder="0.00"
+            autocomplete="off" inputmode="decimal"
+            aria-label="Transfer amount in USDC">
+          <span class="cc-card-amount-unit-lock" id="ccAmountToken" aria-hidden="true">USDC</span>
         </div>
-      </div>
-
-      <!-- locked mode: fixed amount display -->
-      <div class="cc-locked-row" id="ccLockedAmountRow">
-        <span class="cc-amount-label">AMOUNT</span>
-        <span class="cc-locked-value" id="ccLockedAmount">—</span>
-      </div>
-
-      <!-- Fee + total — visible when amount is valid -->
-      <div class="cc-fee-rows" id="ccFeeRows">
-        <div class="cc-fee-row">
-          <span class="cc-fee-k">Fee</span>
-          <span class="cc-fee-v" id="ccFeeValue">—</span>
+        <div class="cc-card-tx-row">
+          <span id="ccFeePctLabel">Fee 1%</span>
+          <span class="cc-card-tx-row-value" id="ccFeeValue">&mdash;</span>
         </div>
-        <div class="cc-fee-row cc-total-row">
-          <span class="cc-fee-k">Total sent</span>
-          <span class="cc-fee-v cc-total-v" id="ccTotalValue">—</span>
+        <div class="cc-card-tx-row">
+          <span>Total</span>
+          <span class="cc-card-tx-row-value" id="ccTotalValue">&mdash;</span>
         </div>
+        <p class="cc-card-name"      id="ccCardName"></p>
+        <p class="cc-card-recipient" id="ccCardRecipient" title="">&mdash;</p>
+        <p class="cc-selfsend-warn"  id="ccSelfSendWarn">You appear to be the card holder. Share this URL with a sender.</p>
       </div>
 
-    </div><!-- /.cc-amount-surface -->
-
-    <!-- Self-send warning — shown when connected wallet === manifest recipient -->
-    <div class="cc-selfsend-warn" id="ccSelfSendWarn">
-      <p class="cc-selfsend-text">You appear to be the card holder. Share this URL with someone who wants to support you.</p>
-    </div>
-
-    <!-- Confirm panel — READY_TO_SEND -->
-    <div class="cc-confirm-panel" id="ccConfirmPanel">
-      <div class="cc-confirm-row">
-        <span class="cc-confirm-k">FROM</span>
-        <span class="cc-confirm-v cc-mono" id="ccConfirmSender">—</span>
+      <!-- Review — READY_TO_SEND -->
+      <div class="cc-body-panel" id="ccBodyReview">
+        <p class="cc-card-tx-label">Review Transfer</p>
+        <p class="cc-card-tx-amount"><span id="ccReviewAmount">&mdash;</span><span class="cc-card-tx-unit"> USDC</span></p>
+        <div class="cc-card-tx-row">
+          <span id="ccReviewFeePct">Fee 1%</span>
+          <span class="cc-card-tx-row-value" id="ccReviewFee">&mdash;</span>
+        </div>
+        <div class="cc-card-tx-row">
+          <span>Total</span>
+          <span class="cc-card-tx-row-value" id="ccReviewTotal">&mdash;</span>
+        </div>
+        <p class="cc-card-name"      id="ccReviewName"></p>
+        <p class="cc-card-recipient" id="ccReviewRecipient" title="">&mdash;</p>
       </div>
-      <div class="cc-confirm-row">
-        <span class="cc-confirm-k">TO</span>
-        <span class="cc-confirm-v cc-mono" id="ccConfirmRecipient">—</span>
+
+      <!-- Execution — CONNECTING, SWITCHING_NETWORK, APPROVE_PENDING, EXECUTE_PENDING -->
+      <div class="cc-body-panel" id="ccBodyExec">
+        <p class="cc-card-tx-label" id="ccExecLabel">Connecting&hellip;</p>
+        <span class="cc-card-tx-spinner" aria-label="Processing"></span>
+        <p class="cc-card-tx-amount"><span id="ccExecAmount">&mdash;</span><span class="cc-card-tx-unit"> USDC</span></p>
+        <p class="cc-card-name"      id="ccExecName"></p>
+        <p class="cc-card-recipient" id="ccExecRecipient" title="">&mdash;</p>
       </div>
-      <div class="cc-confirm-row cc-confirm-row--sep">
-        <span class="cc-confirm-k">SENDING</span>
-        <span class="cc-confirm-v cc-mono" id="ccConfirmAmount">—</span>
+
+      <!-- Confirmed — CONFIRMED -->
+      <div class="cc-body-panel" id="ccBodyConfirmed">
+        <p class="cc-card-tx-label">Confirmed</p>
+        <p class="cc-card-tx-amount"><span id="ccConfirmedAmount">&mdash;</span><span class="cc-card-tx-unit"> USDC</span></p>
+        <a class="cc-card-tx-hash" id="ccTxHash" href="#" target="_blank" rel="noopener noreferrer">&mdash;</a>
+        <p class="cc-card-name"      id="ccConfirmedName"></p>
+        <p class="cc-card-recipient" id="ccConfirmedRecipient" title="">&mdash;</p>
       </div>
-      <div class="cc-confirm-row">
-        <span class="cc-confirm-k" id="ccConfirmFeeLabel">FEE (1%)</span>
-        <span class="cc-confirm-v cc-mono" id="ccConfirmFee">—</span>
+
+      <!-- Error / Revoked — TX_FAILED, REVOKED -->
+      <div class="cc-body-panel" id="ccBodyError">
+        <p class="cc-card-tx-label" id="ccErrorStateLabel">Error</p>
+        <p class="cc-card-tx-error" id="ccCardError">&mdash;</p>
+        <p class="cc-card-name"      id="ccErrorName"></p>
+        <p class="cc-card-recipient" id="ccErrorRecipient" title="">&mdash;</p>
       </div>
-      <div class="cc-confirm-row">
-        <span class="cc-confirm-k">TOTAL</span>
-        <span class="cc-confirm-v cc-mono" id="ccConfirmTotal">—</span>
+
+    </div><!-- /.cc-card-body -->
+
+    <!-- Chip: in-card execution trigger -->
+    <div class="cc-card-action" id="ccCardAction">
+      <button class="cc-card-chip cc-card-chip--waiting" id="ccChip"
+        type="button" disabled aria-label="Enter amount to continue"></button>
+    </div>
+
+    <!-- Bottom: network rail + product stamp -->
+    <div class="cc-card-bottom">
+      <span class="cc-card-network" id="ccCardNetwork">&mdash;</span>
+      <div class="cc-card-stamp">
+        <img src="/components/images/coincard-logo.svg" alt="Coin Card"
+             class="cc-card-logo" width="392" height="56">
+        <span class="cc-card-logo-fallback">COIN CARD</span>
       </div>
-    </div>
-
-    <!-- Execution status — APPROVE_PENDING, EXECUTE_PENDING -->
-    <div class="cc-exec-status" id="ccExecStatus">
-      <p class="cc-exec-text" id="ccExecText">—</p>
-    </div>
-
-    <!-- Confirmed — CONFIRMED -->
-    <div class="cc-confirmed" id="ccConfirmed">
-      <span class="cc-confirmed-label">Transfer confirmed</span>
-      <a class="cc-tx-link" id="ccTxLink" href="#" target="_blank" rel="noopener noreferrer">View on Explorer →</a>
-      <a class="cc-portal-link" id="ccPortalLink" href="https://implicitex.com" target="_blank" rel="noopener noreferrer">Advanced verification →</a>
-    </div>
-
-    <!-- Action: disabled until TRANSFER_INTENT_READY -->
-    <div class="cc-action">
-      <button class="cc-send-btn" id="ccSendBtn" type="button" disabled aria-label="Connect wallet to send USDC">
-        Connect Wallet →
-      </button>
-    </div>
-
-    <!-- Revoked notice — shown instead of amount surface when revoked -->
-    <div class="cc-revoked-notice" id="ccRevokedNotice">
-      <p class="cc-revoked-text">This Coin Card has been revoked. Do not use it to initiate a transfer.</p>
-    </div>
-
-    <!-- Brand Footer — structural member of the card, not a state.
-         Visible whenever the card is visible. The state machine never
-         asks "should the footer be shown?" — it is always shown. -->
-    <div class="cc-footer" id="ccFooter">
-      <img src="/components/images/coincard-logo.svg"
-           alt="Coin Card"
-           class="cc-mark"
-           width="98"
-           height="14">
-      <span class="cc-attr">Powered by ImplicitEx</span>
     </div>
 
   </div><!-- /.cc-card -->
