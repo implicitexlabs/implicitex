@@ -1,0 +1,70 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "implicitex.architecture.artifact.v1",
+  "title": "Architecture Artifact Contract V1",
+  "type": "object",
+  "required": ["schema", "name", "status", "graph"],
+  "additionalProperties": true,
+  "properties": {
+    "schema": { "type": "string", "minLength": 1 },
+    "name": { "type": "string", "minLength": 1 },
+    "status": { "type": "string", "minLength": 1 },
+    "graph": {
+      "type": "object",
+      "required": ["nodes", "edges", "forbiddenEdges"],
+      "additionalProperties": true,
+      "properties": {
+        "nodes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/node" }
+        },
+        "edges": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/edge" }
+        },
+        "forbiddenEdges": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/edge" }
+        }
+      }
+    },
+    "expectedLifecycle": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/lifecycleState" }
+    }
+  },
+  "$defs": {
+    "node": {
+      "type": "object",
+      "required": ["id", "type", "role"],
+      "additionalProperties": true,
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "type": { "type": "string", "minLength": 1 },
+        "role": { "type": "string", "minLength": 1 }
+      }
+    },
+    "edge": {
+      "type": "object",
+      "required": ["from", "to", "relationship"],
+      "additionalProperties": true,
+      "properties": {
+        "from": { "type": "string", "minLength": 1 },
+        "to": { "type": "string", "minLength": 1 },
+        "relationship": { "type": "string", "minLength": 1 },
+        "allowMultipleOwners": { "type": "boolean" }
+      }
+    },
+    "lifecycleState": {
+      "type": "object",
+      "required": ["id"],
+      "additionalProperties": true,
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "ownedBy": { "type": "string", "minLength": 1 },
+        "question": { "type": "string" },
+        "fundMovingWriteAllowed": { "type": "boolean" }
+      }
+    }
+  }
+}

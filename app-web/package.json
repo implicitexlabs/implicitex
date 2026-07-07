@@ -5,6 +5,7 @@
   "scripts": {
     "compile": "hardhat compile",
     "check:static": "node scripts/check_static_public.js",
+    "validate:architecture": "node scripts/validate_coin_card_architecture.js",
     "test:observability": "node tests/frontend/observability.test.js",
     "test:analytics": "node tests/frontend/analytics.test.js",
     "test:consent": "node tests/frontend/consent.test.js",

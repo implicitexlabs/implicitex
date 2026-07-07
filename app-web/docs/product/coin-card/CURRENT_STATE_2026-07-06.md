@@ -10,7 +10,15 @@
 
 `docs/operations/evidence/coincard/2026-07-06-card-execution-shell.png`
 
-Take this screenshot before resuming Coin Card work. If the live card does not match it, investigate before touching code. The screenshot is the ground truth for visual state at this checkpoint.
+Take this screenshot before resuming Coin Card work. If the live card does not match it, investigate before touching code. The screenshot is visual evidence only; the preservation stack is the git tag, this checkpoint document, the artifact contract, the smoke checklist, and then the screenshot.
+
+Machine-readable artifact contract:
+
+`app-web/docs/product/coin-card/coin-card.artifact.json`
+
+Current implementation structure contract:
+
+`app-web/docs/product/coin-card/coin-card.structure/v1.json`
 
 ---
 
@@ -180,10 +188,14 @@ Run before and after any Coin Card change. Requires live browser + MetaMask.
 ## Opening procedure for next Coin Card session
 
 1. Read this document.
-2. Open `https://implicitex.com/card/antoine` in browser.
-3. Compare against the screenshot at `docs/operations/evidence/coincard/2026-07-06-card-execution-shell.png`.
-4. If the card does not match, investigate before writing code.
-5. Run the smoke checklist (visual + fee checks, no wallet needed).
-6. Only then proceed with planned work.
+2. Read `app-web/docs/product/coin-card/coin-card.artifact.json`.
+3. Read `app-web/docs/product/coin-card/coin-card.structure/v1.json`.
+4. Run `npm run validate:architecture`.
+5. Confirm the checkpoint tag `coincard-instrument-checkpoint-2026-07-06` exists.
+6. Open `https://implicitex.com/card/antoine` in browser.
+7. Compare against the screenshot at `docs/operations/evidence/coincard/2026-07-06-card-execution-shell.png`.
+8. If the card does not match, investigate before writing code.
+9. Run the smoke checklist (visual + fee checks, no wallet needed).
+10. Only then proceed with planned work.
 
 **The checkpoint is b1bc58e. Any regression from this state is a bug, not a style choice.**
