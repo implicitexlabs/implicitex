@@ -9,6 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500&family=Oxanium:wght@500;600;700&display=swap" rel="stylesheet">
   <!-- ethers@6.13.4 — same version as wallet.js; CDN already on CSP allowlist -->
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
+  <script src="coin-card-display.js"></script>
   <style>
 
     /* ---- Design tokens ---- */
@@ -912,7 +913,7 @@
     .cc-badge--decal .cc-attribution    { margin-top: auto; }
 
     /* ─── RIGHT AUTHORITY LANE ───────────────────────────────────────
-       Dedicated upper-right logo lane. Stacked lockup, centered in the lane.
+       Dedicated upper-right lettermark lane. Ambient glow remains on the mark.
        No absolute positioning. No drift.
     ──────────────────────────────────────────────────────────────── */
     .cc-authority-square {
@@ -929,10 +930,8 @@
 
     .cc-authority-lockup {
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 5px;
       width: 100%;
     }
 
@@ -944,7 +943,7 @@
       overflow: visible; /* bloom extends slightly beyond mark bounds */
     }
 
-    /* Lettermark — part of upper-right logo lockup */
+    /* Lettermark — upper-right credential stamp */
     .cc-mark-wrap--decal {
       position: relative;
       transform: none;
@@ -981,14 +980,6 @@
       width: 34px;
       height: 34px;
       opacity: 0.30;
-    }
-
-    .cc-authority-wordmark {
-      display: block;
-      width: 96px;
-      height: auto;
-      filter: brightness(0) invert(1);
-      opacity: 0.38;
     }
 
     /* "Powered by [wordmark]" in badge left column — collapsed state only */
@@ -1155,10 +1146,6 @@
                 <div class="cc-mark-wrap cc-mark-wrap--decal" id="mark-decal">
                   <img class="cc-mark-img" src="/components/images/lettermark-white.svg" alt="">
                 </div>
-                <img class="cc-authority-wordmark"
-                     src="/components/images/wordmark-white.svg"
-                     alt=""
-                     aria-hidden="true">
               </div>
             </div>
           </div>
@@ -1500,12 +1487,7 @@
     // Trim trailing zeros beyond two decimal places; always show at least two.
     // 0.105 → "0.105" | 0.10 → "0.10" | 1.00 → "1.00"
     function formatUsdcExact(units) {
-      const formatted = ethers.formatUnits(units, 6);
-      const [whole, frac = ''] = formatted.split('.');
-      const trimmed = frac.replace(/0+$/, '');
-      if (!trimmed)             return `${whole}.00`;
-      if (trimmed.length <= 2)  return `${whole}.${trimmed.padEnd(2, '0')}`;
-      return `${whole}.${trimmed}`;
+      return CoinCardDisplay.formatUsdcUnits(units, { decimals: 6 });
     }
 
     function updateTotals() {
@@ -1903,8 +1885,11 @@
     let verifiedManifest = null;
 
     function abbrev(addr) {
-      if (!addr || addr.length < 12) return addr;
-      return addr.slice(0, 6) + '\u2026' + addr.slice(-4);
+      if (!addr) return addr;
+      return CoinCardDisplay.middleTruncate(addr, 6, 4, {
+        marker: '\u2026',
+        truncateAtLength: 11,
+      });
     }
 
     function setRegistryValue(text, cssClass) {

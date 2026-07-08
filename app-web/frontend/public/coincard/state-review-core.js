@@ -5,6 +5,21 @@
 })(typeof window !== 'undefined' ? window : globalThis, function () {
   'use strict';
 
+  var CoinCardDisplay = null;
+  if (typeof require === 'function') {
+    try {
+      CoinCardDisplay = require('./coin-card-display.js');
+    } catch (err) {
+      CoinCardDisplay = null;
+    }
+  }
+  if (!CoinCardDisplay && typeof window !== 'undefined') {
+    CoinCardDisplay = window.CoinCardDisplay;
+  }
+  if (!CoinCardDisplay) {
+    throw new Error('CoinCardDisplay helper unavailable');
+  }
+
   var ACTIVE_EXECUTION = [
     'APPROVAL_REQUESTED',
     'APPROVAL_PENDING',
@@ -637,23 +652,20 @@
   }
 
   function formatUnits(contract, value) {
-    if (value === null || value === undefined || value === '') return contract.state.amountPolicy.unavailableDisplay || '—';
-    var scale = scaleFor(contract);
-    var raw = BigInt(value);
-    var sign = raw < 0n ? '-' : '';
-    var abs = raw < 0n ? -raw : raw;
-    var whole = abs / scale;
-    var frac = (abs % scale).toString().padStart(contract.state.amountPolicy.decimals, '0');
-    var trimmed = frac.replace(/0+$/, '');
-    if (trimmed.length < 2) trimmed = frac.slice(0, 2);
-    return sign + whole.toString() + '.' + trimmed + ' USDC';
+    var unavailableDisplay = contract.state.amountPolicy.unavailableDisplay || '—';
+    var formatted = CoinCardDisplay.formatUsdcUnits(value, {
+      decimals: contract.state.amountPolicy.decimals,
+      unavailableDisplay: unavailableDisplay,
+    });
+    if (formatted === unavailableDisplay) return formatted;
+    return formatted + ' USDC';
   }
 
   function middleTruncate(value, head, tail) {
-    if (!value) return '—';
-    var text = String(value);
-    if (text.length <= head + tail + 3) return text;
-    return text.slice(0, head) + '...' + text.slice(-tail);
+    return CoinCardDisplay.middleTruncate(value, head, tail, {
+      marker: '...',
+      truncateAtLength: head + tail + 3,
+    });
   }
 
   function primaryStatus(contract, state) {

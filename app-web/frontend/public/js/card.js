@@ -23,6 +23,11 @@
     '1':     'Ethereum',
   };
 
+  var CoinCardDisplay = window.CoinCardDisplay;
+  if (!CoinCardDisplay) {
+    throw new Error('CoinCardDisplay helper is required for Coin Card display formatting');
+  }
+
   function el(id) { return document.getElementById(id); }
 
   function show(id) {
@@ -51,8 +56,11 @@
   /* ---- Credential string helpers ---- */
 
   function truncateAddress(addr) {
-    if (!addr || addr.length < 12) return addr;
-    return addr.slice(0, 6) + '\u2026' + addr.slice(-4);
+    if (!addr) return addr;
+    return CoinCardDisplay.middleTruncate(addr, 6, 4, {
+      marker: '\u2026',
+      truncateAtLength: 11,
+    });
   }
 
   /* Fallback: derive a display credential from the raw card ID.
