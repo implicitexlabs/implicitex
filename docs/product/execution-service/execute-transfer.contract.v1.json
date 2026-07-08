@@ -127,6 +127,19 @@
     "confirmed",
     "failed"
   ],
+  "serviceGuarantees": [
+    "Execution Service fulfills verified intent; it does not author intent.",
+    "It must not choose, replace, or reinterpret the recipient.",
+    "It must not rewrite amount, token, chain, or fee policy.",
+    "It must not require the Transfer Portal.",
+    "It may change wallet/provider/approval/receipt strategy without changing the public request shape."
+  ],
+  "consumerGuarantees": [
+    "Recipient identity is already verified.",
+    "Amount and fee have already been presented to the sender.",
+    "The request represents intentional sender action.",
+    "The consumer will render normalized outcomes instead of interpreting provider internals."
+  ],
   "invariants": [
     "Consumers submit verified intent and render normalized outcomes.",
     "Consumers do not know provider, signer, contract sequencing, receipt polling, or retry strategy.",
