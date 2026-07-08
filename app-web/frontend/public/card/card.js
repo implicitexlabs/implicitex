@@ -39,7 +39,7 @@
  *   { source:'implicitex-coincard', type:'CC_AMOUNT_CHANGED',  cardId, payload:{ amount, fee, total } }
  *   { source:'implicitex-coincard', type:'CC_INTENT_READY',    cardId, payload:{ intent } }
  *   { source:'implicitex-coincard', type:'CC_READY_TO_SEND',   cardId, payload:{ sender, intent } }
- *   { source:'implicitex-coincard', type:'CC_CONFIRMED',       cardId, payload:{ txHash, sender, intent } }
+ *   { source:'implicitex-coincard', type:'CC_CONFIRMED',       cardId, payload:{ txHash, sender, intent, receipt } }
  *   { source:'implicitex-coincard', type:'CC_ERROR',           cardId, payload:{ message } }
  *
  * PostMessage bridge (parent → iframe):
@@ -129,6 +129,13 @@
     if (!isAllowedParentOrigin(event.origin)) return;
     if (!state.trustedParentOrigin) state.trustedParentOrigin = event.origin;
   });
+
+  /* ----------------------------------------------------------------
+   * generateTraceId — opaque per-execution correlation identifier
+   * ---------------------------------------------------------------- */
+  function generateTraceId() {
+    return 'cc-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7);
+  }
 
   /* ----------------------------------------------------------------
    * Chip — in-card execution trigger
@@ -436,13 +443,16 @@
     setStatus('pending', 'Pending');
 
     window.IX_EXECUTE.executeTransfer({
-      action: 'execute',
-      chainId: chainId,
-      sender: state.sender,
+      action:    'execute',
+      chainId:   chainId,
+      sender:    state.sender,
       recipient: intent.recipient,
-      amount: intent.amount,
-      total: intent.total,
-      token: token,
+      amount:    intent.amount,
+      fee:       intent.fee,
+      total:     intent.total,
+      token:     token,
+      source:    'coincard',
+      traceId:   generateTraceId(),
     }, {
       onApprovalSubmitted: function () {
         setText('ccExecLabel', 'Approval submitted. Awaiting confirmation\u2026');
@@ -459,18 +469,19 @@
     })
       .then(function (result) {
         if (result.status === 'confirmed') {
-          /* Populate confirmed panel */
+          /* Populate confirmed panel from normalized receipt */
+          var receipt = result.receipt;
           setText('ccConfirmedAmount', intent.amount.toFixed(2));
           var txHashEl = el('ccTxHash');
-          if (txHashEl) {
-            txHashEl.href        = result.explorerUrl || '#';
-            txHashEl.textContent = result.txHash.slice(0, 10) + '\u2026' + result.txHash.slice(-6);
-            txHashEl.title       = result.txHash;
+          if (txHashEl && receipt) {
+            txHashEl.href        = receipt.explorerUrl || '#';
+            txHashEl.textContent = receipt.txHash.slice(0, 10) + '\u2026' + receipt.txHash.slice(-6);
+            txHashEl.title       = receipt.txHash;
           }
           setStatus('confirmed', 'Confirmed');
           transition('CONFIRMED');
           setChipState('cc-card-chip--done', true, 'Transfer confirmed');
-          emit('CC_CONFIRMED', { txHash: result.txHash, sender: state.sender, intent: intent });
+          emit('CC_CONFIRMED', { txHash: receipt && receipt.txHash, sender: state.sender, intent: intent, receipt: receipt });
           return;
         }
         if (result.status === 'wallet-rejected') {

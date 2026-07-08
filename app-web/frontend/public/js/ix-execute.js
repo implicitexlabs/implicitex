@@ -257,6 +257,49 @@
     return parseInt(receipt.status, 16) === 1 || Number(receipt.status) === 1;
   }
 
+  /* ----------------------------------------------------------------
+   * normalizeBlockNumber — coerce hex or decimal block number to integer
+   * ---------------------------------------------------------------- */
+  function normalizeBlockNumber(raw) {
+    if (raw == null) return null;
+    if (typeof raw === 'number') return raw;
+    if (typeof raw === 'string' && raw.startsWith('0x')) return parseInt(raw, 16);
+    return parseInt(raw, 10) || null;
+  }
+
+  /* ----------------------------------------------------------------
+   * buildReceipt — construct a stable, serializable execution receipt
+   *
+   * All consumer-facing receipt fields live here. Raw provider receipts
+   * (eth_getTransactionReceipt responses) must not leave this function.
+   * ---------------------------------------------------------------- */
+  function buildReceipt(request, approvalHash, transferHash, transferReceipt, cfg) {
+    var amount = request.amount != null ? Number(request.amount) : null;
+    var total  = request.total  != null ? Number(request.total)  : null;
+    var fee    = request.fee    != null
+      ? Number(request.fee)
+      : (amount != null && total != null ? total - amount : null);
+
+    return {
+      schema:       'implicitex.receipt.v1',
+      txHash:       transferHash,
+      approvalHash: approvalHash,
+      sender:       request.sender    || null,
+      recipient:    request.recipient || null,
+      amount:       amount,
+      fee:          fee,
+      total:        total,
+      token:        (request.token || 'USDC').toUpperCase(),
+      chainId:      request.chainId   || null,
+      chainName:    cfg ? cfg.name    : null,
+      blockNumber:  normalizeBlockNumber(transferReceipt && transferReceipt.blockNumber),
+      explorerUrl:  cfg ? cfg.explorerUrl + '/tx/' + transferHash : null,
+      source:       request.source    || null,
+      traceId:      request.traceId   || null,
+      confirmedAt:  Date.now(),
+    };
+  }
+
   function executeTransfer(request, hooks) {
     request = request || {};
     hooks = hooks || {};
@@ -344,15 +387,13 @@
                   if (hooks.onFailed) hooks.onFailed(transferErr);
                   return { status: 'failed', error: transferErr };
                 }
+                var receipt = buildReceipt(request, approvalHash, transferHash, transferReceipt, cfg);
                 var confirmed = {
-                  status: 'confirmed',
+                  status:       'confirmed',
+                  txHash:       transferHash,
                   approvalHash: approvalHash,
-                  approvalReceipt: approvalReceipt,
-                  transferHash: transferHash,
-                  txHash: transferHash,
-                  receipt: transferReceipt,
-                  explorerUrl: cfg.explorerUrl + '/tx/' + transferHash,
-                  chain: cfg,
+                  explorerUrl:  receipt.explorerUrl,
+                  receipt:      receipt,
                 };
                 if (hooks.onConfirmed) hooks.onConfirmed(confirmed);
                 return confirmed;
