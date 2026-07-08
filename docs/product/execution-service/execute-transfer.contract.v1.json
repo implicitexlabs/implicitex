@@ -1,0 +1,137 @@
+{
+  "schema": "implicitex.execute-transfer.contract.v1",
+  "name": "Execution Service Public Contract",
+  "status": "draft-contract",
+  "date": "2026-07-08",
+  "purpose": "Define the public request/response boundary for execution orchestration. Consumers submit verified intent and render normalized outcomes. They do not know provider, signer, contract sequencing, receipt polling, or retry strategy.",
+  "request": {
+    "recipient": {
+      "type": "evm-address",
+      "required": true,
+      "description": "Verified recipient address supplied by the requesting surface."
+    },
+    "amount": {
+      "type": "decimal-string",
+      "required": true,
+      "description": "Human-entered transfer amount in token units."
+    },
+    "chainId": {
+      "type": "integer",
+      "required": true,
+      "description": "Target EVM chain identifier."
+    },
+    "token": {
+      "type": "symbol",
+      "required": true,
+      "description": "Token symbol for the requested transfer route."
+    },
+    "fee": {
+      "type": "decimal-string",
+      "required": true,
+      "description": "Declared fee component for the execution request."
+    },
+    "source": {
+      "type": "string",
+      "required": true,
+      "description": "Originating surface or product source for traceability."
+    },
+    "traceId": {
+      "type": "string",
+      "required": true,
+      "description": "Opaque request correlation identifier."
+    }
+  },
+  "response": {
+    "status": {
+      "type": "enum",
+      "required": true,
+      "values": [
+        "wallet-missing",
+        "wallet-rejected",
+        "wrong-network",
+        "ready-to-send",
+        "approval-pending",
+        "transfer-pending",
+        "confirmed",
+        "failed"
+      ]
+    },
+    "sender": {
+      "type": "evm-address",
+      "required": false,
+      "description": "Connected sender address when wallet access succeeds."
+    },
+    "approvalHash": {
+      "type": "tx-hash",
+      "required": false,
+      "description": "Hash returned when an approval transaction is submitted."
+    },
+    "transferHash": {
+      "type": "tx-hash",
+      "required": false,
+      "description": "Hash returned when the transfer transaction is submitted."
+    },
+    "receipt": {
+      "type": "object",
+      "required": false,
+      "description": "Normalized receipt or terminal execution record."
+    },
+    "explorerUrl": {
+      "type": "url",
+      "required": false,
+      "description": "Explorer link for the terminal transfer transaction."
+    },
+    "error": {
+      "type": "object",
+      "required": false,
+      "description": "Normalized failure object with service-level category and message."
+    }
+  },
+  "progressHooks": {
+    "onWalletRequested": {
+      "required": false,
+      "description": "Invoked when wallet access is about to be requested."
+    },
+    "onWalletConnected": {
+      "required": false,
+      "description": "Invoked when the sender address has been resolved."
+    },
+    "onNetworkMismatch": {
+      "required": false,
+      "description": "Invoked when the connected wallet is on the wrong network."
+    },
+    "onApprovalSubmitted": {
+      "required": false,
+      "description": "Invoked when approval is submitted to the wallet or provider."
+    },
+    "onTransferSubmitted": {
+      "required": false,
+      "description": "Invoked when the transfer is submitted."
+    },
+    "onConfirmed": {
+      "required": false,
+      "description": "Invoked when the transfer is confirmed."
+    },
+    "onFailed": {
+      "required": false,
+      "description": "Invoked when the request fails or is rejected."
+    }
+  },
+  "statuses": [
+    "wallet-missing",
+    "wallet-rejected",
+    "wrong-network",
+    "ready-to-send",
+    "approval-pending",
+    "transfer-pending",
+    "confirmed",
+    "failed"
+  ],
+  "invariants": [
+    "Consumers submit verified intent and render normalized outcomes.",
+    "Consumers do not know provider, signer, contract sequencing, receipt polling, or retry strategy.",
+    "The service may change implementation strategy without changing the consumer-facing request shape.",
+    "The service may support Safe wallets, account abstraction, alternative providers, retries, batching, or different execution strategies without requiring Coin Card changes.",
+    "The public contract must remain stable until a versioned replacement is declared."
+  ]
+}
