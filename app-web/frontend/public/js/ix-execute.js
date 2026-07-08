@@ -9,6 +9,7 @@
  *   connectWallet()               → Promise<string address>
  *   getChainId()                  → Promise<number>
  *   switchChain(chainId)          → Promise<void>
+ *   executeTransfer(request, hooks?) → Promise<execution result>
  *   approve(chainId, sender, totalRaw)                        → Promise<txHash>
  *   transferWithFee(chainId, sender, recipient, amountRaw)    → Promise<txHash>
  *   waitForReceipt(hash)          → Promise<receipt>
@@ -97,6 +98,16 @@
     return CHAINS[chainId] || null;
   }
 
+  function providerUnavailableError() {
+    var err = new Error('No wallet detected');
+    err.code = 'NO_WALLET';
+    return err;
+  }
+
+  function ensureProvider() {
+    if (!window.ethereum) throw providerUnavailableError();
+  }
+
   /* ----------------------------------------------------------------
    * calculateFee — single authority for platform fee math
    *
@@ -119,6 +130,7 @@
    * connectWallet — request wallet accounts
    * ---------------------------------------------------------------- */
   function connectWallet() {
+    ensureProvider();
     return window.ethereum.request({ method: 'eth_requestAccounts' })
       .then(function (accounts) {
         if (!accounts || !accounts.length) throw new Error('No accounts returned');
@@ -130,6 +142,7 @@
    * getChainId — return current chain as a number
    * ---------------------------------------------------------------- */
   function getChainId() {
+    ensureProvider();
     return window.ethereum.request({ method: 'eth_chainId' })
       .then(function (hex) {
         return parseInt(hex, 16);
@@ -140,6 +153,7 @@
    * switchChain — switch to chainId, adding the chain if unknown (4902)
    * ---------------------------------------------------------------- */
   function switchChain(chainId) {
+    ensureProvider();
     var cfg = CHAINS[chainId];
     var hexId = cfg ? cfg.chainHex : ('0x' + chainId.toString(16));
 
@@ -168,6 +182,7 @@
    * approve — approve the ImplicitEx contract to spend totalRaw USDC
    * ---------------------------------------------------------------- */
   function approve(chainId, sender, totalRaw) {
+    ensureProvider();
     var cfg = CHAINS[chainId];
     if (!cfg) return Promise.reject(new Error('Unsupported chainId: ' + chainId));
 
@@ -187,6 +202,7 @@
    * transferWithFee — call ImplicitEx contract transferWithFee
    * ---------------------------------------------------------------- */
   function transferWithFee(chainId, sender, recipient, amountRaw) {
+    ensureProvider();
     var cfg = CHAINS[chainId];
     if (!cfg) return Promise.reject(new Error('Unsupported chainId: ' + chainId));
 
@@ -207,6 +223,7 @@
    * Gives up after 90 attempts (3 minutes).
    * ---------------------------------------------------------------- */
   function waitForReceipt(hash) {
+    ensureProvider();
     var MAX_ATTEMPTS = 90;
     var INTERVAL_MS  = 2000;
     var attempt = 0;
@@ -235,6 +252,95 @@
     });
   }
 
+  function receiptSucceeded(receipt) {
+    if (!receipt || receipt.status == null) return false;
+    return parseInt(receipt.status, 16) === 1 || Number(receipt.status) === 1;
+  }
+
+  function unsupportedChainError(chainId) {
+    return new Error('Unsupported chainId: ' + chainId);
+  }
+
+  function executeTransfer(request, hooks) {
+    request = request || {};
+    hooks = hooks || {};
+    var action = request.action || 'execute';
+    var chainId = request.chainId;
+    var cfg = chainConfig(chainId);
+
+    if (!cfg) return Promise.reject(unsupportedChainError(chainId));
+
+    if (action === 'prepare') {
+      return connectWallet()
+        .then(function (address) {
+          return getChainId().then(function (currentChainId) {
+            if (currentChainId !== chainId) {
+              return {
+                status: 'wrong-network',
+                sender: address,
+                chainId: currentChainId,
+                expectedChainId: chainId,
+                chain: cfg,
+              };
+            }
+            return {
+              status: 'ready-to-send',
+              sender: address,
+              chainId: currentChainId,
+              chain: cfg,
+            };
+          });
+        });
+    }
+
+    if (action === 'switch-network') {
+      return switchChain(chainId).then(function () {
+        return {
+          status: 'network-ready',
+          chainId: chainId,
+          chain: cfg,
+        };
+      }).catch(function (err) {
+        if (err) err.chain = cfg;
+        throw err;
+      });
+    }
+
+    if (action !== 'execute') {
+      return Promise.reject(new Error('Unsupported execution action: ' + action));
+    }
+
+    var amountRaw = toRawUsdc(request.amount);
+    var totalRaw = toRawUsdc(request.total);
+
+    if (hooks.onApprovalRequested) hooks.onApprovalRequested();
+    return approve(chainId, request.sender, totalRaw)
+      .then(function (approvalHash) {
+        if (hooks.onApprovalSubmitted) hooks.onApprovalSubmitted(approvalHash);
+        return waitForReceipt(approvalHash).then(function (approvalReceipt) {
+          if (!receiptSucceeded(approvalReceipt)) throw new Error('APPROVE_FAILED');
+          if (hooks.onTransferRequested) hooks.onTransferRequested(approvalReceipt);
+          return transferWithFee(chainId, request.sender, request.recipient, amountRaw)
+            .then(function (transferHash) {
+              if (hooks.onTransferSubmitted) hooks.onTransferSubmitted(transferHash);
+              return waitForReceipt(transferHash).then(function (transferReceipt) {
+                if (!receiptSucceeded(transferReceipt)) throw new Error('TRANSFER_FAILED');
+                return {
+                  status: 'confirmed',
+                  approvalHash: approvalHash,
+                  approvalReceipt: approvalReceipt,
+                  transferHash: transferHash,
+                  txHash: transferHash,
+                  receipt: transferReceipt,
+                  explorerUrl: cfg.explorerUrl + '/tx/' + transferHash,
+                  chain: cfg,
+                };
+              });
+            });
+        });
+      });
+  }
+
   /* ----------------------------------------------------------------
    * Public API
    * ---------------------------------------------------------------- */
@@ -242,6 +348,7 @@
     connectWallet:   connectWallet,
     getChainId:      getChainId,
     switchChain:     switchChain,
+    executeTransfer: executeTransfer,
     approve:         approve,
     transferWithFee: transferWithFee,
     waitForReceipt:  waitForReceipt,

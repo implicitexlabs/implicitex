@@ -247,24 +247,7 @@
   "migration": {
     "version": "v1",
     "previous": null,
-    "next": "execution-service-request-boundary",
-    "notes": "Contract target is a single IX_EXECUTE.executeTransfer request boundary. Runtime still orchestrates execution primitives in app-web/frontend/public/card/card.js; this is explicit migration debt, not the target architecture.",
-    "debt": [
-      {
-        "id": "coin-card-runtime-primitive-orchestration",
-        "status": "known-migration-debt",
-        "runtimeFile": "app-web/frontend/public/card/card.js",
-        "currentRuntimeDispatches": [
-          "IX_EXECUTE.connectWallet",
-          "IX_EXECUTE.switchChain",
-          "startExecution",
-          "IX_EXECUTE.approve",
-          "IX_EXECUTE.transferWithFee",
-          "IX_EXECUTE.waitForReceipt"
-        ],
-        "targetDispatch": "IX_EXECUTE.executeTransfer",
-        "rule": "Coin Card creates a verified transfer intent. Execution Service fulfills it."
-      }
-    ]
+    "next": null,
+    "notes": "Coin Card targets the single IX_EXECUTE.executeTransfer request boundary. Execution primitives remain owned by IX_EXECUTE."
   }
 }

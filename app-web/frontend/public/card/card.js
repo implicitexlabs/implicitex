@@ -297,7 +297,6 @@
    * ---------------------------------------------------------------- */
   function connectWallet() {
     if (!window.IX_EXECUTE) { renderError('Execution module unavailable'); return; }
-    if (!window.ethereum)   { renderError('No wallet detected', 'Install MetaMask to send USDC.'); return; }
 
     transition('CONNECTING');
     setText('ccExecLabel', 'Connecting wallet\u2026');
@@ -305,28 +304,26 @@
     setChipState('cc-card-chip--active', true, 'Connecting wallet\u2026');
     setStatus('pending', 'Connecting');
 
-    window.IX_EXECUTE.connectWallet()
-      .then(function (address) {
-        state.sender = address;
+    window.IX_EXECUTE.executeTransfer({
+      action: 'prepare',
+      chainId: state.manifest && state.manifest.chainId,
+    })
+      .then(function (result) {
+        state.sender = result.sender;
 
         /* Self-send detection */
         var warn = el('ccSelfSendWarn');
         if (warn && state.manifest) {
           warn.classList.toggle('is-active',
-            address.toLowerCase() === state.manifest.recipient.toLowerCase());
+            result.sender.toLowerCase() === state.manifest.recipient.toLowerCase());
         }
 
-        return window.IX_EXECUTE.getChainId();
-      })
-      .then(function (chainId) {
-        var manifestChainId = state.manifest && state.manifest.chainId;
-        var cfg = window.IX_EXECUTE.chainConfig(manifestChainId);
-        if (chainId !== manifestChainId) {
+        if (result.status === 'wrong-network') {
           transition('WRONG_NETWORK');
           setText('ccTxLabel', 'Wrong Network');
           setStatus('pending', 'Wrong Network');
           setChipState('cc-card-chip--ready', false,
-            'Switch to ' + (cfg ? cfg.name : 'correct network'));
+            'Switch to ' + (result.chain ? result.chain.name : 'correct network'));
           return;
         }
         showConfirmPanel();
@@ -340,6 +337,10 @@
           setChipState('cc-card-chip--ready', false, 'Connect wallet to send USDC');
           return;
         }
+        if (err && err.code === 'NO_WALLET') {
+          renderError('No wallet detected', 'Install MetaMask to send USDC.');
+          return;
+        }
         renderError('Wallet error', err && err.message);
       });
   }
@@ -347,7 +348,6 @@
   function switchNetwork() {
     if (!window.IX_EXECUTE) return;
     var manifestChainId = state.manifest && state.manifest.chainId;
-    var cfg = window.IX_EXECUTE.chainConfig(manifestChainId);
 
     transition('SWITCHING_NETWORK');
     setText('ccExecLabel', 'Switching network\u2026');
@@ -355,7 +355,10 @@
     setChipState('cc-card-chip--active', true, 'Switching network\u2026');
     setStatus('pending', 'Switching');
 
-    window.IX_EXECUTE.switchChain(manifestChainId)
+    window.IX_EXECUTE.executeTransfer({
+      action: 'switch-network',
+      chainId: manifestChainId,
+    })
       .then(showConfirmPanel)
       .catch(function (err) {
         if (err && err.code === 4001) {
@@ -363,7 +366,7 @@
           setText('ccTxLabel', 'Wrong Network');
           setStatus('pending', 'Wrong Network');
           setChipState('cc-card-chip--ready', false,
-            'Switch to ' + (cfg ? cfg.name : 'correct network'));
+            'Switch to ' + (err.chain ? err.chain.name : 'correct network'));
           return;
         }
         renderError('Network switch failed', err && err.message);
@@ -403,11 +406,6 @@
     if (!state.intent || !state.sender || !state.manifest || !window.IX_EXECUTE) return;
     var intent  = state.intent;
     var chainId = state.manifest.chainId;
-    var cfg     = window.IX_EXECUTE.chainConfig(chainId);
-    if (!cfg) { renderError('Unsupported network', 'chainId ' + chainId); return; }
-
-    var amountRaw = window.IX_EXECUTE.toRawUsdc(intent.amount);
-    var totalRaw  = window.IX_EXECUTE.toRawUsdc(intent.total);
     var token     = (state.manifest.token || 'USDC').toUpperCase();
 
     /* Prime exec panel with amount (name+recipient already populated by renderTrust) */
@@ -418,41 +416,42 @@
     setText('ccExecLabel', 'Confirm USDC approval in wallet\u2026');
     setStatus('pending', 'Pending');
 
-    window.IX_EXECUTE.approve(chainId, state.sender, totalRaw)
-      .then(function (hash) {
+    window.IX_EXECUTE.executeTransfer({
+      action: 'execute',
+      chainId: chainId,
+      sender: state.sender,
+      recipient: intent.recipient,
+      amount: intent.amount,
+      total: intent.total,
+      token: token,
+    }, {
+      onApprovalSubmitted: function () {
         setText('ccExecLabel', 'Approval submitted. Awaiting confirmation\u2026');
-        return window.IX_EXECUTE.waitForReceipt(hash);
-      })
-      .then(function (receipt) {
-        if (parseInt(receipt.status, 16) !== 1) throw new Error('APPROVE_FAILED');
-
+      },
+      onTransferRequested: function () {
         transition('EXECUTE_PENDING');
         setChipState('cc-card-chip--active', true, 'Confirm transfer in wallet\u2026');
         setText('ccExecLabel', 'Confirm transfer in wallet\u2026');
-        return window.IX_EXECUTE.transferWithFee(chainId, state.sender, intent.recipient, amountRaw);
-      })
-      .then(function (hash) {
+      },
+      onTransferSubmitted: function () {
         setText('ccExecLabel', 'Transfer submitted. Awaiting on-chain confirmation\u2026');
         setStatus('submitted', 'Confirming');
-        return window.IX_EXECUTE.waitForReceipt(hash)
-          .then(function (r) { return { receipt: r, hash: hash }; });
-      })
+      },
+    })
       .then(function (result) {
-        if (parseInt(result.receipt.status, 16) !== 1) throw new Error('TRANSFER_FAILED');
-
         /* Populate confirmed panel */
         setText('ccConfirmedAmount', intent.amount.toFixed(2));
         var txHashEl = el('ccTxHash');
         if (txHashEl) {
-          txHashEl.href        = cfg.explorerUrl + '/tx/' + result.hash;
-          txHashEl.textContent = result.hash.slice(0, 10) + '\u2026' + result.hash.slice(-6);
-          txHashEl.title       = result.hash;
+          txHashEl.href        = result.explorerUrl || '#';
+          txHashEl.textContent = result.txHash.slice(0, 10) + '\u2026' + result.txHash.slice(-6);
+          txHashEl.title       = result.txHash;
         }
 
         setStatus('confirmed', 'Confirmed');
         transition('CONFIRMED');
         setChipState('cc-card-chip--done', true, 'Transfer confirmed');
-        emit('CC_CONFIRMED', { txHash: result.hash, sender: state.sender, intent: intent });
+        emit('CC_CONFIRMED', { txHash: result.txHash, sender: state.sender, intent: intent });
       })
       .catch(function (err) {
         if (err && err.code === 4001) {
