@@ -4,6 +4,21 @@
 
 Normative subordinate trust model.
 
+**V1 trust model frozen: 2026-07-04.**
+
+V1 implementation may refine field names, validation mechanics, UI layout, and
+receipt rendering, but it must not reopen or weaken these boundaries:
+
+- Free Coin Card verifies the route, not recipient identity.
+- Registered/Paid Coin Card may add recipient, domain, wallet-control, registry,
+  signature, and revocation evidence.
+- Purpose labels are metadata, not settlement logic.
+- Current manifests cannot rewrite transaction-time evidence.
+- Blockchain evidence controls settlement truth.
+
+Changes to these boundaries require an explicit V2 trust-model review, not an
+implementation convenience change.
+
 ## Authority
 
 This document inherits authority from:
@@ -52,16 +67,41 @@ is not authorized.
 
 ## 1. What Is a Coin Card?
 
-A Coin Card is a verifiable payment identity credential that binds a public recipient identity to a specific non-custodial payment destination, with registry-backed status and revocation.
+Coin Card is a family of embeddable payment objects for non-custodial value
+transfer. The trust claim depends on the tier and evidence available.
 
-A Coin Card is permitted to make this claim:
+At the free self-hosted tier, a Coin Card is a payment route interface. It
+loads host-controlled payment instructions, validates the route, and helps a
+sender execute a transfer through the official ImplicitEx rail.
+
+A free Coin Card is permitted to make this claim:
+
+```text
+This is a supported payment route using an official ImplicitEx transfer rail.
+The displayed recipient address is the address supplied by the host-controlled
+manifest at the time of transaction.
+```
+
+A verified or registered Coin Card is a verifiable payment identity credential
+that binds a public recipient identity to a specific non-custodial payment
+destination, with registry-backed status and revocation.
+
+A verified or registered Coin Card is permitted to make this claim:
 
 ```text
 This public recipient identity is bound to this specific payment destination,
 under this registry status, according to the currently available verification evidence.
 ```
 
-A Coin Card exists to answer:
+A free Coin Card exists to answer:
+
+- is this embed using the official ImplicitEx transfer rail
+- is the recipient address syntactically valid
+- which network and token route is being requested
+- what address was loaded from the manifest at the time of transaction
+- whether the completed transaction is verifiable on-chain
+
+A verified or registered Coin Card exists to answer:
 
 - who the recipient identity claims to be
 - where payment is intended to go
@@ -70,6 +110,60 @@ A Coin Card exists to answer:
 - whether any known revocation or invalidation state applies
 
 A Coin Card does not execute a transfer. It informs commitment before transfer execution.
+
+## 1.1 Free Tier Boundary
+
+Free Coin Card verification is route verification, not recipient verification.
+
+ImplicitEx may verify:
+
+- official ImplicitEx contract or transfer surface
+- supported network
+- supported token
+- syntactically valid recipient address
+- fee calculation and transfer amount
+- transaction hash and on-chain settlement
+- manifest hash or equivalent fingerprint at transaction time, when available
+
+ImplicitEx does not verify at the free tier:
+
+- the recipient's legal identity
+- whether the recipient address belongs to the host website
+- whether the host entered the intended address
+- whether the host later changed its own manifest
+- whether the host is honest, compliant, reputable, or safe
+
+Required free-tier meaning:
+
+```text
+The host supplies the recipient address. ImplicitEx validates the route and
+records what was used. The sender decides whether to pay that address.
+```
+
+If a host changes its self-hosted manifest after a transaction, the historical
+transaction remains anchored by the on-chain transaction hash and the recorded
+manifest fingerprint where available. The current manifest is not proof of what
+the card displayed in the past.
+
+## 1.2 Paid Verification Boundary
+
+Recipient, domain, wallet-control, registry, or business-level verification
+belongs in a separate verified or registered program.
+
+Allowed paid verification evidence may include:
+
+- wallet-control signature
+- verified domain association
+- signed manifest
+- registry publication
+- revocation status
+- evidence timestamp
+- support or business metadata, when explicitly collected
+
+Wallet signature verification is preferred over micro-transfer verification when
+possible because it proves control of the recipient address without moving funds.
+Micro-transfer verification may be used later if a specific product need
+justifies the added friction and gas cost.
 
 ## 2. What Is Not a Coin Card?
 
@@ -88,7 +182,14 @@ A Coin Card is not:
 - a transfer receipt
 - a wallet
 
-A Coin Card must not be described as proving that:
+A free Coin Card must not be described as proving that:
+
+- the host owns the displayed wallet
+- the displayed wallet belongs to a named person or business
+- the recipient identity is verified
+- ImplicitEx stands behind the recipient
+
+No Coin Card must be described as proving that:
 
 - the recipient is honest
 - the recipient is legally compliant
@@ -99,9 +200,24 @@ A Coin Card must not be described as proving that:
 
 ## 3. What Evidence Constitutes a Valid Coin Card?
 
-A valid Coin Card requires evidence sufficient to support the identity-to-destination binding and current registry state.
+Free-tier validity requires route evidence, not identity evidence.
 
-Required evidence:
+Required free-tier evidence:
+
+- host manifest or host-supplied configuration
+- valid recipient address format
+- supported network and token route
+- official ImplicitEx contract or execution surface
+- fee and amount calculation
+- transaction hash after execution
+- manifest hash or equivalent fingerprint at transaction time, when available
+
+A valid free Coin Card may be operationally valid without proving identity.
+
+Verified or registered Coin Cards require evidence sufficient to support the
+identity-to-destination binding and current registry state.
+
+Required verified-tier evidence:
 
 - canonical identity payload
 - creator signature
@@ -165,6 +281,38 @@ If the canonical payload changes while the presentation remains unchanged, the p
 
 ## 5. What Trust Claims May Be Made?
 
+Allowed free-tier language:
+
+- official ImplicitEx route
+- supported payment route
+- recipient address supplied by host
+- address format valid
+- network supported
+- token supported
+- contract verified
+- manifest fingerprint recorded
+- transaction confirmed on-chain
+- recipient receives the displayed amount
+
+Allowed free-tier explanatory language:
+
+```text
+This Coin Card uses an official ImplicitEx transfer route.
+```
+
+```text
+The recipient address is supplied by the host manifest.
+```
+
+```text
+ImplicitEx does not verify the recipient identity for free self-hosted Coin Cards.
+```
+
+```text
+Payment was sent to the wallet address loaded from this Coin Card manifest at
+the time of transaction.
+```
+
 Allowed trust language:
 
 - verified payment identity
@@ -192,6 +340,7 @@ The canonical payment identity payload signature is valid.
 
 Forbidden trust language:
 
+- verified recipient, unless enrolled in an explicit verified-recipient program
 - trusted recipient
 - safe recipient
 - guaranteed payment

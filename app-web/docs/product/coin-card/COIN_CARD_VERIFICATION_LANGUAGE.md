@@ -69,7 +69,26 @@ A Coin Card verification statement may describe identity binding, destination co
 
 It must not imply moral trustworthiness, business legitimacy, legal approval, custody, insurance, recoverability, or transfer success.
 
+Free self-hosted Coin Cards are a narrower claim. Free-tier language may verify
+the route, address format, contract, network, token, manifest fingerprint, and
+on-chain transaction evidence. It must not claim recipient identity, domain, or
+business verification unless the Coin Card is enrolled in a separate verified or
+registered program.
+
 ## Permitted Claims
+
+Permitted free-tier claims:
+
+- official ImplicitEx route
+- contract verified
+- supported network
+- supported token
+- address format valid
+- recipient address supplied by host
+- manifest fingerprint recorded
+- payment route verified
+- transaction confirmed on-chain
+- recipient receives displayed amount
 
 Permitted verification claims:
 
@@ -113,6 +132,7 @@ Evidence checked at 2026-06-28T00:00:00Z.
 
 Forbidden verification claims:
 
+- verified recipient, unless explicitly enrolled in a verified-recipient program
 - trusted recipient
 - safe recipient
 - safe merchant
@@ -162,6 +182,12 @@ Badges must name the evidence they represent.
 Allowed badges:
 
 ```text
+OFFICIAL IMPLICITEX ROUTE
+CONTRACT VERIFIED
+SUPPORTED NETWORK
+SUPPORTED TOKEN
+ADDRESS FORMAT VALID
+MANIFEST FINGERPRINT RECORDED
 VERIFIED PAYMENT IDENTITY
 REGISTRY ACTIVE
 DESTINATION CONFIRMED
@@ -192,6 +218,7 @@ Forbidden badges:
 TRUSTED
 SAFE
 GUARANTEED
+VERIFIED RECIPIENT
 APPROVED BUSINESS
 VERIFIED BUSINESS
 INSURED
@@ -220,6 +247,7 @@ Forbidden labels:
 
 - Trust score
 - Safety score
+- Verified recipient
 - Approved merchant
 - Business verification
 - Fraud protection
@@ -524,6 +552,23 @@ Receipts must preserve stale, pending, unknown, or inferred state.
 Permitted receipt language:
 
 ```text
+Payment was sent to the wallet address loaded from this Coin Card manifest at
+the time of transaction.
+```
+
+```text
+Recipient address supplied by host manifest.
+```
+
+```text
+Manifest fingerprint recorded at time of transfer.
+```
+
+```text
+Official ImplicitEx contract used.
+```
+
+```text
 Coin Card evidence observed at 2026-06-28T00:00:00Z.
 ```
 
@@ -544,6 +589,10 @@ Registry evidence was stale at time of transfer.
 ```
 
 Forbidden receipt language:
+
+```text
+ImplicitEx verified the recipient.
+```
 
 ```text
 Recipient was trusted.
@@ -568,11 +617,19 @@ Public copy must not broaden the claims made by the trust model.
 Permitted public copy:
 
 ```text
-Coin Card helps users verify a payment identity before sending.
+Registered Coin Card helps users verify a payment identity before sending.
 ```
 
 ```text
-Coin Card binds a public recipient identity to a payment destination with registry-backed status.
+Free Coin Card verifies the payment route, not the recipient identity.
+```
+
+```text
+The host supplies the recipient address; ImplicitEx verifies the route and records the transfer evidence.
+```
+
+```text
+Registered Coin Card binds a public recipient identity to a payment destination with registry-backed status.
 ```
 
 ```text

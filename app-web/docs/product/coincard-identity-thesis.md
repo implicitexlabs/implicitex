@@ -202,23 +202,29 @@ User Interface → Identity → Verification → Registry → Recovery
 
 ### Layer 1 (Current)
 ```
-Coin Card → Registry → Verified Recipient → USDC Transfer
+Coin Card Free → Host Manifest → Route Verification → USDC Transfer
 ```
-Public message: *Send money to verified recipients.*
+Public message: *Send USDC through a verified route. The host supplies the recipient address.*
 
 ### Layer 2
+```
+Registered Coin Card → Wallet Signature → Verified Recipient → USDC Transfer
+```
+Public message: *Publish a verified USDC receiving identity.*
+
+### Layer 3
 ```
 Coin Card → Multiple Wallets → Multiple Chains
 ```
 Public message: *One payment identity everywhere.*
 
-### Layer 3
+### Layer 4
 ```
 Coin Card → Recovery → Delegation → Persistent Identity
 ```
 Public message: *Your permanent economic identity.*
 
-### Layer 4
+### Layer 5
 ```
 Coin Card → Reputation → Credential System → Portable Economic Identity
 ```
