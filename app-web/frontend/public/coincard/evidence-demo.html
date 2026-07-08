@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Coin Card Evidence Demo</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="/favicon.ico">
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f7f8fa;
+      --panel: #ffffff;
+      --ink: #111827;
+      --muted: #5b6472;
+      --line: #d8dde5;
+      --line-strong: #9aa5b5;
+      --accent: #1267d8;
+      --good: #0f7a4f;
+      --warn: #9a6700;
+      --code: #eef2f7;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font: 15px/1.45 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    main {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 28px 0 40px;
+    }
+
+    header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 20px;
+      margin-bottom: 18px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 26px;
+      line-height: 1.15;
+      letter-spacing: 0;
+    }
+
+    .sub {
+      margin: 8px 0 0;
+      color: var(--muted);
+      max-width: 780px;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    button {
+      min-height: 38px;
+      border: 1px solid var(--line-strong);
+      background: var(--panel);
+      color: var(--ink);
+      padding: 8px 12px;
+      border-radius: 6px;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    button.primary {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #fff;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+    }
+
+    .status {
+      min-height: 38px;
+      margin: 0 0 18px;
+      padding: 9px 12px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 6px;
+      color: var(--muted);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 14px;
+    }
+
+    .answer-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    section {
+      min-width: 0;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 8px;
+      padding: 14px;
+    }
+
+    section.wide {
+      grid-column: 1 / -1;
+    }
+
+    h2 {
+      margin: 0 0 10px;
+      font-size: 15px;
+      letter-spacing: 0;
+    }
+
+    .fact-list {
+      display: grid;
+      gap: 6px;
+      margin: 0;
+    }
+
+    .fact {
+      display: grid;
+      grid-template-columns: 150px minmax(0, 1fr);
+      gap: 10px;
+      align-items: baseline;
+      min-height: 26px;
+    }
+
+    .label {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .value {
+      min-width: 0;
+      overflow-wrap: anywhere;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 13px;
+    }
+
+    pre {
+      margin: 0;
+      overflow: auto;
+      max-height: 320px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--code);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .sections {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .evidence-section {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      background: #fbfcfe;
+    }
+
+    .owner {
+      margin: -4px 0 10px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .ok { color: var(--good); }
+    .warn { color: var(--warn); }
+
+    .answer-card {
+      min-width: 0;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 8px;
+      padding: 12px;
+    }
+
+    .question {
+      margin: 0 0 8px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .result {
+      margin: 8px 0 0;
+      padding-top: 8px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    @media (max-width: 860px) {
+      header {
+        display: block;
+      }
+
+      .actions {
+        justify-content: flex-start;
+        margin-top: 14px;
+      }
+
+      .grid,
+      .answer-grid,
+      .sections {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>Coin Card Evidence Demo</h1>
+        <p class="sub">Local proof path for a Free Coin Card manifest. No wallet, no transaction, no chain call.</p>
+      </div>
+      <div class="actions" aria-label="Demo actions">
+        <button class="primary" id="loadBtn" type="button">Load Sample</button>
+        <button id="simulateBtn" type="button" disabled>Simulate Receipt</button>
+        <button id="mutateBtn" type="button" disabled>Change Current Manifest</button>
+        <button id="resetBtn" type="button">Reset</button>
+      </div>
+    </header>
+
+    <p class="status" id="status">Ready.</p>
+
+    <div class="answer-grid" aria-label="Evidence questions">
+      <section class="answer-card" aria-labelledby="publishedTitle">
+        <p class="question">Question 1</p>
+        <h2 id="publishedTitle">What was published?</h2>
+        <div class="fact-list" id="publishedFacts"></div>
+      </section>
+
+      <section class="answer-card" aria-labelledby="observedTitle">
+        <p class="question">Question 2</p>
+        <h2 id="observedTitle">What did ImplicitEx observe?</h2>
+        <div class="fact-list" id="observedFacts"></div>
+      </section>
+
+      <section class="answer-card" aria-labelledby="happenedTitle">
+        <p class="question">Question 3</p>
+        <h2 id="happenedTitle">What actually happened?</h2>
+        <div class="fact-list" id="happenedFacts"></div>
+      </section>
+
+      <section class="answer-card" aria-labelledby="changedTitle">
+        <p class="question">Question 4</p>
+        <h2 id="changedTitle">What changed later?</h2>
+        <div class="fact-list" id="changedFacts"></div>
+        <p class="result" id="authorityResult">No historical receipt yet.</p>
+      </section>
+    </div>
+
+    <div class="grid">
+      <section aria-labelledby="currentManifestTitle">
+        <h2 id="currentManifestTitle">Current Host Manifest</h2>
+        <div class="fact-list" id="currentFacts"></div>
+      </section>
+
+      <section aria-labelledby="historicalReceiptTitle">
+        <h2 id="historicalReceiptTitle">Historical Receipt Evidence</h2>
+        <div class="fact-list" id="receiptFacts"></div>
+      </section>
+
+      <section aria-labelledby="manifestJsonTitle">
+        <h2 id="manifestJsonTitle">Current coin-card.json</h2>
+        <pre id="manifestJson">{}</pre>
+      </section>
+
+      <section aria-labelledby="proofJsonTitle">
+        <h2 id="proofJsonTitle">Proof Packet</h2>
+        <pre id="proofJson">{}</pre>
+      </section>
+
+      <section class="wide" aria-labelledby="sectionsTitle">
+        <h2 id="sectionsTitle">Rendered Evidence Sections</h2>
+        <div class="sections" id="evidenceSections"></div>
+      </section>
+    </div>
+  </main>
+
+  <script src="/js/transfer-status.js"></script>
+  <script src="/js/receipt-schema.js"></script>
+  <script src="/js/proof-packet.js"></script>
+  <script src="/js/coincard-free-manifest.js"></script>
+  <script src="/coincard/evidence-demo.js"></script>
+</body>
+</html>
