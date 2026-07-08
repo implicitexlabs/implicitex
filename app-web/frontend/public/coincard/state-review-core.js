@@ -886,6 +886,12 @@
     if (mode === 'FORM_VALIDATION_ERROR' && rowId === 'amount') {
       return validationTitleFor(state) + '. ' + errorMessageFor(state);
     }
+    if (rowId === 'approvalHash') {
+      return hasValue(values.approvalHash) ? String(values.approvalHash) : '—';
+    }
+    if (rowId === 'transferHash') {
+      return hasValue(values.transferHash) ? String(values.transferHash) : '—';
+    }
     if (rowId === 'receipt') {
       return state.receipt + (state.receiptOutcome && state.receiptOutcome !== 'NONE' ? ' / ' + state.receiptOutcome : '');
     }

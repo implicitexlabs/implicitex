@@ -1705,8 +1705,16 @@
         || CHAIN_NAMES_MAP[String(manifest.chainId)]
         || 'Chain ' + manifest.chainId;
 
+      const settleRecipient = $('settle-recipient');
       $('settle-amount').textContent        = formatUsdcExact(amountWei)  + ' USDC';
-      $('settle-recipient').textContent     = manifest.displayName || abbrev(manifest.recipient);
+      settleRecipient.textContent           = manifest.displayName || abbrev(manifest.recipient);
+      if (manifest.recipient) {
+        settleRecipient.title = manifest.recipient;
+        settleRecipient.setAttribute('aria-label', manifest.recipient);
+      } else {
+        settleRecipient.removeAttribute('title');
+        settleRecipient.removeAttribute('aria-label');
+      }
       $('settle-network-token').textContent = chain + ' · ' + (manifest.token || '').toUpperCase();
       $('settle-dest').textContent          = abbrev(manifest.recipient);
       $('settle-fee').textContent           = formatUsdcExact(feeWei)     + ' USDC';

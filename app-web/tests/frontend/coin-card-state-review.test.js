@@ -376,6 +376,11 @@ async function assertRenderedGeometry() {
 
       if (result.id === 'transfer-pending-long-hash') {
         assert.equal(result.recipientTitle, '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd', 'full recipient remains accessible');
+        const transferHash = result.slots.find((slot) => slot.id === 'cc-review-row-value-transferHash');
+        assert.equal(transferHash.text, '0xaaaaaa...aaaaaa', 'transfer hash remains visibly truncated');
+        assert.equal(transferHash.title, result.fixture.values.transferHash, 'transfer hash accessible value preserves full hash');
+        assert.equal(transferHash.ariaLabel, result.fixture.values.transferHash, 'transfer hash aria-label preserves full hash');
+        assert.notEqual(transferHash.title, transferHash.text, 'transfer hash accessible value differs from visible text');
       }
     });
   } finally {

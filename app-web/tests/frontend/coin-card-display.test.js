@@ -64,6 +64,27 @@ function referenceFormatUsdcExact(units) {
   return `${sign}${whole.toString()}.${trimmed}`;
 }
 
+function makeMockElement() {
+  const attributes = new Map();
+  return {
+    textContent: '',
+    title: '',
+    href: '',
+    style: {},
+    setAttribute(name, value) {
+      attributes.set(name, String(value));
+      if (name === 'title') this.title = String(value);
+    },
+    getAttribute(name) {
+      return attributes.has(name) ? attributes.get(name) : null;
+    },
+    removeAttribute(name) {
+      attributes.delete(name);
+      if (name === 'title') this.title = '';
+    },
+  };
+}
+
 function startStaticServer(rootDir) {
   const mimeTypes = {
     '.css': 'text/css; charset=utf-8',
@@ -223,6 +244,44 @@ test('live wrappers and browser surfaces preserve current accessible values', as
   assert.equal(laneAbbrev('1234567890123'), '123456…0123', 'lane A length 13 truncation');
   assert.equal(laneAbbrev('0x1234567890abcdef1234567890abcdef12345678'), '0x1234…5678', 'lane A long address truncation');
 
+  const elements = new Map();
+  const getMockElement = (id) => {
+    if (!elements.has(id)) elements.set(id, makeMockElement());
+    return elements.get(id);
+  };
+  const toSettle = loadFunctionFromSource(path.join(appRoot, 'frontend/public/coincard/card-acceptance-lane-a.html'), 'toSettle', {
+    calcFeeWei: (amountWei) => amountWei * 250n / 10000n,
+    wrapper: { classList: { add() {}, remove() {} } },
+    setPanelOpen() {},
+    CHAIN_NAMES_MAP: { 137: 'Polygon' },
+    $: getMockElement,
+    formatUsdcExact: referenceFormatUsdcExact,
+    abbrev: laneAbbrev,
+  });
+
+  const settleRecipient = '0x1234567890abcdef1234567890abcdef12345678';
+  const settleTxHash = '0x' + 'b'.repeat(64);
+  toSettle(BigInt('1500000'), {
+    recipient: settleRecipient,
+    chainId: 137,
+    chainName: 'Polygon',
+    token: 'USDC',
+  }, settleTxHash);
+  assert.equal(getMockElement('settle-recipient').textContent, '0x1234…5678', 'lane A settle recipient visible text remains abbreviated');
+  assert.equal(getMockElement('settle-recipient').title, settleRecipient, 'lane A settle recipient retains full title');
+  assert.equal(getMockElement('settle-recipient').getAttribute('aria-label'), settleRecipient, 'lane A settle recipient retains full aria-label');
+
+  const secondRecipient = '0xfedcba9876543210fedcba9876543210fedcba98';
+  toSettle(BigInt('2500000'), {
+    recipient: secondRecipient,
+    chainId: 137,
+    chainName: 'Polygon',
+    token: 'USDC',
+  }, settleTxHash);
+  assert.equal(getMockElement('settle-recipient').textContent, '0xfedc…ba98', 'lane A settle recipient visible text remains abbreviated after update');
+  assert.equal(getMockElement('settle-recipient').title, secondRecipient, 'lane A settle recipient title updates with new destination');
+  assert.equal(getMockElement('settle-recipient').getAttribute('aria-label'), secondRecipient, 'lane A settle recipient aria-label updates with new destination');
+
   const server = await startStaticServer(path.join(appRoot, 'frontend/public'));
   const ethersBundlePath = path.join(appRoot, 'node_modules/ethers/dist/ethers.umd.min.js');
   const ethersBundle = fs.readFileSync(ethersBundlePath, 'utf8');
@@ -257,6 +316,7 @@ test('live wrappers and browser surfaces preserve current accessible values', as
     });
 
     await page.goto(`${server.baseUrl}/card.html?cc=cc_demo_implicitex`, { waitUntil: 'networkidle2' });
+    await page.waitForSelector('#ccCardRecipientField');
     const cardResult = await page.evaluate(() => ({
       visible: document.getElementById('ccCardRecipientField')?.textContent,
       title: document.getElementById('ccCardRecipientField')?.title,
@@ -265,30 +325,12 @@ test('live wrappers and browser surfaces preserve current accessible values', as
     assert.equal(cardResult.visible, '0xa7cE…3919', 'card recipient visible truncation');
 
     await page.goto(`${server.baseUrl}/coincard/card-acceptance-lane-a.html`, { waitUntil: 'networkidle2' });
-    await page.evaluate(() => {
-      const input = document.getElementById('cc-amount');
-      input.value = '1.50';
-      input.dispatchEvent(new Event('input', { bubbles: true }));
-    });
+    await page.waitForSelector('#settle-recipient');
     const laneAResult = await page.evaluate(() => ({
       destinationText: document.getElementById('ival-destination')?.textContent,
       destinationTitle: document.getElementById('ival-destination')?.title,
-      settleRecipientTitle: document.getElementById('settle-recipient')?.title,
     }));
     assert.equal(laneAResult.destinationTitle, '0xa7cE4232811021d2Dd01f4f0f264Df2427ab3919', 'lane A destination retains full title');
-    assert.equal(laneAResult.settleRecipientTitle, '', 'lane A settle recipient currently has no explicit title');
-
-    await page.goto(`${server.baseUrl}/coincard/state-review.html`, { waitUntil: 'networkidle2' });
-    await page.evaluate(() => {
-      const btn = Array.from(document.querySelectorAll('.fixture-btn')).find((node) => node.textContent === 'transfer-pending-long-hash');
-      if (btn) btn.click();
-    });
-    const reviewResult = await page.evaluate(() => ({
-      visible: document.querySelector('.row-value.row-id-transferHash')?.textContent,
-      title: document.querySelector('.row-value.row-id-transferHash')?.title,
-    }));
-    assert.equal(reviewResult.title, reviewResult.visible, 'review transfer hash currently mirrors the visible truncation');
-    assert.notEqual(reviewResult.title, '0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef12345678g0', 'review transfer hash does not yet expose full title');
   } finally {
     await browser.close();
     await server.close();
