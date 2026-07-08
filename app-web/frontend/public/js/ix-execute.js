@@ -257,10 +257,6 @@
     return parseInt(receipt.status, 16) === 1 || Number(receipt.status) === 1;
   }
 
-  function unsupportedChainError(chainId) {
-    return new Error('Unsupported chainId: ' + chainId);
-  }
-
   function executeTransfer(request, hooks) {
     request = request || {};
     hooks = hooks || {};
@@ -268,7 +264,10 @@
     var chainId = request.chainId;
     var cfg = chainConfig(chainId);
 
-    if (!cfg) return Promise.reject(unsupportedChainError(chainId));
+    if (!cfg) return Promise.resolve({
+      status: 'failed',
+      error: { code: 'UNSUPPORTED_CHAIN', message: 'Unsupported chainId: ' + chainId },
+    });
 
     if (action === 'prepare') {
       if (hooks.onWalletRequested) hooks.onWalletRequested();
