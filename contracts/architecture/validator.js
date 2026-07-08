@@ -140,6 +140,8 @@ function validateStructureContract(artifact, structure, options) {
   if (structure.executionOwnership) {
     validateExecutionOwnership(structure, options);
   }
+
+  validateMigrationDebt(structure, options);
 }
 
 function validateStates(artifact, structure) {
@@ -208,7 +210,47 @@ function validateExecutionOwnership(structure, options) {
       const symbol = ownership.singleFeeAuthority.split('.').pop();
       assertCondition(source.includes(symbol), `execution implementation missing fee authority: ${symbol}`);
     }
+
+    const migrationDebt = structure.migration && structure.migration.debt;
+    if (ownership.targetRequestMethod && (!migrationDebt || migrationDebt.length === 0)) {
+      const symbol = ownership.targetRequestMethod.split('.').pop();
+      assertCondition(source.includes(symbol), `execution implementation missing target request method: ${symbol}`);
+    }
   }
+}
+
+function validateMigrationDebt(structure, options) {
+  const debt = structure.migration && structure.migration.debt;
+  if (debt === undefined) return [];
+
+  assertCondition(Array.isArray(debt), 'structure migration.debt must be an array');
+
+  return debt.map((entry) => {
+    assertCondition(entry && typeof entry.id === 'string' && entry.id.length > 0, 'migration debt has item without id');
+    assertCondition(typeof entry.status === 'string' && entry.status.length > 0, `migration debt ${entry.id} missing status`);
+    assertCondition(typeof entry.runtimeFile === 'string' && entry.runtimeFile.length > 0, `migration debt ${entry.id} missing runtimeFile`);
+    assertCondition(typeof entry.targetDispatch === 'string' && entry.targetDispatch.length > 0, `migration debt ${entry.id} missing targetDispatch`);
+    assertCondition(
+      Array.isArray(entry.currentRuntimeDispatches),
+      `migration debt ${entry.id} currentRuntimeDispatches must be an array`
+    );
+
+    const runtimePath = assertFileExists(options.repoRoot, entry.runtimeFile, `migration debt runtimeFile for ${entry.id}`);
+    const source = fs.readFileSync(runtimePath, 'utf8');
+    const presentDispatches = entry.currentRuntimeDispatches.filter((dispatch) => {
+      const symbol = dispatch.includes('.') ? dispatch.split('.').pop() : dispatch;
+      return source.includes(dispatch) || source.includes(symbol);
+    });
+
+    return {
+      id: entry.id,
+      status: entry.status,
+      runtimeFile: entry.runtimeFile,
+      targetDispatch: entry.targetDispatch,
+      currentRuntimeDispatches: entry.currentRuntimeDispatches,
+      presentDispatches,
+    };
+  });
 }
 
 function validateArchitecture(options) {
@@ -221,15 +263,21 @@ function validateArchitecture(options) {
 
   validateArtifactContract(artifact);
   validateStructureContract(artifact, structure, options);
+  const migrationDebt = validateMigrationDebt(structure, options);
 
   if (!options.silent) {
     console.log('ok - architecture artifact graph is valid');
     console.log('ok - structure contract maps to artifact graph');
     console.log('ok - forbidden dependency edges are absent from structure');
     console.log('ok - declared implementation authorities exist');
+    for (const debt of migrationDebt) {
+      console.log(
+        `debt - ${debt.id}: ${debt.runtimeFile} still has ${debt.presentDispatches.join(', ') || 'no declared runtime dispatches present'}; target ${debt.targetDispatch}`
+      );
+    }
   }
 
-  return { artifact, structure };
+  return { artifact, structure, migrationDebt };
 }
 
 function parseArgs(argv) {
