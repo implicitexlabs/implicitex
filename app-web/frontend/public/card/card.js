@@ -309,13 +309,30 @@
       chainId: state.manifest && state.manifest.chainId,
     })
       .then(function (result) {
-        state.sender = result.sender;
+        if (result.status === 'wallet-missing') {
+          renderError('No wallet detected', 'Install MetaMask to send USDC.');
+          return;
+        }
+        if (result.status === 'wallet-rejected') {
+          transition('TRANSFER_INTENT_READY');
+          setText('ccTxLabel', 'Send USDC');
+          setStatus('verified', 'Verified');
+          setChipState('cc-card-chip--ready', false, 'Connect wallet to send USDC');
+          return;
+        }
+        if (result.status === 'failed') {
+          renderError('Wallet error', result.error && result.error.message);
+          return;
+        }
 
-        /* Self-send detection */
-        var warn = el('ccSelfSendWarn');
-        if (warn && state.manifest) {
-          warn.classList.toggle('is-active',
-            result.sender.toLowerCase() === state.manifest.recipient.toLowerCase());
+        if (result.sender) {
+          state.sender = result.sender;
+          /* Self-send detection */
+          var warn = el('ccSelfSendWarn');
+          if (warn && state.manifest) {
+            warn.classList.toggle('is-active',
+              result.sender.toLowerCase() === state.manifest.recipient.toLowerCase());
+          }
         }
 
         if (result.status === 'wrong-network') {
@@ -326,21 +343,13 @@
             'Switch to ' + (result.chain ? result.chain.name : 'correct network'));
           return;
         }
-        showConfirmPanel();
+        if (result.status === 'ready-to-send') {
+          showConfirmPanel();
+          return;
+        }
+        renderError('Wallet connection failed');
       })
       .catch(function (err) {
-        if (err && err.code === 4001) {
-          /* User rejected — return to intent ready */
-          transition('TRANSFER_INTENT_READY');
-          setText('ccTxLabel', 'Send USDC');
-          setStatus('verified', 'Verified');
-          setChipState('cc-card-chip--ready', false, 'Connect wallet to send USDC');
-          return;
-        }
-        if (err && err.code === 'NO_WALLET') {
-          renderError('No wallet detected', 'Install MetaMask to send USDC.');
-          return;
-        }
         renderError('Wallet error', err && err.message);
       });
   }
@@ -359,16 +368,26 @@
       action: 'switch-network',
       chainId: manifestChainId,
     })
-      .then(showConfirmPanel)
-      .catch(function (err) {
-        if (err && err.code === 4001) {
+      .then(function (result) {
+        if (result.status === 'ready-to-send') {
+          showConfirmPanel();
+          return;
+        }
+        if (result.status === 'wrong-network') {
           transition('WRONG_NETWORK');
           setText('ccTxLabel', 'Wrong Network');
           setStatus('pending', 'Wrong Network');
           setChipState('cc-card-chip--ready', false,
-            'Switch to ' + (err.chain ? err.chain.name : 'correct network'));
+            'Switch to ' + (result.chain ? result.chain.name : 'correct network'));
           return;
         }
+        if (result.status === 'failed') {
+          renderError('Network switch failed', result.error && result.error.message);
+          return;
+        }
+        renderError('Network switch failed');
+      })
+      .catch(function (err) {
         renderError('Network switch failed', err && err.message);
       });
   }
@@ -439,28 +458,36 @@
       },
     })
       .then(function (result) {
-        /* Populate confirmed panel */
-        setText('ccConfirmedAmount', intent.amount.toFixed(2));
-        var txHashEl = el('ccTxHash');
-        if (txHashEl) {
-          txHashEl.href        = result.explorerUrl || '#';
-          txHashEl.textContent = result.txHash.slice(0, 10) + '\u2026' + result.txHash.slice(-6);
-          txHashEl.title       = result.txHash;
+        if (result.status === 'confirmed') {
+          /* Populate confirmed panel */
+          setText('ccConfirmedAmount', intent.amount.toFixed(2));
+          var txHashEl = el('ccTxHash');
+          if (txHashEl) {
+            txHashEl.href        = result.explorerUrl || '#';
+            txHashEl.textContent = result.txHash.slice(0, 10) + '\u2026' + result.txHash.slice(-6);
+            txHashEl.title       = result.txHash;
+          }
+          setStatus('confirmed', 'Confirmed');
+          transition('CONFIRMED');
+          setChipState('cc-card-chip--done', true, 'Transfer confirmed');
+          emit('CC_CONFIRMED', { txHash: result.txHash, sender: state.sender, intent: intent });
+          return;
         }
-
-        setStatus('confirmed', 'Confirmed');
-        transition('CONFIRMED');
-        setChipState('cc-card-chip--done', true, 'Transfer confirmed');
-        emit('CC_CONFIRMED', { txHash: result.txHash, sender: state.sender, intent: intent });
-      })
-      .catch(function (err) {
-        if (err && err.code === 4001) {
+        if (result.status === 'wallet-rejected') {
           /* User rejected — return to review panel */
           transition('READY_TO_SEND');
           setStatus('verified', 'Verified');
           setChipState('cc-card-chip--ready', false, 'Confirm transfer in wallet');
           return;
         }
+        if (result.status === 'failed') {
+          var msg = result.error && result.error.message || 'Transfer failed';
+          renderTxError(msg.length > 80 ? msg.slice(0, 80) + '\u2026' : msg);
+          return;
+        }
+        renderTxError('Unexpected execution result');
+      })
+      .catch(function (err) {
         var msg = err && err.message || 'Transfer failed';
         renderTxError(msg.length > 80 ? msg.slice(0, 80) + '\u2026' : msg);
       });

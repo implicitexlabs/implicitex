@@ -271,10 +271,13 @@
     if (!cfg) return Promise.reject(unsupportedChainError(chainId));
 
     if (action === 'prepare') {
+      if (hooks.onWalletRequested) hooks.onWalletRequested();
       return connectWallet()
         .then(function (address) {
+          if (hooks.onWalletConnected) hooks.onWalletConnected(address);
           return getChainId().then(function (currentChainId) {
             if (currentChainId !== chainId) {
+              if (hooks.onNetworkMismatch) hooks.onNetworkMismatch(currentChainId, chainId);
               return {
                 status: 'wrong-network',
                 sender: address,
@@ -290,20 +293,29 @@
               chain: cfg,
             };
           });
+        })
+        .catch(function (err) {
+          if (err && err.code === 'NO_WALLET') return { status: 'wallet-missing' };
+          if (err && err.code === 4001)        return { status: 'wallet-rejected' };
+          return { status: 'failed', error: { code: err && err.code, message: err && err.message } };
         });
     }
 
     if (action === 'switch-network') {
-      return switchChain(chainId).then(function () {
-        return {
-          status: 'network-ready',
-          chainId: chainId,
-          chain: cfg,
-        };
-      }).catch(function (err) {
-        if (err) err.chain = cfg;
-        throw err;
-      });
+      return switchChain(chainId)
+        .then(function () {
+          return {
+            status: 'ready-to-send',
+            chainId: chainId,
+            chain: cfg,
+          };
+        })
+        .catch(function (err) {
+          if (err && err.code === 4001) {
+            return { status: 'wrong-network', chainId: chainId, chain: cfg };
+          }
+          return { status: 'failed', error: { code: err && err.code, message: err && err.message } };
+        });
     }
 
     if (action !== 'execute') {
@@ -318,14 +330,22 @@
       .then(function (approvalHash) {
         if (hooks.onApprovalSubmitted) hooks.onApprovalSubmitted(approvalHash);
         return waitForReceipt(approvalHash).then(function (approvalReceipt) {
-          if (!receiptSucceeded(approvalReceipt)) throw new Error('APPROVE_FAILED');
+          if (!receiptSucceeded(approvalReceipt)) {
+            var approveErr = { code: 'APPROVE_FAILED', message: 'Approval transaction failed' };
+            if (hooks.onFailed) hooks.onFailed(approveErr);
+            return { status: 'failed', error: approveErr };
+          }
           if (hooks.onTransferRequested) hooks.onTransferRequested(approvalReceipt);
           return transferWithFee(chainId, request.sender, request.recipient, amountRaw)
             .then(function (transferHash) {
               if (hooks.onTransferSubmitted) hooks.onTransferSubmitted(transferHash);
               return waitForReceipt(transferHash).then(function (transferReceipt) {
-                if (!receiptSucceeded(transferReceipt)) throw new Error('TRANSFER_FAILED');
-                return {
+                if (!receiptSucceeded(transferReceipt)) {
+                  var transferErr = { code: 'TRANSFER_FAILED', message: 'Transfer transaction failed' };
+                  if (hooks.onFailed) hooks.onFailed(transferErr);
+                  return { status: 'failed', error: transferErr };
+                }
+                var confirmed = {
                   status: 'confirmed',
                   approvalHash: approvalHash,
                   approvalReceipt: approvalReceipt,
@@ -335,9 +355,17 @@
                   explorerUrl: cfg.explorerUrl + '/tx/' + transferHash,
                   chain: cfg,
                 };
+                if (hooks.onConfirmed) hooks.onConfirmed(confirmed);
+                return confirmed;
               });
             });
         });
+      })
+      .catch(function (err) {
+        if (err && err.code === 4001) return { status: 'wallet-rejected' };
+        var execErr = { code: err && err.code || 'EXECUTION_FAILED', message: err && err.message || 'Execution failed' };
+        if (hooks.onFailed) hooks.onFailed(execErr);
+        return { status: 'failed', error: execErr };
       });
   }
 
