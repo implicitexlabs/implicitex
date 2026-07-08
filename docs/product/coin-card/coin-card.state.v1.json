@@ -29,24 +29,82 @@
     "tokenSupport": ["UNKNOWN", "SUPPORTED", "UNSUPPORTED"],
     "amountText": ["EMPTY", "TEMPORARY_INCOMPLETE", "SYNTACTICALLY_COMPLETE", "SYNTAX_INVALID"],
     "amountValidity": ["UNKNOWN", "VALID", "INVALID_CHARACTER", "EXCESS_PRECISION", "BELOW_MINIMUM", "ABOVE_MAXIMUM", "PRECISION_MISMATCH"],
+    "allowance": ["UNKNOWN", "APPROVAL_REQUIRED", "ALLOWANCE_SUFFICIENT"],
+    "retryability": ["UNKNOWN", "RETRYABLE", "NON_RETRYABLE"],
     "funding": ["UNKNOWN", "SUFFICIENT", "INSUFFICIENT_USDC", "INSUFFICIENT_GAS"],
     "wallet": ["DISCONNECTED", "CONNECTING", "CONNECTED_WRONG_NETWORK", "CONNECTED_READY", "CONNECTION_FAILED"],
     "execution": ["IDLE", "PREVIEW_READY", "EXECUTION_READY", "APPROVAL_REQUESTED", "APPROVAL_PENDING", "APPROVAL_CONFIRMED", "TRANSFER_REQUESTED", "TRANSFER_PENDING", "CONFIRMED", "FAILED", "INTERRUPTED", "RECONCILING"],
     "receipt": ["NONE", "LOCAL_READY", "SUBMITTED", "FINAL"],
+    "receiptOutcome": ["NONE", "success", "reverted", "not_broadcast", "no_execution_found", "unknown"],
     "error": ["NONE", "ROUTE_ERROR", "FORM_ERROR", "FUNDING_ERROR", "WALLET_ERROR", "EXECUTION_ERROR", "RECONCILIATION_ERROR"]
+  },
+  "productionParameters": {
+    "network": {
+      "value": "Polygon",
+      "chainId": 137,
+      "source": "app-web/deployments/polygon.json and app-web/frontend/public/config/chains.js",
+      "provenance": "DEPLOYED_MAINNET"
+    },
+    "usdcDecimals": {
+      "value": 6,
+      "unit": "decimals",
+      "source": "Circle native USDC on Polygon configuration",
+      "network": "Polygon",
+      "provenance": "PRODUCTION_CONFIG"
+    },
+    "tokenAddress": {
+      "value": "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359",
+      "unit": "evm-address",
+      "source": "app-web/deployments/polygon.json and app-web/frontend/public/config/chains.js",
+      "network": "Polygon",
+      "provenance": "DEPLOYED_MAINNET"
+    },
+    "transferContractAddress": {
+      "value": "0x5015841D6E665e63Ea174aD6b8FeF854026dE0C0",
+      "unit": "evm-address",
+      "source": "app-web/deployments/polygon.json and app-web/frontend/public/config/chains.js",
+      "network": "Polygon",
+      "provenance": "DEPLOYED_MAINNET"
+    },
+    "feeBasisPoints": {
+      "value": 100,
+      "unit": "basis-points",
+      "source": "app-web/deployments/polygon.json feeBps and ImplicitExTransfer feeBasisPoints",
+      "network": "Polygon",
+      "provenance": "DEPLOYED_MAINNET"
+    },
+    "minimumAmountUnits": {
+      "value": "1000000",
+      "unit": "usdc-base-units",
+      "source": "app-web/deployments/polygon.json minTransfer; app-web/frontend/public/config/chains.js minTransferUsdc=1",
+      "network": "Polygon",
+      "provenance": "DEPLOYED_MAINNET"
+    },
+    "transferPrecisionUnits": {
+      "value": "1000000",
+      "unit": "usdc-base-units",
+      "source": "app-web/deployments/polygon.json precision; ImplicitExTransfer transferPrecision",
+      "network": "Polygon",
+      "provenance": "DEPLOYED_MAINNET"
+    }
   },
   "amountPolicy": {
     "inputType": "text",
     "inputMode": "decimal",
     "decimals": 6,
+    "minimumAmountUnits": "1000000",
+    "transferPrecisionUnits": "1000000",
     "maximumAmountUnits": null,
+    "feeBasisPoints": 100,
+    "unavailableDisplay": "—",
     "maximumTextLength": {
       "value": 32,
+      "enabled": false,
       "provenance": "PROPOSED",
       "effect": "INVALID_CHARACTER if accepted"
     },
     "temporaryInputs": ["", ".", "1."],
-    "acceptedExamples": [".5", "0.5", "1", "1.0", "1.000000", "0001.00"],
+    "acceptedExamples": ["1", "1.0", "1.000000", "0001.00"],
     "rejectedExamples": ["1 0", "1,000", "+1", "-1", "1e3", "1.0000001"],
     "aboveMaximumRule": "Only produce ABOVE_MAXIMUM when maximumAmountUnits is not null."
   },
@@ -58,11 +116,86 @@
     { "units": "10010", "display": "0.01001 USDC" }
   ],
   "renderPrecedence": {
-    "primaryStatus": ["CONFIRMED_OR_RECONCILING", "ACTIVE_EXECUTION", "EXECUTION_FAILURE", "ROUTE_FAILURE", "WALLET_NETWORK_BLOCKER", "FUNDING_BLOCKER", "AMOUNT_VALIDATION", "IDLE_OR_READY"],
-    "cta": ["COLLAPSED_EXPAND_ONLY", "CONFIRMED_NO_FUND_MOVING_ACTION", "PENDING_DISABLED", "RETRYABLE_FAILURE", "BLOCKER_DISABLED", "CONNECT", "SWITCH_NETWORK", "APPROVE_OR_TRANSFER"],
-    "body": ["CONFIRMED_RESULT", "RECONCILIATION_FACTS", "ACTIVE_EXECUTION_FACTS", "FAILURE_FACTS", "ROUTE_ERROR", "EDITABLE_FORM"]
+    "primaryStatus": ["CONFIRMED", "RECONCILING", "ACTIVE_EXECUTION", "EXECUTION_FAILURE", "ROUTE_FAILURE", "WALLET_NETWORK_BLOCKER", "FUNDING_BLOCKER", "AMOUNT_VALIDATION", "IDLE_OR_READY"],
+    "cta": ["COLLAPSED_EXPAND_ONLY", "CONFIRMED_NO_FUND_MOVING_ACTION", "PENDING_DISABLED", "RETRYABLE_FAILURE", "ROUTE_BLOCKER_DISABLED", "AMOUNT_BLOCKER_DISABLED", "NETWORK_TOKEN_BLOCKER_DISABLED", "CONNECT", "SWITCH_NETWORK", "FUNDING_BLOCKER_DISABLED", "APPROVE_OR_TRANSFER"],
+    "body": ["CONFIRMED_RESULT", "RECONCILIATION_FACTS", "ACTIVE_EXECUTION_FACTS", "FAILURE_FACTS", "ROUTE_ERROR", "FORM_VALIDATION_ERROR", "EDITABLE_FORM"]
+  },
+  "bodySchemas": {
+    "EDITABLE_FORM": ["recipient", "route", "destination", "amount", "fee", "total"],
+    "FORM_VALIDATION_ERROR": ["recipient", "validationTitle", "validationExplanation", "amount", "fee", "total"],
+    "APPROVAL_REQUESTED": ["recipient", "approvalHash", "result", "amount", "fee", "total"],
+    "APPROVAL_PENDING": ["recipient", "approvalHash", "result", "amount", "fee", "total"],
+    "APPROVAL_CONFIRMED": ["recipient", "approvalHash", "result", "amount", "fee", "total"],
+    "TRANSFER_REQUESTED": ["recipient", "transferHash", "result", "amount", "fee", "total"],
+    "TRANSFER_PENDING": ["recipient", "transferHash", "result", "amount", "fee", "total"],
+    "RECONCILIATION_FACTS": ["recipient", "result", "transferHash", "amount", "fee", "total"],
+    "CONFIRMED_RESULT": ["recipient", "result", "transferHash", "amount", "fee", "total"],
+    "FAILED": ["recipient", "result", "errorCode", "errorMessage", "amount", "receipt"],
+    "INTERRUPTED": ["recipient", "result", "errorCode", "errorMessage", "amount", "receipt"],
+    "ROUTE_ERROR": ["recipient", "result", "errorCode", "errorMessage", "route", "destination"]
+  },
+  "selectorLabels": {
+    "status": {
+      "CONFIRMED": "Confirmed",
+      "RECONCILING": "Checking chain",
+      "TRANSFER_PENDING": "Confirming transfer",
+      "TRANSFER_REQUESTED": "Confirm transfer",
+      "APPROVAL_CONFIRMED": "Approval confirmed",
+      "APPROVAL_PENDING": "Approval pending",
+      "APPROVAL_REQUESTED": "Approve in wallet",
+      "FAILED": "Failed",
+      "INTERRUPTED": "Interrupted",
+      "ROUTE_UNAVAILABLE": "Route unavailable",
+      "ROUTE_INVALID": "Route invalid",
+      "UNSUPPORTED_NETWORK": "Unsupported network",
+      "UNSUPPORTED_TOKEN": "Unsupported token",
+      "CONNECTION_FAILED": "Connection failed",
+      "WRONG_NETWORK": "Wrong network",
+      "INSUFFICIENT_USDC": "Insufficient USDC",
+      "INSUFFICIENT_GAS": "Insufficient gas",
+      "INVALID_AMOUNT": "Invalid amount",
+      "EXCESS_PRECISION": "Too many decimals",
+      "BELOW_MINIMUM": "Below minimum",
+      "ABOVE_MAXIMUM": "Above maximum",
+      "PRECISION_MISMATCH": "Whole USDC required",
+      "TEMPORARY_AMOUNT": "Complete amount",
+      "EXECUTION_READY": "Ready to send",
+      "PREVIEW_READY": "Preview ready",
+      "CONNECTING": "Connecting",
+      "IDLE": "Enter amount"
+    },
+    "cta": {
+      "EXPAND": "Expand",
+      "RECEIPT": "Receipt",
+      "PENDING": "Pending",
+      "RETRY": "Retry",
+      "ROUTE_UNAVAILABLE": "Route unavailable",
+      "ROUTE_INVALID": "Route invalid",
+      "UNSUPPORTED": "Unsupported",
+      "ENTER_AMOUNT": "Enter amount",
+      "FIX_AMOUNT": "Fix amount",
+      "RECONNECT": "Reconnect",
+      "CONNECT": "Connect",
+      "CONNECTING": "Connecting",
+      "SWITCH_NETWORK": "Switch network",
+      "INSUFFICIENT_USDC": "Insufficient USDC",
+      "INSUFFICIENT_GAS": "Insufficient gas",
+      "CHECKING_FUNDS": "Checking funds",
+      "APPROVE": "Approve",
+      "SEND": "Send",
+      "REVIEW_ERROR": "Review error",
+      "INSPECT": "Inspect"
+    }
   },
   "legalInvariants": [
+    { "id": "axis-values-must-be-declared" },
+    { "id": "route-availability-validity-consistency" },
+    { "id": "amount-text-validity-consistency" },
+    { "id": "above-maximum-requires-configured-maximum" },
+    { "id": "fixture-amount-input-consistency" },
+    { "id": "allowance-execution-consistency" },
+    { "id": "funding-wallet-consistency" },
+    { "id": "unsupported-network-token-cannot-be-execution-ready" },
     {
       "id": "preview-ready-requires-valid-route-and-amount",
       "when": { "execution": "PREVIEW_READY" },
@@ -79,17 +212,16 @@
       "id": "execution-ready-requires-funding-and-sender",
       "when": { "execution": "EXECUTION_READY" },
       "requires": {
-        "view": "EXPANDED",
         "wallet": "CONNECTED_READY",
         "funding": "SUFFICIENT",
+        "allowance": "APPROVAL_REQUIRED|ALLOWANCE_SUFFICIENT",
         "activeIntentId": "present"
       }
     },
-    {
-      "id": "collapsed-cannot-initiate-execution",
-      "when": { "view": "COLLAPSED" },
-      "forbids": ["CONNECT_INITIATED", "APPROVAL_REQUESTED_FROM_VIEW", "TRANSFER_REQUESTED_FROM_VIEW"]
-    },
+    { "id": "active-execution-requires-intent" },
+    { "id": "approval-pending-requires-hash" },
+    { "id": "approval-confirmed-requires-successful-approval" },
+    { "id": "retryability-consistency" },
     {
       "id": "transfer-pending-requires-hash",
       "when": { "execution": "TRANSFER_PENDING" },
@@ -99,12 +231,34 @@
       "id": "confirmed-requires-final-receipt",
       "when": { "execution": "CONFIRMED" },
       "requires": {
-        "values.transferHash": "present",
         "receipt": "FINAL",
-        "values.receiptStatus": "success"
+        "receiptOutcome": "success"
       }
-    }
+    },
+    { "id": "receipt-finality-consistency" },
+    { "id": "error-axis-consistency" },
+    { "id": "fixture-math-consistency" }
   ],
+  "transitionGuards": {
+    "CONNECT": ["expanded-view", "no-active-wallet-request"],
+    "SWITCH_NETWORK": ["expanded-view", "connected-wrong-network"],
+    "REQUEST_APPROVAL": ["expanded-view", "valid-preview", "connected-ready-wallet", "sufficient-funding", "approval-required", "active-intent"],
+    "REQUEST_TRANSFER": ["expanded-view", "valid-preview", "connected-ready-wallet", "sufficient-funding", "allowance-sufficient", "active-intent"],
+    "RESET": ["new-intent", "preserve-view", "preserve-route", "clear-amounts", "reset-preflight"],
+    "NEW_TRANSACTION": [],
+    "EXPAND": ["view-collapsed"],
+    "COLLAPSE": ["view-expanded"],
+    "RETRY": ["retryable-error", "same-intent-not-finalized"]
+  },
+  "transitionPostconditions": {
+    "RESET": ["preserve-view", "preserve-locked-route", "archive-evidence", "clear-amounts", "reset-preflight", "change-intent-id", "invalidate-old-events"],
+    "NEW_TRANSACTION": ["preserve-view", "preserve-locked-route", "archive-evidence", "clear-amounts", "reset-preflight", "change-intent-id", "invalidate-old-events"],
+    "RETRY": ["preserve-view", "preserve-locked-route", "archive-evidence", "preserve-transaction-facts", "reset-preflight", "change-attempt-id", "invalidate-old-events"]
+  },
+  "coveragePolicy": {
+    "axes": ["view", "routeAvailability", "routeValidity", "routeMutability", "networkSupport", "tokenSupport", "amountText", "amountValidity", "allowance", "retryability", "funding", "wallet", "execution", "receipt", "receiptOutcome", "error"],
+    "scenarios": ["collapsed-pending-execution", "post-broadcast-wallet-disconnection", "reset-new-intent", "current-intent-event-accepted", "stale-intent-rejected", "stale-archive-match", "stale-archive-miss", "retryable-failed", "non-retryable-failed", "retryable-interrupted", "non-retryable-interrupted"]
+  },
   "correlation": {
     "requiredEventField": "intentId",
     "staleEventPolicy": "Reject for active transaction; may reconcile archived receipt only by matching stored intent/hash."

@@ -1,135 +1,15 @@
 (function () {
   'use strict';
 
-  var fixtures = [
-    {
-      id: 'collapsed-acceptance-mark',
-      expectLegal: true,
-      state: baseState({ view: 'COLLAPSED' }),
-      values: baseValues(),
-    },
-    {
-      id: 'expanded-empty-amount',
-      expectLegal: true,
-      state: baseState({ view: 'EXPANDED' }),
-      values: baseValues(),
-    },
-    {
-      id: 'preview-ready-disconnected',
-      expectLegal: true,
-      state: baseState({
-        view: 'EXPANDED',
-        amountText: 'SYNTACTICALLY_COMPLETE',
-        amountValidity: 'VALID',
-        funding: 'UNKNOWN',
-        wallet: 'DISCONNECTED',
-        execution: 'PREVIEW_READY',
-        receipt: 'LOCAL_READY',
-      }),
-      values: baseValues({
-        amountUnits: '1000000',
-        feeUnits: '10000',
-        totalUnits: '1010000',
-      }),
-    },
-    {
-      id: 'execution-ready-connected',
-      expectLegal: true,
-      state: baseState({
-        view: 'EXPANDED',
-        amountText: 'SYNTACTICALLY_COMPLETE',
-        amountValidity: 'VALID',
-        funding: 'SUFFICIENT',
-        wallet: 'CONNECTED_READY',
-        execution: 'EXECUTION_READY',
-        receipt: 'LOCAL_READY',
-        activeIntentId: 'intent-ready-001',
-      }),
-      values: baseValues({
-        amountUnits: '1000000',
-        feeUnits: '10000',
-        totalUnits: '1010000',
-        sender: '0x1111111111111111111111111111111111111111',
-      }),
-    },
-    {
-      id: 'long-content-transfer-pending',
-      expectLegal: true,
-      state: baseState({
-        view: 'EXPANDED',
-        amountText: 'SYNTACTICALLY_COMPLETE',
-        amountValidity: 'VALID',
-        funding: 'SUFFICIENT',
-        wallet: 'CONNECTED_READY',
-        execution: 'TRANSFER_PENDING',
-        receipt: 'SUBMITTED',
-        activeIntentId: 'intent-transfer-001',
-      }),
-      values: baseValues({
-        name: 'A very long recipient display name that must never move card geometry',
-        recipient: '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd',
-        transferHash: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-      }),
-    },
-    {
-      id: 'confirmed-final',
-      expectLegal: true,
-      state: baseState({
-        view: 'EXPANDED',
-        amountText: 'SYNTACTICALLY_COMPLETE',
-        amountValidity: 'VALID',
-        funding: 'UNKNOWN',
-        wallet: 'DISCONNECTED',
-        execution: 'CONFIRMED',
-        receipt: 'FINAL',
-        activeIntentId: 'intent-final-001',
-      }),
-      values: baseValues({
-        transferHash: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
-        receiptStatus: 'success',
-      }),
-    },
-    {
-      id: 'illegal-collapsed-execution-ready',
-      expectLegal: false,
-      state: baseState({
-        view: 'COLLAPSED',
-        amountText: 'SYNTACTICALLY_COMPLETE',
-        amountValidity: 'VALID',
-        funding: 'SUFFICIENT',
-        wallet: 'CONNECTED_READY',
-        execution: 'EXECUTION_READY',
-        receipt: 'LOCAL_READY',
-        activeIntentId: 'intent-illegal-001',
-      }),
-      values: baseValues(),
-    },
-  ];
-
+  var contract = window.COIN_CARD_REVIEW_CONTRACT;
+  var core = window.CoinCardReviewCore;
+  var fixtures = contract.fixtures.fixtures;
   var selected = fixtures[0];
   var list = document.getElementById('fixtureList');
   var card = document.getElementById('coinCardReview');
   var result = document.getElementById('reviewResult');
+  var actionDiagnostic = document.getElementById('actionDiagnostic');
   var json = document.getElementById('fixtureJson');
-
-  function baseState(overrides) {
-    return Object.assign({
-      view: 'EXPANDED',
-      routeAvailability: 'AVAILABLE',
-      routeValidity: 'VALID',
-      routeMutability: 'LOCKED',
-      networkSupport: 'SUPPORTED',
-      tokenSupport: 'SUPPORTED',
-      amountText: 'EMPTY',
-      amountValidity: 'UNKNOWN',
-      funding: 'UNKNOWN',
-      wallet: 'DISCONNECTED',
-      execution: 'IDLE',
-      receipt: 'NONE',
-      error: 'NONE',
-      activeIntentId: null,
-    }, overrides || {});
-  }
 
   function baseValues(overrides) {
     return Object.assign({
@@ -144,162 +24,227 @@
       amountUnits: null,
       feeUnits: null,
       totalUnits: null,
+      approvalHash: null,
       transferHash: null,
-      receiptStatus: null,
     }, overrides || {});
   }
 
-  function legal(fixture) {
-    var s = fixture.state;
-    var v = fixture.values || {};
-    if (s.view === 'COLLAPSED' && s.execution === 'EXECUTION_READY') return false;
-    if ((s.execution === 'PREVIEW_READY' || s.execution === 'EXECUTION_READY') &&
-        (s.routeAvailability !== 'AVAILABLE' || s.routeValidity !== 'VALID' ||
-         s.networkSupport !== 'SUPPORTED' || s.tokenSupport !== 'SUPPORTED' ||
-         s.amountValidity !== 'VALID')) return false;
-    if (s.execution === 'EXECUTION_READY' &&
-        (s.view !== 'EXPANDED' || s.wallet !== 'CONNECTED_READY' ||
-         s.funding !== 'SUFFICIENT' || !s.activeIntentId)) return false;
-    if (s.execution === 'TRANSFER_PENDING' && !v.transferHash) return false;
-    if (s.execution === 'CONFIRMED' &&
-        (!v.transferHash || s.receipt !== 'FINAL' || v.receiptStatus !== 'success')) return false;
-    return true;
-  }
-
-  function formatUnits(value) {
-    if (value === null || value === undefined) return '-';
-    var raw = BigInt(value);
-    var sign = raw < 0n ? '-' : '';
-    var abs = raw < 0n ? -raw : raw;
-    var whole = abs / 1000000n;
-    var frac = (abs % 1000000n).toString().padStart(6, '0');
-    var trimmed = frac.replace(/0+$/, '');
-    if (trimmed.length < 2) trimmed = frac.slice(0, 2);
-    return sign + whole.toString() + '.' + trimmed + ' USDC';
-  }
-
-  function mid(value) {
-    if (!value) return '-';
-    if (value.length <= 18) return value;
-    return value.slice(0, 8) + '...' + value.slice(-6);
-  }
-
-  function statusFor(state) {
-    if (state.execution === 'CONFIRMED') return 'Confirmed';
-    if (state.execution === 'RECONCILING') return 'Checking chain';
-    if (state.execution === 'TRANSFER_PENDING') return 'Confirming';
-    if (state.execution === 'TRANSFER_REQUESTED') return 'Confirm transfer';
-    if (state.execution === 'APPROVAL_PENDING') return 'Approval pending';
-    if (state.execution === 'APPROVAL_REQUESTED') return 'Approve in wallet';
-    if (state.execution === 'FAILED') return 'Failed';
-    if (state.execution === 'INTERRUPTED') return 'Interrupted';
-    if (state.routeValidity === 'INVALID') return 'Route error';
-    if (state.wallet === 'CONNECTED_WRONG_NETWORK') return 'Wrong network';
-    if (state.funding === 'INSUFFICIENT_USDC') return 'Insufficient USDC';
-    if (state.funding === 'INSUFFICIENT_GAS') return 'Insufficient gas';
-    if (state.amountValidity !== 'VALID' && state.amountValidity !== 'UNKNOWN') return 'Amount error';
-    if (state.execution === 'EXECUTION_READY') return 'Ready';
-    if (state.execution === 'PREVIEW_READY') return 'Preview ready';
-    return 'Enter amount';
-  }
-
-  function ctaFor(state) {
-    if (state.view === 'COLLAPSED') return 'Expand';
-    if (state.execution === 'CONFIRMED') return 'Receipt';
-    if (state.execution.indexOf('PENDING') !== -1 || state.execution.indexOf('REQUESTED') !== -1) return 'Pending';
-    if (state.execution === 'FAILED' || state.execution === 'INTERRUPTED') return 'Retry';
-    if (state.routeValidity !== 'VALID' || state.amountValidity !== 'VALID') return 'Disabled';
-    if (state.wallet === 'DISCONNECTED') return 'Connect';
-    if (state.wallet === 'CONNECTED_WRONG_NETWORK') return 'Switch';
-    if (state.execution === 'EXECUTION_READY') return 'Send';
-    return 'Inspect';
-  }
-
-  function slot(cls, text, extra) {
+  function slot(cls, display, extra, accessible) {
     var div = document.createElement('div');
+    var full = accessible || display;
     div.className = 'slot ' + cls + (extra ? ' ' + extra : '');
-    div.textContent = text;
-    div.title = text;
+    div.textContent = display;
+    div.title = full;
+    div.setAttribute('aria-label', full);
     return div;
   }
 
-  function renderCollapsed(fixture) {
-    var values = fixture.values || {};
-    card.appendChild(slot('collapsed-primary', values.primary || '-'));
-    card.appendChild(slot('collapsed-secondary', statusFor(fixture.state)));
-    card.appendChild(slot('collapsed-status', ''));
-    card.appendChild(slot('collapsed-mark', ''));
+  function buttonSlot(cls, label, ariaLabel) {
+    var button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'slot ' + cls;
+    button.textContent = label;
+    button.setAttribute('aria-label', ariaLabel);
+    return button;
   }
 
-  function renderExpanded(fixture) {
-    var s = fixture.state;
-    var v = fixture.values || {};
-    card.appendChild(slot('expanded-primary', v.primary || '-'));
-    card.appendChild(slot('expanded-name', v.name || '-'));
-    card.appendChild(slot('expanded-network', v.networkToken || '-'));
-    card.appendChild(slot('expanded-product', v.product || '-'));
-    card.appendChild(slot('expanded-attribution', v.attribution || '-'));
-    card.appendChild(slot('expanded-mark', ''));
-    card.appendChild(slot('expanded-divider', ''));
-    card.appendChild(slot('collapse-proposed', ''));
+  function valueForRow(rowId, values) {
+    if (rowId === 'recipient') {
+      return {
+        display: core.middleTruncate(values.recipient, 8, 6),
+        accessible: values.recipient || '-',
+      };
+    }
+    if (rowId === 'route') return { display: values.route || '-', accessible: values.route || '-' };
+    if (rowId === 'destination') return { display: values.destination || '-', accessible: values.destination || '-' };
+    if (rowId === 'amount') return { display: core.formatUnits(contract, values.amountUnits), accessible: core.formatUnits(contract, values.amountUnits) };
+    if (rowId === 'fee') return { display: core.formatUnits(contract, values.feeUnits), accessible: core.formatUnits(contract, values.feeUnits) };
+    if (rowId === 'total') return { display: core.formatUnits(contract, values.totalUnits), accessible: core.formatUnits(contract, values.totalUnits) };
+    return { display: '-', accessible: '-' };
+  }
 
-    row(0, 'Recipient', mid(v.recipient));
-    row(1, 'Route', v.route || '-');
-    row(2, 'Destination', v.destination || '-');
-    row(3, 'Amount', formatUnits(v.amountUnits));
-    row(4, 'Fee', formatUnits(v.feeUnits));
-    row(5, 'Total', formatUnits(v.totalUnits));
+  function row(index, rowContract) {
+    var labelSlot = slot('row-label row-' + index + ' row-id-' + rowContract.id, rowContract.label, 'slot-label');
+    var valueSlot = slot('row-value row-' + index + ' row-id-' + rowContract.id, rowContract.display, 'slot-value', rowContract.accessible);
+    labelSlot.id = 'cc-review-row-label-' + rowContract.id;
+    valueSlot.id = 'cc-review-row-value-' + rowContract.id;
+    if (rowContract.describedBy) valueSlot.setAttribute('aria-describedby', rowContract.describedBy);
+    card.appendChild(labelSlot);
+    card.appendChild(valueSlot);
+  }
+
+  function renderCollapsed(fixture, selectors) {
+    var values = baseValues(fixture.values);
+    card.appendChild(slot('collapsed-primary', values.primary));
+    card.appendChild(slot('collapsed-secondary', selectors.primaryStatus));
+    card.appendChild(slot('collapsed-status', '', '', selectors.primaryStatus));
+    card.appendChild(slot('collapsed-mark', '', '', 'ImplicitEx mark'));
+    var expand = buttonSlot('collapsed-expand-hit', '', 'Expand Coin Card');
+    expand.addEventListener('click', function () {
+      var allowed = core.evaluateTransition(contract, 'EXPAND', fixture.state, fixture.values || {}, {});
+      actionDiagnostic.textContent = allowed.allowed ? 'Review action: EXPAND' : 'Rejected EXPAND: ' + allowed.errors.join('; ');
+      if (allowed.allowed) renderFixture(core.transitionView(fixture, 'EXPANDED'));
+      var nextControl = card.querySelector('.collapse-proposed');
+      if (nextControl) nextControl.focus();
+    });
+    card.appendChild(expand);
+  }
+
+  function renderExpanded(fixture, selectors) {
+    var values = baseValues(fixture.values);
+    var body = core.bodyModel(contract, fixture.state, fixture.values || {});
+    card.appendChild(slot('expanded-primary', values.primary));
+    card.appendChild(slot('expanded-name', values.name));
+    card.appendChild(slot('expanded-network', values.networkToken));
+    card.appendChild(slot('expanded-product', values.product));
+    card.appendChild(slot('expanded-attribution', values.attribution));
+    card.appendChild(slot('expanded-mark', '', '', 'ImplicitEx mark'));
+    card.appendChild(slot('expanded-divider', ''));
+    var collapse = buttonSlot('collapse-proposed', '×', 'Collapse Coin Card. Proposed fixed control location.');
+    collapse.addEventListener('click', function () {
+      var allowed = core.evaluateTransition(contract, 'COLLAPSE', fixture.state, fixture.values || {}, {});
+      actionDiagnostic.textContent = allowed.allowed ? 'Review action: COLLAPSE' : 'Rejected COLLAPSE: ' + allowed.errors.join('; ');
+      if (allowed.allowed) renderFixture(core.transitionView(fixture, 'COLLAPSED'));
+      var nextControl = card.querySelector('.collapsed-expand-hit');
+      if (nextControl) nextControl.focus();
+    });
+    card.appendChild(collapse);
+
+    body.rows.forEach(function (rowContract, index) {
+      row(index, rowContract);
+    });
 
     card.appendChild(slot('action-divider', ''));
-    card.appendChild(slot('status-dot', ''));
-    card.appendChild(slot('status-text', statusFor(s)));
-    card.appendChild(slot('cta-slot', ctaFor(s)));
-  }
-
-  function row(index, label, value) {
-    card.appendChild(slot('row-label row-' + index, label, 'slot-label'));
-    card.appendChild(slot('row-value row-' + index, value, 'slot-value'));
+    card.appendChild(slot('status-dot', '', '', selectors.primaryStatus));
+    card.appendChild(slot('status-text', selectors.primaryStatus));
+    var cta = buttonSlot('cta-slot', selectors.cta.label, selectors.cta.label);
+    cta.disabled = !selectors.cta.enabled;
+    cta.dataset.action = selectors.cta.action;
+    cta.addEventListener('click', function () {
+      var transition = selectors.cta.action === 'EXECUTE' ? 'REQUEST_TRANSFER' : selectors.cta.action === 'APPROVE' ? 'REQUEST_APPROVAL' : selectors.cta.action;
+      var payload = selectors.cta.action === 'RETRY'
+        ? { intentId: fixture.state.activeIntentId, newAttemptId: String(fixture.state.activeAttemptId || fixture.state.activeIntentId || 'attempt') + '-retry' }
+        : {};
+      var allowed = core.evaluateTransition(contract, transition, fixture.state, fixture.values || {}, payload);
+      actionDiagnostic.textContent = allowed.allowed
+        ? 'Review action: ' + selectors.cta.action
+        : 'Rejected ' + selectors.cta.action + ': ' + allowed.errors.join('; ');
+    });
+    card.appendChild(cta);
   }
 
   function renderFixture(fixture) {
-    selected = fixture;
-    var isLegal = legal(fixture);
-    card.className = 'coin-card-review';
-    card.textContent = '';
-    card.dataset.view = fixture.state.view;
+    var evaluation = fixture.event ? core.evaluateEvent(fixture) : core.evaluateState(contract, fixture);
+    var selectors = fixture.state ? core.selectors(contract, fixture.state, fixture.values || {}) : { primaryStatus: 'Event rejected', cta: { label: 'Event', enabled: false, action: 'NONE' }, body: { rows: [] } };
+    var assertionResult = evaluateAssertions(fixture, evaluation, selectors);
 
-    if (!isLegal) {
-      card.classList.add('is-illegal');
-      card.textContent = 'Illegal state vector rejected';
-    } else if (fixture.state.view === 'COLLAPSED') {
-      renderCollapsed(fixture);
+    card.replaceChildren();
+    card.className = 'coin-card-review';
+    if (fixture.state) {
+      card.dataset.view = fixture.state.view;
+      if (!evaluation.legal) card.classList.add('is-illegal');
+      if (fixture.state.view === 'COLLAPSED') renderCollapsed(fixture, selectors);
+      else renderExpanded(fixture, selectors);
     } else {
-      renderExpanded(fixture);
+      card.dataset.view = 'EXPANDED';
+      card.classList.add('is-illegal');
+      card.appendChild(slot('status-text', 'Rejected stale event'));
     }
 
-    result.textContent = (isLegal === fixture.expectLegal ? 'PASS' : 'FAIL') + ' / ' + fixture.id;
+    var expected = fixture.expectLegal === true;
+    var legalPass = fixture.event ? eventExpectationPasses(fixture, evaluation) : evaluation.legal === expected;
+    var pass = legalPass && assertionResult.failed.length === 0;
+    result.textContent = (pass ? 'PASS' : 'FAIL') + ' · ' + fixture.id +
+      ' · assertions ' + assertionResult.passed.length + '/' + assertionResult.total +
+      (pass ? '' : ' · ' + assertionResult.failed.concat(evaluation.errors || evaluation.rejectedReason || []).join('; '));
     json.textContent = JSON.stringify(fixture, null, 2);
-    syncButtons();
   }
 
-  function syncButtons() {
-    Array.from(list.querySelectorAll('button')).forEach(function (button) {
-      button.setAttribute('aria-pressed', button.dataset.fixtureId === selected.id ? 'true' : 'false');
+  function evaluateAssertions(fixture, evaluation, selectors) {
+    var assertions = fixture.assert || [];
+    var passed = [];
+    var failed = [];
+    assertions.forEach(function (assertion) {
+      var ok = assertionPasses(assertion, fixture, evaluation, selectors);
+      if (ok) passed.push(assertion);
+      else failed.push(assertion);
     });
+    return { total: assertions.length, passed: passed, failed: failed };
   }
 
-  function init() {
+  function assertionPasses(assertion, fixture, evaluation, selectors) {
+    var state = fixture.state || {};
+    var values = baseValues(fixture.values);
+    if (assertion === 'outer=216x44') return state.view === 'COLLAPSED' && core.expectedGeometry(contract, state).width === 216 && core.expectedGeometry(contract, state).height === 44;
+    if (assertion === 'outer=460x286') return state.view === 'EXPANDED' && core.expectedGeometry(contract, state).width === 460 && core.expectedGeometry(contract, state).height === 286;
+    if (assertion === 'expand-only') return state.view === 'COLLAPSED' && selectors.cta.action === 'EXPAND';
+    if (assertion === 'no-wallet-action') return state.view === 'COLLAPSED' && selectors.cta.action !== 'CONNECT' && selectors.cta.action !== 'EXECUTE';
+    if (assertion === 'fee=em-dash') return core.formatUnits(contract, values.feeUnits) === '—';
+    if (assertion === 'total=em-dash') return core.formatUnits(contract, values.totalUnits) === '—';
+    if (assertion === 'connect-cta') return selectors.cta.label === 'Connect';
+    if (assertion === 'no-approval') return selectors.cta.action !== 'EXECUTE';
+    if (assertion.indexOf('amount=') === 0) return core.formatUnits(contract, values.amountUnits) === assertion.slice(7);
+    if (assertion.indexOf('fee=') === 0) return core.formatUnits(contract, values.feeUnits) === assertion.slice(4);
+    if (assertion.indexOf('total=') === 0) return core.formatUnits(contract, values.totalUnits) === assertion.slice(6);
+    if (assertion === 'approval-or-transfer-cta') return selectors.cta.action === 'EXECUTE';
+    if (assertion === 'approve-cta') return selectors.cta.action === 'APPROVE';
+    if (assertion === 'hash-middle-truncated') return core.middleTruncate(values.transferHash, 8, 6).indexOf('...') !== -1;
+    if (assertion === 'pending-precedence') return selectors.primaryStatus === 'Confirming transfer' || selectors.primaryStatus === 'Approval pending';
+    if (assertion === 'confirmed-precedence') return selectors.primaryStatus === 'Confirmed';
+    if (assertion === 'no-fund-moving-cta') return selectors.cta.action !== 'EXECUTE';
+    if (assertion === 'reject-illegal-vector') return evaluation.legal === false;
+    if (assertion === 'reject-active-mutation') return evaluation.accepted === false;
+    if (assertion === 'archive-reconcile-only-if-matching-receipt') return evaluation.rejectedReason === 'stale intent';
+    if (assertion === 'route-unavailable-status') return selectors.primaryStatus === 'Route unavailable';
+    if (assertion === 'route-invalid-status') return selectors.primaryStatus === 'Route invalid';
+    if (assertion === 'fix-amount-cta') return selectors.cta.label === 'Fix amount';
+    if (assertion === 'insufficient-usdc-status') return selectors.primaryStatus === 'Insufficient USDC';
+    if (assertion === 'insufficient-gas-status') return selectors.primaryStatus === 'Insufficient gas';
+    if (assertion === 'approval-pending-status') return selectors.primaryStatus === 'Approval pending';
+    if (assertion === 'approval-confirmed-status') return selectors.primaryStatus === 'Approval confirmed';
+    if (assertion === 'transfer-requested-status') return selectors.primaryStatus === 'Confirm transfer';
+    if (assertion === 'failed-retry-cta') return selectors.cta.label === 'Retry' || selectors.cta.label === 'Review error';
+    if (assertion === 'interrupted-retry-cta') return selectors.cta.label === 'Retry' || selectors.cta.label === 'Review error';
+    if (assertion === 'reconciling-precedence') return selectors.primaryStatus === 'Checking chain';
+    if (assertion === 'unsupported-network-status') return selectors.primaryStatus === 'Unsupported network';
+    if (assertion === 'unsupported-token-status') return selectors.primaryStatus === 'Unsupported token';
+    if (assertion === 'connection-failed-status') return selectors.primaryStatus === 'Connection failed';
+    if (assertion === 'reject-invalid-enum') return evaluation.legal === false;
+    if (assertion === 'reject-missing-required') return evaluation.legal === false;
+    if (assertion === 'new-intent-required') return fixture.event && evaluation.rejectedReason === 'stale intent';
+    if (assertion === 'accepted-current-intent') return fixture.event && evaluation.accepted === true;
+    if (assertion === 'reject-stale-attempt') return fixture.event && evaluation.rejectedReason === 'stale attempt';
+    if (assertion === 'archive-attempt-mismatch') return fixture.event && evaluation.rejectedReason === 'archived attempt mismatch';
+    if (assertion === 'archive-match') return fixture.event && evaluation.archived === true;
+    if (assertion === 'archive-miss') return fixture.event && evaluation.archived === false && evaluation.rejectedReason === 'stale intent';
+    if (assertion === 'collapsed-pending-legal') return evaluation.legal === true && state.view === 'COLLAPSED';
+    if (assertion === 'post-broadcast-disconnect-legal') return evaluation.legal === true && state.wallet === 'DISCONNECTED';
+    return false;
+  }
+
+  function eventExpectationPasses(fixture, evaluation) {
+    if (typeof fixture.expectAccepted === 'boolean') return evaluation.accepted === fixture.expectAccepted;
+    if (typeof fixture.expectRejected === 'boolean') return evaluation.accepted !== fixture.expectRejected;
+    return !evaluation.accepted === fixture.expectLegal;
+  }
+
+  function renderList() {
+    list.replaceChildren();
     fixtures.forEach(function (fixture) {
       var button = document.createElement('button');
       button.type = 'button';
       button.className = 'fixture-btn';
-      button.dataset.fixtureId = fixture.id;
       button.textContent = fixture.id;
-      button.addEventListener('click', function () { renderFixture(fixture); });
+      button.setAttribute('aria-pressed', fixture === selected ? 'true' : 'false');
+      button.addEventListener('click', function () {
+        selected = fixture;
+        renderList();
+        renderFixture(selected);
+      });
       list.appendChild(button);
     });
-    renderFixture(selected);
   }
 
-  init();
+  renderList();
+  renderFixture(selected);
 })();

@@ -1,0 +1,270 @@
+{
+  "date": "2026-07-08T01:41:04.008Z",
+  "rpcUrl": "https://polygon-bor-rpc.publicnode.com",
+  "deployment": {
+    "network": "polygon",
+    "chainId": 137,
+    "contract": "ImplicitExTransfer",
+    "address": "0x5015841D6E665e63Ea174aD6b8FeF854026dE0C0",
+    "deployer": "0x5466bbA8cD334554c88F81342dDfcEc4c4A7698B",
+    "owner": "0x776A0D6b9F96445A38303F56d5B923e6d1FF8E97",
+    "pendingOwner": "0x0000000000000000000000000000000000000000",
+    "usdc": "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359",
+    "treasury": "0xa7cE4232811021d2Dd01f4f0f264Df2427ab3919",
+    "feeBps": 100,
+    "minTransfer": 1000000,
+    "precision": 1000000,
+    "timestamp": "2026-05-22T20:27:50.300Z",
+    "txHash": "0x87593fdb3d256a4a94b3e73877ba0bc433c39e81eefc78334af6da79ff5ef1f3",
+    "ownershipTransferTxHash": "0xd84181dbffbd4f760cfa650b2a1edb1acc17713e66bb5d6d478376dc5202d777",
+    "ownershipAcceptanceTxHash": "0xd6bfb2876725391c956dbd17ec5f774f9246b50df5667e8b29e8c78305365e90"
+  },
+  "chainsConfig": {
+    "chainId": 137,
+    "usdcAddress": "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359",
+    "contractAddress": "0x5015841D6E665e63Ea174aD6b8FeF854026dE0C0",
+    "feeBasisPoints": 100,
+    "minTransferUsdc": 1,
+    "maxTransferUsdc": 250,
+    "transfersEnabled": true
+  },
+  "onChain": {
+    "chainId": 137,
+    "contractAddress": "0x5015841D6E665e63Ea174aD6b8FeF854026dE0C0",
+    "usdcAddress": "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359",
+    "treasury": "0xa7cE4232811021d2Dd01f4f0f264Df2427ab3919",
+    "feeBasisPoints": 100,
+    "minTransferAmount": "1000000",
+    "transferPrecision": "1000000",
+    "usdcDecimals": 6,
+    "usdcSymbol": "USDC"
+  },
+  "expected": {
+    "chainId": 137,
+    "contractAddress": "0x5015841D6E665e63Ea174aD6b8FeF854026dE0C0",
+    "usdcAddress": "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359",
+    "treasury": "0xa7cE4232811021d2Dd01f4f0f264Df2427ab3919",
+    "feeBasisPoints": 100,
+    "minTransferAmount": "1000000",
+    "transferPrecision": "1000000",
+    "usdcDecimals": 6
+  },
+  "comparisons": {
+    "chainId": {
+      "live": 137,
+      "deployment": {
+        "present": true,
+        "value": 137
+      },
+      "chains": {
+        "present": true,
+        "value": 137
+      },
+      "state": {
+        "present": true,
+        "value": 137
+      },
+      "normalized": {
+        "live": "137",
+        "deployment": "137",
+        "chains": "137",
+        "state": "137"
+      },
+      "matches": {
+        "deployment": true,
+        "chains": true,
+        "state": true
+      },
+      "requiredMismatch": false
+    },
+    "tokenAddress": {
+      "live": "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359",
+      "deployment": {
+        "present": true,
+        "value": "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359"
+      },
+      "chains": {
+        "present": true,
+        "value": "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359"
+      },
+      "state": {
+        "present": true,
+        "value": "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359"
+      },
+      "normalized": {
+        "live": "0x3c499c542cef5e3811e1192ce70d8cc03d5c3359",
+        "deployment": "0x3c499c542cef5e3811e1192ce70d8cc03d5c3359",
+        "chains": "0x3c499c542cef5e3811e1192ce70d8cc03d5c3359",
+        "state": "0x3c499c542cef5e3811e1192ce70d8cc03d5c3359"
+      },
+      "matches": {
+        "deployment": true,
+        "chains": true,
+        "state": true
+      },
+      "requiredMismatch": false
+    },
+    "transferContractAddress": {
+      "live": "0x5015841D6E665e63Ea174aD6b8FeF854026dE0C0",
+      "deployment": {
+        "present": true,
+        "value": "0x5015841D6E665e63Ea174aD6b8FeF854026dE0C0"
+      },
+      "chains": {
+        "present": true,
+        "value": "0x5015841D6E665e63Ea174aD6b8FeF854026dE0C0"
+      },
+      "state": {
+        "present": true,
+        "value": "0x5015841D6E665e63Ea174aD6b8FeF854026dE0C0"
+      },
+      "normalized": {
+        "live": "0x5015841d6e665e63ea174ad6b8fef854026de0c0",
+        "deployment": "0x5015841d6e665e63ea174ad6b8fef854026de0c0",
+        "chains": "0x5015841d6e665e63ea174ad6b8fef854026de0c0",
+        "state": "0x5015841d6e665e63ea174ad6b8fef854026de0c0"
+      },
+      "matches": {
+        "deployment": true,
+        "chains": true,
+        "state": true
+      },
+      "requiredMismatch": false
+    },
+    "treasury": {
+      "live": "0xa7cE4232811021d2Dd01f4f0f264Df2427ab3919",
+      "deployment": {
+        "present": true,
+        "value": "0xa7cE4232811021d2Dd01f4f0f264Df2427ab3919"
+      },
+      "chains": {
+        "present": false,
+        "value": null
+      },
+      "state": {
+        "present": false,
+        "value": null
+      },
+      "normalized": {
+        "live": "0xa7ce4232811021d2dd01f4f0f264df2427ab3919",
+        "deployment": "0xa7ce4232811021d2dd01f4f0f264df2427ab3919",
+        "chains": null,
+        "state": null
+      },
+      "matches": {
+        "deployment": true,
+        "chains": null,
+        "state": null
+      },
+      "requiredMismatch": false
+    },
+    "feeBasisPoints": {
+      "live": 100,
+      "deployment": {
+        "present": true,
+        "value": 100
+      },
+      "chains": {
+        "present": true,
+        "value": 100
+      },
+      "state": {
+        "present": true,
+        "value": 100
+      },
+      "normalized": {
+        "live": "100",
+        "deployment": "100",
+        "chains": "100",
+        "state": "100"
+      },
+      "matches": {
+        "deployment": true,
+        "chains": true,
+        "state": true
+      },
+      "requiredMismatch": false
+    },
+    "minTransferAmount": {
+      "live": "1000000",
+      "deployment": {
+        "present": true,
+        "value": "1000000"
+      },
+      "chains": {
+        "present": true,
+        "value": "1000000"
+      },
+      "state": {
+        "present": true,
+        "value": "1000000"
+      },
+      "normalized": {
+        "live": "1000000",
+        "deployment": "1000000",
+        "chains": "1000000",
+        "state": "1000000"
+      },
+      "matches": {
+        "deployment": true,
+        "chains": true,
+        "state": true
+      },
+      "requiredMismatch": false
+    },
+    "transferPrecision": {
+      "live": "1000000",
+      "deployment": {
+        "present": true,
+        "value": "1000000"
+      },
+      "chains": {
+        "present": false,
+        "value": null
+      },
+      "state": {
+        "present": true,
+        "value": "1000000"
+      },
+      "normalized": {
+        "live": "1000000",
+        "deployment": "1000000",
+        "chains": null,
+        "state": "1000000"
+      },
+      "matches": {
+        "deployment": true,
+        "chains": null,
+        "state": true
+      },
+      "requiredMismatch": false
+    },
+    "usdcDecimals": {
+      "live": 6,
+      "deployment": {
+        "present": false,
+        "value": null
+      },
+      "chains": {
+        "present": false,
+        "value": null
+      },
+      "state": {
+        "present": true,
+        "value": 6
+      },
+      "normalized": {
+        "live": "6",
+        "deployment": null,
+        "chains": null,
+        "state": "6"
+      },
+      "matches": {
+        "deployment": null,
+        "chains": null,
+        "state": true
+      },
+      "requiredMismatch": false
+    }
+  }
+}
