@@ -485,10 +485,32 @@
           return;
         }
         if (result.status === 'wallet-rejected') {
-          /* User rejected — return to review panel */
+          /* User declined — return to review panel to retry */
           transition('READY_TO_SEND');
           setStatus('verified', 'Verified');
           setChipState('cc-card-chip--ready', false, 'Confirm transfer in wallet');
+          return;
+        }
+        if (result.status === 'wallet-busy') {
+          /* Wallet has a pending request — not a failure; return to review */
+          transition('READY_TO_SEND');
+          setStatus('verified', 'Verified');
+          setChipState('cc-card-chip--ready', false, 'Wallet busy — retry when ready');
+          return;
+        }
+        if (result.status === 'outcome-unknown') {
+          /* Transfer may have been broadcast — do not claim failure */
+          var explorerUrl = result.error && result.error.explorerUrl;
+          var unknownMsg  = explorerUrl
+            ? 'Transfer submitted. Check the explorer to confirm.'
+            : 'Transfer status unknown. Check the explorer before retrying.';
+          var txHashLink = el('ccTxHash');
+          if (txHashLink && explorerUrl) {
+            txHashLink.href        = explorerUrl;
+            txHashLink.textContent = 'View on explorer';
+            txHashLink.title       = result.error && result.error.txHash || '';
+          }
+          renderTxError(unknownMsg);
           return;
         }
         if (result.status === 'failed') {

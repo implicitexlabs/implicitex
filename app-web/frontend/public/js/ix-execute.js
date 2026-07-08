@@ -378,6 +378,12 @@
     var amountRaw = toRawUsdc(request.amount);
     var totalRaw = toRawUsdc(request.total);
 
+    /* transferSubmitted tracks whether eth_sendTransaction returned a hash.
+     * Any error after that point is outcome-unknown — we cannot assert that
+     * funds did not move. submittedHash is used to surface the explorer link. */
+    var transferSubmitted = false;
+    var submittedHash     = null;
+
     if (hooks.onApprovalRequested) hooks.onApprovalRequested();
     return approve(chainId, request.sender, totalRaw)
       .then(function (approvalHash) {
@@ -391,23 +397,57 @@
           if (hooks.onTransferRequested) hooks.onTransferRequested(approvalReceipt);
           return transferWithFee(chainId, request.sender, request.recipient, amountRaw)
             .then(function (transferHash) {
+              /* Hash returned — transfer is broadcast. Any error from here is outcome-unknown. */
+              transferSubmitted = true;
+              submittedHash     = transferHash;
               if (hooks.onTransferSubmitted) hooks.onTransferSubmitted(transferHash);
-              return waitForReceipt(transferHash).then(function (transferReceipt) {
-                if (!receiptSucceeded(transferReceipt)) {
-                  var transferErr = { code: 'TRANSFER_FAILED', message: 'Transfer transaction failed' };
-                  if (hooks.onFailed) hooks.onFailed(transferErr);
-                  return makeResult('failed', { sender: request.sender, error: transferErr });
-                }
-                var receipt = buildReceipt(request, approvalHash, transferHash, transferReceipt, cfg);
-                var confirmed = makeResult('confirmed', { sender: request.sender, receipt: receipt });
-                if (hooks.onConfirmed) hooks.onConfirmed(confirmed);
-                return confirmed;
-              });
+              return waitForReceipt(transferHash)
+                .then(function (transferReceipt) {
+                  if (!receiptSucceeded(transferReceipt)) {
+                    var transferErr = { code: 'TRANSFER_FAILED', message: 'Transfer transaction failed' };
+                    if (hooks.onFailed) hooks.onFailed(transferErr);
+                    return makeResult('failed', { sender: request.sender, error: transferErr });
+                  }
+                  var receipt = buildReceipt(request, approvalHash, transferHash, transferReceipt, cfg);
+                  var confirmed = makeResult('confirmed', { sender: request.sender, receipt: receipt });
+                  if (hooks.onConfirmed) hooks.onConfirmed(confirmed);
+                  return confirmed;
+                })
+                .catch(function (receiptErr) {
+                  /* Receipt polling failed after broadcast — outcome is ambiguous.
+                   * Do not assert failure; surface the hash for explorer lookup. */
+                  var ambiguousErr = {
+                    code:    'RECEIPT_UNAVAILABLE',
+                    message: receiptErr && receiptErr.message || 'Transfer broadcast but confirmation could not be verified.',
+                    txHash:  transferHash,
+                    explorerUrl: cfg.explorerUrl + '/tx/' + transferHash,
+                  };
+                  if (hooks.onFailed) hooks.onFailed(ambiguousErr);
+                  return makeResult('outcome-unknown', { sender: request.sender, error: ambiguousErr });
+                });
             });
         });
       })
       .catch(function (err) {
         if (err && err.code === 4001) return makeResult('wallet-rejected', { sender: request.sender });
+        if (err && err.code === -32002) {
+          /* Wallet already has a pending request — no broadcast occurred, safe to retry. */
+          return makeResult('wallet-busy', {
+            sender: request.sender,
+            error:  { code: 'WALLET_BUSY', message: 'Wallet already has a pending request.' },
+          });
+        }
+        if (transferSubmitted) {
+          /* Error after broadcast — outcome ambiguous. Surface hash for explorer lookup. */
+          var postBroadcastErr = {
+            code:       'POST_BROADCAST_ERROR',
+            message:    err && err.message || 'Error occurred after transfer was broadcast.',
+            txHash:     submittedHash,
+            explorerUrl: cfg.explorerUrl + '/tx/' + submittedHash,
+          };
+          if (hooks.onFailed) hooks.onFailed(postBroadcastErr);
+          return makeResult('outcome-unknown', { sender: request.sender, error: postBroadcastErr });
+        }
         var execErr = { code: err && err.code || 'EXECUTION_FAILED', message: err && err.message || 'Execution failed' };
         if (hooks.onFailed) hooks.onFailed(execErr);
         return makeResult('failed', { sender: request.sender, error: execErr });

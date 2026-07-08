@@ -52,14 +52,16 @@
         "values": [
           "wallet-missing",
           "wallet-rejected",
+          "wallet-busy",
           "wrong-network",
           "ready-to-send",
           "approval-pending",
           "transfer-pending",
           "confirmed",
+          "outcome-unknown",
           "failed"
         ],
-        "description": "Normalized execution phase. Always present. Consumers branch on this field only."
+        "description": "Normalized execution phase. Always present. Consumers branch on this field only. wallet-busy: wallet already has a pending request; no funds moved; safe to retry. outcome-unknown: transfer was broadcast but confirmation could not be verified; funds may have moved; consumer must surface the explorer link and must not claim funds were not sent."
       },
       "sender": {
         "type": "evm-address",
@@ -84,8 +86,8 @@
         "type": "object",
         "required": true,
         "nullable": true,
-        "shape": { "code": "string", "message": "string" },
-        "description": "Normalized failure descriptor. Present on failed. Null on all other statuses. Provider-specific error codes must not appear here."
+        "shape": { "code": "string", "message": "string", "txHash": "tx-hash | undefined" },
+        "description": "Normalized failure descriptor. Present on failed, wallet-busy, and outcome-unknown. Null on success paths. On outcome-unknown, error.txHash contains the broadcast hash so consumers can construct an explorer link. Provider-specific error codes must not appear here."
       }
     }
   },
@@ -122,11 +124,13 @@
   "statuses": [
     "wallet-missing",
     "wallet-rejected",
+    "wallet-busy",
     "wrong-network",
     "ready-to-send",
     "approval-pending",
     "transfer-pending",
     "confirmed",
+    "outcome-unknown",
     "failed"
   ],
   "serviceGuarantees": [
