@@ -1,6 +1,6 @@
 # Stablecoin Expansion Roadmap
 
-Date: 2026-07-03
+Date: 2026-07-04
 Status: Product roadmap notes.
 
 ## Strategic Position
@@ -14,6 +14,16 @@ Verified, non-custodial transfer routes for carefully approved digital currencie
 USDC proves the first route. USDT0 should prove issuer diversity on the same
 network. Later assets should add a meaningful new user group, currency,
 distribution channel, or strategic capability.
+
+This roadmap is subordinate to the Coin Card distribution roadmap. Additional
+stablecoins do not solve the current bottleneck by themselves:
+
+```text
+Supporting two assets does not matter if no one knows the product exists.
+```
+
+USDT0 remains strategically useful, but it should not displace Coin Card Free,
+receipt proof, content, or early user acquisition.
 
 ## Recommended Order
 
@@ -31,11 +41,26 @@ Why it stays first:
 
 Rule: preserve the USDC route as independently operable.
 
-### 2. USDT0
+### 2. Coin Card Route Readiness
 
-USDT0 is the highest-priority expansion because it broadens international and
-exchange-oriented stablecoin usefulness without forcing ImplicitEx onto another
-network.
+Before adding another stablecoin, Coin Card must make the existing USDC route
+usable outside implicitex.com.
+
+Required before USDT0 becomes implementation priority:
+
+- Coin Card Free has a self-serve embed path.
+- Host-controlled manifest configuration is documented.
+- Free-tier trust language is locked: route verified, recipient not verified.
+- Receipt path records contract, network, token, recipient, fee, transaction
+  hash, and manifest fingerprint where practical.
+- At least one real external embed use case exists or a specific partner/user
+  request justifies USDT0.
+
+### 3. USDT0
+
+USDT0 is the highest-priority stablecoin expansion after Coin Card route
+readiness because it broadens international and exchange-oriented stablecoin
+usefulness without forcing ImplicitEx onto another network.
 
 Strategic value:
 
@@ -54,7 +79,7 @@ Implementation posture:
 
 Detailed plan: `docs/product/usdt0-integration-plan.md`
 
-### 3. EURC
+### 4. EURC
 
 EURC is the best third-currency candidate because it introduces euro-denominated
 payments rather than another dollar stablecoin.
@@ -87,7 +112,7 @@ Reference:
 - Circle EURC contract addresses
   https://developers.circle.com/stablecoins/eurc-contract-addresses
 
-### 4. PYUSD
+### 5. PYUSD
 
 PYUSD is strategically interesting because PayPal is a recognizable consumer and
 merchant brand.
@@ -109,7 +134,7 @@ Likely posture:
 - watchlist after Base or Arbitrum decisions
 - not ahead of EURC unless user demand is strong
 
-### 5. RLUSD
+### 6. RLUSD
 
 RLUSD belongs on the institutional watchlist.
 
@@ -131,7 +156,7 @@ Likely posture:
 - reevaluate when an inexpensive EVM route is approved, liquid, documented, and
   operational
 
-### 6. DAI Or USDS
+### 7. DAI Or USDS
 
 DAI or plain USDS could serve users who want a more crypto-native stablecoin
 alternative.
@@ -155,7 +180,8 @@ Rule:
 ### Phase 1: Multi-Asset Polygon
 
 - USDC remains default.
-- Add USDT0.
+- Ship Coin Card Free for USDC first.
+- Add USDT0 only after Coin Card route readiness criteria are met.
 - Implement asset route registry.
 - Make Coin Cards token-aware.
 - Make receipts and proof packets token-aware.
@@ -197,7 +223,8 @@ A second network requires:
 - live smoke procedure
 - rollback and pause controls
 
-Do not start multichain work until Polygon USDC + USDT0 is stable.
+Do not start multichain work until Polygon USDC Coin Card usage and any approved
+USDT0 route are stable.
 
 ### Phase 4: Currency And Issuer Diversity
 
@@ -231,3 +258,9 @@ Exclude:
 Every new asset must make ImplicitEx clearer or more useful. If a route adds
 confusion, operational risk, or support burden without a distinct user advantage,
 it should stay out of the product.
+
+Distribution principle:
+
+```text
+Fewer supported routes with real users beat more supported routes with no usage.
+```

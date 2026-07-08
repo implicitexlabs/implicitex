@@ -1,6 +1,6 @@
 # Coin Card — Product Tiers
 
-Last updated: 2026-06-30
+Last updated: 2026-07-04
 
 ---
 
@@ -10,8 +10,9 @@ Tiers are not about features. They are about escalating trust, verification,
 customization, and operational responsibility.
 
 Each tier reflects a different relationship between ImplicitEx, the card holder,
-and the transaction recipient. The custodial risk surface increases with tier.
-Escrow and advanced settlement are explicitly deferred until legal review is complete.
+and the transaction recipient. The evidentiary responsibility increases with
+tier. Escrow and advanced settlement are explicitly deferred until legal review
+is complete.
 
 ---
 
@@ -60,7 +61,7 @@ is out of scope until a separate compliance review authorizes it.
 - "Wallet-signed"
 - "Sender-authorized"
 - "On-chain transfer"
-- "Verified recipient metadata"
+- "Verified recipient metadata" only where the tier has explicit verification evidence
 - "Bank-grade clarity without bank custody"
 
 ---
@@ -74,16 +75,68 @@ embedded across the web so that senders recognize them and trust the format.
 
 ### What the host gets
 
-- Basic Coin Card embed (iframe or JS widget)
-- Recipient wallet address configured by the host
+- Basic Coin Card embed (iframe, JS widget, redirect flow, or approved hybrid)
+- Recipient wallet address configured by the host in a plain manifest file
 - Network and token displayed clearly to the sender
 - Sender connects their own wallet and enters the amount
-- Transaction fee on successful transfer (fee rate TBD — must reconcile with existing platform fee policy; default non-subscriber rate was 2.5%; Free tier rate requires deliberate pricing decision before launch)
+- Transaction fee on successful transfer using the current ImplicitEx public fee policy
 - "Powered by ImplicitEx" attribution with link to coincard.implicitex.com
+
+Recommended V1 manifest:
+
+```json
+{
+  "schema": "implicitex.coincard.free.v1",
+  "version": 1,
+  "created": "2026-07-04T18:00:00Z",
+  "updated": "2026-07-04T18:00:00Z",
+  "name": "Aden Media Group",
+  "recipientAddress": "0x...",
+  "network": "polygon",
+  "token": "USDC",
+  "status": "active"
+}
+```
+
+The host edits the manifest. Coin Card software reads it. ImplicitEx does not
+need to receive, approve, or retain the recipient address for the free
+self-hosted version.
+
+`created` and `updated` are chronology fields. They are useful context in a
+dispute, but they are host-declared metadata, not cryptographic proof of
+publication time. Historical proof comes from the manifest fingerprint recorded
+at transaction time and the on-chain transaction record.
+
+Required V1 fields:
+
+- `schema`
+- `version`
+- `created`
+- `updated`
+- `name`
+- `recipientAddress`
+- `network`
+- `token`
+- `status`
+
+Deferred V1.1 field:
+
+```json
+{
+  "purpose": "donation"
+}
+```
+
+Possible purpose values include `donation`, `invoice`, and `creator-support`.
+This field is intentionally deferred from V1 launch. It may add semantic meaning
+for receipts, search, examples, and later analytics, but it must not affect
+settlement, fee math, route validation, or the trust boundary.
 
 ### What ImplicitEx does NOT provide at this tier
 
 - Verified domain association
+- Verified recipient identity
+- Wallet ownership attestation
 - Brand customization
 - Analytics
 - Receipt branding
@@ -92,16 +145,21 @@ embedded across the web so that senders recognize them and trust the format.
 
 ### Trust model
 
-ImplicitEx owns **transaction trust** only — will the card honestly show where
-funds go, execute correctly, and produce settlement proof?
+ImplicitEx owns **route trust** only — is the card using the official
+ImplicitEx rail, a supported network/token route, valid address format, clear
+fee math, and on-chain settlement proof?
 
-ImplicitEx does NOT own **host trust** — does the sender trust the site/creator/project?
-That is between the sender and the host. Coin Card Free makes no claim otherwise.
+ImplicitEx does NOT own **host trust** or **recipient identity trust** — does
+the sender trust the site/creator/project, and did the host enter the intended
+wallet address? That is between the sender and the host. Coin Card Free makes
+no claim otherwise.
 
 Correct card language:
 
 > "Recipient wallet configured for this Coin Card"
+> "Recipient address supplied by host"
 > "Funds settle to the address shown"
+> "Official ImplicitEx route"
 > "Powered by ImplicitEx"
 
 Forbidden card language:
@@ -109,24 +167,76 @@ Forbidden card language:
 > "Verified recipient"
 > "[Name] verified"
 > "Identity verified"
+> "ImplicitEx approved"
+> "Trusted recipient"
 
 ### Creation flow (current V1)
 
-1. Host enters valid EVM wallet address
-2. System validates address format
-3. Caveat displayed: ImplicitEx does not verify wallet ownership
-4. Host confirms
-5. Card ID created (deduplication on wallet + config)
-6. Host receives iframe embed code
+1. Host downloads or copies Coin Card embed package
+2. Host enters a valid EVM wallet address in `coin-card.json`
+3. Card validates address format, network, token, and manifest shape
+4. Caveat displayed: ImplicitEx does not verify wallet ownership or recipient identity
+5. Sender reviews the displayed recipient address before paying
+6. Transaction receipt records contract, network, token, recipient, fee,
+   transaction hash, and manifest fingerprint where practical
 
 ### Anti-abuse (without gatekeeping)
 
 - Address format validation
-- Rate limits per IP
-- Duplicate config resolves to existing card
+- Manifest schema validation
+- No HTML/script/style injection from manifest fields
+- Optional rate limits for ImplicitEx-hosted helper endpoints
 - Blocklist for prohibited addresses
 - Admin disable switch
 - Budget alerts
+
+### Dispute posture
+
+If a host changes its manifest after a transaction, the current file is not the
+source of truth for the past transaction. The receipt and on-chain transaction
+hash control the historical record.
+
+Evidence split:
+
+| Layer | Evidence |
+|---|---|
+| Host evidence | `coin-card.json`, `created`, `updated`, host website/domain |
+| Coin Card evidence | manifest fingerprint/hash, schema/version, route validation result, contract address used |
+| Blockchain evidence | transaction hash, block number, timestamp, sender, recipient, amount, fee |
+
+Burden of proof:
+
+```text
+The host proves what they intended to publish.
+ImplicitEx proves what was presented and executed.
+The blockchain proves what actually happened.
+```
+
+Evidence supremacy:
+
+```text
+Blockchain evidence
+        ↓
+Recorded Coin Card evidence at transaction time
+        ↓
+Current host manifest or registry record
+        ↓
+Human testimony
+```
+
+If sources disagree, the more objective and transaction-proximate evidence
+controls. The current host manifest cannot rewrite what was recorded at
+transaction time. Recorded Coin Card evidence cannot override confirmed
+on-chain settlement.
+
+Free-tier receipt posture:
+
+> "Payment was sent to the wallet address loaded from this Coin Card manifest at
+> the time of transaction."
+
+Free tier does not say:
+
+> "ImplicitEx verified that this address belonged to the host."
 
 ---
 
@@ -144,6 +254,7 @@ holder from an anonymous embed user to a named, domain-bound recipient.
 - Domain association + verified domain badge
 - Brand name and optional logo
 - Canonical wallet address registry entry
+- Wallet-control proof by signature when possible
 - Revocation and update history
 - Public status page
 - Receipt / proof packet with Registered branding
@@ -175,6 +286,15 @@ to pay and filter out non-serious holders.
 Not "banking." Not "merchant account." Not "hosted wallet."
 
 ImplicitEx holds **identity and routing metadata**, not funds.
+
+Preferred verification ceremony:
+
+```text
+Connect recipient wallet -> sign message -> publish signed manifest
+```
+
+Micro-transfer verification is deferred unless a specific product need justifies
+the added gas cost and friction.
 
 ---
 

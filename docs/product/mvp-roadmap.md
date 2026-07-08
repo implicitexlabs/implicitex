@@ -1,6 +1,6 @@
 # ImplicitEx MVP Roadmap
 
-Last updated: 2026-06-30
+Last updated: 2026-07-04
 Branch: gate3-production-frontend-qa
 
 ---
@@ -23,9 +23,10 @@ No reversal claim
 **Scope boundary:** do not add swaps, embedded wallets, fiat ramps, accounts, analytics dashboards,
 session restore polish, AI features, or social login before live-transfer smoke is complete.
 
-**Future expansion note:** preserve Polygon USDC as the reference route, then add
-USDT0 through an approved asset-route registry. See
-`docs/product/usdt0-integration-plan.md`.
+**Future expansion note:** preserve Polygon USDC as the reference route. The
+next product priority is Coin Card distribution, not another asset. Add USDT0
+later through an approved asset-route registry after Coin Card Free has a
+working external embed path. See `docs/product/usdt0-integration-plan.md`.
 
 ---
 
@@ -417,8 +418,8 @@ Longer-term mitigations (no single fix):
 | Sparkline on gas row | Post-gas-row polish |
 | Ledger integration | After web + Electron both stable |
 | Ethereum mainnet | Post-Polygon-MVP |
-| Creator widget | Post-MVP; depends on transfer engine being proven reliable first |
-| Creator dashboard | Post-widget; requires transaction volume to be meaningful |
+| Coin Card Free | Active next product priority after launch-stability defects |
+| Creator dashboard | Post-Coin Card; requires transaction volume to be meaningful |
 
 ---
 
@@ -427,6 +428,44 @@ Longer-term mitigations (no single fix):
 The MVP answers one question: **can a person reliably transfer USDC?**
 
 The next questions depend on it.
+
+## Current Priority Order — July 2026
+
+Product is no longer the only bottleneck. The transfer path works; the next
+bottlenecks are distribution, trust, and narrative.
+
+Nothing is currently prioritized ahead of Coin Card except defects that could
+misroute funds, misstate fees, weaken receipts, or create misleading trust
+claims.
+
+Priority order:
+
+1. Coin Card Free — embeddable USDC payment surface.
+2. Distribution — examples, outreach, site integrations, and repeatable content.
+3. Trust receipts — contract address, recipient address, manifest hash, fee,
+   network, token, and transaction hash anchored to the on-chain record where
+   practical.
+4. Content — explain non-custodial transfer, verification, custody boundaries,
+   stablecoin payment rails, and why money movement should be auditable.
+5. User acquisition — creators, freelancers, donation pages, invoices, and
+   small sites that need a clean USDC receiving surface.
+6. Additional stablecoins — USDT0 and later assets only after distribution
+   signals justify the added surface area.
+
+Do not add chains, token menus, swaps, bridges, or complex routing ahead of
+Coin Card. Simplicity is a product advantage:
+
+```text
+USDC
+Polygon
+Wallet-to-wallet
+Non-custodial
+Transparent fee
+On-chain proof
+```
+
+Coin Card should extend that advantage across other websites without turning
+ImplicitEx into a generic crypto routing product.
 
 ---
 
@@ -442,57 +481,147 @@ This is what ships. Everything below requires this to work first.
 
 ---
 
-### Layer 2 — Creator widget
+### Layer 2 — Coin Card Free
 
-An embeddable transfer interface for creator pages, blogs, newsletters, and
-podcasts. The user does not create an account, download a wallet, or join an
-ecosystem. They use the wallet they already have.
+An embeddable USDC payment surface for creator pages, blogs, newsletters,
+invoice pages, donation pages, project sites, and small business websites. The
+sender does not create an ImplicitEx account, download a new wallet, or join a
+closed ecosystem. They use the wallet they already have.
 
 ```
-Creator Website
+Host Website
       ↓
-ImplicitEx Widget
+Coin Card
       ↓
 USDC Transfer
 ```
 
-Conceptual UI:
+V1 architecture:
 
 ```
-Support [Creator]
-[ Send $5 ]  [ Send $10 ]  [ Custom Amount ]
-Powered by ImplicitEx
+coin-card.js     — ImplicitEx-controlled software and transfer flow
+coin-card.json   — host-controlled payment manifest
+transfer contract — official ImplicitEx settlement rail
+```
+
+The host controls the recipient address by editing a plain JSON manifest. The
+free tier verifies only what can be verified without becoming a recipient
+endorsement:
+
+- official ImplicitEx contract
+- supported network and token route
+- syntactically valid recipient wallet address
+- transfer amount and fee math
+- transaction hash and on-chain settlement
+- manifest hash or equivalent fingerprint at the time of transaction
+
+The free tier does not verify:
+
+- the recipient's legal identity
+- whether the address belongs to the host
+- whether the host entered the intended address
+- whether the host later changed its local manifest
+
+Receipt language should say:
+
+```text
+Payment was sent to the wallet address loaded from this Coin Card manifest at
+the time of transaction.
+```
+
+It should not say:
+
+```text
+ImplicitEx verified the recipient.
 ```
 
 **Why this is the right first expansion:**
 
-- Every creator who embeds the widget becomes a distribution channel.
-- Supporters use it. Every transfer generates a fee. The creator gets support,
-  ImplicitEx gets transaction volume.
-- That is a cleaner growth loop than acquiring individual transfer users one by one.
-
-**Differentiation from custodial alternatives (e.g. Rumble Wallet):**
-
-Custodial model: download our wallet, create an account, join our ecosystem.
-ImplicitEx model: already have a wallet? Click support and send USDC.
-
-The second has less friction and no lock-in. The emotional purchase is the same
-— "I want to support this creator" — but the path is shorter.
+- Every external embed becomes distribution.
+- Every successful payment teaches the Coin Card pattern.
+- The host receives USDC directly; ImplicitEx never sees or controls funds.
+- It creates real use cases before broader token support adds complexity.
 
 **Technical preconditions before building:**
 
-- Transfer engine proven stable under real load (Gate 5 complete)
+- Transfer engine proven stable under low-limit public use
 - Fee model confirmed working and understood by users
 - Receipt lifecycle reliable (no orphaned receipts in production)
-- Widget embed architecture defined (iframe, script tag, or redirect flow)
+- Embed architecture defined: script tag, iframe, redirect flow, or hybrid
+- Manifest schema locked for the free tier
+- Manifest fingerprint captured in the receipt path
+- Free-tier verification language locked: route verified, recipient not verified
 
-**Status:** Not started. Correctly deferred until transfer engine is proven.
+**Status:** Active next product priority. Free tier visual and transaction-state
+surfaces are partially implemented (Lane A smoke surfaces, verify page,
+publisher MVP). Public self-serve Free tier is not complete until embed
+configuration, manifest creation, card creation, and onboarding flow exist for a
+recipient who has never spoken to anyone from ImplicitEx.
+
+**V1 trust model is frozen as of 2026-07-04.** Do not keep iterating on the
+philosophy before implementation. The next work is build evidence:
+
+1. `coin-card.json`
+2. manifest validation
+3. manifest fingerprinting
+4. receipt evidence recording
+5. dispute-proof receipt rendering
+6. first external embed
+
+Implementation acceptance rules:
+
+- Free Coin Card verifies the route, not recipient identity.
+- `purpose` remains metadata and must not affect settlement or fee logic.
+- Receipts preserve transaction-time Coin Card evidence.
+- Evidence Supremacy Principle governs conflicts:
+  blockchain evidence, recorded Coin Card evidence, current manifest, then human
+  testimony.
 
 ---
 
-### Layer 3 — Creator dashboard
+### Layer 3 — Verified / Registered Coin Card
 
-Post-widget. Only meaningful when transaction volume exists.
+Paid trust escalation. This is where ImplicitEx may verify domain association,
+wallet control, registry status, signed manifests, revocation, and branded
+receipt metadata.
+
+Verification should use wallet signatures where possible:
+
+```
+Connect recipient wallet → sign message → publish signed manifest
+```
+
+This is preferable to micro-deposit verification because it proves address
+control without moving funds or requiring gas.
+
+Paid tiers may add:
+
+- verified domain association
+- wallet-control proof
+- signed manifest
+- registry status page
+- revocation and update history
+- branded receipts and proof packets
+- assisted setup
+- exportable records
+
+Do not include this language in Free tier:
+
+```text
+Verified recipient
+Verified business
+ImplicitEx approved
+Trusted merchant
+```
+
+**Status:** Not started beyond publisher MVP experiments. Do not launch paid
+verification until Free tier proves at least one real external embed use case.
+
+---
+
+### Layer 4 — Creator dashboard
+
+Post-Coin Card. Only meaningful when transaction volume exists.
 
 ```
 Creators:   transfer analytics, supporter history, top supporters
@@ -500,27 +629,20 @@ Supporters: recurring support, campaign tracking
 ```
 
 This is where ImplicitEx starts competing with creator monetization tools.
-Do not design for this before Layer 2 ships and generates real data.
+Do not design for this before Coin Card Free ships and generates real data.
 
 ---
 
-**Sequencing principle:** the creator widget was not abandoned — it was correctly
-deferred behind the harder problem of proving the transfer engine works. The widget
-depends on that proof. Once Gate 5 is complete and real transfers are flowing, the
-creator widget becomes the most natural first revenue-producing expansion.
-
----
-
-### Layer 4 — Coin Card tiers
+### Layer 5 — Coin Card tiers
 
 Full specification: `docs/product/coincard-tiers.md`
 
-Coin Card is the public identity object that makes ImplicitEx useful before
-large transaction volume exists. Each tier escalates trust, verification, and
-operational responsibility.
+Coin Card is the public payment object that makes ImplicitEx useful before large
+transaction volume exists. Each tier escalates evidence, verification,
+customization, and operational responsibility.
 
 ```
-Tier 1 — Free        Embeddable payment card. Fee rate TBD (reconcile with platform policy). No account.
+Tier 1 — Free        Embeddable payment card. Current public fee policy. No account.
 Tier 2 — Registered  Verified domain + brand. Annual subscription.
 Tier 3 — Business    Multiple cards, receipts, export, assisted setup.
 Tier 4 — Advanced    Escrow / conditional release. Deferred — legal review required.
@@ -543,19 +665,17 @@ is still building. It does not require waiting for platform scale.
 
 **Preconditions:**
 
-- Coin Card Free embed is stable in production (Lane A smoke complete)
-- Publisher flow exists for Registered tier (domain verification, manifest signing)
+- Coin Card Free embed is stable in production
+- At least one real external embed use case exists
+- Publisher flow exists for Registered tier
+- Domain verification and wallet-control proof are scoped
 - Aden Media Group setup offer is defined and priced
 
-**Status:** Free tier visual and transaction-state surfaces are partially implemented (Lane A
-smoke surfaces, verify page, publisher MVP). Public self-serve Free tier is not complete
-until embed configuration, card creation, and onboarding flow exist for a recipient who
-has never spoken to anyone from ImplicitEx. Registered and Business tiers not started.
-Start Registered only after Free tier earns at least one real external embed use case.
+**Status:** See Layer 2 and Layer 3.
 
 ---
 
-### Layer 5 — Agent distribution system
+### Layer 6 — Agent distribution system
 
 Full specification: `docs/strategy/marketing/agent-system.md`
 

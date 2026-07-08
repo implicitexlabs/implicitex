@@ -1,6 +1,6 @@
 # ImplicitEx Visual Campaign Thesis
 
-**Version:** 1.3  
+**Version:** 1.4
 **Date:** 2026-07-04  
 **Applies to:** Twitter/X campaign, website hero, Coin Card, receipts, documentation, investor decks, mobile
 
@@ -11,6 +11,10 @@
 This is the visual philosophy that governs all ImplicitEx marketing surfaces. It was derived from building a 10-card Twitter/X campaign at 1600×900px and discovering which compositional decisions made the work feel like infrastructure and which made it feel like advertising.
 
 This is not a style guide. It is a set of constraints that produce a specific character. The character is: **a financial operating system that exists, not a startup introducing itself.**
+
+ImplicitEx is a blockchain-based technology company currently focused on DeFi: decentralized finance, direct wallet-to-wallet value movement, verifiable receipts, and payment infrastructure that reduces dependence on intermediary parties that gatekeep interpersonal exchange and commerce. The visual system should therefore feel technical but not inaccessible. It should imply precision, clean execution, stark palettes, disciplined restraint, and layers of complexity that are present in the product without being over-explained in the campaign.
+
+The reference family is closer to SpaceX, xAI, Terafab, Tesla, and X than to consumer fintech or crypto-native promotion: high-contrast, sparse, systems-oriented, declarative, and future-facing without becoming cyberpunk. Futurism is permitted as an implication of engineering capability. It is not permitted as neon, spectacle, or lore.
 
 ---
 
@@ -28,9 +32,13 @@ Apply this test before any card enters production.
 
 ---
 
-## The Five Visual Languages
+## Campaign Vocabulary
 
-ImplicitEx compositions are built from five and only five elements. Anything outside this vocabulary does not belong.
+ImplicitEx compositions are built from a controlled vocabulary, not a fixed inventory. The Series A campaign established the first durable elements: Orbitron declarations, lettermark, wordmark, world map, rules, and negative space. Future campaigns may introduce additional elements — photography, technical diagrams, protocol artifacts, product screenshots, data visualizations, campaign-specific textures, or other systems — when they earn their place.
+
+The constraint is not "only these elements forever." The constraint is campaign-level consistency. Each campaign must define its own image logic, copy grammar, mark usage, and hierarchy, then apply those rules consistently across the full set. Image and copy should feel balanced inside a campaign, even when the balance changes between campaigns. Over time, ImplicitEx should test multiple campaign models: some image-driven, some idea-driven, some evidence-driven, some product-driven. The strongest performers should inform the next production cycle; weaker systems should be retired or narrowed.
+
+The current vocabulary is the baseline.
 
 ### 1. Orbitron ALL CAPS — Declarations, Not Headlines
 
@@ -68,16 +76,32 @@ Rules:
 - Seal always occupies the lower-right or lower-center position, never upper-left or upper-right.
 - The seal has its own zone, separated from copy by at least one rule line.
 - Seal zone: ~180–270px rendered size on 1600×900 canvas.
-- The wordmark (IMPLICITEX in horizontal geometry) appears below the seal, accompanied by the sub-attribution line: `USDC · POLYGON · NON-CUSTODIAL`
-- Sub-attribution weight: Oxanium 500, 13px, 26% white opacity. It is infrastructure metadata, not marketing copy.
+- The seal can appear alone only when the surrounding surface already makes ImplicitEx unmistakable.
+- In campaign assets, the seal should usually be paired with the wordmark or appear within a lockup system that gives the company name clear authorship.
 
 What to avoid: lettermark centered horizontally at equal spacing from both edges (symmetry suggests decoration), lettermark floating without a rule to separate it from the copy zone, lettermark sized the same as text elements (it should be architecturally distinct).
 
 ---
 
-### 3. World Map — Operational Substrate
+### 3. Wordmark — Brand Authorship
 
-The world map is not a background. It is the third primary visual element — as load-bearing as the copy and the seal.
+The wordmark (IMPLICITEX in horizontal geometry) is the company name, not a decorative caption. It makes authorship explicit and keeps the campaign from becoming an anonymous protocol poster.
+
+Use the wordmark when the surface must establish brand recall, when the lettermark alone would be too abstract, or when the asset may travel outside an ImplicitEx-controlled context. In Series A, the wordmark appears below the seal, accompanied by the sub-attribution line: `USDC · POLYGON · NON-CUSTODIAL`.
+
+Rules:
+- The wordmark should follow the lettermark in stacked lockups unless the surface is a navigation/header context where the inline lockup is already canonical.
+- The wordmark must remain subordinate to the primary campaign claim but clearer than metadata.
+- Sub-attribution weight: Oxanium 500, 13px, 26% white opacity on 1600×900 campaign assets. It is infrastructure metadata, not marketing copy.
+- Do not treat the wordmark as a tagline. It is authorship, not persuasion.
+
+What to avoid: wordmark competing with the main claim, wordmark repeated in multiple zones, wordmark used as texture, or wordmark omitted from externally shared assets where brand recognition matters.
+
+---
+
+### 4. World Map — Operational Substrate
+
+The world map is not a background. It is a primary visual element — as load-bearing as the copy and the seal.
 
 The map is rendered from the same algorithm that runs on the ImplicitEx live product (`canvas.js` — 88×44 pixel grid, ellipse-scored continents, coastal dropout, depth-based alpha shimmer). This is not decorative. **The marketing surface and the product surface are rendering the same world.**
 
@@ -95,7 +119,7 @@ Rules:
 
 ---
 
-### 4. Rules — System Boundaries
+### 5. Rules — System Boundaries
 
 A rule is a 1px horizontal or vertical line at `rgba(255,255,255,0.14)`. It is not a divider in the typographic sense. It is a **boundary between zones of the system.**
 
@@ -110,7 +134,7 @@ A composition with no rules is informal. A composition with too many rules is do
 
 ---
 
-### 5. Negative Space — Trust
+### 6. Negative Space — Trust
 
 60–70% of the canvas is black. This is not a design choice about aesthetics. It is a product statement.
 
@@ -308,7 +332,7 @@ These are not stylistic preferences. They are exclusions that protect the charac
 
 ### Website Hero
 
-The world map canvas is already live. The hero composition should follow the same zone structure: claim in copy zone (left), with the mark acting as institutional anchor at the architectural edge. The scroll threshold should reveal specifications, not aspirations.
+The world map canvas is already live. The hero composition should follow the same zone structure: claim in copy zone (left), with the lockup or mark acting as institutional anchor at the architectural edge. The scroll threshold should reveal specifications, not aspirations.
 
 ### Coin Card
 
@@ -316,7 +340,7 @@ The Coin Card surface inherits the seal-concludes principle. The issuer mark (Im
 
 ### Receipts
 
-Receipt typography is IBM Plex Mono for all transactional data (amounts, addresses, hashes). The lettermark appears once, at the document footer, as the issuing seal. The receipt is an evidence artifact — its authority comes from the on-chain data it references, not from ImplicitEx claiming authority.
+Receipt typography is IBM Plex Mono for all transactional data (amounts, addresses, hashes). The lettermark appears once, at the document footer, as the issuing seal; the wordmark may accompany it when the receipt needs explicit brand authorship outside an ImplicitEx-controlled surface. The receipt is an evidence artifact — its authority comes from the on-chain data it references, not from ImplicitEx claiming authority.
 
 ### Documentation
 
