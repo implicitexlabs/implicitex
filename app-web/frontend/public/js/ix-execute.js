@@ -258,6 +258,33 @@
   }
 
   /* ----------------------------------------------------------------
+   * chainIdentity — public chain descriptor (name + id only)
+   * Internal config (RPC, contract addresses) must not leave the service.
+   * ---------------------------------------------------------------- */
+  function chainIdentity(cfg) {
+    if (!cfg) return null;
+    return { name: cfg.name, chainId: cfg.chainId };
+  }
+
+  /* ----------------------------------------------------------------
+   * makeResult — canonical ExecutionResult factory
+   *
+   * Every exit from executeTransfer goes through here. All four
+   * non-status fields are always present; null where not applicable.
+   * Consumers check status, then read the relevant field — no
+   * conditional property existence.
+   * ---------------------------------------------------------------- */
+  function makeResult(status, fields) {
+    return {
+      status:  status,
+      sender:  (fields && fields.sender  != null) ? fields.sender  : null,
+      chain:   (fields && fields.chain   != null) ? fields.chain   : null,
+      receipt: (fields && fields.receipt != null) ? fields.receipt : null,
+      error:   (fields && fields.error   != null) ? fields.error   : null,
+    };
+  }
+
+  /* ----------------------------------------------------------------
    * normalizeBlockNumber — coerce hex or decimal block number to integer
    * ---------------------------------------------------------------- */
   function normalizeBlockNumber(raw) {
@@ -307,10 +334,9 @@
     var chainId = request.chainId;
     var cfg = chainConfig(chainId);
 
-    if (!cfg) return Promise.resolve({
-      status: 'failed',
+    if (!cfg) return Promise.resolve(makeResult('failed', {
       error: { code: 'UNSUPPORTED_CHAIN', message: 'Unsupported chainId: ' + chainId },
-    });
+    }));
 
     if (action === 'prepare') {
       if (hooks.onWalletRequested) hooks.onWalletRequested();
@@ -320,43 +346,28 @@
           return getChainId().then(function (currentChainId) {
             if (currentChainId !== chainId) {
               if (hooks.onNetworkMismatch) hooks.onNetworkMismatch(currentChainId, chainId);
-              return {
-                status: 'wrong-network',
-                sender: address,
-                chainId: currentChainId,
-                expectedChainId: chainId,
-                chain: cfg,
-              };
+              return makeResult('wrong-network', { sender: address, chain: chainIdentity(cfg) });
             }
-            return {
-              status: 'ready-to-send',
-              sender: address,
-              chainId: currentChainId,
-              chain: cfg,
-            };
+            return makeResult('ready-to-send', { sender: address, chain: chainIdentity(cfg) });
           });
         })
         .catch(function (err) {
-          if (err && err.code === 'NO_WALLET') return { status: 'wallet-missing' };
-          if (err && err.code === 4001)        return { status: 'wallet-rejected' };
-          return { status: 'failed', error: { code: err && err.code, message: err && err.message } };
+          if (err && err.code === 'NO_WALLET') return makeResult('wallet-missing');
+          if (err && err.code === 4001)        return makeResult('wallet-rejected');
+          return makeResult('failed', { error: { code: err && err.code, message: err && err.message } });
         });
     }
 
     if (action === 'switch-network') {
       return switchChain(chainId)
         .then(function () {
-          return {
-            status: 'ready-to-send',
-            chainId: chainId,
-            chain: cfg,
-          };
+          return makeResult('ready-to-send', { chain: chainIdentity(cfg) });
         })
         .catch(function (err) {
           if (err && err.code === 4001) {
-            return { status: 'wrong-network', chainId: chainId, chain: cfg };
+            return makeResult('wrong-network', { chain: chainIdentity(cfg) });
           }
-          return { status: 'failed', error: { code: err && err.code, message: err && err.message } };
+          return makeResult('failed', { error: { code: err && err.code, message: err && err.message } });
         });
     }
 
@@ -375,7 +386,7 @@
           if (!receiptSucceeded(approvalReceipt)) {
             var approveErr = { code: 'APPROVE_FAILED', message: 'Approval transaction failed' };
             if (hooks.onFailed) hooks.onFailed(approveErr);
-            return { status: 'failed', error: approveErr };
+            return makeResult('failed', { sender: request.sender, error: approveErr });
           }
           if (hooks.onTransferRequested) hooks.onTransferRequested(approvalReceipt);
           return transferWithFee(chainId, request.sender, request.recipient, amountRaw)
@@ -385,16 +396,10 @@
                 if (!receiptSucceeded(transferReceipt)) {
                   var transferErr = { code: 'TRANSFER_FAILED', message: 'Transfer transaction failed' };
                   if (hooks.onFailed) hooks.onFailed(transferErr);
-                  return { status: 'failed', error: transferErr };
+                  return makeResult('failed', { sender: request.sender, error: transferErr });
                 }
                 var receipt = buildReceipt(request, approvalHash, transferHash, transferReceipt, cfg);
-                var confirmed = {
-                  status:       'confirmed',
-                  txHash:       transferHash,
-                  approvalHash: approvalHash,
-                  explorerUrl:  receipt.explorerUrl,
-                  receipt:      receipt,
-                };
+                var confirmed = makeResult('confirmed', { sender: request.sender, receipt: receipt });
                 if (hooks.onConfirmed) hooks.onConfirmed(confirmed);
                 return confirmed;
               });
@@ -402,10 +407,10 @@
         });
       })
       .catch(function (err) {
-        if (err && err.code === 4001) return { status: 'wallet-rejected' };
+        if (err && err.code === 4001) return makeResult('wallet-rejected', { sender: request.sender });
         var execErr = { code: err && err.code || 'EXECUTION_FAILED', message: err && err.message || 'Execution failed' };
         if (hooks.onFailed) hooks.onFailed(execErr);
-        return { status: 'failed', error: execErr };
+        return makeResult('failed', { sender: request.sender, error: execErr });
       });
   }
 
