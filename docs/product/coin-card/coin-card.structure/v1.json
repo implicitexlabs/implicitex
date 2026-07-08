@@ -39,6 +39,11 @@
     },
     {
       "from": "coinCard",
+      "to": "verifiedTransferIntent",
+      "relationship": "owns"
+    },
+    {
+      "from": "coinCard",
       "to": "receipt",
       "relationship": "owns"
     },
@@ -56,6 +61,11 @@
       "from": "transferPortal",
       "to": "coinCard",
       "relationship": "augments"
+    },
+    {
+      "from": "ixExecute",
+      "to": "executionFulfillment",
+      "relationship": "owns"
     }
   ],
   "regions": [
@@ -133,21 +143,21 @@
       "lifecycle": "transfer-intent-ready",
       "bodyPanel": "#ccBodyInput",
       "chipClass": "cc-card-chip--ready",
-      "dispatch": "IX_EXECUTE.connectWallet"
+      "targetDispatch": "IX_EXECUTE.executeTransfer"
     },
     {
       "id": "WRONG_NETWORK",
       "lifecycle": "transfer-intent-ready",
       "bodyPanel": "#ccBodyInput",
       "chipClass": "cc-card-chip--ready",
-      "dispatch": "IX_EXECUTE.switchChain"
+      "targetDispatch": "IX_EXECUTE.executeTransfer"
     },
     {
       "id": "READY_TO_SEND",
       "lifecycle": "transfer-intent-ready",
       "bodyPanel": "#ccBodyReview",
       "chipClass": "cc-card-chip--ready",
-      "dispatch": "startExecution"
+      "targetDispatch": "IX_EXECUTE.executeTransfer"
     },
     {
       "id": "CONNECTING",
@@ -218,7 +228,9 @@
   },
   "executionOwnership": {
     "implementationFile": "app-web/frontend/public/js/ix-execute.js",
-    "allowedFundMovingMethods": [
+    "targetRequestMethod": "IX_EXECUTE.executeTransfer",
+    "targetBoundaryRule": "Coin Card creates a verified transfer intent. IX_EXECUTE fulfills it.",
+    "ownedPrimitiveMethods": [
       "IX_EXECUTE.connectWallet",
       "IX_EXECUTE.switchChain",
       "IX_EXECUTE.approve",
@@ -235,7 +247,24 @@
   "migration": {
     "version": "v1",
     "previous": null,
-    "next": null,
-    "notes": "First structure contract extracted from the 2026-07-06 execution shell checkpoint."
+    "next": "execution-service-request-boundary",
+    "notes": "Contract target is a single IX_EXECUTE.executeTransfer request boundary. Runtime still orchestrates execution primitives in app-web/frontend/public/card/card.js; this is explicit migration debt, not the target architecture.",
+    "debt": [
+      {
+        "id": "coin-card-runtime-primitive-orchestration",
+        "status": "known-migration-debt",
+        "runtimeFile": "app-web/frontend/public/card/card.js",
+        "currentRuntimeDispatches": [
+          "IX_EXECUTE.connectWallet",
+          "IX_EXECUTE.switchChain",
+          "startExecution",
+          "IX_EXECUTE.approve",
+          "IX_EXECUTE.transferWithFee",
+          "IX_EXECUTE.waitForReceipt"
+        ],
+        "targetDispatch": "IX_EXECUTE.executeTransfer",
+        "rule": "Coin Card creates a verified transfer intent. Execution Service fulfills it."
+      }
+    ]
   }
 }

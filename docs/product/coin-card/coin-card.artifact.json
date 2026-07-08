@@ -46,6 +46,16 @@
         "role": "stateful-workflow-region"
       },
       {
+        "id": "verifiedTransferIntent",
+        "type": "responsibility",
+        "role": "coin-card-execution-request"
+      },
+      {
+        "id": "executionFulfillment",
+        "type": "responsibility",
+        "role": "execution-service-workflow"
+      },
+      {
         "id": "receipt",
         "type": "responsibility",
         "role": "terminal-evidence-region"
@@ -100,6 +110,11 @@
       },
       {
         "from": "coinCard",
+        "to": "verifiedTransferIntent",
+        "relationship": "owns"
+      },
+      {
+        "from": "coinCard",
         "to": "receipt",
         "relationship": "owns"
       },
@@ -121,6 +136,11 @@
       {
         "from": "ixExecute",
         "to": "wallet",
+        "relationship": "owns"
+      },
+      {
+        "from": "ixExecute",
+        "to": "executionFulfillment",
         "relationship": "owns"
       },
       {
@@ -218,6 +238,10 @@
       "rule": "Coin Card and Transfer Portal consume IX_EXECUTE independently; neither routes through the other."
     },
     {
+      "id": "execution-request-boundary",
+      "rule": "Coin Card creates a verified transfer intent. IX_EXECUTE fulfills it through a product-level execution request."
+    },
+    {
       "id": "single-execution-owner",
       "rule": "IX_EXECUTE owns wallet access, approval, transfer, receipt polling, and fee math."
     },
@@ -276,8 +300,9 @@
     "Every ownership edge points to one natural owner.",
     "No forbidden dependency edge is present in the implementation mapping.",
     "Coin Card owns identity, transaction, and receipt.",
+    "Coin Card owns verified transfer intent but not execution fulfillment.",
     "Transfer Portal augments Coin Card but does not route Coin Card payments.",
-    "IX_EXECUTE owns wallet, approval, transfer, receipt polling, and fee math.",
+    "IX_EXECUTE owns execution fulfillment, wallet, approval, transfer, receipt polling, and fee math.",
     "Identity regions are structural and persist across workflow states.",
     "Workflow regions may change across workflow states.",
     "A confirmed transfer terminates inside the Coin Card.",
