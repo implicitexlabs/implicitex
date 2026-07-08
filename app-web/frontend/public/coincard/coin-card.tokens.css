@@ -1,5 +1,5 @@
 /*
- * Generated from docs/product/coin-card.tokens.json.
+ * Generated from docs/product/coin-card/coin-card.tokens.json.
  * Do not edit by hand. Run: npm run build:coincard-tokens
  */
 :root {
@@ -192,13 +192,11 @@
   --cc-type-micro-letter-spacing-em: 0.09em;
   --cc-type-micro-size: 9px;
   --cc-type-micro-weight: 500;
-  --cc-claim-human-family: Inter;
-  --cc-claim-technical-family: IBM Plex Mono;
-  --cc-type-primary-claim-family: Inter;
+  --cc-type-primary-claim-family: Oxanium;
   --cc-type-primary-claim-line-height: 1.1;
   --cc-type-primary-claim-size: 18px;
   --cc-type-primary-claim-weight: 600;
-  --cc-type-recipient-name-family: Inter;
+  --cc-type-recipient-name-family: Oxanium;
   --cc-type-recipient-name-line-height: 1.15;
   --cc-type-recipient-name-size: 13px;
   --cc-type-recipient-name-weight: 500;
