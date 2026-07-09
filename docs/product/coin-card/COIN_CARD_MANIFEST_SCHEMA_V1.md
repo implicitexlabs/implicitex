@@ -91,10 +91,11 @@ Generate:
 ```bash
 python tools/coin-card-integrity/generate_manifest.py \
   --root app-web/frontend/public \
+  --asset js/ix-execution.js \
+  --asset card/coin-card-trusted-keys.js \
   --asset card/coin-card-verification.js \
   --asset card/card.js \
   --asset card/card.css \
-  --asset js/ix-execution.js \
   --out /tmp/coin-card-manifest.json \
   --card-id cc_demo_implicitex \
   --recipient 0x0000000000000000000000000000000000000000 \

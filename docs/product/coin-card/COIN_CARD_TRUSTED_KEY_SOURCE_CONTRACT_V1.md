@@ -12,12 +12,16 @@ A public key is trusted only if the trust source is itself protected.
 
 ## Allowed v1 Source
 
-v1 should use a protected runtime allowlist embedded in the Coin Card runtime
-bundle, exposed as:
+v1 should use a protected runtime allowlist bootstrap module
+(`card/coin-card-trusted-keys.js`) embedded in the Coin Card runtime bundle.
+The bootstrap module initializes the allowlist and exposes it as:
 
 ```text
 window.IX_COIN_CARD_TRUSTED_PUBLIC_KEYS
 ```
+
+The bootstrap module itself should be part of the protected asset set so the
+allowlist cannot be replaced or injected by an untrusted host.
 
 This object must be:
 

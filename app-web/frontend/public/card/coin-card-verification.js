@@ -30,10 +30,11 @@
     'manifestHash',
   ]);
   var REQUIRED_ASSET_PATHS = Object.freeze([
+    'js/ix-execution.js',
+    'card/coin-card-trusted-keys.js',
     'card/coin-card-verification.js',
     'card/card.js',
     'card/card.css',
-    'js/ix-execution.js',
   ]);
   var SUPPORTED_SIGNATURE_MODES = Object.freeze({
     'signed-p256-v1': true,

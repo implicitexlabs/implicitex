@@ -7,15 +7,18 @@ const vm = require('node:vm');
 
 const repoRoot = path.resolve(__dirname, '../../..');
 const verificationPath = path.join(repoRoot, 'app-web/frontend/public/card/coin-card-verification.js');
+const trustedKeysPath = path.join(repoRoot, 'app-web/frontend/public/card/coin-card-trusted-keys.js');
 const cardPath = path.join(repoRoot, 'app-web/frontend/public/card/card.js');
 const verificationSource = fs.readFileSync(verificationPath, 'utf8');
+const trustedKeysSource = fs.readFileSync(trustedKeysPath, 'utf8');
 const cardSource = fs.readFileSync(cardPath, 'utf8');
 
 const REQUIRED_ASSET_BODIES = {
+  'js/ix-execution.js': 'ix execution asset body',
+  'card/coin-card-trusted-keys.js': 'coin-card-trusted-keys asset body',
   'card/coin-card-verification.js': 'coin-card-verification asset body',
   'card/card.js': 'card runtime asset body',
   'card/card.css': 'card stylesheet asset body',
-  'js/ix-execution.js': 'ix execution asset body',
 };
 
 function sha256Hex(value) {
@@ -144,10 +147,11 @@ const expectedStateCopy = {
   },
 };
 const requiredAssetPaths = [
+  'js/ix-execution.js',
+  'card/coin-card-trusted-keys.js',
   'card/coin-card-verification.js',
   'card/card.js',
   'card/card.css',
-  'js/ix-execution.js',
 ];
 
 function makeElement(id) {
@@ -408,6 +412,19 @@ test('unknown verification state copy normalizes to VERIFICATION_UNAVAILABLE', (
     verification.getStateCopy('BROKEN').primaryMessage,
     expectedStateCopy.VERIFICATION_UNAVAILABLE.primaryMessage,
   );
+});
+
+test('trusted key source bootstrap initializes a frozen empty allowlist', () => {
+  const context = {
+    Object,
+    window: {},
+  };
+  context.globalThis = context;
+  vm.runInNewContext(trustedKeysSource, context, { filename: trustedKeysPath });
+
+  assert.equal(context.window.IX_COIN_CARD_TRUSTED_PUBLIC_KEYS && typeof context.window.IX_COIN_CARD_TRUSTED_PUBLIC_KEYS, 'object');
+  assert.equal(Object.isFrozen(context.window.IX_COIN_CARD_TRUSTED_PUBLIC_KEYS), true);
+  assert.deepEqual(Object.keys(context.window.IX_COIN_CARD_TRUSTED_PUBLIC_KEYS), []);
 });
 
 test('loadIntegrityManifest exposes metadata without approving execution', async () => {
@@ -938,7 +955,7 @@ test('loadIntegrityManifest missing required protected asset becomes VERIFICATIO
   const result = await verification.loadIntegrityManifest('coin-card-manifest.json', async () => ({
     ok: true,
     json: async () => validIntegrityManifest({
-      assets: manifest.assets.filter((asset) => asset.path !== 'card/card.js'),
+      assets: manifest.assets.filter((asset) => asset.path !== 'card/coin-card-trusted-keys.js'),
     }),
   }));
 
@@ -946,7 +963,7 @@ test('loadIntegrityManifest missing required protected asset becomes VERIFICATIO
   assert.equal(result.integrityManifest, null);
   assert.equal(result.error, 'integrity-manifest-asset-policy-mismatch');
   assert.deepEqual(Array.from(result.requiredAssetPaths), requiredAssetPaths);
-  assert(!result.assetPaths.includes('card/card.js'));
+  assert(!result.assetPaths.includes('card/coin-card-trusted-keys.js'));
 });
 
 test('loadIntegrityManifest extra protected asset becomes VERIFICATION_UNAVAILABLE', async () => {

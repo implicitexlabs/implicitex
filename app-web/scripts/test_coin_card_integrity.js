@@ -12,10 +12,11 @@ const verifier = path.join(toolsRoot, 'verify_manifest.py');
 const cardIndex = path.join(publicRoot, 'card/index.html');
 const manifestFilename = 'coin-card-manifest.json';
 const protectedAssets = [
+  'js/ix-execution.js',
+  'card/coin-card-trusted-keys.js',
   'card/coin-card-verification.js',
   'card/card.js',
   'card/card.css',
-  'js/ix-execution.js',
 ];
 
 function run(command, args, options = {}) {
@@ -92,13 +93,15 @@ function main() {
     '--root',
     publicRoot,
     '--asset',
+    'js/ix-execution.js',
+    '--asset',
+    'card/coin-card-trusted-keys.js',
+    '--asset',
     'card/coin-card-verification.js',
     '--asset',
     'card/card.js',
     '--asset',
     'card/card.css',
-    '--asset',
-    'js/ix-execution.js',
     '--out',
     manifestPath,
     '--card-id',
@@ -119,7 +122,7 @@ function main() {
   assertGeneratedPackageShape(manifestPath);
 
   copyProtectedAssets(tamperRoot);
-  fs.appendFileSync(path.join(tamperRoot, 'card/card.css'), '\n/* tamper */\n', 'utf8');
+  fs.appendFileSync(path.join(tamperRoot, 'card/coin-card-trusted-keys.js'), '\n/* tamper */\n', 'utf8');
 
   const tamperResult = run('python', [
     verifier,
@@ -129,8 +132,8 @@ function main() {
   ]);
 
   assert.notEqual(tamperResult.status, 0, 'tampered manifest verification must fail');
-  assert.match(tamperResult.stderr, /asset hash mismatch for card\/card\.css/);
-  assert.match(tamperResult.stderr, /asset size mismatch for card\/card\.css/);
+  assert.match(tamperResult.stderr, /asset hash mismatch for card\/coin-card-trusted-keys\.js/);
+  assert.match(tamperResult.stderr, /asset size mismatch for card\/coin-card-trusted-keys\.js/);
 
   console.log('OK: Coin Card integrity proof tooling');
 }
