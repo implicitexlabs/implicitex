@@ -652,10 +652,11 @@ test('evaluateSignaturePolicy invalid supported signature becomes INTEGRITY_FAIL
     crypto: webcrypto,
     atob: nodeAtob,
     btoa: nodeBtoa,
-    trustedPublicKeys: {
+    trustedPublicKeys: Object.freeze({
       'coin-card-test-key': publicKey,
-    },
+    }),
   });
+  assert.equal(verification.isTrustedKeySourceAvailable(), true);
   const manifest = validIntegrityManifest({
     signature: {
       mode: 'signed-p256-v1',
@@ -709,7 +710,7 @@ test('evaluateSignaturePolicy supported valid signature with unknown key remains
   assert.equal(result.keyId, 'missing-key');
 });
 
-test('evaluateSignaturePolicy supported valid signature with known key can verify', async () => {
+test('evaluateSignaturePolicy mutable trusted key source stays unavailable', async () => {
   const keyPair = await webcrypto.subtle.generateKey(
     { name: 'ECDSA', namedCurve: 'P-256' },
     true,
@@ -724,6 +725,51 @@ test('evaluateSignaturePolicy supported valid signature with known key can verif
       'coin-card-test-key': publicKey,
     },
   });
+  const manifest = validIntegrityManifest({
+    signature: {
+      mode: 'signed-p256-v1',
+      algorithm: 'ECDSA',
+      keyId: 'coin-card-test-key',
+      value: '',
+    },
+  });
+  const canonicalPayload = verification.canonicalizeIntegrityManifestPayload(manifest);
+  const payloadBytes = new TextEncoder().encode(canonicalPayload);
+  const signatureBytes = await webcrypto.subtle.sign(
+    { name: 'ECDSA', hash: { name: 'SHA-256' } },
+    keyPair.privateKey,
+    payloadBytes,
+  );
+  manifest.signature.value = toBase64Url(signatureBytes);
+
+  const result = await verification.evaluateSignaturePolicy(manifest, {
+    state: verification.STATES.ASSET_HASHES_PASSED,
+    integrityManifest: manifest,
+    metadata: { assetIntegrityStatus: 'passed' },
+    error: null,
+  });
+
+  assert.equal(verification.isTrustedKeySourceAvailable(), false);
+  assert.equal(result.state, verification.STATES.VERIFICATION_UNAVAILABLE);
+  assert.equal(result.error, 'integrity-manifest-public-key-unavailable');
+});
+
+test('evaluateSignaturePolicy supported valid signature with known key can verify', async () => {
+  const keyPair = await webcrypto.subtle.generateKey(
+    { name: 'ECDSA', namedCurve: 'P-256' },
+    true,
+    ['sign', 'verify'],
+  );
+  const publicKey = await webcrypto.subtle.exportKey('jwk', keyPair.publicKey);
+  const verification = loadVerification({
+    crypto: webcrypto,
+    atob: nodeAtob,
+    btoa: nodeBtoa,
+    trustedPublicKeys: Object.freeze({
+      'coin-card-test-key': publicKey,
+    }),
+  });
+  assert.equal(verification.isTrustedKeySourceAvailable(), true);
   const manifest = validIntegrityManifest({
     signature: {
       mode: 'signed-p256-v1',

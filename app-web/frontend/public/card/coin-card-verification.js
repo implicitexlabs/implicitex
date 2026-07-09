@@ -169,10 +169,17 @@
     if (!keyId) return null;
 
     var trustedKeys = window.IX_COIN_CARD_TRUSTED_PUBLIC_KEYS;
-    if (!trustedKeys || typeof trustedKeys !== 'object') return null;
+    if (!isTrustedKeySourceAvailable()) return null;
 
     if (!Object.prototype.hasOwnProperty.call(trustedKeys, keyId)) return null;
     return trustedKeys[keyId] || null;
+  }
+
+  function isTrustedKeySourceAvailable() {
+    var trustedKeys = window.IX_COIN_CARD_TRUSTED_PUBLIC_KEYS;
+    if (!trustedKeys || typeof trustedKeys !== 'object') return false;
+    if (typeof Object.isFrozen !== 'function') return false;
+    return Object.isFrozen(trustedKeys);
   }
 
   function getCryptoSubtleForVerify() {
@@ -665,6 +672,7 @@
     getRequiredAssetPaths: getRequiredAssetPaths,
     hasRequiredAssets: hasRequiredAssets,
     canonicalizeIntegrityManifestPayload: canonicalizeIntegrityManifestPayload,
+    isTrustedKeySourceAvailable: isTrustedKeySourceAvailable,
     getTrustedPublicKey: getTrustedPublicKey,
     readIntegrityManifestPointer: readIntegrityManifestPointer,
     readManifestPointer: readIntegrityManifestPointer,
