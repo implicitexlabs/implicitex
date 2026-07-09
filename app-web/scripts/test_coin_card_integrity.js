@@ -9,6 +9,8 @@ const publicRoot = path.join(repoRoot, 'app-web/frontend/public');
 const toolsRoot = path.join(repoRoot, 'tools/coin-card-integrity');
 const generator = path.join(toolsRoot, 'generate_manifest.py');
 const verifier = path.join(toolsRoot, 'verify_manifest.py');
+const cardIndex = path.join(publicRoot, 'card/index.html');
+const manifestFilename = 'coin-card-manifest.json';
 const protectedAssets = [
   'card/coin-card-verification.js',
   'card/card.js',
@@ -61,11 +63,28 @@ function copyProtectedAssets(targetRoot) {
   }
 }
 
+function readRuntimeManifestPointer() {
+  const html = fs.readFileSync(cardIndex, 'utf8');
+  const match = html.match(/\sdata-ix-manifest="([^"]+)"/);
+  assert(match, 'Coin Card runtime must declare data-ix-manifest');
+  return match[1];
+}
+
+function assertGeneratedPackageShape(manifestPath) {
+  assert.equal(path.basename(manifestPath), manifestFilename);
+  assert.equal(readRuntimeManifestPointer(), manifestFilename);
+  assert(fs.existsSync(manifestPath), 'generated manifest must exist at package root');
+
+  const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+  const declaredAssets = manifest.assets.map((asset) => asset.path).sort();
+  assert.deepEqual(declaredAssets, [...protectedAssets].sort());
+}
+
 function main() {
   compilePython([generator, verifier]);
 
   const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'coin-card-integrity-'));
-  const manifestPath = path.join(tempRoot, 'coin-card-manifest.json');
+  const manifestPath = path.join(tempRoot, manifestFilename);
   const tamperRoot = path.join(tempRoot, 'tampered-public');
 
   requireSuccess('manifest generation', 'python', [
@@ -96,6 +115,8 @@ function main() {
     publicRoot,
     manifestPath,
   ]);
+
+  assertGeneratedPackageShape(manifestPath);
 
   copyProtectedAssets(tamperRoot);
   fs.appendFileSync(path.join(tamperRoot, 'card/card.css'), '\n/* tamper */\n', 'utf8');

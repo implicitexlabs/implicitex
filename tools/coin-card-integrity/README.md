@@ -62,8 +62,10 @@ From `app-web`:
 npm run test:coin-card-integrity
 ```
 
-This check compiles the Python files, generates and verifies a manifest against
-real Coin Card assets, then copies those assets to a temporary directory,
+This check compiles the Python files, generates and verifies
+`coin-card-manifest.json` against real Coin Card assets, confirms the generated
+manifest filename matches the runtime `data-ix-manifest` pointer, confirms the
+v1 protected asset list, then copies those assets to a temporary directory,
 modifies `card/card.css`, and requires verification to fail.
 
 ## `unsigned-dev`
