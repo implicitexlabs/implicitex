@@ -1,7 +1,7 @@
-/* coin-card-verification.js — Coin Card manifest verification state scaffold
+/* coin-card-verification.js — Coin Card Integrity Manifest verification state scaffold
  *
  * This is not browser-side cryptographic verification. It defines the runtime
- * state model and execution gate that future manifest verification must satisfy.
+ * state model and execution gate that future Integrity Manifest verification must satisfy.
  */
 
 (function () {
@@ -40,7 +40,7 @@
     VERIFIED: Object.freeze({
       statusLabel: 'Verified',
       primaryMessage: 'This Coin Card matches the issued ImplicitEx package.',
-      secondaryMessage: 'The protected assets and manifest evidence are valid for this card.',
+      secondaryMessage: 'The protected assets and Integrity Manifest evidence are valid for this card.',
       actionLabel: 'Continue',
     }),
     INTEGRITY_FAILED: Object.freeze({
@@ -58,7 +58,7 @@
     VERIFICATION_UNAVAILABLE: Object.freeze({
       statusLabel: 'Verification unavailable',
       primaryMessage: 'This Coin Card cannot currently be verified.',
-      secondaryMessage: 'The manifest, registry, protected files, or signature evidence could not be checked. Transfers are disabled.',
+      secondaryMessage: 'The Integrity Manifest, registry, protected files, or signature evidence could not be checked. Transfers are disabled.',
       actionLabel: 'Transfers disabled',
     }),
   });
@@ -75,12 +75,13 @@
     return normalizeState(state) === STATES.VERIFIED;
   }
 
-  function readManifestPointer(root) {
+  function readIntegrityManifestPointer(root) {
     if (!root || typeof root.getAttribute !== 'function') {
       return {
         state: STATES.VERIFICATION_UNAVAILABLE,
+        integrityManifestUrl: null,
         manifestUrl: null,
-        error: 'manifest-root-unavailable',
+        error: 'integrity-manifest-root-unavailable',
       };
     }
 
@@ -89,13 +90,15 @@
     if (!manifestUrl) {
       return {
         state: STATES.VERIFICATION_UNAVAILABLE,
+        integrityManifestUrl: null,
         manifestUrl: null,
-        error: 'manifest-pointer-missing',
+        error: 'integrity-manifest-pointer-missing',
       };
     }
 
     return {
       state: null,
+      integrityManifestUrl: manifestUrl,
       manifestUrl: manifestUrl,
       error: null,
     };
@@ -104,7 +107,7 @@
   function unavailable(error, extra) {
     var result = {
       state: STATES.VERIFICATION_UNAVAILABLE,
-      manifest: null,
+      integrityManifest: null,
       metadata: null,
       error: error,
     };
@@ -116,64 +119,64 @@
     return result;
   }
 
-  function buildManifestMetadata(manifest) {
+  function buildIntegrityManifestMetadata(integrityManifest) {
     return {
-      schemaVersion: manifest.schemaVersion,
-      cardId: manifest.cardId,
-      coinCardVersion: manifest.coinCardVersion,
-      recipient: manifest.recipient,
-      network: manifest.network,
-      registryStatus: manifest.registryStatus,
-      layoutVersion: manifest.layoutVersion,
-      buildVersion: manifest.buildVersion,
-      manifestHash: manifest.manifestHash,
-      signatureMode: manifest.signature && manifest.signature.mode || null,
-      assetPaths: Array.isArray(manifest.assets)
-        ? manifest.assets.map(function (asset) { return asset && asset.path; })
+      schemaVersion: integrityManifest.schemaVersion,
+      cardId: integrityManifest.cardId,
+      coinCardVersion: integrityManifest.coinCardVersion,
+      recipient: integrityManifest.recipient,
+      network: integrityManifest.network,
+      registryStatus: integrityManifest.registryStatus,
+      layoutVersion: integrityManifest.layoutVersion,
+      buildVersion: integrityManifest.buildVersion,
+      manifestHash: integrityManifest.manifestHash,
+      signatureMode: integrityManifest.signature && integrityManifest.signature.mode || null,
+      assetPaths: Array.isArray(integrityManifest.assets)
+        ? integrityManifest.assets.map(function (asset) { return asset && asset.path; })
         : [],
     };
   }
 
-  function normalizeLoadedManifest(manifest) {
-    if (!manifest || typeof manifest !== 'object' || Array.isArray(manifest)) {
-      return unavailable('manifest-invalid');
+  function normalizeLoadedIntegrityManifest(integrityManifest) {
+    if (!integrityManifest || typeof integrityManifest !== 'object' || Array.isArray(integrityManifest)) {
+      return unavailable('integrity-manifest-invalid');
     }
-    if (manifest.schemaVersion !== MANIFEST_SCHEMA_VERSION) {
-      return unavailable('manifest-schema-unsupported');
+    if (integrityManifest.schemaVersion !== MANIFEST_SCHEMA_VERSION) {
+      return unavailable('integrity-manifest-schema-unsupported');
     }
 
     for (var i = 0; i < REQUIRED_MANIFEST_FIELDS.length; i++) {
       var field = REQUIRED_MANIFEST_FIELDS[i];
-      if (!manifest[field]) {
-        return unavailable('manifest-missing-required-field', { field: field });
+      if (!integrityManifest[field]) {
+        return unavailable('integrity-manifest-missing-required-field', { field: field });
       }
     }
-    if (!Array.isArray(manifest.assets) || !manifest.assets.length) {
-      return unavailable('manifest-missing-required-field', { field: 'assets' });
+    if (!Array.isArray(integrityManifest.assets) || !integrityManifest.assets.length) {
+      return unavailable('integrity-manifest-missing-required-field', { field: 'assets' });
     }
-    if (!manifest.signature || typeof manifest.signature !== 'object') {
-      return unavailable('manifest-missing-required-field', { field: 'signature' });
+    if (!integrityManifest.signature || typeof integrityManifest.signature !== 'object') {
+      return unavailable('integrity-manifest-missing-required-field', { field: 'signature' });
     }
 
     return {
       state: STATES.VERIFICATION_UNAVAILABLE,
-      manifest: manifest,
-      metadata: buildManifestMetadata(manifest),
+      integrityManifest: integrityManifest,
+      metadata: buildIntegrityManifestMetadata(integrityManifest),
       error: null,
     };
   }
 
-  function loadManifest(pointer, fetchImpl) {
+  function loadIntegrityManifest(pointer, fetchImpl) {
     var manifestUrl = typeof pointer === 'string'
       ? pointer.trim()
-      : pointer && pointer.manifestUrl;
+      : pointer && (pointer.integrityManifestUrl || pointer.manifestUrl);
     if (!manifestUrl) {
-      return Promise.resolve(unavailable('manifest-pointer-missing'));
+      return Promise.resolve(unavailable('integrity-manifest-pointer-missing'));
     }
 
     var request = fetchImpl || window.fetch;
     if (typeof request !== 'function') {
-      return Promise.resolve(unavailable('manifest-fetch-unavailable'));
+      return Promise.resolve(unavailable('integrity-manifest-fetch-unavailable'));
     }
 
     return Promise.resolve()
@@ -182,19 +185,19 @@
       })
       .then(function (response) {
         if (!response || response.ok === false) {
-          return unavailable('manifest-fetch-failed');
+          return unavailable('integrity-manifest-fetch-failed');
         }
         if (typeof response.json !== 'function') {
-          return unavailable('manifest-response-invalid');
+          return unavailable('integrity-manifest-response-invalid');
         }
         return response.json()
-          .then(function (manifest) {
-            return normalizeLoadedManifest(manifest);
+          .then(function (integrityManifest) {
+            return normalizeLoadedIntegrityManifest(integrityManifest);
           }, function () {
-            return unavailable('manifest-parse-failed');
+            return unavailable('integrity-manifest-parse-failed');
           });
       }, function () {
-        return unavailable('manifest-fetch-failed');
+        return unavailable('integrity-manifest-fetch-failed');
       });
   }
 
@@ -209,8 +212,9 @@
     normalizeState: normalizeState,
     getStateCopy: getStateCopy,
     canExecuteTransfer: canExecuteTransfer,
-    readManifestPointer: readManifestPointer,
-    loadManifest: loadManifest,
+    readIntegrityManifestPointer: readIntegrityManifestPointer,
+    readManifestPointer: readIntegrityManifestPointer,
+    loadIntegrityManifest: loadIntegrityManifest,
     requireExecutable: requireExecutable,
   });
 })();

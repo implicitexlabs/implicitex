@@ -2,9 +2,20 @@
 
 Status: contract proposal
 
-Purpose: define how a Coin Card runtime is allowed to use manifest integrity
+Purpose: define how a Coin Card runtime is allowed to use Integrity Manifest
 evidence. This document does not implement runtime verification. It defines the
 product boundary that future runtime verification must satisfy.
+
+## Terminology
+
+`coin-card-manifest.json` is the Coin Card **Integrity Manifest**.
+
+`/registry/coincards/<id>.json` is the **Coin Card Registry Record**.
+
+The Integrity Manifest and Registry Record are different inputs. The Registry
+Record may describe recipient, display, network, token, and card status. The
+Integrity Manifest describes package integrity evidence. Runtime code must not
+use the Registry Record as a substitute for Integrity Manifest verification.
 
 ## Core Rule
 
@@ -18,13 +29,13 @@ that proof.
 
 ## Manifest Placement
 
-For v1, a generated Coin Card package should publish its manifest at:
+For v1, a generated Coin Card package should publish its Integrity Manifest at:
 
 ```text
 coin-card-manifest.json
 ```
 
-The manifest path is relative to the Coin Card package root.
+The Integrity Manifest path is relative to the Coin Card package root.
 
 Example package shape:
 
@@ -38,15 +49,15 @@ coin-card-package/
     ix-execution.js
 ```
 
-This placement keeps the manifest portable with the card package and avoids
+This placement keeps the Integrity Manifest portable with the card package and avoids
 binding v1 verification to a specific host, CDN, or application route.
 
 ## Manifest Reference
 
-The Coin Card runtime must be able to locate the manifest before enabling
+The Coin Card runtime must be able to locate the Integrity Manifest before enabling
 transfer execution.
 
-The preferred v1 reference is a declarative manifest pointer on the card root:
+The preferred v1 reference is a declarative Integrity Manifest pointer on the card root:
 
 ```html
 <div

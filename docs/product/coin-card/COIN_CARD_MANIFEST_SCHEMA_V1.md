@@ -2,7 +2,21 @@
 
 Status: proof schema
 
-Purpose: define the first deterministic manifest format for Coin Card integrity tooling. This schema is intentionally boring: it proves asset hashing and manifest verification before production signing is introduced.
+Purpose: define the first deterministic Integrity Manifest format for Coin Card integrity tooling. This schema is intentionally boring: it proves asset hashing and Integrity Manifest verification before production signing is introduced.
+
+## Terminology
+
+`coin-card-manifest.json` is the Coin Card **Integrity Manifest**. It describes
+the issued package, protected assets, asset hashes, signature metadata, and
+manifest hash.
+
+`/registry/coincards/<id>.json` is the **Coin Card Registry Record**. It carries
+runtime card facts such as recipient, display name, chain, token, card status,
+and other registry-backed configuration.
+
+Do not treat a Registry Record as cryptographic package integrity evidence.
+Do not treat a loaded Integrity Manifest as execution permission until
+verification marks the card `VERIFIED`.
 
 ## Boundary
 
@@ -12,7 +26,7 @@ The Python integrity layer answers:
 
 It does not execute wallet actions, submit transactions, poll receipts, or replace `IX_EXECUTION`.
 
-## Manifest Object
+## Integrity Manifest Object
 
 Required fields:
 

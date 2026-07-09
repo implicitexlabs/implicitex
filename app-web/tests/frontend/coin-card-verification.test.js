@@ -122,24 +122,30 @@ function loadCoinCard(options = {}) {
   ];
   ids.forEach((id) => elements.set(id, makeElement(id)));
   const frame = elements.get('ccFrame');
-  if (options.manifestPointer !== null) {
-    frame.setAttribute('data-ix-manifest', options.manifestPointer || 'coin-card-manifest.json');
+  if (options.integrityManifestPointer !== null) {
+    frame.setAttribute('data-ix-manifest', options.integrityManifestPointer || 'coin-card-manifest.json');
   }
 
   const executionCalls = [];
   const verification = loadVerification();
   const verificationCalls = [];
   const wrappedVerification = Object.assign({}, verification, {
-    readManifestPointer(root) {
-      verificationCalls.push({ type: 'readManifestPointer', root });
+    readIntegrityManifestPointer(root) {
+      verificationCalls.push({ type: 'readIntegrityManifestPointer', root });
       if (!root.getAttribute('data-ix-manifest')) {
         return {
           state: verification.STATES.VERIFICATION_UNAVAILABLE,
+          integrityManifestUrl: null,
           manifestUrl: null,
-          error: 'manifest-pointer-missing',
+          error: 'integrity-manifest-pointer-missing',
         };
       }
-      return { state: null, manifestUrl: 'coin-card-manifest.json', error: null };
+      return {
+        state: null,
+        integrityManifestUrl: 'coin-card-manifest.json',
+        manifestUrl: 'coin-card-manifest.json',
+        error: null,
+      };
     },
     canExecuteTransfer(state) {
       verificationCalls.push({ type: 'canExecuteTransfer', state });
@@ -211,7 +217,7 @@ function loadCoinCard(options = {}) {
         json: () => Promise.resolve({
           schema: 'implicitex.coincard.v1',
           cardId: 'demo-card',
-          status: options.manifestStatus || 'active',
+          status: options.registryRecordStatus || 'active',
           recipient: '0x2222222222222222222222222222222222222222',
           chainId: 137,
           token: 'USDC',
@@ -256,17 +262,18 @@ test('VERIFICATION_UNAVAILABLE blocks execution', () => {
   assert.equal(verification.canExecuteTransfer(verification.STATES.VERIFICATION_UNAVAILABLE), false);
 });
 
-test('missing manifest pointer becomes VERIFICATION_UNAVAILABLE', () => {
+test('missing Integrity Manifest pointer becomes VERIFICATION_UNAVAILABLE', () => {
   const verification = loadVerification();
-  const result = verification.readManifestPointer({
+  const result = verification.readIntegrityManifestPointer({
     getAttribute() {
       return null;
     },
   });
 
   assert.equal(result.state, verification.STATES.VERIFICATION_UNAVAILABLE);
+  assert.equal(result.integrityManifestUrl, null);
   assert.equal(result.manifestUrl, null);
-  assert.equal(result.error, 'manifest-pointer-missing');
+  assert.equal(result.error, 'integrity-manifest-pointer-missing');
 });
 
 test('every known verification state returns controlled copy', () => {
@@ -290,9 +297,9 @@ test('unknown verification state copy normalizes to VERIFICATION_UNAVAILABLE', (
   );
 });
 
-test('loadManifest exposes metadata without approving execution', async () => {
+test('loadIntegrityManifest exposes metadata without approving execution', async () => {
   const verification = loadVerification();
-  const result = await verification.loadManifest('coin-card-manifest.json', async (url) => ({
+  const result = await verification.loadIntegrityManifest('coin-card-manifest.json', async (url) => ({
     ok: true,
     url,
     json: async () => validIntegrityManifest(),
@@ -312,9 +319,9 @@ test('loadManifest exposes metadata without approving execution', async () => {
   ]);
 });
 
-test('loadManifest parse failure becomes VERIFICATION_UNAVAILABLE', async () => {
+test('loadIntegrityManifest parse failure becomes VERIFICATION_UNAVAILABLE', async () => {
   const verification = loadVerification();
-  const result = await verification.loadManifest('coin-card-manifest.json', async () => ({
+  const result = await verification.loadIntegrityManifest('coin-card-manifest.json', async () => ({
     ok: true,
     json: async () => {
       throw new Error('bad json');
@@ -322,37 +329,37 @@ test('loadManifest parse failure becomes VERIFICATION_UNAVAILABLE', async () => 
   }));
 
   assert.equal(result.state, verification.STATES.VERIFICATION_UNAVAILABLE);
-  assert.equal(result.manifest, null);
+  assert.equal(result.integrityManifest, null);
   assert.equal(result.metadata, null);
-  assert.equal(result.error, 'manifest-parse-failed');
+  assert.equal(result.error, 'integrity-manifest-parse-failed');
 });
 
-test('loadManifest missing required field becomes VERIFICATION_UNAVAILABLE', async () => {
+test('loadIntegrityManifest missing required field becomes VERIFICATION_UNAVAILABLE', async () => {
   const verification = loadVerification();
-  const manifest = validIntegrityManifest();
-  delete manifest.manifestHash;
+  const integrityManifest = validIntegrityManifest();
+  delete integrityManifest.manifestHash;
 
-  const result = await verification.loadManifest('coin-card-manifest.json', async () => ({
+  const result = await verification.loadIntegrityManifest('coin-card-manifest.json', async () => ({
     ok: true,
-    json: async () => manifest,
+    json: async () => integrityManifest,
   }));
 
   assert.equal(result.state, verification.STATES.VERIFICATION_UNAVAILABLE);
-  assert.equal(result.error, 'manifest-missing-required-field');
+  assert.equal(result.error, 'integrity-manifest-missing-required-field');
   assert.equal(result.field, 'manifestHash');
 });
 
-test('loadManifest unsupported schema becomes VERIFICATION_UNAVAILABLE', async () => {
+test('loadIntegrityManifest unsupported schema becomes VERIFICATION_UNAVAILABLE', async () => {
   const verification = loadVerification();
-  const result = await verification.loadManifest('coin-card-manifest.json', async () => ({
+  const result = await verification.loadIntegrityManifest('coin-card-manifest.json', async () => ({
     ok: true,
     json: async () => validIntegrityManifest({ schemaVersion: 'coin-card-manifest.v2' }),
   }));
 
   assert.equal(result.state, verification.STATES.VERIFICATION_UNAVAILABLE);
-  assert.equal(result.manifest, null);
+  assert.equal(result.integrityManifest, null);
   assert.equal(result.metadata, null);
-  assert.equal(result.error, 'manifest-schema-unsupported');
+  assert.equal(result.error, 'integrity-manifest-schema-unsupported');
 });
 
 test('non-VERIFIED transfer attempts render the correct disabled copy', async () => {

@@ -50,3 +50,10 @@ Python integrity tooling proves package integrity.
 Coin Card runtime gates execution on verification state.
 IX_EXECUTION performs wallet and transaction execution.
 ```
+
+Terminology:
+
+```text
+Integrity Manifest: coin-card-manifest.json package integrity evidence.
+Registry Record: /registry/coincards/<id>.json runtime card configuration.
+```

@@ -2,11 +2,11 @@
  *
  * States:
  *   BOOT                  → initializing; reading card ID from URL
- *   MANIFEST_LOADING      → fetching /registry/coincards/<id>.json
- *   VERIFIED              → manifest valid; input panel shown
+ *   MANIFEST_LOADING      → fetching Coin Card Registry Record
+ *   VERIFIED              → registry record valid; input panel shown
  *   AMOUNT_READY          → valid amount entered; fee calculated
  *   TRANSFER_INTENT_READY → intent ready; chip --ready
- *   REVOKED               → manifest revoked; transfer blocked
+ *   REVOKED               → registry record revoked; transfer blocked
  *   CONNECTING            → wallet connect in progress
  *   WRONG_NETWORK         → connected but on wrong chain
  *   SWITCHING_NETWORK     → chain switch in progress
@@ -15,7 +15,7 @@
  *   EXECUTE_PENDING       → transferWithFee submitted
  *   CONFIRMED             → transfer confirmed on-chain
  *   TX_FAILED             → execution error (card visible; error panel shown)
- *   ERROR                 → manifest-level error (card hidden; frame error shown)
+ *   ERROR                 → registry-record-level error (card hidden; frame error shown)
  *
  * Body panels (CSS data-state rules control visibility):
  *   #ccBodyInput     — amount entry
@@ -70,14 +70,14 @@
   var state = {
     current:             'BOOT',
     cardId:              null,
-    manifest:            null,
+    registryRecord:      null,
     trustedParentOrigin: null,
     amount:              null,
     fee:                 null,
     total:               null,
     intent:              null,
     sender:              null,
-    manifestVerificationState: 'VERIFICATION_UNAVAILABLE',
+    integrityManifestVerificationState: 'VERIFICATION_UNAVAILABLE',
   };
 
   var frame = document.getElementById('ccFrame');
@@ -107,13 +107,13 @@
    * PostMessage bridge
    * ---------------------------------------------------------------- */
   function isAllowedParentOrigin(origin) {
-    var allowed = (state.manifest && state.manifest.allowedParentOrigins) || [];
+    var allowed = (state.registryRecord && state.registryRecord.allowedParentOrigins) || [];
     return allowed.includes('*') || allowed.includes(origin);
   }
 
   function emit(type, payload) {
     if (!window.parent || window.parent === window) return;
-    var allowed = (state.manifest && state.manifest.allowedParentOrigins) || [];
+    var allowed = (state.registryRecord && state.registryRecord.allowedParentOrigins) || [];
     var targetOrigin = state.trustedParentOrigin
       || (allowed.includes('*') ? '*' : '*');
     window.parent.postMessage({
@@ -127,7 +127,7 @@
   window.addEventListener('message', function (event) {
     var msg = event.data;
     if (!msg || msg.source !== 'coincard-host') return;
-    if (!state.manifest) return;
+    if (!state.registryRecord) return;
     if (!isAllowedParentOrigin(event.origin)) return;
     if (!state.trustedParentOrigin) state.trustedParentOrigin = event.origin;
   });
@@ -163,7 +163,7 @@
 
   function renderVerificationBlocked() {
     var copy = verification && verification.getStateCopy
-      ? verification.getStateCopy(state.manifestVerificationState)
+      ? verification.getStateCopy(state.integrityManifestVerificationState)
       : {
         statusLabel: 'Verification unavailable',
         primaryMessage: 'This Coin Card cannot currently be verified.',
@@ -171,14 +171,14 @@
       };
     setText('ccErrorStateLabel', copy.statusLabel);
     setText('ccCardError', copy.primaryMessage);
-    setStatus(state.manifestVerificationState === 'CARD_REVOKED' ? 'revoked' : 'failed', copy.statusLabel);
+    setStatus(state.integrityManifestVerificationState === 'CARD_REVOKED' ? 'revoked' : 'failed', copy.statusLabel);
     transition('TX_FAILED');
     setChipState('cc-card-chip--waiting', true, copy.actionLabel);
-    emit('CC_ERROR', { message: copy.primaryMessage, verificationState: state.manifestVerificationState });
+    emit('CC_ERROR', { message: copy.primaryMessage, verificationState: state.integrityManifestVerificationState });
   }
 
   /* ----------------------------------------------------------------
-   * Trust population — runs once on manifest load.
+   * Trust population — runs once on registry record load.
    * Populates recipient identity across all body panels so each panel
    * shows the correct data when it becomes visible.
    * ---------------------------------------------------------------- */
@@ -197,13 +197,13 @@
     }
   }
 
-  function renderTrust(manifest) {
-    var addr    = manifest.recipient || '';
-    var name    = manifest.displayName || '';
-    var token   = (manifest.token || 'USDC').toUpperCase();
-    var chainId = String(manifest.chainId || '');
-    var network = manifest.chainName || CHAIN_NAMES[chainId] || ('Chain ' + chainId);
-    var bps     = manifest.feeBps != null ? manifest.feeBps : 100;
+  function renderTrust(registryRecord) {
+    var addr    = registryRecord.recipient || '';
+    var name    = registryRecord.displayName || '';
+    var token   = (registryRecord.token || 'USDC').toUpperCase();
+    var chainId = String(registryRecord.chainId || '');
+    var network = registryRecord.chainName || CHAIN_NAMES[chainId] || ('Chain ' + chainId);
+    var bps     = registryRecord.feeBps != null ? registryRecord.feeBps : 100;
     var pctStr  = 'Fee ' + (bps / 100).toFixed(1) + '%';
 
     populateRecipientFields(addr, name);
@@ -214,9 +214,9 @@
     setStatus('verified', 'Verified');
   }
 
-  function renderRevoked(manifest) {
-    var addr = manifest.recipient || '';
-    var name = manifest.displayName || '';
+  function renderRevoked(registryRecord) {
+    var addr = registryRecord.recipient || '';
+    var name = registryRecord.displayName || '';
     populateRecipientFields(addr, name);
     setText('ccErrorStateLabel', 'Revoked');
     setText('ccCardError', 'This Coin Card has been revoked. Do not use it to initiate a transfer.');
@@ -227,8 +227,8 @@
    * Amount handling
    * ---------------------------------------------------------------- */
   function applyAmount(amount, chainId) {
-    var feeBps    = (state.manifest && state.manifest.feeBps != null)
-                     ? state.manifest.feeBps : null;
+    var feeBps    = (state.registryRecord && state.registryRecord.feeBps != null)
+                     ? state.registryRecord.feeBps : null;
     var rawAmount = window.IX_EXECUTION.toRawUsdc(amount);
     var feeResult = window.IX_EXECUTION.calculateFee(rawAmount, chainId, feeBps);
     var fee       = Number(feeResult.fee)   / 1e6;
@@ -246,7 +246,7 @@
     state.fee    = fee;
     state.total  = total;
 
-    var token = (state.manifest && state.manifest.token || 'USDC').toUpperCase();
+    var token = (state.registryRecord && state.registryRecord.token || 'USDC').toUpperCase();
     setText('ccFeeValue',   fee.toFixed(2)   + ' ' + token);
     setText('ccTotalValue', total.toFixed(2) + ' ' + token);
 
@@ -269,8 +269,8 @@
    * Intent construction
    * ---------------------------------------------------------------- */
   function buildIntent() {
-    if (!state.manifest || state.amount == null) return;
-    var m = state.manifest;
+    if (!state.registryRecord || state.amount == null) return;
+    var m = state.registryRecord;
     state.intent = {
       cardId:    m.cardId,
       recipient: m.recipient,
@@ -289,17 +289,17 @@
   /* ----------------------------------------------------------------
    * Amount surface setup
    * ---------------------------------------------------------------- */
-  function initAmountSurface(manifest) {
-    var mode    = manifest.amountMode || 'sender_input';
-    var chainId = manifest.chainId;
-    var token   = (manifest.token || 'USDC').toUpperCase();
+  function initAmountSurface(registryRecord) {
+    var mode    = registryRecord.amountMode || 'sender_input';
+    var chainId = registryRecord.chainId;
+    var token   = (registryRecord.token || 'USDC').toUpperCase();
     setText('ccAmountToken', token);
 
-    if (mode === 'locked' && manifest.lockedAmount != null) {
+    if (mode === 'locked' && registryRecord.lockedAmount != null) {
       /* locked: auto-apply; hide the input field */
       var field = el('ccAmountField');
       if (field) field.style.display = 'none';
-      applyAmount(manifest.lockedAmount, chainId);
+      applyAmount(registryRecord.lockedAmount, chainId);
     } else {
       /* sender_input / suggested: user enters amount */
       var input = el('ccAmountInput');
@@ -322,7 +322,7 @@
    * ---------------------------------------------------------------- */
   function connectWallet() {
     if (!window.IX_EXECUTION) { renderError('Execution module unavailable'); return; }
-    if (!verification || !verification.canExecuteTransfer(state.manifestVerificationState)) {
+    if (!verification || !verification.canExecuteTransfer(state.integrityManifestVerificationState)) {
       renderVerificationBlocked();
       return;
     }
@@ -335,7 +335,7 @@
 
     window.IX_EXECUTION.executeTransfer({
       action: 'prepare',
-      chainId: state.manifest && state.manifest.chainId,
+      chainId: state.registryRecord && state.registryRecord.chainId,
     })
       .then(function (result) {
         if (result.status === 'wallet-missing') {
@@ -358,9 +358,9 @@
           state.sender = result.sender;
           /* Self-send detection */
           var warn = el('ccSelfSendWarn');
-          if (warn && state.manifest) {
+          if (warn && state.registryRecord) {
             warn.classList.toggle('is-active',
-              result.sender.toLowerCase() === state.manifest.recipient.toLowerCase());
+              result.sender.toLowerCase() === state.registryRecord.recipient.toLowerCase());
           }
         }
 
@@ -385,11 +385,11 @@
 
   function switchNetwork() {
     if (!window.IX_EXECUTION) return;
-    if (!verification || !verification.canExecuteTransfer(state.manifestVerificationState)) {
+    if (!verification || !verification.canExecuteTransfer(state.integrityManifestVerificationState)) {
       renderVerificationBlocked();
       return;
     }
-    var manifestChainId = state.manifest && state.manifest.chainId;
+    var registryRecordChainId = state.registryRecord && state.registryRecord.chainId;
 
     transition('SWITCHING_NETWORK');
     setText('ccExecLabel', 'Switching network\u2026');
@@ -399,7 +399,7 @@
 
     window.IX_EXECUTION.executeTransfer({
       action: 'switch-network',
-      chainId: manifestChainId,
+      chainId: registryRecordChainId,
     })
       .then(function (result) {
         if (result.status === 'ready-to-send') {
@@ -429,7 +429,7 @@
    * Review panel
    * ---------------------------------------------------------------- */
   function showConfirmPanel() {
-    if (!state.intent || !state.sender || !state.manifest) {
+    if (!state.intent || !state.sender || !state.registryRecord) {
       transition('TRANSFER_INTENT_READY');
       setText('ccTxLabel', 'Send USDC');
       setStatus('verified', 'Verified');
@@ -437,8 +437,8 @@
       return;
     }
     var intent = state.intent;
-    var token  = (state.manifest.token || 'USDC').toUpperCase();
-    var bps    = state.manifest.feeBps != null ? state.manifest.feeBps : 100;
+    var token  = (state.registryRecord.token || 'USDC').toUpperCase();
+    var bps    = state.registryRecord.feeBps != null ? state.registryRecord.feeBps : 100;
 
     setText('ccReviewAmount',  intent.amount.toFixed(2));
     setText('ccReviewFee',     intent.fee.toFixed(2)   + ' ' + token);
@@ -455,14 +455,14 @@
    * Execution — all writes through window.IX_EXECUTION
    * ---------------------------------------------------------------- */
   function startExecution() {
-    if (!state.intent || !state.sender || !state.manifest || !window.IX_EXECUTION) return;
-    if (!verification || !verification.canExecuteTransfer(state.manifestVerificationState)) {
+    if (!state.intent || !state.sender || !state.registryRecord || !window.IX_EXECUTION) return;
+    if (!verification || !verification.canExecuteTransfer(state.integrityManifestVerificationState)) {
       renderVerificationBlocked();
       return;
     }
     var intent  = state.intent;
-    var chainId = state.manifest.chainId;
-    var token     = (state.manifest.token || 'USDC').toUpperCase();
+    var chainId = state.registryRecord.chainId;
+    var token     = (state.registryRecord.token || 'USDC').toUpperCase();
 
     /* Prime exec panel with amount (name+recipient already populated by renderTrust) */
     setText('ccExecAmount', intent.amount.toFixed(2));
@@ -569,13 +569,13 @@
   }
 
   /* ----------------------------------------------------------------
-   * Manifest validation
+   * Registry record validation
    * ---------------------------------------------------------------- */
-  function validateManifest(manifest, cardId) {
-    if (manifest.schema !== 'implicitex.coincard.v1') return 'schema-mismatch';
-    if (manifest.cardId !== cardId)                   return 'card-id-mismatch';
-    if (!manifest.recipient || !manifest.chainId || !manifest.token) return 'missing-required-fields';
-    if (manifest.owner && (typeof manifest.owner !== 'object' || !manifest.owner.name)) return 'owner-malformed';
+  function validateRegistryRecord(registryRecord, cardId) {
+    if (registryRecord.schema !== 'implicitex.coincard.v1') return 'schema-mismatch';
+    if (registryRecord.cardId !== cardId)                   return 'card-id-mismatch';
+    if (!registryRecord.recipient || !registryRecord.chainId || !registryRecord.token) return 'missing-required-fields';
+    if (registryRecord.owner && (typeof registryRecord.owner !== 'object' || !registryRecord.owner.name)) return 'owner-malformed';
     return null;
   }
 
@@ -583,7 +583,7 @@
    * Error rendering
    * ---------------------------------------------------------------- */
 
-  /* Manifest-level error — card hidden; frame error surface shown */
+  /* Registry-record-level error — card hidden; frame error surface shown */
   function renderError(message, sub) {
     setText('ccErrorMessage', message || 'Registry error');
     setText('ccErrorSub', sub || '');
@@ -601,13 +601,13 @@
   }
 
   /* ----------------------------------------------------------------
-   * Manifest fetch
+   * Registry record fetch
    * ---------------------------------------------------------------- */
-  function loadManifest(cardId) {
+  function loadRegistryRecord(cardId) {
     transition('MANIFEST_LOADING');
-    var pointer = verification && verification.readManifestPointer(frame);
+    var pointer = verification && verification.readIntegrityManifestPointer(frame);
     if (!pointer || pointer.state === 'VERIFICATION_UNAVAILABLE') {
-      state.manifestVerificationState = 'VERIFICATION_UNAVAILABLE';
+      state.integrityManifestVerificationState = 'VERIFICATION_UNAVAILABLE';
       renderError('Verification unavailable', pointer && pointer.error);
       return;
     }
@@ -619,51 +619,51 @@
         if (!response.ok) throw new Error('fetch-error-' + response.status);
         return response.json();
       })
-      .then(function (manifest) {
-        if (manifest._notFound) {
+      .then(function (registryRecord) {
+        if (registryRecord._notFound) {
           renderError('No record found', cardId);
           return;
         }
 
-        if (manifest.status === 'revoked') {
-          state.manifest = manifest;
-          state.manifestVerificationState = 'CARD_REVOKED';
-          renderRevoked(manifest);
+        if (registryRecord.status === 'revoked') {
+          state.registryRecord = registryRecord;
+          state.integrityManifestVerificationState = 'CARD_REVOKED';
+          renderRevoked(registryRecord);
           transition('REVOKED');
           emit('CC_ERROR', { message: 'revoked' });
           return;
         }
 
-        var err = validateManifest(manifest, cardId);
+        var err = validateRegistryRecord(registryRecord, cardId);
         if (err) {
-          renderError('Invalid manifest', err);
+          renderError('Invalid registry record', err);
           return;
         }
 
-        if (manifest.status !== 'active') {
-          renderError('Card not active', manifest.status);
+        if (registryRecord.status !== 'active') {
+          renderError('Card not active', registryRecord.status);
           return;
         }
 
-        state.manifest = manifest;
+        state.registryRecord = registryRecord;
         /* Scaffold only: future browser verification will produce this state. */
-        state.manifestVerificationState = verification && verification.normalizeState
-          ? verification.normalizeState(manifest.verificationState || 'VERIFIED')
+        state.integrityManifestVerificationState = verification && verification.normalizeState
+          ? verification.normalizeState(registryRecord.verificationState || 'VERIFIED')
           : 'VERIFICATION_UNAVAILABLE';
-        renderTrust(manifest);
-        if (!verification || !verification.canExecuteTransfer(state.manifestVerificationState)) {
+        renderTrust(registryRecord);
+        if (!verification || !verification.canExecuteTransfer(state.integrityManifestVerificationState)) {
           renderVerificationBlocked();
           return;
         }
-        initAmountSurface(manifest);
+        initAmountSurface(registryRecord);
         transition('VERIFIED');
         setChipState('cc-card-chip--waiting', true, 'Enter amount to continue');
 
         emit('CC_READY', {
-          recipient: manifest.recipient,
-          chainId:   manifest.chainId,
-          token:     manifest.token,
-          owner:     manifest.owner || null,
+          recipient: registryRecord.recipient,
+          chainId:   registryRecord.chainId,
+          token:     registryRecord.token,
+          owner:     registryRecord.owner || null,
         });
       })
       .catch(function (err) {
@@ -695,7 +695,7 @@
       return;
     }
 
-    loadManifest(cardId);
+    loadRegistryRecord(cardId);
   }
 
   if (document.readyState === 'loading') {
