@@ -36,7 +36,7 @@
     'js/ix-execution.js',
   ]);
   var SUPPORTED_SIGNATURE_MODES = Object.freeze({
-    'signed-v1': true,
+    'signed-p256-v1': true,
   });
 
   var STATE_SET = Object.freeze({
@@ -163,6 +163,16 @@
     });
 
     return JSON.stringify(payload);
+  }
+
+  function getTrustedPublicKey(keyId) {
+    if (!keyId) return null;
+
+    var trustedKeys = window.IX_COIN_CARD_TRUSTED_PUBLIC_KEYS;
+    if (!trustedKeys || typeof trustedKeys !== 'object') return null;
+
+    if (!Object.prototype.hasOwnProperty.call(trustedKeys, keyId)) return null;
+    return trustedKeys[keyId] || null;
   }
 
   function getCryptoSubtleForVerify() {
@@ -509,19 +519,33 @@
       });
     }
 
-    if (signature.value === 'invalid' || signature.valid === false || signature.status === 'invalid') {
-      return {
-        state: STATES.INTEGRITY_FAILED,
-        integrityManifest: null,
-        metadata: null,
-        error: 'integrity-manifest-signature-invalid',
+    if (!signature.keyId) {
+      return unavailable('integrity-manifest-key-id-missing', {
         signatureMode: signatureMode,
-      };
+      });
     }
 
-    return unavailable('integrity-manifest-signature-verifier-unavailable', {
-      signatureMode: signatureMode,
-    });
+    var trustedPublicKey = getTrustedPublicKey(signature.keyId);
+    if (!trustedPublicKey) {
+      return unavailable('integrity-manifest-public-key-unavailable', {
+        signatureMode: signatureMode,
+        keyId: signature.keyId,
+      });
+    }
+
+    return verifyP256Signature(integrityManifest, trustedPublicKey)
+      .then(function (result) {
+        if (result && result.state === STATES.VERIFIED) {
+          return result;
+        }
+        if (result && result.state === STATES.INTEGRITY_FAILED) {
+          return result;
+        }
+        return unavailable(result && result.error || 'integrity-manifest-signature-verifier-unavailable', {
+          signatureMode: signatureMode,
+          keyId: signature.keyId,
+        });
+      });
   }
 
   function verifyP256Signature(integrityManifest, publicKey) {
@@ -641,6 +665,7 @@
     getRequiredAssetPaths: getRequiredAssetPaths,
     hasRequiredAssets: hasRequiredAssets,
     canonicalizeIntegrityManifestPayload: canonicalizeIntegrityManifestPayload,
+    getTrustedPublicKey: getTrustedPublicKey,
     readIntegrityManifestPointer: readIntegrityManifestPointer,
     readManifestPointer: readIntegrityManifestPointer,
     loadIntegrityManifest: loadIntegrityManifest,

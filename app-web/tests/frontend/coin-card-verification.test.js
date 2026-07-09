@@ -77,8 +77,17 @@ function loadVerification(options = {}) {
   }
   context.window.TextEncoder = options.TextEncoder || TextEncoder;
   context.TextEncoder = options.TextEncoder || TextEncoder;
-  if (typeof options.atob === 'function') context.atob = options.atob;
-  if (typeof options.btoa === 'function') context.btoa = options.btoa;
+  if (options.trustedPublicKeys) {
+    context.window.IX_COIN_CARD_TRUSTED_PUBLIC_KEYS = options.trustedPublicKeys;
+  }
+  if (typeof options.atob === 'function') {
+    context.atob = options.atob;
+    context.window.atob = options.atob;
+  }
+  if (typeof options.btoa === 'function') {
+    context.btoa = options.btoa;
+    context.window.btoa = options.btoa;
+  }
   vm.runInNewContext(verificationSource, context, { filename: verificationPath });
   return context.window.IX_COIN_CARD_VERIFICATION;
 }
@@ -89,6 +98,18 @@ function toBase64Url(buffer) {
     .replace(/\+/g, '-')
     .replace(/\//g, '_')
     .replace(/=+$/g, '');
+}
+
+function toBase64(value) {
+  return Buffer.from(value).toString('base64');
+}
+
+function nodeAtob(value) {
+  return Buffer.from(value, 'base64').toString('binary');
+}
+
+function nodeBtoa(value) {
+  return toBase64(value);
 }
 
 function validIntegrityManifest(overrides = {}) {
@@ -498,8 +519,8 @@ test('canonicalizeIntegrityManifestPayload changes when protected assets change'
 test('verifyP256Signature validates a signed-p256-v1 manifest with Web Crypto', async () => {
   const verification = loadVerification({
     crypto: webcrypto,
-    atob: globalThis.atob,
-    btoa: globalThis.btoa,
+    atob: nodeAtob,
+    btoa: nodeBtoa,
   });
   const keyPair = await webcrypto.subtle.generateKey(
     { name: 'ECDSA', namedCurve: 'P-256' },
@@ -535,8 +556,8 @@ test('verifyP256Signature validates a signed-p256-v1 manifest with Web Crypto', 
 test('verifyP256Signature rejects a tampered signed-p256-v1 manifest', async () => {
   const verification = loadVerification({
     crypto: webcrypto,
-    atob: globalThis.atob,
-    btoa: globalThis.btoa,
+    atob: nodeAtob,
+    btoa: nodeBtoa,
   });
   const keyPair = await webcrypto.subtle.generateKey(
     { name: 'ECDSA', namedCurve: 'P-256' },
@@ -620,17 +641,40 @@ test('evaluateSignaturePolicy unsupported signature mode becomes VERIFICATION_UN
   assert.equal(result.signatureMode, 'signed-v2');
 });
 
-test('evaluateSignaturePolicy invalid supported signature becomes INTEGRITY_FAILED', () => {
-  const verification = loadVerification();
-  const manifest = validIntegrityManifest({
-    signature: {
-      mode: 'signed-v1',
-      algorithm: 'rsa-pss',
-      value: 'invalid',
+test('evaluateSignaturePolicy invalid supported signature becomes INTEGRITY_FAILED', async () => {
+  const keyPair = await webcrypto.subtle.generateKey(
+    { name: 'ECDSA', namedCurve: 'P-256' },
+    true,
+    ['sign', 'verify'],
+  );
+  const publicKey = await webcrypto.subtle.exportKey('jwk', keyPair.publicKey);
+  const verification = loadVerification({
+    crypto: webcrypto,
+    atob: nodeAtob,
+    btoa: nodeBtoa,
+    trustedPublicKeys: {
+      'coin-card-test-key': publicKey,
     },
   });
+  const manifest = validIntegrityManifest({
+    signature: {
+      mode: 'signed-p256-v1',
+      algorithm: 'ECDSA',
+      keyId: 'coin-card-test-key',
+      value: '',
+    },
+  });
+  const canonicalPayload = verification.canonicalizeIntegrityManifestPayload(manifest);
+  const payloadBytes = new TextEncoder().encode(canonicalPayload);
+  const signatureBytes = await webcrypto.subtle.sign(
+    { name: 'ECDSA', hash: { name: 'SHA-256' } },
+    keyPair.privateKey,
+    payloadBytes,
+  );
+  manifest.signature.value = toBase64Url(signatureBytes);
+  manifest.recipient = '0x2222222222222222222222222222222222222222';
 
-  const result = verification.evaluateSignaturePolicy(manifest, {
+  const result = await verification.evaluateSignaturePolicy(manifest, {
     state: verification.STATES.ASSET_HASHES_PASSED,
     integrityManifest: manifest,
     metadata: { assetIntegrityStatus: 'passed' },
@@ -639,15 +683,16 @@ test('evaluateSignaturePolicy invalid supported signature becomes INTEGRITY_FAIL
 
   assert.equal(result.state, verification.STATES.INTEGRITY_FAILED);
   assert.equal(result.error, 'integrity-manifest-signature-invalid');
-  assert.equal(result.signatureMode, 'signed-v1');
+  assert.equal(result.signatureMode, 'signed-p256-v1');
 });
 
-test('evaluateSignaturePolicy supported valid signature remains unavailable until a real verifier exists', () => {
+test('evaluateSignaturePolicy supported valid signature with unknown key remains unavailable', () => {
   const verification = loadVerification();
   const manifest = validIntegrityManifest({
     signature: {
-      mode: 'signed-v1',
-      algorithm: 'rsa-pss',
+      mode: 'signed-p256-v1',
+      algorithm: 'ECDSA',
+      keyId: 'missing-key',
       value: 'signed',
     },
   });
@@ -660,8 +705,53 @@ test('evaluateSignaturePolicy supported valid signature remains unavailable unti
   });
 
   assert.equal(result.state, verification.STATES.VERIFICATION_UNAVAILABLE);
-  assert.equal(result.error, 'integrity-manifest-signature-verifier-unavailable');
-  assert.equal(result.signatureMode, 'signed-v1');
+  assert.equal(result.error, 'integrity-manifest-public-key-unavailable');
+  assert.equal(result.keyId, 'missing-key');
+});
+
+test('evaluateSignaturePolicy supported valid signature with known key can verify', async () => {
+  const keyPair = await webcrypto.subtle.generateKey(
+    { name: 'ECDSA', namedCurve: 'P-256' },
+    true,
+    ['sign', 'verify'],
+  );
+  const publicKey = await webcrypto.subtle.exportKey('jwk', keyPair.publicKey);
+  const verification = loadVerification({
+    crypto: webcrypto,
+    atob: nodeAtob,
+    btoa: nodeBtoa,
+    trustedPublicKeys: {
+      'coin-card-test-key': publicKey,
+    },
+  });
+  const manifest = validIntegrityManifest({
+    signature: {
+      mode: 'signed-p256-v1',
+      algorithm: 'ECDSA',
+      keyId: 'coin-card-test-key',
+      value: '',
+    },
+  });
+  const canonicalPayload = verification.canonicalizeIntegrityManifestPayload(manifest);
+  const payloadBytes = new TextEncoder().encode(canonicalPayload);
+  const signatureBytes = await webcrypto.subtle.sign(
+    { name: 'ECDSA', hash: { name: 'SHA-256' } },
+    keyPair.privateKey,
+    payloadBytes,
+  );
+  manifest.signature.value = toBase64Url(signatureBytes);
+
+  const result = await verification.evaluateSignaturePolicy(manifest, {
+    state: verification.STATES.ASSET_HASHES_PASSED,
+    integrityManifest: manifest,
+    metadata: { assetIntegrityStatus: 'passed' },
+    error: null,
+  });
+
+  assert.equal(result.state, verification.STATES.VERIFIED);
+  assert.equal(result.valid, true);
+  assert.equal(result.signatureMode, 'signed-p256-v1');
+  assert.equal(result.keyId, 'coin-card-test-key');
 });
 
 test('loadIntegrityManifest hash mismatch becomes INTEGRITY_FAILED', async () => {
