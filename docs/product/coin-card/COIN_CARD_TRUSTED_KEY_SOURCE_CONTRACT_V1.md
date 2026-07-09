@@ -23,6 +23,9 @@ window.IX_COIN_CARD_TRUSTED_PUBLIC_KEYS
 The bootstrap module itself should be part of the protected asset set so the
 allowlist cannot be replaced or injected by an untrusted host.
 
+How approved keys enter this bootstrap is defined separately in
+`COIN_CARD_TRUSTED_PUBLIC_KEY_POPULATION_CONTRACT_V1.md`.
+
 This object must be:
 
 - initialized by protected runtime code

@@ -30,6 +30,7 @@ Implementation-local checkpoint notes may exist under `app-web/docs/product/coin
 - `COIN_CARD_SIGNATURE_POLICY_V1.md` — signature policy for when asset-hash consistency can become trusted execution.
 - `COIN_CARD_SIGNATURE_VERIFIER_DESIGN_V1.md` — verifier algorithm, canonical payload, key ID, and failure mapping.
 - `COIN_CARD_TRUSTED_KEY_SOURCE_CONTRACT_V1.md` — trusted public key source, immutability, and key rotation boundary.
+- `COIN_CARD_TRUSTED_PUBLIC_KEY_POPULATION_CONTRACT_V1.md` — how approved public keys enter the protected trust source.
 - `COIN_CARD_VERIFICATION_STATE_COPY_V1.md` — user-facing copy contract for manifest verification states.
 - `../../../tools/coin-card-integrity/README.md` — proof tooling usage for generating, verifying, and tamper-checking Coin Card manifests.
 
@@ -47,6 +48,7 @@ The manifest integrity docs are intentionally split by responsibility:
 - Signature policy: `COIN_CARD_SIGNATURE_POLICY_V1.md`
 - Signature verifier design: `COIN_CARD_SIGNATURE_VERIFIER_DESIGN_V1.md`
 - Trusted key source: `COIN_CARD_TRUSTED_KEY_SOURCE_CONTRACT_V1.md`
+- Trusted key population: `COIN_CARD_TRUSTED_PUBLIC_KEY_POPULATION_CONTRACT_V1.md`
 - Verification state copy: `COIN_CARD_VERIFICATION_STATE_COPY_V1.md`
 - Proof tooling: `../../../tools/coin-card-integrity/README.md`
 

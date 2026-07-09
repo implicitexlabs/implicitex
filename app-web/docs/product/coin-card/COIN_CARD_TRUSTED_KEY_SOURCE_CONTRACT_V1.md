@@ -29,6 +29,9 @@ This object must be:
 The browser verifier may read the allowlist. It must not accept public keys from
 untrusted runtime input.
 
+How approved keys enter this allowlist is defined separately in
+`COIN_CARD_TRUSTED_PUBLIC_KEY_POPULATION_CONTRACT_V1.md`.
+
 ## Source Requirements
 
 - No private keys in the repo.
