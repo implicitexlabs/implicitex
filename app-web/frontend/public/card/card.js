@@ -217,10 +217,17 @@
   function renderRevoked(registryRecord) {
     var addr = registryRecord.recipient || '';
     var name = registryRecord.displayName || '';
+    var copy = verification && verification.getStateCopy
+      ? verification.getStateCopy('CARD_REVOKED')
+      : {
+        statusLabel: 'Revoked',
+        actionLabel: 'Transfers disabled',
+    };
     populateRecipientFields(addr, name);
-    setText('ccErrorStateLabel', 'Revoked');
-    setText('ccCardError', 'This Coin Card has been revoked. Do not use it to initiate a transfer.');
-    setStatus('revoked', 'Revoked');
+    setText('ccErrorStateLabel', copy.statusLabel);
+    setText('ccCardError', copy.primaryMessage);
+    setStatus('revoked', copy.statusLabel);
+    setChipState('cc-card-chip--waiting', true, copy.actionLabel);
   }
 
   /* ----------------------------------------------------------------
@@ -600,6 +607,54 @@
     emit('CC_ERROR', { message: message });
   }
 
+  function getFetchImpl() {
+    if (window && typeof window.fetch === 'function') return window.fetch;
+    if (typeof fetch === 'function') return fetch;
+    return null;
+  }
+
+  function applyIntegrityManifestVerification(registryRecord, pointer) {
+    var manifestUrl = pointer.integrityManifestUrl || pointer.manifestUrl;
+    var request = getFetchImpl();
+    if (!request) {
+      state.integrityManifestVerificationState = 'VERIFICATION_UNAVAILABLE';
+      renderVerificationBlocked();
+      return;
+    }
+    if (!verification || typeof verification.loadIntegrityManifest !== 'function') {
+      state.integrityManifestVerificationState = 'VERIFICATION_UNAVAILABLE';
+      renderVerificationBlocked();
+      return;
+    }
+
+    verification.loadIntegrityManifest(manifestUrl, request)
+      .then(function (result) {
+        state.integrityManifestVerificationState = verification && verification.normalizeState
+          ? verification.normalizeState(result && result.state)
+          : 'VERIFICATION_UNAVAILABLE';
+
+        if (!verification || !verification.canExecuteTransfer(state.integrityManifestVerificationState)) {
+          renderVerificationBlocked();
+          return;
+        }
+
+        initAmountSurface(registryRecord);
+        transition('VERIFIED');
+        setChipState('cc-card-chip--waiting', true, 'Enter amount to continue');
+
+        emit('CC_READY', {
+          recipient: registryRecord.recipient,
+          chainId:   registryRecord.chainId,
+          token:     registryRecord.token,
+          owner:     registryRecord.owner || null,
+        });
+      })
+      .catch(function (err) {
+        state.integrityManifestVerificationState = 'VERIFICATION_UNAVAILABLE';
+        renderVerificationBlocked();
+      });
+  }
+
   /* ----------------------------------------------------------------
    * Registry record fetch
    * ---------------------------------------------------------------- */
@@ -611,9 +666,14 @@
       renderError('Verification unavailable', pointer && pointer.error);
       return;
     }
+    var request = getFetchImpl();
+    if (!request) {
+      renderError('Registry unavailable', 'fetch-unavailable');
+      return;
+    }
     var url = '/registry/coincards/' + encodeURIComponent(cardId) + '.json';
 
-    fetch(url)
+    request(url)
       .then(function (response) {
         if (response.status === 404) return { _notFound: true };
         if (!response.ok) throw new Error('fetch-error-' + response.status);
@@ -646,25 +706,9 @@
         }
 
         state.registryRecord = registryRecord;
-        /* Scaffold only: future browser verification will produce this state. */
-        state.integrityManifestVerificationState = verification && verification.normalizeState
-          ? verification.normalizeState(registryRecord.verificationState || 'VERIFIED')
-          : 'VERIFICATION_UNAVAILABLE';
         renderTrust(registryRecord);
-        if (!verification || !verification.canExecuteTransfer(state.integrityManifestVerificationState)) {
-          renderVerificationBlocked();
-          return;
-        }
-        initAmountSurface(registryRecord);
-        transition('VERIFIED');
-        setChipState('cc-card-chip--waiting', true, 'Enter amount to continue');
-
-        emit('CC_READY', {
-          recipient: registryRecord.recipient,
-          chainId:   registryRecord.chainId,
-          token:     registryRecord.token,
-          owner:     registryRecord.owner || null,
-        });
+        state.integrityManifestVerificationState = 'VERIFICATION_UNAVAILABLE';
+        applyIntegrityManifestVerification(registryRecord, pointer);
       })
       .catch(function (err) {
         renderError('Registry unavailable', err && err.message);

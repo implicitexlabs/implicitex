@@ -1,4 +1,5 @@
 const assert = require('node:assert/strict');
+const { createHash } = require('node:crypto');
 const fs = require('node:fs');
 const path = require('node:path');
 const test = require('node:test');
@@ -10,19 +11,24 @@ const cardPath = path.join(repoRoot, 'app-web/frontend/public/card/card.js');
 const verificationSource = fs.readFileSync(verificationPath, 'utf8');
 const cardSource = fs.readFileSync(cardPath, 'utf8');
 
-function loadVerification() {
-  const context = {
-    Object,
-    Promise,
-    String,
-    window: {},
-  };
-  context.globalThis = context;
-  vm.runInNewContext(verificationSource, context, { filename: verificationPath });
-  return context.window.IX_COIN_CARD_VERIFICATION;
+const REQUIRED_ASSET_BODIES = {
+  'card/coin-card-verification.js': 'coin-card-verification asset body',
+  'card/card.js': 'card runtime asset body',
+  'card/card.css': 'card stylesheet asset body',
+  'js/ix-execution.js': 'ix execution asset body',
+};
+
+function sha256Hex(value) {
+  return 'sha256:' + createHash('sha256').update(value).digest('hex');
 }
 
-function validIntegrityManifest(overrides = {}) {
+function makeIntegrityManifest(overrides = {}) {
+  const assets = (overrides.assets || Object.keys(REQUIRED_ASSET_BODIES).map((assetPath) => ({
+    path: assetPath,
+    sha256: sha256Hex(REQUIRED_ASSET_BODIES[assetPath]),
+    bytes: Buffer.byteLength(REQUIRED_ASSET_BODIES[assetPath]),
+  }))).map((asset) => ({ ...asset }));
+
   return {
     schemaVersion: 'coin-card-manifest.v1',
     cardId: 'cc_demo_implicitex',
@@ -32,20 +38,46 @@ function validIntegrityManifest(overrides = {}) {
     registryStatus: 'active',
     layoutVersion: 'coin-card-layout.v1',
     buildVersion: 'dev',
-    assets: [
-      { path: 'card/coin-card-verification.js', sha256: 'sha256:test', bytes: 1 },
-      { path: 'card/card.js', sha256: 'sha256:test', bytes: 1 },
-      { path: 'card/card.css', sha256: 'sha256:test', bytes: 1 },
-      { path: 'js/ix-execution.js', sha256: 'sha256:test', bytes: 1 },
-    ],
+    assets,
     signature: {
       mode: 'unsigned-dev',
       algorithm: null,
       value: null,
     },
-    manifestHash: 'sha256:test',
+    manifestHash: 'sha256:' + '11'.repeat(32),
     ...overrides,
   };
+}
+
+function makeDigest() {
+  return {
+    digest(algorithm, bytes) {
+      assert.equal(algorithm, 'SHA-256');
+      const buffer = Buffer.isBuffer(bytes) ? bytes : Buffer.from(bytes);
+      const digest = createHash('sha256').update(buffer).digest();
+      return Promise.resolve(digest.buffer.slice(digest.byteOffset, digest.byteOffset + digest.byteLength));
+    },
+  };
+}
+
+function loadVerification(options = {}) {
+  const context = {
+    Object,
+    Promise,
+    String,
+    Uint8Array,
+    window: {},
+  };
+  context.globalThis = context;
+  if (!options.cryptoUnavailable) {
+    context.window.crypto = { subtle: makeDigest() };
+  }
+  vm.runInNewContext(verificationSource, context, { filename: verificationPath });
+  return context.window.IX_COIN_CARD_VERIFICATION;
+}
+
+function validIntegrityManifest(overrides = {}) {
+  return makeIntegrityManifest(overrides);
 }
 
 const expectedStateCopy = {
@@ -53,6 +85,11 @@ const expectedStateCopy = {
     statusLabel: 'Verified',
     primaryMessage: 'This Coin Card matches the issued ImplicitEx package.',
     actionLabel: 'Continue',
+  },
+  ASSET_HASHES_PASSED: {
+    statusLabel: 'Integrity checks passed',
+    primaryMessage: 'This Coin Card matches the issued Integrity Manifest assets.',
+    actionLabel: 'Transfers disabled',
   },
   INTEGRITY_FAILED: {
     statusLabel: 'Integrity check failed',
@@ -153,6 +190,27 @@ function loadCoinCard(options = {}) {
         error: null,
       };
     },
+    loadIntegrityManifest(pointer, fetchImpl) {
+      verificationCalls.push({ type: 'loadIntegrityManifest', pointer });
+      if (typeof options.loadIntegrityManifest === 'function') {
+        return options.loadIntegrityManifest(pointer, fetchImpl);
+      }
+      if (options.integrityManifestResult) {
+        return Promise.resolve(options.integrityManifestResult);
+      }
+      return Promise.resolve({
+        state: verification.STATES.ASSET_HASHES_PASSED,
+        integrityManifest: validIntegrityManifest(),
+        metadata: {
+          ...validIntegrityManifest(),
+          assetIntegrityStatus: 'passed',
+          assetPaths: requiredAssetPaths,
+        },
+        error: null,
+        requiredAssetPaths,
+        assetPaths: requiredAssetPaths,
+      });
+    },
     canExecuteTransfer(state) {
       verificationCalls.push({ type: 'canExecuteTransfer', state });
       return options.canExecuteTransfer !== false && verification.canExecuteTransfer(state);
@@ -210,32 +268,36 @@ function loadCoinCard(options = {}) {
           return Promise.resolve({ status: 'failed' });
         },
       },
+      crypto: { subtle: makeDigest() },
       location: {
         pathname: '/card/demo-card',
       },
       parent: null,
       addEventListener() {},
     },
-    fetch() {
-      return Promise.resolve({
-        ok: true,
-        status: 200,
-        json: () => Promise.resolve({
-          schema: 'implicitex.coincard.v1',
-          cardId: 'demo-card',
-          status: options.registryRecordStatus || 'active',
-          recipient: '0x2222222222222222222222222222222222222222',
-          chainId: 137,
-          token: 'USDC',
-          displayName: 'Demo Recipient',
-          verificationState: options.verificationState,
-        }),
-      });
+    fetch(url) {
+      if (url === '/registry/coincards/demo-card.json') {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () => Promise.resolve({
+            schema: 'implicitex.coincard.v1',
+            cardId: 'demo-card',
+            status: options.registryRecordStatus || 'active',
+            recipient: '0x2222222222222222222222222222222222222222',
+            chainId: 137,
+            token: 'USDC',
+            displayName: 'Demo Recipient',
+          }),
+        });
+      }
+      return Promise.resolve({ ok: false, status: 404 });
     },
   };
   context.globalThis = context;
   context.window.window = context.window;
   context.window.parent = context.window;
+  context.window.fetch = context.fetch;
 
   vm.runInNewContext(cardSource, context, { filename: cardPath });
 
@@ -243,9 +305,18 @@ function loadCoinCard(options = {}) {
 }
 
 async function settle() {
-  await Promise.resolve();
-  await Promise.resolve();
-  await Promise.resolve();
+  for (let i = 0; i < 4; i++) {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  }
+}
+
+async function waitFor(predicate, options = {}) {
+  const attempts = options.attempts || 20;
+  for (let i = 0; i < attempts; i++) {
+    if (predicate()) return;
+    await settle();
+  }
+  assert.fail(options.message || 'Timed out waiting for condition');
 }
 
 test('VERIFIED allows execution', () => {
@@ -309,15 +380,115 @@ test('loadIntegrityManifest exposes metadata without approving execution', async
     ok: true,
     url,
     json: async () => validIntegrityManifest(),
+    arrayBuffer: async () => Buffer.from(REQUIRED_ASSET_BODIES[url] || '', 'utf8'),
   }));
 
-  assert.equal(result.state, verification.STATES.VERIFICATION_UNAVAILABLE);
+  assert.equal(result.state, verification.STATES.ASSET_HASHES_PASSED);
   assert.equal(verification.canExecuteTransfer(result.state), false);
   assert.equal(result.error, null);
   assert.equal(result.metadata.cardId, 'cc_demo_implicitex');
   assert.equal(result.metadata.schemaVersion, 'coin-card-manifest.v1');
   assert.equal(result.metadata.signatureMode, 'unsigned-dev');
+  assert.equal(result.metadata.assetIntegrityStatus, 'passed');
   assert.deepEqual(result.metadata.assetPaths, requiredAssetPaths);
+});
+
+test('loadIntegrityManifest hashes required assets in browser', async () => {
+  const verification = loadVerification();
+  const manifest = validIntegrityManifest();
+  const assetBodies = Object.fromEntries(
+    Object.entries(REQUIRED_ASSET_BODIES).map(([assetPath, body]) => [assetPath, body]),
+  );
+
+  const result = await verification.loadIntegrityManifest('coin-card-manifest.json', async (url) => {
+    if (url === 'coin-card-manifest.json') {
+      return {
+        ok: true,
+        status: 200,
+        json: async () => manifest,
+      };
+    }
+
+    return {
+      ok: true,
+      status: 200,
+      arrayBuffer: async () => Buffer.from(assetBodies[url], 'utf8'),
+    };
+  });
+
+  assert.equal(result.state, verification.STATES.ASSET_HASHES_PASSED);
+  assert.equal(result.metadata.assetIntegrityStatus, 'passed');
+  assert.deepEqual(Array.from(result.requiredAssetPaths), requiredAssetPaths);
+  assert.deepEqual(result.assetPaths, requiredAssetPaths);
+});
+
+test('loadIntegrityManifest hash mismatch becomes INTEGRITY_FAILED', async () => {
+  const verification = loadVerification();
+  const manifest = validIntegrityManifest({
+    assets: validIntegrityManifest().assets.map((asset) => (
+      asset.path === 'card/card.css'
+        ? { ...asset, sha256: 'sha256:' + 'ff'.repeat(32) }
+        : asset
+    )),
+  });
+
+  const result = await verification.loadIntegrityManifest('coin-card-manifest.json', async (url) => {
+    if (url === 'coin-card-manifest.json') {
+      return {
+        ok: true,
+        status: 200,
+        json: async () => manifest,
+      };
+    }
+
+    return {
+      ok: true,
+      status: 200,
+      arrayBuffer: async () => Buffer.from(REQUIRED_ASSET_BODIES[url], 'utf8'),
+    };
+  });
+
+  assert.equal(result.state, verification.STATES.INTEGRITY_FAILED);
+  assert.equal(result.error, 'integrity-manifest-asset-hash-mismatch');
+  assert.equal(result.assetPath, 'card/card.css');
+});
+
+test('loadIntegrityManifest fetch failure becomes VERIFICATION_UNAVAILABLE', async () => {
+  const verification = loadVerification();
+  const result = await verification.loadIntegrityManifest('coin-card-manifest.json', async (url) => {
+    if (url === 'coin-card-manifest.json') {
+      return {
+        ok: true,
+        status: 200,
+        json: async () => validIntegrityManifest(),
+      };
+    }
+
+    if (url === 'card/card.css') {
+      return Promise.reject(new Error('offline'));
+    }
+
+    return {
+      ok: true,
+      status: 200,
+      arrayBuffer: async () => Buffer.from(REQUIRED_ASSET_BODIES[url], 'utf8'),
+    };
+  });
+
+  assert.equal(result.state, verification.STATES.VERIFICATION_UNAVAILABLE);
+  assert.equal(result.error, 'integrity-manifest-asset-fetch-failed');
+});
+
+test('loadIntegrityManifest crypto unavailable becomes VERIFICATION_UNAVAILABLE', async () => {
+  const verification = loadVerification({ cryptoUnavailable: true });
+  const result = await verification.loadIntegrityManifest('coin-card-manifest.json', async () => ({
+    ok: true,
+    status: 200,
+    json: async () => validIntegrityManifest(),
+  }));
+
+  assert.equal(result.state, verification.STATES.VERIFICATION_UNAVAILABLE);
+  assert.equal(result.error, 'integrity-manifest-crypto-unavailable');
 });
 
 test('required Integrity Manifest asset policy is exact for v1', () => {
@@ -429,11 +600,65 @@ test('loadIntegrityManifest duplicate protected asset becomes VERIFICATION_UNAVA
   assert.equal(result.error, 'integrity-manifest-asset-policy-mismatch');
 });
 
-test('non-VERIFIED transfer attempts render the correct disabled copy', async () => {
-  for (const blockedState of ['INTEGRITY_FAILED', 'CARD_REVOKED', 'VERIFICATION_UNAVAILABLE']) {
-    const runtime = loadCoinCard({ verificationState: blockedState });
+test('ASSET_HASHES_PASSED renders the correct disabled copy', async () => {
+  const runtime = loadCoinCard();
 
-    await settle();
+  await waitFor(
+    () => runtime.elements.get('ccCardError').textContent === expectedStateCopy.ASSET_HASHES_PASSED.primaryMessage,
+    {
+      message: JSON.stringify({
+        errorMessage: runtime.elements.get('ccErrorMessage').textContent,
+        cardError: runtime.elements.get('ccCardError').textContent,
+        statusLabel: runtime.elements.get('ccErrorStateLabel').textContent,
+        chipDisabled: runtime.elements.get('ccChip').disabled,
+        verificationCalls: runtime.verificationCalls,
+      }),
+    },
+  );
+
+  assert.equal(runtime.elements.get('ccCardError').textContent, expectedStateCopy.ASSET_HASHES_PASSED.primaryMessage);
+  assert.equal(runtime.elements.get('ccErrorStateLabel').textContent, expectedStateCopy.ASSET_HASHES_PASSED.statusLabel);
+  assert.equal(runtime.elements.get('ccChip').disabled, true);
+  assert(runtime.verificationCalls.some((call) => call.type === 'canExecuteTransfer' && call.state === 'ASSET_HASHES_PASSED'));
+  assert.deepEqual(runtime.executionCalls, []);
+});
+
+test('blocked verification states still render the correct disabled copy', async () => {
+  for (const blockedState of ['INTEGRITY_FAILED', 'CARD_REVOKED', 'VERIFICATION_UNAVAILABLE']) {
+    const runtime = blockedState === 'CARD_REVOKED'
+      ? loadCoinCard({ registryRecordStatus: 'revoked' })
+      : blockedState === 'INTEGRITY_FAILED'
+        ? loadCoinCard({
+          integrityManifestResult: {
+            state: 'INTEGRITY_FAILED',
+            integrityManifest: null,
+            metadata: null,
+            error: 'integrity-manifest-asset-hash-mismatch',
+            assetPath: 'card/card.css',
+          },
+        })
+        : loadCoinCard({
+          integrityManifestResult: {
+            state: 'VERIFICATION_UNAVAILABLE',
+            integrityManifest: null,
+            metadata: null,
+            error: 'integrity-manifest-asset-fetch-failed',
+          },
+        });
+
+    await waitFor(
+      () => runtime.elements.get('ccCardError').textContent === expectedStateCopy[blockedState].primaryMessage,
+      {
+        message: JSON.stringify({
+          blockedState,
+          errorMessage: runtime.elements.get('ccErrorMessage').textContent,
+          cardError: runtime.elements.get('ccCardError').textContent,
+          statusLabel: runtime.elements.get('ccErrorStateLabel').textContent,
+          chipDisabled: runtime.elements.get('ccChip').disabled,
+          verificationCalls: runtime.verificationCalls,
+        }),
+      },
+    );
     const chip = runtime.elements.get('ccChip');
 
     chip.dispatch('click');
@@ -443,6 +668,10 @@ test('non-VERIFIED transfer attempts render the correct disabled copy', async ()
     assert.equal(runtime.elements.get('ccErrorStateLabel').textContent, expectedStateCopy[blockedState].statusLabel, blockedState);
     assert.equal(runtime.elements.get('ccCardError').textContent, expectedStateCopy[blockedState].primaryMessage, blockedState);
     assert.equal(runtime.elements.get('ccChip').disabled, true, blockedState);
-    assert(runtime.verificationCalls.some((call) => call.type === 'canExecuteTransfer'), blockedState);
+    if (blockedState === 'CARD_REVOKED') {
+      assert(!runtime.verificationCalls.some((call) => call.type === 'canExecuteTransfer'), blockedState);
+    } else {
+      assert(runtime.verificationCalls.some((call) => call.type === 'canExecuteTransfer' && call.state === blockedState), blockedState);
+    }
   }
 });

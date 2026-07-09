@@ -1,7 +1,7 @@
-/* coin-card-verification.js — Coin Card Integrity Manifest verification state scaffold
+/* coin-card-verification.js — Coin Card Integrity Manifest verification state and browser-side hash check
  *
- * This is not browser-side cryptographic verification. It defines the runtime
- * state model and execution gate that future Integrity Manifest verification must satisfy.
+ * The browser can verify Integrity Manifest asset hashes, but only VERIFIED may execute.
+ * Hash consistency is evidence; signature policy still decides trust.
  */
 
 (function () {
@@ -9,6 +9,7 @@
 
   var STATES = Object.freeze({
     VERIFIED: 'VERIFIED',
+    ASSET_HASHES_PASSED: 'ASSET_HASHES_PASSED',
     INTEGRITY_FAILED: 'INTEGRITY_FAILED',
     CARD_REVOKED: 'CARD_REVOKED',
     VERIFICATION_UNAVAILABLE: 'VERIFICATION_UNAVAILABLE',
@@ -37,6 +38,7 @@
 
   var STATE_SET = Object.freeze({
     VERIFIED: true,
+    ASSET_HASHES_PASSED: true,
     INTEGRITY_FAILED: true,
     CARD_REVOKED: true,
     VERIFICATION_UNAVAILABLE: true,
@@ -48,6 +50,12 @@
       primaryMessage: 'This Coin Card matches the issued ImplicitEx package.',
       secondaryMessage: 'The protected assets and Integrity Manifest evidence are valid for this card.',
       actionLabel: 'Continue',
+    }),
+    ASSET_HASHES_PASSED: Object.freeze({
+      statusLabel: 'Integrity checks passed',
+      primaryMessage: 'This Coin Card matches the issued Integrity Manifest assets.',
+      secondaryMessage: 'Protected asset hashes match, but execution remains disabled until signature policy is resolved.',
+      actionLabel: 'Transfers disabled',
     }),
     INTEGRITY_FAILED: Object.freeze({
       statusLabel: 'Integrity check failed',
@@ -108,6 +116,138 @@
     }
 
     return true;
+  }
+
+  function hasRequiredAssetHashes(integrityManifest) {
+    if (!hasRequiredAssets(integrityManifest)) return false;
+
+    for (var i = 0; i < integrityManifest.assets.length; i++) {
+      var asset = integrityManifest.assets[i];
+      if (!asset || typeof asset.sha256 !== 'string' || !asset.sha256.trim()) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  function getCryptoSubtle() {
+    return window.crypto && window.crypto.subtle && typeof window.crypto.subtle.digest === 'function'
+      ? window.crypto.subtle
+      : null;
+  }
+
+  function bufferToHex(buffer) {
+    var bytes = new Uint8Array(buffer);
+    var hex = '';
+    for (var i = 0; i < bytes.length; i++) {
+      hex += bytes[i].toString(16).padStart(2, '0');
+    }
+    return hex;
+  }
+
+  function sha256Hex(bytes) {
+    var subtle = getCryptoSubtle();
+    if (!subtle) {
+      return Promise.resolve(null);
+    }
+    return subtle.digest('SHA-256', bytes).then(function (digest) {
+      return 'sha256:' + bufferToHex(digest);
+    });
+  }
+
+  function fetchArrayBuffer(request, url) {
+    return Promise.resolve()
+      .then(function () {
+        return request(url);
+      })
+      .then(function (response) {
+        if (!response || response.ok === false) {
+          return unavailable('integrity-manifest-asset-fetch-failed', { assetPath: url });
+        }
+        if (typeof response.arrayBuffer !== 'function') {
+          return unavailable('integrity-manifest-asset-response-invalid', { assetPath: url });
+        }
+        return response.arrayBuffer().then(function (buffer) {
+          return buffer;
+        }, function () {
+          return unavailable('integrity-manifest-asset-read-failed', { assetPath: url });
+        });
+      }, function () {
+        return unavailable('integrity-manifest-asset-fetch-failed', { assetPath: url });
+      });
+  }
+
+  function findAssetByPath(integrityManifest, assetPath) {
+    for (var i = 0; i < integrityManifest.assets.length; i++) {
+      if (integrityManifest.assets[i] && integrityManifest.assets[i].path === assetPath) {
+        return integrityManifest.assets[i];
+      }
+    }
+    return null;
+  }
+
+  function verifyIntegrityManifestAssets(preparedResult, request) {
+    var subtle = getCryptoSubtle();
+    if (!subtle) {
+      return Promise.resolve(unavailable('integrity-manifest-crypto-unavailable'));
+    }
+
+    var integrityManifest = preparedResult.integrityManifest;
+    if (!hasRequiredAssetHashes(integrityManifest)) {
+      return Promise.resolve(unavailable('integrity-manifest-asset-hash-missing'));
+    }
+
+    var assetPaths = getAssetPaths(integrityManifest);
+    var assetVerifications = assetPaths.map(function (assetPath) {
+      var declaredAsset = findAssetByPath(integrityManifest, assetPath);
+
+      return fetchArrayBuffer(request, assetPath).then(function (bufferOrResult) {
+        if (bufferOrResult && bufferOrResult.state === STATES.VERIFICATION_UNAVAILABLE) {
+          return bufferOrResult;
+        }
+        return sha256Hex(bufferOrResult).then(function (computedSha256) {
+          if (computedSha256 !== declaredAsset.sha256) {
+            return {
+              state: STATES.INTEGRITY_FAILED,
+              integrityManifest: null,
+              metadata: null,
+              error: 'integrity-manifest-asset-hash-mismatch',
+              assetPath: assetPath,
+              expectedSha256: declaredAsset.sha256,
+              computedSha256: computedSha256,
+            };
+          }
+          return {
+            assetPath: assetPath,
+            sha256: computedSha256,
+          };
+        });
+      });
+    });
+
+    return Promise.all(assetVerifications).then(function (results) {
+      for (var i = 0; i < results.length; i++) {
+        if (results[i] && results[i].state === STATES.VERIFICATION_UNAVAILABLE) {
+          return results[i];
+        }
+        if (results[i] && results[i].state === STATES.INTEGRITY_FAILED) {
+          return results[i];
+        }
+      }
+
+      var metadata = Object.assign({}, preparedResult.metadata, {
+        assetIntegrityStatus: 'passed',
+      });
+      return {
+        state: STATES.ASSET_HASHES_PASSED,
+        integrityManifest: integrityManifest,
+        metadata: metadata,
+        error: null,
+        requiredAssetPaths: getRequiredAssetPaths(),
+        assetPaths: assetPaths,
+      };
+    });
   }
 
   function readIntegrityManifestPointer(root) {
@@ -198,6 +338,12 @@
         assetPaths: getAssetPaths(integrityManifest),
       });
     }
+    if (!hasRequiredAssetHashes(integrityManifest)) {
+      return unavailable('integrity-manifest-asset-hash-missing', {
+        requiredAssetPaths: getRequiredAssetPaths(),
+        assetPaths: getAssetPaths(integrityManifest),
+      });
+    }
 
     return {
       state: STATES.VERIFICATION_UNAVAILABLE,
@@ -239,6 +385,15 @@
           });
       }, function () {
         return unavailable('integrity-manifest-fetch-failed');
+      })
+      .then(function (preparedResult) {
+        if (preparedResult.state === STATES.VERIFICATION_UNAVAILABLE && preparedResult.error) {
+          return preparedResult;
+        }
+        if (!preparedResult.integrityManifest) {
+          return preparedResult;
+        }
+        return verifyIntegrityManifestAssets(preparedResult, request);
       });
   }
 
