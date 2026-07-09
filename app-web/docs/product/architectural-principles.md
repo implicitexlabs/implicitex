@@ -167,7 +167,7 @@ Transfer Portal (inspection console)
 
 **The hard invariant:** The Transfer Portal never becomes a required step in completing a payment. This is stronger than "the Portal does not execute." A Portal that does not execute but must be visited before execution still violates the product boundary. The Portal is always optional, always secondary, always reachable from the instrument — never the other way around.
 
-Both products consume the same execution engine (`window.IX_EXECUTE`) independently. Neither calls the other.
+Both products consume the same execution engine (`window.IX_EXECUTION`) independently. Neither calls the other.
 
 **The decision filter:**
 
@@ -302,7 +302,7 @@ The platform is not Coin Card. The platform is not the Portal. They are clients.
 
 **On the Execution Service:**
 
-The authority for execution belongs to a platform-level service — not to the Coin Card, not to the Transfer Portal, and not to any implementation file that a surface happens to own. The current `ix-execute.js` is the seed of this service. It is not yet the service itself.
+The authority for execution belongs to a platform-level service — not to the Coin Card, not to the Transfer Portal, and not to any implementation file that a surface happens to own. The current `ix-execution.js` is the seed of this service. It is not yet the service itself.
 
 Files are implementation details. Services are architectural concepts. Five years from now the implementation may be `execution-service.ts`, multiple modules, a WebAssembly bridge, or a hardware wallet adapter. The architecture does not change because the implementation does. When WalletConnect, Safe, and Ledger arrive, they are Execution Service features — Coin Card and Portal both benefit from them simultaneously, without either surface changing.
 

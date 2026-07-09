@@ -31,8 +31,8 @@
  *   cc-card-chip--done     → terminal
  *
  * Execution:
- *   All fund-moving writes route through window.IX_EXECUTE (js/ix-execute.js).
- *   No direct eth_sendTransaction outside IX_EXECUTE.
+ *   All fund-moving writes route through window.IX_EXECUTION (js/ix-execution.js).
+ *   No direct eth_sendTransaction outside IX_EXECUTION.
  *
  * PostMessage bridge (iframe → parent):
  *   { source:'implicitex-coincard', type:'CC_READY',          cardId, payload:{ recipient, chainId, token, owner } }
@@ -60,7 +60,7 @@
     '1':     'Ethereum',
   };
 
-  /* Fee calculation delegated to window.IX_EXECUTE.calculateFee() */
+  /* Fee calculation delegated to window.IX_EXECUTION.calculateFee() */
   var CHAIN_MIN_USDC = { 137: 1,   80002: 1,   1: 1   };
   var CHAIN_MAX_USDC = { 137: 250, 80002: 250, 1: 250  };
 
@@ -211,8 +211,8 @@
   function applyAmount(amount, chainId) {
     var feeBps    = (state.manifest && state.manifest.feeBps != null)
                      ? state.manifest.feeBps : null;
-    var rawAmount = window.IX_EXECUTE.toRawUsdc(amount);
-    var feeResult = window.IX_EXECUTE.calculateFee(rawAmount, chainId, feeBps);
+    var rawAmount = window.IX_EXECUTION.toRawUsdc(amount);
+    var feeResult = window.IX_EXECUTION.calculateFee(rawAmount, chainId, feeBps);
     var fee       = Number(feeResult.fee)   / 1e6;
     var total     = Number(feeResult.total) / 1e6;
     var min       = CHAIN_MIN_USDC[chainId] || 1;
@@ -303,7 +303,7 @@
    * Wallet connect + network switch
    * ---------------------------------------------------------------- */
   function connectWallet() {
-    if (!window.IX_EXECUTE) { renderError('Execution module unavailable'); return; }
+    if (!window.IX_EXECUTION) { renderError('Execution module unavailable'); return; }
 
     transition('CONNECTING');
     setText('ccExecLabel', 'Connecting wallet\u2026');
@@ -311,7 +311,7 @@
     setChipState('cc-card-chip--active', true, 'Connecting wallet\u2026');
     setStatus('pending', 'Connecting');
 
-    window.IX_EXECUTE.executeTransfer({
+    window.IX_EXECUTION.executeTransfer({
       action: 'prepare',
       chainId: state.manifest && state.manifest.chainId,
     })
@@ -362,7 +362,7 @@
   }
 
   function switchNetwork() {
-    if (!window.IX_EXECUTE) return;
+    if (!window.IX_EXECUTION) return;
     var manifestChainId = state.manifest && state.manifest.chainId;
 
     transition('SWITCHING_NETWORK');
@@ -371,7 +371,7 @@
     setChipState('cc-card-chip--active', true, 'Switching network\u2026');
     setStatus('pending', 'Switching');
 
-    window.IX_EXECUTE.executeTransfer({
+    window.IX_EXECUTION.executeTransfer({
       action: 'switch-network',
       chainId: manifestChainId,
     })
@@ -426,10 +426,10 @@
   }
 
   /* ----------------------------------------------------------------
-   * Execution — all writes through window.IX_EXECUTE
+   * Execution — all writes through window.IX_EXECUTION
    * ---------------------------------------------------------------- */
   function startExecution() {
-    if (!state.intent || !state.sender || !state.manifest || !window.IX_EXECUTE) return;
+    if (!state.intent || !state.sender || !state.manifest || !window.IX_EXECUTION) return;
     var intent  = state.intent;
     var chainId = state.manifest.chainId;
     var token     = (state.manifest.token || 'USDC').toUpperCase();
@@ -442,7 +442,7 @@
     setText('ccExecLabel', 'Confirm USDC approval in wallet\u2026');
     setStatus('pending', 'Pending');
 
-    window.IX_EXECUTE.executeTransfer({
+    window.IX_EXECUTION.executeTransfer({
       action:    'execute',
       chainId:   chainId,
       sender:    state.sender,

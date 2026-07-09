@@ -13,7 +13,7 @@ The stateless embed audit is background only. This contract controls the next im
 - `app-web/frontend/public/card/index.html`
 - `app-web/frontend/public/card/card.css`
 - `app-web/frontend/public/card/card.js`
-- `app-web/frontend/public/js/ix-execute.js`
+- `app-web/frontend/public/js/ix-execution.js`
 - `app-web/frontend/public/js/wallet.js`
 - `app-web/contracts/implicitex_transfer.sol`
 - `docs/product/coin-card/coin-card.tokens.json`
@@ -537,8 +537,8 @@ Invariants:
 
 Current implementation:
 
-- `ix-execute.js` calculates fee as integer BigInt floor division, matching the contract.
-- `ix-execute.js` still exposes `toRawUsdc(floatVal)`, which rounds `floatVal * 1e6`; that is not acceptable as the primary parser.
+- `ix-execution.js` calculates fee as integer BigInt floor division, matching the contract.
+- `ix-execution.js` still exposes `toRawUsdc(floatVal)`, which rounds `floatVal * 1e6`; that is not acceptable as the primary parser.
 - `card.js` converts BigInt fee/total back to `Number` for state and display.
 - `wallet.js` has a stronger `formatUsdcRaw(raw, decimals)` display helper and uses `calculateFee(rawAmount, chainId)`, but Coin Card must still converge on one shared integer parser/calculator.
 

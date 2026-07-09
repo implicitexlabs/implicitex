@@ -92,7 +92,7 @@ identification + movement). Not a new principle.
 
 **Type: Observation** — Do not implement until the return value grows naturally.
 
-`IX_EXECUTE.calculateFee()` currently returns `{ fee: BigInt, total: BigInt }`. A richer value object would make the result self-describing:
+`IX_EXECUTION.calculateFee()` currently returns `{ fee: BigInt, total: BigInt }`. A richer value object would make the result self-describing:
 
 ```javascript
 {
@@ -128,35 +128,37 @@ That is the shape of a Chain Registry — not configuration embedded in the Exec
 
 **Type: Pattern** — Run this after any change to execution-related code to confirm no second execution path has been introduced.
 
-For each search: if the result appears *only* in `js/ix-execute.js` (and in comments elsewhere), the authority is clean. Any non-comment hit outside `ix-execute.js` is a violation.
+For each search: if the result appears *only* in `js/ix-execution.js` (and in comments elsewhere), the authority is clean. Any non-comment hit outside `ix-execution.js` is a violation.
 
 ```
-grep -rn "eth_sendTransaction"        js/ config/ card/   # writes only — must be ix-execute.js
-grep -rn "wallet_switchEthereumChain" js/ config/ card/   # must be ix-execute.js
-grep -rn "eth_requestAccounts"        js/ config/ card/   # must be ix-execute.js (known violations: wallet.js, coincard-publisher)
-grep -rn "\.approve("                 js/ config/ card/   # writes: must call window.IX_EXECUTE.approve()
-grep -rn "transferWithFee("           js/ config/ card/   # writes: must call window.IX_EXECUTE.transferWithFee()
+grep -rn "eth_sendTransaction"        js/ config/ card/   # writes only — must be ix-execution.js
+grep -rn "wallet_switchEthereumChain" js/ config/ card/   # must be ix-execution.js
+grep -rn "eth_requestAccounts"        js/ config/ card/   # must be ix-execution.js (known violations: wallet.js, coincard-publisher)
+grep -rn "\.approve("                 js/ config/ card/   # writes: must be ix-execution.js
+grep -rn "transferWithFee("           js/ config/ card/   # writes: must be ix-execution.js
+grep -rn "IX_EXECUTION\.\(approve\|transferWithFee\|waitForReceipt\)" js/ card/ # must return no consumer hits
 ```
 
-**Stage 1 baseline (2026-07-06, commit 127e8a8):**
+**Execution Service baseline (2026-07-08):**
 
 | Search | Expected | Status |
 |---|---|---|
-| `eth_sendTransaction` | `ix-execute.js` only | ✅ |
-| `.approve(` writes | `window.IX_EXECUTE.approve()` at both call sites | ✅ |
-| `transferWithFee(` writes | `window.IX_EXECUTE.transferWithFee()` at both call sites | ✅ |
-| `wallet_switchEthereumChain` | `ix-execute.js` — `wallet.js:3021` is a known violation (Stage 1 roadmap item) | ⚠️ known |
-| `eth_requestAccounts` | `ix-execute.js` — `wallet.js` and `coincard-publisher*.js` are known violations | ⚠️ known |
+| `eth_sendTransaction` | `ix-execution.js` only | ✅ |
+| `.approve(` writes | `ix-execution.js` only | ✅ |
+| `transferWithFee(` writes | `ix-execution.js` only | ✅ |
+| `IX_EXECUTION.approve/transferWithFee/waitForReceipt` | no consumer hits | ✅ |
+| `wallet_switchEthereumChain` | `ix-execution.js` only | ✅ |
+| `eth_requestAccounts` | `ix-execution.js`; publisher signing flows may request separate non-transfer authorization | ⚠️ scoped |
 
-Known violations are tracked violations from the authority audit — not regressions introduced by Stage 1.
+Consumers submit verified intent through `IX_EXECUTION.executeTransfer()` and render `ExecutionResult.status`.
 
 **Smoke test checklist (live wallet required):**
 
 - [ ] Connect wallet (MetaMask)
-- [ ] Wrong network → switch to Polygon via IX_EXECUTE
-- [ ] Approve USDC — confirm IX_EXECUTE.approve() fires (console: `[IX] invoking transferWithFee`)
-- [ ] Execute transfer — confirm IX_EXECUTE.transferWithFee() fires
-- [ ] Wait for receipt — confirm IX_EXECUTE.waitForReceipt() polls correctly
+- [ ] Wrong network → switch to Polygon through `executeTransfer({ action: 'switch-network' })`
+- [ ] Allowance sufficient → `executeTransfer()` goes directly to transfer
+- [ ] Allowance insufficient → `executeTransfer()` handles approval, then transfer
+- [ ] Receipt polling remains internal to `executeTransfer()`
 - [ ] Receipt reconciliation — receipt persisted in localStorage, visible in receipt list
 - [ ] Reject approval → REJECTED state
 - [ ] Reject transfer → REJECTED state
@@ -170,4 +172,3 @@ Known violations are tracked violations from the authority audit — not regress
 | Date | Trigger | Notes reviewed | Outcome |
 |---|---|---|---|
 | 2026-07-06 | Initial freeze | — | Doctrine established at ten principles |
-

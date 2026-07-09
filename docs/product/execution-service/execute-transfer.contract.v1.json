@@ -4,6 +4,10 @@
   "status": "draft-contract",
   "date": "2026-07-08",
   "purpose": "Define the public request/response boundary for execution orchestration. Consumers submit verified intent and render normalized outcomes. They do not know provider, signer, contract sequencing, receipt polling, or retry strategy.",
+  "publicApi": {
+    "execution": "executeTransfer(request, hooks?)",
+    "description": "executeTransfer is the only public execution entry point. Provider access, chain switching, approval submission, transfer submission, and receipt polling are internal implementation details. Consumers may use non-execution helpers such as fee/amount formatting where explicitly exposed, but they must not call execution primitives directly."
+  },
   "request": {
     "recipient": {
       "type": "evm-address",
@@ -29,6 +33,12 @@
       "type": "decimal-string",
       "required": true,
       "description": "Declared fee component for the execution request."
+    },
+    "requiresApproval": {
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "description": "Readiness-derived execution hint. True means the service should submit approval before transfer. False means the consumer has verified sufficient allowance and the service may proceed directly to transfer. The service consumes this readiness output but does not produce it."
     },
     "source": {
       "type": "string",

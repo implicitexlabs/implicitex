@@ -1143,7 +1143,7 @@
 
   function buildDraftSummary(recipient, amountStr, amountFloat, chainConfig) {
     const rawAmount = parseUsdcAmount(amountStr);
-    const { fee, total: totalDebit } = window.IX_EXECUTE.calculateFee(rawAmount, chainConfig && chainConfig.chainId);
+    const { fee, total: totalDebit } = window.IX_EXECUTION.calculateFee(rawAmount, chainConfig && chainConfig.chainId);
     const balance = state.usdcBalanceRaw;
     return {
       recipient,
@@ -3664,6 +3664,7 @@
     let transferConfirmed = false;
     let txBroadcast = false;
     let broadcastHash = null;
+    let broadcastUrl = null;
     let diagnosticHold = false;
 
     try {
@@ -3763,7 +3764,7 @@
     }
 
     // Read-only contract instance — pre-flight queries only (minTransfer, paused, previewTransfer).
-    // Writes go through window.IX_EXECUTE.
+    // Writes go through window.IX_EXECUTION.
     const implicitex = new ethers.Contract(contractAddress, IMPLICITEX_ABI,
       new ethers.BrowserProvider(activeProvider));
 
@@ -3876,716 +3877,265 @@
     // --- Allowance check / approve ---
     const needsApproval = allowance < totalDebit;
 
-    if (needsApproval) {
-      const totalDebitHuman = ethers.formatUnits(totalDebit, 6);
-      markTransferStep('authorization_requested');
-      // ---- Step 1 of 2: Authorize USDC Access ----
-      // Narrate BEFORE MetaMask fires. Three rails, three distinct roles:
-      //   transferStateNote = primary action rail  (what step, what is required)
-      //   txStatus          = contextual note      (what this action does NOT do)
-      //   companionState    = state memory rail    (record for the tray)
-      setTransferNote(`Step 1 of 2 — Approve ${totalDebitHuman} USDC total debit`);
-      setStatus('Approval is permission only. Funds are not sent yet.');
-      setTxState('pending', 'Wallet authorization required.', 'Approve in MetaMask…');
-      if (els.previewNote) els.previewNote.textContent = `Wallet authorization requested for ${totalDebitHuman} USDC total debit. Funds are not sent yet.`;
-      updateReceipt(receiptId, {
-        state: IX_TRANSFER_STATES.AUTHORIZING,
-        lastKnownMessage: `USDC authorization requested for ${totalDebitHuman} USDC total debit. Funds are not sent yet.`,
-      });
-      companionState(IX_TRANSFER_STATES.AUTHORIZING, {
-        statusLine: `Approve ${totalDebitHuman} USDC total debit.`,
-        stateVal:   'Awaiting authorization',
-        fundsVal:   'Not yet — authorization only',
-        networkVal: chainConfig.name,
-        eventVal:   'USDC authorization requested',
-        actionVal:  'Approve the full total debit. Approval alone does not send funds.',
-      });
-      try {
-        const approveHash = await window.IX_EXECUTE.approve(state.chainId, state.address, totalDebit);
-        updateReceipt(receiptId, {
-          approvalHash: approveHash,
-          lastKnownMessage: `USDC authorization submitted for ${totalDebitHuman} USDC total debit. Funds are not sent yet.`,
-        });
-        setStatus('Step 2 of 2 — transfer confirmation follows.');
-        setTxState('pending', 'Authorization submitted.', 'Confirming approval…');
-        setTransferNote('Step 1 of 2 — Approval submitted — awaiting chain confirmation…');
-        await window.IX_EXECUTE.waitForReceipt(approveHash);
-        // On mobile MetaMask's in-app browser the provider's internal state may
-        // not have settled immediately after the approval receipt. A short pause
-        // reduces the chance of -32603 on the next wallet prompt.
-        if (/mobile/i.test(navigator.userAgent) && activeProvider && activeProvider.isMetaMask) {
-          await new Promise(function (resolve) { setTimeout(resolve, 900); });
-        }
-        // Check flow after the approval wait — account or network may have changed
-        // while we were blocked on the confirmation.
-        assertFlowActive();
-        updateReceipt(receiptId, {
-          state: IX_TRANSFER_STATES.AUTHORIZED,
-          lastKnownMessage: 'USDC authorization confirmed. Transfer not submitted yet.',
-        });
-        markTransferStep('authorization_confirmed');
-        setTransferNote('Approval confirmed — transfer confirmation opening in MetaMask…');
-      } catch (err) {
-        if (err.code === 'FLOW_INVALIDATED') throw err; // bubble to outer catch
-
-        const errCode = providerErrorCode(err);
-
-        if (errCode === -32002) {
-          // MetaMask already has a pending request — not a transfer failure,
-          // not user rejection. No authorization occurred. Deterministic interruption.
-          // Set cooldown to block immediate retries while MetaMask clears the queue.
-          submitBlockedUntil = Date.now() + 5000;
-          setTransferNote('');
-          setStatus('');
-          resolveReceipt(receiptId, {
-            state: IX_TRANSFER_STATES.INTERRUPTED,
-            fundsMoved: false,
-            lastKnownMessage: 'Wallet request already pending in MetaMask. No authorization occurred. No funds moved.',
-          });
-          failTransferTimeline('authorization_requested', 'Wallet request already pending');
-          setTxState('idle', 'MetaMask already has a pending request. Open MetaMask and finish or cancel it, then retry.');
-          companionState(IX_TRANSFER_STATES.INTERRUPTED, {
-            statusLine: 'Wallet request already pending in MetaMask.',
-            stateVal:   'Interrupted',
-            fundsVal:   'No — nothing was sent',
-            networkVal: chainConfig.name,
-            eventVal:   'MetaMask already has a pending request (-32002)',
-            actionVal:  'Open MetaMask, finish or cancel the pending request, then retry.',
-            autoOpen:   true,
-          });
-        } else {
-          const rejected = errCode === 4001 || errCode === 5000 ||
-            err.code === 'ACTION_REJECTED' ||
-            (err.info && err.info.error && err.info.error.code === 4001);
-          if (rejected) {
-            setTransferNote('');
-            setStatus('');
-            resolveReceipt(receiptId, {
-              state: IX_TRANSFER_STATES.REJECTED,
-              fundsMoved: false,
-              lastKnownMessage: 'USDC authorization declined in wallet. No funds moved.',
-            });
-            failTransferTimeline('authorization_requested', 'Authorization declined');
-            setTxState('idle', 'Authorization declined. No funds moved.');
-            companionState(IX_TRANSFER_STATES.REJECTED, {
-              statusLine: 'Authorization rejected in wallet.',
-              stateVal:   'Declined',
-              fundsVal:   'No — nothing was sent',
-              networkVal: chainConfig.name,
-              eventVal:   'USDC authorization declined in wallet',
-              actionVal:  'No funds moved. Retry when ready.',
-              autoOpen:   true,
-            });
-          } else {
-            const explained = classifyTransferError(err, { phase: 'authorization', broadcastKnown: false });
-            setTransferNote('');
-            setStatus('');
-            resolveReceipt(receiptId, {
-              state: IX_TRANSFER_STATES.INTERRUPTED,
-              fundsMoved: explained.fundsMoved,
-              lastKnownMessage: `${explained.title}. ${explained.message}`,
-            });
-            failTransferTimeline('authorization_requested', explained.title);
-            setTxState('idle', `${explained.title}. ${explained.retryGuidance}`);
-            companionState(IX_TRANSFER_STATES.INTERRUPTED, {
-              statusLine: 'Authorization interrupted. Transfer cancelled.',
-              stateVal:   explained.title,
-              fundsVal:   'No — transfer did not proceed',
-              networkVal: chainConfig.name,
-              eventVal:   explained.code,
-              actionVal:  explained.retryGuidance,
-              autoOpen:   true,
-            });
-          }
-        }
-        return;
-      }
-    } else {
-      updateReceipt(receiptId, {
-        state: IX_TRANSFER_STATES.AUTHORIZING,
-        lastKnownMessage: 'Existing USDC allowance is being checked. Transfer not submitted yet.',
-      });
-      updateReceipt(receiptId, {
-        state: IX_TRANSFER_STATES.AUTHORIZED,
-        lastKnownMessage: 'Existing USDC allowance is sufficient. Transfer not submitted yet.',
-      });
-    }
-
-    // ---- Step 2 of 2 (or sole step when allowance already sufficient): Execute transfer ----
-    // Check flow before the transfer step — the user may have changed account or network
-    // during the approval confirmation wait.
-    assertFlowActive();
-
-    // After approval confirms, poll the on-chain allowance before submitting
-    // the transfer. This is inherently more reliable than a fixed sleep because
-    // it gates on the actual condition the transfer requires. On mobile MetaMask's
-    // in-app browser the provider's internal state may not have settled immediately
-    // after the approval receipt, causing the next eth_sendTransaction to fail with
-    // -32603. Polling the allowance gives the provider and chain state time to
-    // propagate without overfitting to a particular hardware or network latency.
-    if (needsApproval) {
-      const ALLOWANCE_POLL_MS    = 500;
-      const ALLOWANCE_TIMEOUT_MS = 10000;
-      const pollStart = Date.now();
-      let allowanceReady = false;
-      while (!allowanceReady) {
-        try {
-          const currentAllowance = await usdc.allowance(state.address, contractAddress);
-          if (BigInt(currentAllowance) >= totalDebit) {
-            allowanceReady = true;
-            break;
-          }
-        } catch (_) {
-          // RPC read failure — keep polling
-        }
-        if (Date.now() - pollStart >= ALLOWANCE_TIMEOUT_MS) {
-          // Allowance did not confirm within 10 s. Proceed anyway; if the
-          // allowance truly hasn't propagated the contract will revert on-chain
-          // with a classified error rather than a silent provider failure.
-          break;
-        }
-        await new Promise(function (resolve) { setTimeout(resolve, ALLOWANCE_POLL_MS); });
-      }
-      assertFlowActive(); // account or network may have changed during the wait
-    }
-
-    // ---- Final wallet readiness gate ----
-    // Runs after approval (if any) and allowance polling, before the funds-moving
-    // prompt narrates or fires. Rehydrates the provider/signer so that any
-    // provider state drift on mobile MetaMask is caught here rather than at
-    // transferWithFee(). Each check returns early on failure; the outer finally
-    // resets activeTransferFlow and exits review.
     {
-      // 1. Confirm wallet account has not changed.
-      let gateAccounts;
-      try { gateAccounts = await activeProvider.request({ method: 'eth_accounts' }); } catch (_) { gateAccounts = null; }
-      const gateSender = gateAccounts && gateAccounts[0];
-      if (!gateSender || gateSender.toLowerCase() !== state.address.toLowerCase()) {
-        clearTransferForm();
-        state.address = gateSender || null;
-        updateSenderDisplay();
-        setTransferNote('');
-        setStatus('Wallet account changed before transfer prompt. No funds moved. Reconnect and retry.');
-        resolveReceipt(receiptId, {
-          state: IX_TRANSFER_STATES.INTERRUPTED,
-          fundsMoved: false,
-          lastKnownMessage: 'Wallet account changed before transfer prompt. No funds moved.',
-        });
-        failTransferTimeline(
-          needsApproval ? 'authorization_confirmed' : 'review_ready',
-          'Account changed before transfer prompt'
-        );
-        companionState(IX_TRANSFER_STATES.INTERRUPTED, {
-          statusLine: 'Wallet account changed before transfer prompt.',
-          stateVal:   'Interrupted',
-          fundsVal:   'No — transfer did not proceed',
-          networkVal: chainConfig.name,
-          eventVal:   'Account mismatch at final readiness gate',
-          actionVal:  'Reconnect wallet and re-enter transfer details.',
-          autoOpen:   true,
-        });
-        return;
-      }
+      let executionPhase = needsApproval ? 'authorization' : 'transfer';
+      const totalDebitHuman = ethers.formatUnits(totalDebit, 6);
+      const amountHuman = ethers.formatUnits(rawAmount, 6);
 
-      // 2. Confirm chain has not changed.
-      let gateChainHex;
-      try { gateChainHex = await activeProvider.request({ method: 'eth_chainId' }); } catch (_) { gateChainHex = null; }
-      const gateChainId = gateChainHex ? normalizeChainId(gateChainHex) : null;
-      if (!gateChainId || !isLiveTransferChain(gateChainId)) {
-        setTransferNote('');
-        setStatus('Network changed before transfer prompt. Switch back to Polygon and retry.');
-        resolveReceipt(receiptId, {
-          state: IX_TRANSFER_STATES.INTERRUPTED,
-          fundsMoved: false,
-          lastKnownMessage: 'Network changed before transfer prompt. No funds moved.',
-        });
-        failTransferTimeline(
-          needsApproval ? 'authorization_confirmed' : 'review_ready',
-          'Network changed before transfer prompt'
-        );
-        companionState(IX_TRANSFER_STATES.INTERRUPTED, {
-          statusLine: 'Network changed before transfer prompt.',
-          stateVal:   'Interrupted',
-          fundsVal:   'No — transfer did not proceed',
-          networkVal: chainConfig.name,
-          eventVal:   'Chain mismatch at final readiness gate',
-          actionVal:  'Switch wallet back to Polygon and retry.',
-          autoOpen:   true,
-        });
-        return;
-      }
-
-      // 3. Fresh signer + contracts for remaining checks and dry-run.
-      //    On mobile MetaMask the original signer may reference stale provider state.
-      //    If the fresh signer cannot be obtained, the provider is not ready —
-      //    treat as INTERRUPTED rather than continuing with possibly stale state.
-      let gateSigner;
-      try {
-        const gateProvider = new ethers.BrowserProvider(activeProvider);
-        gateSigner = await gateProvider.getSigner(state.address);
-      } catch (_) {
-        setTransferNote('');
-        setStatus('Wallet provider was not ready for the final confirmation. Reopen MetaMask and retry.');
-        resolveReceipt(receiptId, {
-          state: IX_TRANSFER_STATES.INTERRUPTED,
-          fundsMoved: false,
-          lastKnownMessage: 'Wallet provider was not ready for the final confirmation. No funds moved.',
-        });
-        failTransferTimeline(
-          needsApproval ? 'authorization_confirmed' : 'review_ready',
-          'Provider not ready at final readiness gate'
-        );
-        companionState(IX_TRANSFER_STATES.INTERRUPTED, {
-          statusLine: 'Wallet provider was not ready for the final confirmation.',
-          stateVal:   'Interrupted',
-          fundsVal:   'No — transfer did not proceed',
-          networkVal: chainConfig.name,
-          eventVal:   'Fresh signer unavailable at final gate',
-          actionVal:  'Reopen MetaMask and retry.',
-          autoOpen:   true,
-        });
-        return;
-      }
-      const gateUsdc       = new ethers.Contract(usdcAddress,     ERC20_ABI,     gateSigner);
-      const gateImplicitex = new ethers.Contract(contractAddress, IMPLICITEX_ABI, gateSigner);
-
-      // 4. Recheck on-chain allowance and balance.
-      let gateAllowance = null;
-      let gateBalance   = null;
-      try {
-        [gateAllowance, gateBalance] = await Promise.all([
-          gateUsdc.allowance(state.address, contractAddress),
-          gateUsdc.balanceOf(state.address),
-        ]);
-      } catch (_) { /* RPC read failure — proceed; contract will catch mismatch */ }
-
-      if (gateAllowance !== null && BigInt(gateAllowance) < totalDebit) {
-        setTransferNote('');
-        setStatus('USDC allowance dropped before transfer prompt. Retry to re-authorize the correct amount.');
-        resolveReceipt(receiptId, {
-          state: IX_TRANSFER_STATES.INTERRUPTED,
-          fundsMoved: false,
-          lastKnownMessage: 'USDC allowance insufficient at final readiness gate. No funds moved.',
-        });
-        failTransferTimeline(
-          needsApproval ? 'authorization_confirmed' : 'review_ready',
-          'Allowance dropped before transfer prompt'
-        );
-        companionState(IX_TRANSFER_STATES.INTERRUPTED, {
-          statusLine: 'USDC allowance insufficient at final readiness gate.',
-          stateVal:   'Interrupted',
-          fundsVal:   'No — transfer did not proceed',
-          networkVal: chainConfig.name,
-          eventVal:   'Allowance below totalDebit at final gate',
-          actionVal:  'Retry to authorize the correct amount.',
-          autoOpen:   true,
-        });
-        return;
-      }
-
-      if (gateBalance !== null && BigInt(gateBalance) < totalDebit) {
-        setTransferNote('');
-        setStatus('USDC balance insufficient before transfer prompt. No funds moved.');
-        resolveReceipt(receiptId, {
-          state: IX_TRANSFER_STATES.INTERRUPTED,
-          fundsMoved: false,
-          lastKnownMessage: 'USDC balance insufficient at final readiness gate. No funds moved.',
-        });
-        failTransferTimeline(
-          needsApproval ? 'authorization_confirmed' : 'review_ready',
-          'Balance insufficient before transfer prompt'
-        );
-        companionState(IX_TRANSFER_STATES.INTERRUPTED, {
-          statusLine: 'USDC balance insufficient at final readiness gate.',
-          stateVal:   'Interrupted',
-          fundsVal:   'No — transfer did not proceed',
-          networkVal: chainConfig.name,
-          eventVal:   'Balance below totalDebit at final gate',
-          actionVal:  'Top up your USDC balance before retrying.',
-          autoOpen:   true,
-        });
-        return;
-      }
-
-      // QA: log gate allowance/balance values before dry-run (visible on desktop; use companion on mobile).
-      console.log('[IX] final-gate allowance:', gateAllowance !== null ? ethers.formatUnits(BigInt(gateAllowance), 6) : 'unread', 'totalDebit:', ethers.formatUnits(totalDebit, 6));
-
-      // 5. Dry-run via staticCall — catches contract revert before wallet prompt fires.
-      try {
-        await gateImplicitex.transferWithFee.staticCall(recipient, rawAmount);
-      } catch (staticErr) {
-        const explained = classifyTransferError(staticErr, { phase: 'preflight', broadcastKnown: false });
-        setTransferNote('');
-        setStatus(`${explained.title}. ${explained.retryGuidance}`);
-        resolveReceipt(receiptId, {
-          state: IX_TRANSFER_STATES.FAILED,
-          fundsMoved: false,
-          lastKnownMessage: `Preflight check failed: ${explained.title}. ${explained.message}`,
-        });
-        failTransferTimeline(
-          needsApproval ? 'authorization_confirmed' : 'review_ready',
-          explained.title
-        );
-        companionState(IX_TRANSFER_STATES.FAILED, {
-          statusLine: 'Transfer dry-run failed before wallet prompt.',
-          stateVal:   explained.title,
-          fundsVal:   'No — transfer did not proceed',
-          networkVal: chainConfig.name,
-          eventVal:   explained.code,
-          actionVal:  explained.retryGuidance,
-          autoOpen:   true,
-        });
-        persistWalletDiag('staticCall_catch', staticErr, { broadcastHash: broadcastHash, txBroadcast: txBroadcast });
-        renderPreBroadcastDiag(staticErr, 'staticCall preflight');
-        diagnosticHold = true;
-        return;
-      }
-
-      console.log('[IX] final-gate: staticCall passed');
-
-      // 6. estimateGas — catches RPC and mobile provider failures before the prompt.
-      try {
-        await gateImplicitex.transferWithFee.estimateGas(recipient, rawAmount);
-      } catch (gasErr) {
-        const explained = classifyTransferError(gasErr, { phase: 'preflight', broadcastKnown: false });
-        setTransferNote('');
-        setStatus(`${explained.title}. ${explained.retryGuidance}`);
-        resolveReceipt(receiptId, {
-          state: IX_TRANSFER_STATES.INTERRUPTED,
-          fundsMoved: false,
-          lastKnownMessage: `Gas estimate failed before wallet prompt: ${explained.title}. ${explained.message}`,
-        });
-        failTransferTimeline(
-          needsApproval ? 'authorization_confirmed' : 'review_ready',
-          explained.title
-        );
-        companionState(IX_TRANSFER_STATES.INTERRUPTED, {
-          statusLine: 'Gas estimate failed before wallet prompt.',
-          stateVal:   explained.title,
-          fundsVal:   'No — transfer did not proceed',
-          networkVal: chainConfig.name,
-          eventVal:   explained.code,
-          actionVal:  explained.retryGuidance,
-          autoOpen:   true,
-        });
-        persistWalletDiag('estimateGas_catch', gasErr, { broadcastHash: broadcastHash, txBroadcast: txBroadcast });
-        renderPreBroadcastDiag(gasErr, 'estimateGas preflight');
-        diagnosticHold = true;
-        return;
-      }
-
-      console.log('[IX] final-gate: estimateGas passed — all gate checks cleared');
-    }
-
-    // Narrate BEFORE MetaMask fires.
-    //   transferStateNote = primary action rail
-    //   txStatus          = point-of-no-return signal
-    //   companionState    = state memory
-    const stepLabel = needsApproval ? 'Step 2 of 2 — Confirm the transfer in MetaMask' : 'Confirm the transfer in MetaMask';
-    markTransferStep('transfer_requested');
-    setTransferNote(stepLabel);
-    setStatus(`This is the funds-moving request. Recipient gets ${ethers.formatUnits(rawAmount, 6)} USDC; total wallet debit is ${ethers.formatUnits(totalDebit, 6)} USDC.`);
-    setTxState('pending', 'Wallet confirmation required.', 'Confirm transfer in MetaMask…');
-    if (els.previewNote) els.previewNote.textContent = 'Transfer confirmation requested. Confirm in MetaMask only if recipient amount, platform fee, and total wallet debit match.';
-    updateReceipt(receiptId, {
-      state: IX_TRANSFER_STATES.SUBMITTING,
-      lastKnownMessage: 'Transfer confirmation requested. Funds move only after on-chain confirmation.',
-    });
-    companionState(IX_TRANSFER_STATES.SUBMITTING, {
-      statusLine: 'Confirm transfer.',
-      stateVal:   'Awaiting confirmation',
-      fundsVal:   'No — not until confirmed on-chain',
-      networkVal: chainConfig.name,
-      eventVal:   'Transfer signature requested',
-      actionVal:  `Funds move only if confirmed on-chain. Recipient gets ${ethers.formatUnits(rawAmount, 6)} USDC; total wallet debit is ${ethers.formatUnits(totalDebit, 6)} USDC.`,
-    });
-
-    // txBroadcast: set true only after SUBMITTED is persisted to localStorage.
-    // Any error in the catch with txBroadcast=true routes to OUTCOME_UNKNOWN —
-    // do not set this flag until the hash is durably written.
-    // (txBroadcast, broadcastHash, diagnosticHold are hoisted above the outer try.)
-    let broadcastUrl = null;
-    try {
-      persistWalletDiag('before_transferWithFee', null, {
-        recipient:    recipient,
-        rawAmount:    rawAmount.toString(),
-        totalDebit:   totalDebit.toString(),
-        broadcastHash: broadcastHash,
-        txBroadcast:  txBroadcast,
-      });
-      console.log('[IX] invoking transferWithFee — recipient:', recipient, 'rawAmount:', rawAmount.toString());
-      setStatus('Opening final MetaMask transfer confirmation…');
-      const txHash = await window.IX_EXECUTE.transferWithFee(state.chainId, state.address, recipient, rawAmount);
-      console.log('[IX] transferWithFee returned — hash:', txHash);
-      setStatus('Transfer submitted to network: ' + (txHash ? txHash.slice(0, 12) + '…' : 'no hash'));
-      broadcastHash = txHash;
-      broadcastUrl = `${chainConfig.explorerUrl}/tx/${broadcastHash}`;
-
-      // Persist SUBMITTED + hash atomically before any UI update or flag change.
-      // This is the durable broadcast checkpoint: if the page closes after this
-      // write, rehydrate.js will find a SUBMITTED receipt with a hash and attempt
-      // chain reconciliation on next load.
-      updateReceipt(receiptId, {
-        state: IX_TRANSFER_STATES.SUBMITTED,
-        transferHash: broadcastHash,
-        hash: broadcastHash,
-        explorerUrl: broadcastUrl,
-        lastKnownMessage: 'Transfer broadcast to network. Awaiting confirmation.',
+      const result = await window.IX_EXECUTION.executeTransfer({
+        action: 'execute',
+        chainId,
+        sender: state.address,
+        recipient,
+        amount: amountFloat,
+        fee: Number(ethers.formatUnits(fee, 6)),
+        total: Number(ethers.formatUnits(totalDebit, 6)),
+        token: 'USDC',
+        source: 'transfer-portal',
+        traceId: 'portal-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7),
+        requiresApproval: needsApproval,
+      }, {
+        onApprovalRequested: function () {
+          executionPhase = 'authorization';
+          markTransferStep('authorization_requested');
+          setTransferNote(`Step 1 of 2 — Approve ${totalDebitHuman} USDC total debit`);
+          setStatus('Approval is permission only. Funds are not sent yet.');
+          setTxState('pending', 'Wallet authorization required.', 'Approve in MetaMask…');
+          if (els.previewNote) els.previewNote.textContent = `Wallet authorization requested for ${totalDebitHuman} USDC total debit. Funds are not sent yet.`;
+          updateReceipt(receiptId, {
+            state: IX_TRANSFER_STATES.AUTHORIZING,
+            lastKnownMessage: `USDC authorization requested for ${totalDebitHuman} USDC total debit. Funds are not sent yet.`,
+          });
+          companionState(IX_TRANSFER_STATES.AUTHORIZING, {
+            statusLine: `Approve ${totalDebitHuman} USDC total debit.`,
+            stateVal:   'Awaiting authorization',
+            fundsVal:   'Not yet — authorization only',
+            networkVal: chainConfig.name,
+            eventVal:   'USDC authorization requested',
+            actionVal:  'Approve the full total debit. Approval alone does not send funds.',
+          });
+        },
+        onApprovalSubmitted: function (approvalHash) {
+          updateReceipt(receiptId, {
+            approvalHash,
+            lastKnownMessage: `USDC authorization submitted for ${totalDebitHuman} USDC total debit. Funds are not sent yet.`,
+          });
+          setStatus('Step 2 of 2 — transfer confirmation follows.');
+          setTxState('pending', 'Authorization submitted.', 'Confirming approval…');
+          setTransferNote('Step 1 of 2 — Approval submitted — awaiting chain confirmation…');
+        },
+        onApprovalConfirmed: function () {
+          updateReceipt(receiptId, {
+            state: IX_TRANSFER_STATES.AUTHORIZED,
+            lastKnownMessage: 'USDC authorization confirmed. Transfer not submitted yet.',
+          });
+          markTransferStep('authorization_confirmed');
+          setTransferNote('Approval confirmed — transfer confirmation opening in MetaMask…');
+        },
+        onTransferRequested: function () {
+          executionPhase = 'transfer';
+          const stepLabel = needsApproval ? 'Step 2 of 2 — Confirm the transfer in MetaMask' : 'Confirm the transfer in MetaMask';
+          markTransferStep('transfer_requested');
+          setTransferNote(stepLabel);
+          setStatus(`This is the funds-moving request. Recipient gets ${amountHuman} USDC; total wallet debit is ${totalDebitHuman} USDC.`);
+          setTxState('pending', 'Wallet confirmation required.', 'Confirm transfer in MetaMask…');
+          if (els.previewNote) els.previewNote.textContent = 'Transfer confirmation requested. Confirm in MetaMask only if recipient amount, platform fee, and total wallet debit match.';
+          updateReceipt(receiptId, {
+            state: IX_TRANSFER_STATES.SUBMITTING,
+            lastKnownMessage: 'Transfer confirmation requested. Funds move only after on-chain confirmation.',
+          });
+          companionState(IX_TRANSFER_STATES.SUBMITTING, {
+            statusLine: 'Confirm transfer.',
+            stateVal:   'Awaiting confirmation',
+            fundsVal:   'No — not until confirmed on-chain',
+            networkVal: chainConfig.name,
+            eventVal:   'Transfer signature requested',
+            actionVal:  `Funds move only if confirmed on-chain. Recipient gets ${amountHuman} USDC; total wallet debit is ${totalDebitHuman} USDC.`,
+          });
+        },
+        onTransferSubmitted: function (txHash) {
+          broadcastHash = txHash;
+          broadcastUrl = `${chainConfig.explorerUrl}/tx/${txHash}`;
+          updateReceipt(receiptId, {
+            state: IX_TRANSFER_STATES.SUBMITTED,
+            transferHash: txHash,
+            hash: txHash,
+            explorerUrl: broadcastUrl,
+            lastKnownMessage: 'Transfer broadcast to network. Awaiting confirmation.',
+          });
+          txBroadcast = true;
+          markTransferStep('broadcast');
+          setTransferNote('Transfer submitted — awaiting Polygon confirmation…');
+          setStatus('');
+          setTxState('pending', 'Broadcast to network. Do not retry.', 'Awaiting Polygon…');
+          companionState(IX_TRANSFER_STATES.SUBMITTED, {
+            statusLine: 'Transaction submitted. Awaiting chain confirmation.',
+            stateVal:   'Submitted',
+            fundsVal:   'No — not until confirmed',
+            networkVal: chainConfig.name,
+            eventVal:   txHash,
+            actionVal:  'Wait for confirmation. Do not retry.',
+          });
+        },
       });
 
-      // Flag set after persistence: catch block uses this to distinguish
-      // post-broadcast errors (OUTCOME_UNKNOWN) from pre-broadcast errors (FAILED).
-      txBroadcast = true;
-
-      markTransferStep('broadcast');
-      setTransferNote('Transfer submitted — awaiting Polygon confirmation…');
-      setStatus('');
-      setTxState('pending', 'Broadcast to network. Do not retry.', 'Awaiting Polygon…');
-      companionState(IX_TRANSFER_STATES.SUBMITTED, {
-        statusLine: 'Transaction submitted. Awaiting chain confirmation.',
-        stateVal:   'Submitted',
-        fundsVal:   'No — not until confirmed',
-        networkVal: chainConfig.name,
-        eventVal:   'Broadcast to network',
-        actionVal:  'Wait for confirmation. Do not retry.',
-      });
-      // IX_EXECUTE.waitForReceipt returns the raw eth_getTransactionReceipt object.
-      // blockNumber arrives as a hex string; parseInt converts it to match receipt schema.
-      const txReceipt  = await window.IX_EXECUTE.waitForReceipt(txHash);
-      const receiptUrl = `${chainConfig.explorerUrl}/tx/${txHash}`;
-      if (els.txStatus) {
-        // explorerUrl is from our own config; txHash is a 0x-prefixed hex from the chain — safe.
-        els.txStatus.innerHTML =
-          `Transfer confirmed. ` +
-          `<a href="${receiptUrl}" target="_blank" rel="noopener">` +
-          `View on ${chainConfig.name} explorer</a>`;
-      }
-      setTransferNote('');
-      setTxState('idle', null); // status already set above via innerHTML
-      updateReceiptFromSource(receiptId, {
-        state: IX_TRANSFER_STATES.CONFIRMED,
-        fundsMoved: true,
-        transferHash: txHash,
-        hash: txHash,
-        explorerUrl: receiptUrl,
-        blockNumber: txReceipt.blockNumber ? parseInt(txReceipt.blockNumber, 16) : null,
-        lastKnownMessage: 'Transfer confirmed. Funds moved on Polygon.',
-      }, OBSERVATION_SOURCES && OBSERVATION_SOURCES.RPC);
-      if (window.IX && window.IX.receipts) window.IX.receipts.clearActive();
-      markTransferStep('confirmed');
-      renderTransferSummary(refreshedSummary, {
-        label: 'Transfer Confirmed',
-        mode: 'Confirmed',
-        note: `Tx ${shortHash(txHash)} confirmed on Polygon. Explorer link is visible above and in the receipt list.`,
-      });
-      companionState(IX_TRANSFER_STATES.CONFIRMED, {
-        statusLine: 'Transfer confirmed. Funds moved on Polygon.',
-        stateVal:   'Confirmed',
-        fundsVal:   'Yes — transfer complete',
-        networkVal: chainConfig.name,
-        eventVal:   txHash,
-        actionVal:  `View on ${chainConfig.name} explorer`,
-        actionHref: receiptUrl,
-        autoOpen:   true,
-      });
-
-      transferConfirmed = true;
-      if (window.IX && window.IX.track) window.IX.track('transfer_confirmed');
-      upsertRecipientBook(recipient, metadata);
-      clearDraftControlsAfterConfirmation();
-      refreshUsdcBalance();
-    } catch (err) {
-      if (err.code === 'FLOW_INVALIDATED') throw err; // bubble to outer catch
-
-      if (txBroadcast) {
-        // Transaction was broadcast before the error. Outcome is unknown —
-        // we cannot assert fundsMoved either way. Surface the hash and direct
-        // the user to the explorer rather than claiming funds were not moved.
-        const explained = classifyTransferError(err, { phase: 'confirmation', broadcastKnown: true });
-        setTransferNote('');
-        const outcomeHash = err.receipt && err.receipt.hash
-          ? err.receipt.hash
-          : err.transactionHash || broadcastHash;
-        const outcomeUrl = outcomeHash ? `${chainConfig.explorerUrl}/tx/${outcomeHash}` : broadcastUrl;
-        preserveReceiptForRehydration(receiptId, {
-          state: explained.state,
-          fundsMoved: explained.fundsMoved,
-          transferHash: outcomeHash,
-          hash: outcomeHash,
-          explorerUrl: outcomeUrl,
-          lastKnownMessage: 'Transaction broadcast detected. Final confirmation could not be verified locally.',
-        });
-        failTransferTimeline('broadcast', 'Outcome unknown');
-        if (els.txStatus && outcomeUrl) {
-          els.txStatus.innerHTML =
-            `Outcome unknown. ` +
-            `<a href="${outcomeUrl}" target="_blank" rel="noopener">` +
-            `Check on ${chainConfig.name} explorer</a>`;
-        } else {
-          setTxState('idle', 'Outcome unknown. Check the explorer before retrying.');
+      switch (result.status) {
+        case 'confirmed': {
+          const executionReceipt = result.receipt || {};
+          const txHash = executionReceipt.txHash;
+          const receiptUrl = executionReceipt.explorerUrl || (txHash ? `${chainConfig.explorerUrl}/tx/${txHash}` : null);
+          if (els.txStatus && receiptUrl) {
+            els.txStatus.innerHTML =
+              `Transfer confirmed. ` +
+              `<a href="${receiptUrl}" target="_blank" rel="noopener">` +
+              `View on ${chainConfig.name} explorer</a>`;
+          } else {
+            setStatus('Transfer confirmed.');
+          }
+          setTransferNote('');
+          setTxState('idle', null);
+          updateReceiptFromSource(receiptId, {
+            state: IX_TRANSFER_STATES.CONFIRMED,
+            fundsMoved: true,
+            approvalHash: executionReceipt.approvalHash || null,
+            transferHash: txHash || null,
+            hash: txHash || null,
+            explorerUrl: receiptUrl,
+            blockNumber: executionReceipt.blockNumber || null,
+            lastKnownMessage: 'Transfer confirmed. Funds moved on Polygon.',
+          }, OBSERVATION_SOURCES && OBSERVATION_SOURCES.RPC);
+          if (window.IX && window.IX.receipts) window.IX.receipts.clearActive();
+          markTransferStep('confirmed');
+          renderTransferSummary(refreshedSummary, {
+            label: 'Transfer Confirmed',
+            mode: 'Confirmed',
+            note: txHash ? `Tx ${shortHash(txHash)} confirmed on Polygon. Explorer link is visible above and in the receipt list.` : 'Transfer confirmed on Polygon.',
+          });
+          companionState(IX_TRANSFER_STATES.CONFIRMED, {
+            statusLine: 'Transfer confirmed. Funds moved on Polygon.',
+            stateVal:   'Confirmed',
+            fundsVal:   'Yes — transfer complete',
+            networkVal: chainConfig.name,
+            eventVal:   txHash || 'Transfer confirmed',
+            actionVal:  receiptUrl ? `View on ${chainConfig.name} explorer` : 'Transfer confirmed.',
+            actionHref: receiptUrl || undefined,
+            autoOpen:   true,
+          });
+          transferConfirmed = true;
+          if (window.IX && window.IX.track) window.IX.track('transfer_confirmed');
+          upsertRecipientBook(recipient, metadata);
+          clearDraftControlsAfterConfirmation();
+          refreshUsdcBalance();
+          return;
         }
-        companionState(IX_TRANSFER_STATES.OUTCOME_UNKNOWN, {
-          statusLine: 'Transaction outcome could not be verified locally.',
-          stateVal:   'Outcome unknown',
-          fundsVal:   'Unknown — check explorer',
-          networkVal: chainConfig.name,
-          eventVal:   explained.code,
-          actionVal:  explained.retryGuidance,
-          severity:   'advisory',
-          autoOpen:   true,
-        });
-      } else {
-        // Error before broadcast: wallet busy, user rejected, or pre-broadcast failure.
-        const errCode = providerErrorCode(err);
 
-        if (errCode === -32002) {
-          // MetaMask already has a pending request — deterministic interruption.
-          // No broadcast occurred. No funds moved.
-          // Set cooldown to block immediate retries while MetaMask clears the queue.
+        case 'outcome-unknown': {
+          const outcomeHash = result.error && result.error.txHash || broadcastHash;
+          const outcomeUrl = result.error && result.error.explorerUrl || (outcomeHash ? `${chainConfig.explorerUrl}/tx/${outcomeHash}` : null);
+          preserveReceiptForRehydration(receiptId, {
+            state: IX_TRANSFER_STATES.OUTCOME_UNKNOWN,
+            fundsMoved: null,
+            transferHash: outcomeHash,
+            hash: outcomeHash,
+            explorerUrl: outcomeUrl,
+            lastKnownMessage: 'Transaction broadcast detected. Final confirmation could not be verified locally.',
+          });
+          failTransferTimeline('broadcast', 'Outcome unknown');
+          setTransferNote('');
+          if (els.txStatus && outcomeUrl) {
+            els.txStatus.innerHTML =
+              `Outcome unknown. ` +
+              `<a href="${outcomeUrl}" target="_blank" rel="noopener">` +
+              `Check on ${chainConfig.name} explorer</a>`;
+          } else {
+            setTxState('idle', 'Outcome unknown. Check the explorer before retrying.');
+          }
+          companionState(IX_TRANSFER_STATES.OUTCOME_UNKNOWN, {
+            statusLine: 'Transaction outcome could not be verified locally.',
+            stateVal:   'Outcome unknown',
+            fundsVal:   'Unknown — check explorer',
+            networkVal: chainConfig.name,
+            eventVal:   outcomeHash || (result.error && result.error.code) || 'Outcome unknown',
+            actionVal:  'Verify on explorer before retrying.',
+            actionHref: outcomeUrl || undefined,
+            severity:   'advisory',
+            autoOpen:   true,
+          });
+          return;
+        }
+
+        case 'wallet-busy': {
           submitBlockedUntil = Date.now() + 5000;
           setTransferNote('');
           setStatus('');
           resolveReceipt(receiptId, {
             state: IX_TRANSFER_STATES.INTERRUPTED,
             fundsMoved: false,
-            lastKnownMessage: 'Wallet request already pending in MetaMask. No transfer was submitted. No funds moved.',
+            lastKnownMessage: 'Wallet request already pending. No transfer was submitted. No funds moved.',
           });
-          failTransferTimeline('transfer_requested', 'Wallet request already pending');
-          setTxState('idle', 'MetaMask already has a pending request. Open MetaMask and finish or cancel it, then retry.');
+          failTransferTimeline(executionPhase === 'authorization' ? 'authorization_requested' : 'transfer_requested', 'Wallet request already pending');
+          setTxState('idle', 'Wallet already has a pending request. Open your wallet and finish or cancel it, then retry.');
           companionState(IX_TRANSFER_STATES.INTERRUPTED, {
-            statusLine: 'Wallet request already pending in MetaMask.',
+            statusLine: 'Wallet request already pending.',
             stateVal:   'Interrupted',
             fundsVal:   'No — nothing was sent',
             networkVal: chainConfig.name,
-            eventVal:   'MetaMask already has a pending request (-32002)',
-            actionVal:  'Open MetaMask, finish or cancel the pending request, then retry.',
+            eventVal:   'wallet-busy',
+            actionVal:  'Open your wallet, finish or cancel the pending request, then retry.',
             autoOpen:   true,
           });
-          persistWalletDiag('transferWithFee_catch_-32002', err, { broadcastHash: broadcastHash, txBroadcast: txBroadcast });
-          renderPreBroadcastDiag(err, '-32002 pending request');
-          diagnosticHold = true;
-        } else {
-          const rejected = errCode === 4001 || errCode === 5000 ||
-            err.code === 'ACTION_REJECTED' ||
-            (err.info && err.info.error && err.info.error.code === 4001);
-          if (rejected) {
-            setTransferNote('');
-            setStatus('');
-            resolveReceipt(receiptId, {
-              state: IX_TRANSFER_STATES.REJECTED,
-              fundsMoved: false,
-              lastKnownMessage: 'Transfer rejected in wallet. No transfer was broadcast.',
-            });
-            failTransferTimeline('transfer_requested', 'Transfer declined');
-            setTxState('idle', 'Transfer declined. No funds moved.');
-            companionState(IX_TRANSFER_STATES.REJECTED, {
-              statusLine: 'Transfer rejected in wallet.',
-              stateVal:   'Rejected',
-              fundsVal:   'No — nothing was sent',
-              networkVal: chainConfig.name,
-              eventVal:   'Transfer rejected in wallet',
-              actionVal:  'No transfer was broadcast. Retry when ready.',
-              autoOpen:   true,
-            });
-            persistWalletDiag('transferWithFee_catch_rejected', err, { broadcastHash: broadcastHash, txBroadcast: txBroadcast });
-            renderPreBroadcastDiag(err, 'rejected 4001/5000/ACTION_REJECTED');
-            diagnosticHold = true;
-          } else {
-            const rawCode = providerErrorCode(err);
-            const rawDetail = ERROR_CLASSIFIER ? ERROR_CLASSIFIER.cleanDetail(err) : (err && err.message || '');
-            const walletDiag = serializeWalletError(err);
-            console.error('[IX] transferWithFee error (pre-broadcast):', err);
-            console.error('[IX] error breakdown:', {
-              code:         err && err.code,
-              providerCode: rawCode,
-              message:      err && err.message,
-              shortMessage: err && err.shortMessage,
-              reason:       err && err.reason,
-              data:         err && err.data,
-              info:         err && err.info,
-            });
-            const explained = classifyTransferError(err, { phase: 'transfer', broadcastKnown: false });
-            setTransferNote('');
-            // Safer copy: on mobile the tx may have reached the chain despite the local failure.
-            setStatus('Transfer status unknown. Do not retry yet. Checking Polygon for a matching transaction\u2026');
-            // Keep receipt active (updateReceipt not resolveReceipt) so reconciliation can patch it.
-            updateReceipt(receiptId, {
-              state: IX_TRANSFER_STATES.INTERRUPTED,
-              fundsMoved: explained.fundsMoved,
-              lastKnownMessage: 'Transfer status unknown. Checking chain for a matching transaction.',
-            });
-            failTransferTimeline('transfer_requested', explained.title);
-            setTxState('idle', 'Transfer status unknown. Do not retry yet. Checking Polygon for a matching transaction\u2026');
-            // eventVal includes raw error fields so they are visible in companion on mobile.
-            const eventParts = [explained.code];
-            if (rawCode != null) eventParts.push('code:' + rawCode);
-            if (err && err.shortMessage) eventParts.push('short:' + String(err.shortMessage).slice(0, 80));
-            if (rawDetail) eventParts.push(rawDetail);
-            if (err && err.data) eventParts.push('data:' + String(err.data).slice(0, 60));
-            const eventVal = eventParts.join(' — ');
-            companionState(IX_TRANSFER_STATES.INTERRUPTED, {
-              statusLine: 'Transfer status unknown \u2014 checking chain.',
-              stateVal:   'Checking Polygon\u2026',
-              fundsVal:   'Unknown \u2014 verifying on-chain',
-              networkVal: chainConfig.name,
-              eventVal:   eventVal,
-              actionVal:  'Do not retry. Checking Polygon for a matching transaction.',
-              autoOpen:   true,
-            });
-            persistWalletDiag('transferWithFee_catch_unclassified', err, { broadcastHash: broadcastHash, txBroadcast: txBroadcast });
-            renderPreBroadcastDiag(err, 'unclassified pre-broadcast');
-            diagnosticHold = true;
+          return;
+        }
 
-            // ---- Chain reconciliation ----
-            // Query TransferExecuted events on Polygon via RPC to check whether the
-            // transaction reached the chain despite the local provider failure.
-            const reconResult = await reconcileInterruptedTransfer(
-              state.address, recipient, rawAmount, contractAddress, chainConfig
-            );
-            if (reconResult.found) {
-              // Transfer confirmed on-chain — repair receipt from INTERRUPTED to CONFIRMED.
-              updateReceiptFromSource(receiptId, {
-                state:            IX_TRANSFER_STATES.CONFIRMED,
-                fundsMoved:       true,
-                txHash:           reconResult.txHash,
-                explorerUrl:      reconResult.explorerUrl,
-                blockNumber:      reconResult.blockNumber,
-                lastKnownMessage: 'Transfer confirmed on-chain (recovered from interrupted state).',
-              }, OBSERVATION_SOURCES && OBSERVATION_SOURCES.RPC);
-              if (window.IX && window.IX.receipts) window.IX.receipts.clearActive();
-              setStatus('Transfer confirmed on Polygon. Funds moved.');
-              setTxState('idle', 'Transfer confirmed on-chain. No further action needed.');
-              companionState(IX_TRANSFER_STATES.CONFIRMED, {
-                statusLine: 'Transfer confirmed on Polygon.',
-                stateVal:   'Confirmed',
-                fundsVal:   'Yes \u2014 confirmed on-chain',
-                networkVal: chainConfig.name,
-                eventVal:   'TransferExecuted event found: ' + reconResult.txHash.slice(0, 12) + '\u2026',
-                actionVal:  'Save or export the proof packet.',
-                autoOpen:   true,
-              });
-            } else {
-              // No matching event — keep INTERRUPTED and archive.
-              if (window.IX && window.IX.receipts) window.IX.receipts.clearActive();
-              const reconNote = reconResult.reconError
-                ? ' (query error: ' + String(reconResult.reconError).slice(0, 60) + ')'
-                : '';
-              setStatus('No matching transfer found on Polygon. No funds moved.' + reconNote);
-              setTxState('idle', 'No matching transfer found. Safe to retry when ready.');
-              companionState(IX_TRANSFER_STATES.INTERRUPTED, {
-                statusLine: 'No matching transfer found on Polygon.',
-                stateVal:   'Interrupted',
-                fundsVal:   'No \u2014 no matching event found on-chain',
-                networkVal: chainConfig.name,
-                eventVal:   'Reconciliation complete' + reconNote,
-                actionVal:  'No funds moved. Safe to retry when ready.',
-                autoOpen:   true,
-              });
-            }
-          }
+        case 'wallet-rejected': {
+          const rejectedState = executionPhase === 'authorization' ? 'Authorization declined' : 'Transfer declined';
+          setTransferNote('');
+          setStatus('');
+          resolveReceipt(receiptId, {
+            state: IX_TRANSFER_STATES.REJECTED,
+            fundsMoved: false,
+            lastKnownMessage: rejectedState + '. No transfer was broadcast.',
+          });
+          failTransferTimeline(executionPhase === 'authorization' ? 'authorization_requested' : 'transfer_requested', rejectedState);
+          setTxState('idle', rejectedState + '. No funds moved.');
+          companionState(IX_TRANSFER_STATES.REJECTED, {
+            statusLine: rejectedState + ' in wallet.',
+            stateVal:   'Rejected',
+            fundsVal:   'No — nothing was sent',
+            networkVal: chainConfig.name,
+            eventVal:   result.status,
+            actionVal:  'No transfer was broadcast. Retry when ready.',
+            autoOpen:   true,
+          });
+          return;
+        }
+
+        case 'failed':
+        default: {
+          const message = result.error && result.error.message || 'Execution failed';
+          setTransferNote('');
+          setStatus(message);
+          resolveReceipt(receiptId, {
+            state: IX_TRANSFER_STATES.FAILED,
+            fundsMoved: false,
+            lastKnownMessage: message,
+          });
+          failTransferTimeline(executionPhase === 'authorization' ? 'authorization_requested' : 'transfer_requested', message);
+          setTxState('idle', message);
+          companionState(IX_TRANSFER_STATES.FAILED, {
+            statusLine: message,
+            stateVal:   'Failed',
+            fundsVal:   'No — transfer did not complete',
+            networkVal: chainConfig.name,
+            eventVal:   result.error && result.error.code || 'failed',
+            actionVal:  'Review details, then retry if appropriate.',
+            autoOpen:   true,
+          });
+          return;
         }
       }
     }
+
 
     } catch (err) {
       // ---- Flow invalidation handler ----

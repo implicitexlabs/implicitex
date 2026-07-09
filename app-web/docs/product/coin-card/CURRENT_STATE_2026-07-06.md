@@ -74,22 +74,19 @@ cc-frame[data-state]
 
 ## Execution model
 
-All fund-moving writes route through `window.IX_EXECUTE` (js/ix-execute.js).
+All fund-moving writes route through `window.IX_EXECUTION` (js/ix-execution.js).
 
 **Flow:**
-1. `IX_EXECUTE.connectWallet()` — eth_requestAccounts
-2. `IX_EXECUTE.getChainId()` — confirm chain
-3. `IX_EXECUTE.switchChain()` — if wrong network
-4. `IX_EXECUTE.approve(chainId, sender, totalRaw)` — USDC approval
-5. `IX_EXECUTE.waitForReceipt(approveHash)` — confirm approval
-6. `IX_EXECUTE.transferWithFee(chainId, sender, recipient, amountRaw)` — execute
-7. `IX_EXECUTE.waitForReceipt(txHash)` — confirm settlement
+1. Coin Card builds verified intent.
+2. Coin Card calls `IX_EXECUTION.executeTransfer(request, hooks)`.
+3. `executeTransfer()` owns wallet access, network switching, approval submission, transfer submission, and receipt polling.
+4. Coin Card renders the returned `ExecutionResult.status`.
 
-**Fee math:** `IX_EXECUTE.calculateFee(rawAmount, chainId, feeBps?)` — single authority.
+**Fee math:** `IX_EXECUTION.calculateFee(rawAmount, chainId, feeBps?)` — single authority.
 Card.js calls this; fee displayed and fee on-chain are the same integer-division result.
 
 **Chip dispatches by state:**
-- `TRANSFER_INTENT_READY` → connectWallet()
+- `TRANSFER_INTENT_READY` → `executeTransfer({ action: 'prepare' })`
 - `WRONG_NETWORK` → switchNetwork()
 - `READY_TO_SEND` → startExecution()
 
@@ -108,12 +105,12 @@ These must survive all future Coin Card work. If a proposed change violates any 
    structural members. They are never hidden by state rules. Only body panels change.
 
 3. **Fee math owned by the Execution Service.**
-   `IX_EXECUTE.calculateFee()` is the single authority. card.js and wallet.js both
+   `IX_EXECUTION.calculateFee()` is the single authority. card.js and wallet.js both
    consume it. No surface may implement its own fee calculation.
 
-4. **No write outside IX_EXECUTE.**
+4. **No write outside IX_EXECUTION.**
    `eth_sendTransaction`, `.approve()`, `.transferWithFee()` must not appear outside
-   `js/ix-execute.js`. Run the execution authority audit before any execution-adjacent change:
+   `js/ix-execution.js`. Run the execution authority audit before any execution-adjacent change:
    ```
    grep -rn "eth_sendTransaction"        js/ config/ card/
    grep -rn "\.approve("                 js/ config/ card/
@@ -157,7 +154,7 @@ Run before and after any Coin Card change. Requires live browser + MetaMask.
 
 - [ ] Tap chip (--ready) → wallet connect prompt fires
 - [ ] Wrong network → chip label reads "Switch to Polygon", chip --ready
-- [ ] Tap chip on wrong network → network switch fires through IX_EXECUTE
+- [ ] Tap chip on wrong network → network switch fires through IX_EXECUTION
 - [ ] Review panel shows same amount / fee / total as input panel
 - [ ] Tap chip on review → approval prompt fires (MetaMask)
 - [ ] Console: `[IX] invoking approve` (not a direct Contract call)
