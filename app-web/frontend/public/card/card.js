@@ -77,9 +77,11 @@
     total:               null,
     intent:              null,
     sender:              null,
+    manifestVerificationState: 'VERIFICATION_UNAVAILABLE',
   };
 
   var frame = document.getElementById('ccFrame');
+  var verification = window.IX_COIN_CARD_VERIFICATION || null;
 
   var SHELL_ACTIVE_STATES = {
     VERIFIED: true, AMOUNT_READY: true, TRANSFER_INTENT_READY: true,
@@ -304,6 +306,10 @@
    * ---------------------------------------------------------------- */
   function connectWallet() {
     if (!window.IX_EXECUTION) { renderError('Execution module unavailable'); return; }
+    if (!verification || !verification.canExecuteTransfer(state.manifestVerificationState)) {
+      renderTxError('Coin Card verification unavailable. Transfer disabled.');
+      return;
+    }
 
     transition('CONNECTING');
     setText('ccExecLabel', 'Connecting wallet\u2026');
@@ -363,6 +369,10 @@
 
   function switchNetwork() {
     if (!window.IX_EXECUTION) return;
+    if (!verification || !verification.canExecuteTransfer(state.manifestVerificationState)) {
+      renderTxError('Coin Card verification unavailable. Transfer disabled.');
+      return;
+    }
     var manifestChainId = state.manifest && state.manifest.chainId;
 
     transition('SWITCHING_NETWORK');
@@ -430,6 +440,10 @@
    * ---------------------------------------------------------------- */
   function startExecution() {
     if (!state.intent || !state.sender || !state.manifest || !window.IX_EXECUTION) return;
+    if (!verification || !verification.canExecuteTransfer(state.manifestVerificationState)) {
+      renderTxError('Coin Card verification unavailable. Transfer disabled.');
+      return;
+    }
     var intent  = state.intent;
     var chainId = state.manifest.chainId;
     var token     = (state.manifest.token || 'USDC').toUpperCase();
@@ -575,6 +589,12 @@
    * ---------------------------------------------------------------- */
   function loadManifest(cardId) {
     transition('MANIFEST_LOADING');
+    var pointer = verification && verification.readManifestPointer(frame);
+    if (!pointer || pointer.state === 'VERIFICATION_UNAVAILABLE') {
+      state.manifestVerificationState = 'VERIFICATION_UNAVAILABLE';
+      renderError('Verification unavailable', pointer && pointer.error);
+      return;
+    }
     var url = '/registry/coincards/' + encodeURIComponent(cardId) + '.json';
 
     fetch(url)
@@ -591,6 +611,7 @@
 
         if (manifest.status === 'revoked') {
           state.manifest = manifest;
+          state.manifestVerificationState = 'CARD_REVOKED';
           renderRevoked(manifest);
           transition('REVOKED');
           emit('CC_ERROR', { message: 'revoked' });
@@ -609,6 +630,7 @@
         }
 
         state.manifest = manifest;
+        state.manifestVerificationState = 'VERIFIED';
         renderTrust(manifest);
         initAmountSurface(manifest);
         transition('VERIFIED');

@@ -67,13 +67,14 @@ The v1 protected asset set is:
 
 ```text
 card/card.js
+card/coin-card-verification.js
 card/card.css
 js/ix-execution.js
 ```
 
 These are protected because they control the rendered Coin Card surface, the
-visible trust and interaction layer, and the shared transaction execution
-boundary.
+visible trust and interaction layer, the runtime verification gate, and the
+shared transaction execution boundary.
 
 Future versions may add protected images, SVGs, generated artifacts, token CSS,
 or receipt/proof wiring. Adding protected assets is a schema-compatible policy

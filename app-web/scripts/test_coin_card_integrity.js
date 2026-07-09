@@ -10,6 +10,7 @@ const toolsRoot = path.join(repoRoot, 'tools/coin-card-integrity');
 const generator = path.join(toolsRoot, 'generate_manifest.py');
 const verifier = path.join(toolsRoot, 'verify_manifest.py');
 const protectedAssets = [
+  'card/coin-card-verification.js',
   'card/card.js',
   'card/card.css',
   'js/ix-execution.js',
@@ -71,6 +72,8 @@ function main() {
     generator,
     '--root',
     publicRoot,
+    '--asset',
+    'card/coin-card-verification.js',
     '--asset',
     'card/card.js',
     '--asset',

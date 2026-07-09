@@ -12,7 +12,8 @@
 </head>
 <body>
 
-<div class="cc-frame" id="ccFrame" data-state="BOOT" role="region" aria-label="Coin Card transfer surface">
+<div class="cc-frame" id="ccFrame" data-state="BOOT" data-ix-coin-card
+  data-ix-manifest="coin-card-manifest.json" role="region" aria-label="Coin Card transfer surface">
 
   <!-- BOOT / MANIFEST_LOADING -->
   <div class="cc-loading" id="ccLoading" aria-live="polite">
@@ -136,6 +137,7 @@
 </div><!-- /.cc-frame -->
 
 <script src="/js/ix-execution.js"></script>
+<script src="coin-card-verification.js"></script>
 <script src="card.js"></script>
 </body>
 </html>

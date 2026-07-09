@@ -77,6 +77,7 @@ Generate:
 ```bash
 python tools/coin-card-integrity/generate_manifest.py \
   --root app-web/frontend/public \
+  --asset card/coin-card-verification.js \
   --asset card/card.js \
   --asset card/card.css \
   --asset js/ix-execution.js \
