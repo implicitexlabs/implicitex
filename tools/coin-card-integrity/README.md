@@ -53,6 +53,18 @@ The verifier checks:
 
 Any asset byte change should cause verification to fail.
 
+## Repeatable Repo Check
+
+From `app-web`:
+
+```bash
+npm run test:coin-card-integrity
+```
+
+This check compiles the Python files, generates and verifies a manifest against
+real Coin Card assets, then copies those assets to a temporary directory,
+modifies `card/card.css`, and requires verification to fail.
+
 ## `unsigned-dev`
 
 The proof manifest uses:
