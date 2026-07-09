@@ -17,6 +17,7 @@ Canonical docs:
 - `../../../../docs/product/coin-card/COIN_CARD_CRYPTOGRAPHIC_INTEGRITY_ARCHITECTURE.md` — conceptual integrity architecture for making issued Coin Cards authentic or invalid.
 - `../../../../docs/product/coin-card/COIN_CARD_MANIFEST_SCHEMA_V1.md` — manifest fields, protected asset entries, canonical hashing, and proof-tooling format.
 - `../../../../docs/product/coin-card/COIN_CARD_MANIFEST_RUNTIME_CONTRACT_V1.md` — runtime manifest placement, verification states, and the rule that only `VERIFIED` cards may call `IX_EXECUTION.executeTransfer(...)`.
+- `../../../../docs/product/coin-card/COIN_CARD_VERIFICATION_STATE_COPY_V1.md` — user-facing copy contract for manifest verification states.
 - `../../../../tools/coin-card-integrity/README.md` — proof tooling usage for generating, verifying, and tamper-checking Coin Card manifests.
 
 Implementation-local checkpoint:
@@ -28,6 +29,7 @@ Mirrored files in this directory:
 - `COIN_CARD_CRYPTOGRAPHIC_INTEGRITY_ARCHITECTURE.md`
 - `COIN_CARD_MANIFEST_SCHEMA_V1.md`
 - `COIN_CARD_MANIFEST_RUNTIME_CONTRACT_V1.md`
+- `COIN_CARD_VERIFICATION_STATE_COPY_V1.md`
 
 Those mirrored files are convenience copies for app-web readers. The canonical versions live under `docs/product/coin-card/`.
 
@@ -38,6 +40,7 @@ The manifest integrity docs are intentionally split by responsibility:
 - Architecture: `docs/product/coin-card/COIN_CARD_CRYPTOGRAPHIC_INTEGRITY_ARCHITECTURE.md`
 - Manifest data shape: `docs/product/coin-card/COIN_CARD_MANIFEST_SCHEMA_V1.md`
 - Runtime execution policy: `docs/product/coin-card/COIN_CARD_MANIFEST_RUNTIME_CONTRACT_V1.md`
+- Verification state copy: `docs/product/coin-card/COIN_CARD_VERIFICATION_STATE_COPY_V1.md`
 - Proof tooling: `tools/coin-card-integrity/README.md`
 
 The boundary is:
