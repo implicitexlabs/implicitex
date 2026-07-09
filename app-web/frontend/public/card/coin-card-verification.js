@@ -165,6 +165,56 @@
     return JSON.stringify(payload);
   }
 
+  function getCryptoSubtleForVerify() {
+    return window.crypto
+      && window.crypto.subtle
+      && typeof window.crypto.subtle.importKey === 'function'
+      && typeof window.crypto.subtle.verify === 'function'
+      ? window.crypto.subtle
+      : null;
+  }
+
+  function base64UrlToBytes(value) {
+    if (typeof value !== 'string' || !value.trim()) return null;
+
+    var normalized = value.replace(/-/g, '+').replace(/_/g, '/');
+    while (normalized.length % 4) normalized += '=';
+
+    var atobImpl = (window && typeof window.atob === 'function')
+      ? window.atob
+      : (typeof atob === 'function' ? atob : null);
+    if (atobImpl) {
+      var binary = atobImpl(normalized);
+      var bytes = new Uint8Array(binary.length);
+      for (var i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+      }
+      return bytes;
+    }
+
+    if (typeof Buffer !== 'undefined') {
+      return new Uint8Array(Buffer.from(normalized, 'base64'));
+    }
+
+    return null;
+  }
+
+  function bytesToBase64Url(bytes) {
+    var binary = '';
+    for (var i = 0; i < bytes.length; i++) {
+      binary += String.fromCharCode(bytes[i]);
+    }
+    var btoaImpl = (window && typeof window.btoa === 'function')
+      ? window.btoa
+      : (typeof btoa === 'function' ? btoa : null);
+    var encoded = btoaImpl
+      ? btoaImpl(binary)
+      : (typeof Buffer !== 'undefined' ? Buffer.from(bytes).toString('base64') : null);
+
+    if (!encoded) return null;
+    return encoded.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+  }
+
   function getCryptoSubtle() {
     return window.crypto && window.crypto.subtle && typeof window.crypto.subtle.digest === 'function'
       ? window.crypto.subtle
@@ -474,6 +524,109 @@
     });
   }
 
+  function verifyP256Signature(integrityManifest, publicKey) {
+    var subtle = getCryptoSubtleForVerify();
+    if (!subtle) {
+      return Promise.resolve(unavailable('integrity-manifest-signature-verifier-unavailable'));
+    }
+
+    if (!integrityManifest || !integrityManifest.signature || typeof integrityManifest.signature !== 'object') {
+      return Promise.resolve(unavailable('integrity-manifest-signature-missing'));
+    }
+
+    var signature = integrityManifest.signature;
+    if (signature.mode !== 'signed-p256-v1') {
+      return Promise.resolve(unavailable('integrity-manifest-signature-mode-unsupported', {
+        signatureMode: signature.mode || null,
+      }));
+    }
+    if (!signature.value) {
+      return Promise.resolve(unavailable('integrity-manifest-signature-missing', {
+        signatureMode: signature.mode,
+      }));
+    }
+
+    var canonicalPayload = canonicalizeIntegrityManifestPayload(integrityManifest);
+    if (!canonicalPayload) {
+      return Promise.resolve(unavailable('integrity-manifest-canonical-payload-missing'));
+    }
+
+    var textEncoder = window.TextEncoder || (typeof TextEncoder === 'function' ? TextEncoder : null);
+    if (!textEncoder) {
+      return Promise.resolve(unavailable('integrity-manifest-textencoder-unavailable'));
+    }
+
+    var signatureBytes = base64UrlToBytes(signature.value);
+    if (!signatureBytes) {
+      return Promise.resolve(unavailable('integrity-manifest-signature-format-invalid'));
+    }
+
+    var payloadBytes = new textEncoder().encode(canonicalPayload);
+    var keyPromise;
+    if (publicKey && typeof publicKey === 'object' && publicKey.type === 'public' && typeof publicKey.algorithm === 'object') {
+      keyPromise = Promise.resolve(publicKey);
+    } else {
+      var keyMaterial = publicKey;
+      if (typeof publicKey === 'string') {
+        try {
+          keyMaterial = JSON.parse(publicKey);
+        } catch (err) {
+          return Promise.resolve(unavailable('integrity-manifest-public-key-invalid'));
+        }
+      }
+      if (!keyMaterial || typeof keyMaterial !== 'object') {
+        return Promise.resolve(unavailable('integrity-manifest-public-key-invalid'));
+      }
+      if (!keyMaterial.kty) {
+        return Promise.resolve(unavailable('integrity-manifest-public-key-invalid'));
+      }
+      keyPromise = subtle.importKey(
+        'jwk',
+        keyMaterial,
+        { name: 'ECDSA', namedCurve: 'P-256' },
+        false,
+        ['verify']
+      );
+    }
+
+    return Promise.resolve(keyPromise)
+      .then(function (key) {
+        return subtle.verify(
+          { name: 'ECDSA', hash: { name: 'SHA-256' } },
+          key,
+          signatureBytes,
+          payloadBytes
+        );
+      })
+      .then(function (valid) {
+        if (!valid) {
+          return {
+            ok: true,
+            valid: false,
+            state: STATES.INTEGRITY_FAILED,
+            error: 'integrity-manifest-signature-invalid',
+            signatureMode: signature.mode,
+            keyId: signature.keyId || null,
+            canonicalPayload: canonicalPayload,
+          };
+        }
+        return {
+          ok: true,
+          valid: true,
+          state: STATES.VERIFIED,
+          error: null,
+          signatureMode: signature.mode,
+          keyId: signature.keyId || null,
+          canonicalPayload: canonicalPayload,
+        };
+      }, function () {
+        return unavailable('integrity-manifest-signature-verifier-unavailable', {
+          signatureMode: signature.mode,
+          keyId: signature.keyId || null,
+        });
+      });
+  }
+
   function requireExecutable(state) {
     return canExecuteTransfer(state)
       ? { ok: true, state: STATES.VERIFIED, error: null }
@@ -492,6 +645,7 @@
     readManifestPointer: readIntegrityManifestPointer,
     loadIntegrityManifest: loadIntegrityManifest,
     evaluateSignaturePolicy: evaluateSignaturePolicy,
+    verifyP256Signature: verifyP256Signature,
     requireExecutable: requireExecutable,
   });
 })();
