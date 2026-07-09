@@ -21,6 +21,29 @@ function loadVerification() {
   return context.window.IX_COIN_CARD_VERIFICATION;
 }
 
+const expectedStateCopy = {
+  VERIFIED: {
+    statusLabel: 'Verified',
+    primaryMessage: 'This Coin Card matches the issued ImplicitEx package.',
+    actionLabel: 'Continue',
+  },
+  INTEGRITY_FAILED: {
+    statusLabel: 'Integrity check failed',
+    primaryMessage: 'This Coin Card does not match the issued ImplicitEx package.',
+    actionLabel: 'Transfers disabled',
+  },
+  CARD_REVOKED: {
+    statusLabel: 'Revoked',
+    primaryMessage: 'This Coin Card is no longer operationally valid.',
+    actionLabel: 'Transfers disabled',
+  },
+  VERIFICATION_UNAVAILABLE: {
+    statusLabel: 'Verification unavailable',
+    primaryMessage: 'This Coin Card cannot currently be verified.',
+    actionLabel: 'Transfers disabled',
+  },
+};
+
 function makeElement(id) {
   const attributes = new Map();
   const listeners = new Map();
@@ -77,13 +100,14 @@ function loadCoinCard(options = {}) {
   }
 
   const executionCalls = [];
+  const verification = loadVerification();
   const verificationCalls = [];
-  const verification = {
+  const wrappedVerification = Object.assign({}, verification, {
     readManifestPointer(root) {
       verificationCalls.push({ type: 'readManifestPointer', root });
       if (!root.getAttribute('data-ix-manifest')) {
         return {
-          state: 'VERIFICATION_UNAVAILABLE',
+          state: verification.STATES.VERIFICATION_UNAVAILABLE,
           manifestUrl: null,
           error: 'manifest-pointer-missing',
         };
@@ -92,9 +116,9 @@ function loadCoinCard(options = {}) {
     },
     canExecuteTransfer(state) {
       verificationCalls.push({ type: 'canExecuteTransfer', state });
-      return options.canExecuteTransfer !== false && state === 'VERIFIED';
+      return options.canExecuteTransfer !== false && verification.canExecuteTransfer(state);
     },
-  };
+  });
 
   const context = {
     console,
@@ -116,7 +140,7 @@ function loadCoinCard(options = {}) {
       addEventListener() {},
     },
     window: {
-      IX_COIN_CARD_VERIFICATION: verification,
+      IX_COIN_CARD_VERIFICATION: wrappedVerification,
       IX_EXECUTION: {
         toRawUsdc(amount) {
           return BigInt(Math.round(Number(amount) * 1000000));
@@ -160,11 +184,12 @@ function loadCoinCard(options = {}) {
         json: () => Promise.resolve({
           schema: 'implicitex.coincard.v1',
           cardId: 'demo-card',
-          status: 'active',
+          status: options.manifestStatus || 'active',
           recipient: '0x2222222222222222222222222222222222222222',
           chainId: 137,
           token: 'USDC',
           displayName: 'Demo Recipient',
+          verificationState: options.verificationState,
         }),
       });
     },
@@ -217,19 +242,41 @@ test('missing manifest pointer becomes VERIFICATION_UNAVAILABLE', () => {
   assert.equal(result.error, 'manifest-pointer-missing');
 });
 
-test('Coin Card does not call IX_EXECUTION.executeTransfer unless verification gate passes', async () => {
-  const runtime = loadCoinCard({ canExecuteTransfer: false });
+test('every known verification state returns controlled copy', () => {
+  const verification = loadVerification();
 
-  await settle();
-  const input = runtime.elements.get('ccAmountInput');
-  const chip = runtime.elements.get('ccChip');
+  for (const state of Object.values(verification.STATES)) {
+    const copy = verification.getStateCopy(state);
+    assert.equal(copy.statusLabel, expectedStateCopy[state].statusLabel, state);
+    assert.equal(copy.primaryMessage, expectedStateCopy[state].primaryMessage, state);
+    assert.equal(copy.actionLabel, expectedStateCopy[state].actionLabel, state);
+  }
+});
 
-  input.value = '10';
-  input.dispatch('input');
-  chip.dispatch('click');
-  await settle();
+test('unknown verification state copy normalizes to VERIFICATION_UNAVAILABLE', () => {
+  const verification = loadVerification();
 
-  assert.deepEqual(runtime.executionCalls, []);
-  assert.equal(runtime.elements.get('ccCardError').textContent, 'Coin Card verification unavailable. Transfer disabled.');
-  assert(runtime.verificationCalls.some((call) => call.type === 'canExecuteTransfer'));
+  assert.equal(verification.normalizeState('BROKEN'), verification.STATES.VERIFICATION_UNAVAILABLE);
+  assert.equal(
+    verification.getStateCopy('BROKEN').primaryMessage,
+    expectedStateCopy.VERIFICATION_UNAVAILABLE.primaryMessage,
+  );
+});
+
+test('non-VERIFIED transfer attempts render the correct disabled copy', async () => {
+  for (const blockedState of ['INTEGRITY_FAILED', 'CARD_REVOKED', 'VERIFICATION_UNAVAILABLE']) {
+    const runtime = loadCoinCard({ verificationState: blockedState });
+
+    await settle();
+    const chip = runtime.elements.get('ccChip');
+
+    chip.dispatch('click');
+    await settle();
+
+    assert.deepEqual(runtime.executionCalls, [], blockedState);
+    assert.equal(runtime.elements.get('ccErrorStateLabel').textContent, expectedStateCopy[blockedState].statusLabel, blockedState);
+    assert.equal(runtime.elements.get('ccCardError').textContent, expectedStateCopy[blockedState].primaryMessage, blockedState);
+    assert.equal(runtime.elements.get('ccChip').disabled, true, blockedState);
+    assert(runtime.verificationCalls.some((call) => call.type === 'canExecuteTransfer'), blockedState);
+  }
 });

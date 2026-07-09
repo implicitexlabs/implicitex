@@ -161,6 +161,22 @@
     setText('ccStatusLabel', label);
   }
 
+  function renderVerificationBlocked() {
+    var copy = verification && verification.getStateCopy
+      ? verification.getStateCopy(state.manifestVerificationState)
+      : {
+        statusLabel: 'Verification unavailable',
+        primaryMessage: 'This Coin Card cannot currently be verified.',
+        actionLabel: 'Transfers disabled',
+      };
+    setText('ccErrorStateLabel', copy.statusLabel);
+    setText('ccCardError', copy.primaryMessage);
+    setStatus(state.manifestVerificationState === 'CARD_REVOKED' ? 'revoked' : 'failed', copy.statusLabel);
+    transition('TX_FAILED');
+    setChipState('cc-card-chip--waiting', true, copy.actionLabel);
+    emit('CC_ERROR', { message: copy.primaryMessage, verificationState: state.manifestVerificationState });
+  }
+
   /* ----------------------------------------------------------------
    * Trust population — runs once on manifest load.
    * Populates recipient identity across all body panels so each panel
@@ -307,7 +323,7 @@
   function connectWallet() {
     if (!window.IX_EXECUTION) { renderError('Execution module unavailable'); return; }
     if (!verification || !verification.canExecuteTransfer(state.manifestVerificationState)) {
-      renderTxError('Coin Card verification unavailable. Transfer disabled.');
+      renderVerificationBlocked();
       return;
     }
 
@@ -370,7 +386,7 @@
   function switchNetwork() {
     if (!window.IX_EXECUTION) return;
     if (!verification || !verification.canExecuteTransfer(state.manifestVerificationState)) {
-      renderTxError('Coin Card verification unavailable. Transfer disabled.');
+      renderVerificationBlocked();
       return;
     }
     var manifestChainId = state.manifest && state.manifest.chainId;
@@ -441,7 +457,7 @@
   function startExecution() {
     if (!state.intent || !state.sender || !state.manifest || !window.IX_EXECUTION) return;
     if (!verification || !verification.canExecuteTransfer(state.manifestVerificationState)) {
-      renderTxError('Coin Card verification unavailable. Transfer disabled.');
+      renderVerificationBlocked();
       return;
     }
     var intent  = state.intent;
@@ -630,8 +646,15 @@
         }
 
         state.manifest = manifest;
-        state.manifestVerificationState = 'VERIFIED';
+        /* Scaffold only: future browser verification will produce this state. */
+        state.manifestVerificationState = verification && verification.normalizeState
+          ? verification.normalizeState(manifest.verificationState || 'VERIFIED')
+          : 'VERIFICATION_UNAVAILABLE';
         renderTrust(manifest);
+        if (!verification || !verification.canExecuteTransfer(state.manifestVerificationState)) {
+          renderVerificationBlocked();
+          return;
+        }
         initAmountSurface(manifest);
         transition('VERIFIED');
         setChipState('cc-card-chip--waiting', true, 'Enter amount to continue');
