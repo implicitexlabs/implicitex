@@ -27,6 +27,7 @@ Implementation-local checkpoint notes may exist under `app-web/docs/product/coin
 - `COIN_CARD_CRYPTOGRAPHIC_INTEGRITY_ARCHITECTURE.md` — conceptual integrity architecture for making issued Coin Cards authentic or invalid.
 - `COIN_CARD_MANIFEST_SCHEMA_V1.md` — manifest fields, protected asset entries, canonical hashing, and proof-tooling format.
 - `COIN_CARD_MANIFEST_RUNTIME_CONTRACT_V1.md` — runtime manifest placement, verification states, and the rule that only `VERIFIED` cards may call `IX_EXECUTION.executeTransfer(...)`.
+- `COIN_CARD_SIGNATURE_POLICY_V1.md` — signature policy for when asset-hash consistency can become trusted execution.
 - `COIN_CARD_VERIFICATION_STATE_COPY_V1.md` — user-facing copy contract for manifest verification states.
 - `../../../tools/coin-card-integrity/README.md` — proof tooling usage for generating, verifying, and tamper-checking Coin Card manifests.
 
@@ -41,6 +42,7 @@ The manifest integrity docs are intentionally split by responsibility:
 - Architecture: `COIN_CARD_CRYPTOGRAPHIC_INTEGRITY_ARCHITECTURE.md`
 - Manifest data shape: `COIN_CARD_MANIFEST_SCHEMA_V1.md`
 - Runtime execution policy: `COIN_CARD_MANIFEST_RUNTIME_CONTRACT_V1.md`
+- Signature policy: `COIN_CARD_SIGNATURE_POLICY_V1.md`
 - Verification state copy: `COIN_CARD_VERIFICATION_STATE_COPY_V1.md`
 - Proof tooling: `../../../tools/coin-card-integrity/README.md`
 
