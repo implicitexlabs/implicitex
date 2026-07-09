@@ -422,6 +422,64 @@ test('loadIntegrityManifest hashes required assets in browser', async () => {
   assert.deepEqual(result.assetPaths, requiredAssetPaths);
 });
 
+test('canonicalizeIntegrityManifestPayload ignores top-level field order', () => {
+  const verification = loadVerification();
+  const baseManifest = validIntegrityManifest();
+  const reorderedManifest = {};
+  reorderedManifest.signature = baseManifest.signature;
+  reorderedManifest.manifestHash = baseManifest.manifestHash;
+  reorderedManifest.assets = baseManifest.assets.map((asset) => ({
+    sha256: asset.sha256,
+    bytes: asset.bytes,
+    path: asset.path,
+  }));
+  reorderedManifest.buildVersion = baseManifest.buildVersion;
+  reorderedManifest.layoutVersion = baseManifest.layoutVersion;
+  reorderedManifest.registryStatus = baseManifest.registryStatus;
+  reorderedManifest.network = baseManifest.network;
+  reorderedManifest.recipient = baseManifest.recipient;
+  reorderedManifest.coinCardVersion = baseManifest.coinCardVersion;
+  reorderedManifest.cardId = baseManifest.cardId;
+  reorderedManifest.schemaVersion = baseManifest.schemaVersion;
+
+  const basePayload = verification.canonicalizeIntegrityManifestPayload(baseManifest);
+  const reorderedPayload = verification.canonicalizeIntegrityManifestPayload(reorderedManifest);
+
+  assert.equal(basePayload, reorderedPayload);
+  assert(!basePayload.includes('signature'));
+  assert(!basePayload.includes('manifestHash'));
+});
+
+test('canonicalizeIntegrityManifestPayload changes when recipient changes', () => {
+  const verification = loadVerification();
+  const baseManifest = validIntegrityManifest();
+  const mutatedManifest = validIntegrityManifest({
+    recipient: '0x1111111111111111111111111111111111111111',
+  });
+
+  assert.notEqual(
+    verification.canonicalizeIntegrityManifestPayload(baseManifest),
+    verification.canonicalizeIntegrityManifestPayload(mutatedManifest),
+  );
+});
+
+test('canonicalizeIntegrityManifestPayload changes when protected assets change', () => {
+  const verification = loadVerification();
+  const baseManifest = validIntegrityManifest();
+  const mutatedManifest = validIntegrityManifest({
+    assets: baseManifest.assets.map((asset) => (
+      asset.path === 'card/card.css'
+        ? { path: asset.path, sha256: asset.sha256, bytes: asset.bytes + 1 }
+        : asset
+    )),
+  });
+
+  assert.notEqual(
+    verification.canonicalizeIntegrityManifestPayload(baseManifest),
+    verification.canonicalizeIntegrityManifestPayload(mutatedManifest),
+  );
+});
+
 test('evaluateSignaturePolicy keeps unsigned-dev at ASSET_HASHES_PASSED', () => {
   const verification = loadVerification();
   const assetHashResult = {

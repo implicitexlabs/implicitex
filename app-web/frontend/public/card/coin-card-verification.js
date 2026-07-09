@@ -134,6 +134,37 @@
     return true;
   }
 
+  function canonicalizeValue(value) {
+    if (Array.isArray(value)) {
+      return value.map(function (item) {
+        return canonicalizeValue(item);
+      });
+    }
+    if (!value || typeof value !== 'object') {
+      return value;
+    }
+
+    var canonical = {};
+    Object.keys(value).sort().forEach(function (key) {
+      canonical[key] = canonicalizeValue(value[key]);
+    });
+    return canonical;
+  }
+
+  function canonicalizeIntegrityManifestPayload(integrityManifest) {
+    if (!integrityManifest || typeof integrityManifest !== 'object' || Array.isArray(integrityManifest)) {
+      return '';
+    }
+
+    var payload = {};
+    Object.keys(integrityManifest).sort().forEach(function (key) {
+      if (key === 'signature' || key === 'manifestHash') return;
+      payload[key] = canonicalizeValue(integrityManifest[key]);
+    });
+
+    return JSON.stringify(payload);
+  }
+
   function getCryptoSubtle() {
     return window.crypto && window.crypto.subtle && typeof window.crypto.subtle.digest === 'function'
       ? window.crypto.subtle
@@ -456,6 +487,7 @@
     canExecuteTransfer: canExecuteTransfer,
     getRequiredAssetPaths: getRequiredAssetPaths,
     hasRequiredAssets: hasRequiredAssets,
+    canonicalizeIntegrityManifestPayload: canonicalizeIntegrityManifestPayload,
     readIntegrityManifestPointer: readIntegrityManifestPointer,
     readManifestPointer: readIntegrityManifestPointer,
     loadIntegrityManifest: loadIntegrityManifest,
