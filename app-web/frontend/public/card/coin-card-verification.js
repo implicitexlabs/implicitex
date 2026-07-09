@@ -35,6 +35,9 @@
     'card/card.css',
     'js/ix-execution.js',
   ]);
+  var SUPPORTED_SIGNATURE_MODES = Object.freeze({
+    'signed-v1': true,
+  });
 
   var STATE_SET = Object.freeze({
     VERIFIED: true,
@@ -393,8 +396,51 @@
         if (!preparedResult.integrityManifest) {
           return preparedResult;
         }
-        return verifyIntegrityManifestAssets(preparedResult, request);
+        return verifyIntegrityManifestAssets(preparedResult, request)
+          .then(function (assetResult) {
+            return evaluateSignaturePolicy(preparedResult.integrityManifest, assetResult);
+          });
       });
+  }
+
+  function evaluateSignaturePolicy(integrityManifest, assetHashResult) {
+    if (!assetHashResult || assetHashResult.state !== STATES.ASSET_HASHES_PASSED) {
+      return assetHashResult;
+    }
+
+    if (!integrityManifest || !integrityManifest.signature || typeof integrityManifest.signature !== 'object') {
+      return unavailable('integrity-manifest-signature-missing');
+    }
+
+    var signature = integrityManifest.signature;
+    var signatureMode = signature.mode;
+    if (!signatureMode) {
+      return unavailable('integrity-manifest-signature-missing');
+    }
+
+    if (signatureMode === 'unsigned-dev') {
+      return assetHashResult;
+    }
+
+    if (!SUPPORTED_SIGNATURE_MODES[signatureMode]) {
+      return unavailable('integrity-manifest-signature-mode-unsupported', {
+        signatureMode: signatureMode,
+      });
+    }
+
+    if (signature.value === 'invalid' || signature.valid === false || signature.status === 'invalid') {
+      return {
+        state: STATES.INTEGRITY_FAILED,
+        integrityManifest: null,
+        metadata: null,
+        error: 'integrity-manifest-signature-invalid',
+        signatureMode: signatureMode,
+      };
+    }
+
+    return unavailable('integrity-manifest-signature-verifier-unavailable', {
+      signatureMode: signatureMode,
+    });
   }
 
   function requireExecutable(state) {
@@ -413,6 +459,7 @@
     readIntegrityManifestPointer: readIntegrityManifestPointer,
     readManifestPointer: readIntegrityManifestPointer,
     loadIntegrityManifest: loadIntegrityManifest,
+    evaluateSignaturePolicy: evaluateSignaturePolicy,
     requireExecutable: requireExecutable,
   });
 })();

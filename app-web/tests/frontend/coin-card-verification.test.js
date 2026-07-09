@@ -422,6 +422,101 @@ test('loadIntegrityManifest hashes required assets in browser', async () => {
   assert.deepEqual(result.assetPaths, requiredAssetPaths);
 });
 
+test('evaluateSignaturePolicy keeps unsigned-dev at ASSET_HASHES_PASSED', () => {
+  const verification = loadVerification();
+  const assetHashResult = {
+    state: verification.STATES.ASSET_HASHES_PASSED,
+    integrityManifest: validIntegrityManifest(),
+    metadata: { assetIntegrityStatus: 'passed' },
+    error: null,
+  };
+
+  const result = verification.evaluateSignaturePolicy(validIntegrityManifest(), assetHashResult);
+  assert.equal(result.state, verification.STATES.ASSET_HASHES_PASSED);
+});
+
+test('evaluateSignaturePolicy missing signature becomes VERIFICATION_UNAVAILABLE', () => {
+  const verification = loadVerification();
+  const manifest = validIntegrityManifest();
+  delete manifest.signature;
+
+  const result = verification.evaluateSignaturePolicy(manifest, {
+    state: verification.STATES.ASSET_HASHES_PASSED,
+    integrityManifest: manifest,
+    metadata: { assetIntegrityStatus: 'passed' },
+    error: null,
+  });
+
+  assert.equal(result.state, verification.STATES.VERIFICATION_UNAVAILABLE);
+  assert.equal(result.error, 'integrity-manifest-signature-missing');
+});
+
+test('evaluateSignaturePolicy unsupported signature mode becomes VERIFICATION_UNAVAILABLE', () => {
+  const verification = loadVerification();
+  const manifest = validIntegrityManifest({
+    signature: {
+      mode: 'signed-v2',
+      algorithm: 'rsa-pss',
+      value: 'signed',
+    },
+  });
+
+  const result = verification.evaluateSignaturePolicy(manifest, {
+    state: verification.STATES.ASSET_HASHES_PASSED,
+    integrityManifest: manifest,
+    metadata: { assetIntegrityStatus: 'passed' },
+    error: null,
+  });
+
+  assert.equal(result.state, verification.STATES.VERIFICATION_UNAVAILABLE);
+  assert.equal(result.error, 'integrity-manifest-signature-mode-unsupported');
+  assert.equal(result.signatureMode, 'signed-v2');
+});
+
+test('evaluateSignaturePolicy invalid supported signature becomes INTEGRITY_FAILED', () => {
+  const verification = loadVerification();
+  const manifest = validIntegrityManifest({
+    signature: {
+      mode: 'signed-v1',
+      algorithm: 'rsa-pss',
+      value: 'invalid',
+    },
+  });
+
+  const result = verification.evaluateSignaturePolicy(manifest, {
+    state: verification.STATES.ASSET_HASHES_PASSED,
+    integrityManifest: manifest,
+    metadata: { assetIntegrityStatus: 'passed' },
+    error: null,
+  });
+
+  assert.equal(result.state, verification.STATES.INTEGRITY_FAILED);
+  assert.equal(result.error, 'integrity-manifest-signature-invalid');
+  assert.equal(result.signatureMode, 'signed-v1');
+});
+
+test('evaluateSignaturePolicy supported valid signature remains unavailable until a real verifier exists', () => {
+  const verification = loadVerification();
+  const manifest = validIntegrityManifest({
+    signature: {
+      mode: 'signed-v1',
+      algorithm: 'rsa-pss',
+      value: 'signed',
+    },
+  });
+
+  const result = verification.evaluateSignaturePolicy(manifest, {
+    state: verification.STATES.ASSET_HASHES_PASSED,
+    integrityManifest: manifest,
+    metadata: { assetIntegrityStatus: 'passed' },
+    error: null,
+  });
+
+  assert.equal(result.state, verification.STATES.VERIFICATION_UNAVAILABLE);
+  assert.equal(result.error, 'integrity-manifest-signature-verifier-unavailable');
+  assert.equal(result.signatureMode, 'signed-v1');
+});
+
 test('loadIntegrityManifest hash mismatch becomes INTEGRITY_FAILED', async () => {
   const verification = loadVerification();
   const manifest = validIntegrityManifest({
