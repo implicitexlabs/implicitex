@@ -70,6 +70,12 @@ const expectedStateCopy = {
     actionLabel: 'Transfers disabled',
   },
 };
+const requiredAssetPaths = [
+  'card/coin-card-verification.js',
+  'card/card.js',
+  'card/card.css',
+  'js/ix-execution.js',
+];
 
 function makeElement(id) {
   const attributes = new Map();
@@ -311,12 +317,27 @@ test('loadIntegrityManifest exposes metadata without approving execution', async
   assert.equal(result.metadata.cardId, 'cc_demo_implicitex');
   assert.equal(result.metadata.schemaVersion, 'coin-card-manifest.v1');
   assert.equal(result.metadata.signatureMode, 'unsigned-dev');
-  assert.deepEqual(result.metadata.assetPaths, [
-    'card/coin-card-verification.js',
-    'card/card.js',
-    'card/card.css',
-    'js/ix-execution.js',
-  ]);
+  assert.deepEqual(result.metadata.assetPaths, requiredAssetPaths);
+});
+
+test('required Integrity Manifest asset policy is exact for v1', () => {
+  const verification = loadVerification();
+  const manifest = validIntegrityManifest();
+
+  assert.deepEqual(Array.from(verification.getRequiredAssetPaths()), requiredAssetPaths);
+  assert.equal(verification.hasRequiredAssets(manifest), true);
+  assert.equal(
+    verification.hasRequiredAssets(validIntegrityManifest({
+      assets: manifest.assets.filter((asset) => asset.path !== 'js/ix-execution.js'),
+    })),
+    false,
+  );
+  assert.equal(
+    verification.hasRequiredAssets(validIntegrityManifest({
+      assets: manifest.assets.concat([{ path: 'extra.js', sha256: 'sha256:test', bytes: 1 }]),
+    })),
+    false,
+  );
 });
 
 test('loadIntegrityManifest parse failure becomes VERIFICATION_UNAVAILABLE', async () => {
@@ -360,6 +381,52 @@ test('loadIntegrityManifest unsupported schema becomes VERIFICATION_UNAVAILABLE'
   assert.equal(result.integrityManifest, null);
   assert.equal(result.metadata, null);
   assert.equal(result.error, 'integrity-manifest-schema-unsupported');
+});
+
+test('loadIntegrityManifest missing required protected asset becomes VERIFICATION_UNAVAILABLE', async () => {
+  const verification = loadVerification();
+  const manifest = validIntegrityManifest();
+  const result = await verification.loadIntegrityManifest('coin-card-manifest.json', async () => ({
+    ok: true,
+    json: async () => validIntegrityManifest({
+      assets: manifest.assets.filter((asset) => asset.path !== 'card/card.js'),
+    }),
+  }));
+
+  assert.equal(result.state, verification.STATES.VERIFICATION_UNAVAILABLE);
+  assert.equal(result.integrityManifest, null);
+  assert.equal(result.error, 'integrity-manifest-asset-policy-mismatch');
+  assert.deepEqual(Array.from(result.requiredAssetPaths), requiredAssetPaths);
+  assert(!result.assetPaths.includes('card/card.js'));
+});
+
+test('loadIntegrityManifest extra protected asset becomes VERIFICATION_UNAVAILABLE', async () => {
+  const verification = loadVerification();
+  const manifest = validIntegrityManifest();
+  const result = await verification.loadIntegrityManifest('coin-card-manifest.json', async () => ({
+    ok: true,
+    json: async () => validIntegrityManifest({
+      assets: manifest.assets.concat([{ path: 'card/extra.js', sha256: 'sha256:test', bytes: 1 }]),
+    }),
+  }));
+
+  assert.equal(result.state, verification.STATES.VERIFICATION_UNAVAILABLE);
+  assert.equal(result.error, 'integrity-manifest-asset-policy-mismatch');
+  assert(result.assetPaths.includes('card/extra.js'));
+});
+
+test('loadIntegrityManifest duplicate protected asset becomes VERIFICATION_UNAVAILABLE', async () => {
+  const verification = loadVerification();
+  const manifest = validIntegrityManifest();
+  const result = await verification.loadIntegrityManifest('coin-card-manifest.json', async () => ({
+    ok: true,
+    json: async () => validIntegrityManifest({
+      assets: manifest.assets.slice(0, -1).concat([manifest.assets[0]]),
+    }),
+  }));
+
+  assert.equal(result.state, verification.STATES.VERIFICATION_UNAVAILABLE);
+  assert.equal(result.error, 'integrity-manifest-asset-policy-mismatch');
 });
 
 test('non-VERIFIED transfer attempts render the correct disabled copy', async () => {

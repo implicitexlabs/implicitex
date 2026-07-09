@@ -28,6 +28,12 @@
     'signature',
     'manifestHash',
   ]);
+  var REQUIRED_ASSET_PATHS = Object.freeze([
+    'card/coin-card-verification.js',
+    'card/card.js',
+    'card/card.css',
+    'js/ix-execution.js',
+  ]);
 
   var STATE_SET = Object.freeze({
     VERIFIED: true,
@@ -73,6 +79,35 @@
 
   function canExecuteTransfer(state) {
     return normalizeState(state) === STATES.VERIFIED;
+  }
+
+  function getRequiredAssetPaths() {
+    return REQUIRED_ASSET_PATHS.slice();
+  }
+
+  function getAssetPaths(integrityManifest) {
+    if (!integrityManifest || !Array.isArray(integrityManifest.assets)) return [];
+    return integrityManifest.assets.map(function (asset) {
+      return asset && asset.path;
+    });
+  }
+
+  function hasRequiredAssets(integrityManifest) {
+    var assetPaths = getAssetPaths(integrityManifest);
+    if (assetPaths.length !== REQUIRED_ASSET_PATHS.length) return false;
+
+    var seen = {};
+    for (var i = 0; i < assetPaths.length; i++) {
+      var path = assetPaths[i];
+      if (!path || seen[path]) return false;
+      seen[path] = true;
+    }
+
+    for (var j = 0; j < REQUIRED_ASSET_PATHS.length; j++) {
+      if (!seen[REQUIRED_ASSET_PATHS[j]]) return false;
+    }
+
+    return true;
   }
 
   function readIntegrityManifestPointer(root) {
@@ -157,6 +192,12 @@
     if (!integrityManifest.signature || typeof integrityManifest.signature !== 'object') {
       return unavailable('integrity-manifest-missing-required-field', { field: 'signature' });
     }
+    if (!hasRequiredAssets(integrityManifest)) {
+      return unavailable('integrity-manifest-asset-policy-mismatch', {
+        requiredAssetPaths: getRequiredAssetPaths(),
+        assetPaths: getAssetPaths(integrityManifest),
+      });
+    }
 
     return {
       state: STATES.VERIFICATION_UNAVAILABLE,
@@ -212,6 +253,8 @@
     normalizeState: normalizeState,
     getStateCopy: getStateCopy,
     canExecuteTransfer: canExecuteTransfer,
+    getRequiredAssetPaths: getRequiredAssetPaths,
+    hasRequiredAssets: hasRequiredAssets,
     readIntegrityManifestPointer: readIntegrityManifestPointer,
     readManifestPointer: readIntegrityManifestPointer,
     loadIntegrityManifest: loadIntegrityManifest,
