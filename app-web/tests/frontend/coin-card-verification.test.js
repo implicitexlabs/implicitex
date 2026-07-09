@@ -13,12 +13,39 @@ const cardSource = fs.readFileSync(cardPath, 'utf8');
 function loadVerification() {
   const context = {
     Object,
+    Promise,
     String,
     window: {},
   };
   context.globalThis = context;
   vm.runInNewContext(verificationSource, context, { filename: verificationPath });
   return context.window.IX_COIN_CARD_VERIFICATION;
+}
+
+function validIntegrityManifest(overrides = {}) {
+  return {
+    schemaVersion: 'coin-card-manifest.v1',
+    cardId: 'cc_demo_implicitex',
+    coinCardVersion: 'coin-card.v1',
+    recipient: '0x0000000000000000000000000000000000000000',
+    network: 'polygon-mainnet',
+    registryStatus: 'active',
+    layoutVersion: 'coin-card-layout.v1',
+    buildVersion: 'dev',
+    assets: [
+      { path: 'card/coin-card-verification.js', sha256: 'sha256:test', bytes: 1 },
+      { path: 'card/card.js', sha256: 'sha256:test', bytes: 1 },
+      { path: 'card/card.css', sha256: 'sha256:test', bytes: 1 },
+      { path: 'js/ix-execution.js', sha256: 'sha256:test', bytes: 1 },
+    ],
+    signature: {
+      mode: 'unsigned-dev',
+      algorithm: null,
+      value: null,
+    },
+    manifestHash: 'sha256:test',
+    ...overrides,
+  };
 }
 
 const expectedStateCopy = {
@@ -261,6 +288,71 @@ test('unknown verification state copy normalizes to VERIFICATION_UNAVAILABLE', (
     verification.getStateCopy('BROKEN').primaryMessage,
     expectedStateCopy.VERIFICATION_UNAVAILABLE.primaryMessage,
   );
+});
+
+test('loadManifest exposes metadata without approving execution', async () => {
+  const verification = loadVerification();
+  const result = await verification.loadManifest('coin-card-manifest.json', async (url) => ({
+    ok: true,
+    url,
+    json: async () => validIntegrityManifest(),
+  }));
+
+  assert.equal(result.state, verification.STATES.VERIFICATION_UNAVAILABLE);
+  assert.equal(verification.canExecuteTransfer(result.state), false);
+  assert.equal(result.error, null);
+  assert.equal(result.metadata.cardId, 'cc_demo_implicitex');
+  assert.equal(result.metadata.schemaVersion, 'coin-card-manifest.v1');
+  assert.equal(result.metadata.signatureMode, 'unsigned-dev');
+  assert.deepEqual(result.metadata.assetPaths, [
+    'card/coin-card-verification.js',
+    'card/card.js',
+    'card/card.css',
+    'js/ix-execution.js',
+  ]);
+});
+
+test('loadManifest parse failure becomes VERIFICATION_UNAVAILABLE', async () => {
+  const verification = loadVerification();
+  const result = await verification.loadManifest('coin-card-manifest.json', async () => ({
+    ok: true,
+    json: async () => {
+      throw new Error('bad json');
+    },
+  }));
+
+  assert.equal(result.state, verification.STATES.VERIFICATION_UNAVAILABLE);
+  assert.equal(result.manifest, null);
+  assert.equal(result.metadata, null);
+  assert.equal(result.error, 'manifest-parse-failed');
+});
+
+test('loadManifest missing required field becomes VERIFICATION_UNAVAILABLE', async () => {
+  const verification = loadVerification();
+  const manifest = validIntegrityManifest();
+  delete manifest.manifestHash;
+
+  const result = await verification.loadManifest('coin-card-manifest.json', async () => ({
+    ok: true,
+    json: async () => manifest,
+  }));
+
+  assert.equal(result.state, verification.STATES.VERIFICATION_UNAVAILABLE);
+  assert.equal(result.error, 'manifest-missing-required-field');
+  assert.equal(result.field, 'manifestHash');
+});
+
+test('loadManifest unsupported schema becomes VERIFICATION_UNAVAILABLE', async () => {
+  const verification = loadVerification();
+  const result = await verification.loadManifest('coin-card-manifest.json', async () => ({
+    ok: true,
+    json: async () => validIntegrityManifest({ schemaVersion: 'coin-card-manifest.v2' }),
+  }));
+
+  assert.equal(result.state, verification.STATES.VERIFICATION_UNAVAILABLE);
+  assert.equal(result.manifest, null);
+  assert.equal(result.metadata, null);
+  assert.equal(result.error, 'manifest-schema-unsupported');
 });
 
 test('non-VERIFIED transfer attempts render the correct disabled copy', async () => {

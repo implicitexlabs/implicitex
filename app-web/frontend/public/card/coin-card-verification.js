@@ -14,6 +14,21 @@
     VERIFICATION_UNAVAILABLE: 'VERIFICATION_UNAVAILABLE',
   });
 
+  var MANIFEST_SCHEMA_VERSION = 'coin-card-manifest.v1';
+  var REQUIRED_MANIFEST_FIELDS = Object.freeze([
+    'schemaVersion',
+    'cardId',
+    'coinCardVersion',
+    'recipient',
+    'network',
+    'registryStatus',
+    'layoutVersion',
+    'buildVersion',
+    'assets',
+    'signature',
+    'manifestHash',
+  ]);
+
   var STATE_SET = Object.freeze({
     VERIFIED: true,
     INTEGRITY_FAILED: true,
@@ -86,6 +101,103 @@
     };
   }
 
+  function unavailable(error, extra) {
+    var result = {
+      state: STATES.VERIFICATION_UNAVAILABLE,
+      manifest: null,
+      metadata: null,
+      error: error,
+    };
+    if (extra) {
+      Object.keys(extra).forEach(function (key) {
+        result[key] = extra[key];
+      });
+    }
+    return result;
+  }
+
+  function buildManifestMetadata(manifest) {
+    return {
+      schemaVersion: manifest.schemaVersion,
+      cardId: manifest.cardId,
+      coinCardVersion: manifest.coinCardVersion,
+      recipient: manifest.recipient,
+      network: manifest.network,
+      registryStatus: manifest.registryStatus,
+      layoutVersion: manifest.layoutVersion,
+      buildVersion: manifest.buildVersion,
+      manifestHash: manifest.manifestHash,
+      signatureMode: manifest.signature && manifest.signature.mode || null,
+      assetPaths: Array.isArray(manifest.assets)
+        ? manifest.assets.map(function (asset) { return asset && asset.path; })
+        : [],
+    };
+  }
+
+  function normalizeLoadedManifest(manifest) {
+    if (!manifest || typeof manifest !== 'object' || Array.isArray(manifest)) {
+      return unavailable('manifest-invalid');
+    }
+    if (manifest.schemaVersion !== MANIFEST_SCHEMA_VERSION) {
+      return unavailable('manifest-schema-unsupported');
+    }
+
+    for (var i = 0; i < REQUIRED_MANIFEST_FIELDS.length; i++) {
+      var field = REQUIRED_MANIFEST_FIELDS[i];
+      if (!manifest[field]) {
+        return unavailable('manifest-missing-required-field', { field: field });
+      }
+    }
+    if (!Array.isArray(manifest.assets) || !manifest.assets.length) {
+      return unavailable('manifest-missing-required-field', { field: 'assets' });
+    }
+    if (!manifest.signature || typeof manifest.signature !== 'object') {
+      return unavailable('manifest-missing-required-field', { field: 'signature' });
+    }
+
+    return {
+      state: STATES.VERIFICATION_UNAVAILABLE,
+      manifest: manifest,
+      metadata: buildManifestMetadata(manifest),
+      error: null,
+    };
+  }
+
+  function loadManifest(pointer, fetchImpl) {
+    var manifestUrl = typeof pointer === 'string'
+      ? pointer.trim()
+      : pointer && pointer.manifestUrl;
+    if (!manifestUrl) {
+      return Promise.resolve(unavailable('manifest-pointer-missing'));
+    }
+
+    var request = fetchImpl || window.fetch;
+    if (typeof request !== 'function') {
+      return Promise.resolve(unavailable('manifest-fetch-unavailable'));
+    }
+
+    return Promise.resolve()
+      .then(function () {
+        return request(manifestUrl);
+      })
+      .then(function (response) {
+        if (!response || response.ok === false) {
+          return unavailable('manifest-fetch-failed');
+        }
+        if (typeof response.json !== 'function') {
+          return unavailable('manifest-response-invalid');
+        }
+        return response.json()
+          .then(function (manifest) {
+            return normalizeLoadedManifest(manifest);
+          }, function () {
+            return unavailable('manifest-parse-failed');
+          });
+      }, function () {
+        return unavailable('manifest-fetch-failed');
+      });
+  }
+
   function requireExecutable(state) {
     return canExecuteTransfer(state)
       ? { ok: true, state: STATES.VERIFIED, error: null }
@@ -98,6 +210,7 @@
     getStateCopy: getStateCopy,
     canExecuteTransfer: canExecuteTransfer,
     readManifestPointer: readManifestPointer,
+    loadManifest: loadManifest,
     requireExecutable: requireExecutable,
   });
 })();
