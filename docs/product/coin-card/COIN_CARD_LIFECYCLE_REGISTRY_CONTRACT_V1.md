@@ -21,16 +21,12 @@ The lifecycle registry answers the third question only.
 
 ## Separate Authorities
 
-V1 must keep these authorities conceptually separate:
+The lifecycle registry relies on the authority model defined in
+`COIN_CARD_LIFECYCLE_REGISTRY_AUTHORITY_CONTRACT_V1.md`.
 
-- Manifest signing key: signs a manifest envelope claim.
-- Lifecycle administration key: authorizes suspension, revocation, and
-  supersession decisions.
-- Registry publication authority: accepts lifecycle records, assigns registry
-  ordering, and publishes registry evidence.
-
-A compromised manifest-signing key must not automatically control card
-revocation, supersession, or registry history.
+V1 must keep manifest signing, lifecycle administration, and registry
+publication conceptually separate. A compromised manifest-signing key must not
+automatically control card revocation, supersession, or registry history.
 
 ## Publication Evidence
 
@@ -55,7 +51,10 @@ A lifecycle registry record should define:
 
 ```text
 registrySchemaVersion
+registryId
+environment
 registryVersion
+recordId
 publishedAt
 cardId
 manifestId
@@ -68,9 +67,16 @@ effectiveUntil
 supersededByManifestId
 reasonCode
 authorityId
+administrationEvidenceHash
+signature
 ```
 
-`registryVersion` must be monotonic within the registry publication authority.
+`registryVersion` is global publication order within `registryId` and
+`environment`. `revision` remains manifest order within `cardId`.
+`recordId` is a stable identifier for one registry publication record.
+`administrationEvidenceHash` binds the publication to lifecycle administration
+evidence when applicable. `signature` authenticates the registry publication as
+defined in `COIN_CARD_LIFECYCLE_REGISTRY_AUTHORITY_CONTRACT_V1.md`.
 Lifecycle runtime work must not begin until the publication authority and record
 authentication mechanism are explicitly selected.
 
@@ -124,8 +130,10 @@ authority and registry publication authority.
 
 ## Effective Time Semantics
 
+- Lifecycle intervals are half-open: `effectiveFrom <= time < effectiveUntil`.
 - `effectiveFrom` is inclusive.
-- `effectiveUntil` is inclusive when present.
+- `effectiveUntil` is exclusive when present.
+- `effectiveUntil: null` means unbounded.
 - Revocation takes effect at the exact revocation timestamp.
 - Suspension takes effect at the exact suspension timestamp.
 - Registry publication time is independent of issuer `signedAt`.

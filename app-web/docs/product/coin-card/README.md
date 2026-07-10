@@ -23,6 +23,7 @@ Canonical docs:
 - `../../../../docs/product/coin-card/COIN_CARD_TRUSTED_PUBLIC_KEY_POPULATION_CONTRACT_V1.md` — how approved public keys enter the protected trust source.
 - `../../../../docs/product/coin-card/COIN_CARD_TRUSTED_PUBLIC_KEY_RECORD_CONTRACT_V1.md` — trusted key record shape and deterministic key resolution outcomes.
 - `../../../../docs/product/coin-card/COIN_CARD_SIGNED_MANIFEST_ENVELOPE_CONTRACT_V1.md` — canonical signed manifest envelope, payment facts, amount policy, payload binding, and revision chaining.
+- `../../../../docs/product/coin-card/COIN_CARD_LIFECYCLE_REGISTRY_AUTHORITY_CONTRACT_V1.md` — lifecycle administration authority, registry publication authority, and lifecycle record authentication.
 - `../../../../docs/product/coin-card/COIN_CARD_LIFECYCLE_REGISTRY_CONTRACT_V1.md` — lifecycle registry authority, publication evidence, card status, manifest status, supersession, and rollback rules.
 - `../../../../docs/product/coin-card/COIN_CARD_VERIFICATION_STATE_COPY_V1.md` — user-facing copy contract for manifest verification states.
 - `../../../../tools/coin-card-integrity/README.md` — proof tooling usage for generating, verifying, and tamper-checking Coin Card manifests.
@@ -53,6 +54,7 @@ The manifest integrity docs are intentionally split by responsibility:
 - Trusted key population: `docs/product/coin-card/COIN_CARD_TRUSTED_PUBLIC_KEY_POPULATION_CONTRACT_V1.md`
 - Trusted key record resolution: `docs/product/coin-card/COIN_CARD_TRUSTED_PUBLIC_KEY_RECORD_CONTRACT_V1.md`
 - Signed manifest envelope: `docs/product/coin-card/COIN_CARD_SIGNED_MANIFEST_ENVELOPE_CONTRACT_V1.md`
+- Lifecycle registry authority: `docs/product/coin-card/COIN_CARD_LIFECYCLE_REGISTRY_AUTHORITY_CONTRACT_V1.md`
 - Lifecycle registry: `docs/product/coin-card/COIN_CARD_LIFECYCLE_REGISTRY_CONTRACT_V1.md`
 - Verification state copy: `docs/product/coin-card/COIN_CARD_VERIFICATION_STATE_COPY_V1.md`
 - Proof tooling: `tools/coin-card-integrity/README.md`

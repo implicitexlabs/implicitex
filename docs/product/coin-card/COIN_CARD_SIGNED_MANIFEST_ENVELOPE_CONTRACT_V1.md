@@ -57,7 +57,7 @@ fields.
 - `cardId`: enduring Coin Card identity across manifest revisions.
 - `revision`: positive integer revision for this `cardId`.
 - `previousManifestId`: `null` for revision `1`; otherwise the immediately
-  preceding accepted manifest.
+  preceding manifest claimed by the issuer.
 - `issuerId`: issuer asserted by the signed envelope and passed to trusted-key
   resolution.
 - `keyId`: trusted key record identifier used for signature verification.
@@ -91,9 +91,10 @@ evidence, but V1 does not assume it.
 
 ```text
 address
-chainNamespace
-chainId
 ```
+
+The recipient address is interpreted inside the signed `network` context. V1
+must not duplicate `chainNamespace` or `chainId` inside `recipient`.
 
 `network` must be a plain-data object:
 
@@ -116,7 +117,8 @@ Native-asset instructions may use `contractAddress: null` only when the
 
 ## Amount Policy
 
-`amountPolicy` must be exactly one of:
+`amountPolicy` must be a canonical plain-data object with a `type` field exactly
+equal to one of:
 
 ```text
 OPEN_AMOUNT
@@ -126,13 +128,75 @@ BOUNDED_AMOUNT
 ```
 
 V1 amount values must be canonical non-negative integer strings in asset base
-units. Decimal display formatting is presentation-only.
+units. Decimal display formatting is presentation-only. The canonical string
+`"0"` is allowed. Leading zeros, negative signs, decimal points, exponent
+notation, empty strings, and non-string numeric values are invalid.
 
-- `OPEN_AMOUNT`: no signed amount constraint.
-- `FIXED_AMOUNT`: requires `amountBaseUnits`.
-- `MINIMUM_AMOUNT`: requires `minAmountBaseUnits`.
-- `BOUNDED_AMOUNT`: requires `minAmountBaseUnits` and `maxAmountBaseUnits`;
-  the minimum must be less than or equal to the maximum.
+Allowed shapes are:
+
+```json
+{
+  "type": "OPEN_AMOUNT"
+}
+```
+
+```json
+{
+  "type": "FIXED_AMOUNT",
+  "amountBaseUnits": "50000000"
+}
+```
+
+```json
+{
+  "type": "MINIMUM_AMOUNT",
+  "minAmountBaseUnits": "1000000"
+}
+```
+
+```json
+{
+  "type": "BOUNDED_AMOUNT",
+  "minAmountBaseUnits": "1000000",
+  "maxAmountBaseUnits": "100000000"
+}
+```
+
+Unexpected fields, missing required fields, fields forbidden for the selected
+policy type, and `minAmountBaseUnits` greater than `maxAmountBaseUnits` are
+invalid.
+
+## Payload Hash
+
+The envelope must pin the protected payload hash contract:
+
+```text
+payloadHashAlgorithm: SHA-256
+payloadHashEncoding: base64url-unpadded
+payloadCanonicalization: coin-card-protected-payload.v1
+payloadDomain: ImplicitEx Coin Card Protected Payload v1
+```
+
+`payloadHash` is:
+
+```text
+SHA-256(payloadDomain || 0x00 || canonical protected payload bytes)
+```
+
+where `payloadDomain` is encoded as UTF-8, and the digest is encoded as
+unpadded base64url.
+
+The canonical protected payload bytes must exclude:
+
+- the envelope signature value;
+- lifecycle registry data;
+- transport metadata;
+- runtime verification output;
+- `payloadHash` itself when the envelope is contained within the hashed
+  payload.
+
+The domain separator prevents identical bytes from being reused as another
+signed artifact type.
 
 ## Payload Canonicalization
 
@@ -152,17 +216,14 @@ the signed payload and invalidate the signature.
 
 ## Manifest Revision Chaining
 
-Revision rules are defined here, but currentness is decided by the lifecycle
-registry:
+The envelope may assert revision continuity, but it cannot prove registry
+acceptance or currentness:
 
-- The first accepted manifest for a card must use `revision: 1` and
-  `previousManifestId: null`.
-- A successor manifest must use `revision` exactly one greater than its
-  predecessor.
-- A successor manifest must name the registry-current predecessor in
+- Revision `1` must declare `previousManifestId: null`.
+- Later envelopes must claim the immediately preceding manifest in
   `previousManifestId`.
-- Duplicate revisions for a card are invalid.
-- Rollback to an earlier revision is forbidden.
 
-The signed envelope alone cannot prove that a manifest is current. It can only
-prove the issuer-signed claim that the lifecycle registry will later evaluate.
+The signed envelope alone cannot prove that the predecessor is registry-current,
+that the revision was accepted, that no competing revision exists, or that a
+rollback did not occur. The lifecycle registry independently determines whether
+the revision claim is acceptable and current.
