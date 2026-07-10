@@ -47,6 +47,7 @@ coin-card-package/
     coin-card-trusted-key-resolution.js
     coin-card-lifecycle-registry.js
     coin-card-lifecycle-record-verification.js
+    coin-card-lifecycle-bundle-verification.js
     coin-card-verification.js
     card.js
     card.css
@@ -87,6 +88,7 @@ card/coin-card-trusted-keys.js
 card/coin-card-trusted-key-resolution.js
 card/coin-card-lifecycle-registry.js
 card/coin-card-lifecycle-record-verification.js
+card/coin-card-lifecycle-bundle-verification.js
 card/coin-card-verification.js
 card/card.js
 card/card.css
@@ -94,8 +96,9 @@ card/card.css
 
 These are protected because they control the rendered Coin Card surface, the
 visible trust and interaction layer, the trusted key source, the lifecycle
-registry source, lifecycle record authentication, the runtime verification gate,
-and the shared transaction execution boundary.
+registry source, lifecycle record authentication, atomic lifecycle bundle
+authentication, the runtime verification gate, and the shared transaction
+execution boundary.
 
 Future versions may add protected images, SVGs, generated artifacts, token CSS,
 or receipt/proof wiring. Adding protected assets is a schema-compatible policy

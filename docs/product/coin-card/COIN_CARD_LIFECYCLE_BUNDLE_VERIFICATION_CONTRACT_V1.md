@@ -1,6 +1,6 @@
 # Coin Card Lifecycle Bundle Verification Contract v1
 
-Status: contract proposal
+Status: implemented authentication foundation
 
 Purpose: define atomic validation for a non-empty protected lifecycle record
 bundle composed of individually authenticated lifecycle records.
@@ -16,6 +16,9 @@ V1 bundle verification proves only this claim:
 It does not prove bundle-signature authenticity. V1 bundles are not
 separately bundle-signed. It does not resolve card lifecycle state, promote
 presentation, or authorize execution.
+
+The V1 result must make that absence explicit with
+`bundleSignature: 'not-applicable-v1'`.
 
 ## Bundle Schema
 
@@ -64,6 +67,9 @@ The bundle verifier must reject:
 
 Bundle verification must snapshot the caller-owned bundle before any async
 record verification begins, then operate only on the frozen snapshot.
+If a verification time is supplied for testing or deterministic replay, the
+same instant must be used for the bundle freshness check and every contained
+record verification.
 
 ## Entry Authentication
 
@@ -81,6 +87,7 @@ return only frozen facts:
   recordsAuthenticated: true,
   bundleIntegrityAuthenticated: false,
   rollbackProtected: false,
+  bundleSignature: 'not-applicable-v1',
   registryId: 'implicitex-production',
   environment: 'production',
   registryVersion: 3,
@@ -98,6 +105,7 @@ The result must not claim lifecycle state resolution or execution eligibility.
 V1 bundle verification should distinguish:
 
 - `LIFECYCLE_BUNDLE_VERIFICATION_UNAVAILABLE`
+- `LIFECYCLE_BUNDLE_VERIFICATION_TIME_INVALID`
 - `LIFECYCLE_BUNDLE_STRUCTURE_INVALID`
 - `LIFECYCLE_BUNDLE_ENTRY_AUTHENTICATION_FAILED`
 

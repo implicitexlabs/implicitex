@@ -14,6 +14,8 @@ const trustedKeyResolutionSource = fs.readFileSync(trustedKeyResolutionPath, 'ut
 const lifecycleRegistrySource = fs.readFileSync(lifecycleRegistryPath, 'utf8');
 const lifecycleRecordVerificationSource = fs.readFileSync(lifecycleRecordVerificationPath, 'utf8');
 const lifecycleBundleVerificationSource = fs.readFileSync(lifecycleBundleVerificationPath, 'utf8');
+const BUNDLE_SCHEMA_VERSION = 'coin-card-lifecycle-registry-bundle.v1';
+const BUNDLE_SIGNATURE = 'not-applicable-v1';
 
 function deepFreeze(value) {
   if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
@@ -37,6 +39,10 @@ function toBase64Url(buffer) {
 
 function realmClone(context, value) {
   return vm.runInNewContext(`(${JSON.stringify(value)})`, context);
+}
+
+function realmEvaluate(context, source) {
+  return vm.runInNewContext(source, context);
 }
 
 function nodeAtob(value) {
@@ -156,6 +162,11 @@ function loadBundleRuntime(options = {}) {
   vm.runInNewContext(trustedKeyResolutionSource, context, { filename: trustedKeyResolutionPath });
   vm.runInNewContext(lifecycleRegistrySource, context, { filename: lifecycleRegistryPath });
   vm.runInNewContext(lifecycleRecordVerificationSource, context, { filename: lifecycleRecordVerificationPath });
+  if (typeof options.recordVerifierApiFactory === 'function') {
+    context.window.IX_COIN_CARD_LIFECYCLE_RECORD_VERIFICATION = options.recordVerifierApiFactory(
+      context.window.IX_COIN_CARD_LIFECYCLE_RECORD_VERIFICATION,
+    );
+  }
   vm.runInNewContext(lifecycleBundleVerificationSource, context, { filename: lifecycleBundleVerificationPath });
   return {
     context,
@@ -166,7 +177,7 @@ function loadBundleRuntime(options = {}) {
   };
 }
 
-async function makeSignedBundleRuntime(recordOverrides = [], bundleOverrides = {}, keyOverrides = {}) {
+async function makeSignedBundleRuntime(recordOverrides = [], bundleOverrides = {}, keyOverrides = {}, options = {}) {
   const keyPair = await webcrypto.subtle.generateKey(
     { name: 'ECDSA', namedCurve: 'P-256' },
     true,
@@ -177,6 +188,7 @@ async function makeSignedBundleRuntime(recordOverrides = [], bundleOverrides = {
     trustedPublicKeys: {
       'registry-publication-test-key': trustedKeyRecord('registry-publication-test-key', publicKey, keyOverrides),
     },
+    recordVerifierApiFactory: options.recordVerifierApiFactory,
   });
 
   const records = [1, 2, 3].map((index, position) => lifecycleRecord(index, recordOverrides[position] || {}));
@@ -190,7 +202,7 @@ async function makeSignedBundleRuntime(recordOverrides = [], bundleOverrides = {
   }
 
   const bundle = deepFreeze({
-    registrySchemaVersion: 'coin-card-lifecycle-bundle.v1',
+    registrySchemaVersion: BUNDLE_SCHEMA_VERSION,
     registryId: 'implicitex-production',
     environment: 'production',
     registryVersion: 3,
@@ -214,6 +226,7 @@ test('valid synthetic lifecycle bundle authenticates atomically without lifecycl
   assert.equal(lifecycleBundleVerificationSource.includes('resolveLifecycle'), false);
   assert.equal(lifecycleBundleVerificationSource.includes('IX_COIN_CARD_VERIFICATION'), false);
   assert.equal(lifecycleBundleVerificationSource.includes('IX_EXECUTION'), false);
+  assert.equal(runtime.bundleVerifier.BUNDLE_SCHEMA_VERSION, BUNDLE_SCHEMA_VERSION);
   assert.equal(runtime.bundleVerifier.OUTCOMES.LIFECYCLE_BUNDLE_RECORDS_AUTHENTICATED, 'LIFECYCLE_BUNDLE_RECORDS_AUTHENTICATED');
   assert.equal(result.outcome, runtime.bundleVerifier.OUTCOMES.LIFECYCLE_BUNDLE_RECORDS_AUTHENTICATED);
   assert.equal(result.authenticated, true);
@@ -221,6 +234,7 @@ test('valid synthetic lifecycle bundle authenticates atomically without lifecycl
   assert.equal(result.recordsAuthenticated, true);
   assert.equal(result.bundleIntegrityAuthenticated, false);
   assert.equal(result.rollbackProtected, false);
+  assert.equal(result.bundleSignature, BUNDLE_SIGNATURE);
   assert.equal(result.registryId, 'implicitex-production');
   assert.equal(result.environment, 'production');
   assert.equal(result.registryVersion, 3);
@@ -261,6 +275,56 @@ test('bundle authentication snapshots caller-owned data before async entry verif
   assert.equal(result.entries[2].record.registryVersion, 3);
 });
 
+test('bundle authentication uses one verification instant for every entry', async () => {
+  const calls = [];
+  const runtime = await makeSignedBundleRuntime();
+  const recordVerifier = runtime.recordVerifier;
+  const wrappedRecordVerifier = Object.freeze({
+    ...recordVerifier,
+    authenticateLifecycleRecord(record, options) {
+      calls.push({
+        recordId: record && record.recordId || null,
+        verificationTime: options && options.verificationTime || null,
+      });
+      return recordVerifier.authenticateLifecycleRecord(record, options);
+    },
+  });
+
+  const result = await runtime.bundleVerifier.authenticateLifecycleRegistryBundle(runtime.bundle, {
+    verificationTime: '2026-07-09T09:05:00.000Z',
+    recordVerifierApi: wrappedRecordVerifier,
+  });
+
+  assert.equal(result.outcome, runtime.bundleVerifier.OUTCOMES.LIFECYCLE_BUNDLE_RECORDS_AUTHENTICATED);
+  assert.equal(calls.length, 3);
+  assert.deepEqual(calls.map((call) => call.verificationTime), [
+    calls[0].verificationTime,
+    calls[0].verificationTime,
+    calls[0].verificationTime,
+  ]);
+  assert.equal(typeof calls[0].verificationTime, 'string');
+});
+
+test('bundle verifier rejects invalid verificationTime options', async () => {
+  const runtime = await makeSignedBundleRuntime();
+  const invalidResult = await runtime.bundleVerifier.authenticateLifecycleRegistryBundle(runtime.bundle, {
+    verificationTime: 'not-a-timestamp',
+  });
+  assert.equal(invalidResult.outcome, runtime.bundleVerifier.OUTCOMES.LIFECYCLE_BUNDLE_VERIFICATION_TIME_INVALID);
+  assert.equal(invalidResult.authenticated, false);
+  assert.equal(Object.isFrozen(invalidResult), true);
+
+  const accessorOptions = {};
+  Object.defineProperty(accessorOptions, 'verificationTime', {
+    enumerable: false,
+    value: '2026-07-09T09:05:00.000Z',
+  });
+  const accessorResult = await runtime.bundleVerifier.authenticateLifecycleRegistryBundle(runtime.bundle, accessorOptions);
+  assert.equal(accessorResult.outcome, runtime.bundleVerifier.OUTCOMES.LIFECYCLE_BUNDLE_VERIFICATION_TIME_INVALID);
+  assert.equal(accessorResult.authenticated, false);
+  assert.equal(Object.isFrozen(accessorResult), true);
+});
+
 test('bundle verifier rejects structural defects atomically', async () => {
   const runtime = await makeSignedBundleRuntime([
     {},
@@ -279,7 +343,7 @@ test('bundle verifier rejects structural defects atomically', async () => {
   assert.equal(Object.isFrozen(duplicateVersionResult), true);
 
   const hiddenAccessor = realmClone(runtime.context, {
-    registrySchemaVersion: 'coin-card-lifecycle-bundle.v1',
+    registrySchemaVersion: BUNDLE_SCHEMA_VERSION,
     registryId: 'implicitex-production',
     environment: 'production',
     registryVersion: 3,
@@ -296,6 +360,188 @@ test('bundle verifier rejects structural defects atomically', async () => {
   const hiddenAccessorResult = await runtime.bundleVerifier.authenticateLifecycleRegistryBundle(hiddenAccessor);
   assert.equal(hiddenAccessorResult.outcome, runtime.bundleVerifier.OUTCOMES.LIFECYCLE_BUNDLE_STRUCTURE_INVALID);
   assert.equal(hiddenAccessorResult.authenticated, false);
+});
+
+test('bundle verifier rejects all documented wrapper and collection invariants', async () => {
+  const runtime = await makeSignedBundleRuntime();
+  const scenarios = [
+    {
+      name: 'wrong schema',
+      mutate(bundle) {
+        bundle.registrySchemaVersion = 'coin-card-lifecycle-registry-bundle.v2';
+      },
+    },
+    {
+      name: 'wrong registry',
+      mutate(bundle) {
+        bundle.registryId = 'implicitex-staging';
+      },
+    },
+    {
+      name: 'wrong environment',
+      mutate(bundle) {
+        bundle.environment = 'staging';
+      },
+    },
+    {
+      name: 'empty entries',
+      mutate(bundle) {
+        bundle.entries = [];
+      },
+    },
+    {
+      name: 'duplicate recordId',
+      mutate(bundle) {
+        bundle.entries[1].recordId = bundle.entries[0].recordId;
+      },
+    },
+    {
+      name: 'duplicate registryVersion',
+      mutate(bundle) {
+        bundle.entries[1].registryVersion = bundle.entries[0].registryVersion;
+      },
+    },
+    {
+      name: 'out of order versions',
+      mutate(bundle) {
+        bundle.entries[1].registryVersion = 4;
+        bundle.entries[2].registryVersion = 2;
+      },
+    },
+    {
+      name: 'highest version mismatch',
+      mutate(bundle) {
+        bundle.registryVersion = 4;
+      },
+    },
+    {
+      name: 'duplicate publication identity',
+      mutate(bundle) {
+        bundle.entries[1].cardId = bundle.entries[0].cardId;
+        bundle.entries[1].manifestId = bundle.entries[0].manifestId;
+        bundle.entries[1].revision = bundle.entries[0].revision;
+      },
+    },
+    {
+      name: 'record registry mismatch',
+      mutate(bundle) {
+        bundle.entries[1].registryId = 'implicitex-staging';
+      },
+    },
+    {
+      name: 'record environment mismatch',
+      mutate(bundle) {
+        bundle.entries[1].environment = 'staging';
+      },
+    },
+    {
+      name: 'record published after generatedAt',
+      mutate(bundle) {
+        bundle.entries[1].publishedAt = '2026-07-09T09:06:00.000Z';
+      },
+    },
+    {
+      name: 'generatedAt beyond clock skew',
+      mutate(bundle) {
+        bundle.generatedAt = '2026-07-10T09:10:00.000Z';
+      },
+      options: {
+        verificationTime: '2026-07-10T09:00:00.000Z',
+      },
+    },
+  ];
+
+  for (const scenario of scenarios) {
+    const bundle = clone(runtime.bundle);
+    const mutated = scenario.mutate(bundle);
+    const candidate = scenario.replace ? mutated : bundle;
+    const result = await runtime.bundleVerifier.authenticateLifecycleRegistryBundle(
+      realmClone(runtime.context, candidate),
+      scenario.options,
+    );
+    assert.equal(result.authenticated, false, scenario.name);
+    assert.notEqual(result.outcome, runtime.bundleVerifier.OUTCOMES.LIFECYCLE_BUNDLE_RECORDS_AUTHENTICATED, scenario.name);
+    assert.equal(Object.isFrozen(result), true, scenario.name);
+  }
+});
+
+test('bundle verifier rejects custom prototypes, symbols, cycles, and shared references', async () => {
+  const runtime = await makeSignedBundleRuntime();
+  const cases = [
+    {
+      name: 'custom prototype',
+      value: realmEvaluate(runtime.context, `(() => {
+        const prototype = { hidden: 'value' };
+        const bundle = Object.create(prototype);
+        bundle.registrySchemaVersion = 'coin-card-lifecycle-registry-bundle.v1';
+        bundle.registryId = 'implicitex-production';
+        bundle.environment = 'production';
+        bundle.registryVersion = 3;
+        bundle.generatedAt = '2026-07-09T09:05:00.000Z';
+        bundle.entries = ${JSON.stringify(runtime.records)};
+        return bundle;
+      })()`),
+    },
+    {
+      name: 'symbol property',
+      value: realmEvaluate(runtime.context, `(() => {
+        const bundle = ${JSON.stringify(runtime.bundle)};
+        const symbol = Symbol('hidden');
+        bundle[symbol] = 'value';
+        return bundle;
+      })()`),
+    },
+    {
+      name: 'cycle',
+      value: realmEvaluate(runtime.context, `(() => {
+        const bundle = ${JSON.stringify(runtime.bundle)};
+        bundle.self = bundle;
+        return bundle;
+      })()`),
+    },
+    {
+      name: 'shared reference',
+      value: realmEvaluate(runtime.context, `(() => {
+        const bundle = ${JSON.stringify(runtime.bundle)};
+        const shared = bundle.entries[0];
+        bundle.entries = [shared, shared, bundle.entries[2]];
+        return bundle;
+      })()`),
+    },
+    {
+      name: 'sparse entries',
+      value: realmEvaluate(runtime.context, `(() => {
+        const bundle = ${JSON.stringify(runtime.bundle)};
+        bundle.entries = [bundle.entries[0], , bundle.entries[2]];
+        return bundle;
+      })()`),
+    },
+  ];
+
+  for (const scenario of cases) {
+    const result = await runtime.bundleVerifier.authenticateLifecycleRegistryBundle(scenario.value);
+    assert.equal(result.authenticated, false, scenario.name);
+    assert.equal(result.outcome, runtime.bundleVerifier.OUTCOMES.LIFECYCLE_BUNDLE_STRUCTURE_INVALID, scenario.name);
+  }
+});
+
+test('bundle verifier returns unavailable when entry verification rejects unexpectedly', async () => {
+  const runtime = await makeSignedBundleRuntime();
+  const result = await runtime.bundleVerifier.authenticateLifecycleRegistryBundle(runtime.bundle, {
+    verificationTime: '2026-07-09T09:05:00.000Z',
+    recordVerifierApi: Object.freeze({
+      ...runtime.recordVerifier,
+      authenticateLifecycleRecord() {
+        throw new Error('unexpected verifier failure');
+      },
+    }),
+  });
+  assert.equal(result.outcome, runtime.bundleVerifier.OUTCOMES.LIFECYCLE_BUNDLE_VERIFICATION_UNAVAILABLE);
+  assert.equal(result.authenticated, false);
+  assert.equal(result.reason, 'lifecycle-record-verifier-rejected');
+  assert.equal(result.failedEntryIndex, 0);
+  assert.equal(result.failedRecordId, 'registry-record-001');
+  assert.equal(Object.isFrozen(result), true);
 });
 
 test('bundle verifier fails closed when one entry fails authentication', async () => {

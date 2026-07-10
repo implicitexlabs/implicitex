@@ -96,6 +96,7 @@ python tools/coin-card-integrity/generate_manifest.py \
   --asset card/coin-card-trusted-key-resolution.js \
   --asset card/coin-card-lifecycle-registry.js \
   --asset card/coin-card-lifecycle-record-verification.js \
+  --asset card/coin-card-lifecycle-bundle-verification.js \
   --asset card/coin-card-verification.js \
   --asset card/card.js \
   --asset card/card.css \

@@ -8,9 +8,10 @@
 (function () {
   'use strict';
 
-  var BUNDLE_SCHEMA_VERSION = 'coin-card-lifecycle-bundle.v1';
+  var BUNDLE_SCHEMA_VERSION = 'coin-card-lifecycle-registry-bundle.v1';
   var BUNDLE_REGISTRY_ID = 'implicitex-production';
   var BUNDLE_ENVIRONMENT = 'production';
+  var BUNDLE_SIGNATURE = 'not-applicable-v1';
   var STRICT_UTC_TIMESTAMP_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
   var BUNDLE_CLOCK_SKEW_MS = 5 * 60 * 1000;
   var BUNDLE_FIELDS = Object.freeze([
@@ -25,6 +26,7 @@
     LIFECYCLE_BUNDLE_RECORDS_AUTHENTICATED: 'LIFECYCLE_BUNDLE_RECORDS_AUTHENTICATED',
     LIFECYCLE_BUNDLE_STRUCTURE_INVALID: 'LIFECYCLE_BUNDLE_STRUCTURE_INVALID',
     LIFECYCLE_BUNDLE_ENTRY_AUTHENTICATION_FAILED: 'LIFECYCLE_BUNDLE_ENTRY_AUTHENTICATION_FAILED',
+    LIFECYCLE_BUNDLE_VERIFICATION_TIME_INVALID: 'LIFECYCLE_BUNDLE_VERIFICATION_TIME_INVALID',
     LIFECYCLE_BUNDLE_VERIFICATION_UNAVAILABLE: 'LIFECYCLE_BUNDLE_VERIFICATION_UNAVAILABLE',
   });
 
@@ -169,6 +171,35 @@
     return window.IX_COIN_CARD_LIFECYCLE_RECORD_VERIFICATION || null;
   }
 
+  function readExactDataProperty(options, field) {
+    if (!options || typeof options !== 'object' || Array.isArray(options)) {
+      return {
+        present: false,
+        value: undefined,
+      };
+    }
+    if (!Object.prototype.hasOwnProperty.call(options, field)) {
+      return {
+        present: false,
+        value: undefined,
+      };
+    }
+
+    var descriptor = Object.getOwnPropertyDescriptor(options, field);
+    if (
+      !descriptor
+      || !Object.prototype.hasOwnProperty.call(descriptor, 'value')
+      || descriptor.enumerable !== true
+    ) {
+      return undefined;
+    }
+
+    return {
+      present: true,
+      value: descriptor.value,
+    };
+  }
+
   function failure(outcome, extra) {
     var result = {
       outcome: outcome,
@@ -177,6 +208,7 @@
       recordsAuthenticated: false,
       bundleIntegrityAuthenticated: false,
       rollbackProtected: false,
+      bundleSignature: BUNDLE_SIGNATURE,
       bundle: null,
       entries: null,
     };
@@ -196,6 +228,7 @@
       recordsAuthenticated: true,
       bundleIntegrityAuthenticated: false,
       rollbackProtected: false,
+      bundleSignature: BUNDLE_SIGNATURE,
       registryId: bundle.registryId,
       environment: bundle.environment,
       registryVersion: bundle.registryVersion,
@@ -231,17 +264,45 @@
     return true;
   }
 
-  async function authenticateLifecycleRegistryBundle(bundle) {
+  async function authenticateLifecycleRegistryBundle(bundle, options) {
     var registryApi = getRegistryApi();
-    var recordVerifierApi = getRecordVerifierApi();
+    var recordVerifierApiOption = readExactDataProperty(options, 'recordVerifierApi');
     var now = new Date().toISOString();
-    var nowMs = parseStrictUtcTimestamp(now);
+    var verificationTime = now;
+    var verificationTimeOption = readExactDataProperty(options, 'verificationTime');
+    var verificationTimeMs;
 
     if (!registryApi || typeof registryApi.canonicalizeJson !== 'function') {
       return Promise.resolve(failure(OUTCOMES.LIFECYCLE_BUNDLE_VERIFICATION_UNAVAILABLE, {
         sourceValidated: false,
         reason: 'lifecycle-registry-canonicalizer-unavailable',
       }));
+    }
+    if (verificationTimeOption === undefined) {
+      return Promise.resolve(failure(OUTCOMES.LIFECYCLE_BUNDLE_VERIFICATION_TIME_INVALID, {
+        sourceValidated: false,
+        reason: 'bundle-verification-time-not-enumerable',
+      }));
+    }
+    if (verificationTimeOption.present) {
+      verificationTime = verificationTimeOption.value;
+      verificationTimeMs = parseStrictUtcTimestamp(verificationTime);
+      if (verificationTimeMs === null) {
+        return Promise.resolve(failure(OUTCOMES.LIFECYCLE_BUNDLE_VERIFICATION_TIME_INVALID, {
+          sourceValidated: false,
+          reason: 'bundle-verification-time-invalid',
+        }));
+      }
+    }
+    if (typeof verificationTimeMs === 'undefined') {
+      verificationTimeMs = parseStrictUtcTimestamp(verificationTime);
+    }
+    var recordVerifierApi = null;
+    if (recordVerifierApiOption && recordVerifierApiOption.present) {
+      recordVerifierApi = recordVerifierApiOption.value;
+    }
+    if (!recordVerifierApi || typeof recordVerifierApi.authenticateLifecycleRecord !== 'function') {
+      recordVerifierApi = getRecordVerifierApi();
     }
     if (!recordVerifierApi || typeof recordVerifierApi.authenticateLifecycleRecord !== 'function') {
       return Promise.resolve(failure(OUTCOMES.LIFECYCLE_BUNDLE_VERIFICATION_UNAVAILABLE, {
@@ -255,7 +316,7 @@
       return Promise.resolve(failure(OUTCOMES.LIFECYCLE_BUNDLE_STRUCTURE_INVALID));
     }
 
-    if (parseStrictUtcTimestamp(snapshot.generatedAt) > nowMs + BUNDLE_CLOCK_SKEW_MS) {
+    if (parseStrictUtcTimestamp(snapshot.generatedAt) > verificationTimeMs + BUNDLE_CLOCK_SKEW_MS) {
       return Promise.resolve(failure(OUTCOMES.LIFECYCLE_BUNDLE_STRUCTURE_INVALID));
     }
 
@@ -273,7 +334,20 @@
 
     for (var i = 0; i < snapshot.entries.length; i++) {
       var entry = snapshot.entries[i];
-      var entryResult = await recordVerifierApi.authenticateLifecycleRecord(entry);
+      var entryResult;
+
+      try {
+        entryResult = await recordVerifierApi.authenticateLifecycleRecord(entry, {
+          verificationTime: verificationTime,
+        });
+      } catch (error) {
+        return Promise.resolve(failure(OUTCOMES.LIFECYCLE_BUNDLE_VERIFICATION_UNAVAILABLE, {
+          failedEntryIndex: i,
+          failedRecordId: entry && entry.recordId || null,
+          reason: 'lifecycle-record-verifier-rejected',
+          sourceValidated: true,
+        }));
+      }
 
       if (
         !entryResult
@@ -310,7 +384,16 @@
         }));
       }
 
-      var publicationIdentity = record.cardId + '\u0000' + record.manifestId + '\u0000' + String(record.revision);
+      var publicationIdentity = registryApi.canonicalizeJson([
+        record.cardId,
+        record.manifestId,
+        record.revision,
+      ]);
+      if (publicationIdentity === null) {
+        return Promise.resolve(failure(OUTCOMES.LIFECYCLE_BUNDLE_STRUCTURE_INVALID, {
+          sourceValidated: true,
+        }));
+      }
       if (seenPublicationIds[publicationIdentity]) {
         return Promise.resolve(failure(OUTCOMES.LIFECYCLE_BUNDLE_STRUCTURE_INVALID, {
           sourceValidated: true,

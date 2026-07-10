@@ -66,6 +66,11 @@
         "role": "optional-inspection-console"
       },
       {
+        "id": "lifecycleBundle",
+        "type": "responsibility",
+        "role": "atomic-record-collection-authentication"
+      },
+      {
         "id": "ixExecute",
         "type": "service",
         "role": "execution-engine",
@@ -116,6 +121,11 @@
       {
         "from": "coinCard",
         "to": "receipt",
+        "relationship": "owns"
+      },
+      {
+        "from": "coinCard",
+        "to": "lifecycleBundle",
         "relationship": "owns"
       },
       {
