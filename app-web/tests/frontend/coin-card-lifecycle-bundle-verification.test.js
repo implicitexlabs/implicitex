@@ -197,7 +197,13 @@ function loadBundleRuntime(options = {}) {
 
   vm.runInNewContext(trustedKeyResolutionSource, context, { filename: trustedKeyResolutionPath });
   vm.runInNewContext(lifecycleRegistrySource, context, { filename: lifecycleRegistryPath });
-  if (options.recordVerifierStub) {
+  if (typeof options.recordVerifierStubFactory === 'function') {
+    context.__recordVerifierCallLog = options.recordVerifierCallLog || [];
+    context.window.__recordVerifierCallLog = context.__recordVerifierCallLog;
+    vm.runInNewContext(options.recordVerifierStubFactory(), context, {
+      filename: path.join(repoRoot, 'tests/frontend/record-verifier-stub.vm.js'),
+    });
+  } else if (options.recordVerifierStub) {
     Object.defineProperty(context.window, 'IX_COIN_CARD_LIFECYCLE_RECORD_VERIFICATION', {
       value: options.recordVerifierStub,
       writable: false,
@@ -255,6 +261,8 @@ async function makeSignedBundleRuntime(recordOverrides = [], bundleOverrides = {
     trustedPublicKeys: {
       'registry-publication-test-key': trustedKeyRecord('registry-publication-test-key', publicKey, keyOverrides),
     },
+    recordVerifierCallLog: options.recordVerifierCallLog,
+    recordVerifierStubFactory: options.recordVerifierStubFactory,
     recordVerifierStub: options.recordVerifierStub,
     recordVerifierApiFactory: options.recordVerifierApiFactory,
     fixedNow: options.fixedNow || '2026-07-10T09:10:00.000Z',
@@ -305,6 +313,8 @@ test('valid synthetic lifecycle bundle authenticates atomically without lifecycl
   assert.equal(lifecycleBundleVerificationSource.includes('resolveLifecycle'), false);
   assert.equal(lifecycleBundleVerificationSource.includes('IX_COIN_CARD_VERIFICATION'), false);
   assert.equal(lifecycleBundleVerificationSource.includes('IX_EXECUTION'), false);
+  assert.equal(lifecycleBundleVerificationSource.includes('recordVerifierApi:'), false);
+  assert.equal(lifecycleBundleVerificationSource.includes('options.verificationTime'), false);
   assert.equal(runtime.bundleVerifier.BUNDLE_SCHEMA_VERSION, BUNDLE_SCHEMA_VERSION);
   assert.equal(runtime.bundleVerifier.OUTCOMES.LIFECYCLE_BUNDLE_RECORDS_AUTHENTICATED, 'LIFECYCLE_BUNDLE_RECORDS_AUTHENTICATED');
   assert.equal(result.outcome, runtime.bundleVerifier.OUTCOMES.LIFECYCLE_BUNDLE_RECORDS_AUTHENTICATED);
@@ -337,6 +347,54 @@ test('valid synthetic lifecycle bundle authenticates atomically without lifecycl
   assert.equal(result.entries[0].record.cardStatus, 'CARD_ACTIVE');
 });
 
+test('bundle authentication uses one verification instant for every entry', async () => {
+  const calls = [];
+  const runtime = await makeSignedBundleRuntime([], {}, {}, {
+    recordVerifierCallLog: calls,
+    recordVerifierStubFactory() {
+      return `
+        (function () {
+          Object.defineProperty(window, 'IX_COIN_CARD_LIFECYCLE_RECORD_VERIFICATION', {
+            value: Object.freeze({
+              LIFECYCLE_RECORD_SIGNATURE_DOMAIN: 'ImplicitEx Coin Card Lifecycle Registry Record v1',
+              OUTCOMES: Object.freeze({
+                LIFECYCLE_RECORD_AUTHENTICATED: 'LIFECYCLE_RECORD_AUTHENTICATED',
+              }),
+              authenticateLifecycleRecord(record, options) {
+                window.__recordVerifierCallLog.push({
+                  recordId: record && record.recordId || null,
+                  verificationTime: options && options.verificationTime || null,
+                });
+                return Promise.resolve(Object.freeze({
+                  outcome: 'LIFECYCLE_RECORD_AUTHENTICATED',
+                  authenticated: true,
+                  sourceValidated: true,
+                  record: Object.freeze({ ...record }),
+                  keyResolution: Object.freeze({
+                    outcome: 'TRUSTED_KEY_ACTIVE',
+                  }),
+                }));
+              },
+            }),
+            writable: false,
+            enumerable: true,
+            configurable: false,
+          });
+        })();
+      `;
+    },
+  });
+
+  const result = await runtime.bundleVerifier.authenticateLifecycleRegistryBundle(runtime.bundle);
+
+  assert.equal(result.outcome, runtime.bundleVerifier.OUTCOMES.LIFECYCLE_BUNDLE_RECORDS_AUTHENTICATED);
+  assert.equal(calls.length, 3);
+  assert.equal(calls[0].verificationTime, calls[1].verificationTime);
+  assert.equal(calls[1].verificationTime, calls[2].verificationTime);
+  assert.equal(typeof calls[0].verificationTime, 'string');
+  assert.equal(result.authenticated, true);
+});
+
 test('bundle authentication snapshots caller-owned data before async entry verification', async () => {
   const runtime = await makeSignedBundleRuntime();
   const callerBundle = runtime.bundle;
@@ -352,6 +410,23 @@ test('bundle authentication snapshots caller-owned data before async entry verif
   assert.equal(result.bundle.generatedAt, '2026-07-09T09:05:00.000Z');
   assert.equal(result.entries[1].record.manifestId, 'manifest_test_002');
   assert.equal(result.entries[2].record.registryVersion, 3);
+});
+
+test('bundle verification ignores extra caller arguments and keeps its own authority', async () => {
+  let fakeVerifierCalls = 0;
+  const runtime = await makeSignedBundleRuntime();
+  const result = await runtime.bundleVerifier.authenticateLifecycleRegistryBundle(runtime.bundle, {
+    verificationTime: '1970-01-01T00:00:00.000Z',
+    recordVerifierApi: {
+      authenticateLifecycleRecord() {
+        fakeVerifierCalls += 1;
+        throw new Error('caller-supplied verifier must not be used');
+      },
+    },
+  });
+
+  assert.equal(result.outcome, runtime.bundleVerifier.OUTCOMES.LIFECYCLE_BUNDLE_RECORDS_AUTHENTICATED);
+  assert.equal(fakeVerifierCalls, 0);
 });
 
 test('bundle verifier rejects structural defects atomically', async () => {

@@ -179,31 +179,6 @@
         "relationship": "augments"
       },
       {
-        "from": "lifecycleBundle",
-        "to": "manifestVerification",
-        "relationship": "depends-on"
-      },
-      {
-        "from": "lifecycleBundle",
-        "to": "presentation",
-        "relationship": "depends-on"
-      },
-      {
-        "from": "lifecycleBundle",
-        "to": "wallet",
-        "relationship": "depends-on"
-      },
-      {
-        "from": "lifecycleBundle",
-        "to": "ixExecute",
-        "relationship": "depends-on"
-      },
-      {
-        "from": "lifecycleBundle",
-        "to": "lifecycleResolution",
-        "relationship": "depends-on"
-      },
-      {
         "from": "ixExecute",
         "to": "wallet",
         "relationship": "owns"
@@ -252,6 +227,36 @@
         "to": "coinCard",
         "relationship": "routes-payment-through",
         "reason": "Both surfaces consume IX_EXECUTION independently."
+      },
+      {
+        "from": "lifecycleBundle",
+        "to": "manifestVerification",
+        "relationship": "depends-on",
+        "reason": "Lifecycle bundle verification must not depend on manifest verification."
+      },
+      {
+        "from": "lifecycleBundle",
+        "to": "presentation",
+        "relationship": "depends-on",
+        "reason": "Lifecycle bundle verification must not depend on presentation."
+      },
+      {
+        "from": "lifecycleBundle",
+        "to": "wallet",
+        "relationship": "depends-on",
+        "reason": "Lifecycle bundle verification must not depend on wallet state."
+      },
+      {
+        "from": "lifecycleBundle",
+        "to": "ixExecute",
+        "relationship": "depends-on",
+        "reason": "Lifecycle bundle verification must not depend on IX execution."
+      },
+      {
+        "from": "lifecycleBundle",
+        "to": "lifecycleResolution",
+        "relationship": "depends-on",
+        "reason": "Lifecycle bundle verification must not depend on lifecycle resolution."
       }
     ]
   },
