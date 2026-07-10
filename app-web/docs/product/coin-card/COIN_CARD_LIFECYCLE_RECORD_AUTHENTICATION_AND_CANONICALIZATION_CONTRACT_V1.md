@@ -10,6 +10,8 @@ in the protected runtime module
 authentication tests. The runtime also enforces immutable pre-verification
 snapshots, the record schema discriminator, signature domain separation,
 canonical base64url signature and evidence-hash checks, and strict publication
-time ordering. Populated lifecycle registry entries, registry record
+time ordering. Caller-supplied verification time is a separate verification
+context input; invalid values fail as verification-context errors, not signed
+record contradictions. Populated lifecycle registry entries, registry record
 selection, lifecycle state resolution from authenticated entries, presentation
 promotion, and execution eligibility are not implemented here.

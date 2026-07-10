@@ -184,6 +184,10 @@ record and its signature object. When a field is intentionally repeated inside
 - `signature.authorityId` must equal lifecycle record `authorityId`.
 - `signature.signedAt` must be covered by the signed payload.
 
+Verification-time input supplied by the caller is separate from signed record
+publication time. An invalid caller-provided verification time must fail as a
+verification-context error, not as a signed-record contradiction.
+
 Record publication time must also be internally consistent:
 
 - `signature.signedAt` must be less than or equal to `publishedAt`.
@@ -207,6 +211,11 @@ The trusted key record must satisfy:
 - trusted key usage includes `coin-card-registry-publication`;
 - trusted key timing and revocation policy authorize `signature.signedAt` and
   verification time.
+
+The trusted-key population must remain empty until governed publication tooling
+has validated the whole population and imported every public JWK successfully.
+Population-wide cryptographic readiness is part of the source contract for any
+non-empty trusted-key source.
 
 The trusted publication key must also import successfully as a P-256 public
 key before signature verification proceeds. Import failure is distinct from a

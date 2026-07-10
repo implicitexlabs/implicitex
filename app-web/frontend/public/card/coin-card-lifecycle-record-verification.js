@@ -75,6 +75,7 @@
     LIFECYCLE_PUBLICATION_KEY_EXPIRED: 'LIFECYCLE_PUBLICATION_KEY_EXPIRED',
     LIFECYCLE_PUBLICATION_KEY_REVOKED: 'LIFECYCLE_PUBLICATION_KEY_REVOKED',
     LIFECYCLE_PUBLICATION_KEY_TIMING_INVALID: 'LIFECYCLE_PUBLICATION_KEY_TIMING_INVALID',
+    LIFECYCLE_VERIFICATION_TIME_INVALID: 'LIFECYCLE_VERIFICATION_TIME_INVALID',
     LIFECYCLE_RECORD_PUBLICATION_TIME_INVALID: 'LIFECYCLE_RECORD_PUBLICATION_TIME_INVALID',
     LIFECYCLE_RECORD_SIGNATURE_INVALID: 'LIFECYCLE_RECORD_SIGNATURE_INVALID',
     LIFECYCLE_CRYPTO_UNAVAILABLE: 'LIFECYCLE_CRYPTO_UNAVAILABLE',
@@ -159,6 +160,19 @@
     return Object.freeze(snapshot);
   }
 
+  function readOwnEnumerableDataProperty(value, name) {
+    if (!value || typeof value !== 'object') return null;
+    var descriptor = Object.getOwnPropertyDescriptor(value, name);
+    if (
+      !descriptor
+      || !Object.prototype.hasOwnProperty.call(descriptor, 'value')
+      || descriptor.enumerable !== true
+    ) {
+      return null;
+    }
+    return descriptor.value;
+  }
+
   function decodeCanonicalBase64Url(value, expectedEncodedLength, expectedDecodedLength) {
     if (
       !isNonemptyString(value)
@@ -220,6 +234,19 @@
       : null;
   }
 
+  function freezeKeyResolutionSnapshot(keyResolution) {
+    if (!keyResolution || typeof keyResolution !== 'object' || Array.isArray(keyResolution)) return null;
+    var keys = getOwnDataPropertyNames(keyResolution);
+    if (!keys) return null;
+
+    var snapshot = {};
+    for (var i = 0; i < keys.length; i++) {
+      var key = keys[i];
+      snapshot[key] = keyResolution[key];
+    }
+    return Object.freeze(snapshot);
+  }
+
   function failure(outcome, extra) {
     var result = {
       outcome: outcome,
@@ -229,14 +256,16 @@
     };
     if (extra) {
       Object.keys(extra).forEach(function (key) {
-        result[key] = extra[key];
+        result[key] = key === 'keyResolution'
+          ? freezeKeyResolutionSnapshot(extra[key])
+          : extra[key];
       });
     }
-    return result;
+    return Object.freeze(result);
   }
 
   function success(record, keyResolution) {
-    return {
+    return Object.freeze({
       outcome: OUTCOMES.LIFECYCLE_RECORD_AUTHENTICATED,
       authenticated: true,
       recordId: record.recordId,
@@ -245,8 +274,8 @@
       authorityId: record.authorityId,
       keyId: record.signature.keyId,
       record: record,
-      keyResolution: keyResolution,
-    };
+      keyResolution: freezeKeyResolutionSnapshot(keyResolution),
+    });
   }
 
   function validateSignatureMetadata(signature, record) {
@@ -403,7 +432,17 @@
   }
 
   function authenticateLifecycleRecord(record, options) {
-    var verificationTime = options && options.verificationTime || new Date().toISOString();
+    var verificationTime = new Date().toISOString();
+    if (
+      options
+      && typeof options === 'object'
+      && !Array.isArray(options)
+      && Object.prototype.hasOwnProperty.call(options, 'verificationTime')
+      && Object.getOwnPropertyDescriptor(options, 'verificationTime')
+      && Object.getOwnPropertyDescriptor(options, 'verificationTime').enumerable === true
+    ) {
+      verificationTime = readOwnEnumerableDataProperty(options, 'verificationTime');
+    }
     var verificationTimeMs = parseStrictUtcTimestamp(verificationTime);
     var registryApi = getRegistryApi();
     var trustedKeyApi = getTrustedKeyApi();
@@ -423,7 +462,7 @@
       return Promise.resolve(failure(OUTCOMES.LIFECYCLE_CRYPTO_UNAVAILABLE));
     }
     if (verificationTimeMs === null) {
-      return Promise.resolve(failure(OUTCOMES.LIFECYCLE_RECORD_PUBLICATION_TIME_INVALID, {
+      return Promise.resolve(failure(OUTCOMES.LIFECYCLE_VERIFICATION_TIME_INVALID, {
         reason: 'lifecycle-verification-time-invalid',
       }));
     }

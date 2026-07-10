@@ -340,12 +340,16 @@ test('authenticated lifecycle record is an immutable pre-verification snapshot',
   assert.equal(result.record.manifestId, 'manifest_test_001');
   assert.equal(Object.isFrozen(result.record), true);
   assert.equal(Object.isFrozen(result.record.signature), true);
+  assert.equal(Object.isFrozen(result.keyResolution), true);
+  assert.equal(result.keyResolution.outcome, runtime.trustedKeyResolution.TRUSTED_KEY_OUTCOMES.TRUSTED_KEY_ACTIVE);
 
   result.record.cardStatus = 'CARD_REVOKED';
   result.record.signature.keyId = 'different-key';
+  result.keyResolution.outcome = 'TRUSTED_KEY_REVOKED';
 
   assert.equal(result.record.cardStatus, 'CARD_ACTIVE');
   assert.equal(result.record.signature.keyId, 'registry-publication-test-key');
+  assert.equal(result.keyResolution.outcome, runtime.trustedKeyResolution.TRUSTED_KEY_OUTCOMES.TRUSTED_KEY_ACTIVE);
 });
 
 test('lifecycle record schema rejects contradictory lifecycle semantics', async () => {
@@ -454,8 +458,27 @@ test('publication key failures map to deterministic lifecycle outcomes', async (
   const invalidVerifierTime = await runtime.verifier.authenticateLifecycleRecord(runtime.record, {
     verificationTime: 'not-a-timestamp',
   });
-  assert.equal(invalidVerifierTime.outcome, runtime.verifier.OUTCOMES.LIFECYCLE_RECORD_PUBLICATION_TIME_INVALID);
+  assert.equal(invalidVerifierTime.outcome, runtime.verifier.OUTCOMES.LIFECYCLE_VERIFICATION_TIME_INVALID);
   assert.equal(invalidVerifierTime.authenticated, false);
+
+  for (const verificationTime of ['', null, 0]) {
+    const result = await runtime.verifier.authenticateLifecycleRecord(runtime.record, {
+      verificationTime,
+    });
+    assert.equal(result.outcome, runtime.verifier.OUTCOMES.LIFECYCLE_VERIFICATION_TIME_INVALID);
+    assert.equal(result.authenticated, false);
+  }
+
+  const accessorOptions = {};
+  Object.defineProperty(accessorOptions, 'verificationTime', {
+    enumerable: true,
+    get() {
+      return '2026-07-10T08:01:00.000Z';
+    },
+  });
+  const accessorResult = await runtime.verifier.authenticateLifecycleRecord(runtime.record, accessorOptions);
+  assert.equal(accessorResult.outcome, runtime.verifier.OUTCOMES.LIFECYCLE_VERIFICATION_TIME_INVALID);
+  assert.equal(accessorResult.authenticated, false);
 });
 
 test('missing crypto fails closed and production lifecycle source remains empty', async () => {
