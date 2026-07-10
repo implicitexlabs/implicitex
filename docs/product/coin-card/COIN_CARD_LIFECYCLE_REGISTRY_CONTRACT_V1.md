@@ -110,7 +110,9 @@ MANIFEST_RECORD_INVALID
 Manifest status applies to a specific `manifestId` and revision.
 
 Only `CARD_ACTIVE` plus `MANIFEST_CURRENT` may allow verified facts to advance
-to presentation projection.
+to presentation projection. The composed operational outcome matrix is defined
+in
+`COIN_CARD_LIFECYCLE_RECORD_AUTHENTICATION_AND_CANONICALIZATION_CONTRACT_V1.md`.
 
 ## Supersession and Rollback Rules
 
@@ -143,6 +145,9 @@ authority and registry publication authority.
 The first implementation should use a frozen empty protected registry. An empty
 registry must not treat any card as active. It should produce deterministic
 unknown outcomes until governed lifecycle records exist.
+
+The protected registry bundle shape and rollback limitation are defined in
+`COIN_CARD_LIFECYCLE_RECORD_AUTHENTICATION_AND_CANONICALIZATION_CONTRACT_V1.md`.
 
 This preserves the secure-empty-first pattern used by trusted keys:
 

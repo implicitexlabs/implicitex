@@ -78,6 +78,10 @@ publishedAt
 An authenticated lifecycle registry record must be signed by a trusted key with
 usage `coin-card-registry-publication`.
 
+The signature object shape, canonical payload, duplicated-field rules, and
+publication key bindings are defined in
+`COIN_CARD_LIFECYCLE_RECORD_AUTHENTICATION_AND_CANONICALIZATION_CONTRACT_V1.md`.
+
 The signed registry record payload must cover:
 
 ```text
@@ -109,6 +113,10 @@ cached resolver decisions.
 When a registry record is based on a lifecycle administration request, the
 registry record should include `administrationEvidenceHash` rather than embedding
 large or private administration artifacts directly.
+
+The administration evidence hash algorithm, encoding, canonicalization, domain
+separator, and nullability rules are defined in
+`COIN_CARD_LIFECYCLE_RECORD_AUTHENTICATION_AND_CANONICALIZATION_CONTRACT_V1.md`.
 
 The publication authority remains responsible for accepting only administration
 evidence authorized for the same `cardId`, `manifestId`, `environment`, and

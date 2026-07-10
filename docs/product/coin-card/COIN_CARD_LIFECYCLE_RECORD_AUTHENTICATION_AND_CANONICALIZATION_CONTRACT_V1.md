@@ -1,0 +1,221 @@
+# Coin Card Lifecycle Record Authentication and Canonicalization Contract v1
+
+Status: contract proposal
+
+Purpose: define byte-level canonicalization, lifecycle record signatures,
+operational outcome composition, registry bundle freshness limits, and
+administration evidence hashing before lifecycle resolver runtime work begins.
+
+## Canonical JSON
+
+Coin Card V1 signed and hashed payloads use:
+
+```text
+coin-card-canonical-json.v1
+```
+
+Canonical JSON rules:
+
+- Encode canonical text as UTF-8.
+- Emit no insignificant whitespace.
+- Objects must be plain-data objects with no getters, setters, symbols,
+  functions, unexpected prototypes, `undefined`, `NaN`, or infinities.
+- Object keys are sorted by Unicode code point.
+- Strings are enclosed in double quotes.
+- String escaping must use JSON escapes for quotation mark, reverse solidus, and
+  control characters U+0000 through U+001F. Use `\b`, `\t`, `\n`, `\f`, and
+  `\r` for those five controls; use lowercase `\u00xx` for other controls.
+  Solidus `/` must not be escaped.
+- Unicode text must already be normalized to NFC; non-NFC strings are invalid.
+- Booleans serialize only as `true` or `false`.
+- `null` is allowed only where the schema explicitly allows it.
+- Optional fields must be omitted unless the field contract explicitly requires
+  a present `null`.
+- Arrays are allowed only where the schema declares them; array order is
+  meaningful.
+- Raw JSON input with duplicate object keys is invalid before canonicalization.
+- Numbers are allowed only where a schema explicitly permits them. Permitted V1
+  numbers must be safe integers serialized as base-10 JSON numbers without a
+  plus sign, decimal point, exponent, or leading zeros. Coin Card amount values
+  must remain canonical integer strings in base units.
+
+## Payload Hash Vector
+
+Domain:
+
+```text
+ImplicitEx Coin Card Protected Payload v1
+```
+
+Input object:
+
+```json
+{
+  "cardId": "card_test_001",
+  "recipient": {
+    "address": "0x1111111111111111111111111111111111111111"
+  },
+  "amountPolicy": {
+    "type": "FIXED_AMOUNT",
+    "amountBaseUnits": "50000000"
+  }
+}
+```
+
+Canonical UTF-8 text:
+
+```json
+{"amountPolicy":{"amountBaseUnits":"50000000","type":"FIXED_AMOUNT"},"cardId":"card_test_001","recipient":{"address":"0x1111111111111111111111111111111111111111"}}
+```
+
+SHA-256 hexadecimal digest over
+`domain || 0x00 || canonical UTF-8 text`:
+
+```text
+3ed60d0c409d735bdfe467b96f0af0379b077fdfbc4c8ae9a30882766dfd7eda
+```
+
+Unpadded base64url digest:
+
+```text
+PtYNDECdc1vf5Ge5bwrwN5sHf9-8TIrpowiCdm39fto
+```
+
+## Lifecycle Record Signature Schema
+
+A lifecycle registry record signature must be a plain-data object:
+
+```json
+{
+  "mode": "signed-p256-v1",
+  "algorithm": "ECDSA_P256_SHA256",
+  "keyId": "registry-publication-key-2026-01",
+  "authorityId": "implicitex-registry",
+  "signedAt": "2026-07-10T08:00:00.000Z",
+  "value": "base64url-unpadded-signature"
+}
+```
+
+The signature payload must cover every lifecycle registry record field and
+signature metadata field except `signature.value` and runtime verification
+output.
+
+Duplicate authorization fields are forbidden outside the canonical lifecycle
+record and its signature object. When a field is intentionally repeated inside
+`signature`, the values must match exactly:
+
+- `signature.keyId` resolves the publication key.
+- `signature.authorityId` must equal lifecycle record `authorityId`.
+- `signature.signedAt` must be covered by the signed payload.
+
+## Registry Publication Key Binding
+
+The lifecycle record verifier must resolve `signature.keyId` through the trusted
+key resolver with usage:
+
+```text
+coin-card-registry-publication
+```
+
+The trusted key record must satisfy:
+
+- trusted key record `issuerId` equals lifecycle record `authorityId` unless a
+  future trusted-key schema adds an explicit authority identity field;
+- trusted key environment equals lifecycle record `environment`;
+- trusted key usage includes `coin-card-registry-publication`;
+- trusted key timing and revocation policy authorize `signature.signedAt` and
+  verification time.
+
+Only `TRUSTED_KEY_ACTIVE` may expose public key material for lifecycle record
+signature verification.
+
+## Lifecycle State Compatibility
+
+Lifecycle resolution must return detailed outcomes and one composed operational
+outcome:
+
+```javascript
+{
+  cardOutcome: 'CARD_ACTIVE',
+  manifestOutcome: 'MANIFEST_CURRENT',
+  operationalOutcome: 'LIFECYCLE_OPERATIONAL'
+}
+```
+
+Composed outcomes:
+
+```text
+LIFECYCLE_OPERATIONAL
+LIFECYCLE_BLOCKED
+LIFECYCLE_UNKNOWN
+LIFECYCLE_INVALID
+```
+
+Decision table:
+
+| Card outcome | Manifest outcome | Operational outcome |
+| --- | --- | --- |
+| `CARD_ACTIVE` | `MANIFEST_CURRENT` | `LIFECYCLE_OPERATIONAL` |
+| `CARD_ACTIVE` | `MANIFEST_SUPERSEDED` | `LIFECYCLE_BLOCKED` |
+| `CARD_ACTIVE` | `MANIFEST_EXPIRED` | `LIFECYCLE_BLOCKED` |
+| `CARD_ACTIVE` | `MANIFEST_REVOKED` | `LIFECYCLE_BLOCKED` |
+| `CARD_ACTIVE` | `MANIFEST_UNKNOWN` | `LIFECYCLE_UNKNOWN` |
+| `CARD_ACTIVE` | `MANIFEST_RECORD_INVALID` | `LIFECYCLE_INVALID` |
+| `CARD_SUSPENDED` | any recognized manifest outcome | `LIFECYCLE_BLOCKED` |
+| `CARD_REVOKED` | any recognized manifest outcome | `LIFECYCLE_BLOCKED` |
+| `CARD_UNKNOWN` | any manifest outcome | `LIFECYCLE_UNKNOWN` |
+| `CARD_RECORD_INVALID` | any manifest outcome | `LIFECYCLE_INVALID` |
+
+Presentation code must consume the composed `operationalOutcome`; it must not
+reinterpret card and manifest outcomes independently.
+
+## Registry Bundle and Rollback Limitation
+
+The first static implementation may use an authenticated protected registry
+bundle:
+
+```text
+registryId
+environment
+registryVersion
+generatedAt
+entries
+signature
+```
+
+The protected registry bundle proves authenticity of bundled lifecycle records.
+It does not independently prove that the client has received the globally latest
+registry publication.
+
+Rollback resistance requires a later freshness mechanism such as a locally
+persisted highest-seen `registryVersion`, a signed current-registry head, a
+transparency log, an on-chain registry anchor, a trusted freshness endpoint, or
+a protected application release that pins the expected registry head.
+
+For V1 static bundles, deployment integrity provides release-level freshness and
+registry signatures provide authority authenticity.
+
+## Administration Evidence Hash
+
+Administration evidence hashes use:
+
+```text
+administrationEvidenceHashAlgorithm: SHA-256
+administrationEvidenceHashEncoding: base64url-unpadded
+administrationEvidenceCanonicalization: coin-card-canonical-json.v1
+administrationEvidenceDomain: ImplicitEx Coin Card Lifecycle Administration Evidence v1
+```
+
+`administrationEvidenceHash` is:
+
+```text
+SHA-256(administrationEvidenceDomain || 0x00 || canonical evidence bytes)
+```
+
+where the domain is encoded as UTF-8 and the digest is encoded as unpadded
+base64url.
+
+`administrationEvidenceHash` is required when a lifecycle registry record is
+based on an external lifecycle administration request. It must be `null` only
+when the registry publication authority creates a record without external
+administration evidence under a documented registry policy.

@@ -173,7 +173,8 @@ The envelope must pin the protected payload hash contract:
 ```text
 payloadHashAlgorithm: SHA-256
 payloadHashEncoding: base64url-unpadded
-payloadCanonicalization: coin-card-protected-payload.v1
+payloadCanonicalization: coin-card-canonical-json.v1
+payloadType: coin-card-protected-payload.v1
 payloadDomain: ImplicitEx Coin Card Protected Payload v1
 ```
 
@@ -196,7 +197,8 @@ The canonical protected payload bytes must exclude:
   payload.
 
 The domain separator prevents identical bytes from being reused as another
-signed artifact type.
+signed artifact type. Canonicalization is defined in
+`COIN_CARD_LIFECYCLE_RECORD_AUTHENTICATION_AND_CANONICALIZATION_CONTRACT_V1.md`.
 
 ## Payload Canonicalization
 
