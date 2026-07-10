@@ -44,6 +44,7 @@ coin-card-package/
   coin-card-manifest.json
   card/
     coin-card-trusted-keys.js
+    coin-card-lifecycle-registry.js
     coin-card-verification.js
     card.js
     card.css
@@ -81,14 +82,16 @@ The v1 protected asset set is:
 ```text
 js/ix-execution.js
 card/coin-card-trusted-keys.js
+card/coin-card-lifecycle-registry.js
 card/coin-card-verification.js
 card/card.js
 card/card.css
 ```
 
 These are protected because they control the rendered Coin Card surface, the
-visible trust and interaction layer, the runtime verification gate, and the
-shared transaction execution boundary.
+visible trust and interaction layer, the trusted key source, the lifecycle
+registry source, the runtime verification gate, and the shared transaction
+execution boundary.
 
 Future versions may add protected images, SVGs, generated artifacts, token CSS,
 or receipt/proof wiring. Adding protected assets is a schema-compatible policy

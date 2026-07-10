@@ -14,6 +14,7 @@ const manifestFilename = 'coin-card-manifest.json';
 const protectedAssets = [
   'js/ix-execution.js',
   'card/coin-card-trusted-keys.js',
+  'card/coin-card-lifecycle-registry.js',
   'card/coin-card-verification.js',
   'card/card.js',
   'card/card.css',
@@ -96,6 +97,8 @@ function main() {
     'js/ix-execution.js',
     '--asset',
     'card/coin-card-trusted-keys.js',
+    '--asset',
+    'card/coin-card-lifecycle-registry.js',
     '--asset',
     'card/coin-card-verification.js',
     '--asset',

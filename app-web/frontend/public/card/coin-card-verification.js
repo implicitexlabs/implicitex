@@ -32,6 +32,7 @@
   var REQUIRED_ASSET_PATHS = Object.freeze([
     'js/ix-execution.js',
     'card/coin-card-trusted-keys.js',
+    'card/coin-card-lifecycle-registry.js',
     'card/coin-card-verification.js',
     'card/card.js',
     'card/card.css',

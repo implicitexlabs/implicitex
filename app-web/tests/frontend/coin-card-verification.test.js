@@ -16,6 +16,7 @@ const cardSource = fs.readFileSync(cardPath, 'utf8');
 const REQUIRED_ASSET_BODIES = {
   'js/ix-execution.js': 'ix execution asset body',
   'card/coin-card-trusted-keys.js': 'coin-card-trusted-keys asset body',
+  'card/coin-card-lifecycle-registry.js': 'coin-card-lifecycle-registry asset body',
   'card/coin-card-verification.js': 'coin-card-verification asset body',
   'card/card.js': 'card runtime asset body',
   'card/card.css': 'card stylesheet asset body',
@@ -214,6 +215,7 @@ const expectedStateCopy = {
 const requiredAssetPaths = [
   'js/ix-execution.js',
   'card/coin-card-trusted-keys.js',
+  'card/coin-card-lifecycle-registry.js',
   'card/coin-card-verification.js',
   'card/card.js',
   'card/card.css',

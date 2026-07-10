@@ -20,7 +20,9 @@ Canonical JSON rules:
 - Emit no insignificant whitespace.
 - Objects must be plain-data objects with no getters, setters, symbols,
   functions, unexpected prototypes, `undefined`, `NaN`, or infinities.
-- Object keys are sorted by Unicode code point.
+- Object keys are sorted by Unicode scalar value/code point, not ECMAScript
+  UTF-16 code-unit order. Implementations must use a comparator that compares
+  full code points.
 - Strings are enclosed in double quotes.
 - String escaping must use JSON escapes for quotation mark, reverse solidus, and
   control characters U+0000 through U+001F. Use `\b`, `\t`, `\n`, `\f`, and
@@ -81,6 +83,46 @@ Unpadded base64url digest:
 PtYNDECdc1vf5Ge5bwrwN5sHf9-8TIrpowiCdm39fto
 ```
 
+## Unicode Ordering Vector
+
+Input object:
+
+```json
+{
+  "😀": 5,
+  "𐀀": 4,
+  "Ω": 3,
+  "é": 2,
+  "a": 1
+}
+```
+
+Canonical UTF-8 text:
+
+```json
+{"a":1,"é":2,"Ω":3,"𐀀":4,"😀":5}
+```
+
+## String Escaping Vector
+
+Input object:
+
+```json
+{
+  "label": "Café \"A\"\n😀/test",
+  "nul": "\u0000",
+  "tab": "\t",
+  "slash": "/",
+  "backslash": "\\"
+}
+```
+
+Canonical UTF-8 text:
+
+```json
+{"backslash":"\\","label":"Café \"A\"\n😀/test","nul":"\u0000","slash":"/","tab":"\t"}
+```
+
 ## Lifecycle Record Signature Schema
 
 A lifecycle registry record signature must be a plain-data object:
@@ -89,6 +131,9 @@ A lifecycle registry record signature must be a plain-data object:
 {
   "mode": "signed-p256-v1",
   "algorithm": "ECDSA_P256_SHA256",
+  "signatureEncoding": "ieee-p1363",
+  "signatureLengthBytes": 64,
+  "signatureValueEncoding": "base64url-unpadded",
   "keyId": "registry-publication-key-2026-01",
   "authorityId": "implicitex-registry",
   "signedAt": "2026-07-10T08:00:00.000Z",
@@ -99,6 +144,10 @@ A lifecycle registry record signature must be a plain-data object:
 The signature payload must cover every lifecycle registry record field and
 signature metadata field except `signature.value` and runtime verification
 output.
+
+`signature.value` must encode the fixed-width IEEE P1363 ECDSA representation
+`r || s`, where `r` and `s` are each 32-byte big-endian integers for P-256.
+ASN.1 DER signatures are invalid in V1.
 
 Duplicate authorization fields are forbidden outside the canonical lifecycle
 record and its signature object. When a field is intentionally repeated inside
@@ -180,12 +229,28 @@ environment
 registryVersion
 generatedAt
 entries
-signature
 ```
 
 The protected registry bundle proves authenticity of bundled lifecycle records.
 It does not independently prove that the client has received the globally latest
 registry publication.
+
+For the first static implementation, each non-empty lifecycle record must be
+individually signed by the registry publication authority. The protected
+registry bundle is an integrity-protected application asset; it is not
+separately bundle-signed in V1.
+
+`generatedAt` is publication metadata only. It is not independent freshness
+evidence. Runtime diagnostics should expose:
+
+```javascript
+{
+  authenticated: true,
+  rollbackProtected: false,
+  registryVersion: 42,
+  generatedAt: '2026-07-10T08:00:00.000Z'
+}
+```
 
 Rollback resistance requires a later freshness mechanism such as a locally
 persisted highest-seen `registryVersion`, a signed current-registry head, a
@@ -219,3 +284,34 @@ base64url.
 based on an external lifecycle administration request. It must be `null` only
 when the registry publication authority creates a record without external
 administration evidence under a documented registry policy.
+
+## Administration Evidence Action Schema
+
+Administration evidence should use this minimal canonical shape before hashing:
+
+```text
+evidenceSchemaVersion
+action
+cardId
+manifestId
+environment
+requestedAt
+effectiveFrom
+reasonCode
+authorityId
+nonce
+```
+
+Allowed actions:
+
+```text
+SUSPEND_CARD
+RESTORE_CARD
+REVOKE_CARD
+REVOKE_MANIFEST
+SUPERSEDE_MANIFEST
+```
+
+The evidence action, `cardId`, `manifestId`, `environment`, effective time, and
+authority identity must match the lifecycle registry record that references the
+evidence hash.

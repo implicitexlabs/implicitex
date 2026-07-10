@@ -93,6 +93,7 @@ python tools/coin-card-integrity/generate_manifest.py \
   --root app-web/frontend/public \
   --asset js/ix-execution.js \
   --asset card/coin-card-trusted-keys.js \
+  --asset card/coin-card-lifecycle-registry.js \
   --asset card/coin-card-verification.js \
   --asset card/card.js \
   --asset card/card.css \

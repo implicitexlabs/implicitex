@@ -105,6 +105,10 @@ authorityId
 administrationEvidenceHash
 ```
 
+The lifecycle signature uses fixed-width IEEE P1363 `r || s` bytes, encoded as
+unpadded base64url, as defined in
+`COIN_CARD_LIFECYCLE_RECORD_AUTHENTICATION_AND_CANONICALIZATION_CONTRACT_V1.md`.
+
 The signature must not cover runtime verification output, transport metadata, or
 cached resolver decisions.
 
