@@ -199,6 +199,12 @@
     return true;
   }
 
+  function hasOwnTrue(map, value) {
+    return typeof value === 'string'
+      && Object.prototype.hasOwnProperty.call(map, value)
+      && map[value] === true;
+  }
+
   function hasExactTrustedKeyRecordSchema(record) {
     return sameStringSet(getOwnDataPropertyNames(record), TRUSTED_KEY_RECORD_FIELDS);
   }
@@ -215,7 +221,7 @@
     if (!isNullOrStrictUtcTimestamp(record.validUntil)) return false;
     if (!isNullOrStrictUtcTimestamp(record.revokedAt)) return false;
     if (!isNullOrNonemptyString(record.revocationReason)) return false;
-    if (!(record.revocationPolicy === null || TRUSTED_KEY_REVOCATION_POLICIES[record.revocationPolicy])) return false;
+    if (!(record.revocationPolicy === null || hasOwnTrue(TRUSTED_KEY_REVOCATION_POLICIES, record.revocationPolicy))) return false;
     if (!isNullOrNonemptyString(record.successorKeyId)) return false;
 
     if (record.status === 'REVOKED') {
@@ -234,7 +240,7 @@
     if (!isValidPublicP256Jwk(record.publicKey)) return false;
     if (typeof record.issuerId !== 'string' || !record.issuerId) return false;
     if (!isValidTrustedKeyUsageArray(record.usage)) return false;
-    if (!TRUSTED_KEY_STATUSES[record.status]) return false;
+    if (!hasOwnTrue(TRUSTED_KEY_STATUSES, record.status)) return false;
     if (parseStrictUtcTimestamp(record.validFrom) === null) return false;
     if (!isNullOrStrictUtcTimestamp(record.validUntil)) return false;
     if (typeof record.environment !== 'string' || !record.environment) return false;
@@ -254,7 +260,7 @@
     var seen = Object.create(null);
     for (var i = 0; i < value.length; i++) {
       var usage = value[i];
-      if (typeof usage !== 'string' || !TRUSTED_KEY_USAGES[usage] || seen[usage]) return false;
+      if (!hasOwnTrue(TRUSTED_KEY_USAGES, usage) || seen[usage]) return false;
       seen[usage] = true;
     }
     return true;

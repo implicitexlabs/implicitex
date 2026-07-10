@@ -196,6 +196,7 @@ test('trusted key resolver enforces exact record schema and nullable fields', ()
 });
 
 test('trusted key resolver makes malformed unrelated records atomically unavailable', () => {
+  const inheritedNames = ['toString', 'constructor', 'valueOf', '__proto__'];
   const cases = [
     trustedKeyRecord('bad-jwk-key', {
       publicKey: makePublicJwk({ x: 'short' }),
@@ -218,7 +219,20 @@ test('trusted key resolver makes malformed unrelated records atomically unavaila
     trustedKeyRecord('successor-self-key', {
       successorKeyId: 'successor-self-key',
     }),
-  ];
+  ].concat(
+    inheritedNames.map((name) => trustedKeyRecord(`bad-usage-${name}`, {
+      usage: [name],
+    })),
+    inheritedNames.map((name) => trustedKeyRecord(`bad-status-${name}`, {
+      status: name,
+    })),
+    inheritedNames.map((name) => trustedKeyRecord(`bad-policy-${name}`, {
+      status: 'REVOKED',
+      revokedAt: '2026-07-05T00:00:00.000Z',
+      revocationReason: 'prototype-membership-regression',
+      revocationPolicy: name,
+    })),
+  );
 
   cases.forEach((badRecord) => {
     const trustedPublicKeys = Object.freeze({
