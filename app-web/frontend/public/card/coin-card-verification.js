@@ -187,15 +187,16 @@
     var trustedKeys = window.IX_COIN_CARD_TRUSTED_PUBLIC_KEYS;
     if (!trustedKeys || typeof trustedKeys !== 'object') return false;
     if (typeof Object.isFrozen !== 'function') return false;
-    return Object.isFrozen(trustedKeys);
+    return isDeepFrozenPlainData(trustedKeys);
   }
 
   function getTrustedKeyRecord(keyId) {
     if (!keyId || !isTrustedKeySourceAvailable()) return null;
 
     var trustedKeys = window.IX_COIN_CARD_TRUSTED_PUBLIC_KEYS;
-    if (!Object.prototype.hasOwnProperty.call(trustedKeys, keyId)) return null;
-    return trustedKeys[keyId] || null;
+    var descriptor = Object.getOwnPropertyDescriptor(trustedKeys, keyId);
+    if (!descriptor || !Object.prototype.hasOwnProperty.call(descriptor, 'value')) return null;
+    return descriptor.value || null;
   }
 
   function parseStrictUtcTimestamp(value) {

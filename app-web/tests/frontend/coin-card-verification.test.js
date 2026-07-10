@@ -492,6 +492,31 @@ test('trusted key source bootstrap initializes a frozen empty allowlist', () => 
   assert.deepEqual(Object.keys(context.window.IX_COIN_CARD_TRUSTED_PUBLIC_KEYS), []);
 });
 
+test('trusted key source rejects frozen accessor entries', () => {
+  const trustedKeys = {};
+  Object.defineProperty(trustedKeys, 'coin-card-test-key', {
+    enumerable: true,
+    get() {
+      return trustedKeyRecord('coin-card-test-key', TEST_PUBLIC_JWK);
+    },
+  });
+  Object.freeze(trustedKeys);
+
+  const verification = loadVerification({ trustedPublicKeys: trustedKeys });
+  const result = verification.resolveTrustedKeyRecord('coin-card-test-key', {
+    usage: 'coin-card-manifest-signing',
+    environment: 'production',
+    issuerId: 'implicitex',
+    signatureTime: '2026-07-01T00:00:00.000Z',
+    verificationTime: '2026-07-10T00:00:00.000Z',
+    signatureMode: 'signed-p256-v1',
+  });
+
+  assert.equal(verification.isTrustedKeySourceAvailable(), false);
+  assert.equal(result.outcome, verification.TRUSTED_KEY_OUTCOMES.TRUSTED_KEY_SOURCE_UNAVAILABLE);
+  assert.equal(result.publicKey, null);
+});
+
 test('verification API does not expose a direct trusted-public-key bypass', () => {
   const verification = loadVerification();
 
@@ -561,8 +586,8 @@ test('resolveTrustedKeyRecord rejects nested mutable record material', () => {
     signatureMode: 'signed-p256-v1',
   });
 
-  assert.equal(result.outcome, verification.TRUSTED_KEY_OUTCOMES.TRUSTED_KEY_RECORD_INVALID);
-  assert.equal(result.reason, 'trusted-key-record-not-deep-frozen-plain-data');
+  assert.equal(result.outcome, verification.TRUSTED_KEY_OUTCOMES.TRUSTED_KEY_SOURCE_UNAVAILABLE);
+  assert.equal(result.reason, 'trusted-key-source-unavailable');
 });
 
 test('resolveTrustedKeyRecord rejects frozen accessor records', () => {
@@ -602,8 +627,8 @@ test('resolveTrustedKeyRecord rejects frozen accessor records', () => {
     signatureMode: 'signed-p256-v1',
   });
 
-  assert.equal(result.outcome, verification.TRUSTED_KEY_OUTCOMES.TRUSTED_KEY_RECORD_INVALID);
-  assert.equal(result.reason, 'trusted-key-record-not-deep-frozen-plain-data');
+  assert.equal(result.outcome, verification.TRUSTED_KEY_OUTCOMES.TRUSTED_KEY_SOURCE_UNAVAILABLE);
+  assert.equal(result.reason, 'trusted-key-source-unavailable');
 });
 
 test('resolveTrustedKeyRecord reports deterministic non-active outcomes', () => {
@@ -663,7 +688,7 @@ test('resolveTrustedKeyRecord reports deterministic non-active outcomes', () => 
     {
       name: 'invalid',
       records: {
-        'coin-card-test-key': { keyId: 'coin-card-test-key' },
+        'coin-card-test-key': deepFreeze({ keyId: 'coin-card-test-key' }),
       },
       expected: 'TRUSTED_KEY_RECORD_INVALID',
     },
