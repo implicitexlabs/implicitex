@@ -8,14 +8,17 @@ const vm = require('node:vm');
 const repoRoot = path.resolve(__dirname, '../../..');
 const verificationPath = path.join(repoRoot, 'app-web/frontend/public/card/coin-card-verification.js');
 const trustedKeysPath = path.join(repoRoot, 'app-web/frontend/public/card/coin-card-trusted-keys.js');
+const trustedKeyResolutionPath = path.join(repoRoot, 'app-web/frontend/public/card/coin-card-trusted-key-resolution.js');
 const cardPath = path.join(repoRoot, 'app-web/frontend/public/card/card.js');
 const verificationSource = fs.readFileSync(verificationPath, 'utf8');
 const trustedKeysSource = fs.readFileSync(trustedKeysPath, 'utf8');
+const trustedKeyResolutionSource = fs.readFileSync(trustedKeyResolutionPath, 'utf8');
 const cardSource = fs.readFileSync(cardPath, 'utf8');
 
 const REQUIRED_ASSET_BODIES = {
   'js/ix-execution.js': 'ix execution asset body',
   'card/coin-card-trusted-keys.js': 'coin-card-trusted-keys asset body',
+  'card/coin-card-trusted-key-resolution.js': 'coin-card-trusted-key-resolution asset body',
   'card/coin-card-lifecycle-registry.js': 'coin-card-lifecycle-registry asset body',
   'card/coin-card-verification.js': 'coin-card-verification asset body',
   'card/card.js': 'card runtime asset body',
@@ -92,6 +95,7 @@ function loadVerification(options = {}) {
     context.btoa = options.btoa;
     context.window.btoa = options.btoa;
   }
+  vm.runInNewContext(trustedKeyResolutionSource, context, { filename: trustedKeyResolutionPath });
   vm.runInNewContext(verificationSource, context, { filename: verificationPath });
   return context.window.IX_COIN_CARD_VERIFICATION;
 }
@@ -215,6 +219,7 @@ const expectedStateCopy = {
 const requiredAssetPaths = [
   'js/ix-execution.js',
   'card/coin-card-trusted-keys.js',
+  'card/coin-card-trusted-key-resolution.js',
   'card/coin-card-lifecycle-registry.js',
   'card/coin-card-verification.js',
   'card/card.js',

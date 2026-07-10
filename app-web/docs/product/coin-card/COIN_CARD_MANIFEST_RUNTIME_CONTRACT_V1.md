@@ -44,6 +44,7 @@ coin-card-package/
   coin-card-manifest.json
   card/
     coin-card-trusted-keys.js
+    coin-card-trusted-key-resolution.js
     coin-card-lifecycle-registry.js
     coin-card-verification.js
     card.js
@@ -82,6 +83,7 @@ The v1 protected asset set is:
 ```text
 js/ix-execution.js
 card/coin-card-trusted-keys.js
+card/coin-card-trusted-key-resolution.js
 card/coin-card-lifecycle-registry.js
 card/coin-card-verification.js
 card/card.js

@@ -41,8 +41,8 @@ Canonical JSON rules:
 - Raw JSON input with duplicate object keys is invalid before canonicalization.
 - Numbers are allowed only where a schema explicitly permits them. Permitted V1
   numbers must be safe integers serialized as base-10 JSON numbers without a
-  plus sign, decimal point, exponent, or leading zeros. Coin Card amount values
-  must remain canonical integer strings in base units.
+  plus sign, decimal point, exponent, leading zeros, or negative zero. Coin
+  Card amount values must remain canonical integer strings in base units.
 
 ## Payload Hash Vector
 
@@ -244,8 +244,10 @@ generatedAt
 entries
 ```
 
-For the empty bootstrap, `registryVersion` must be `0`, `generatedAt` must be
-`null`, and `entries` must be an empty deeply frozen array.
+For the empty production bootstrap, `registryId` must be
+`implicitex-production`, `environment` must be `production`, `registryVersion`
+must be `0`, `generatedAt` must be `null`, and `entries` must be an empty deeply
+frozen array.
 
 Source validation of the empty bundle proves only frozen plain-data shape and
 the exact empty schema. It does not independently prove package-integrity

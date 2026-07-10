@@ -153,6 +153,7 @@ test('canonicalizeJson rejects non-canonical data shapes', () => {
   assert.equal(registry.canonicalizeJson(cyclic), null);
   assert.equal(registry.canonicalizeJson(realmValue(context, `{ bad: undefined }`)), null);
   assert.equal(registry.canonicalizeJson(realmValue(context, `{ bad: Number.NaN }`)), null);
+  assert.equal(registry.canonicalizeJson(realmValue(context, `{ revision: -0 }`)), null);
   assert.equal(registry.canonicalizeJson(realmValue(context, `{ label: 'Cafe\\u0301' }`)), null);
   assert.equal(registry.canonicalizeJson(realmValue(context, `(() => ({ label: String.fromCharCode(0xd800) }))()`)), null);
   assert.equal(registry.canonicalizeJson(realmValue(context, `(() => {
@@ -212,12 +213,21 @@ test('validateLifecycleRegistryBundle rejects mutable accessor and non-empty bun
     generatedAt: null,
     entries: Object.freeze([]),
   }))()`);
+  const wrongIdentity = realmValue(context, `(() => Object.freeze({
+    registrySchemaVersion: 'coin-card-lifecycle-registry.v1',
+    registryId: 'implicitex-staging',
+    environment: 'staging',
+    registryVersion: 0,
+    generatedAt: null,
+    entries: Object.freeze([]),
+  }))()`);
 
   assert.equal(registry.validateLifecycleRegistryBundle(mutable).ok, false);
   assert.equal(registry.validateLifecycleRegistryBundle(accessor).ok, false);
   assert.equal(registry.validateLifecycleRegistryBundle(hiddenAccessor).error, 'lifecycle-registry-bundle-not-deep-frozen-plain-data');
   assert.equal(registry.validateLifecycleRegistryBundle(nonEmpty).error, 'lifecycle-registry-empty-bundle-required-field-invalid');
   assert.equal(registry.validateLifecycleRegistryBundle(wrongVersion).error, 'lifecycle-registry-empty-bundle-required-field-invalid');
+  assert.equal(registry.validateLifecycleRegistryBundle(wrongIdentity).error, 'lifecycle-registry-empty-bundle-required-field-invalid');
 });
 
 test('resolveLifecycle returns deterministic empty unknown outcomes', () => {

@@ -29,6 +29,11 @@ How approved keys enter this bootstrap is defined separately in
 The canonical trusted-key record shape and resolution outcomes are defined in
 `COIN_CARD_TRUSTED_PUBLIC_KEY_RECORD_CONTRACT_V1.md`.
 
+Runtime validation and policy resolution are owned by the protected shared
+resolver module `card/coin-card-trusted-key-resolution.js`. Manifest
+verification and lifecycle record verification must call that shared authority
+instead of implementing independent trusted-key policy.
+
 This object must be:
 
 - initialized by protected runtime code
@@ -84,6 +89,11 @@ source entry in a future signed registry.
 The trusted key source answers only this question:
 
 > Which public key records may the verifier trust?
+
+The trusted key resolver answers:
+
+> Is this recognized key record authorized for this usage, environment,
+> authority, and signing time?
 
 It does not answer:
 

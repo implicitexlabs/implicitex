@@ -185,7 +185,7 @@
   }
 
   function canonicalizeNumber(value) {
-    if (!Number.isSafeInteger(value)) return null;
+    if (!Number.isSafeInteger(value) || Object.is(value, -0)) return null;
     return String(value);
   }
 
@@ -357,10 +357,8 @@
     }
     if (
       bundle.registrySchemaVersion !== REGISTRY_SCHEMA_VERSION
-      || typeof bundle.registryId !== 'string'
-      || !bundle.registryId
-      || typeof bundle.environment !== 'string'
-      || !bundle.environment
+      || bundle.registryId !== 'implicitex-production'
+      || bundle.environment !== 'production'
       || bundle.registryVersion !== 0
       || bundle.generatedAt !== null
       || !Array.isArray(bundle.entries)
