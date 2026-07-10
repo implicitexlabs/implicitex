@@ -697,7 +697,7 @@ test('resolveTrustedKeyRecord reports deterministic non-active outcomes', () => 
       records: {
         'coin-card-test-key': deepFreeze({ keyId: 'coin-card-test-key' }),
       },
-      expected: 'TRUSTED_KEY_RECORD_INVALID',
+      expected: 'TRUSTED_KEY_SOURCE_UNAVAILABLE',
     },
   ];
 

@@ -43,6 +43,11 @@ successorKeyId
 environment
 ```
 
+The record property set is exact. Every field listed above must be present as
+an own enumerable data property, and no additional record fields are permitted.
+Optional semantic values must be represented by explicit `null`, not by omitted
+fields, empty strings, `undefined`, or other falsy values.
+
 Required v1 values:
 
 - `schemaVersion`: `coin-card-trusted-key-record.v1`
@@ -63,6 +68,14 @@ Trusted-key records must contain only own data properties. Accessors, setters,
 symbol properties, functions, and unexpected prototypes are invalid in the trust
 root.
 
+Trusted-key records and nested trusted-key data must be acyclic. Cycles and
+shared object references are invalid for V1 trust-root data.
+
+The trusted-key source is atomic. A malformed record shape, hidden property,
+accessor, unexpected property, invalid nullability, cycle, mutable nested value,
+or non-plain-data entry makes the entire source unavailable as
+`TRUSTED_KEY_SOURCE_UNAVAILABLE`.
+
 The public JWK must be a public P-256 verification key:
 
 - `kty`: `EC`
@@ -81,6 +94,10 @@ The resolver distinguishes:
 
 The key must be active for the signature time. Missing or invalid timing evidence
 fails closed as `TRUSTED_KEY_RECORD_INVALID`.
+
+`validUntil` must be either `null` or a strict UTC timestamp. `revokedAt` must be
+either `null` or a strict UTC timestamp. Empty strings and omitted fields are
+invalid.
 
 V1 timestamps must be strict UTC millisecond timestamps:
 
@@ -107,6 +124,12 @@ reason `trusted-key-signature-time-in-future`.
 
 Compromised-key revocation should use `INVALIDATE_ALL_SIGNATURES`. Routine
 rotation should use `NO_NEW_SIGNATURES` with `successorKeyId` when applicable.
+
+For non-revoked records, `revokedAt`, `revocationReason`, and
+`revocationPolicy` must all be `null`. For revoked records, `revokedAt` and
+`revocationPolicy` are required. `revocationReason` may be `null` or a nonempty
+string. `successorKeyId` may be `null` or a nonempty string, and it must not
+equal the record's own `keyId`.
 
 ## Resolution Outcomes
 
