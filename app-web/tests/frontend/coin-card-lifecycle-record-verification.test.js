@@ -128,6 +128,10 @@ function realmClone(context, value) {
   return vm.runInNewContext(`(${JSON.stringify(value)})`, context);
 }
 
+function realmEvaluate(context, source) {
+  return vm.runInNewContext(source, context);
+}
+
 function loadLifecycleRecordVerification(options = {}) {
   const context = {
     TextEncoder,
@@ -236,6 +240,23 @@ test('lifecycle record verifier rejects DER and non-64-byte signature encodings'
   }
 });
 
+test('lifecycle record verifier rejects custom-prototype and array inputs', async () => {
+  const runtime = await makeSignedRuntime();
+  const prototypeRecord = realmEvaluate(runtime.context, `(() => {
+    const prototype = { inheritedPolicy: 'unexpected' };
+    const record = Object.create(prototype);
+    return Object.assign(record, ${JSON.stringify(runtime.record)});
+  })()`);
+
+  const prototypeResult = await authenticate(runtime, prototypeRecord);
+  assert.equal(prototypeResult.outcome, runtime.verifier.OUTCOMES.LIFECYCLE_RECORD_SCHEMA_INVALID);
+  assert.equal(prototypeResult.authenticated, false);
+
+  const arrayResult = await authenticate(runtime, realmEvaluate(runtime.context, '([])'));
+  assert.equal(arrayResult.outcome, runtime.verifier.OUTCOMES.LIFECYCLE_RECORD_SCHEMA_INVALID);
+  assert.equal(arrayResult.authenticated, false);
+});
+
 test('mutating signed lifecycle record fields prevents authentication', async () => {
   const runtime = await makeSignedRuntime();
   const mutations = {
@@ -285,6 +306,23 @@ test('mutating signed lifecycle record fields prevents authentication', async ()
     assert.equal(result.authenticated, false, `signature.${field}`);
     assert.equal(result.record, null, `signature.${field}`);
   }
+});
+
+test('canonical administration evidence hash authenticates and noncanonical values fail', async () => {
+  const canonicalEvidence = toBase64Url(Buffer.alloc(32, 1));
+  const runtime = await makeSignedRuntime({
+    administrationEvidenceHash: canonicalEvidence,
+  });
+  const result = await authenticate(runtime, runtime.record);
+
+  assert.equal(result.outcome, runtime.verifier.OUTCOMES.LIFECYCLE_RECORD_AUTHENTICATED);
+  assert.equal(result.authenticated, true);
+
+  const badEvidence = clone(runtime.record);
+  badEvidence.administrationEvidenceHash = `${canonicalEvidence.slice(0, -1)}B`;
+  const badEvidenceResult = await authenticate(runtime, realmClone(runtime.context, badEvidence));
+  assert.equal(badEvidenceResult.outcome, runtime.verifier.OUTCOMES.LIFECYCLE_RECORD_SCHEMA_INVALID);
+  assert.equal(badEvidenceResult.authenticated, false);
 });
 
 test('authenticated lifecycle record is an immutable pre-verification snapshot', async () => {
@@ -341,6 +379,22 @@ test('duplicate signature metadata must match canonical lifecycle values', async
   assert.equal(result.authenticated, false);
 });
 
+test('publication key import failures are distinct from signature verification failures', async () => {
+  const invalidJwk = {
+    kty: 'EC',
+    crv: 'P-256',
+    x: toBase64Url(Buffer.alloc(32, 0)),
+    y: toBase64Url(Buffer.alloc(32, 0)),
+    ext: true,
+    key_ops: ['verify'],
+  };
+  const runtime = await makeSignedRuntime({}, { publicKey: invalidJwk });
+  const result = await authenticate(runtime, runtime.record);
+
+  assert.equal(result.outcome, runtime.verifier.OUTCOMES.LIFECYCLE_PUBLICATION_KEY_IMPORT_INVALID);
+  assert.equal(result.authenticated, false);
+});
+
 test('publication key failures map to deterministic lifecycle outcomes', async () => {
   const cases = [
     {
@@ -374,11 +428,18 @@ test('publication key failures map to deterministic lifecycle outcomes', async (
       expected: 'LIFECYCLE_PUBLICATION_KEY_EXPIRED',
     },
     {
-      name: 'future signing time',
+      name: 'signed after published',
       recordOverrides: {
-        signature: { signedAt: '2026-07-10T08:10:00.001Z' },
+        publishedAt: '2026-07-10T07:59:59.000Z',
       },
-      expected: 'LIFECYCLE_PUBLICATION_KEY_TIMING_INVALID',
+      expected: 'LIFECYCLE_RECORD_PUBLICATION_TIME_INVALID',
+    },
+    {
+      name: 'published far in the future',
+      recordOverrides: {
+        publishedAt: '2026-07-10T09:10:00.000Z',
+      },
+      expected: 'LIFECYCLE_RECORD_PUBLICATION_TIME_INVALID',
     },
   ];
 
@@ -393,7 +454,7 @@ test('publication key failures map to deterministic lifecycle outcomes', async (
   const invalidVerifierTime = await runtime.verifier.authenticateLifecycleRecord(runtime.record, {
     verificationTime: 'not-a-timestamp',
   });
-  assert.equal(invalidVerifierTime.outcome, runtime.verifier.OUTCOMES.LIFECYCLE_PUBLICATION_KEY_TIMING_INVALID);
+  assert.equal(invalidVerifierTime.outcome, runtime.verifier.OUTCOMES.LIFECYCLE_RECORD_PUBLICATION_TIME_INVALID);
   assert.equal(invalidVerifierTime.authenticated, false);
 });
 

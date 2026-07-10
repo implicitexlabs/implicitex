@@ -157,6 +157,10 @@ The signature payload must cover every lifecycle registry record field and
 signature metadata field except `signature.value` and runtime verification
 output.
 
+Record authentication must begin from a plain-data snapshot with a standard
+plain-object prototype or `null` prototype. Custom prototypes and arrays are
+not valid lifecycle-record inputs in V1.
+
 Lifecycle record signatures are domain separated. The verifier signs and
 verifies:
 
@@ -180,6 +184,12 @@ record and its signature object. When a field is intentionally repeated inside
 - `signature.authorityId` must equal lifecycle record `authorityId`.
 - `signature.signedAt` must be covered by the signed payload.
 
+Record publication time must also be internally consistent:
+
+- `signature.signedAt` must be less than or equal to `publishedAt`.
+- `publishedAt` must not be later than verification time plus the configured
+  clock skew.
+
 ## Registry Publication Key Binding
 
 The lifecycle record verifier must resolve `signature.keyId` through the trusted
@@ -197,6 +207,10 @@ The trusted key record must satisfy:
 - trusted key usage includes `coin-card-registry-publication`;
 - trusted key timing and revocation policy authorize `signature.signedAt` and
   verification time.
+
+The trusted publication key must also import successfully as a P-256 public
+key before signature verification proceeds. Import failure is distinct from a
+signature mismatch.
 
 Only `TRUSTED_KEY_ACTIVE` may expose public key material for lifecycle record
 signature verification.
@@ -321,6 +335,9 @@ SHA-256(administrationEvidenceDomain || 0x00 || canonical evidence bytes)
 where the domain is encoded as UTF-8 and the digest is encoded as unpadded
 base64url.
 
+The base64url digest must be canonical: decoding and re-encoding must produce
+the exact same text.
+
 `administrationEvidenceHash` is required when a lifecycle registry record is
 based on an external lifecycle administration request. It must be `null` only
 when the registry publication authority creates a record without external
@@ -367,6 +384,10 @@ Implemented in the protected browser runtime:
 - individual lifecycle-record authentication;
 - synthetic lifecycle-record authentication tests;
 - protected runtime module `card/coin-card-lifecycle-record-verification.js`.
+- immutable pre-verification snapshots for authenticated records;
+- exact schema discriminator and signature domain separation;
+- canonical base64url signature and evidence-hash validation;
+- strict publication-time ordering checks.
 
 Not implemented in this slice:
 

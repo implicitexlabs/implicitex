@@ -7,6 +7,9 @@ Canonical source: `../../../../docs/product/coin-card/COIN_CARD_LIFECYCLE_RECORD
 Implementation note: individual lifecycle-record authentication is implemented
 in the protected runtime module
 `card/coin-card-lifecycle-record-verification.js` and covered by synthetic
-authentication tests. Populated lifecycle registry entries, registry record
+authentication tests. The runtime also enforces immutable pre-verification
+snapshots, the record schema discriminator, signature domain separation,
+canonical base64url signature and evidence-hash checks, and strict publication
+time ordering. Populated lifecycle registry entries, registry record
 selection, lifecycle state resolution from authenticated entries, presentation
 promotion, and execution eligibility are not implemented here.

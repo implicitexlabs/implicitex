@@ -15,6 +15,7 @@
   var STRICT_UTC_TIMESTAMP_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
   var SHA256_BASE64URL_LENGTH = 43;
   var P256_P1363_BASE64URL_LENGTH = 86;
+  var LIFECYCLE_RECORD_CLOCK_SKEW_MS = 5 * 60 * 1000;
   var LIFECYCLE_RECORD_FIELDS = Object.freeze([
     'administrationEvidenceHash',
     'authorityId',
@@ -64,6 +65,7 @@
     LIFECYCLE_RECORD_CANONICALIZATION_INVALID: 'LIFECYCLE_RECORD_CANONICALIZATION_INVALID',
     LIFECYCLE_RECORD_SIGNATURE_METADATA_INVALID: 'LIFECYCLE_RECORD_SIGNATURE_METADATA_INVALID',
     LIFECYCLE_RECORD_SIGNATURE_ENCODING_INVALID: 'LIFECYCLE_RECORD_SIGNATURE_ENCODING_INVALID',
+    LIFECYCLE_PUBLICATION_KEY_IMPORT_INVALID: 'LIFECYCLE_PUBLICATION_KEY_IMPORT_INVALID',
     LIFECYCLE_PUBLICATION_KEY_SOURCE_UNAVAILABLE: 'LIFECYCLE_PUBLICATION_KEY_SOURCE_UNAVAILABLE',
     LIFECYCLE_PUBLICATION_KEY_UNKNOWN: 'LIFECYCLE_PUBLICATION_KEY_UNKNOWN',
     LIFECYCLE_PUBLICATION_KEY_USAGE_DENIED: 'LIFECYCLE_PUBLICATION_KEY_USAGE_DENIED',
@@ -73,6 +75,7 @@
     LIFECYCLE_PUBLICATION_KEY_EXPIRED: 'LIFECYCLE_PUBLICATION_KEY_EXPIRED',
     LIFECYCLE_PUBLICATION_KEY_REVOKED: 'LIFECYCLE_PUBLICATION_KEY_REVOKED',
     LIFECYCLE_PUBLICATION_KEY_TIMING_INVALID: 'LIFECYCLE_PUBLICATION_KEY_TIMING_INVALID',
+    LIFECYCLE_RECORD_PUBLICATION_TIME_INVALID: 'LIFECYCLE_RECORD_PUBLICATION_TIME_INVALID',
     LIFECYCLE_RECORD_SIGNATURE_INVALID: 'LIFECYCLE_RECORD_SIGNATURE_INVALID',
     LIFECYCLE_CRYPTO_UNAVAILABLE: 'LIFECYCLE_CRYPTO_UNAVAILABLE',
   });
@@ -102,6 +105,12 @@
     return names;
   }
 
+  function isPlainDataContainer(value) {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+    var prototype = Object.getPrototypeOf(value);
+    return prototype === Object.prototype || prototype === null;
+  }
+
   function sameStringSet(actual, expected) {
     if (!Array.isArray(actual) || actual.length !== expected.length) return false;
     var actualSorted = actual.slice().sort();
@@ -120,7 +129,15 @@
     if (value === null || typeof value === 'string' || typeof value === 'boolean' || typeof value === 'number') {
       return value;
     }
-    if (typeof value === 'undefined' || typeof value === 'function' || typeof value === 'symbol' || !value || typeof value !== 'object') {
+    if (
+      typeof value === 'undefined'
+      || typeof value === 'function'
+      || typeof value === 'symbol'
+      || !value
+      || typeof value !== 'object'
+      || Array.isArray(value)
+      || !isPlainDataContainer(value)
+    ) {
       return undefined;
     }
 
@@ -131,16 +148,6 @@
     var keys = getOwnDataPropertyNames(value);
     if (!keys) return undefined;
 
-    if (Array.isArray(value)) {
-      var array = [];
-      for (var i = 0; i < value.length; i++) {
-        var item = snapshotPlainData(value[i], visited);
-        if (item === undefined) return undefined;
-        array.push(item);
-      }
-      return Object.freeze(array);
-    }
-
     var snapshot = {};
     for (var j = 0; j < keys.length; j++) {
       var key = keys[j];
@@ -150,6 +157,23 @@
       snapshot[key] = fieldValue;
     }
     return Object.freeze(snapshot);
+  }
+
+  function decodeCanonicalBase64Url(value, expectedEncodedLength, expectedDecodedLength) {
+    if (
+      !isNonemptyString(value)
+      || value.length !== expectedEncodedLength
+      || !BASE64URL_RE.test(value)
+      || value.indexOf('=') !== -1
+    ) {
+      return null;
+    }
+
+    var decoded = decodeBase64Url(value, expectedEncodedLength);
+    if (!decoded || decoded.length !== expectedDecodedLength || encodeBase64Url(decoded) !== value) {
+      return null;
+    }
+    return decoded;
   }
 
   function parseStrictUtcTimestamp(value) {
@@ -173,12 +197,7 @@
   }
 
   function isNullOrSha256Base64Url(value) {
-    return value === null || (
-      typeof value === 'string'
-      && value.length === SHA256_BASE64URL_LENGTH
-      && BASE64URL_RE.test(value)
-      && value.indexOf('=') === -1
-    );
+    return value === null || decodeCanonicalBase64Url(value, SHA256_BASE64URL_LENGTH, 32) !== null;
   }
 
   function isSafePositiveInteger(value) {
@@ -295,8 +314,8 @@
     return payload;
   }
 
-  function decodeBase64Url(value) {
-    if (!isNonemptyString(value) || value.length !== P256_P1363_BASE64URL_LENGTH || !BASE64URL_RE.test(value) || value.indexOf('=') !== -1) return null;
+  function decodeBase64Url(value, expectedLength) {
+    if (!isNonemptyString(value) || value.length !== expectedLength || !BASE64URL_RE.test(value) || value.indexOf('=') !== -1) return null;
     var base64 = value.replace(/-/g, '+').replace(/_/g, '/');
     while (base64.length % 4) base64 += '=';
 
@@ -385,6 +404,7 @@
 
   function authenticateLifecycleRecord(record, options) {
     var verificationTime = options && options.verificationTime || new Date().toISOString();
+    var verificationTimeMs = parseStrictUtcTimestamp(verificationTime);
     var registryApi = getRegistryApi();
     var trustedKeyApi = getTrustedKeyApi();
     var subtle = getCryptoSubtle();
@@ -402,12 +422,30 @@
     if (!subtle) {
       return Promise.resolve(failure(OUTCOMES.LIFECYCLE_CRYPTO_UNAVAILABLE));
     }
+    if (verificationTimeMs === null) {
+      return Promise.resolve(failure(OUTCOMES.LIFECYCLE_RECORD_PUBLICATION_TIME_INVALID, {
+        reason: 'lifecycle-verification-time-invalid',
+      }));
+    }
     var snapshot = snapshotPlainData(record, []);
     if (!snapshot || !validateLifecycleRecordSchema(snapshot)) {
       return Promise.resolve(failure(OUTCOMES.LIFECYCLE_RECORD_SCHEMA_INVALID));
     }
     if (!validateSignatureMetadata(snapshot.signature, snapshot)) {
       return Promise.resolve(failure(OUTCOMES.LIFECYCLE_RECORD_SIGNATURE_METADATA_INVALID));
+    }
+
+    var publishedAtMs = parseStrictUtcTimestamp(snapshot.publishedAt);
+    var signedAtMs = parseStrictUtcTimestamp(snapshot.signature.signedAt);
+    if (signedAtMs === null || publishedAtMs === null || signedAtMs > publishedAtMs) {
+      return Promise.resolve(failure(OUTCOMES.LIFECYCLE_RECORD_PUBLICATION_TIME_INVALID, {
+        reason: 'lifecycle-record-signature-time-order-invalid',
+      }));
+    }
+    if (publishedAtMs > verificationTimeMs + LIFECYCLE_RECORD_CLOCK_SKEW_MS) {
+      return Promise.resolve(failure(OUTCOMES.LIFECYCLE_RECORD_PUBLICATION_TIME_INVALID, {
+        reason: 'lifecycle-record-publication-time-in-future',
+      }));
     }
 
     var payload = buildSignaturePayload(snapshot);
@@ -417,7 +455,7 @@
       return Promise.resolve(failure(OUTCOMES.LIFECYCLE_RECORD_CANONICALIZATION_INVALID));
     }
 
-    var signatureBytes = decodeBase64Url(snapshot.signature.value);
+    var signatureBytes = decodeBase64Url(snapshot.signature.value, P256_P1363_BASE64URL_LENGTH);
     if (!signatureBytes || signatureBytes.length !== 64 || encodeBase64Url(signatureBytes) !== snapshot.signature.value) {
       return Promise.resolve(failure(OUTCOMES.LIFECYCLE_RECORD_SIGNATURE_ENCODING_INVALID));
     }
@@ -449,16 +487,21 @@
         publicKey,
         signatureBytes,
         payloadBytes
-      );
-    }).then(function (valid) {
-      return valid
-        ? success(snapshot, keyResolution)
-        : failure(OUTCOMES.LIFECYCLE_RECORD_SIGNATURE_INVALID, {
+      ).then(function (valid) {
+        return valid
+          ? success(snapshot, keyResolution)
+          : failure(OUTCOMES.LIFECYCLE_RECORD_SIGNATURE_INVALID, {
+            keyId: snapshot.signature.keyId,
+            keyResolution: keyResolution,
+          });
+      }, function () {
+        return failure(OUTCOMES.LIFECYCLE_RECORD_SIGNATURE_INVALID, {
           keyId: snapshot.signature.keyId,
           keyResolution: keyResolution,
         });
-    }).catch(function () {
-      return failure(OUTCOMES.LIFECYCLE_RECORD_SIGNATURE_INVALID, {
+      });
+    }, function () {
+      return failure(OUTCOMES.LIFECYCLE_PUBLICATION_KEY_IMPORT_INVALID, {
         keyId: snapshot.signature.keyId,
         keyResolution: keyResolution,
       });
