@@ -1,5 +1,5 @@
 const assert = require('node:assert/strict');
-const { webcrypto } = require('node:crypto');
+const { createHash, webcrypto } = require('node:crypto');
 const fs = require('node:fs');
 const path = require('node:path');
 const test = require('node:test');
@@ -70,6 +70,7 @@ function trustedKeyRecord(keyId, publicKey, overrides = {}) {
 function lifecycleRecord(overrides = {}) {
   const record = {
     registryId: 'implicitex-production',
+    registrySchemaVersion: 'coin-card-lifecycle-registry-record.v1',
     environment: 'production',
     registryVersion: 1,
     recordId: 'registry-record-test-001',
@@ -112,6 +113,15 @@ function signaturePayload(record) {
   const payload = clone(record);
   delete payload.signature.value;
   return payload;
+}
+
+function signedPayloadBytes(runtime, record) {
+  const canonical = runtime.registry.canonicalizeJson(realmClone(runtime.context, signaturePayload(record)));
+  return Buffer.concat([
+    Buffer.from(runtime.verifier.LIFECYCLE_RECORD_SIGNATURE_DOMAIN, 'utf8'),
+    Buffer.from([0]),
+    Buffer.from(canonical, 'utf8'),
+  ]);
 }
 
 function realmClone(context, value) {
@@ -167,11 +177,11 @@ async function makeSignedRuntime(recordOverrides = {}, keyOverrides = {}) {
     [record.signature.keyId]: trustedKeyRecord(record.signature.keyId, publicKey, keyOverrides),
   };
   const runtime = loadLifecycleRecordVerification({ trustedPublicKeys, crypto: webcrypto });
-  const canonical = runtime.registry.canonicalizeJson(realmClone(runtime.context, signaturePayload(record)));
+  const signedBytes = signedPayloadBytes(runtime, record);
   const signature = await webcrypto.subtle.sign(
     { name: 'ECDSA', hash: { name: 'SHA-256' } },
     keyPair.privateKey,
-    new TextEncoder().encode(canonical),
+    signedBytes,
   );
 
   assert.equal(signature.byteLength, 64);
@@ -200,6 +210,12 @@ test('valid synthetic lifecycle record authenticates without manifest verifier',
   assert.equal(result.registryVersion, 1);
   assert.equal(result.authorityId, 'implicitex-registry');
   assert.equal(result.keyId, 'registry-publication-test-key');
+  assert.equal(runtime.verifier.LIFECYCLE_RECORD_SCHEMA_VERSION, 'coin-card-lifecycle-registry-record.v1');
+  assert.equal(runtime.verifier.LIFECYCLE_RECORD_SIGNATURE_DOMAIN, 'ImplicitEx Coin Card Lifecycle Registry Record v1');
+  assert.equal(
+    createHash('sha256').update(signedPayloadBytes(runtime, runtime.record)).digest('hex'),
+    'd1a44a87ba5a6c20bcde94c1b2ef75e4f70a52bace479cffbf17db0989d58e14',
+  );
 });
 
 test('lifecycle record verifier rejects DER and non-64-byte signature encodings', async () => {
@@ -224,6 +240,7 @@ test('mutating signed lifecycle record fields prevents authentication', async ()
   const runtime = await makeSignedRuntime();
   const mutations = {
     registryId: 'implicitex-production-mutated',
+    registrySchemaVersion: 'coin-card-lifecycle-registry-record.v2',
     environment: 'staging',
     registryVersion: 2,
     recordId: 'registry-record-test-002',
@@ -239,7 +256,7 @@ test('mutating signed lifecycle record fields prevents authentication', async ()
     supersededByManifestId: 'manifest_test_003',
     reasonCode: 'TEST_REASON',
     authorityId: 'other-registry',
-    administrationEvidenceHash: 'evidence-hash-test',
+    administrationEvidenceHash: toBase64Url(Buffer.alloc(32, 1)),
   };
 
   for (const [field, value] of Object.entries(mutations)) {
@@ -267,6 +284,49 @@ test('mutating signed lifecycle record fields prevents authentication', async ()
     assert.notEqual(result.outcome, runtime.verifier.OUTCOMES.LIFECYCLE_RECORD_AUTHENTICATED, `signature.${field}`);
     assert.equal(result.authenticated, false, `signature.${field}`);
     assert.equal(result.record, null, `signature.${field}`);
+  }
+});
+
+test('authenticated lifecycle record is an immutable pre-verification snapshot', async () => {
+  const runtime = await makeSignedRuntime();
+  const callerRecord = runtime.record;
+  const pending = authenticate(runtime, callerRecord);
+
+  callerRecord.cardStatus = 'CARD_REVOKED';
+  callerRecord.manifestId = 'different-manifest';
+
+  const result = await pending;
+
+  assert.equal(result.outcome, runtime.verifier.OUTCOMES.LIFECYCLE_RECORD_AUTHENTICATED);
+  assert.equal(result.record.cardStatus, 'CARD_ACTIVE');
+  assert.equal(result.record.manifestId, 'manifest_test_001');
+  assert.equal(Object.isFrozen(result.record), true);
+  assert.equal(Object.isFrozen(result.record.signature), true);
+
+  result.record.cardStatus = 'CARD_REVOKED';
+  result.record.signature.keyId = 'different-key';
+
+  assert.equal(result.record.cardStatus, 'CARD_ACTIVE');
+  assert.equal(result.record.signature.keyId, 'registry-publication-test-key');
+});
+
+test('lifecycle record schema rejects contradictory lifecycle semantics', async () => {
+  const cases = [
+    { revision: 1, previousManifestId: 'manifest_previous' },
+    { revision: 2, previousManifestId: null },
+    { manifestStatus: 'MANIFEST_SUPERSEDED', supersededByManifestId: null },
+    { manifestStatus: 'MANIFEST_CURRENT', supersededByManifestId: 'manifest_next' },
+    { effectiveUntil: '2026-07-10T08:00:00.000Z' },
+    { effectiveUntil: '2026-07-10T07:59:59.999Z' },
+    { administrationEvidenceHash: 'evidence-hash-test' },
+  ];
+
+  for (const overrides of cases) {
+    const runtime = await makeSignedRuntime(overrides);
+    const result = await authenticate(runtime, runtime.record);
+    assert.equal(result.outcome, runtime.verifier.OUTCOMES.LIFECYCLE_RECORD_SCHEMA_INVALID, JSON.stringify(overrides));
+    assert.equal(result.authenticated, false);
+    assert.equal(result.record, null);
   }
 });
 
@@ -318,7 +378,7 @@ test('publication key failures map to deterministic lifecycle outcomes', async (
       recordOverrides: {
         signature: { signedAt: '2026-07-10T08:10:00.001Z' },
       },
-      expected: 'LIFECYCLE_PUBLICATION_KEY_SOURCE_UNAVAILABLE',
+      expected: 'LIFECYCLE_PUBLICATION_KEY_TIMING_INVALID',
     },
   ];
 
@@ -328,6 +388,13 @@ test('publication key failures map to deterministic lifecycle outcomes', async (
     assert.equal(result.outcome, runtime.verifier.OUTCOMES[scenario.expected], scenario.name);
     assert.equal(result.authenticated, false, scenario.name);
   }
+
+  const runtime = await makeSignedRuntime();
+  const invalidVerifierTime = await runtime.verifier.authenticateLifecycleRecord(runtime.record, {
+    verificationTime: 'not-a-timestamp',
+  });
+  assert.equal(invalidVerifierTime.outcome, runtime.verifier.OUTCOMES.LIFECYCLE_PUBLICATION_KEY_TIMING_INVALID);
+  assert.equal(invalidVerifierTime.authenticated, false);
 });
 
 test('missing crypto fails closed and production lifecycle source remains empty', async () => {

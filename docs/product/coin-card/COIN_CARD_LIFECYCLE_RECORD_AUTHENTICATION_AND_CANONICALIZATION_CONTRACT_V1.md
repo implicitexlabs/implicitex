@@ -128,6 +128,15 @@ Canonical UTF-8 text:
 
 ## Lifecycle Record Signature Schema
 
+A signed lifecycle registry record must include:
+
+```text
+registrySchemaVersion: coin-card-lifecycle-registry-record.v1
+```
+
+This field is part of the signed payload and defines the schema under which the
+record's bytes and semantics are interpreted.
+
 A lifecycle registry record signature must be a plain-data object:
 
 ```json
@@ -148,9 +157,20 @@ The signature payload must cover every lifecycle registry record field and
 signature metadata field except `signature.value` and runtime verification
 output.
 
+Lifecycle record signatures are domain separated. The verifier signs and
+verifies:
+
+```text
+UTF8("ImplicitEx Coin Card Lifecycle Registry Record v1")
+|| 0x00
+|| UTF8(canonical lifecycle record signature payload)
+```
+
 `signature.value` must encode the fixed-width IEEE P1363 ECDSA representation
 `r || s`, where `r` and `s` are each 32-byte big-endian integers for P-256.
-ASN.1 DER signatures are invalid in V1.
+ASN.1 DER signatures are invalid in V1. The canonical textual representation is
+exactly 86 unpadded base64url characters and must round trip by decoding and
+re-encoding to the same string.
 
 Duplicate authorization fields are forbidden outside the canonical lifecycle
 record and its signature object. When a field is intentionally repeated inside
@@ -306,6 +326,9 @@ based on an external lifecycle administration request. It must be `null` only
 when the registry publication authority creates a record without external
 administration evidence under a documented registry policy.
 
+Runtime validation must accept only `null` or a 43-character canonical
+unpadded-base64url SHA-256 digest.
+
 ## Administration Evidence Action Schema
 
 Administration evidence should use this minimal canonical shape before hashing:
@@ -336,3 +359,19 @@ SUPERSEDE_MANIFEST
 The evidence action, `cardId`, `manifestId`, `environment`, effective time, and
 authority identity must match the lifecycle registry record that references the
 evidence hash.
+
+## Runtime Implementation Status
+
+Implemented in the protected browser runtime:
+
+- individual lifecycle-record authentication;
+- synthetic lifecycle-record authentication tests;
+- protected runtime module `card/coin-card-lifecycle-record-verification.js`.
+
+Not implemented in this slice:
+
+- populated lifecycle registry entries;
+- registry record selection;
+- lifecycle state resolution from authenticated entries;
+- presentation promotion from authenticated lifecycle records;
+- execution eligibility from authenticated lifecycle records.

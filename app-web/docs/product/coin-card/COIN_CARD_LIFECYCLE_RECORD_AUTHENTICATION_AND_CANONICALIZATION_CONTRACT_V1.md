@@ -4,6 +4,9 @@ Status: canonical pointer
 
 Canonical source: `../../../../docs/product/coin-card/COIN_CARD_LIFECYCLE_RECORD_AUTHENTICATION_AND_CANONICALIZATION_CONTRACT_V1.md`.
 
-Implementation note: this contract is documentation-only in this slice. Runtime
-behavior still ends at trusted-key-backed manifest verification; lifecycle
-record authentication and registry resolution are not implemented here.
+Implementation note: individual lifecycle-record authentication is implemented
+in the protected runtime module
+`card/coin-card-lifecycle-record-verification.js` and covered by synthetic
+authentication tests. Populated lifecycle registry entries, registry record
+selection, lifecycle state resolution from authenticated entries, presentation
+promotion, and execution eligibility are not implemented here.
