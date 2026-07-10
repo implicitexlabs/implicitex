@@ -41,6 +41,18 @@ This object must be:
 The browser verifier may read the allowlist. It must not accept public keys or
 key records from untrusted runtime input.
 
+## Atomic Source Semantics
+
+The trusted-key population is atomic. If the source object or any entry violates
+the protected plain-data contract, the entire source is unavailable.
+
+The verifier must not salvage valid-looking entries from a malformed source. It
+must fail closed with internal outcome `TRUSTED_KEY_SOURCE_UNAVAILABLE`, even
+when the requested key record would have passed validation in isolation.
+
+This makes the protected source a single trust root rather than a partially
+recoverable data cache.
+
 ## Source Requirements
 
 - No private keys in the repo.
