@@ -655,7 +655,7 @@ test('resolveTrustedKeyRecord reports deterministic non-active outcomes', () => 
     {
       name: 'usage denied',
       records: {
-        'coin-card-test-key': trustedKeyRecord('coin-card-test-key', TEST_PUBLIC_JWK, { usage: deepFreeze(['receipt-signing']) }),
+        'coin-card-test-key': trustedKeyRecord('coin-card-test-key', TEST_PUBLIC_JWK, { usage: deepFreeze(['coin-card-registry-publication']) }),
       },
       expected: 'TRUSTED_KEY_USAGE_DENIED',
     },
@@ -1215,8 +1215,8 @@ test('resolveTrustedKeyRecord rejects malformed P-256 JWK records', () => {
     signatureMode: 'signed-p256-v1',
   });
 
-  assert.equal(result.outcome, verification.TRUSTED_KEY_OUTCOMES.TRUSTED_KEY_RECORD_INVALID);
-  assert.equal(result.reason, 'trusted-key-public-jwk-invalid');
+  assert.equal(result.outcome, verification.TRUSTED_KEY_OUTCOMES.TRUSTED_KEY_SOURCE_UNAVAILABLE);
+  assert.equal(result.reason, 'trusted-key-source-unavailable');
 });
 
 test('INVALIDATE_AFTER_TIMESTAMP uses verification time unlike NO_NEW_SIGNATURES', () => {

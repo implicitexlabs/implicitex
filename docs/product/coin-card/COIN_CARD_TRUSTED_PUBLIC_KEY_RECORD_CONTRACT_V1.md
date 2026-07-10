@@ -52,10 +52,16 @@ Required v1 values:
 
 - `schemaVersion`: `coin-card-trusted-key-record.v1`
 - `algorithm`: `ECDSA_P256_SHA256`
-- `usage`: must include `coin-card-manifest-signing`
+- `usage`: nonempty dense array of unique recognized V1 usages
 - `status`: `ACTIVE`, `REVOKED`, or `EXPIRED`
 - `publicKey`: P-256 public JWK
 - `environment`: trust domain such as `production` or `staging`
+
+Recognized V1 usages are:
+
+- `coin-card-manifest-signing`
+- `coin-card-lifecycle-administration`
+- `coin-card-registry-publication`
 
 `keyId` must be stable, explicit, unique within the trusted source, and must not
 be derived from untrusted runtime input.
@@ -73,8 +79,11 @@ shared object references are invalid for V1 trust-root data.
 
 The trusted-key source is atomic. A malformed record shape, hidden property,
 accessor, unexpected property, invalid nullability, cycle, mutable nested value,
-or non-plain-data entry makes the entire source unavailable as
-`TRUSTED_KEY_SOURCE_UNAVAILABLE`.
+shared object reference, invalid schema version, unsupported algorithm,
+malformed public JWK, malformed issuer, malformed usage array, unknown usage,
+duplicate usage, invalid status, invalid record timestamp, malformed
+environment, successor self-reference, or non-plain-data entry makes the entire
+source unavailable as `TRUSTED_KEY_SOURCE_UNAVAILABLE`.
 
 The public JWK must be a public P-256 verification key:
 

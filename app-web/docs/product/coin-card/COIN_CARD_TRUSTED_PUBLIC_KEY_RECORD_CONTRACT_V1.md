@@ -7,8 +7,9 @@ for Coin Card trusted signing keys.
 
 Canonical source: `../../../../docs/product/coin-card/COIN_CARD_TRUSTED_PUBLIC_KEY_RECORD_CONTRACT_V1.md`.
 
-Implementation note: the canonical contract requires exact, acyclic, deeply
-immutable plain-data key records, strict nullable fields, strict UTC millisecond
+Implementation note: the canonical contract requires exact, acyclic,
+shared-reference-free, deeply immutable plain-data key records, recognized
+unique V1 usage values, strict nullable fields, strict UTC millisecond
 timestamps, a fixed five-minute future-signature skew, public P-256 JWK
 validation, signed top-level resolver context, exact duplicate-field matching,
 and deterministic key-resolution outcomes including

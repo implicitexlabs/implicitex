@@ -45,6 +45,16 @@
     INVALIDATE_AFTER_TIMESTAMP: true,
     NO_NEW_SIGNATURES: true,
   });
+  var TRUSTED_KEY_USAGES = Object.freeze({
+    'coin-card-manifest-signing': true,
+    'coin-card-lifecycle-administration': true,
+    'coin-card-registry-publication': true,
+  });
+  var TRUSTED_KEY_STATUSES = Object.freeze({
+    ACTIVE: true,
+    REVOKED: true,
+    EXPIRED: true,
+  });
 
   function isPlainDataContainer(value) {
     if (Array.isArray(value)) return true;
@@ -117,7 +127,6 @@
       var descriptor = Object.getOwnPropertyDescriptor(value, keys[i]);
       if (!isDeepFrozenPlainData(descriptor.value, visited)) return false;
     }
-    visited.pop();
     return true;
   }
 
@@ -220,15 +229,35 @@
     if (!isDeepFrozenPlainData(record)) return false;
     if (!hasExactTrustedKeyRecordSchema(record)) return false;
     if (record.keyId !== keyId) return false;
-    return hasValidNullableRecordFields(record);
+    if (record.schemaVersion !== TRUSTED_KEY_RECORD_SCHEMA_VERSION) return false;
+    if (record.algorithm !== TRUSTED_KEY_ALGORITHM_P256) return false;
+    if (!isValidPublicP256Jwk(record.publicKey)) return false;
+    if (typeof record.issuerId !== 'string' || !record.issuerId) return false;
+    if (!isValidTrustedKeyUsageArray(record.usage)) return false;
+    if (!TRUSTED_KEY_STATUSES[record.status]) return false;
+    if (parseStrictUtcTimestamp(record.validFrom) === null) return false;
+    if (!isNullOrStrictUtcTimestamp(record.validUntil)) return false;
+    if (typeof record.environment !== 'string' || !record.environment) return false;
+    if (!hasValidNullableRecordFields(record)) return false;
+    if (record.successorKeyId !== null && record.successorKeyId === record.keyId) return false;
+    return true;
   }
 
   function isAllowedStringArray(value, allowedValue) {
-    if (!Array.isArray(value) || !Object.isFrozen(value) || value.length < 1) return false;
-    for (var i = 0; i < value.length; i++) {
-      if (typeof value[i] !== 'string' || !value[i]) return false;
-    }
+    if (!isValidTrustedKeyUsageArray(value)) return false;
     return value.indexOf(allowedValue) !== -1;
+  }
+
+  function isValidTrustedKeyUsageArray(value) {
+    if (!Array.isArray(value) || !Object.isFrozen(value) || value.length < 1) return false;
+
+    var seen = Object.create(null);
+    for (var i = 0; i < value.length; i++) {
+      var usage = value[i];
+      if (typeof usage !== 'string' || !TRUSTED_KEY_USAGES[usage] || seen[usage]) return false;
+      seen[usage] = true;
+    }
+    return true;
   }
 
   function invalidTrustedKeyRecord(keyId, extra) {
@@ -287,47 +316,20 @@
     if (!record) {
       return buildTrustedKeyResolution(TRUSTED_KEY_OUTCOMES.TRUSTED_KEY_UNKNOWN, { keyId: keyId });
     }
-    if (!record || typeof record !== 'object' || Array.isArray(record)) {
-      return invalidTrustedKeyRecord(keyId, { reason: 'trusted-key-record-not-object' });
-    }
 
     var resolutionContext = normalizeTrustedKeyResolutionContext(context);
-    if (!isDeepFrozenPlainData(record)) {
-      return invalidTrustedKeyRecord(keyId, { reason: 'trusted-key-record-not-deep-frozen-plain-data' });
-    }
-    if (!hasExactTrustedKeyRecordSchema(record)) {
-      return invalidTrustedKeyRecord(keyId, { reason: 'trusted-key-record-schema-invalid' });
-    }
     if (
-      record.schemaVersion !== TRUSTED_KEY_RECORD_SCHEMA_VERSION
-      || record.keyId !== keyId
-      || record.algorithm !== TRUSTED_KEY_ALGORITHM_P256
-      || !record.publicKey
-      || !record.issuerId
-      || !record.usage
-      || !record.status
-      || !record.validFrom
-      || !record.environment
-      || !resolutionContext.usage
+      !resolutionContext.usage
       || !resolutionContext.environment
       || !resolutionContext.issuerId
     ) {
-      return invalidTrustedKeyRecord(keyId, { reason: 'trusted-key-record-required-field-invalid' });
-    }
-    if (!hasValidNullableRecordFields(record)) {
-      return invalidTrustedKeyRecord(keyId, { reason: 'trusted-key-record-nullability-invalid' });
-    }
-    if (!isValidPublicP256Jwk(record.publicKey)) {
-      return invalidTrustedKeyRecord(keyId, { reason: 'trusted-key-public-jwk-invalid' });
+      return invalidTrustedKeyRecord(keyId, { reason: 'trusted-key-resolution-context-invalid' });
     }
     if (!isAllowedStringArray(record.usage, resolutionContext.usage)) {
       return buildTrustedKeyResolution(TRUSTED_KEY_OUTCOMES.TRUSTED_KEY_USAGE_DENIED, record);
     }
     if (typeof record.environment !== 'string' || record.environment !== resolutionContext.environment) {
       return buildTrustedKeyResolution(TRUSTED_KEY_OUTCOMES.TRUSTED_KEY_ENVIRONMENT_MISMATCH, record);
-    }
-    if (record.successorKeyId && record.successorKeyId === record.keyId) {
-      return invalidTrustedKeyRecord(keyId, { reason: 'trusted-key-successor-self-reference' });
     }
     if (resolutionContext.signatureMode && resolutionContext.signatureMode !== 'signed-p256-v1') {
       return invalidTrustedKeyRecord(keyId, { reason: 'trusted-key-signature-mode-incompatible' });
@@ -342,7 +344,7 @@
     var validUntil = parseStrictUtcTimestamp(record.validUntil);
     var signatureTime = parseStrictUtcTimestamp(resolutionContext.signatureTime);
     var verificationTime = parseStrictUtcTimestamp(resolutionContext.verificationTime);
-    if (validFrom === null || signatureTime === null || verificationTime === null || (record.validUntil !== null && validUntil === null)) {
+    if (signatureTime === null || verificationTime === null) {
       return invalidTrustedKeyRecord(keyId, { reason: 'trusted-key-timing-evidence-invalid' });
     }
     if (signatureTime > verificationTime + TRUSTED_KEY_CLOCK_SKEW_MS) {

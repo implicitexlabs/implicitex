@@ -29,6 +29,18 @@ const TEST_PUBLIC_JWK = deepFreeze({
   key_ops: ['verify'],
 });
 
+function makePublicJwk(overrides = {}) {
+  return deepFreeze({
+    kty: 'EC',
+    crv: 'P-256',
+    x: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+    y: 'BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB',
+    ext: true,
+    key_ops: ['verify'],
+    ...overrides,
+  });
+}
+
 function trustedKeyRecord(keyId, overrides = {}) {
   return deepFreeze({
     schemaVersion: 'coin-card-trusted-key-record.v1',
@@ -181,6 +193,61 @@ test('trusted key resolver enforces exact record schema and nullable fields', ()
     assert.equal(resolver.isTrustedKeySourceAvailable(), false);
     assert.equal(resolve(resolver, record.keyId).outcome, resolver.TRUSTED_KEY_OUTCOMES.TRUSTED_KEY_SOURCE_UNAVAILABLE);
   });
+});
+
+test('trusted key resolver makes malformed unrelated records atomically unavailable', () => {
+  const cases = [
+    trustedKeyRecord('bad-jwk-key', {
+      publicKey: makePublicJwk({ x: 'short' }),
+    }),
+    trustedKeyRecord('bad-algorithm-key', {
+      algorithm: 'ECDSA_P384_SHA384',
+    }),
+    trustedKeyRecord('bad-timestamp-key', {
+      validFrom: '2026-01-01',
+    }),
+    trustedKeyRecord('bad-status-key', {
+      status: 'DISABLED',
+    }),
+    trustedKeyRecord('bad-usage-key', {
+      usage: ['coin-card-registry-publicaton'],
+    }),
+    trustedKeyRecord('duplicate-usage-key', {
+      usage: ['coin-card-manifest-signing', 'coin-card-manifest-signing'],
+    }),
+    trustedKeyRecord('successor-self-key', {
+      successorKeyId: 'successor-self-key',
+    }),
+  ];
+
+  cases.forEach((badRecord) => {
+    const trustedPublicKeys = Object.freeze({
+      'coin-card-test-key': trustedKeyRecord('coin-card-test-key', {
+        publicKey: makePublicJwk(),
+      }),
+      [badRecord.keyId]: badRecord,
+    });
+    const { resolver } = loadTrustedKeyResolution({ trustedPublicKeys });
+
+    assert.equal(resolver.isTrustedKeySourceAvailable(), false, badRecord.keyId);
+    assert.equal(resolve(resolver).outcome, resolver.TRUSTED_KEY_OUTCOMES.TRUSTED_KEY_SOURCE_UNAVAILABLE, badRecord.keyId);
+  });
+});
+
+test('trusted key resolver rejects shared object references in the source tree', () => {
+  const sharedPublicKey = makePublicJwk();
+  const trustedPublicKeys = Object.freeze({
+    'coin-card-test-key': trustedKeyRecord('coin-card-test-key', {
+      publicKey: sharedPublicKey,
+    }),
+    'coin-card-second-key': trustedKeyRecord('coin-card-second-key', {
+      publicKey: sharedPublicKey,
+    }),
+  });
+  const { resolver } = loadTrustedKeyResolution({ trustedPublicKeys });
+
+  assert.equal(resolver.isTrustedKeySourceAvailable(), false);
+  assert.equal(resolve(resolver).outcome, resolver.TRUSTED_KEY_OUTCOMES.TRUSTED_KEY_SOURCE_UNAVAILABLE);
 });
 
 test('trusted key resolver accepts revoked epoch timestamp evidence', () => {
