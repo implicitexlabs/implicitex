@@ -22,7 +22,6 @@ function makeDigest() {
 
 function loadLifecycle(options = {}) {
   const context = {
-    Object,
     Promise,
     String,
     Uint8Array,
@@ -45,13 +44,12 @@ function loadLifecycle(options = {}) {
   return {
     registry: context.window.IX_COIN_CARD_LIFECYCLE_REGISTRY,
     bundle: context.window.IX_COIN_CARD_LIFECYCLE_REGISTRY_BUNDLE,
+    context,
   };
 }
 
-function deepFreeze(value) {
-  if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
-  Object.keys(value).forEach((key) => deepFreeze(value[key]));
-  return Object.freeze(value);
+function realmValue(context, source) {
+  return vm.runInNewContext(`(${source})`, context);
 }
 
 test('lifecycle registry bootstrap initializes a frozen empty bundle', () => {
@@ -72,8 +70,8 @@ test('lifecycle registry bootstrap initializes a frozen empty bundle', () => {
 });
 
 test('canonicalizeJson matches payload hash golden vector', async () => {
-  const { registry } = loadLifecycle();
-  const payload = {
+  const { registry, context } = loadLifecycle();
+  const payload = realmValue(context, `{
     cardId: 'card_test_001',
     recipient: {
       address: '0x1111111111111111111111111111111111111111',
@@ -82,7 +80,7 @@ test('canonicalizeJson matches payload hash golden vector', async () => {
       type: 'FIXED_AMOUNT',
       amountBaseUnits: '50000000',
     },
-  };
+  }`);
 
   const hash = await registry.hashProtectedPayload(payload);
 
@@ -95,56 +93,76 @@ test('canonicalizeJson matches payload hash golden vector', async () => {
 });
 
 test('canonicalizeJson uses Unicode code point key order', () => {
-  const { registry } = loadLifecycle();
+  const { registry, context } = loadLifecycle();
 
   assert.equal(
-    registry.canonicalizeJson({
+    registry.canonicalizeJson(realmValue(context, `{
       '😀': 5,
       '𐀀': 4,
       Ω: 3,
       é: 2,
       a: 1,
-    }),
+    }`)),
     '{"a":1,"é":2,"Ω":3,"𐀀":4,"😀":5}',
   );
 });
 
 test('canonicalizeJson pins string escaping', () => {
-  const { registry } = loadLifecycle();
+  const { registry, context } = loadLifecycle();
 
   assert.equal(
-    registry.canonicalizeJson({
+    registry.canonicalizeJson(realmValue(context, String.raw`{
       label: 'Café "A"\n😀/test',
       nul: '\u0000',
       tab: '\t',
       slash: '/',
       backslash: '\\',
-    }),
+    }`)),
     '{"backslash":"\\\\","label":"Café \\"A\\"\\n😀/test","nul":"\\u0000","slash":"/","tab":"\\t"}',
   );
 });
 
 test('canonicalizeJson rejects non-canonical data shapes', () => {
-  const { registry } = loadLifecycle();
-  const accessor = {};
-  Object.defineProperty(accessor, 'value', {
-    enumerable: true,
-    get() {
-      return 'dynamic';
-    },
-  });
-  const cyclic = {};
-  cyclic.self = cyclic;
+  const { registry, context } = loadLifecycle();
+  const accessor = realmValue(context, `(() => {
+    const value = {};
+    Object.defineProperty(value, 'field', {
+      enumerable: true,
+      get() {
+        return 'dynamic';
+      },
+    });
+    return value;
+  })()`);
+  const hidden = realmValue(context, `(() => {
+    const value = { visible: 'ok' };
+    Object.defineProperty(value, 'hidden', {
+      enumerable: false,
+      value: 'hidden',
+    });
+    return value;
+  })()`);
+  const cyclic = realmValue(context, `(() => {
+    const value = {};
+    value.self = value;
+    return value;
+  })()`);
 
   assert.equal(registry.canonicalizeJson(accessor), null);
+  assert.equal(registry.canonicalizeJson(hidden), null);
   assert.equal(registry.canonicalizeJson(cyclic), null);
-  assert.equal(registry.canonicalizeJson({ bad: undefined }), null);
-  assert.equal(registry.canonicalizeJson({ bad: Number.NaN }), null);
-  assert.equal(registry.canonicalizeJson({ label: 'Cafe\u0301' }), null);
+  assert.equal(registry.canonicalizeJson(realmValue(context, `{ bad: undefined }`)), null);
+  assert.equal(registry.canonicalizeJson(realmValue(context, `{ bad: Number.NaN }`)), null);
+  assert.equal(registry.canonicalizeJson(realmValue(context, `{ label: 'Cafe\\u0301' }`)), null);
+  assert.equal(registry.canonicalizeJson(realmValue(context, `(() => ({ label: String.fromCharCode(0xd800) }))()`)), null);
+  assert.equal(registry.canonicalizeJson(realmValue(context, `(() => {
+    const key = String.fromCharCode(0xd800);
+    return { [key]: 'bad' };
+  })()`)), null);
 });
 
-test('validateLifecycleRegistryBundle rejects mutable and accessor bundles', () => {
-  const { registry } = loadLifecycle();
+test('validateLifecycleRegistryBundle rejects mutable accessor and non-empty bundles', () => {
+  const { registry, context } = loadLifecycle();
   const mutable = {
     registrySchemaVersion: 'coin-card-lifecycle-registry.v1',
     registryId: 'implicitex-production',
@@ -161,16 +179,45 @@ test('validateLifecycleRegistryBundle rejects mutable and accessor bundles', () 
     },
   });
   Object.freeze(accessor);
+  const hiddenAccessor = realmValue(context, `(() => {
+    const bundle = {
+      registrySchemaVersion: 'coin-card-lifecycle-registry.v1',
+      registryId: 'implicitex-production',
+      environment: 'production',
+      registryVersion: 0,
+      generatedAt: null,
+      entries: Object.freeze([]),
+    };
+    Object.defineProperty(bundle, 'hidden', {
+      enumerable: false,
+      get() {
+        return 'dynamic';
+      },
+    });
+    return Object.freeze(bundle);
+  })()`);
+  const nonEmpty = realmValue(context, `(() => Object.freeze({
+    registrySchemaVersion: 'coin-card-lifecycle-registry.v1',
+    registryId: 'implicitex-production',
+    environment: 'production',
+    registryVersion: 0,
+    generatedAt: null,
+    entries: Object.freeze([Object.freeze({ recordId: 'future-record' })]),
+  }))()`);
+  const wrongVersion = realmValue(context, `(() => Object.freeze({
+    registrySchemaVersion: 'coin-card-lifecycle-registry.v1',
+    registryId: 'implicitex-production',
+    environment: 'production',
+    registryVersion: 1,
+    generatedAt: null,
+    entries: Object.freeze([]),
+  }))()`);
 
   assert.equal(registry.validateLifecycleRegistryBundle(mutable).ok, false);
-  assert.equal(
-    registry.validateLifecycleRegistryBundle(deepFreeze({
-      ...mutable,
-      entries: [{ recordId: 'future-record' }],
-    })).error,
-    'lifecycle-registry-record-validation-unimplemented',
-  );
   assert.equal(registry.validateLifecycleRegistryBundle(accessor).ok, false);
+  assert.equal(registry.validateLifecycleRegistryBundle(hiddenAccessor).error, 'lifecycle-registry-bundle-not-deep-frozen-plain-data');
+  assert.equal(registry.validateLifecycleRegistryBundle(nonEmpty).error, 'lifecycle-registry-empty-bundle-required-field-invalid');
+  assert.equal(registry.validateLifecycleRegistryBundle(wrongVersion).error, 'lifecycle-registry-empty-bundle-required-field-invalid');
 });
 
 test('resolveLifecycle returns deterministic empty unknown outcomes', () => {
@@ -180,33 +227,52 @@ test('resolveLifecycle returns deterministic empty unknown outcomes', () => {
   assert.equal(result.cardOutcome, registry.CARD_OUTCOMES.CARD_UNKNOWN);
   assert.equal(result.manifestOutcome, registry.MANIFEST_OUTCOMES.MANIFEST_UNKNOWN);
   assert.equal(result.operationalOutcome, registry.OPERATIONAL_OUTCOMES.LIFECYCLE_UNKNOWN);
-  assert.equal(result.registry.authenticated, true);
+  assert.equal(result.registry.sourceValidated, true);
+  assert.equal(result.registry.bundleIntegrityAuthenticated, false);
+  assert.equal(result.registry.recordAuthentication, 'not-applicable-empty');
   assert.equal(result.registry.rollbackProtected, false);
   assert.equal(result.registry.registryVersion, 0);
   assert.equal(result.registry.generatedAt, null);
 });
 
-test('composeOperationalOutcome follows lifecycle precedence', () => {
+test('composeOperationalOutcome follows the full lifecycle precedence matrix', () => {
   const { registry } = loadLifecycle();
+  const cardOutcomes = Object.values(registry.CARD_OUTCOMES);
+  const manifestOutcomes = Object.values(registry.MANIFEST_OUTCOMES);
 
-  assert.equal(
-    registry.composeOperationalOutcome(registry.CARD_OUTCOMES.CARD_ACTIVE, registry.MANIFEST_OUTCOMES.MANIFEST_CURRENT),
-    registry.OPERATIONAL_OUTCOMES.LIFECYCLE_OPERATIONAL,
-  );
-  assert.equal(
-    registry.composeOperationalOutcome(registry.CARD_OUTCOMES.CARD_REVOKED, registry.MANIFEST_OUTCOMES.MANIFEST_CURRENT),
-    registry.OPERATIONAL_OUTCOMES.LIFECYCLE_BLOCKED,
-  );
-  assert.equal(
-    registry.composeOperationalOutcome(registry.CARD_OUTCOMES.CARD_ACTIVE, registry.MANIFEST_OUTCOMES.MANIFEST_SUPERSEDED),
-    registry.OPERATIONAL_OUTCOMES.LIFECYCLE_BLOCKED,
-  );
-  assert.equal(
-    registry.composeOperationalOutcome(registry.CARD_OUTCOMES.CARD_UNKNOWN, registry.MANIFEST_OUTCOMES.MANIFEST_CURRENT),
-    registry.OPERATIONAL_OUTCOMES.LIFECYCLE_UNKNOWN,
-  );
-  assert.equal(
-    registry.composeOperationalOutcome(registry.CARD_OUTCOMES.CARD_RECORD_INVALID, registry.MANIFEST_OUTCOMES.MANIFEST_CURRENT),
-    registry.OPERATIONAL_OUTCOMES.LIFECYCLE_INVALID,
-  );
+  for (const cardOutcome of cardOutcomes) {
+    for (const manifestOutcome of manifestOutcomes) {
+      let expected = registry.OPERATIONAL_OUTCOMES.LIFECYCLE_INVALID;
+
+      if (
+        cardOutcome !== registry.CARD_OUTCOMES.CARD_RECORD_INVALID
+        && manifestOutcome !== registry.MANIFEST_OUTCOMES.MANIFEST_RECORD_INVALID
+      ) {
+        if (
+          cardOutcome === registry.CARD_OUTCOMES.CARD_REVOKED
+          || cardOutcome === registry.CARD_OUTCOMES.CARD_SUSPENDED
+        ) {
+          expected = registry.OPERATIONAL_OUTCOMES.LIFECYCLE_BLOCKED;
+        } else if (
+          cardOutcome === registry.CARD_OUTCOMES.CARD_UNKNOWN
+          || manifestOutcome === registry.MANIFEST_OUTCOMES.MANIFEST_UNKNOWN
+        ) {
+          expected = registry.OPERATIONAL_OUTCOMES.LIFECYCLE_UNKNOWN;
+        } else if (
+          cardOutcome === registry.CARD_OUTCOMES.CARD_ACTIVE
+          && manifestOutcome === registry.MANIFEST_OUTCOMES.MANIFEST_CURRENT
+        ) {
+          expected = registry.OPERATIONAL_OUTCOMES.LIFECYCLE_OPERATIONAL;
+        } else if (cardOutcome === registry.CARD_OUTCOMES.CARD_ACTIVE) {
+          expected = registry.OPERATIONAL_OUTCOMES.LIFECYCLE_BLOCKED;
+        }
+      }
+
+      assert.equal(
+        registry.composeOperationalOutcome(cardOutcome, manifestOutcome),
+        expected,
+        `${cardOutcome} + ${manifestOutcome}`,
+      );
+    }
+  }
 });

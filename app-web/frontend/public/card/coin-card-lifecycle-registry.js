@@ -50,28 +50,71 @@
     if (Array.isArray(value)) return true;
 
     var prototype = Object.getPrototypeOf(value);
-    if (prototype === null) return true;
-    return Object.getPrototypeOf(prototype) === null
-      && Object.prototype.hasOwnProperty.call(prototype, 'constructor')
-      && prototype.constructor
-      && prototype.constructor.name === 'Object';
+    return prototype === Object.prototype || prototype === null;
+  }
+
+  function isArrayIndexName(name, length) {
+    if (!/^(0|[1-9]\d*)$/.test(name)) return false;
+    var index = Number(name);
+    return Number.isSafeInteger(index) && index >= 0 && index < length && String(index) === name;
+  }
+
+  function getOwnDataPropertyNames(value) {
+    if (Object.getOwnPropertySymbols && Object.getOwnPropertySymbols(value).length) return null;
+
+    var names = Object.getOwnPropertyNames(value);
+    if (Array.isArray(value)) {
+      var lengthDescriptor = Object.getOwnPropertyDescriptor(value, 'length');
+      if (!lengthDescriptor || !Object.prototype.hasOwnProperty.call(lengthDescriptor, 'value')) return null;
+
+      var indexNames = [];
+      for (var i = 0; i < names.length; i++) {
+        var arrayName = names[i];
+        if (arrayName === 'length') continue;
+        var arrayDescriptor = Object.getOwnPropertyDescriptor(value, arrayName);
+        if (
+          !arrayDescriptor
+          || !Object.prototype.hasOwnProperty.call(arrayDescriptor, 'value')
+          || arrayDescriptor.enumerable !== true
+          || !isArrayIndexName(arrayName, value.length)
+          || typeof arrayDescriptor.value === 'function'
+        ) {
+          return null;
+        }
+        indexNames.push(arrayName);
+      }
+      if (indexNames.length !== value.length) return null;
+      return indexNames.sort(function (left, right) { return Number(left) - Number(right); });
+    }
+
+    for (var j = 0; j < names.length; j++) {
+      var name = names[j];
+      var descriptor = Object.getOwnPropertyDescriptor(value, name);
+      if (
+        !descriptor
+        || !Object.prototype.hasOwnProperty.call(descriptor, 'value')
+        || descriptor.enumerable !== true
+        || typeof descriptor.value === 'function'
+      ) {
+        return null;
+      }
+    }
+    return names;
   }
 
   function isDeepFrozenPlainData(value, seen) {
     if (!value || typeof value !== 'object') return true;
     if (!Object.isFrozen(value)) return false;
     if (!isPlainDataContainer(value)) return false;
-    if (Object.getOwnPropertySymbols && Object.getOwnPropertySymbols(value).length) return false;
+    var keys = getOwnDataPropertyNames(value);
+    if (!keys) return false;
 
     var visited = seen || [];
     if (visited.indexOf(value) !== -1) return true;
     visited.push(value);
 
-    var keys = Object.keys(value);
     for (var i = 0; i < keys.length; i++) {
       var descriptor = Object.getOwnPropertyDescriptor(value, keys[i]);
-      if (!descriptor || !Object.prototype.hasOwnProperty.call(descriptor, 'value')) return false;
-      if (typeof descriptor.value === 'function') return false;
       if (!isDeepFrozenPlainData(descriptor.value, visited)) return false;
     }
     return true;
@@ -92,7 +135,26 @@
   }
 
   function isNormalizedNfc(value) {
-    return typeof value.normalize !== 'function' || value.normalize('NFC') === value;
+    return typeof value.normalize === 'function' && value.normalize('NFC') === value;
+  }
+
+  function containsOnlyUnicodeScalars(value) {
+    for (var i = 0; i < value.length; i++) {
+      var code = value.charCodeAt(i);
+      if (code >= 0xd800 && code <= 0xdbff) {
+        if (i + 1 >= value.length) return false;
+        var next = value.charCodeAt(i + 1);
+        if (next < 0xdc00 || next > 0xdfff) return false;
+        i += 1;
+      } else if (code >= 0xdc00 && code <= 0xdfff) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  function isCanonicalString(value) {
+    return containsOnlyUnicodeScalars(value) && isNormalizedNfc(value);
   }
 
   function escapeCanonicalString(value) {
@@ -130,14 +192,15 @@
   function canonicalizeJsonValue(value, seen) {
     if (value === null) return 'null';
     if (typeof value === 'string') {
-      return isNormalizedNfc(value) ? escapeCanonicalString(value) : null;
+      return isCanonicalString(value) ? escapeCanonicalString(value) : null;
     }
     if (typeof value === 'boolean') return value ? 'true' : 'false';
     if (typeof value === 'number') return canonicalizeNumber(value);
     if (typeof value === 'undefined' || typeof value === 'function' || typeof value === 'symbol') return null;
     if (!value || typeof value !== 'object') return null;
     if (!isPlainDataContainer(value)) return null;
-    if (Object.getOwnPropertySymbols && Object.getOwnPropertySymbols(value).length) return null;
+    var ownPropertyNames = getOwnDataPropertyNames(value);
+    if (!ownPropertyNames) return null;
 
     var visited = seen || [];
     if (visited.indexOf(value) !== -1) return null;
@@ -154,13 +217,12 @@
       return '[' + items.join(',') + ']';
     }
 
-    var keys = Object.keys(value).sort(compareCodePoints);
+    var keys = ownPropertyNames.sort(compareCodePoints);
     var properties = [];
     for (var j = 0; j < keys.length; j++) {
       var key = keys[j];
-      if (!isNormalizedNfc(key)) return null;
+      if (!isCanonicalString(key)) return null;
       var descriptor = Object.getOwnPropertyDescriptor(value, key);
-      if (!descriptor || !Object.prototype.hasOwnProperty.call(descriptor, 'value')) return null;
       var serialized = canonicalizeJsonValue(descriptor.value, visited);
       if (serialized === null) return null;
       properties.push(escapeCanonicalString(key) + ':' + serialized);
@@ -278,32 +340,43 @@
         error: 'lifecycle-registry-bundle-not-deep-frozen-plain-data',
       };
     }
+    var keys = getOwnDataPropertyNames(bundle);
+    var expectedKeys = [
+      'entries',
+      'environment',
+      'generatedAt',
+      'registryId',
+      'registrySchemaVersion',
+      'registryVersion',
+    ];
+    if (!keys || keys.slice().sort(compareCodePoints).join('\n') !== expectedKeys.join('\n')) {
+      return {
+        ok: false,
+        error: 'lifecycle-registry-empty-bundle-schema-invalid',
+      };
+    }
     if (
       bundle.registrySchemaVersion !== REGISTRY_SCHEMA_VERSION
       || typeof bundle.registryId !== 'string'
       || !bundle.registryId
       || typeof bundle.environment !== 'string'
       || !bundle.environment
-      || !Number.isSafeInteger(bundle.registryVersion)
-      || bundle.registryVersion < 0
-      || (bundle.generatedAt !== null && typeof bundle.generatedAt !== 'string')
+      || bundle.registryVersion !== 0
+      || bundle.generatedAt !== null
       || !Array.isArray(bundle.entries)
+      || bundle.entries.length !== 0
     ) {
       return {
         ok: false,
-        error: 'lifecycle-registry-bundle-required-field-invalid',
-      };
-    }
-    if (bundle.entries.length !== 0) {
-      return {
-        ok: false,
-        error: 'lifecycle-registry-record-validation-unimplemented',
+        error: 'lifecycle-registry-empty-bundle-required-field-invalid',
       };
     }
     return {
       ok: true,
       error: null,
-      authenticated: true,
+      sourceValidated: true,
+      bundleIntegrityAuthenticated: false,
+      recordAuthentication: 'not-applicable-empty',
       rollbackProtected: false,
       registryId: bundle.registryId,
       environment: bundle.environment,
@@ -317,16 +390,19 @@
     if (cardOutcome === CARD_OUTCOMES.CARD_RECORD_INVALID || manifestOutcome === MANIFEST_OUTCOMES.MANIFEST_RECORD_INVALID) {
       return OPERATIONAL_OUTCOMES.LIFECYCLE_INVALID;
     }
-    if (cardOutcome === CARD_OUTCOMES.CARD_UNKNOWN || manifestOutcome === MANIFEST_OUTCOMES.MANIFEST_UNKNOWN) {
+    if (cardOutcome === CARD_OUTCOMES.CARD_SUSPENDED || cardOutcome === CARD_OUTCOMES.CARD_REVOKED) {
+      return OPERATIONAL_OUTCOMES.LIFECYCLE_BLOCKED;
+    }
+    if (cardOutcome === CARD_OUTCOMES.CARD_UNKNOWN) {
+      return OPERATIONAL_OUTCOMES.LIFECYCLE_UNKNOWN;
+    }
+    if (cardOutcome === CARD_OUTCOMES.CARD_ACTIVE && manifestOutcome === MANIFEST_OUTCOMES.MANIFEST_UNKNOWN) {
       return OPERATIONAL_OUTCOMES.LIFECYCLE_UNKNOWN;
     }
     if (cardOutcome === CARD_OUTCOMES.CARD_ACTIVE && manifestOutcome === MANIFEST_OUTCOMES.MANIFEST_CURRENT) {
       return OPERATIONAL_OUTCOMES.LIFECYCLE_OPERATIONAL;
     }
     if (cardOutcome === CARD_OUTCOMES.CARD_ACTIVE) {
-      return OPERATIONAL_OUTCOMES.LIFECYCLE_BLOCKED;
-    }
-    if (cardOutcome === CARD_OUTCOMES.CARD_SUSPENDED || cardOutcome === CARD_OUTCOMES.CARD_REVOKED) {
       return OPERATIONAL_OUTCOMES.LIFECYCLE_BLOCKED;
     }
     return OPERATIONAL_OUTCOMES.LIFECYCLE_INVALID;

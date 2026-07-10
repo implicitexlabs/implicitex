@@ -28,7 +28,10 @@ Canonical JSON rules:
   control characters U+0000 through U+001F. Use `\b`, `\t`, `\n`, `\f`, and
   `\r` for those five controls; use lowercase `\u00xx` for other controls.
   Solidus `/` must not be escaped.
-- Unicode text must already be normalized to NFC; non-NFC strings are invalid.
+- Unicode text must contain only valid Unicode scalar values and must already be
+  normalized to NFC; non-NFC strings and unpaired UTF-16 surrogates are invalid.
+- Environments without string normalization support must fail canonicalization
+  closed.
 - Booleans serialize only as `true` or `false`.
 - `null` is allowed only where the schema explicitly allows it.
 - Optional fields must be omitted unless the field contract explicitly requires
@@ -220,8 +223,7 @@ reinterpret card and manifest outcomes independently.
 
 ## Registry Bundle and Rollback Limitation
 
-The first static implementation may use an authenticated protected registry
-bundle:
+The first static implementation may use a protected empty registry bundle:
 
 ```text
 registryId
@@ -231,9 +233,24 @@ generatedAt
 entries
 ```
 
-The protected registry bundle proves authenticity of bundled lifecycle records.
-It does not independently prove that the client has received the globally latest
-registry publication.
+The empty bootstrap bundle schema is exact. It must contain only:
+
+```text
+registrySchemaVersion
+registryId
+environment
+registryVersion
+generatedAt
+entries
+```
+
+For the empty bootstrap, `registryVersion` must be `0`, `generatedAt` must be
+`null`, and `entries` must be an empty deeply frozen array.
+
+Source validation of the empty bundle proves only frozen plain-data shape and
+the exact empty schema. It does not independently prove package-integrity
+authentication; that proof comes from the separate Coin Card Integrity Manifest
+verification path.
 
 For the first static implementation, each non-empty lifecycle record must be
 individually signed by the registry publication authority. The protected
@@ -245,10 +262,12 @@ evidence. Runtime diagnostics should expose:
 
 ```javascript
 {
-  authenticated: true,
+  sourceValidated: true,
+  bundleIntegrityAuthenticated: false,
+  recordAuthentication: 'not-applicable-empty',
   rollbackProtected: false,
-  registryVersion: 42,
-  generatedAt: '2026-07-10T08:00:00.000Z'
+  registryVersion: 0,
+  generatedAt: null
 }
 ```
 
