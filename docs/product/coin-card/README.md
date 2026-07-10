@@ -35,6 +35,7 @@ Implementation-local checkpoint notes may exist under `app-web/docs/product/coin
 - `COIN_CARD_SIGNED_MANIFEST_ENVELOPE_CONTRACT_V1.md` — canonical signed manifest envelope, payment facts, amount policy, payload binding, and revision chaining.
 - `COIN_CARD_LIFECYCLE_REGISTRY_AUTHORITY_CONTRACT_V1.md` — lifecycle administration authority, registry publication authority, and lifecycle record authentication.
 - `COIN_CARD_LIFECYCLE_RECORD_AUTHENTICATION_AND_CANONICALIZATION_CONTRACT_V1.md` — canonical JSON, lifecycle record signatures, operational outcome composition, registry bundle rollback limits, and administration evidence hashes.
+- `COIN_CARD_LIFECYCLE_BUNDLE_VERIFICATION_CONTRACT_V1.md` — non-empty bundle wrapper validation, atomic record-collection authentication, and bundle-level coherence rules.
 - `COIN_CARD_LIFECYCLE_REGISTRY_CONTRACT_V1.md` — lifecycle registry authority, publication evidence, card status, manifest status, supersession, and rollback rules.
 - `COIN_CARD_VERIFICATION_STATE_COPY_V1.md` — user-facing copy contract for manifest verification states.
 - `../../../tools/coin-card-integrity/README.md` — proof tooling usage for generating, verifying, and tamper-checking Coin Card manifests.

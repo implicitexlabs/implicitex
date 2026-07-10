@@ -146,8 +146,8 @@ The first implementation should use a frozen empty protected registry. An empty
 registry must not treat any card as active. It should produce deterministic
 unknown outcomes until governed lifecycle records exist.
 
-The protected registry bundle shape and rollback limitation are defined in
-`COIN_CARD_LIFECYCLE_RECORD_AUTHENTICATION_AND_CANONICALIZATION_CONTRACT_V1.md`.
+The protected non-empty registry bundle shape and rollback limitation are
+defined in `COIN_CARD_LIFECYCLE_BUNDLE_VERIFICATION_CONTRACT_V1.md`.
 
 This preserves the secure-empty-first pattern used by trusted keys:
 
