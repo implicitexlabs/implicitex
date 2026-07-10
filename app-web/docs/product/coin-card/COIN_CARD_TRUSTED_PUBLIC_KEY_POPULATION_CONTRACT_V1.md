@@ -2,19 +2,21 @@
 
 Status: contract proposal
 
-Purpose: define how approved public keys may enter the protected Coin Card
-trusted-key bootstrap. Public keys are not secrets, but they are still trust-root
-material. They must enter the runtime only through protected, reviewable
-channels.
+Purpose: define how approved public key records may enter the protected Coin
+Card trusted-key bootstrap. Public keys are not secrets, but they are still
+trust-root material. They must enter the runtime only through protected,
+reviewable channels.
 
 ## Core Rule
 
-A public key is not trusted because it is public; it is trusted because its
-source is protected.
+A public key record is not trusted because the key is public; it is trusted
+because its source is protected.
 
 ## Key Type
 
-v1 accepts only P-256 public JWKs.
+v1 accepts only `coin-card-trusted-key-record.v1` records containing P-256
+public JWKs. The canonical record contract is
+`COIN_CARD_TRUSTED_PUBLIC_KEY_RECORD_CONTRACT_V1.md`.
 
 Private keys must never appear in:
 
@@ -26,7 +28,7 @@ Private keys must never appear in:
 
 ## Allowed Population Paths
 
-Trusted public keys may be populated only through:
+Trusted public key records may be populated only through:
 
 - a reviewed protected source change in the runtime bootstrap
 - a future signed key registry that is itself protected by contract
@@ -44,8 +46,8 @@ The runtime must not populate trusted keys from:
 
 ## Key Identity
 
-Each key entry must use an explicit, stable `keyId`. Key IDs must not be derived
-from user input.
+Each key record must use an explicit, stable `keyId`. Key IDs must not be
+derived from user input.
 
 ## Empty Allowlist
 
@@ -58,13 +60,14 @@ but empty trust material does not authorize execution.
 Rotation means adding, removing, or replacing keys through the protected source
 path or a future signed registry.
 
-Revocation means removing the key from the protected source or marking the
+Revocation means updating the protected key record with governed revocation
+status and policy, removing the key from the protected source, or marking the
 corresponding signed-registry entry unavailable in a future trusted registry.
 
 ## Verification Boundary
 
-Population alone does not verify anything. It only determines which public keys
-the verifier may consider trusted.
+Population alone does not verify anything. It only determines which public key
+records the verifier may consider trusted.
 
 ## Relationship to the Trusted Key Source Contract
 

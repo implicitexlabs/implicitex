@@ -1,9 +1,9 @@
-/* coin-card-trusted-keys.js — protected bootstrap for trusted Coin Card keys
+/* coin-card-trusted-keys.js — protected bootstrap for trusted Coin Card key records
  *
  * This module creates the runtime allowlist used by the Coin Card verifier.
  * The allowlist is intentionally empty in the proof lane. It is frozen and
- * exposed as a read-only runtime contract so later releases can populate it
- * through protected, reviewable updates.
+ * exposed as a read-only runtime contract so later releases can populate it with
+ * trusted key records through protected, reviewable updates.
  */
 
 (function () {

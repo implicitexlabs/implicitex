@@ -3,12 +3,12 @@
 Status: contract proposal
 
 Purpose: define where the Coin Card verifier is allowed to obtain trusted public
-keys for `signed-p256-v1`. The public key source is part of the trust root. If
+key records for `signed-p256-v1`. The key source is part of the trust root. If
 the key source is mutable or unprotected, the signature check is not trustworthy.
 
 ## Core Rule
 
-A public key is trusted only if the trust source is itself protected.
+A public key record is trusted only if the trust source is itself protected.
 
 ## Allowed v1 Source
 
@@ -26,21 +26,26 @@ allowlist cannot be replaced or injected by an untrusted host.
 How approved keys enter this bootstrap is defined separately in
 `COIN_CARD_TRUSTED_PUBLIC_KEY_POPULATION_CONTRACT_V1.md`.
 
+The canonical trusted-key record shape and resolution outcomes are defined in
+`COIN_CARD_TRUSTED_PUBLIC_KEY_RECORD_CONTRACT_V1.md`.
+
 This object must be:
 
 - initialized by protected runtime code
-- frozen or treated as read-only
-- populated only with approved public keys
+- deeply frozen or treated as read-only at every nested record level
+- plain-data only, without getters, setters, symbol properties, functions, or
+  unexpected prototypes
+- populated only with approved public key records
 - unavailable for user or host mutation after initialization
 
-The browser verifier may read the allowlist. It must not accept public keys from
-untrusted runtime input.
+The browser verifier may read the allowlist. It must not accept public keys or
+key records from untrusted runtime input.
 
 ## Source Requirements
 
 - No private keys in the repo.
-- No public keys from query parameters, postMessage, localStorage, or arbitrary
-  runtime input.
+- No public keys or key records from query parameters, postMessage,
+  localStorage, or arbitrary runtime input.
 - No promotion of a signature to trust if the key source is missing.
 - No promotion of a signature to trust if the key source is mutable at runtime.
 
@@ -49,6 +54,9 @@ untrusted runtime input.
 If `window.IX_COIN_CARD_TRUSTED_PUBLIC_KEYS` is missing, empty, or mutable in a
 way that breaks trust, the verifier must treat signature evaluation as
 `VERIFICATION_UNAVAILABLE`.
+
+A missing or mutable trusted-key source must resolve internally as
+`TRUSTED_KEY_SOURCE_UNAVAILABLE`, not as `TRUSTED_KEY_UNKNOWN`.
 
 ## Key Rotation and Revocation
 
@@ -63,7 +71,7 @@ source entry in a future signed registry.
 
 The trusted key source answers only this question:
 
-> Which public keys may the verifier trust?
+> Which public key records may the verifier trust?
 
 It does not answer:
 

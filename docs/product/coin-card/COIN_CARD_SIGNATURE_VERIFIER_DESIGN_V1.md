@@ -57,9 +57,15 @@ Required fields for v1 verifier support:
 - `signature.algorithm`
 - `signature.keyId`
 - `signature.value`
+- top-level signed `keyId`
+- top-level signed `issuerId`
+- top-level signed `environment`
+- top-level signed `signedAt`
 
-The browser verifier may use `keyId` to select a trusted public key from a
-future key registry or embedded allowlist.
+The browser verifier may use top-level signed `keyId` to resolve a trusted key
+record from a future key registry or embedded allowlist. If `signature` repeats
+authorization fields, every duplicate must match the signed top-level value
+exactly.
 
 ## Failure Mapping
 
@@ -93,7 +99,7 @@ Add a verifier function that can consume:
 
 - a canonical payload
 - a `signature.mode`
-- a public key lookup by `keyId`
+- a trusted key record resolved by signed top-level `keyId`
 - a browser Web Crypto verification primitive
 
 and return the policy result without changing the execution gate contract.

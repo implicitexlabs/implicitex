@@ -22,6 +22,8 @@ trust.
 | Required assets hash correctly + supported valid signature | `VERIFIED` |
 | Required assets hash correctly + missing signature | `VERIFICATION_UNAVAILABLE` |
 | Required assets hash correctly + unsupported signature mode | `VERIFICATION_UNAVAILABLE` |
+| Required assets hash correctly + missing signed authorization context | `VERIFICATION_UNAVAILABLE` |
+| Required assets hash correctly + conflicting authorization context | `VERIFICATION_UNAVAILABLE` |
 | Required assets hash correctly + invalid signature | `INTEGRITY_FAILED` |
 | Required asset hash mismatch | `INTEGRITY_FAILED` |
 | Asset fetch / browser crypto unavailable | `VERIFICATION_UNAVAILABLE` |
@@ -32,6 +34,8 @@ trust.
 - `VERIFIED` is the only state that may enable `IX_EXECUTION.executeTransfer(...)`.
 - Unsupported signature modes must not be normalized into trust.
 - Missing signature evidence is operationally unavailable, not trusted.
+- Missing or conflicting key authorization context is operationally unavailable,
+  not trusted.
 - Invalid signature evidence is an integrity failure.
 
 ## Expected State Flow

@@ -119,6 +119,71 @@ function validIntegrityManifest(overrides = {}) {
   return makeIntegrityManifest(overrides);
 }
 
+function deepFreeze(value) {
+  if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
+  Object.keys(value).forEach((key) => {
+    deepFreeze(value[key]);
+  });
+  return Object.freeze(value);
+}
+
+const TEST_PUBLIC_JWK = deepFreeze({
+  kty: 'EC',
+  crv: 'P-256',
+  x: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+  y: 'BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB',
+  ext: true,
+  key_ops: ['verify'],
+});
+
+function trustedKeyRecord(keyId, publicKey, overrides = {}) {
+  return deepFreeze({
+    schemaVersion: 'coin-card-trusted-key-record.v1',
+    keyId,
+    algorithm: 'ECDSA_P256_SHA256',
+    publicKey,
+    issuerId: 'implicitex',
+    usage: ['coin-card-manifest-signing'],
+    status: 'ACTIVE',
+    validFrom: '2026-01-01T00:00:00.000Z',
+    validUntil: null,
+    revokedAt: null,
+    revocationReason: null,
+    revocationPolicy: null,
+    successorKeyId: null,
+    environment: 'production',
+    ...overrides,
+  });
+}
+
+function signedManifest(overrides = {}) {
+  return validIntegrityManifest({
+    keyId: 'coin-card-test-key',
+    issuerId: 'implicitex',
+    environment: 'production',
+    signedAt: '2026-07-01T00:00:00.000Z',
+    signature: {
+      mode: 'signed-p256-v1',
+      algorithm: 'ECDSA',
+      keyId: 'coin-card-test-key',
+      value: '',
+    },
+    ...overrides,
+  });
+}
+
+async function signManifestWithKeyPair(verification, manifest, keyPair) {
+  const canonicalPayload = verification.canonicalizeIntegrityManifestPayload(manifest);
+  const payloadBytes = new TextEncoder().encode(canonicalPayload);
+  const signatureBytes = await webcrypto.subtle.sign(
+    { name: 'ECDSA', hash: { name: 'SHA-256' } },
+    keyPair.privateKey,
+    payloadBytes,
+  );
+  manifest.signature.value = toBase64Url(signatureBytes);
+  return manifest;
+}
+
 const expectedStateCopy = {
   VERIFIED: {
     statusLabel: 'Verified',
@@ -427,6 +492,304 @@ test('trusted key source bootstrap initializes a frozen empty allowlist', () => 
   assert.deepEqual(Object.keys(context.window.IX_COIN_CARD_TRUSTED_PUBLIC_KEYS), []);
 });
 
+test('verification API does not expose a direct trusted-public-key bypass', () => {
+  const verification = loadVerification();
+
+  assert.equal(verification.getTrustedPublicKey, undefined);
+  assert.equal(typeof verification.resolveTrustedKeyRecord, 'function');
+});
+
+test('resolveTrustedKeyRecord returns ACTIVE for an authorized record at signature time', () => {
+  const verification = loadVerification({
+    trustedPublicKeys: Object.freeze({
+      'coin-card-test-key': trustedKeyRecord('coin-card-test-key', TEST_PUBLIC_JWK),
+    }),
+  });
+
+  const result = verification.resolveTrustedKeyRecord('coin-card-test-key', {
+    usage: 'coin-card-manifest-signing',
+    environment: 'production',
+    issuerId: 'implicitex',
+    signatureTime: '2026-07-01T00:00:00.000Z',
+    verificationTime: '2026-07-10T00:00:00.000Z',
+    signatureMode: 'signed-p256-v1',
+  });
+
+  assert.equal(result.outcome, verification.TRUSTED_KEY_OUTCOMES.TRUSTED_KEY_ACTIVE);
+  assert.deepEqual(result.publicKey, TEST_PUBLIC_JWK);
+});
+
+test('resolveTrustedKeyRecord rejects nested mutable record material', () => {
+  const mutablePublicKey = {
+    kty: 'EC',
+    crv: 'P-256',
+    x: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+    y: 'BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB',
+    ext: true,
+    key_ops: ['verify'],
+  };
+  const mutableRecord = {
+    schemaVersion: 'coin-card-trusted-key-record.v1',
+    keyId: 'coin-card-test-key',
+    algorithm: 'ECDSA_P256_SHA256',
+    publicKey: mutablePublicKey,
+    issuerId: 'implicitex',
+    usage: ['coin-card-manifest-signing'],
+    status: 'ACTIVE',
+    validFrom: '2026-01-01T00:00:00.000Z',
+    validUntil: null,
+    revokedAt: null,
+    revocationReason: null,
+    revocationPolicy: null,
+    successorKeyId: null,
+    environment: 'production',
+  };
+  Object.freeze(mutableRecord);
+  const verification = loadVerification({
+    trustedPublicKeys: Object.freeze({
+      'coin-card-test-key': mutableRecord,
+    }),
+  });
+
+  mutableRecord.publicKey.x = 'CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC';
+  const result = verification.resolveTrustedKeyRecord('coin-card-test-key', {
+    usage: 'coin-card-manifest-signing',
+    environment: 'production',
+    issuerId: 'implicitex',
+    signatureTime: '2026-07-01T00:00:00.000Z',
+    verificationTime: '2026-07-10T00:00:00.000Z',
+    signatureMode: 'signed-p256-v1',
+  });
+
+  assert.equal(result.outcome, verification.TRUSTED_KEY_OUTCOMES.TRUSTED_KEY_RECORD_INVALID);
+  assert.equal(result.reason, 'trusted-key-record-not-deep-frozen-plain-data');
+});
+
+test('resolveTrustedKeyRecord rejects frozen accessor records', () => {
+  const record = {};
+  Object.defineProperty(record, 'schemaVersion', { value: 'coin-card-trusted-key-record.v1', enumerable: true });
+  Object.defineProperty(record, 'keyId', { value: 'coin-card-test-key', enumerable: true });
+  Object.defineProperty(record, 'algorithm', { value: 'ECDSA_P256_SHA256', enumerable: true });
+  Object.defineProperty(record, 'publicKey', {
+    enumerable: true,
+    get() {
+      return TEST_PUBLIC_JWK;
+    },
+  });
+  Object.defineProperty(record, 'issuerId', { value: 'implicitex', enumerable: true });
+  Object.defineProperty(record, 'usage', { value: deepFreeze(['coin-card-manifest-signing']), enumerable: true });
+  Object.defineProperty(record, 'status', { value: 'ACTIVE', enumerable: true });
+  Object.defineProperty(record, 'validFrom', { value: '2026-01-01T00:00:00.000Z', enumerable: true });
+  Object.defineProperty(record, 'validUntil', { value: null, enumerable: true });
+  Object.defineProperty(record, 'revokedAt', { value: null, enumerable: true });
+  Object.defineProperty(record, 'revocationReason', { value: null, enumerable: true });
+  Object.defineProperty(record, 'revocationPolicy', { value: null, enumerable: true });
+  Object.defineProperty(record, 'successorKeyId', { value: null, enumerable: true });
+  Object.defineProperty(record, 'environment', { value: 'production', enumerable: true });
+  Object.freeze(record);
+
+  const verification = loadVerification({
+    trustedPublicKeys: Object.freeze({
+      'coin-card-test-key': record,
+    }),
+  });
+  const result = verification.resolveTrustedKeyRecord('coin-card-test-key', {
+    usage: 'coin-card-manifest-signing',
+    environment: 'production',
+    issuerId: 'implicitex',
+    signatureTime: '2026-07-01T00:00:00.000Z',
+    verificationTime: '2026-07-10T00:00:00.000Z',
+    signatureMode: 'signed-p256-v1',
+  });
+
+  assert.equal(result.outcome, verification.TRUSTED_KEY_OUTCOMES.TRUSTED_KEY_RECORD_INVALID);
+  assert.equal(result.reason, 'trusted-key-record-not-deep-frozen-plain-data');
+});
+
+test('resolveTrustedKeyRecord reports deterministic non-active outcomes', () => {
+  const cases = [
+    {
+      name: 'source unavailable',
+      records: null,
+      keyId: 'missing-key',
+      expected: 'TRUSTED_KEY_SOURCE_UNAVAILABLE',
+    },
+    {
+      name: 'unknown',
+      records: {},
+      keyId: 'missing-key',
+      expected: 'TRUSTED_KEY_UNKNOWN',
+    },
+    {
+      name: 'usage denied',
+      records: {
+        'coin-card-test-key': trustedKeyRecord('coin-card-test-key', TEST_PUBLIC_JWK, { usage: deepFreeze(['receipt-signing']) }),
+      },
+      expected: 'TRUSTED_KEY_USAGE_DENIED',
+    },
+    {
+      name: 'environment mismatch',
+      records: {
+        'coin-card-test-key': trustedKeyRecord('coin-card-test-key', TEST_PUBLIC_JWK, { environment: 'staging' }),
+      },
+      expected: 'TRUSTED_KEY_ENVIRONMENT_MISMATCH',
+    },
+    {
+      name: 'not yet active',
+      records: {
+        'coin-card-test-key': trustedKeyRecord('coin-card-test-key', TEST_PUBLIC_JWK, { validFrom: '2026-08-01T00:00:00.000Z' }),
+      },
+      expected: 'TRUSTED_KEY_NOT_YET_ACTIVE',
+    },
+    {
+      name: 'expired',
+      records: {
+        'coin-card-test-key': trustedKeyRecord('coin-card-test-key', TEST_PUBLIC_JWK, { validUntil: '2026-06-01T00:00:00.000Z' }),
+      },
+      expected: 'TRUSTED_KEY_EXPIRED',
+    },
+    {
+      name: 'revoked',
+      records: {
+        'coin-card-test-key': trustedKeyRecord('coin-card-test-key', TEST_PUBLIC_JWK, {
+          status: 'REVOKED',
+          revokedAt: '2026-06-01T00:00:00.000Z',
+          revocationReason: 'compromise',
+          revocationPolicy: 'INVALIDATE_ALL_SIGNATURES',
+        }),
+      },
+      expected: 'TRUSTED_KEY_REVOKED',
+    },
+    {
+      name: 'invalid',
+      records: {
+        'coin-card-test-key': { keyId: 'coin-card-test-key' },
+      },
+      expected: 'TRUSTED_KEY_RECORD_INVALID',
+    },
+  ];
+
+  for (const scenario of cases) {
+    const verification = loadVerification({
+      trustedPublicKeys: scenario.records && Object.freeze(scenario.records),
+    });
+    const result = verification.resolveTrustedKeyRecord(scenario.keyId || 'coin-card-test-key', {
+      usage: 'coin-card-manifest-signing',
+      environment: 'production',
+      issuerId: 'implicitex',
+      signatureTime: '2026-07-01T00:00:00.000Z',
+      verificationTime: '2026-07-10T00:00:00.000Z',
+      signatureMode: 'signed-p256-v1',
+    });
+
+    assert.equal(result.outcome, verification.TRUSTED_KEY_OUTCOMES[scenario.expected], scenario.name);
+    assert.equal(result.publicKey, null, scenario.name);
+  }
+});
+
+test('resolveTrustedKeyRecord allows routine rotation only for signatures before revocation timestamp', () => {
+  const verification = loadVerification({
+    trustedPublicKeys: Object.freeze({
+      'coin-card-test-key': trustedKeyRecord('coin-card-test-key', TEST_PUBLIC_JWK, {
+        status: 'REVOKED',
+        revokedAt: '2026-07-05T00:00:00.000Z',
+        revocationReason: 'routine-rotation',
+        revocationPolicy: 'NO_NEW_SIGNATURES',
+        successorKeyId: 'coin-card-successor-key',
+      }),
+    }),
+  });
+
+  const before = verification.resolveTrustedKeyRecord('coin-card-test-key', {
+    usage: 'coin-card-manifest-signing',
+    environment: 'production',
+    issuerId: 'implicitex',
+    signatureTime: '2026-07-01T00:00:00.000Z',
+    verificationTime: '2026-07-10T00:00:00.000Z',
+    signatureMode: 'signed-p256-v1',
+  });
+  const after = verification.resolveTrustedKeyRecord('coin-card-test-key', {
+    usage: 'coin-card-manifest-signing',
+    environment: 'production',
+    issuerId: 'implicitex',
+    signatureTime: '2026-07-06T00:00:00.000Z',
+    verificationTime: '2026-07-10T00:00:00.000Z',
+    signatureMode: 'signed-p256-v1',
+  });
+
+  assert.equal(before.outcome, verification.TRUSTED_KEY_OUTCOMES.TRUSTED_KEY_ACTIVE);
+  assert.deepEqual(before.publicKey, TEST_PUBLIC_JWK);
+  assert.equal(after.outcome, verification.TRUSTED_KEY_OUTCOMES.TRUSTED_KEY_REVOKED);
+  assert.equal(after.publicKey, null);
+});
+
+test('resolveTrustedKeyRecord honors timestamp equality boundaries', () => {
+  const activeVerification = loadVerification({
+    trustedPublicKeys: Object.freeze({
+      'coin-card-test-key': trustedKeyRecord('coin-card-test-key', TEST_PUBLIC_JWK, {
+        validFrom: '2026-07-01T00:00:00.000Z',
+        validUntil: '2026-07-31T00:00:00.000Z',
+      }),
+    }),
+  });
+  const atValidFrom = activeVerification.resolveTrustedKeyRecord('coin-card-test-key', {
+    usage: 'coin-card-manifest-signing',
+    environment: 'production',
+    issuerId: 'implicitex',
+    signatureTime: '2026-07-01T00:00:00.000Z',
+    verificationTime: '2026-07-10T00:00:00.000Z',
+    signatureMode: 'signed-p256-v1',
+  });
+  const atValidUntil = activeVerification.resolveTrustedKeyRecord('coin-card-test-key', {
+    usage: 'coin-card-manifest-signing',
+    environment: 'production',
+    issuerId: 'implicitex',
+    signatureTime: '2026-07-31T00:00:00.000Z',
+    verificationTime: '2026-08-01T00:00:00.000Z',
+    signatureMode: 'signed-p256-v1',
+  });
+  const revokedVerification = loadVerification({
+    trustedPublicKeys: Object.freeze({
+      'coin-card-test-key': trustedKeyRecord('coin-card-test-key', TEST_PUBLIC_JWK, {
+        status: 'REVOKED',
+        revokedAt: '2026-07-05T00:00:00.000Z',
+        revocationReason: 'boundary-test',
+        revocationPolicy: 'NO_NEW_SIGNATURES',
+      }),
+    }),
+  });
+  const signatureAtRevokedAt = revokedVerification.resolveTrustedKeyRecord('coin-card-test-key', {
+    usage: 'coin-card-manifest-signing',
+    environment: 'production',
+    issuerId: 'implicitex',
+    signatureTime: '2026-07-05T00:00:00.000Z',
+    verificationTime: '2026-07-10T00:00:00.000Z',
+    signatureMode: 'signed-p256-v1',
+  });
+  const invalidateAfterVerification = loadVerification({
+    trustedPublicKeys: Object.freeze({
+      'coin-card-test-key': trustedKeyRecord('coin-card-test-key', TEST_PUBLIC_JWK, {
+        status: 'REVOKED',
+        revokedAt: '2026-07-05T00:00:00.000Z',
+        revocationReason: 'boundary-test',
+        revocationPolicy: 'INVALIDATE_AFTER_TIMESTAMP',
+      }),
+    }),
+  }).resolveTrustedKeyRecord('coin-card-test-key', {
+    usage: 'coin-card-manifest-signing',
+    environment: 'production',
+    issuerId: 'implicitex',
+    signatureTime: '2026-07-01T00:00:00.000Z',
+    verificationTime: '2026-07-05T00:00:00.000Z',
+    signatureMode: 'signed-p256-v1',
+  });
+
+  assert.equal(atValidFrom.outcome, 'TRUSTED_KEY_ACTIVE');
+  assert.equal(atValidUntil.outcome, 'TRUSTED_KEY_ACTIVE');
+  assert.equal(signatureAtRevokedAt.outcome, 'TRUSTED_KEY_REVOKED');
+  assert.equal(invalidateAfterVerification.outcome, 'TRUSTED_KEY_REVOKED');
+});
+
 test('loadIntegrityManifest exposes metadata without approving execution', async () => {
   const verification = loadVerification();
   const result = await verification.loadIntegrityManifest('coin-card-manifest.json', async (url) => ({
@@ -533,6 +896,23 @@ test('canonicalizeIntegrityManifestPayload changes when protected assets change'
   );
 });
 
+test('canonicalizeIntegrityManifestPayload covers signed authorization context', () => {
+  const verification = loadVerification();
+  const baseManifest = signedManifest();
+
+  for (const field of ['keyId', 'issuerId', 'environment', 'signedAt']) {
+    const mutatedManifest = signedManifest({
+      [field]: field === 'signedAt' ? '2026-07-02T00:00:00.000Z' : `changed-${field}`,
+    });
+
+    assert.notEqual(
+      verification.canonicalizeIntegrityManifestPayload(baseManifest),
+      verification.canonicalizeIntegrityManifestPayload(mutatedManifest),
+      field,
+    );
+  }
+});
+
 test('verifyP256Signature validates a signed-p256-v1 manifest with Web Crypto', async () => {
   const verification = loadVerification({
     crypto: webcrypto,
@@ -545,11 +925,14 @@ test('verifyP256Signature validates a signed-p256-v1 manifest with Web Crypto', 
     ['sign', 'verify'],
   );
   const publicKey = await webcrypto.subtle.exportKey('jwk', keyPair.publicKey);
-  const manifest = validIntegrityManifest({
+  const manifest = signedManifest({
     signature: {
       mode: 'signed-p256-v1',
       algorithm: 'ECDSA',
       keyId: 'coin-card-test-key',
+      issuerId: 'implicitex',
+      environment: 'production',
+      signedAt: '2026-07-01T00:00:00.000Z',
       value: '',
     },
   });
@@ -582,7 +965,7 @@ test('verifyP256Signature rejects a tampered signed-p256-v1 manifest', async () 
     ['sign', 'verify'],
   );
   const publicKey = await webcrypto.subtle.exportKey('jwk', keyPair.publicKey);
-  const manifest = validIntegrityManifest({
+  const manifest = signedManifest({
     signature: {
       mode: 'signed-p256-v1',
       algorithm: 'ECDSA',
@@ -658,6 +1041,242 @@ test('evaluateSignaturePolicy unsupported signature mode becomes VERIFICATION_UN
   assert.equal(result.signatureMode, 'signed-v2');
 });
 
+test('evaluateSignaturePolicy rejects conflicting duplicate authorization context', () => {
+  const verification = loadVerification({
+    trustedPublicKeys: Object.freeze({
+      'coin-card-test-key': trustedKeyRecord('coin-card-test-key', TEST_PUBLIC_JWK),
+    }),
+  });
+  const manifest = signedManifest({
+    signature: {
+      mode: 'signed-p256-v1',
+      algorithm: 'ECDSA',
+      keyId: 'coin-card-test-key',
+      issuerId: 'attacker',
+      value: 'signed',
+    },
+  });
+
+  const result = verification.evaluateSignaturePolicy(manifest, {
+    state: verification.STATES.ASSET_HASHES_PASSED,
+    integrityManifest: manifest,
+    metadata: { assetIntegrityStatus: 'passed' },
+    error: null,
+  });
+
+  assert.equal(result.state, verification.STATES.VERIFICATION_UNAVAILABLE);
+  assert.equal(result.error, 'integrity-manifest-signature-context-mismatch');
+  assert.equal(result.field, 'issuerId');
+});
+
+test('evaluateSignaturePolicy rejects present duplicate authorization fields unless exactly equal', async () => {
+  const verification = loadVerification({
+    trustedPublicKeys: Object.freeze({
+      'coin-card-test-key': trustedKeyRecord('coin-card-test-key', TEST_PUBLIC_JWK),
+    }),
+  });
+  const cases = [
+    { label: 'null', duplicate: null, mismatch: true },
+    { label: 'undefined', duplicate: undefined, mismatch: true },
+    { label: 'empty', duplicate: '', mismatch: true },
+    { label: 'wrong type', duplicate: 7, mismatch: true },
+    { label: 'correct', duplicate: 'implicitex', mismatch: false },
+    { label: 'absent', duplicate: undefined, absent: true, mismatch: false },
+  ];
+
+  for (const scenario of cases) {
+    const signature = {
+      mode: 'signed-p256-v1',
+      algorithm: 'ECDSA',
+      keyId: 'coin-card-test-key',
+      value: 'signed',
+    };
+    if (!scenario.absent) {
+      signature.issuerId = scenario.duplicate;
+    }
+    const manifest = signedManifest({ signature });
+    const result = await Promise.resolve(verification.evaluateSignaturePolicy(manifest, {
+      state: verification.STATES.ASSET_HASHES_PASSED,
+      integrityManifest: manifest,
+      metadata: { assetIntegrityStatus: 'passed' },
+      error: null,
+    }));
+
+    if (scenario.mismatch) {
+      assert.equal(result.error, 'integrity-manifest-signature-context-mismatch', scenario.label);
+      assert.equal(result.field, 'issuerId', scenario.label);
+    } else {
+      assert.notEqual(result.error, 'integrity-manifest-signature-context-mismatch', scenario.label);
+    }
+  }
+});
+
+test('resolveTrustedKeyRecord rejects non-canonical timestamps', () => {
+  const verification = loadVerification({
+    trustedPublicKeys: Object.freeze({
+      'coin-card-test-key': trustedKeyRecord('coin-card-test-key', TEST_PUBLIC_JWK),
+    }),
+  });
+
+  const result = verification.resolveTrustedKeyRecord('coin-card-test-key', {
+    usage: 'coin-card-manifest-signing',
+    environment: 'production',
+    issuerId: 'implicitex',
+    signatureTime: '2026-07-01T00:00:00Z',
+    verificationTime: '2026-07-10T00:00:00.000Z',
+    signatureMode: 'signed-p256-v1',
+  });
+
+  assert.equal(result.outcome, verification.TRUSTED_KEY_OUTCOMES.TRUSTED_KEY_RECORD_INVALID);
+  assert.equal(result.reason, 'trusted-key-timing-evidence-invalid');
+});
+
+test('resolveTrustedKeyRecord rejects signature times beyond verifier clock skew', () => {
+  const verification = loadVerification({
+    trustedPublicKeys: Object.freeze({
+      'coin-card-test-key': trustedKeyRecord('coin-card-test-key', TEST_PUBLIC_JWK),
+    }),
+  });
+
+  const withinSkew = verification.resolveTrustedKeyRecord('coin-card-test-key', {
+    usage: 'coin-card-manifest-signing',
+    environment: 'production',
+    issuerId: 'implicitex',
+    signatureTime: '2026-07-10T00:05:00.000Z',
+    verificationTime: '2026-07-10T00:00:00.000Z',
+    signatureMode: 'signed-p256-v1',
+  });
+  const beyondSkew = verification.resolveTrustedKeyRecord('coin-card-test-key', {
+    usage: 'coin-card-manifest-signing',
+    environment: 'production',
+    issuerId: 'implicitex',
+    signatureTime: '2026-07-10T00:05:00.001Z',
+    verificationTime: '2026-07-10T00:00:00.000Z',
+    signatureMode: 'signed-p256-v1',
+  });
+
+  assert.equal(withinSkew.outcome, verification.TRUSTED_KEY_OUTCOMES.TRUSTED_KEY_ACTIVE);
+  assert.equal(beyondSkew.outcome, verification.TRUSTED_KEY_OUTCOMES.TRUSTED_KEY_RECORD_INVALID);
+  assert.equal(beyondSkew.reason, 'trusted-key-signature-time-in-future');
+});
+
+test('resolveTrustedKeyRecord rejects malformed P-256 JWK records', () => {
+  const malformedJwk = deepFreeze({
+    kty: 'EC',
+    crv: 'P-256',
+    x: 'short',
+    y: 'BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB',
+    d: 'private-material',
+  });
+  const verification = loadVerification({
+    trustedPublicKeys: Object.freeze({
+      'coin-card-test-key': trustedKeyRecord('coin-card-test-key', malformedJwk),
+    }),
+  });
+
+  const result = verification.resolveTrustedKeyRecord('coin-card-test-key', {
+    usage: 'coin-card-manifest-signing',
+    environment: 'production',
+    issuerId: 'implicitex',
+    signatureTime: '2026-07-01T00:00:00.000Z',
+    verificationTime: '2026-07-10T00:00:00.000Z',
+    signatureMode: 'signed-p256-v1',
+  });
+
+  assert.equal(result.outcome, verification.TRUSTED_KEY_OUTCOMES.TRUSTED_KEY_RECORD_INVALID);
+  assert.equal(result.reason, 'trusted-key-public-jwk-invalid');
+});
+
+test('INVALIDATE_AFTER_TIMESTAMP uses verification time unlike NO_NEW_SIGNATURES', () => {
+  const makeVerification = (revocationPolicy) => loadVerification({
+    trustedPublicKeys: Object.freeze({
+      'coin-card-test-key': trustedKeyRecord('coin-card-test-key', TEST_PUBLIC_JWK, {
+        status: 'REVOKED',
+        revokedAt: '2026-07-05T00:00:00.000Z',
+        revocationReason: 'policy-test',
+        revocationPolicy,
+      }),
+    }),
+  });
+  const context = {
+    usage: 'coin-card-manifest-signing',
+    environment: 'production',
+    issuerId: 'implicitex',
+    signatureTime: '2026-07-01T00:00:00.000Z',
+    verificationTime: '2026-07-10T00:00:00.000Z',
+    signatureMode: 'signed-p256-v1',
+  };
+
+  const noNew = makeVerification('NO_NEW_SIGNATURES').resolveTrustedKeyRecord('coin-card-test-key', context);
+  const invalidateAfter = makeVerification('INVALIDATE_AFTER_TIMESTAMP').resolveTrustedKeyRecord('coin-card-test-key', context);
+
+  assert.equal(noNew.outcome, 'TRUSTED_KEY_ACTIVE');
+  assert.equal(invalidateAfter.outcome, 'TRUSTED_KEY_REVOKED');
+});
+
+test('evaluateSignaturePolicy fails when signed authorization context is mutated after signing', async () => {
+  const verification = loadVerification({
+    crypto: webcrypto,
+    atob: nodeAtob,
+    btoa: nodeBtoa,
+    trustedPublicKeys: Object.freeze({}),
+  });
+  const keyPair = await webcrypto.subtle.generateKey(
+    { name: 'ECDSA', namedCurve: 'P-256' },
+    true,
+    ['sign', 'verify'],
+  );
+  const publicKey = await webcrypto.subtle.exportKey('jwk', keyPair.publicKey);
+  const verifyingRuntime = loadVerification({
+    crypto: webcrypto,
+    atob: nodeAtob,
+    btoa: nodeBtoa,
+    trustedPublicKeys: Object.freeze({
+      'coin-card-test-key': trustedKeyRecord('coin-card-test-key', publicKey),
+    }),
+  });
+  const validManifest = await signManifestWithKeyPair(verification, signedManifest(), keyPair);
+  const validResult = await verifyingRuntime.evaluateSignaturePolicy(validManifest, {
+    state: verifyingRuntime.STATES.ASSET_HASHES_PASSED,
+    integrityManifest: validManifest,
+    metadata: { assetIntegrityStatus: 'passed' },
+    error: null,
+  });
+
+  assert.equal(validResult.state, verifyingRuntime.STATES.VERIFIED);
+
+  for (const field of ['keyId', 'issuerId', 'environment', 'signedAt']) {
+    const mutatedManifest = JSON.parse(JSON.stringify(validManifest));
+    mutatedManifest[field] = field === 'signedAt' ? '2026-07-02T00:00:00.000Z' : `changed-${field}`;
+    if (field === 'keyId') {
+      mutatedManifest.signature.keyId = mutatedManifest.keyId;
+    }
+
+    const mutatedRecord = trustedKeyRecord(mutatedManifest.keyId, publicKey, {
+      keyId: mutatedManifest.keyId,
+      issuerId: mutatedManifest.issuerId,
+      environment: mutatedManifest.environment,
+    });
+    const mutatedRuntime = loadVerification({
+      crypto: webcrypto,
+      atob: nodeAtob,
+      btoa: nodeBtoa,
+      trustedPublicKeys: Object.freeze({
+        [mutatedManifest.keyId]: mutatedRecord,
+      }),
+    });
+    const result = await mutatedRuntime.evaluateSignaturePolicy(mutatedManifest, {
+      state: mutatedRuntime.STATES.ASSET_HASHES_PASSED,
+      integrityManifest: mutatedManifest,
+      metadata: { assetIntegrityStatus: 'passed' },
+      error: null,
+    });
+
+    assert.equal(result.state, mutatedRuntime.STATES.INTEGRITY_FAILED, field);
+    assert.equal(result.error, 'integrity-manifest-signature-invalid', field);
+  }
+});
+
 test('evaluateSignaturePolicy invalid supported signature becomes INTEGRITY_FAILED', async () => {
   const keyPair = await webcrypto.subtle.generateKey(
     { name: 'ECDSA', namedCurve: 'P-256' },
@@ -670,15 +1289,18 @@ test('evaluateSignaturePolicy invalid supported signature becomes INTEGRITY_FAIL
     atob: nodeAtob,
     btoa: nodeBtoa,
     trustedPublicKeys: Object.freeze({
-      'coin-card-test-key': publicKey,
+      'coin-card-test-key': trustedKeyRecord('coin-card-test-key', publicKey),
     }),
   });
   assert.equal(verification.isTrustedKeySourceAvailable(), true);
-  const manifest = validIntegrityManifest({
+  const manifest = signedManifest({
     signature: {
       mode: 'signed-p256-v1',
       algorithm: 'ECDSA',
       keyId: 'coin-card-test-key',
+      issuerId: 'implicitex',
+      environment: 'production',
+      signedAt: '2026-07-01T00:00:00.000Z',
       value: '',
     },
   });
@@ -706,7 +1328,8 @@ test('evaluateSignaturePolicy invalid supported signature becomes INTEGRITY_FAIL
 
 test('evaluateSignaturePolicy supported valid signature with unknown key remains unavailable', () => {
   const verification = loadVerification();
-  const manifest = validIntegrityManifest({
+  const manifest = signedManifest({
+    keyId: 'missing-key',
     signature: {
       mode: 'signed-p256-v1',
       algorithm: 'ECDSA',
@@ -725,6 +1348,7 @@ test('evaluateSignaturePolicy supported valid signature with unknown key remains
   assert.equal(result.state, verification.STATES.VERIFICATION_UNAVAILABLE);
   assert.equal(result.error, 'integrity-manifest-public-key-unavailable');
   assert.equal(result.keyId, 'missing-key');
+  assert.equal(result.trustedKeyOutcome, verification.TRUSTED_KEY_OUTCOMES.TRUSTED_KEY_SOURCE_UNAVAILABLE);
 });
 
 test('evaluateSignaturePolicy mutable trusted key source stays unavailable', async () => {
@@ -739,14 +1363,17 @@ test('evaluateSignaturePolicy mutable trusted key source stays unavailable', asy
     atob: nodeAtob,
     btoa: nodeBtoa,
     trustedPublicKeys: {
-      'coin-card-test-key': publicKey,
+      'coin-card-test-key': trustedKeyRecord('coin-card-test-key', publicKey),
     },
   });
-  const manifest = validIntegrityManifest({
+  const manifest = signedManifest({
     signature: {
       mode: 'signed-p256-v1',
       algorithm: 'ECDSA',
       keyId: 'coin-card-test-key',
+      issuerId: 'implicitex',
+      environment: 'production',
+      signedAt: '2026-07-01T00:00:00.000Z',
       value: '',
     },
   });
@@ -783,15 +1410,18 @@ test('evaluateSignaturePolicy supported valid signature with known key can verif
     atob: nodeAtob,
     btoa: nodeBtoa,
     trustedPublicKeys: Object.freeze({
-      'coin-card-test-key': publicKey,
+      'coin-card-test-key': trustedKeyRecord('coin-card-test-key', publicKey),
     }),
   });
   assert.equal(verification.isTrustedKeySourceAvailable(), true);
-  const manifest = validIntegrityManifest({
+  const manifest = signedManifest({
     signature: {
       mode: 'signed-p256-v1',
       algorithm: 'ECDSA',
       keyId: 'coin-card-test-key',
+      issuerId: 'implicitex',
+      environment: 'production',
+      signedAt: '2026-07-01T00:00:00.000Z',
       value: '',
     },
   });
