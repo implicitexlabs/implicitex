@@ -341,6 +341,8 @@ test('authenticated lifecycle record is an immutable pre-verification snapshot',
   assert.equal(Object.isFrozen(result.record), true);
   assert.equal(Object.isFrozen(result.record.signature), true);
   assert.equal(Object.isFrozen(result.keyResolution), true);
+  assert.equal(Object.isFrozen(result.keyResolution.record), true);
+  assert.equal(Object.isFrozen(result.keyResolution.publicKey), true);
   assert.equal(result.keyResolution.outcome, runtime.trustedKeyResolution.TRUSTED_KEY_OUTCOMES.TRUSTED_KEY_ACTIVE);
 
   result.record.cardStatus = 'CARD_REVOKED';
@@ -381,6 +383,7 @@ test('duplicate signature metadata must match canonical lifecycle values', async
 
   assert.equal(result.outcome, runtime.verifier.OUTCOMES.LIFECYCLE_RECORD_SIGNATURE_METADATA_INVALID);
   assert.equal(result.authenticated, false);
+  assert.equal(Object.isFrozen(result), true);
 });
 
 test('publication key import failures are distinct from signature verification failures', async () => {
@@ -397,6 +400,7 @@ test('publication key import failures are distinct from signature verification f
 
   assert.equal(result.outcome, runtime.verifier.OUTCOMES.LIFECYCLE_PUBLICATION_KEY_IMPORT_INVALID);
   assert.equal(result.authenticated, false);
+  assert.equal(Object.isFrozen(result), true);
 });
 
 test('publication key failures map to deterministic lifecycle outcomes', async () => {
@@ -452,6 +456,7 @@ test('publication key failures map to deterministic lifecycle outcomes', async (
     const result = await authenticate(runtime, runtime.record);
     assert.equal(result.outcome, runtime.verifier.OUTCOMES[scenario.expected], scenario.name);
     assert.equal(result.authenticated, false, scenario.name);
+    assert.equal(Object.isFrozen(result), true, scenario.name);
   }
 
   const runtime = await makeSignedRuntime();
@@ -460,6 +465,7 @@ test('publication key failures map to deterministic lifecycle outcomes', async (
   });
   assert.equal(invalidVerifierTime.outcome, runtime.verifier.OUTCOMES.LIFECYCLE_VERIFICATION_TIME_INVALID);
   assert.equal(invalidVerifierTime.authenticated, false);
+  assert.equal(Object.isFrozen(invalidVerifierTime), true);
 
   for (const verificationTime of ['', null, 0]) {
     const result = await runtime.verifier.authenticateLifecycleRecord(runtime.record, {
@@ -467,18 +473,30 @@ test('publication key failures map to deterministic lifecycle outcomes', async (
     });
     assert.equal(result.outcome, runtime.verifier.OUTCOMES.LIFECYCLE_VERIFICATION_TIME_INVALID);
     assert.equal(result.authenticated, false);
+    assert.equal(Object.isFrozen(result), true);
   }
 
   const accessorOptions = {};
   Object.defineProperty(accessorOptions, 'verificationTime', {
+    enumerable: false,
+    value: '2026-07-10T08:01:00.000Z',
+  });
+  const nonEnumerableResult = await runtime.verifier.authenticateLifecycleRecord(runtime.record, accessorOptions);
+  assert.equal(nonEnumerableResult.outcome, runtime.verifier.OUTCOMES.LIFECYCLE_VERIFICATION_TIME_INVALID);
+  assert.equal(nonEnumerableResult.authenticated, false);
+  assert.equal(Object.isFrozen(nonEnumerableResult), true);
+
+  const accessorOptionsWithGetter = {};
+  Object.defineProperty(accessorOptionsWithGetter, 'verificationTime', {
     enumerable: true,
     get() {
       return '2026-07-10T08:01:00.000Z';
     },
   });
-  const accessorResult = await runtime.verifier.authenticateLifecycleRecord(runtime.record, accessorOptions);
+  const accessorResult = await runtime.verifier.authenticateLifecycleRecord(runtime.record, accessorOptionsWithGetter);
   assert.equal(accessorResult.outcome, runtime.verifier.OUTCOMES.LIFECYCLE_VERIFICATION_TIME_INVALID);
   assert.equal(accessorResult.authenticated, false);
+  assert.equal(Object.isFrozen(accessorResult), true);
 });
 
 test('missing crypto fails closed and production lifecycle source remains empty', async () => {

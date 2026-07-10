@@ -160,19 +160,6 @@
     return Object.freeze(snapshot);
   }
 
-  function readOwnEnumerableDataProperty(value, name) {
-    if (!value || typeof value !== 'object') return null;
-    var descriptor = Object.getOwnPropertyDescriptor(value, name);
-    if (
-      !descriptor
-      || !Object.prototype.hasOwnProperty.call(descriptor, 'value')
-      || descriptor.enumerable !== true
-    ) {
-      return null;
-    }
-    return descriptor.value;
-  }
-
   function decodeCanonicalBase64Url(value, expectedEncodedLength, expectedDecodedLength) {
     if (
       !isNonemptyString(value)
@@ -433,15 +420,18 @@
 
   function authenticateLifecycleRecord(record, options) {
     var verificationTime = new Date().toISOString();
-    if (
-      options
-      && typeof options === 'object'
-      && !Array.isArray(options)
-      && Object.prototype.hasOwnProperty.call(options, 'verificationTime')
-      && Object.getOwnPropertyDescriptor(options, 'verificationTime')
-      && Object.getOwnPropertyDescriptor(options, 'verificationTime').enumerable === true
-    ) {
-      verificationTime = readOwnEnumerableDataProperty(options, 'verificationTime');
+    if (options && typeof options === 'object' && !Array.isArray(options) && Object.prototype.hasOwnProperty.call(options, 'verificationTime')) {
+      var verificationTimeDescriptor = Object.getOwnPropertyDescriptor(options, 'verificationTime');
+      if (
+        !verificationTimeDescriptor
+        || !Object.prototype.hasOwnProperty.call(verificationTimeDescriptor, 'value')
+        || verificationTimeDescriptor.enumerable !== true
+      ) {
+        return Promise.resolve(failure(OUTCOMES.LIFECYCLE_VERIFICATION_TIME_INVALID, {
+          reason: 'lifecycle-verification-time-invalid',
+        }));
+      }
+      verificationTime = verificationTimeDescriptor.value;
     }
     var verificationTimeMs = parseStrictUtcTimestamp(verificationTime);
     var registryApi = getRegistryApi();

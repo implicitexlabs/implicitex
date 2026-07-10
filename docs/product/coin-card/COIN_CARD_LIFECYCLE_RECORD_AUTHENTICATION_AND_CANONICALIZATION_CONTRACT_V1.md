@@ -187,6 +187,8 @@ record and its signature object. When a field is intentionally repeated inside
 Verification-time input supplied by the caller is separate from signed record
 publication time. An invalid caller-provided verification time must fail as a
 verification-context error, not as a signed-record contradiction.
+If `verificationTime` is supplied, it must be an own enumerable data property;
+accessors and non-enumerable properties fail closed.
 
 Record publication time must also be internally consistent:
 
