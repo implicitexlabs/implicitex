@@ -71,6 +71,31 @@
         "role": "atomic-record-collection-authentication"
       },
       {
+        "id": "lifecycleRegistry",
+        "type": "responsibility",
+        "role": "registry-canonicalization-and-empty-bundle-validation"
+      },
+      {
+        "id": "lifecycleRecordVerification",
+        "type": "responsibility",
+        "role": "individual-lifecycle-record-authentication"
+      },
+      {
+        "id": "manifestVerification",
+        "type": "responsibility",
+        "role": "signed-manifest-authentication"
+      },
+      {
+        "id": "lifecycleResolution",
+        "type": "responsibility",
+        "role": "operational-lifecycle-resolution"
+      },
+      {
+        "id": "presentation",
+        "type": "responsibility",
+        "role": "presentation-projection"
+      },
+      {
         "id": "ixExecute",
         "type": "service",
         "role": "execution-engine",
@@ -129,6 +154,16 @@
         "relationship": "owns"
       },
       {
+        "from": "lifecycleBundle",
+        "to": "lifecycleRegistry",
+        "relationship": "consumes"
+      },
+      {
+        "from": "lifecycleBundle",
+        "to": "lifecycleRecordVerification",
+        "relationship": "consumes"
+      },
+      {
         "from": "coinCard",
         "to": "ixExecute",
         "relationship": "consumes"
@@ -142,6 +177,31 @@
         "from": "transferPortal",
         "to": "coinCard",
         "relationship": "augments"
+      },
+      {
+        "from": "lifecycleBundle",
+        "to": "manifestVerification",
+        "relationship": "depends-on"
+      },
+      {
+        "from": "lifecycleBundle",
+        "to": "presentation",
+        "relationship": "depends-on"
+      },
+      {
+        "from": "lifecycleBundle",
+        "to": "wallet",
+        "relationship": "depends-on"
+      },
+      {
+        "from": "lifecycleBundle",
+        "to": "ixExecute",
+        "relationship": "depends-on"
+      },
+      {
+        "from": "lifecycleBundle",
+        "to": "lifecycleResolution",
+        "relationship": "depends-on"
       },
       {
         "from": "ixExecute",

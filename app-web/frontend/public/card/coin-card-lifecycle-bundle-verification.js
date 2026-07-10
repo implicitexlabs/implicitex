@@ -29,6 +29,25 @@
     LIFECYCLE_BUNDLE_VERIFICATION_TIME_INVALID: 'LIFECYCLE_BUNDLE_VERIFICATION_TIME_INVALID',
     LIFECYCLE_BUNDLE_VERIFICATION_UNAVAILABLE: 'LIFECYCLE_BUNDLE_VERIFICATION_UNAVAILABLE',
   });
+  var REASONS = Object.freeze({
+    BUNDLE_VERIFICATION_TIME_INVALID: 'bundle-verification-time-invalid',
+    BUNDLE_SCHEMA_INVALID: 'bundle-schema-invalid',
+    BUNDLE_REGISTRY_ID_MISMATCH: 'bundle-registry-id-mismatch',
+    BUNDLE_ENVIRONMENT_MISMATCH: 'bundle-environment-mismatch',
+    BUNDLE_GENERATED_AT_IN_FUTURE: 'bundle-generated-at-in-future',
+    BUNDLE_ENTRY_VERIFIER_UNAVAILABLE: 'lifecycle-record-verifier-unavailable',
+    BUNDLE_ENTRY_VERIFIER_REJECTED: 'lifecycle-record-verifier-rejected',
+    BUNDLE_ENTRY_AUTHENTICATION_FAILED: 'bundle-entry-authentication-failed',
+    BUNDLE_ENTRY_RECORD_MISMATCH: 'bundle-entry-authenticated-record-mismatch',
+    BUNDLE_ENTRY_REGISTRY_MISMATCH: 'bundle-entry-registry-mismatch',
+    BUNDLE_ENTRY_ENVIRONMENT_MISMATCH: 'bundle-entry-environment-mismatch',
+    BUNDLE_ENTRY_REGISTRY_VERSION_INVALID: 'bundle-registry-version-order-invalid',
+    BUNDLE_REGISTRY_VERSION_DUPLICATE: 'bundle-registry-version-duplicate',
+    BUNDLE_RECORD_ID_DUPLICATE: 'bundle-record-id-duplicate',
+    BUNDLE_PUBLICATION_ID_DUPLICATE: 'bundle-publication-identity-duplicate',
+    BUNDLE_ENTRY_PUBLISHED_AFTER_GENERATED_AT: 'bundle-entry-published-after-generated-at',
+    BUNDLE_HIGHEST_VERSION_MISMATCH: 'bundle-highest-version-mismatch',
+  });
 
   function isPlainDataContainer(value) {
     if (Array.isArray(value)) return true;
@@ -171,35 +190,6 @@
     return window.IX_COIN_CARD_LIFECYCLE_RECORD_VERIFICATION || null;
   }
 
-  function readExactDataProperty(options, field) {
-    if (!options || typeof options !== 'object' || Array.isArray(options)) {
-      return {
-        present: false,
-        value: undefined,
-      };
-    }
-    if (!Object.prototype.hasOwnProperty.call(options, field)) {
-      return {
-        present: false,
-        value: undefined,
-      };
-    }
-
-    var descriptor = Object.getOwnPropertyDescriptor(options, field);
-    if (
-      !descriptor
-      || !Object.prototype.hasOwnProperty.call(descriptor, 'value')
-      || descriptor.enumerable !== true
-    ) {
-      return undefined;
-    }
-
-    return {
-      present: true,
-      value: descriptor.value,
-    };
-  }
-
   function failure(outcome, extra) {
     var result = {
       outcome: outcome,
@@ -251,26 +241,24 @@
   }
 
   function validateBundleShape(bundle) {
-    if (!bundle || typeof bundle !== 'object' || Array.isArray(bundle)) return false;
-    if (!isDeepFrozenPlainData(bundle)) return false;
-    if (!hasExactFields(bundle, BUNDLE_FIELDS)) return false;
-    if (bundle.registrySchemaVersion !== BUNDLE_SCHEMA_VERSION) return false;
-    if (bundle.registryId !== BUNDLE_REGISTRY_ID) return false;
-    if (bundle.environment !== BUNDLE_ENVIRONMENT) return false;
-    if (!isSafePositiveInteger(bundle.registryVersion)) return false;
-    if (!isNonemptyString(bundle.generatedAt) || parseStrictUtcTimestamp(bundle.generatedAt) === null) return false;
-    if (!Array.isArray(bundle.entries) || bundle.entries.length < 1) return false;
-    if (!Object.isFrozen(bundle.entries)) return false;
-    return true;
+    if (!bundle || typeof bundle !== 'object' || Array.isArray(bundle)) return REASONS.BUNDLE_SCHEMA_INVALID;
+    if (!isDeepFrozenPlainData(bundle)) return REASONS.BUNDLE_SCHEMA_INVALID;
+    if (!hasExactFields(bundle, BUNDLE_FIELDS)) return REASONS.BUNDLE_SCHEMA_INVALID;
+    if (bundle.registrySchemaVersion !== BUNDLE_SCHEMA_VERSION) return REASONS.BUNDLE_SCHEMA_INVALID;
+    if (bundle.registryId !== BUNDLE_REGISTRY_ID) return REASONS.BUNDLE_REGISTRY_ID_MISMATCH;
+    if (bundle.environment !== BUNDLE_ENVIRONMENT) return REASONS.BUNDLE_ENVIRONMENT_MISMATCH;
+    if (!isSafePositiveInteger(bundle.registryVersion)) return REASONS.BUNDLE_SCHEMA_INVALID;
+    if (!isNonemptyString(bundle.generatedAt) || parseStrictUtcTimestamp(bundle.generatedAt) === null) return REASONS.BUNDLE_SCHEMA_INVALID;
+    if (!Array.isArray(bundle.entries) || bundle.entries.length < 1) return REASONS.BUNDLE_SCHEMA_INVALID;
+    if (!Object.isFrozen(bundle.entries)) return REASONS.BUNDLE_SCHEMA_INVALID;
+    return null;
   }
 
-  async function authenticateLifecycleRegistryBundle(bundle, options) {
+  async function authenticateLifecycleRegistryBundle(bundle) {
     var registryApi = getRegistryApi();
-    var recordVerifierApiOption = readExactDataProperty(options, 'recordVerifierApi');
     var now = new Date().toISOString();
     var verificationTime = now;
-    var verificationTimeOption = readExactDataProperty(options, 'verificationTime');
-    var verificationTimeMs;
+    var verificationTimeMs = parseStrictUtcTimestamp(verificationTime);
 
     if (!registryApi || typeof registryApi.canonicalizeJson !== 'function') {
       return Promise.resolve(failure(OUTCOMES.LIFECYCLE_BUNDLE_VERIFICATION_UNAVAILABLE, {
@@ -278,50 +266,38 @@
         reason: 'lifecycle-registry-canonicalizer-unavailable',
       }));
     }
-    if (verificationTimeOption === undefined) {
+    if (verificationTimeMs === null) {
       return Promise.resolve(failure(OUTCOMES.LIFECYCLE_BUNDLE_VERIFICATION_TIME_INVALID, {
         sourceValidated: false,
-        reason: 'bundle-verification-time-not-enumerable',
+        reason: REASONS.BUNDLE_VERIFICATION_TIME_INVALID,
       }));
     }
-    if (verificationTimeOption.present) {
-      verificationTime = verificationTimeOption.value;
-      verificationTimeMs = parseStrictUtcTimestamp(verificationTime);
-      if (verificationTimeMs === null) {
-        return Promise.resolve(failure(OUTCOMES.LIFECYCLE_BUNDLE_VERIFICATION_TIME_INVALID, {
-          sourceValidated: false,
-          reason: 'bundle-verification-time-invalid',
-        }));
-      }
-    }
-    if (typeof verificationTimeMs === 'undefined') {
-      verificationTimeMs = parseStrictUtcTimestamp(verificationTime);
-    }
-    var recordVerifierApi = null;
-    if (recordVerifierApiOption && recordVerifierApiOption.present) {
-      recordVerifierApi = recordVerifierApiOption.value;
-    }
-    if (!recordVerifierApi || typeof recordVerifierApi.authenticateLifecycleRecord !== 'function') {
-      recordVerifierApi = getRecordVerifierApi();
-    }
+    var recordVerifierApi = getRecordVerifierApi();
     if (!recordVerifierApi || typeof recordVerifierApi.authenticateLifecycleRecord !== 'function') {
       return Promise.resolve(failure(OUTCOMES.LIFECYCLE_BUNDLE_VERIFICATION_UNAVAILABLE, {
         sourceValidated: false,
-        reason: 'lifecycle-record-verifier-unavailable',
+        reason: REASONS.BUNDLE_ENTRY_VERIFIER_UNAVAILABLE,
       }));
     }
 
     var snapshot = snapshotPlainData(bundle, []);
-    if (!snapshot || !validateBundleShape(snapshot)) {
-      return Promise.resolve(failure(OUTCOMES.LIFECYCLE_BUNDLE_STRUCTURE_INVALID));
+    var bundleShapeReason = snapshot ? validateBundleShape(snapshot) : REASONS.BUNDLE_SCHEMA_INVALID;
+    if (!snapshot || bundleShapeReason) {
+      return Promise.resolve(failure(OUTCOMES.LIFECYCLE_BUNDLE_STRUCTURE_INVALID, {
+        reason: bundleShapeReason || REASONS.BUNDLE_SCHEMA_INVALID,
+      }));
     }
 
     if (parseStrictUtcTimestamp(snapshot.generatedAt) > verificationTimeMs + BUNDLE_CLOCK_SKEW_MS) {
-      return Promise.resolve(failure(OUTCOMES.LIFECYCLE_BUNDLE_STRUCTURE_INVALID));
+      return Promise.resolve(failure(OUTCOMES.LIFECYCLE_BUNDLE_STRUCTURE_INVALID, {
+        reason: REASONS.BUNDLE_GENERATED_AT_IN_FUTURE,
+      }));
     }
 
     if (registryApi.canonicalizeJson(snapshot) === null) {
-      return Promise.resolve(failure(OUTCOMES.LIFECYCLE_BUNDLE_STRUCTURE_INVALID));
+      return Promise.resolve(failure(OUTCOMES.LIFECYCLE_BUNDLE_STRUCTURE_INVALID, {
+        reason: REASONS.BUNDLE_SCHEMA_INVALID,
+      }));
     }
 
     var generatedAtMs = parseStrictUtcTimestamp(snapshot.generatedAt);
@@ -344,7 +320,7 @@
         return Promise.resolve(failure(OUTCOMES.LIFECYCLE_BUNDLE_VERIFICATION_UNAVAILABLE, {
           failedEntryIndex: i,
           failedRecordId: entry && entry.recordId || null,
-          reason: 'lifecycle-record-verifier-rejected',
+          reason: REASONS.BUNDLE_ENTRY_VERIFIER_REJECTED,
           sourceValidated: true,
         }));
       }
@@ -358,29 +334,44 @@
           failedEntryIndex: i,
           failedRecordId: entry && entry.recordId || null,
           entryOutcome: entryResult && entryResult.outcome || null,
+          reason: REASONS.BUNDLE_ENTRY_AUTHENTICATION_FAILED,
           sourceValidated: true,
         }));
       }
 
       var record = entryResult.record;
+      var submittedCanonical = registryApi.canonicalizeJson(entry);
+      var authenticatedCanonical = registryApi.canonicalizeJson(record);
+      if (submittedCanonical === null || authenticatedCanonical === null || submittedCanonical !== authenticatedCanonical) {
+        return Promise.resolve(failure(OUTCOMES.LIFECYCLE_BUNDLE_STRUCTURE_INVALID, {
+          sourceValidated: true,
+          reason: REASONS.BUNDLE_ENTRY_RECORD_MISMATCH,
+        }));
+      }
       if (record.registryId !== snapshot.registryId || record.environment !== snapshot.environment) {
         return Promise.resolve(failure(OUTCOMES.LIFECYCLE_BUNDLE_STRUCTURE_INVALID, {
           sourceValidated: true,
-        }));
-      }
-      if (record.registryVersion <= previousRegistryVersion) {
-        return Promise.resolve(failure(OUTCOMES.LIFECYCLE_BUNDLE_STRUCTURE_INVALID, {
-          sourceValidated: true,
+          reason: record.registryId !== snapshot.registryId
+            ? REASONS.BUNDLE_ENTRY_REGISTRY_MISMATCH
+            : REASONS.BUNDLE_ENTRY_ENVIRONMENT_MISMATCH,
         }));
       }
       if (seenRegistryVersions[record.registryVersion]) {
         return Promise.resolve(failure(OUTCOMES.LIFECYCLE_BUNDLE_STRUCTURE_INVALID, {
           sourceValidated: true,
+          reason: REASONS.BUNDLE_REGISTRY_VERSION_DUPLICATE,
+        }));
+      }
+      if (record.registryVersion <= previousRegistryVersion) {
+        return Promise.resolve(failure(OUTCOMES.LIFECYCLE_BUNDLE_STRUCTURE_INVALID, {
+          sourceValidated: true,
+          reason: REASONS.BUNDLE_ENTRY_REGISTRY_VERSION_INVALID,
         }));
       }
       if (seenRecordIds[record.recordId]) {
         return Promise.resolve(failure(OUTCOMES.LIFECYCLE_BUNDLE_STRUCTURE_INVALID, {
           sourceValidated: true,
+          reason: REASONS.BUNDLE_RECORD_ID_DUPLICATE,
         }));
       }
 
@@ -392,17 +383,20 @@
       if (publicationIdentity === null) {
         return Promise.resolve(failure(OUTCOMES.LIFECYCLE_BUNDLE_STRUCTURE_INVALID, {
           sourceValidated: true,
+          reason: REASONS.BUNDLE_SCHEMA_INVALID,
         }));
       }
       if (seenPublicationIds[publicationIdentity]) {
         return Promise.resolve(failure(OUTCOMES.LIFECYCLE_BUNDLE_STRUCTURE_INVALID, {
           sourceValidated: true,
+          reason: REASONS.BUNDLE_PUBLICATION_ID_DUPLICATE,
         }));
       }
 
       if (parseStrictUtcTimestamp(record.publishedAt) > generatedAtMs) {
         return Promise.resolve(failure(OUTCOMES.LIFECYCLE_BUNDLE_STRUCTURE_INVALID, {
           sourceValidated: true,
+          reason: REASONS.BUNDLE_ENTRY_PUBLISHED_AFTER_GENERATED_AT,
         }));
       }
 
@@ -417,6 +411,7 @@
     if (highestRegistryVersion !== snapshot.registryVersion) {
       return Promise.resolve(failure(OUTCOMES.LIFECYCLE_BUNDLE_STRUCTURE_INVALID, {
         sourceValidated: true,
+        reason: REASONS.BUNDLE_HIGHEST_VERSION_MISMATCH,
       }));
     }
 

@@ -67,9 +67,9 @@ The bundle verifier must reject:
 
 Bundle verification must snapshot the caller-owned bundle before any async
 record verification begins, then operate only on the frozen snapshot.
-If a verification time is supplied for testing or deterministic replay, the
-same instant must be used for the bundle freshness check and every contained
-record verification.
+The public API does not accept caller-supplied verifier objects or
+verification times. The runtime uses the protected bundle verifier, the
+protected record verifier, and its own authoritative clock.
 
 ## Entry Authentication
 

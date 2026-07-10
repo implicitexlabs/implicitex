@@ -11,5 +11,6 @@ collection of individually authenticated lifecycle records. It does not
 resolve card lifecycle state, promote presentation, or authorize execution.
 The V1 result makes the absence of bundle signing explicit with
 `bundleSignature: 'not-applicable-v1'`.
-If a verification time is supplied for deterministic replay, the bundle uses
-the same instant for wrapper freshness and every contained entry.
+The public API does not accept caller-supplied verifier objects or
+verification times. Tests inject controlled globals through the VM harness
+before the bundle verifier loads.

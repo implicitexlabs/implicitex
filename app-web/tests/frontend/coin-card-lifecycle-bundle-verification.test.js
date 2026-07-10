@@ -53,6 +53,33 @@ function nodeBtoa(value) {
   return Buffer.from(value, 'binary').toString('base64');
 }
 
+function makeFixedDateClass(isoString) {
+  const RealDate = Date;
+  const fixedTime = RealDate.parse(isoString);
+
+  return class FixedDate extends RealDate {
+    constructor(...args) {
+      if (args.length === 0) {
+        super(isoString);
+      } else {
+        super(...args);
+      }
+    }
+
+    static now() {
+      return fixedTime;
+    }
+
+    static parse(value) {
+      return RealDate.parse(value);
+    }
+
+    static UTC(...args) {
+      return RealDate.UTC(...args);
+    }
+  };
+}
+
 function trustedKeyRecord(keyId, publicKey, overrides = {}) {
   return deepFreeze({
     schemaVersion: 'coin-card-trusted-key-record.v1',
@@ -134,6 +161,7 @@ function signedPayloadBytes(runtime, record) {
 }
 
 function loadBundleRuntime(options = {}) {
+  const fixedDate = options.fixedNow ? makeFixedDateClass(options.fixedNow) : null;
   const context = {
     TextEncoder,
     Promise,
@@ -142,30 +170,69 @@ function loadBundleRuntime(options = {}) {
     btoa: nodeBtoa,
   };
   context.globalThis = context;
+  if (fixedDate) {
+    context.Date = fixedDate;
+    context.window.Date = fixedDate;
+  }
   context.window.TextEncoder = TextEncoder;
   context.window.atob = nodeAtob;
   context.window.btoa = nodeBtoa;
   context.window.crypto = options.crypto || webcrypto;
 
-  if (options.trustedPublicKeys) {
-    context.__trustedPublicKeysJson = JSON.stringify(options.trustedPublicKeys);
-    vm.runInNewContext(`(() => {
-      function deepFreeze(value) {
-        if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
-        Object.getOwnPropertyNames(value).forEach((key) => deepFreeze(value[key]));
-        return Object.freeze(value);
-      }
-      window.IX_COIN_CARD_TRUSTED_PUBLIC_KEYS = deepFreeze(JSON.parse(__trustedPublicKeysJson));
-    })()`, context);
+  function applyTrustedPublicKeys(targetContext) {
+    if (options.trustedPublicKeys) {
+      targetContext.__trustedPublicKeysJson = JSON.stringify(options.trustedPublicKeys);
+      vm.runInNewContext(`(() => {
+        function deepFreeze(value) {
+          if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
+          Object.getOwnPropertyNames(value).forEach((key) => deepFreeze(value[key]));
+          return Object.freeze(value);
+        }
+        window.IX_COIN_CARD_TRUSTED_PUBLIC_KEYS = deepFreeze(JSON.parse(__trustedPublicKeysJson));
+      })()`, targetContext);
+    }
   }
+
+  applyTrustedPublicKeys(context);
 
   vm.runInNewContext(trustedKeyResolutionSource, context, { filename: trustedKeyResolutionPath });
   vm.runInNewContext(lifecycleRegistrySource, context, { filename: lifecycleRegistryPath });
-  vm.runInNewContext(lifecycleRecordVerificationSource, context, { filename: lifecycleRecordVerificationPath });
-  if (typeof options.recordVerifierApiFactory === 'function') {
-    context.window.IX_COIN_CARD_LIFECYCLE_RECORD_VERIFICATION = options.recordVerifierApiFactory(
-      context.window.IX_COIN_CARD_LIFECYCLE_RECORD_VERIFICATION,
-    );
+  if (options.recordVerifierStub) {
+    Object.defineProperty(context.window, 'IX_COIN_CARD_LIFECYCLE_RECORD_VERIFICATION', {
+      value: options.recordVerifierStub,
+      writable: false,
+      enumerable: true,
+      configurable: false,
+    });
+  } else if (typeof options.recordVerifierApiFactory === 'function') {
+    const recordVerifierContext = {
+      TextEncoder,
+      Promise,
+      window: {},
+      atob: nodeAtob,
+      btoa: nodeBtoa,
+    };
+    recordVerifierContext.globalThis = recordVerifierContext;
+    if (fixedDate) {
+      recordVerifierContext.Date = fixedDate;
+      recordVerifierContext.window.Date = fixedDate;
+    }
+    recordVerifierContext.window.TextEncoder = TextEncoder;
+    recordVerifierContext.window.atob = nodeAtob;
+    recordVerifierContext.window.btoa = nodeBtoa;
+    recordVerifierContext.window.crypto = options.crypto || webcrypto;
+    applyTrustedPublicKeys(recordVerifierContext);
+    vm.runInNewContext(trustedKeyResolutionSource, recordVerifierContext, { filename: trustedKeyResolutionPath });
+    vm.runInNewContext(lifecycleRegistrySource, recordVerifierContext, { filename: lifecycleRegistryPath });
+    vm.runInNewContext(lifecycleRecordVerificationSource, recordVerifierContext, { filename: lifecycleRecordVerificationPath });
+    Object.defineProperty(context.window, 'IX_COIN_CARD_LIFECYCLE_RECORD_VERIFICATION', {
+      value: options.recordVerifierApiFactory(recordVerifierContext.window.IX_COIN_CARD_LIFECYCLE_RECORD_VERIFICATION),
+      writable: false,
+      enumerable: true,
+      configurable: false,
+    });
+  } else {
+    vm.runInNewContext(lifecycleRecordVerificationSource, context, { filename: lifecycleRecordVerificationPath });
   }
   vm.runInNewContext(lifecycleBundleVerificationSource, context, { filename: lifecycleBundleVerificationPath });
   return {
@@ -188,7 +255,9 @@ async function makeSignedBundleRuntime(recordOverrides = [], bundleOverrides = {
     trustedPublicKeys: {
       'registry-publication-test-key': trustedKeyRecord('registry-publication-test-key', publicKey, keyOverrides),
     },
+    recordVerifierStub: options.recordVerifierStub,
     recordVerifierApiFactory: options.recordVerifierApiFactory,
+    fixedNow: options.fixedNow || '2026-07-10T09:10:00.000Z',
   });
 
   const records = [1, 2, 3].map((index, position) => lifecycleRecord(index, recordOverrides[position] || {}));
@@ -217,6 +286,16 @@ async function makeSignedBundleRuntime(recordOverrides = [], bundleOverrides = {
     bundle: realmClone(runtime.context, bundle),
     records: records.map((record) => realmClone(runtime.context, record)),
   };
+}
+
+async function signRecord(runtime, record) {
+  const signature = await webcrypto.subtle.sign(
+    { name: 'ECDSA', hash: { name: 'SHA-256' } },
+    runtime.keyPair.privateKey,
+    signedPayloadBytes(runtime, record),
+  );
+  record.signature.value = toBase64Url(signature);
+  return record;
 }
 
 test('valid synthetic lifecycle bundle authenticates atomically without lifecycle resolution', async () => {
@@ -275,56 +354,6 @@ test('bundle authentication snapshots caller-owned data before async entry verif
   assert.equal(result.entries[2].record.registryVersion, 3);
 });
 
-test('bundle authentication uses one verification instant for every entry', async () => {
-  const calls = [];
-  const runtime = await makeSignedBundleRuntime();
-  const recordVerifier = runtime.recordVerifier;
-  const wrappedRecordVerifier = Object.freeze({
-    ...recordVerifier,
-    authenticateLifecycleRecord(record, options) {
-      calls.push({
-        recordId: record && record.recordId || null,
-        verificationTime: options && options.verificationTime || null,
-      });
-      return recordVerifier.authenticateLifecycleRecord(record, options);
-    },
-  });
-
-  const result = await runtime.bundleVerifier.authenticateLifecycleRegistryBundle(runtime.bundle, {
-    verificationTime: '2026-07-09T09:05:00.000Z',
-    recordVerifierApi: wrappedRecordVerifier,
-  });
-
-  assert.equal(result.outcome, runtime.bundleVerifier.OUTCOMES.LIFECYCLE_BUNDLE_RECORDS_AUTHENTICATED);
-  assert.equal(calls.length, 3);
-  assert.deepEqual(calls.map((call) => call.verificationTime), [
-    calls[0].verificationTime,
-    calls[0].verificationTime,
-    calls[0].verificationTime,
-  ]);
-  assert.equal(typeof calls[0].verificationTime, 'string');
-});
-
-test('bundle verifier rejects invalid verificationTime options', async () => {
-  const runtime = await makeSignedBundleRuntime();
-  const invalidResult = await runtime.bundleVerifier.authenticateLifecycleRegistryBundle(runtime.bundle, {
-    verificationTime: 'not-a-timestamp',
-  });
-  assert.equal(invalidResult.outcome, runtime.bundleVerifier.OUTCOMES.LIFECYCLE_BUNDLE_VERIFICATION_TIME_INVALID);
-  assert.equal(invalidResult.authenticated, false);
-  assert.equal(Object.isFrozen(invalidResult), true);
-
-  const accessorOptions = {};
-  Object.defineProperty(accessorOptions, 'verificationTime', {
-    enumerable: false,
-    value: '2026-07-09T09:05:00.000Z',
-  });
-  const accessorResult = await runtime.bundleVerifier.authenticateLifecycleRegistryBundle(runtime.bundle, accessorOptions);
-  assert.equal(accessorResult.outcome, runtime.bundleVerifier.OUTCOMES.LIFECYCLE_BUNDLE_VERIFICATION_TIME_INVALID);
-  assert.equal(accessorResult.authenticated, false);
-  assert.equal(Object.isFrozen(accessorResult), true);
-});
-
 test('bundle verifier rejects structural defects atomically', async () => {
   const runtime = await makeSignedBundleRuntime([
     {},
@@ -340,6 +369,7 @@ test('bundle verifier rejects structural defects atomically', async () => {
   assert.equal(duplicateVersionResult.outcome, runtime.bundleVerifier.OUTCOMES.LIFECYCLE_BUNDLE_STRUCTURE_INVALID);
   assert.equal(duplicateVersionResult.authenticated, false);
   assert.equal(duplicateVersionResult.entries, null);
+  assert.equal(duplicateVersionResult.reason, 'bundle-registry-version-duplicate');
   assert.equal(Object.isFrozen(duplicateVersionResult), true);
 
   const hiddenAccessor = realmClone(runtime.context, {
@@ -360,107 +390,160 @@ test('bundle verifier rejects structural defects atomically', async () => {
   const hiddenAccessorResult = await runtime.bundleVerifier.authenticateLifecycleRegistryBundle(hiddenAccessor);
   assert.equal(hiddenAccessorResult.outcome, runtime.bundleVerifier.OUTCOMES.LIFECYCLE_BUNDLE_STRUCTURE_INVALID);
   assert.equal(hiddenAccessorResult.authenticated, false);
+  assert.equal(hiddenAccessorResult.reason, 'bundle-schema-invalid');
 });
 
 test('bundle verifier rejects all documented wrapper and collection invariants', async () => {
   const runtime = await makeSignedBundleRuntime();
+  const authenticatingRecordVerifierStub = Object.freeze({
+    LIFECYCLE_RECORD_SIGNATURE_DOMAIN: 'ImplicitEx Coin Card Lifecycle Registry Record v1',
+    OUTCOMES: Object.freeze({
+      LIFECYCLE_RECORD_AUTHENTICATED: 'LIFECYCLE_RECORD_AUTHENTICATED',
+    }),
+    authenticateLifecycleRecord(record) {
+      return Promise.resolve(Object.freeze({
+        outcome: 'LIFECYCLE_RECORD_AUTHENTICATED',
+        authenticated: true,
+        sourceValidated: true,
+        record: Object.freeze({
+          ...record,
+        }),
+        keyResolution: Object.freeze({
+          outcome: 'TRUSTED_KEY_ACTIVE',
+        }),
+      }));
+    },
+  });
   const scenarios = [
     {
       name: 'wrong schema',
       mutate(bundle) {
         bundle.registrySchemaVersion = 'coin-card-lifecycle-registry-bundle.v2';
       },
+      reason: 'bundle-schema-invalid',
     },
     {
       name: 'wrong registry',
-      mutate(bundle) {
+      async mutate(bundle) {
         bundle.registryId = 'implicitex-staging';
+        bundle.entries.forEach((entry) => {
+          entry.registryId = 'implicitex-staging';
+        });
+        for (const entry of bundle.entries) {
+          await signRecord(runtime, entry);
+        }
       },
+      reason: 'bundle-registry-id-mismatch',
     },
     {
       name: 'wrong environment',
+      useStub: true,
       mutate(bundle) {
         bundle.environment = 'staging';
       },
+      reason: 'bundle-environment-mismatch',
     },
     {
       name: 'empty entries',
       mutate(bundle) {
         bundle.entries = [];
       },
+      reason: 'bundle-schema-invalid',
     },
     {
       name: 'duplicate recordId',
-      mutate(bundle) {
+      async mutate(bundle) {
         bundle.entries[1].recordId = bundle.entries[0].recordId;
+        await signRecord(runtime, bundle.entries[1]);
       },
+      reason: 'bundle-record-id-duplicate',
     },
     {
       name: 'duplicate registryVersion',
-      mutate(bundle) {
+      async mutate(bundle) {
         bundle.entries[1].registryVersion = bundle.entries[0].registryVersion;
+        await signRecord(runtime, bundle.entries[1]);
       },
+      reason: 'bundle-registry-version-duplicate',
     },
     {
       name: 'out of order versions',
-      mutate(bundle) {
+      async mutate(bundle) {
         bundle.entries[1].registryVersion = 4;
         bundle.entries[2].registryVersion = 2;
+        await signRecord(runtime, bundle.entries[1]);
+        await signRecord(runtime, bundle.entries[2]);
       },
+      reason: 'bundle-registry-version-order-invalid',
     },
     {
       name: 'highest version mismatch',
       mutate(bundle) {
         bundle.registryVersion = 4;
       },
+      reason: 'bundle-highest-version-mismatch',
     },
     {
       name: 'duplicate publication identity',
-      mutate(bundle) {
+      async mutate(bundle) {
         bundle.entries[1].cardId = bundle.entries[0].cardId;
         bundle.entries[1].manifestId = bundle.entries[0].manifestId;
         bundle.entries[1].revision = bundle.entries[0].revision;
+        bundle.entries[1].previousManifestId = bundle.entries[0].previousManifestId;
+        await signRecord(runtime, bundle.entries[1]);
       },
+      reason: 'bundle-publication-identity-duplicate',
     },
     {
       name: 'record registry mismatch',
-      mutate(bundle) {
+      async mutate(bundle) {
         bundle.entries[1].registryId = 'implicitex-staging';
+        await signRecord(runtime, bundle.entries[1]);
       },
+      reason: 'bundle-entry-registry-mismatch',
     },
     {
       name: 'record environment mismatch',
-      mutate(bundle) {
+      async mutate(bundle) {
         bundle.entries[1].environment = 'staging';
+        await signRecord(runtime, bundle.entries[1]);
       },
+      outcome: 'LIFECYCLE_BUNDLE_ENTRY_AUTHENTICATION_FAILED',
+      reason: 'bundle-entry-authentication-failed',
     },
     {
       name: 'record published after generatedAt',
-      mutate(bundle) {
+      async mutate(bundle) {
         bundle.entries[1].publishedAt = '2026-07-09T09:06:00.000Z';
+        await signRecord(runtime, bundle.entries[1]);
       },
+      reason: 'bundle-entry-published-after-generated-at',
     },
     {
       name: 'generatedAt beyond clock skew',
       mutate(bundle) {
-        bundle.generatedAt = '2026-07-10T09:10:00.000Z';
+        bundle.generatedAt = '2026-07-10T09:20:00.000Z';
       },
-      options: {
-        verificationTime: '2026-07-10T09:00:00.000Z',
-      },
+      reason: 'bundle-generated-at-in-future',
     },
   ];
 
   for (const scenario of scenarios) {
-    const bundle = clone(runtime.bundle);
-    const mutated = scenario.mutate(bundle);
-    const candidate = scenario.replace ? mutated : bundle;
-    const result = await runtime.bundleVerifier.authenticateLifecycleRegistryBundle(
-      realmClone(runtime.context, candidate),
-      scenario.options,
-    );
+    const scenarioRuntime = scenario.useStub
+      ? await makeSignedBundleRuntime([], {}, {}, {
+        recordVerifierStub: authenticatingRecordVerifierStub,
+      })
+      : runtime;
+    const bundle = clone(scenarioRuntime.bundle);
+    await scenario.mutate(bundle);
+    const result = await scenarioRuntime.bundleVerifier.authenticateLifecycleRegistryBundle(realmClone(scenarioRuntime.context, bundle));
     assert.equal(result.authenticated, false, scenario.name);
-    assert.notEqual(result.outcome, runtime.bundleVerifier.OUTCOMES.LIFECYCLE_BUNDLE_RECORDS_AUTHENTICATED, scenario.name);
+    assert.equal(
+      result.outcome,
+      scenario.outcome || scenarioRuntime.bundleVerifier.OUTCOMES.LIFECYCLE_BUNDLE_STRUCTURE_INVALID,
+      scenario.name,
+    );
+    assert.equal(result.reason, scenario.reason, scenario.name);
     assert.equal(Object.isFrozen(result), true, scenario.name);
   }
 });
@@ -522,20 +605,24 @@ test('bundle verifier rejects custom prototypes, symbols, cycles, and shared ref
     const result = await runtime.bundleVerifier.authenticateLifecycleRegistryBundle(scenario.value);
     assert.equal(result.authenticated, false, scenario.name);
     assert.equal(result.outcome, runtime.bundleVerifier.OUTCOMES.LIFECYCLE_BUNDLE_STRUCTURE_INVALID, scenario.name);
+    assert.equal(result.reason, 'bundle-schema-invalid', scenario.name);
   }
 });
 
 test('bundle verifier returns unavailable when entry verification rejects unexpectedly', async () => {
-  const runtime = await makeSignedBundleRuntime();
-  const result = await runtime.bundleVerifier.authenticateLifecycleRegistryBundle(runtime.bundle, {
-    verificationTime: '2026-07-09T09:05:00.000Z',
-    recordVerifierApi: Object.freeze({
-      ...runtime.recordVerifier,
+  const runtime = await makeSignedBundleRuntime([], {}, {}, {
+    recordVerifierStub: Object.freeze({
+      LIFECYCLE_RECORD_SIGNATURE_DOMAIN: 'ImplicitEx Coin Card Lifecycle Registry Record v1',
+      OUTCOMES: Object.freeze({
+        LIFECYCLE_RECORD_AUTHENTICATED: 'LIFECYCLE_RECORD_AUTHENTICATED',
+      }),
       authenticateLifecycleRecord() {
         throw new Error('unexpected verifier failure');
       },
     }),
   });
+
+  const result = await runtime.bundleVerifier.authenticateLifecycleRegistryBundle(runtime.bundle);
   assert.equal(result.outcome, runtime.bundleVerifier.OUTCOMES.LIFECYCLE_BUNDLE_VERIFICATION_UNAVAILABLE);
   assert.equal(result.authenticated, false);
   assert.equal(result.reason, 'lifecycle-record-verifier-rejected');
