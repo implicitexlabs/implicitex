@@ -67,6 +67,13 @@
   /* ----------------------------------------------------------------
    * State machine
    * ---------------------------------------------------------------- */
+  var QR_LIBRARY_STATE = Object.freeze({
+    NOT_REQUESTED: 'NOT_REQUESTED',
+    LOADING:       'LOADING',
+    READY:         'READY',
+    FAILED:        'FAILED',
+  });
+
   var state = {
     current:             'BOOT',
     cardId:              null,
@@ -78,7 +85,13 @@
     intent:              null,
     sender:              null,
     integrityManifestVerificationState: 'VERIFICATION_UNAVAILABLE',
+    qrLibraryState:       QR_LIBRARY_STATE.NOT_REQUESTED,
+    qrLibraryAttestation: null,
   };
+
+  /* Cached promise from loadQrLibrary(). Repeated calls return the same
+   * promise; the UI can attach .then()/.catch() rather than polling state. */
+  var qrLibraryPromise = null;
 
   var frame = document.getElementById('ccFrame');
   var verification = window.IX_COIN_CARD_VERIFICATION || null;
@@ -633,18 +646,18 @@
           ? verification.normalizeState(result && result.state)
           : 'VERIFICATION_UNAVAILABLE';
 
-        /* Store verified asset list for post-verification QR library injection.
-         * Only the VERIFIED result carries verifiedAssets (populated by evaluateSignaturePolicy). */
-        state.verifiedManifestAssets = (result && result.verifiedAssets) || null;
+        /* Store the frozen QR library attestation issued by the verifier.
+         * This is the only token passed to loadQrLibrary(); it contains
+         * exactly the path and sha256 of qrcode.min.js and nothing more. */
+        state.qrLibraryAttestation = (result && result.qrLibraryAttestation) || null;
 
         if (!verification || !verification.canExecuteTransfer(state.integrityManifestVerificationState)) {
           renderVerificationBlocked();
           return;
         }
 
-        /* Load the QR rendering library now that verification has passed.
-         * loadQrLibrary() uses the verified asset hashes — see its comment block. */
-        loadQrLibrary(state.verifiedManifestAssets);
+        /* Load the QR rendering library now that verification has passed. */
+        loadQrLibrary(state.qrLibraryAttestation);
 
         initAmountSurface(registryRecord);
         transition('VERIFIED');
@@ -725,28 +738,60 @@
 
   /* ----------------------------------------------------------------
    * QR library governance — load only after verification succeeds.
-   *   qrcode.min.js is NOT loaded via a static <script> tag.
-   *   It is injected dynamically here, after the integrity manifest
-   *   has verified its SHA-256. The browser SRI attribute enforces
-   *   the same hash at the platform level before execution.
-   *   If verification failed, this function is never called and
-   *   QRCode remains undefined. generateQR() fails closed in that case.
+   *
+   *   qrcode.min.js is NOT loaded via a static <script> tag. It is
+   *   injected dynamically by loadQrLibrary(), called only after
+   *   canExecuteTransfer() returns true, using the frozen attestation
+   *   issued by the integrity verifier (qrLibraryAttestation).
+   *
+   *   The attestation contains exactly one validated path and sha256
+   *   hex string — no other manifest data is passed downstream.
+   *
+   *   The browser SRI attribute provides a second independent check
+   *   before execution; the browser refuses to execute if bytes differ.
+   *
+   *   State machine: NOT_REQUESTED → LOADING → READY | FAILED.
+   *   loadQrLibrary is idempotent; repeated calls after the first are
+   *   no-ops. Each state transition is visible to openQrPanel.
    * ---------------------------------------------------------------- */
-  function loadQrLibrary(verifiedAssets) {
-    if (!Array.isArray(verifiedAssets)) return;
-    var qrcodeAsset = null;
-    for (var qi = 0; qi < verifiedAssets.length; qi++) {
-      if (verifiedAssets[qi] && verifiedAssets[qi].path === 'js/vendor/qrcode.min.js') {
-        qrcodeAsset = verifiedAssets[qi];
-        break;
-      }
+  function renderQrFailed() {
+    var urlEl = el('ccQrUrl');
+    if (urlEl) urlEl.textContent = 'QR unavailable — present card URL manually';
+    var canvas = el('ccQrCanvas');
+    if (canvas) canvas.style.display = 'none';
+  }
+
+  function loadQrLibrary(attestation) {
+    /* Idempotent: return the cached promise on repeated calls. */
+    if (qrLibraryPromise) return qrLibraryPromise;
+
+    /* Brand check — only attestations issued by the active verifier instance
+     * are accepted. Shape-alike external objects are rejected. */
+    if (!verification || !verification.isQrLibraryAttestation ||
+        !verification.isQrLibraryAttestation(attestation)) {
+      state.qrLibraryState = QR_LIBRARY_STATE.FAILED;
+      qrLibraryPromise = Promise.reject(new Error('qr-attestation-not-recognized'));
+      qrLibraryPromise.catch(function () {});
+      return qrLibraryPromise;
     }
-    /* Fail closed: qrcode not in the verified manifest → no library. */
-    if (!qrcodeAsset || typeof qrcodeAsset.sha256 !== 'string') return;
-    var hexHash = qrcodeAsset.sha256.replace(/^sha256:/, '');
-    /* Reject malformed hashes — fail closed. */
-    if (!/^[0-9a-f]{64}$/.test(hexHash)) return;
-    /* Convert hex SHA-256 → base64 for the SRI integrity attribute. */
+
+    /* Shape validation — keep path and sha256 format checks as defence in depth. */
+    if (!attestation || attestation.path !== 'js/vendor/qrcode.min.js') {
+      state.qrLibraryState = QR_LIBRARY_STATE.FAILED;
+      qrLibraryPromise = Promise.reject(new Error('qr-attestation-path-invalid'));
+      qrLibraryPromise.catch(function () {});
+      return qrLibraryPromise;
+    }
+    if (typeof attestation.sha256 !== 'string' ||
+        !/^sha256:[0-9a-f]{64}$/.test(attestation.sha256)) {
+      state.qrLibraryState = QR_LIBRARY_STATE.FAILED;
+      qrLibraryPromise = Promise.reject(new Error('qr-attestation-sha256-invalid'));
+      qrLibraryPromise.catch(function () {});
+      return qrLibraryPromise;
+    }
+
+    /* Convert sha256:HEX → base64 for the SRI integrity attribute. */
+    var hexHash = attestation.sha256.slice('sha256:'.length);
     var hashBytes = new Uint8Array(32);
     for (var bi = 0; bi < 32; bi++) {
       hashBytes[bi] = parseInt(hexHash.slice(bi * 2, bi * 2 + 2), 16);
@@ -754,17 +799,56 @@
     var binary = '';
     for (var ci = 0; ci < hashBytes.length; ci++) binary += String.fromCharCode(hashBytes[ci]);
     var btoaImpl = window.btoa || null;
-    if (typeof btoaImpl !== 'function') return;  /* btoa unavailable — fail closed */
+    if (typeof btoaImpl !== 'function') {
+      state.qrLibraryState = QR_LIBRARY_STATE.FAILED;
+      qrLibraryPromise = Promise.reject(new Error('qr-btoa-unavailable'));
+      qrLibraryPromise.catch(function () {});
+      return qrLibraryPromise;
+    }
     var b64 = btoaImpl(binary);
-    if (!b64) return;
-    /* Inject the script element with browser SRI enforcement. */
-    var scriptEl = document.createElement('script');
-    scriptEl.src = '/js/vendor/qrcode.min.js';
-    scriptEl.integrity = 'sha256-' + b64;
-    scriptEl.crossOrigin = 'anonymous';
-    /* If the browser's SRI check fails, the script will not execute.
-     * generateQR() checks typeof QRCode before use and returns silently. */
-    document.head.appendChild(scriptEl);
+    if (!b64) {
+      state.qrLibraryState = QR_LIBRARY_STATE.FAILED;
+      qrLibraryPromise = Promise.reject(new Error('qr-btoa-failed'));
+      qrLibraryPromise.catch(function () {});
+      return qrLibraryPromise;
+    }
+
+    qrLibraryPromise = new Promise(function (resolve, reject) {
+      state.qrLibraryState = QR_LIBRARY_STATE.LOADING;
+
+      var scriptEl = document.createElement('script');
+      scriptEl.src = '/js/vendor/qrcode.min.js';
+      scriptEl.integrity = 'sha256-' + b64;
+      scriptEl.crossOrigin = 'anonymous';
+
+      scriptEl.onload = function () {
+        if (typeof QRCode === 'undefined' || !QRCode.toCanvas) {
+          state.qrLibraryState = QR_LIBRARY_STATE.FAILED;
+          renderQrFailed();
+          reject(new Error('qrcode-not-available-after-load'));
+          return;
+        }
+        state.qrLibraryState = QR_LIBRARY_STATE.READY;
+        /* Render immediately if the user opened the QR panel while loading. */
+        if (frame && frame.classList.contains('cc-qr-active')) {
+          generateQR();
+        }
+        resolve();
+      };
+
+      scriptEl.onerror = function () {
+        /* SRI mismatch, network failure, or CSP violation — fail closed. */
+        state.qrLibraryState = QR_LIBRARY_STATE.FAILED;
+        if (frame && frame.classList.contains('cc-qr-active')) {
+          renderQrFailed();
+        }
+        reject(new Error('qrcode-load-failed'));
+      };
+
+      document.head.appendChild(scriptEl);
+    });
+
+    return qrLibraryPromise;
   }
 
   /* ----------------------------------------------------------------
@@ -798,11 +882,37 @@
 
   function openQrPanel() {
     if (frame) frame.classList.add('cc-qr-active');
+
+    if (state.qrLibraryState === QR_LIBRARY_STATE.LOADING) {
+      /* Show a transient message; generateQR() is called in onload. */
+      var urlElL = el('ccQrUrl');
+      if (urlElL) urlElL.textContent = 'Loading\u2026';
+      return;
+    }
+
+    if (state.qrLibraryState === QR_LIBRARY_STATE.FAILED) {
+      renderQrFailed();
+      return;
+    }
+
+    if (state.qrLibraryState !== QR_LIBRARY_STATE.READY) {
+      /* NOT_REQUESTED or unexpected — fail closed. */
+      var urlElU = el('ccQrUrl');
+      if (urlElU) urlElU.textContent = 'QR unavailable';
+      return;
+    }
+
     generateQR();
   }
 
   function closeQrPanel() {
     if (frame) frame.classList.remove('cc-qr-active');
+    /* Restore canvas visibility if renderQrFailed() had hidden it. */
+    var canvas = el('ccQrCanvas');
+    if (canvas) canvas.style.display = '';
+    /* Return focus to the PRESENT CARD button so keyboard users retain context. */
+    var receiveBtn = el('ccReceiveBtn');
+    if (receiveBtn && typeof receiveBtn.focus === 'function') receiveBtn.focus();
   }
 
   function init() {
@@ -814,6 +924,13 @@
 
     var qrClose = el('ccQrClose');
     if (qrClose) qrClose.addEventListener('click', closeQrPanel);
+
+    /* Escape key closes the QR panel when it is open. */
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && frame && frame.classList.contains('cc-qr-active')) {
+        closeQrPanel();
+      }
+    });
 
     var parts  = window.location.pathname.split('/').filter(Boolean);
     var cardId = (parts[1] || '').trim();

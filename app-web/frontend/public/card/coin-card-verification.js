@@ -7,6 +7,25 @@
 (function () {
   'use strict';
 
+  /* Private registry of verifier-issued QR library attestations.
+   * Only objects placed here by issueQrLibraryAttestation() are authentic.
+   * loadQrLibrary() must reject any object not recognized by this registry. */
+  var qrAttestationRegistry = (typeof WeakSet !== 'undefined') ? new WeakSet() : null;
+
+  function issueQrLibraryAttestation(sha256) {
+    var attestation = Object.freeze({ path: 'js/vendor/qrcode.min.js', sha256: sha256 });
+    if (qrAttestationRegistry) qrAttestationRegistry.add(attestation);
+    return attestation;
+  }
+
+  /* Public predicate: returns true only for attestations issued by this verifier
+   * instance. Shape-alike objects created externally return false. */
+  function isQrLibraryAttestation(value) {
+    if (!value || typeof value !== 'object') return false;
+    if (!qrAttestationRegistry) return false;
+    return qrAttestationRegistry.has(value);
+  }
+
   var STATES = Object.freeze({
     VERIFIED: 'VERIFIED',
     ASSET_HASHES_PASSED: 'ASSET_HASHES_PASSED',
@@ -637,10 +656,39 @@
     return verifyP256Signature(integrityManifest, trustedKeyResolution.publicKey)
       .then(function (result) {
         if (result && result.state === STATES.VERIFIED) {
-          /* Include verified asset list in the VERIFIED result so callers can
-           * inject post-verification executables (e.g. qrcode.min.js) using
-           * the manifest-authenticated SHA-256 hashes. */
-          return Object.assign({}, result, { verifiedAssets: integrityManifest.assets });
+          /* Issue a branded, deeply frozen QR library attestation from the
+           * verified asset list. This is the only downstream token for
+           * qrcode.min.js injection. The attestation is registered in a
+           * private WeakSet; shape-alike external objects are rejected by
+           * isQrLibraryAttestation().
+           *
+           * Invariant: VERIFIED must always carry a valid attestation.
+           * If the qrcode asset is absent or its sha256 is malformed, the
+           * result is downgraded to INTEGRITY_FAILED rather than allowing
+           * VERIFIED with a null attestation. */
+          var qrAttestation = null;
+          var assets = integrityManifest.assets;
+          if (Array.isArray(assets)) {
+            for (var i = 0; i < assets.length; i++) {
+              var a = assets[i];
+              if (a && a.path === 'js/vendor/qrcode.min.js' &&
+                  typeof a.sha256 === 'string' &&
+                  /^sha256:[0-9a-f]{64}$/.test(a.sha256)) {
+                qrAttestation = issueQrLibraryAttestation(a.sha256);
+                break;
+              }
+            }
+          }
+          if (!qrAttestation) {
+            return {
+              state: STATES.INTEGRITY_FAILED,
+              integrityManifest: null,
+              metadata: null,
+              error: 'integrity-manifest-qr-attestation-missing',
+              qrLibraryAttestation: null,
+            };
+          }
+          return Object.assign({}, result, { qrLibraryAttestation: qrAttestation });
         }
         if (result && result.state === STATES.INTEGRITY_FAILED) {
           return result;
@@ -770,6 +818,7 @@
     getRequiredAssetPaths: getRequiredAssetPaths,
     hasRequiredAssets: hasRequiredAssets,
     canonicalizeIntegrityManifestPayload: canonicalizeIntegrityManifestPayload,
+    isQrLibraryAttestation: isQrLibraryAttestation,
     isTrustedKeySourceAvailable: isTrustedKeySourceAvailable,
     getTrustedKeyRecord: getTrustedKeyRecord,
     resolveTrustedKeyRecord: resolveTrustedKeyRecord,

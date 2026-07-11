@@ -298,3 +298,160 @@ test('card.js does not contain a standalone parseFloat for amount URL params', (
     'card.js must not use parseFloat to parse URL parameters'
   );
 });
+
+/* ----------------------------------------------------------------
+ * 9. QR library loader state machine — source-level invariants
+ * ---------------------------------------------------------------- */
+test('loadQrLibrary is idempotent — source contains NOT_REQUESTED guard', () => {
+  assert.ok(
+    cardJsSource.includes('NOT_REQUESTED'),
+    'loadQrLibrary must check qrLibraryState !== NOT_REQUESTED for idempotency'
+  );
+  assert.ok(
+    cardJsSource.includes('QR_LIBRARY_STATE'),
+    'card.js must define QR_LIBRARY_STATE constants'
+  );
+});
+
+test('loadQrLibrary validates attestation path is exactly js/vendor/qrcode.min.js', () => {
+  assert.ok(
+    cardJsSource.includes("attestation.path !== 'js/vendor/qrcode.min.js'"),
+    'loadQrLibrary must reject attestations with any path other than js/vendor/qrcode.min.js'
+  );
+});
+
+test('loadQrLibrary validates sha256 format before constructing SRI attribute', () => {
+  assert.ok(
+    cardJsSource.includes('/^sha256:[0-9a-f]{64}$/'),
+    'loadQrLibrary must validate sha256 field is sha256:HEX format before use'
+  );
+});
+
+test('loadQrLibrary sets LOADING state before script injection', () => {
+  assert.ok(
+    cardJsSource.includes("QR_LIBRARY_STATE.LOADING"),
+    'loadQrLibrary must transition to LOADING state before appending script element'
+  );
+});
+
+test('loadQrLibrary has onload and onerror handlers for explicit state transitions', () => {
+  const loadQrSource = (() => {
+    const start = cardJsSource.indexOf('function loadQrLibrary(');
+    if (start === -1) throw new Error('loadQrLibrary not found in card.js');
+    let depth = 0, i = start;
+    while (i < cardJsSource.length) {
+      if (cardJsSource[i] === '{') depth++;
+      else if (cardJsSource[i] === '}' && --depth === 0) return cardJsSource.slice(start, i + 1);
+      i++;
+    }
+    throw new Error('loadQrLibrary body not terminated');
+  })();
+  assert.ok(loadQrSource.includes('scriptEl.onload'), 'loadQrLibrary must set onload handler');
+  assert.ok(loadQrSource.includes('scriptEl.onerror'), 'loadQrLibrary must set onerror handler');
+  assert.ok(loadQrSource.includes('QR_LIBRARY_STATE.READY'), 'onload must transition to READY');
+  assert.ok(loadQrSource.includes('QR_LIBRARY_STATE.FAILED'), 'onerror must transition to FAILED');
+});
+
+test('openQrPanel handles LOADING state without calling generateQR', () => {
+  const openSource = (() => {
+    const start = cardJsSource.indexOf('function openQrPanel(');
+    if (start === -1) throw new Error('openQrPanel not found');
+    let depth = 0, i = start;
+    while (i < cardJsSource.length) {
+      if (cardJsSource[i] === '{') depth++;
+      else if (cardJsSource[i] === '}' && --depth === 0) return cardJsSource.slice(start, i + 1);
+      i++;
+    }
+    throw new Error('openQrPanel body not terminated');
+  })();
+  assert.ok(openSource.includes('QR_LIBRARY_STATE.LOADING'), 'openQrPanel must handle LOADING state');
+  assert.ok(openSource.includes('QR_LIBRARY_STATE.FAILED'), 'openQrPanel must handle FAILED state');
+  assert.ok(openSource.includes('QR_LIBRARY_STATE.READY'), 'openQrPanel must handle READY state');
+});
+
+test('card.js source contains no static qrcode.min.js script tag or pre-verification execution path', () => {
+  /* The script must not be loaded before verification. */
+  assert.ok(
+    !cardJsSource.includes('<script src'),
+    'card.js must not inject qrcode via innerHTML script tag'
+  );
+});
+
+test('no static qrcode.min.js script tag in card/index.html', () => {
+  /* Primary entry point must not statically load the QR library. */
+  assert.ok(
+    !indexHtml.includes('src="/js/vendor/qrcode.min.js"') &&
+    !indexHtml.includes("src='/js/vendor/qrcode.min.js'"),
+    'card/index.html must not contain a static qrcode.min.js script tag'
+  );
+});
+
+/* ----------------------------------------------------------------
+ * 10. isQrLibraryAttestation — branded attestation predicate
+ * ---------------------------------------------------------------- */
+test('loadQrLibrary calls verification.isQrLibraryAttestation before injecting the script', () => {
+  const loadQrSource = (() => {
+    const start = cardJsSource.indexOf('function loadQrLibrary(');
+    if (start === -1) throw new Error('loadQrLibrary not found in card.js');
+    let depth = 0, i = start;
+    while (i < cardJsSource.length) {
+      if (cardJsSource[i] === '{') depth++;
+      else if (cardJsSource[i] === '}' && --depth === 0) return cardJsSource.slice(start, i + 1);
+      i++;
+    }
+    throw new Error('loadQrLibrary body not terminated');
+  })();
+  assert.ok(
+    loadQrSource.includes('verification.isQrLibraryAttestation'),
+    'loadQrLibrary must call verification.isQrLibraryAttestation() to authenticate the attestation'
+  );
+  assert.ok(
+    loadQrSource.includes('qr-attestation-not-recognized'),
+    'loadQrLibrary must reject unrecognized attestations with qr-attestation-not-recognized error'
+  );
+});
+
+test('loadQrLibrary returns a cached promise — repeated calls are idempotent', () => {
+  assert.ok(
+    cardJsSource.includes('qrLibraryPromise'),
+    'card.js must cache the loadQrLibrary promise in qrLibraryPromise'
+  );
+  const loadQrSource = (() => {
+    const start = cardJsSource.indexOf('function loadQrLibrary(');
+    if (start === -1) throw new Error('loadQrLibrary not found in card.js');
+    let depth = 0, i = start;
+    while (i < cardJsSource.length) {
+      if (cardJsSource[i] === '{') depth++;
+      else if (cardJsSource[i] === '}' && --depth === 0) return cardJsSource.slice(start, i + 1);
+      i++;
+    }
+    throw new Error('loadQrLibrary body not terminated');
+  })();
+  /* First line of the function must short-circuit if promise already exists. */
+  assert.ok(
+    loadQrSource.includes('if (qrLibraryPromise) return qrLibraryPromise'),
+    'loadQrLibrary must return the cached promise immediately on repeated calls'
+  );
+});
+
+test('card.js closes QR panel and restores focus to PRESENT CARD button on Escape', () => {
+  assert.ok(
+    cardJsSource.includes("e.key === 'Escape'"),
+    'card.js must handle Escape key to close the QR panel'
+  );
+  const closeQrSource = (() => {
+    const start = cardJsSource.indexOf('function closeQrPanel(');
+    if (start === -1) throw new Error('closeQrPanel not found in card.js');
+    let depth = 0, i = start;
+    while (i < cardJsSource.length) {
+      if (cardJsSource[i] === '{') depth++;
+      else if (cardJsSource[i] === '}' && --depth === 0) return cardJsSource.slice(start, i + 1);
+      i++;
+    }
+    throw new Error('closeQrPanel body not terminated');
+  })();
+  assert.ok(
+    closeQrSource.includes('receiveBtn') && closeQrSource.includes('.focus('),
+    'closeQrPanel must restore focus to the PRESENT CARD button after closing'
+  );
+});

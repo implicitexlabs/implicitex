@@ -48,10 +48,11 @@ npm run check:qrcode-vendor
 
 ## Authority — accurate statement
 
-This file is loaded as a same-page `<script>` in `card/index.html`. As ordinary
-browser JavaScript it runs with the page's full ambient authority. It can
-in principle read and modify the DOM, inspect globals, intercept events, or
-monkey-patch browser APIs before later scripts load.
+This file is **not** statically loaded. It is dynamically injected by
+`loadQrLibrary()` in `card/card.js` only after the integrity manifest passes
+verification. As ordinary browser JavaScript it runs with the page's full
+ambient authority. It can in principle read and modify the DOM, inspect
+globals, intercept events, or monkey-patch browser APIs.
 
 The *intended* call path is narrow:
 
@@ -87,7 +88,10 @@ The governance enforces the following properties:
 4. **Fail-closed chain.** If the manifest is absent, fails to load, or has a
    hash mismatch: `canExecuteTransfer()` returns false, `loadQrLibrary()` is
    never called, `QRCode` remains undefined, and `generateQR()` returns
-   immediately (typeof guard at entry).
+   immediately (typeof guard at entry). Note: this gate applies specifically
+   to `qrcode.min.js` execution. Other page assets (card.js, index.html) are
+   loaded by ordinary browser mechanisms; the manifest verifies their hashes
+   but does not dynamically inject them.
 
 5. **Reproducible build.** The checked-in bytes are produced by a deterministic
    build from pinned `qrcode@1.5.4` + `esbuild@0.25.5`. SHA-256 is recorded

@@ -1,0 +1,1029 @@
+/* coin-card-qr-browser.test.js
+ *
+ * Puppeteer browser tests for the Coin Card QR handoff V1 feature.
+ * These tests exercise behaviors that can only be verified in a real browser:
+ *
+ *   - qrcode.min.js is NOT present as a static script on initial page load
+ *   - After successful manifest verification (VERIFIED state), qrcode.min.js
+ *     is dynamically injected with the correct SRI integrity attribute
+ *   - The QR panel opens and shows the canonical card URL
+ *   - The QR canvas has rendered pixels after the library executes
+ *   - The close button and Escape key both close the QR panel
+ *   - Repeated open/close cycles do not create multiple script tags
+ *   - A revoked card does not show the PRESENT CARD button
+ *   - The UI renders without horizontal overflow at 375 px mobile width
+ *
+ * Architecture: a local HTTP server serves frontend/public/. Puppeteer
+ * request interception injects:
+ *   (a) A test coin-card-trusted-keys.js that registers a test P-256 key.
+ *   (b) A signed test manifest whose asset hashes match the real files,
+ *       except card/coin-card-trusted-keys.js whose hash reflects (a).
+ *   (c) Path remapping for asset verification fetches: the verifier calls
+ *       fetch('card/coin-card-trusted-keys.js') from /card/qr-test, which
+ *       the browser resolves to /card/card/coin-card-trusted-keys.js. The
+ *       interceptor maps /card/{x} → public/{x} for all misresolved paths.
+ *   (d) Test registry records for /registry/coincards/qr-test.json and
+ *       /registry/coincards/qr-revoked.json.
+ */
+
+'use strict';
+
+const assert = require('node:assert/strict');
+const { createHash, webcrypto } = require('node:crypto');
+const { readFileSync } = require('node:fs');
+const http = require('node:http');
+const path = require('node:path');
+const { test, describe, before, after } = require('node:test');
+const puppeteer = require('puppeteer');
+
+/* ----------------------------------------------------------------
+ * Paths
+ * ---------------------------------------------------------------- */
+const appRoot   = path.resolve(__dirname, '../..');
+const publicDir = path.join(appRoot, 'frontend/public');
+
+/* ----------------------------------------------------------------
+ * Protected asset paths and their real SHA-256 values (from actual files).
+ * The trusted-keys hash is replaced dynamically with the test-key hash.
+ * ---------------------------------------------------------------- */
+const PROTECTED_ASSET_PATHS = [
+  'js/ix-execution.js',
+  'js/vendor/qrcode.min.js',
+  'card/coin-card-trusted-keys.js',          // hash replaced in test manifest
+  'card/coin-card-trusted-key-resolution.js',
+  'card/coin-card-lifecycle-registry.js',
+  'card/coin-card-lifecycle-record-verification.js',
+  'card/coin-card-lifecycle-bundle-verification.js',
+  'card/coin-card-lifecycle-record-selection.js',
+  'card/coin-card-lifecycle-resolution.js',
+  'card/coin-card-verification.js',
+  'card/card.js',
+  'card/card.css',
+];
+
+function sha256Hex(buf) {
+  return 'sha256:' + createHash('sha256').update(buf).digest('hex');
+}
+
+function toBase64Url(buf) {
+  return Buffer.from(buf)
+    .toString('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '/')
+    .replace(/=+$/g, '');
+}
+
+/* ----------------------------------------------------------------
+ * Canonical payload for signing (mirrors coin-card-verification.js)
+ * ---------------------------------------------------------------- */
+function canonicalizeValue(value) {
+  if (Array.isArray(value)) return value.map(canonicalizeValue);
+  if (!value || typeof value !== 'object') return value;
+  const canonical = {};
+  Object.keys(value).sort().forEach((k) => { canonical[k] = canonicalizeValue(value[k]); });
+  return canonical;
+}
+
+function canonicalizeManifestPayload(manifest) {
+  const payload = {};
+  Object.keys(manifest).sort().forEach((key) => {
+    if (key === 'signature' || key === 'manifestHash') return;
+    payload[key] = canonicalizeValue(manifest[key]);
+  });
+  return JSON.stringify(payload);
+}
+
+/* ----------------------------------------------------------------
+ * Test state (shared across all tests in this file)
+ * ---------------------------------------------------------------- */
+let browser;
+let serverPort;
+let serverUrl;
+let httpServer;
+let signedManifest;
+let revokedManifest;
+let testTrustedKeysJs;
+let qrcodeMinJsSri;   // expected SRI attribute value on the injected script tag
+
+/* ----------------------------------------------------------------
+ * Setup helpers
+ * ---------------------------------------------------------------- */
+
+/* Compute SHA-256 of the test trusted-keys.js we will serve. */
+function buildTestTrustedKeysJs(publicKeyJwk) {
+  /* The publicKey JWK is deep-frozen inline. Arrays in the JWK (like x, y)
+   * come from the extracted key and are plain values; they must appear
+   * deeply frozen in the source. */
+  const jwkStr = JSON.stringify(publicKeyJwk, null, 2)
+    .replace(/"([^"]+)":/g, '$1:')           // remove quotes from keys (not valid JS but for readability; actually keep them for correctness)
+    .split('\n').join('\n      ');
+
+  /* Build a complete IIFE that mirrors the production coin-card-trusted-keys.js
+   * structure: deeply frozen Object.create(null) dictionary. */
+  return [
+    '(function () {',
+    "  'use strict';",
+    '',
+    '  var publicKey = Object.freeze({',
+    `    crv: ${JSON.stringify(publicKeyJwk.crv)},`,
+    `    ext: ${JSON.stringify(publicKeyJwk.ext)},`,
+    `    key_ops: Object.freeze(${JSON.stringify(publicKeyJwk.key_ops)}),`,
+    `    kty: ${JSON.stringify(publicKeyJwk.kty)},`,
+    `    x: ${JSON.stringify(publicKeyJwk.x)},`,
+    `    y: ${JSON.stringify(publicKeyJwk.y)},`,
+    '  });',
+    '',
+    '  var record = Object.freeze({',
+    "    algorithm: 'ECDSA_P256_SHA256',",
+    "    environment: 'production',",
+    "    issuerId: 'implicitex',",
+    "    keyId: 'cc-browser-test-key',",
+    '    publicKey: publicKey,',
+    '    revocationPolicy: null,',
+    '    revocationReason: null,',
+    '    revokedAt: null,',
+    "    schemaVersion: 'coin-card-trusted-key-record.v1',",
+    "    status: 'ACTIVE',",
+    '    successorKeyId: null,',
+    "    usage: Object.freeze(['coin-card-manifest-signing']),",
+    "    validFrom: '2026-01-01T00:00:00.000Z',",
+    '    validUntil: null,',
+    '  });',
+    '',
+    '  var trustedPublicKeys = Object.create(null);',
+    "  Object.defineProperty(trustedPublicKeys, 'cc-browser-test-key', {",
+    '    value: record,',
+    '    writable: false,',
+    '    enumerable: true,',
+    '    configurable: false,',
+    '  });',
+    '  Object.freeze(trustedPublicKeys);',
+    '',
+    "  Object.defineProperty(window, 'IX_COIN_CARD_TRUSTED_PUBLIC_KEYS', {",
+    '    value: trustedPublicKeys,',
+    '    writable: false,',
+    '    enumerable: true,',
+    '    configurable: false,',
+    '  });',
+    '})();',
+    '',
+  ].join('\n');
+}
+
+async function buildSignedManifest(privateKey, testTrustedKeysContent, cardId, status) {
+  /* Compute hashes of all protected assets. The trusted-keys.js hash reflects
+   * the test content we will serve, not the production file. */
+  const assetsSorted = [...PROTECTED_ASSET_PATHS].sort();
+  const assets = assetsSorted.map((assetPath) => {
+    let buf;
+    if (assetPath === 'card/coin-card-trusted-keys.js') {
+      buf = Buffer.from(testTrustedKeysContent, 'utf8');
+    } else {
+      buf = readFileSync(path.join(publicDir, assetPath));
+    }
+    return {
+      bytes: buf.length,
+      path: assetPath,
+      sha256: sha256Hex(buf),
+    };
+  });
+
+  /* Top-level fields read by buildTrustedKeyResolutionContext():
+   * keyId, issuerId, environment, signedAt must appear at manifest top level
+   * (not only inside signature) or the verifier returns VERIFICATION_UNAVAILABLE. */
+  const manifest = {
+    assets,
+    buildVersion: 'browser-test',
+    cardId,
+    coinCardVersion: 'coin-card.v1',
+    environment: 'production',
+    issuerId: 'implicitex',
+    keyId: 'cc-browser-test-key',
+    layoutVersion: 'coin-card-layout.v1',
+    manifestHash: 'sha256:placeholder',
+    network: 'polygon-mainnet',
+    recipient: '0x0000000000000000000000000000000000000001',
+    registryStatus: status || 'active',
+    schemaVersion: 'coin-card-manifest.v1',
+    signedAt: '2026-07-01T00:00:00.000Z',
+    signature: {
+      algorithm: 'ECDSA',
+      keyId: 'cc-browser-test-key',
+      mode: 'signed-p256-v1',
+      value: '',
+    },
+  };
+
+  /* Sign: canonical payload excludes signature and manifestHash. */
+  const payload = canonicalizeManifestPayload(manifest);
+  const payloadBytes = new TextEncoder().encode(payload);
+  const sigBytes = await webcrypto.subtle.sign(
+    { name: 'ECDSA', hash: { name: 'SHA-256' } },
+    privateKey,
+    payloadBytes,
+  );
+  manifest.signature.value = Buffer.from(sigBytes).toString('base64')
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+
+  /* Update manifestHash after signing. */
+  manifest.manifestHash = sha256Hex(Buffer.from(JSON.stringify(manifest)));
+
+  return manifest;
+}
+
+function startHttpServer() {
+  return new Promise((resolve, reject) => {
+    const server = http.createServer((req, res) => {
+      /* CORS headers for SRI / cross-origin script loading from same origin.
+       * Chromium requires CORS response headers even for same-origin requests
+       * when the script element has crossorigin="anonymous". */
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+
+      if (req.method === 'OPTIONS') {
+        res.writeHead(204);
+        res.end();
+        return;
+      }
+
+      let urlPath = req.url.split('?')[0];
+
+      /* Registry endpoint for active test card. */
+      if (urlPath === '/registry/coincards/qr-test.json') {
+        const record = {
+          schema: 'implicitex.coincard.v1',
+          cardId: 'qr-test',
+          recipient: '0x0000000000000000000000000000000000000001',
+          chainId: '137',
+          chainName: 'Polygon',
+          token: 'USDC',
+          feeBps: 100,
+          status: 'active',
+          displayName: 'QR Test Card',
+          amountMode: 'sender_input',
+          allowedParentOrigins: ['*'],
+          lockedAmount: null,
+          owner: null,
+        };
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(record));
+        return;
+      }
+
+      /* Registry endpoint for revoked test card. */
+      if (urlPath === '/registry/coincards/qr-revoked.json') {
+        const record = {
+          schema: 'implicitex.coincard.v1',
+          cardId: 'qr-revoked',
+          recipient: '0x0000000000000000000000000000000000000002',
+          chainId: '137',
+          chainName: 'Polygon',
+          token: 'USDC',
+          feeBps: 100,
+          status: 'revoked',
+          displayName: 'QR Revoked Card',
+          amountMode: 'sender_input',
+          allowedParentOrigins: ['*'],
+          lockedAmount: null,
+          owner: null,
+        };
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(record));
+        return;
+      }
+
+      /* Serve static files from frontend/public/.
+       * Path remapping: the verifier fetches assets relative to the page URL
+       * /card/qr-test, so e.g. fetch('js/ix-execution.js') resolves to
+       * /card/js/ix-execution.js. We strip /card/ from such paths and retry. */
+      const tryPaths = [urlPath];
+      if (urlPath.startsWith('/card/js/') || urlPath.startsWith('/card/card/')) {
+        tryPaths.push(urlPath.slice('/card'.length));
+      }
+
+      for (const tryPath of tryPaths) {
+        const filePath = path.join(publicDir, tryPath);
+        try {
+          const content = readFileSync(filePath);
+          const ext = path.extname(tryPath);
+          const contentTypes = {
+            '.html': 'text/html',
+            '.js':   'application/javascript',
+            '.css':  'text/css',
+            '.json': 'application/json',
+            '.svg':  'image/svg+xml',
+            '.png':  'image/png',
+          };
+          res.writeHead(200, {
+            'Content-Type': contentTypes[ext] || 'application/octet-stream',
+          });
+          res.end(content);
+          return;
+        } catch (_) {
+          /* continue to next tryPath */
+        }
+      }
+
+      /* For /card/** paths not found as static files, serve card/index.html
+       * (Firebase rewrite behaviour). */
+      if (urlPath.startsWith('/card/') || urlPath === '/card') {
+        try {
+          const indexContent = readFileSync(path.join(publicDir, 'card/index.html'));
+          res.writeHead(200, { 'Content-Type': 'text/html' });
+          res.end(indexContent);
+          return;
+        } catch (_) {
+          /* fall through to 404 */
+        }
+      }
+
+      res.writeHead(404);
+      res.end('Not found');
+    });
+
+    server.listen(0, '127.0.0.1', () => {
+      resolve(server);
+    });
+    server.on('error', reject);
+  });
+}
+
+/* ----------------------------------------------------------------
+ * Per-page test helper: sets up request interception and navigates.
+ * Returns the page, already at VERIFIED state (or the specified data-state).
+ * ---------------------------------------------------------------- */
+async function openCardPage(page, cardId, targetState) {
+  await page.setRequestInterception(true);
+
+  page.on('request', (request) => {
+    const url = request.url();
+    const urlObj = new URL(url);
+    const urlPath = urlObj.pathname;
+
+    /* (a) Inject test trusted-keys.js for script tag load AND
+     *     for the asset-verification fetch that resolves to /card/card/... */
+    if (urlPath === '/card/coin-card-trusted-keys.js' ||
+        urlPath === '/card/card/coin-card-trusted-keys.js') {
+      request.respond({
+        status: 200,
+        headers: {
+          'Content-Type': 'application/javascript',
+          'Access-Control-Allow-Origin': '*',
+        },
+        body: testTrustedKeysJs,
+      });
+      return;
+    }
+
+    /* (b) Inject the signed test manifest. */
+    if (urlPath === '/card/coin-card-manifest.json') {
+      const manifest = cardId === 'qr-revoked' ? revokedManifest : signedManifest;
+      request.respond({
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+        },
+        body: JSON.stringify(manifest),
+      });
+      return;
+    }
+
+    /* All other requests pass through to the local HTTP server. */
+    request.continue();
+  });
+
+  const target = targetState || (cardId === 'qr-revoked' ? 'REVOKED' : 'VERIFIED');
+  await page.goto(`${serverUrl}/card/${cardId}`, { waitUntil: 'networkidle0', timeout: 30000 });
+
+  /* Wait for the frame to reach the expected state. */
+  await page.waitForSelector(`#ccFrame[data-state="${target}"]`, { timeout: 15000 });
+  return page;
+}
+
+/* ----------------------------------------------------------------
+ * Test suite
+ * ---------------------------------------------------------------- */
+describe('Coin Card QR handoff — browser tests', async () => {
+
+  /* ---- Setup ---- */
+  before(async () => {
+    /* Generate a P-256 test key pair. */
+    const keyPair = await webcrypto.subtle.generateKey(
+      { name: 'ECDSA', namedCurve: 'P-256' },
+      true,
+      ['sign', 'verify'],
+    );
+    const publicKeyJwk = await webcrypto.subtle.exportKey('jwk', keyPair.publicKey);
+
+    /* Build the test trusted-keys.js content. */
+    testTrustedKeysJs = buildTestTrustedKeysJs(publicKeyJwk);
+
+    /* Build signed manifests for active and revoked cards. */
+    signedManifest  = await buildSignedManifest(keyPair.privateKey, testTrustedKeysJs, 'qr-test', 'active');
+    revokedManifest = await buildSignedManifest(keyPair.privateKey, testTrustedKeysJs, 'qr-revoked', 'active');
+
+    /* Compute the expected SRI value for the qrcode.min.js script tag.
+     * card.js: attestation.sha256 → hex → bytes → base64 → 'sha256-' + b64 */
+    const qrcodeHex = signedManifest.assets.find(
+      (a) => a.path === 'js/vendor/qrcode.min.js',
+    ).sha256.slice('sha256:'.length);
+    qrcodeMinJsSri = 'sha256-' + Buffer.from(qrcodeHex, 'hex').toString('base64');
+
+    /* Start the static HTTP server. */
+    httpServer = await startHttpServer();
+    serverPort = httpServer.address().port;
+    serverUrl  = `http://127.0.0.1:${serverPort}`;
+
+    /* Launch Puppeteer browser. */
+    browser = await puppeteer.launch({
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    });
+  });
+
+  after(async () => {
+    if (browser) await browser.close();
+    if (httpServer) httpServer.close();
+  });
+
+  /* ---- Tests ---- */
+
+  test('qrcode.min.js is not present in the DOM at DOMContentLoaded — not a static script', async () => {
+    /* Prove that qrcode.min.js is not a static script tag: it must be absent from
+     * the DOM immediately at DOMContentLoaded, before any async verification completes.
+     * Dynamic injection happens only after the async verification pipeline resolves. */
+    const page = await browser.newPage();
+    try {
+      await page.setRequestInterception(true);
+
+      page.on('request', (request) => {
+        const urlPath = new URL(request.url()).pathname;
+        if (urlPath === '/card/coin-card-trusted-keys.js' ||
+            urlPath === '/card/card/coin-card-trusted-keys.js') {
+          request.respond({
+            status: 200,
+            headers: { 'Content-Type': 'application/javascript', 'Access-Control-Allow-Origin': '*' },
+            body: testTrustedKeysJs,
+          });
+          return;
+        }
+        if (urlPath === '/card/coin-card-manifest.json') {
+          request.respond({
+            status: 200,
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+            body: JSON.stringify(signedManifest),
+          });
+          return;
+        }
+        request.continue();
+      });
+
+      /* Stop at DOMContentLoaded — before async verification fetches complete. */
+      await page.goto(`${serverUrl}/card/qr-test`, { waitUntil: 'domcontentloaded', timeout: 15000 });
+
+      /* At DOMContentLoaded, qrcode must not yet be in the DOM as a script element.
+       * It can only arrive via loadQrLibrary(), which requires VERIFIED first. */
+      const qrcodeScriptPresentAtLoad = await page.evaluate(
+        () => !!document.querySelector('script[src*="qrcode.min.js"]'),
+      );
+      assert.equal(
+        qrcodeScriptPresentAtLoad,
+        false,
+        'qrcode.min.js must not be in the DOM as a script element at DOMContentLoaded',
+      );
+    } finally {
+      await page.close();
+    }
+  });
+
+  test('qrcode.min.js is dynamically injected into <head> after VERIFIED state', async () => {
+    const page = await browser.newPage();
+    try {
+      await openCardPage(page, 'qr-test');
+
+      /* Wait for the qrcode script to be injected (state machine reaches READY). */
+      await page.waitForFunction(
+        () => !!document.querySelector('script[src="/js/vendor/qrcode.min.js"]'),
+        { timeout: 10000 },
+      );
+
+      const scriptAttrs = await page.$eval(
+        'script[src="/js/vendor/qrcode.min.js"]',
+        (el) => ({
+          src:         el.src,
+          integrity:   el.integrity,
+          crossOrigin: el.crossOrigin,
+          parent:      el.parentElement && el.parentElement.tagName,
+        }),
+      );
+
+      assert.ok(scriptAttrs.src.endsWith('/js/vendor/qrcode.min.js'),
+        'injected script src must point to /js/vendor/qrcode.min.js');
+      assert.equal(scriptAttrs.integrity, qrcodeMinJsSri,
+        'injected script integrity must match SRI encoding of verified hash');
+      assert.equal(scriptAttrs.crossOrigin, 'anonymous',
+        'injected script must use crossOrigin=anonymous for SRI');
+      assert.equal(scriptAttrs.parent, 'HEAD',
+        'injected script must be appended to <head>');
+    } finally {
+      await page.close();
+    }
+  });
+
+  test('only one qrcode.min.js script tag is injected even after multiple open/close cycles', async () => {
+    const page = await browser.newPage();
+    try {
+      await openCardPage(page, 'qr-test');
+
+      /* Wait for QR library to load. */
+      await page.waitForFunction(
+        () => !!document.querySelector('script[src="/js/vendor/qrcode.min.js"]'),
+        { timeout: 10000 },
+      );
+
+      /* Open and close the QR panel three times. */
+      for (let i = 0; i < 3; i++) {
+        await page.click('#ccReceiveBtn');
+        await page.waitForSelector('#ccFrame.cc-qr-active', { timeout: 5000 });
+        await page.click('#ccQrClose');
+        await page.waitForFunction(
+          () => !document.getElementById('ccFrame').classList.contains('cc-qr-active'),
+          { timeout: 5000 },
+        );
+      }
+
+      /* Exactly one qrcode script tag in the DOM — idempotency invariant. */
+      const count = await page.$$eval(
+        'script[src="/js/vendor/qrcode.min.js"]',
+        (els) => els.length,
+      );
+      assert.equal(count, 1, 'exactly one qrcode script tag must exist after repeated opens');
+    } finally {
+      await page.close();
+    }
+  });
+
+  test('PRESENT CARD button opens the QR panel', async () => {
+    const page = await browser.newPage();
+    try {
+      await openCardPage(page, 'qr-test');
+
+      /* Wait for QR library. */
+      await page.waitForFunction(
+        () => !!document.querySelector('script[src="/js/vendor/qrcode.min.js"]'),
+        { timeout: 10000 },
+      );
+
+      const panelActiveBefore = await page.$eval(
+        '#ccFrame',
+        (el) => el.classList.contains('cc-qr-active'),
+      );
+      assert.ok(!panelActiveBefore, 'QR panel must not be active before button click');
+
+      await page.click('#ccReceiveBtn');
+      await page.waitForSelector('#ccFrame.cc-qr-active', { timeout: 5000 });
+
+      const panelActiveAfter = await page.$eval(
+        '#ccFrame',
+        (el) => el.classList.contains('cc-qr-active'),
+      );
+      assert.ok(panelActiveAfter, 'QR panel must be active after PRESENT CARD click');
+    } finally {
+      await page.close();
+    }
+  });
+
+  test('ccQrUrl displays the canonical card URL when the QR panel is open', async () => {
+    const page = await browser.newPage();
+    try {
+      await openCardPage(page, 'qr-test');
+
+      await page.waitForFunction(
+        () => !!document.querySelector('script[src="/js/vendor/qrcode.min.js"]'),
+        { timeout: 10000 },
+      );
+
+      await page.click('#ccReceiveBtn');
+      await page.waitForSelector('#ccFrame.cc-qr-active', { timeout: 5000 });
+
+      /* Wait for the URL text to appear (generateQR populates it). */
+      await page.waitForFunction(
+        () => {
+          const el = document.getElementById('ccQrUrl');
+          return el && el.textContent && el.textContent.includes('/card/qr-test');
+        },
+        { timeout: 5000 },
+      );
+
+      const urlText = await page.$eval('#ccQrUrl', (el) => el.textContent.trim());
+      assert.ok(
+        urlText.endsWith('/card/qr-test'),
+        `ccQrUrl must end with /card/qr-test; got "${urlText}"`,
+      );
+      assert.ok(
+        !urlText.includes('requestAmount') && !urlText.includes('amount='),
+        'QR URL must not contain amount parameters',
+      );
+      assert.ok(
+        !urlText.includes('0x') && !urlText.includes('recipient'),
+        'QR URL must not contain wallet address or recipient field',
+      );
+    } finally {
+      await page.close();
+    }
+  });
+
+  test('QR canvas has rendered pixels after the library loads', async () => {
+    const page = await browser.newPage();
+    try {
+      await openCardPage(page, 'qr-test');
+
+      await page.waitForFunction(
+        () => !!document.querySelector('script[src="/js/vendor/qrcode.min.js"]'),
+        { timeout: 10000 },
+      );
+
+      await page.click('#ccReceiveBtn');
+      await page.waitForSelector('#ccFrame.cc-qr-active', { timeout: 5000 });
+
+      /* Wait for QR URL text as a proxy for generateQR() having run. */
+      await page.waitForFunction(
+        () => {
+          const el = document.getElementById('ccQrUrl');
+          return el && el.textContent && el.textContent.includes('/card/');
+        },
+        { timeout: 5000 },
+      );
+
+      /* Sample the canvas: at least some pixels must be non-white. */
+      const hasNonWhitePixels = await page.evaluate(() => {
+        const canvas = document.getElementById('ccQrCanvas');
+        if (!canvas) return false;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return false;
+        const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+        for (let i = 0; i < data.length; i += 4) {
+          if (data[i] < 200 || data[i + 1] < 200 || data[i + 2] < 200) return true;
+        }
+        return false;
+      });
+
+      assert.ok(hasNonWhitePixels, 'QR canvas must have non-white pixels after rendering');
+    } finally {
+      await page.close();
+    }
+  });
+
+  test('close button removes cc-qr-active class and hides the QR panel', async () => {
+    const page = await browser.newPage();
+    try {
+      await openCardPage(page, 'qr-test');
+
+      await page.waitForFunction(
+        () => !!document.querySelector('script[src="/js/vendor/qrcode.min.js"]'),
+        { timeout: 10000 },
+      );
+
+      await page.click('#ccReceiveBtn');
+      await page.waitForSelector('#ccFrame.cc-qr-active', { timeout: 5000 });
+
+      await page.click('#ccQrClose');
+
+      await page.waitForFunction(
+        () => !document.getElementById('ccFrame').classList.contains('cc-qr-active'),
+        { timeout: 5000 },
+      );
+
+      const isActive = await page.$eval(
+        '#ccFrame',
+        (el) => el.classList.contains('cc-qr-active'),
+      );
+      assert.ok(!isActive, 'cc-qr-active must be removed after close button click');
+    } finally {
+      await page.close();
+    }
+  });
+
+  test('Escape key closes the QR panel', async () => {
+    const page = await browser.newPage();
+    try {
+      await openCardPage(page, 'qr-test');
+
+      await page.waitForFunction(
+        () => !!document.querySelector('script[src="/js/vendor/qrcode.min.js"]'),
+        { timeout: 10000 },
+      );
+
+      await page.click('#ccReceiveBtn');
+      await page.waitForSelector('#ccFrame.cc-qr-active', { timeout: 5000 });
+
+      /* Press Escape. */
+      await page.keyboard.press('Escape');
+
+      await page.waitForFunction(
+        () => !document.getElementById('ccFrame').classList.contains('cc-qr-active'),
+        { timeout: 5000 },
+      );
+
+      const isActive = await page.$eval(
+        '#ccFrame',
+        (el) => el.classList.contains('cc-qr-active'),
+      );
+      assert.ok(!isActive, 'cc-qr-active must be removed after Escape key press');
+    } finally {
+      await page.close();
+    }
+  });
+
+  test('a revoked card does not show the PRESENT CARD button', async () => {
+    const page = await browser.newPage();
+    try {
+      await openCardPage(page, 'qr-revoked');
+
+      /* For revoked cards, the page shows REVOKED state and hides the receive zone. */
+      const state = await page.$eval('#ccFrame', (el) => el.dataset.state);
+      assert.equal(state, 'REVOKED', 'revoked card must reach REVOKED state');
+
+      const receiveZoneVisible = await page.$eval(
+        '#ccReceiveZone',
+        /* The receive zone must not be visible — CSS hides it in REVOKED state. */
+        (el) => {
+          const style = window.getComputedStyle(el);
+          return style.display !== 'none' && style.visibility !== 'hidden' && parseFloat(style.opacity) > 0;
+        },
+      );
+      assert.ok(!receiveZoneVisible, 'PRESENT CARD button must not be visible on a revoked card');
+    } finally {
+      await page.close();
+    }
+  });
+
+  test('UI renders without horizontal overflow at 375 px mobile viewport width', async () => {
+    const page = await browser.newPage();
+    try {
+      await page.setViewport({ width: 375, height: 812, deviceScaleFactor: 2 });
+      await openCardPage(page, 'qr-test');
+
+      await page.waitForFunction(
+        () => !!document.querySelector('script[src="/js/vendor/qrcode.min.js"]'),
+        { timeout: 10000 },
+      );
+
+      /* Open the QR panel to test it at mobile width. */
+      await page.click('#ccReceiveBtn');
+      await page.waitForSelector('#ccFrame.cc-qr-active', { timeout: 5000 });
+
+      const hasOverflow = await page.evaluate(() => {
+        return document.documentElement.scrollWidth > document.documentElement.clientWidth;
+      });
+
+      assert.ok(!hasOverflow, 'page must not have horizontal overflow at 375 px mobile width');
+    } finally {
+      await page.close();
+    }
+  });
+
+  test('QR panel canvas is restored after close and re-open', async () => {
+    const page = await browser.newPage();
+    try {
+      await openCardPage(page, 'qr-test');
+
+      await page.waitForFunction(
+        () => !!document.querySelector('script[src="/js/vendor/qrcode.min.js"]'),
+        { timeout: 10000 },
+      );
+
+      /* First open. */
+      await page.click('#ccReceiveBtn');
+      await page.waitForSelector('#ccFrame.cc-qr-active', { timeout: 5000 });
+      await page.waitForFunction(
+        () => {
+          const el = document.getElementById('ccQrUrl');
+          return el && el.textContent && el.textContent.includes('/card/');
+        },
+        { timeout: 5000 },
+      );
+
+      /* Close. */
+      await page.click('#ccQrClose');
+      await page.waitForFunction(
+        () => !document.getElementById('ccFrame').classList.contains('cc-qr-active'),
+        { timeout: 5000 },
+      );
+
+      /* Re-open: canvas must still be visible (not hidden by renderQrFailed). */
+      await page.click('#ccReceiveBtn');
+      await page.waitForSelector('#ccFrame.cc-qr-active', { timeout: 5000 });
+
+      const canvasDisplay = await page.$eval(
+        '#ccQrCanvas',
+        (el) => window.getComputedStyle(el).display,
+      );
+      assert.notEqual(canvasDisplay, 'none', 'canvas must be visible after re-opening QR panel');
+    } finally {
+      await page.close();
+    }
+  });
+
+  test('qrcode.min.js is NOT injected as a <script> element before VERIFIED — only via fetch for hashing', async () => {
+    /* The verifier legitimately fetch()es qrcode.min.js bytes during asset hash checking
+     * (before VERIFIED). That is correct and expected. This test proves something different:
+     * that no <script> element with qrcode src is added to the DOM until AFTER VERIFIED.
+     * Script injection is only triggered by loadQrLibrary(), which requires VERIFIED first. */
+    const page = await browser.newPage();
+    try {
+      await page.setRequestInterception(true);
+
+      page.on('request', (request) => {
+        const urlPath = new URL(request.url()).pathname;
+        if (urlPath === '/card/coin-card-trusted-keys.js' ||
+            urlPath === '/card/card/coin-card-trusted-keys.js') {
+          request.respond({
+            status: 200,
+            headers: { 'Content-Type': 'application/javascript', 'Access-Control-Allow-Origin': '*' },
+            body: testTrustedKeysJs,
+          });
+          return;
+        }
+        if (urlPath === '/card/coin-card-manifest.json') {
+          request.respond({
+            status: 200,
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+            body: JSON.stringify(signedManifest),
+          });
+          return;
+        }
+        request.continue();
+      });
+
+      /* Stop at DOMContentLoaded — asset hash fetches have not yet completed. */
+      await page.goto(`${serverUrl}/card/qr-test`, { waitUntil: 'domcontentloaded', timeout: 15000 });
+
+      /* At DOMContentLoaded, loadQrLibrary() has not yet been called because
+       * verification is still pending. No qrcode <script> element must exist. */
+      const scriptAtDomContentLoaded = await page.evaluate(
+        () => !!document.querySelector('script[src*="qrcode.min.js"]'),
+      );
+      assert.equal(
+        scriptAtDomContentLoaded,
+        false,
+        'qrcode <script> element must not exist at DOMContentLoaded — VERIFIED not reached yet',
+      );
+    } finally {
+      await page.close();
+    }
+  });
+
+  test('SRI/network failure on qrcode.min.js shows "QR unavailable" in the QR panel', async () => {
+    /* Simulate a network failure on qrcode.min.js. The UI must degrade gracefully
+     * with "QR unavailable" text rather than a blank panel or thrown error. */
+    const page = await browser.newPage();
+    try {
+      await page.setRequestInterception(true);
+
+      page.on('request', (request) => {
+        const urlPath = new URL(request.url()).pathname;
+
+        /* Block qrcode.min.js — simulate network failure. */
+        if (urlPath === '/js/vendor/qrcode.min.js') {
+          request.abort('failed');
+          return;
+        }
+
+        if (urlPath === '/card/coin-card-trusted-keys.js' ||
+            urlPath === '/card/card/coin-card-trusted-keys.js') {
+          request.respond({
+            status: 200,
+            headers: { 'Content-Type': 'application/javascript', 'Access-Control-Allow-Origin': '*' },
+            body: testTrustedKeysJs,
+          });
+          return;
+        }
+
+        if (urlPath === '/card/coin-card-manifest.json') {
+          request.respond({
+            status: 200,
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+            body: JSON.stringify(signedManifest),
+          });
+          return;
+        }
+
+        request.continue();
+      });
+
+      await page.goto(`${serverUrl}/card/qr-test`, { waitUntil: 'networkidle0', timeout: 30000 });
+      await page.waitForSelector('#ccFrame[data-state="VERIFIED"]', { timeout: 15000 });
+
+      /* Open the QR panel — qrcode.min.js injection will fail. */
+      await page.click('#ccReceiveBtn');
+      await page.waitForSelector('#ccFrame.cc-qr-active', { timeout: 5000 });
+
+      /* Wait for the failure message to appear. */
+      await page.waitForFunction(
+        () => {
+          const el = document.getElementById('ccQrUrl');
+          return el && el.textContent && el.textContent.includes('QR unavailable');
+        },
+        { timeout: 10000 },
+      );
+
+      const urlText = await page.$eval('#ccQrUrl', (el) => el.textContent.trim());
+      assert.ok(
+        urlText.includes('QR unavailable'),
+        `#ccQrUrl must show "QR unavailable" on script failure; got "${urlText}"`,
+      );
+
+      /* Canvas must be hidden on failure. */
+      const canvasDisplay = await page.$eval(
+        '#ccQrCanvas',
+        (el) => window.getComputedStyle(el).display,
+      );
+      assert.equal(canvasDisplay, 'none', 'canvas must be hidden when QR library fails to load');
+    } finally {
+      await page.close();
+    }
+  });
+
+  test('revoked card never injects qrcode.min.js into the DOM', async () => {
+    const page = await browser.newPage();
+    try {
+      await openCardPage(page, 'qr-revoked');
+
+      /* Wait for revoked state to settle. */
+      const state = await page.$eval('#ccFrame', (el) => el.dataset.state);
+      assert.equal(state, 'REVOKED');
+
+      /* Allow any pending async to complete, then confirm no script was injected. */
+      await new Promise((r) => setTimeout(r, 500));
+
+      const qrcodeScriptCount = await page.$$eval(
+        'script[src="/js/vendor/qrcode.min.js"]',
+        (els) => els.length,
+      );
+      assert.equal(
+        qrcodeScriptCount,
+        0,
+        'qrcode.min.js must not be injected for a revoked card',
+      );
+    } finally {
+      await page.close();
+    }
+  });
+
+  test('focus returns to PRESENT CARD button after closing QR panel with close button', async () => {
+    const page = await browser.newPage();
+    try {
+      await openCardPage(page, 'qr-test');
+
+      await page.waitForFunction(
+        () => !!document.querySelector('script[src="/js/vendor/qrcode.min.js"]'),
+        { timeout: 10000 },
+      );
+
+      await page.click('#ccReceiveBtn');
+      await page.waitForSelector('#ccFrame.cc-qr-active', { timeout: 5000 });
+
+      await page.click('#ccQrClose');
+      await page.waitForFunction(
+        () => !document.getElementById('ccFrame').classList.contains('cc-qr-active'),
+        { timeout: 5000 },
+      );
+
+      const focusedId = await page.evaluate(() => document.activeElement && document.activeElement.id);
+      assert.equal(focusedId, 'ccReceiveBtn',
+        'focus must return to #ccReceiveBtn after closing QR panel with close button');
+    } finally {
+      await page.close();
+    }
+  });
+
+  test('focus returns to PRESENT CARD button after closing QR panel with Escape', async () => {
+    const page = await browser.newPage();
+    try {
+      await openCardPage(page, 'qr-test');
+
+      await page.waitForFunction(
+        () => !!document.querySelector('script[src="/js/vendor/qrcode.min.js"]'),
+        { timeout: 10000 },
+      );
+
+      await page.click('#ccReceiveBtn');
+      await page.waitForSelector('#ccFrame.cc-qr-active', { timeout: 5000 });
+
+      await page.keyboard.press('Escape');
+      await page.waitForFunction(
+        () => !document.getElementById('ccFrame').classList.contains('cc-qr-active'),
+        { timeout: 5000 },
+      );
+
+      const focusedId = await page.evaluate(() => document.activeElement && document.activeElement.id);
+      assert.equal(focusedId, 'ccReceiveBtn',
+        'focus must return to #ccReceiveBtn after pressing Escape to close QR panel');
+    } finally {
+      await page.close();
+    }
+  });
+
+});

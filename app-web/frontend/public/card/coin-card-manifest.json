@@ -1,0 +1,78 @@
+{
+  "assets": [
+    {
+      "bytes": 17755,
+      "path": "card/card.css",
+      "sha256": "sha256:b80d627301b80c247a9473325f7fc151fecd3d6add4079ae2e4a7b4a1aa8f86d"
+    },
+    {
+      "bytes": 38167,
+      "path": "card/card.js",
+      "sha256": "sha256:756c9b950ea122aa41854a4e344b527aff22ad72a5996cd66e355cf99bd3b9a6"
+    },
+    {
+      "bytes": 17152,
+      "path": "card/coin-card-lifecycle-bundle-verification.js",
+      "sha256": "sha256:b5c2be2dd38af28be878102ccbbad4bb0aff6556ecc47da2284768edc54df6b3"
+    },
+    {
+      "bytes": 42723,
+      "path": "card/coin-card-lifecycle-record-selection.js",
+      "sha256": "sha256:5bfbd90a061c6816c21398e77a4b091eca77b0034560b095527e10787029d1e4"
+    },
+    {
+      "bytes": 22347,
+      "path": "card/coin-card-lifecycle-record-verification.js",
+      "sha256": "sha256:932332ad0bcd817c1afca8d7bb2bb99794bc11f81f983f97b08e5636bbfe82c0"
+    },
+    {
+      "bytes": 15501,
+      "path": "card/coin-card-lifecycle-registry.js",
+      "sha256": "sha256:bfb9c9e38a1260a098e4beb1d882a0bc597aef0ce7e3981d44a56fa688236cdd"
+    },
+    {
+      "bytes": 29496,
+      "path": "card/coin-card-lifecycle-resolution.js",
+      "sha256": "sha256:e35875433ade1bb36e9f382ec2eb0a565d45b939d69da3cd41bdbdbc8ef9d8e7"
+    },
+    {
+      "bytes": 16420,
+      "path": "card/coin-card-trusted-key-resolution.js",
+      "sha256": "sha256:821f8d1490931ed219d7fe53acae0f99376fc8e4a2e3872f71440363a45cedb6"
+    },
+    {
+      "bytes": 667,
+      "path": "card/coin-card-trusted-keys.js",
+      "sha256": "sha256:e5c70fd96dbe7e2e4bdf1734293078d8beaf11c45aa25a108b1ef780d781320d"
+    },
+    {
+      "bytes": 29407,
+      "path": "card/coin-card-verification.js",
+      "sha256": "sha256:7cc5744d59bc53dd177c88542062e35df243d22dceb838a90df48f87accc464d"
+    },
+    {
+      "bytes": 19672,
+      "path": "js/ix-execution.js",
+      "sha256": "sha256:fc3d5dd028f588c3151f4c9a4f344386481a50ba8e09faa2be811588753bf6e9"
+    },
+    {
+      "bytes": 24303,
+      "path": "js/vendor/qrcode.min.js",
+      "sha256": "sha256:d59af15f40bc321f78871fe9d892d1dbbf05e35e20ad22aa51203c68185b58b6"
+    }
+  ],
+  "buildVersion": "commit-d",
+  "cardId": "cc_demo_implicitex",
+  "coinCardVersion": "coin-card.v1",
+  "layoutVersion": "coin-card-layout.v1",
+  "manifestHash": "sha256:ce755d13f0eec9bc37a3206fb391f9a6638d956edf3d2b0507a4b36a97316b7c",
+  "network": "polygon-mainnet",
+  "recipient": "0xa7cE4232811021d2Dd01f4f0f264Df2427ab3919",
+  "registryStatus": "active",
+  "schemaVersion": "coin-card-manifest.v1",
+  "signature": {
+    "algorithm": null,
+    "mode": "unsigned-dev",
+    "value": null
+  }
+}

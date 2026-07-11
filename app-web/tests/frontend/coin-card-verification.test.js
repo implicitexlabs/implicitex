@@ -1848,7 +1848,7 @@ test('path substitution — replacing qrcode with a different vendor path become
   assert.equal(result.error, 'integrity-manifest-asset-policy-mismatch');
 });
 
-test('VERIFIED result carries verifiedAssets for post-verification QR library injection', async () => {
+test('VERIFIED result carries frozen qrLibraryAttestation — not raw manifest assets', async () => {
   const keyPair = await webcrypto.subtle.generateKey(
     { name: 'ECDSA', namedCurve: 'P-256' },
     true,
@@ -1871,13 +1871,97 @@ test('VERIFIED result carries verifiedAssets for post-verification QR library in
     error: null,
   });
 
-  assert.equal(result.state, verifyingRuntime.STATES.VERIFIED,
-    'VERIFIED result must carry verifiedAssets for QR library injection');
-  assert.ok(Array.isArray(result.verifiedAssets),
-    'VERIFIED result must carry verifiedAssets array');
-  const qrcodeAsset = result.verifiedAssets.find((a) => a && a.path === 'js/vendor/qrcode.min.js');
-  assert.ok(qrcodeAsset,
-    'verifiedAssets must contain qrcode.min.js entry for dynamic injection');
-  assert.ok(typeof qrcodeAsset.sha256 === 'string' && qrcodeAsset.sha256.startsWith('sha256:'),
-    'qrcode.min.js verifiedAsset must have sha256 field in sha256:HEX format');
+  assert.equal(result.state, verifyingRuntime.STATES.VERIFIED);
+
+  /* The attestation must be present and frozen. */
+  assert.ok(result.qrLibraryAttestation, 'VERIFIED result must include qrLibraryAttestation');
+  assert.ok(Object.isFrozen(result.qrLibraryAttestation), 'qrLibraryAttestation must be frozen');
+
+  /* Attestation must have exactly the expected path and a validated sha256. */
+  assert.equal(result.qrLibraryAttestation.path, 'js/vendor/qrcode.min.js',
+    'attestation path must be exactly js/vendor/qrcode.min.js');
+  assert.match(result.qrLibraryAttestation.sha256, /^sha256:[0-9a-f]{64}$/,
+    'attestation sha256 must be sha256:HEX format with 64-char lowercase hex');
+
+  /* Caller cannot mutate the attestation path or hash. */
+  result.qrLibraryAttestation.path = 'evil';
+  result.qrLibraryAttestation.sha256 = 'sha256:' + 'ff'.repeat(32);
+  assert.equal(result.qrLibraryAttestation.path, 'js/vendor/qrcode.min.js',
+    'attestation path must be immutable');
+  assert.match(result.qrLibraryAttestation.sha256, /^sha256:[0-9a-f]{64}$/,
+    'attestation sha256 must be immutable');
+
+  /* The raw manifest assets array must not be exposed. */
+  assert.ok(!('verifiedAssets' in result), 'raw verifiedAssets must not appear on VERIFIED result');
+
+  /* isQrLibraryAttestation() must recognise the issued attestation. */
+  assert.ok(
+    verifyingRuntime.isQrLibraryAttestation(result.qrLibraryAttestation),
+    'isQrLibraryAttestation() must return true for verifier-issued attestation',
+  );
+
+  /* A shape-alike object created externally must not pass the predicate. */
+  const fakeAttestation = {
+    path: 'js/vendor/qrcode.min.js',
+    sha256: result.qrLibraryAttestation.sha256,
+  };
+  assert.equal(
+    verifyingRuntime.isQrLibraryAttestation(fakeAttestation),
+    false,
+    'isQrLibraryAttestation() must return false for shape-alike forgeries',
+  );
+
+  /* Primitive and null inputs must not throw. */
+  assert.equal(verifyingRuntime.isQrLibraryAttestation(null), false);
+  assert.equal(verifyingRuntime.isQrLibraryAttestation(undefined), false);
+  assert.equal(verifyingRuntime.isQrLibraryAttestation('js/vendor/qrcode.min.js'), false);
+});
+
+test('malformed qrcode sha256 in manifest produces INTEGRITY_FAILED — not VERIFIED with null attestation', async () => {
+  /* Invariant: the verifier must never return VERIFIED with qrLibraryAttestation: null.
+   * If the qrcode.min.js asset has a malformed sha256, attestation issuance fails
+   * and the result is downgraded to INTEGRITY_FAILED. */
+  const keyPair = await webcrypto.subtle.generateKey(
+    { name: 'ECDSA', namedCurve: 'P-256' },
+    true,
+    ['sign', 'verify'],
+  );
+  const publicKey = await webcrypto.subtle.exportKey('jwk', keyPair.publicKey);
+  const verifyingRuntime = loadVerification({
+    crypto: webcrypto,
+    atob: nodeAtob,
+    btoa: nodeBtoa,
+    trustedPublicKeys: Object.freeze({
+      'coin-card-test-key': trustedKeyRecord('coin-card-test-key', publicKey),
+    }),
+  });
+  const corruptManifest = signedManifest({
+    assets: signedManifest().assets.map((a) =>
+      a.path === 'js/vendor/qrcode.min.js'
+        ? { ...a, sha256: 'not-a-valid-sha256-format' }
+        : a
+    ),
+  });
+  const signed = await signManifestWithKeyPair(verifyingRuntime, corruptManifest, keyPair);
+  const result = await verifyingRuntime.evaluateSignaturePolicy(signed, {
+    state: verifyingRuntime.STATES.ASSET_HASHES_PASSED,
+    integrityManifest: signed,
+    metadata: { assetIntegrityStatus: 'passed' },
+    error: null,
+  });
+
+  /* INTEGRITY_FAILED — not VERIFIED with a null attestation. */
+  assert.equal(result.state, verifyingRuntime.STATES.INTEGRITY_FAILED,
+    'malformed qrcode sha256 must produce INTEGRITY_FAILED — VERIFIED + null is not permitted');
+  assert.equal(result.error, 'integrity-manifest-qr-attestation-missing',
+    'error must identify the missing attestation as the cause');
+  assert.equal(result.qrLibraryAttestation, null,
+    'qrLibraryAttestation is null on INTEGRITY_FAILED result');
+
+  /* The forged state must not fool isQrLibraryAttestation(). */
+  assert.equal(
+    verifyingRuntime.isQrLibraryAttestation({ path: 'js/vendor/qrcode.min.js', sha256: 'sha256:' + 'aa'.repeat(32) }),
+    false,
+    'manually crafted attestation-shaped object must not pass isQrLibraryAttestation()',
+  );
 });
