@@ -14,6 +14,8 @@ from pathlib import Path
 
 
 SCHEMA_VERSION = "coin-card-manifest.v1"
+MANIFEST_SCOPE = "coin-card-runtime-package"
+FORBIDDEN_FIELDS = ("cardId", "recipient", "network", "registryStatus")
 
 
 def sha256_file(path: Path) -> str:
@@ -50,12 +52,18 @@ def verify_manifest(manifest: dict, root: Path) -> list[str]:
     if manifest.get("schemaVersion") != SCHEMA_VERSION:
         errors.append(f"schemaVersion must be {SCHEMA_VERSION!r}")
 
+    if manifest.get("scope") != MANIFEST_SCOPE:
+        errors.append(f"scope must be {MANIFEST_SCOPE!r}")
+
+    for field in FORBIDDEN_FIELDS:
+        if field in manifest:
+            errors.append(
+                f"{field!r} must not appear in a package-scoped manifest "
+                f"(card-instance fields belong in the registry record)"
+            )
+
     for field in (
-        "cardId",
         "coinCardVersion",
-        "recipient",
-        "network",
-        "registryStatus",
         "layoutVersion",
         "buildVersion",
         "manifestHash",

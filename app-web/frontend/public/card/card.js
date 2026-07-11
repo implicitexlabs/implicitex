@@ -656,14 +656,14 @@
           return;
         }
 
-        /* Load the QR rendering library now that verification has passed.
+        initAmountSurface(registryRecord);
+        transition('VERIFIED');
+
+        /* Load the QR rendering library after the UI state transitions to VERIFIED.
          * A failed load is a controlled product state (FAILED → "QR unavailable").
          * The rejection is handled inside loadQrLibrary via .catch() on the cached
          * promise; consume it explicitly here too so no unhandled rejection fires. */
         loadQrLibrary(state.qrLibraryAttestation).catch(function () {});
-
-        initAmountSurface(registryRecord);
-        transition('VERIFIED');
         setChipState('cc-card-chip--waiting', true, 'Enter amount to continue');
 
         emit('CC_READY', {

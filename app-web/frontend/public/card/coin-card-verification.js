@@ -35,13 +35,22 @@
   });
 
   var MANIFEST_SCHEMA_VERSION = 'coin-card-manifest.v1';
-  var REQUIRED_MANIFEST_FIELDS = Object.freeze([
-    'schemaVersion',
+  /* The manifest governs the runtime package (JS/CSS assets), not a card instance.
+   * Card identity, recipient, network, token, and revocation status are exclusively
+   * governed by the authenticated registry/lifecycle layer. */
+  var MANIFEST_RUNTIME_PACKAGE_SCOPE = 'coin-card-runtime-package';
+  /* Fields that must be ABSENT: their presence indicates a card-specific manifest
+   * that would misrepresent the package-wide scope of this verifier. */
+  var FORBIDDEN_MANIFEST_FIELDS = Object.freeze([
     'cardId',
-    'coinCardVersion',
     'recipient',
     'network',
     'registryStatus',
+  ]);
+  var REQUIRED_MANIFEST_FIELDS = Object.freeze([
+    'schemaVersion',
+    'scope',
+    'coinCardVersion',
     'layoutVersion',
     'buildVersion',
     'assets',
@@ -505,11 +514,8 @@
   function buildIntegrityManifestMetadata(integrityManifest) {
     return {
       schemaVersion: integrityManifest.schemaVersion,
-      cardId: integrityManifest.cardId,
+      scope: integrityManifest.scope,
       coinCardVersion: integrityManifest.coinCardVersion,
-      recipient: integrityManifest.recipient,
-      network: integrityManifest.network,
-      registryStatus: integrityManifest.registryStatus,
       layoutVersion: integrityManifest.layoutVersion,
       buildVersion: integrityManifest.buildVersion,
       manifestHash: integrityManifest.manifestHash,
@@ -526,6 +532,16 @@
     }
     if (integrityManifest.schemaVersion !== MANIFEST_SCHEMA_VERSION) {
       return unavailable('integrity-manifest-schema-unsupported');
+    }
+    if (integrityManifest.scope !== MANIFEST_RUNTIME_PACKAGE_SCOPE) {
+      return unavailable('integrity-manifest-scope-invalid');
+    }
+
+    for (var fi = 0; fi < FORBIDDEN_MANIFEST_FIELDS.length; fi++) {
+      var forbiddenField = FORBIDDEN_MANIFEST_FIELDS[fi];
+      if (Object.prototype.hasOwnProperty.call(integrityManifest, forbiddenField)) {
+        return unavailable('integrity-manifest-card-instance-field-present', { field: forbiddenField });
+      }
     }
 
     for (var i = 0; i < REQUIRED_MANIFEST_FIELDS.length; i++) {

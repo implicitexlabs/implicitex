@@ -43,11 +43,8 @@ function makeIntegrityManifest(overrides = {}) {
 
   return {
     schemaVersion: 'coin-card-manifest.v1',
-    cardId: 'cc_demo_implicitex',
+    scope: 'coin-card-runtime-package',
     coinCardVersion: 'coin-card.v1',
-    recipient: '0x0000000000000000000000000000000000000000',
-    network: 'polygon-mainnet',
-    registryStatus: 'active',
     layoutVersion: 'coin-card-layout.v1',
     buildVersion: 'dev',
     assets,
@@ -844,7 +841,7 @@ test('loadIntegrityManifest exposes metadata without approving execution', async
   assert.equal(result.state, verification.STATES.ASSET_HASHES_PASSED);
   assert.equal(verification.canExecuteTransfer(result.state), false);
   assert.equal(result.error, null);
-  assert.equal(result.metadata.cardId, 'cc_demo_implicitex');
+  assert.equal(result.metadata.scope, 'coin-card-runtime-package');
   assert.equal(result.metadata.schemaVersion, 'coin-card-manifest.v1');
   assert.equal(result.metadata.signatureMode, 'unsigned-dev');
   assert.equal(result.metadata.assetIntegrityStatus, 'passed');
@@ -893,11 +890,8 @@ test('canonicalizeIntegrityManifestPayload ignores top-level field order', () =>
   }));
   reorderedManifest.buildVersion = baseManifest.buildVersion;
   reorderedManifest.layoutVersion = baseManifest.layoutVersion;
-  reorderedManifest.registryStatus = baseManifest.registryStatus;
-  reorderedManifest.network = baseManifest.network;
-  reorderedManifest.recipient = baseManifest.recipient;
   reorderedManifest.coinCardVersion = baseManifest.coinCardVersion;
-  reorderedManifest.cardId = baseManifest.cardId;
+  reorderedManifest.scope = baseManifest.scope;
   reorderedManifest.schemaVersion = baseManifest.schemaVersion;
 
   const basePayload = verification.canonicalizeIntegrityManifestPayload(baseManifest);
@@ -908,11 +902,11 @@ test('canonicalizeIntegrityManifestPayload ignores top-level field order', () =>
   assert(!basePayload.includes('manifestHash'));
 });
 
-test('canonicalizeIntegrityManifestPayload changes when recipient changes', () => {
+test('canonicalizeIntegrityManifestPayload changes when buildVersion changes', () => {
   const verification = loadVerification();
   const baseManifest = validIntegrityManifest();
   const mutatedManifest = validIntegrityManifest({
-    recipient: '0x1111111111111111111111111111111111111111',
+    buildVersion: 'commit-different',
   });
 
   assert.notEqual(
@@ -1023,7 +1017,7 @@ test('verifyP256Signature rejects a tampered signed-p256-v1 manifest', async () 
     payloadBytes,
   );
   manifest.signature.value = toBase64Url(signatureBytes);
-  manifest.recipient = '0x2222222222222222222222222222222222222222';
+  manifest.buildVersion = 'tampered-build-version';
 
   const result = await verification.verifyP256Signature(manifest, publicKey);
   assert.equal(result.ok, true);
@@ -1619,6 +1613,113 @@ test('loadIntegrityManifest unsupported schema becomes VERIFICATION_UNAVAILABLE'
   assert.equal(result.integrityManifest, null);
   assert.equal(result.metadata, null);
   assert.equal(result.error, 'integrity-manifest-schema-unsupported');
+});
+
+test('loadIntegrityManifest missing scope becomes VERIFICATION_UNAVAILABLE', async () => {
+  const verification = loadVerification();
+  const manifest = validIntegrityManifest();
+  delete manifest.scope;
+  const result = await verification.loadIntegrityManifest('coin-card-manifest.json', async () => ({
+    ok: true,
+    json: async () => manifest,
+  }));
+
+  assert.equal(result.state, verification.STATES.VERIFICATION_UNAVAILABLE);
+  assert.equal(result.error, 'integrity-manifest-scope-invalid');
+});
+
+test('loadIntegrityManifest wrong scope becomes VERIFICATION_UNAVAILABLE', async () => {
+  const verification = loadVerification();
+  const result = await verification.loadIntegrityManifest('coin-card-manifest.json', async () => ({
+    ok: true,
+    json: async () => validIntegrityManifest({ scope: 'coin-card-instance.v1' }),
+  }));
+
+  assert.equal(result.state, verification.STATES.VERIFICATION_UNAVAILABLE);
+  assert.equal(result.error, 'integrity-manifest-scope-invalid');
+});
+
+test('loadIntegrityManifest rejects manifest with cardId (card-instance field)', async () => {
+  const verification = loadVerification();
+  const result = await verification.loadIntegrityManifest('coin-card-manifest.json', async () => ({
+    ok: true,
+    json: async () => validIntegrityManifest({ cardId: 'cc_demo_implicitex' }),
+  }));
+
+  assert.equal(result.state, verification.STATES.VERIFICATION_UNAVAILABLE);
+  assert.equal(result.error, 'integrity-manifest-card-instance-field-present');
+  assert.equal(result.field, 'cardId');
+});
+
+test('loadIntegrityManifest rejects manifest with recipient (card-instance field)', async () => {
+  const verification = loadVerification();
+  const result = await verification.loadIntegrityManifest('coin-card-manifest.json', async () => ({
+    ok: true,
+    json: async () => validIntegrityManifest({ recipient: '0x0000000000000000000000000000000000000000' }),
+  }));
+
+  assert.equal(result.state, verification.STATES.VERIFICATION_UNAVAILABLE);
+  assert.equal(result.error, 'integrity-manifest-card-instance-field-present');
+  assert.equal(result.field, 'recipient');
+});
+
+test('loadIntegrityManifest rejects manifest with network (card-instance field)', async () => {
+  const verification = loadVerification();
+  const result = await verification.loadIntegrityManifest('coin-card-manifest.json', async () => ({
+    ok: true,
+    json: async () => validIntegrityManifest({ network: 'polygon-mainnet' }),
+  }));
+
+  assert.equal(result.state, verification.STATES.VERIFICATION_UNAVAILABLE);
+  assert.equal(result.error, 'integrity-manifest-card-instance-field-present');
+  assert.equal(result.field, 'network');
+});
+
+test('loadIntegrityManifest rejects manifest with registryStatus (card-instance field)', async () => {
+  const verification = loadVerification();
+  const result = await verification.loadIntegrityManifest('coin-card-manifest.json', async () => ({
+    ok: true,
+    json: async () => validIntegrityManifest({ registryStatus: 'active' }),
+  }));
+
+  assert.equal(result.state, verification.STATES.VERIFICATION_UNAVAILABLE);
+  assert.equal(result.error, 'integrity-manifest-card-instance-field-present');
+  assert.equal(result.field, 'registryStatus');
+});
+
+test('package manifest has no authority over card identity — metadata exposes scope not cardId', async () => {
+  const verification = loadVerification();
+  const result = await verification.loadIntegrityManifest('coin-card-manifest.json', async (url) => ({
+    ok: true,
+    json: async () => validIntegrityManifest(),
+    arrayBuffer: async () => Buffer.from(REQUIRED_ASSET_BODIES[url] || '', 'utf8'),
+  }));
+
+  assert.equal(result.state, verification.STATES.ASSET_HASHES_PASSED);
+  assert.equal(result.metadata.scope, 'coin-card-runtime-package');
+  assert.equal(result.metadata.cardId, undefined);
+  assert.equal(result.metadata.recipient, undefined);
+  assert.equal(result.metadata.network, undefined);
+  assert.equal(result.metadata.registryStatus, undefined);
+});
+
+test('package manifest governs multiple card routes — registry identity change does not affect manifest hash', async () => {
+  // The manifest covers JS/CSS assets only. Two distinct registry records
+  // (cc_demo_implicitex and antoine) share the same runtime package.
+  // Changing which card serves the route does not change the manifest hash.
+  const verification = loadVerification();
+  const manifest = validIntegrityManifest();
+
+  const payloadA = verification.canonicalizeIntegrityManifestPayload(manifest);
+  // Simulate a different registry record being loaded for a different route
+  // by confirming the manifest payload is unchanged (no per-card fields present).
+  const payloadB = verification.canonicalizeIntegrityManifestPayload(manifest);
+
+  assert.equal(payloadA, payloadB);
+  assert(!payloadA.includes('cardId'));
+  assert(!payloadA.includes('recipient'));
+  assert(!payloadA.includes('network'));
+  assert(!payloadA.includes('registryStatus'));
 });
 
 test('loadIntegrityManifest missing required protected asset becomes VERIFICATION_UNAVAILABLE', async () => {

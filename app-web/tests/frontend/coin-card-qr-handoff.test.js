@@ -424,6 +424,22 @@ test('loadQrLibrary call site attaches .catch() to suppress unhandled rejection'
   );
 });
 
+test('loadQrLibrary is called after transition(VERIFIED) — not before', () => {
+  /* The QR library must be loaded only after the UI has transitioned to VERIFIED.
+   * Loading before VERIFIED would mean the library executes during a state where
+   * the card surface has not yet confirmed asset integrity. */
+  const verifiedPos = cardJsSource.indexOf("transition('VERIFIED')");
+  const loadQrPos   = cardJsSource.indexOf(
+    "loadQrLibrary(state.qrLibraryAttestation).catch(function () {})",
+    verifiedPos,
+  );
+  assert.ok(verifiedPos !== -1, "transition('VERIFIED') must appear in card.js");
+  assert.ok(
+    loadQrPos > verifiedPos,
+    'loadQrLibrary() call must appear after transition(VERIFIED) in card.js source order'
+  );
+});
+
 test('loadQrLibrary returns a cached promise — repeated calls are idempotent', () => {
   assert.ok(
     cardJsSource.includes('qrLibraryPromise'),

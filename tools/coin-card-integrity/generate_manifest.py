@@ -14,8 +14,8 @@ from pathlib import Path
 
 
 SCHEMA_VERSION = "coin-card-manifest.v1"
+MANIFEST_SCOPE = "coin-card-runtime-package"
 DEFAULT_VERSION = "coin-card.v1"
-DEFAULT_REGISTRY_STATUS = "active"
 DEFAULT_LAYOUT_VERSION = "coin-card-layout.v1"
 DEFAULT_BUILD_VERSION = "dev"
 
@@ -60,11 +60,8 @@ def build_manifest(args: argparse.Namespace) -> dict:
 
     manifest = {
         "schemaVersion": SCHEMA_VERSION,
-        "cardId": args.card_id,
+        "scope": MANIFEST_SCOPE,
         "coinCardVersion": args.coin_card_version,
-        "recipient": args.recipient,
-        "network": args.network,
-        "registryStatus": args.registry_status,
         "layoutVersion": args.layout_version,
         "buildVersion": args.build_version,
         "assets": assets,
@@ -83,11 +80,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--root", type=Path, required=True, help="Root directory assets are resolved against.")
     parser.add_argument("--asset", action="append", default=[], help="Asset path relative to --root. Repeatable.")
     parser.add_argument("--out", type=Path, required=True, help="Manifest output path.")
-    parser.add_argument("--card-id", required=True)
-    parser.add_argument("--recipient", required=True)
-    parser.add_argument("--network", required=True, help="Network name or chain label, e.g. polygon-mainnet.")
     parser.add_argument("--coin-card-version", default=DEFAULT_VERSION)
-    parser.add_argument("--registry-status", default=DEFAULT_REGISTRY_STATUS)
     parser.add_argument("--layout-version", default=DEFAULT_LAYOUT_VERSION)
     parser.add_argument("--build-version", default=DEFAULT_BUILD_VERSION)
     return parser.parse_args(argv)

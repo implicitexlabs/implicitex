@@ -102,7 +102,6 @@ let serverPort;
 let serverUrl;
 let httpServer;
 let signedManifest;
-let revokedManifest;
 let testTrustedKeysJs;
 let qrcodeMinJsSri;   // expected SRI attribute value on the injected script tag
 
@@ -171,9 +170,12 @@ function buildTestTrustedKeysJs(publicKeyJwk) {
   ].join('\n');
 }
 
-async function buildSignedManifest(privateKey, testTrustedKeysContent, cardId, status) {
+async function buildSignedManifest(privateKey, testTrustedKeysContent) {
   /* Compute hashes of all protected assets. The trusted-keys.js hash reflects
-   * the test content we will serve, not the production file. */
+   * the test content we will serve, not the production file.
+   *
+   * The manifest is package-scoped: it covers JS/CSS assets only.
+   * Card identity (recipient, network, status) comes from the registry record. */
   const assetsSorted = [...PROTECTED_ASSET_PATHS].sort();
   const assets = assetsSorted.map((assetPath) => {
     let buf;
@@ -195,17 +197,14 @@ async function buildSignedManifest(privateKey, testTrustedKeysContent, cardId, s
   const manifest = {
     assets,
     buildVersion: 'browser-test',
-    cardId,
     coinCardVersion: 'coin-card.v1',
     environment: 'production',
     issuerId: 'implicitex',
     keyId: 'cc-browser-test-key',
     layoutVersion: 'coin-card-layout.v1',
     manifestHash: 'sha256:placeholder',
-    network: 'polygon-mainnet',
-    recipient: '0x0000000000000000000000000000000000000001',
-    registryStatus: status || 'active',
     schemaVersion: 'coin-card-manifest.v1',
+    scope: 'coin-card-runtime-package',
     signedAt: '2026-07-01T00:00:00.000Z',
     signature: {
       algorithm: 'ECDSA',
@@ -376,16 +375,17 @@ async function openCardPage(page, cardId, targetState) {
       return;
     }
 
-    /* (b) Inject the signed test manifest. */
+    /* (b) Inject the signed test manifest.
+     * The package manifest is route-independent: the same manifest serves all card routes.
+     * Card identity (recipient, status) comes from the registry record, not the manifest. */
     if (urlPath === '/card/coin-card-manifest.json') {
-      const manifest = cardId === 'qr-revoked' ? revokedManifest : signedManifest;
       request.respond({
         status: 200,
         headers: {
           'Content-Type': 'application/json',
           'Access-Control-Allow-Origin': '*',
         },
-        body: JSON.stringify(manifest),
+        body: JSON.stringify(signedManifest),
       });
       return;
     }
@@ -420,9 +420,8 @@ describe('Coin Card QR handoff — browser tests', async () => {
     /* Build the test trusted-keys.js content. */
     testTrustedKeysJs = buildTestTrustedKeysJs(publicKeyJwk);
 
-    /* Build signed manifests for active and revoked cards. */
-    signedManifest  = await buildSignedManifest(keyPair.privateKey, testTrustedKeysJs, 'qr-test', 'active');
-    revokedManifest = await buildSignedManifest(keyPair.privateKey, testTrustedKeysJs, 'qr-revoked', 'active');
+    /* Build the single package-scoped signed manifest (shared by all card routes). */
+    signedManifest = await buildSignedManifest(keyPair.privateKey, testTrustedKeysJs);
 
     /* Compute the expected SRI value for the qrcode.min.js script tag.
      * card.js: attestation.sha256 → hex → bytes → base64 → 'sha256-' + b64 */

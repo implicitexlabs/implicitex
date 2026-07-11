@@ -78,12 +78,21 @@ function readRuntimeManifestPointer() {
   return match[1];
 }
 
+const FORBIDDEN_MANIFEST_FIELDS = ['cardId', 'recipient', 'network', 'registryStatus'];
+
 function assertGeneratedPackageShape(manifestPath) {
   assert.equal(path.basename(manifestPath), manifestFilename);
   assert.equal(readRuntimeManifestPointer(), manifestFilename);
   assert(fs.existsSync(manifestPath), 'generated manifest must exist at package root');
 
   const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+
+  assert.equal(manifest.scope, 'coin-card-runtime-package', 'manifest must declare package scope');
+
+  for (const field of FORBIDDEN_MANIFEST_FIELDS) {
+    assert(!(field in manifest), `manifest must not contain card-instance field: ${field}`);
+  }
+
   const declaredAssets = manifest.assets.map((asset) => asset.path).sort();
   assert.deepEqual(declaredAssets, [...protectedAssets].sort());
 }
@@ -125,12 +134,6 @@ function main() {
     'card/card.css',
     '--out',
     manifestPath,
-    '--card-id',
-    'cc_demo_implicitex',
-    '--recipient',
-    '0x0000000000000000000000000000000000000000',
-    '--network',
-    'polygon-mainnet',
   ]);
 
   requireSuccess('manifest verification', 'python', [
