@@ -12,6 +12,7 @@
   var BUNDLE_REGISTRY_ID = 'implicitex-production';
   var BUNDLE_ENVIRONMENT = 'production';
   var BUNDLE_SIGNATURE = 'not-applicable-v1';
+  var authenticatedBundleResults = new WeakSet();
   var STRICT_UTC_TIMESTAMP_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
   var BUNDLE_CLOCK_SKEW_MS = 5 * 60 * 1000;
   var BUNDLE_FIELDS = Object.freeze([
@@ -211,7 +212,7 @@
   }
 
   function success(bundle, authenticatedEntries) {
-    return Object.freeze({
+    var result = {
       outcome: OUTCOMES.LIFECYCLE_BUNDLE_RECORDS_AUTHENTICATED,
       authenticated: true,
       sourceValidated: true,
@@ -226,7 +227,10 @@
       entryCount: authenticatedEntries.length,
       bundle: bundle,
       entries: Object.freeze(authenticatedEntries.slice()),
-    });
+    };
+    var frozenResult = Object.freeze(result);
+    authenticatedBundleResults.add(frozenResult);
+    return frozenResult;
   }
 
   function hasExactFields(value, fields) {
@@ -252,6 +256,10 @@
     if (!Array.isArray(bundle.entries) || bundle.entries.length < 1) return REASONS.BUNDLE_SCHEMA_INVALID;
     if (!Object.isFrozen(bundle.entries)) return REASONS.BUNDLE_SCHEMA_INVALID;
     return null;
+  }
+
+  function isAuthenticatedBundleResult(value) {
+    return authenticatedBundleResults.has(value);
   }
 
   async function authenticateLifecycleRegistryBundle(bundle) {
@@ -422,6 +430,7 @@
     value: Object.freeze({
       BUNDLE_SCHEMA_VERSION: BUNDLE_SCHEMA_VERSION,
       OUTCOMES: OUTCOMES,
+      isAuthenticatedBundleResult: isAuthenticatedBundleResult,
       authenticateLifecycleRegistryBundle: authenticateLifecycleRegistryBundle,
     }),
     writable: false,

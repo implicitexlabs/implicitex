@@ -329,6 +329,7 @@ test('valid synthetic lifecycle bundle authenticates atomically without lifecycl
   assert.equal(result.registryVersion, 3);
   assert.equal(result.generatedAt, '2026-07-09T09:05:00.000Z');
   assert.equal(result.entryCount, 3);
+  assert.equal(runtime.bundleVerifier.isAuthenticatedBundleResult(result), true);
   assert.equal(Object.isFrozen(result), true);
   assert.equal(Object.isFrozen(result.bundle), true);
   assert.equal(Object.isFrozen(result.bundle.entries), true);
@@ -345,6 +346,36 @@ test('valid synthetic lifecycle bundle authenticates atomically without lifecycl
 
   result.entries[0].record.cardStatus = 'CARD_REVOKED';
   assert.equal(result.entries[0].record.cardStatus, 'CARD_ACTIVE');
+});
+
+test('bundle verification private predicate accepts only the genuine success result', async () => {
+  const runtime = await makeSignedBundleRuntime();
+  const result = await runtime.bundleVerifier.authenticateLifecycleRegistryBundle(runtime.bundle);
+  const cloneResult = Object.freeze({ ...result });
+  const deepCloneResult = deepFreeze(clone(result));
+
+  assert.equal(runtime.bundleVerifier.isAuthenticatedBundleResult(result), true);
+  assert.equal(runtime.bundleVerifier.isAuthenticatedBundleResult(cloneResult), false);
+  assert.equal(runtime.bundleVerifier.isAuthenticatedBundleResult(deepCloneResult), false);
+  assert.equal(runtime.bundleVerifier.isAuthenticatedBundleResult({}), false);
+  assert.equal(runtime.bundleVerifier.isAuthenticatedBundleResult('not-an-object'), false);
+});
+
+test('bundle verification failure results are not in the private registry', async () => {
+  const runtime = await makeSignedBundleRuntime([
+    {},
+    {},
+    {
+      registryVersion: 2,
+    },
+  ], {
+    registryVersion: 2,
+  });
+  const result = await runtime.bundleVerifier.authenticateLifecycleRegistryBundle(runtime.bundle);
+
+  assert.equal(result.outcome, runtime.bundleVerifier.OUTCOMES.LIFECYCLE_BUNDLE_STRUCTURE_INVALID);
+  assert.equal(runtime.bundleVerifier.isAuthenticatedBundleResult(result), false);
+  assert.equal(Object.isFrozen(result), true);
 });
 
 test('bundle authentication uses one verification instant for every entry', async () => {
