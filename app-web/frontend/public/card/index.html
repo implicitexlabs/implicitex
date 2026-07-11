@@ -134,14 +134,38 @@
 
   </div><!-- /.cc-card -->
 
+  <!-- RECEIVE ZONE — card holder presents card to sender; shown in active card states via CSS -->
+  <div class="cc-receive-zone" id="ccReceiveZone">
+    <button class="cc-receive-btn" id="ccReceiveBtn" type="button">RECEIVE</button>
+  </div>
+
+  <!-- QR PANEL — replaces card view when RECEIVE is active -->
+  <div class="cc-qr-panel" id="ccQrPanel" aria-label="Present Coin Card">
+    <div class="cc-qr-head">
+      <span class="cc-qr-title">PRESENT CARD</span>
+      <button class="cc-qr-close" id="ccQrClose" type="button" aria-label="Close QR panel">&times;</button>
+    </div>
+    <canvas class="cc-qr-canvas" id="ccQrCanvas" width="200" height="200" aria-hidden="true"></canvas>
+    <p class="cc-qr-hint">Sender scans to pay you</p>
+    <div class="cc-qr-amount-wrap">
+      <input class="cc-qr-amount-input" id="ccQrAmountInput"
+        type="number" min="0.01" step="0.01" placeholder="Request amount (optional)"
+        inputmode="decimal" autocomplete="off" aria-label="Request amount in USDC">
+      <span class="cc-qr-amount-unit">USDC</span>
+    </div>
+    <p class="cc-qr-url" id="ccQrUrl" aria-live="polite"></p>
+  </div>
+
 </div><!-- /.cc-frame -->
 
+<script src="/js/vendor/qrcode.min.js"></script>
 <script src="/js/ix-execution.js"></script>
 <script src="coin-card-trusted-keys.js"></script>
 <script src="coin-card-trusted-key-resolution.js"></script>
 <script src="coin-card-lifecycle-registry.js"></script>
 <script src="coin-card-lifecycle-record-verification.js"></script>
 <script src="coin-card-lifecycle-bundle-verification.js"></script>
+<script src="coin-card-lifecycle-record-selection.js"></script>
 <script src="coin-card-verification.js"></script>
 <script src="card.js"></script>
 </body>

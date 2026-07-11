@@ -48,6 +48,7 @@ coin-card-package/
     coin-card-lifecycle-registry.js
     coin-card-lifecycle-record-verification.js
     coin-card-lifecycle-bundle-verification.js
+    coin-card-lifecycle-record-selection.js
     coin-card-verification.js
     card.js
     card.css
@@ -89,6 +90,7 @@ card/coin-card-trusted-key-resolution.js
 card/coin-card-lifecycle-registry.js
 card/coin-card-lifecycle-record-verification.js
 card/coin-card-lifecycle-bundle-verification.js
+card/coin-card-lifecycle-record-selection.js
 card/coin-card-verification.js
 card/card.js
 card/card.css

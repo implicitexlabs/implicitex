@@ -71,6 +71,11 @@
         "role": "atomic-record-collection-authentication"
       },
       {
+        "id": "lifecycleRecordSelection",
+        "type": "responsibility",
+        "role": "authenticated-evidence-selection"
+      },
+      {
         "id": "lifecycleRegistry",
         "type": "responsibility",
         "role": "registry-canonicalization-and-empty-bundle-validation"
@@ -161,6 +166,16 @@
       {
         "from": "lifecycleBundle",
         "to": "lifecycleRecordVerification",
+        "relationship": "consumes"
+      },
+      {
+        "from": "lifecycleRecordSelection",
+        "to": "lifecycleBundle",
+        "relationship": "consumes"
+      },
+      {
+        "from": "lifecycleRecordSelection",
+        "to": "lifecycleRegistry",
         "relationship": "consumes"
       },
       {
@@ -257,6 +272,36 @@
         "to": "lifecycleResolution",
         "relationship": "depends-on",
         "reason": "Lifecycle bundle verification must not depend on lifecycle resolution."
+      },
+      {
+        "from": "lifecycleRecordSelection",
+        "to": "manifestVerification",
+        "relationship": "depends-on",
+        "reason": "Lifecycle record selection must not depend on manifest verification."
+      },
+      {
+        "from": "lifecycleRecordSelection",
+        "to": "presentation",
+        "relationship": "depends-on",
+        "reason": "Lifecycle record selection must not depend on presentation."
+      },
+      {
+        "from": "lifecycleRecordSelection",
+        "to": "wallet",
+        "relationship": "depends-on",
+        "reason": "Lifecycle record selection must not depend on wallet state."
+      },
+      {
+        "from": "lifecycleRecordSelection",
+        "to": "ixExecute",
+        "relationship": "depends-on",
+        "reason": "Lifecycle record selection must not depend on IX execution."
+      },
+      {
+        "from": "lifecycleRecordSelection",
+        "to": "lifecycleResolution",
+        "relationship": "depends-on",
+        "reason": "Lifecycle record selection must not depend on lifecycle resolution."
       }
     ]
   },

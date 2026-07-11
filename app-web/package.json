@@ -15,7 +15,7 @@
     "test:coincard": "npm run test:coincard-presentation-input && npm run test:coincard-display && node tests/frontend/coin-card-tokens.test.js",
     "test:coincard-review": "node tests/frontend/coin-card-state-review.test.js",
     "test:coin-card-integrity": "node scripts/test_coin_card_integrity.js",
-    "test:coin-card-verification": "node tests/frontend/coin-card-trusted-key-resolution.test.js && node tests/frontend/coin-card-lifecycle-record-verification.test.js && node tests/frontend/coin-card-lifecycle-bundle-verification.test.js && node tests/frontend/coin-card-verification.test.js && node tests/frontend/coin-card-lifecycle-registry.test.js",
+    "test:coin-card-verification": "node tests/frontend/coin-card-trusted-key-resolution.test.js && node tests/frontend/coin-card-lifecycle-record-verification.test.js && node tests/frontend/coin-card-lifecycle-bundle-verification.test.js && node tests/frontend/coin-card-lifecycle-record-selection.test.js && node tests/frontend/coin-card-verification.test.js && node tests/frontend/coin-card-lifecycle-registry.test.js",
     "test:ix-execution": "node tests/frontend/ix-execution.test.js",
     "test:observability": "node tests/frontend/observability.test.js",
     "test:analytics": "node tests/frontend/analytics.test.js",
@@ -28,6 +28,7 @@
     "hardhat": "^2.22.0",
     "png-to-ico": "^3.0.1",
     "puppeteer": "^25.1.0",
+    "qrcode": "^1.5.4",
     "sharp": "^0.35.1"
   },
   "dependencies": {

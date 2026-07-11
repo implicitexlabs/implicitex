@@ -5,6 +5,10 @@ const publicRoot = path.resolve(__dirname, "../frontend/public");
 const siteHostnames = new Set(["implicitex.com", "www.implicitex.com"]);
 const skippedSchemes = /^(mailto:|tel:|data:|javascript:|#)/i;
 
+// URL path prefixes served by Firebase SPA rewrites — the rewrite target (index.html) exists
+// but dynamic sub-paths do not exist as files. References to these paths are valid at runtime.
+const spaRoutePrefixes = ["/card/"];
+
 function walk(dir) {
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
     const fullPath = path.join(dir, entry.name);
@@ -19,6 +23,11 @@ function publicPathToFile(urlPath) {
   return path.join(publicRoot, cleanPath.replace(/^\/+/, ""));
 }
 
+function isSpaRoute(urlPath) {
+  const clean = urlPath.split("?")[0].split("#")[0];
+  return spaRoutePrefixes.some(prefix => clean.startsWith(prefix) && clean.length > prefix.length);
+}
+
 function resolveTarget(rawTarget, fromFile) {
   const target = rawTarget.trim();
   if (!target || skippedSchemes.test(target)) return null;
@@ -26,10 +35,14 @@ function resolveTarget(rawTarget, fromFile) {
   if (/^https?:\/\//i.test(target)) {
     const parsed = new URL(target);
     if (!siteHostnames.has(parsed.hostname)) return null;
+    if (isSpaRoute(parsed.pathname)) return null;
     return publicPathToFile(parsed.pathname);
   }
 
-  if (target.startsWith("/")) return publicPathToFile(target);
+  if (target.startsWith("/")) {
+    if (isSpaRoute(target)) return null;
+    return publicPathToFile(target);
+  }
 
   return path.resolve(path.dirname(fromFile), target.split("#")[0].split("?")[0]);
 }
