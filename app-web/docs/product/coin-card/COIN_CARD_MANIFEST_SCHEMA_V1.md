@@ -92,6 +92,7 @@ Generate:
 python tools/coin-card-integrity/generate_manifest.py \
   --root app-web/frontend/public \
   --asset js/ix-execution.js \
+  --asset js/vendor/qrcode.min.js \
   --asset card/coin-card-trusted-keys.js \
   --asset card/coin-card-trusted-key-resolution.js \
   --asset card/coin-card-lifecycle-registry.js \

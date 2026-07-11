@@ -633,10 +633,18 @@
           ? verification.normalizeState(result && result.state)
           : 'VERIFICATION_UNAVAILABLE';
 
+        /* Store verified asset list for post-verification QR library injection.
+         * Only the VERIFIED result carries verifiedAssets (populated by evaluateSignaturePolicy). */
+        state.verifiedManifestAssets = (result && result.verifiedAssets) || null;
+
         if (!verification || !verification.canExecuteTransfer(state.integrityManifestVerificationState)) {
           renderVerificationBlocked();
           return;
         }
+
+        /* Load the QR rendering library now that verification has passed.
+         * loadQrLibrary() uses the verified asset hashes — see its comment block. */
+        loadQrLibrary(state.verifiedManifestAssets);
 
         initAmountSurface(registryRecord);
         transition('VERIFIED');
@@ -716,14 +724,57 @@
   }
 
   /* ----------------------------------------------------------------
+   * QR library governance — load only after verification succeeds.
+   *   qrcode.min.js is NOT loaded via a static <script> tag.
+   *   It is injected dynamically here, after the integrity manifest
+   *   has verified its SHA-256. The browser SRI attribute enforces
+   *   the same hash at the platform level before execution.
+   *   If verification failed, this function is never called and
+   *   QRCode remains undefined. generateQR() fails closed in that case.
+   * ---------------------------------------------------------------- */
+  function loadQrLibrary(verifiedAssets) {
+    if (!Array.isArray(verifiedAssets)) return;
+    var qrcodeAsset = null;
+    for (var qi = 0; qi < verifiedAssets.length; qi++) {
+      if (verifiedAssets[qi] && verifiedAssets[qi].path === 'js/vendor/qrcode.min.js') {
+        qrcodeAsset = verifiedAssets[qi];
+        break;
+      }
+    }
+    /* Fail closed: qrcode not in the verified manifest → no library. */
+    if (!qrcodeAsset || typeof qrcodeAsset.sha256 !== 'string') return;
+    var hexHash = qrcodeAsset.sha256.replace(/^sha256:/, '');
+    /* Reject malformed hashes — fail closed. */
+    if (!/^[0-9a-f]{64}$/.test(hexHash)) return;
+    /* Convert hex SHA-256 → base64 for the SRI integrity attribute. */
+    var hashBytes = new Uint8Array(32);
+    for (var bi = 0; bi < 32; bi++) {
+      hashBytes[bi] = parseInt(hexHash.slice(bi * 2, bi * 2 + 2), 16);
+    }
+    var binary = '';
+    for (var ci = 0; ci < hashBytes.length; ci++) binary += String.fromCharCode(hashBytes[ci]);
+    var btoaImpl = window.btoa || null;
+    if (typeof btoaImpl !== 'function') return;  /* btoa unavailable — fail closed */
+    var b64 = btoaImpl(binary);
+    if (!b64) return;
+    /* Inject the script element with browser SRI enforcement. */
+    var scriptEl = document.createElement('script');
+    scriptEl.src = '/js/vendor/qrcode.min.js';
+    scriptEl.integrity = 'sha256-' + b64;
+    scriptEl.crossOrigin = 'anonymous';
+    /* If the browser's SRI check fails, the script will not execute.
+     * generateQR() checks typeof QRCode before use and returns silently. */
+    document.head.appendChild(scriptEl);
+  }
+
+  /* ----------------------------------------------------------------
    * Init — read card ID from URL path
    *   URL: https://implicitex.com/card/antoine
    *   pathname.split('/') → ['', 'card', 'antoine']
    * ---------------------------------------------------------------- */
   /* ----------------------------------------------------------------
-   * QR receive — generates QR encoding the canonical card URL.
-   *   With amount: https://implicitex.com/card/[id]?amount=X.XX
-   *   Without:     https://implicitex.com/card/[id]
+   * QR receive — generates QR encoding the environment-origin card URL.
+   *   Without amount: {window.location.origin}/card/{cardId}
    * ---------------------------------------------------------------- */
   function generateQR() {
     if (typeof QRCode === 'undefined' || !QRCode.toCanvas) return;

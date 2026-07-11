@@ -31,6 +31,7 @@
   ]);
   var REQUIRED_ASSET_PATHS = Object.freeze([
     'js/ix-execution.js',
+    'js/vendor/qrcode.min.js',
     'card/coin-card-trusted-keys.js',
     'card/coin-card-trusted-key-resolution.js',
     'card/coin-card-lifecycle-registry.js',
@@ -636,7 +637,10 @@
     return verifyP256Signature(integrityManifest, trustedKeyResolution.publicKey)
       .then(function (result) {
         if (result && result.state === STATES.VERIFIED) {
-          return result;
+          /* Include verified asset list in the VERIFIED result so callers can
+           * inject post-verification executables (e.g. qrcode.min.js) using
+           * the manifest-authenticated SHA-256 hashes. */
+          return Object.assign({}, result, { verifiedAssets: integrityManifest.assets });
         }
         if (result && result.state === STATES.INTEGRITY_FAILED) {
           return result;

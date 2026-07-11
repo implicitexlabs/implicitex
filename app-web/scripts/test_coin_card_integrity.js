@@ -13,6 +13,7 @@ const cardIndex = path.join(publicRoot, 'card/index.html');
 const manifestFilename = 'coin-card-manifest.json';
 const protectedAssets = [
   'js/ix-execution.js',
+  'js/vendor/qrcode.min.js',
   'card/coin-card-trusted-keys.js',
   'card/coin-card-trusted-key-resolution.js',
   'card/coin-card-lifecycle-registry.js',
@@ -100,6 +101,8 @@ function main() {
     publicRoot,
     '--asset',
     'js/ix-execution.js',
+    '--asset',
+    'js/vendor/qrcode.min.js',
     '--asset',
     'card/coin-card-trusted-keys.js',
     '--asset',

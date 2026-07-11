@@ -17,6 +17,7 @@ const cardSource = fs.readFileSync(cardPath, 'utf8');
 
 const REQUIRED_ASSET_BODIES = {
   'js/ix-execution.js': 'ix execution asset body',
+  'js/vendor/qrcode.min.js': 'qrcode vendor asset body',
   'card/coin-card-trusted-keys.js': 'coin-card-trusted-keys asset body',
   'card/coin-card-trusted-key-resolution.js': 'coin-card-trusted-key-resolution asset body',
   'card/coin-card-lifecycle-registry.js': 'coin-card-lifecycle-registry asset body',
@@ -222,6 +223,7 @@ const expectedStateCopy = {
 };
 const requiredAssetPaths = [
   'js/ix-execution.js',
+  'js/vendor/qrcode.min.js',
   'card/coin-card-trusted-keys.js',
   'card/coin-card-trusted-key-resolution.js',
   'card/coin-card-lifecycle-registry.js',
@@ -1739,4 +1741,143 @@ test('blocked verification states still render the correct disabled copy', async
       assert(runtime.verificationCalls.some((call) => call.type === 'canExecuteTransfer' && call.state === blockedState), blockedState);
     }
   }
+});
+
+/* ----------------------------------------------------------------
+ * QR library protected-asset governance tests
+ *
+ * qrcode.min.js is a third-party executable in the protected asset
+ * set. These tests verify that:
+ *   - its path is in REQUIRED_ASSET_PATHS (omission is detected)
+ *   - hash mutation is detected as INTEGRITY_FAILED
+ *   - stale hash (fetched bytes differ from manifest) is detected
+ *   - path substitution is detected as VERIFICATION_UNAVAILABLE
+ *   - the VERIFIED result passes verifiedAssets for QR injection
+ * ---------------------------------------------------------------- */
+
+test('js/vendor/qrcode.min.js is a required protected asset', () => {
+  const verification = loadVerification();
+  const paths = verification.getRequiredAssetPaths();
+  assert.ok(paths.includes('js/vendor/qrcode.min.js'),
+    'qrcode.min.js must be in REQUIRED_ASSET_PATHS');
+});
+
+test('omitting qrcode.min.js from manifest becomes VERIFICATION_UNAVAILABLE', async () => {
+  const verification = loadVerification();
+  const manifest = validIntegrityManifest({
+    assets: validIntegrityManifest().assets.filter(
+      (asset) => asset.path !== 'js/vendor/qrcode.min.js'
+    ),
+  });
+  const result = await verification.loadIntegrityManifest('coin-card-manifest.json', async () => ({
+    ok: true,
+    json: async () => manifest,
+  }));
+
+  assert.equal(result.state, verification.STATES.VERIFICATION_UNAVAILABLE);
+  assert.equal(result.error, 'integrity-manifest-asset-policy-mismatch');
+  assert(!result.assetPaths.includes('js/vendor/qrcode.min.js'));
+});
+
+test('corrupted qrcode.min.js hash in manifest becomes INTEGRITY_FAILED', async () => {
+  const verification = loadVerification();
+  const manifest = validIntegrityManifest({
+    assets: validIntegrityManifest().assets.map((asset) =>
+      asset.path === 'js/vendor/qrcode.min.js'
+        ? { ...asset, sha256: 'sha256:' + 'ff'.repeat(32) }
+        : asset
+    ),
+  });
+
+  const result = await verification.loadIntegrityManifest('coin-card-manifest.json', async (url) => {
+    if (url === 'coin-card-manifest.json') {
+      return { ok: true, status: 200, json: async () => manifest };
+    }
+    return {
+      ok: true,
+      status: 200,
+      arrayBuffer: async () => Buffer.from(REQUIRED_ASSET_BODIES[url], 'utf8'),
+    };
+  });
+
+  assert.equal(result.state, verification.STATES.INTEGRITY_FAILED);
+  assert.equal(result.error, 'integrity-manifest-asset-hash-mismatch');
+  assert.equal(result.assetPath, 'js/vendor/qrcode.min.js');
+});
+
+test('stale qrcode.min.js bytes that do not match the manifest hash become INTEGRITY_FAILED', async () => {
+  const verification = loadVerification();
+  const manifest = validIntegrityManifest();   // hash for 'qrcode vendor asset body'
+  const alteredBody = 'qrcode-vendor-bytes-ALTERED';  // bytes differ from hash
+
+  const result = await verification.loadIntegrityManifest('coin-card-manifest.json', async (url) => {
+    if (url === 'coin-card-manifest.json') {
+      return { ok: true, status: 200, json: async () => manifest };
+    }
+    const body = url === 'js/vendor/qrcode.min.js' ? alteredBody : REQUIRED_ASSET_BODIES[url];
+    return {
+      ok: true,
+      status: 200,
+      arrayBuffer: async () => Buffer.from(body, 'utf8'),
+    };
+  });
+
+  assert.equal(result.state, verification.STATES.INTEGRITY_FAILED);
+  assert.equal(result.error, 'integrity-manifest-asset-hash-mismatch');
+  assert.equal(result.assetPath, 'js/vendor/qrcode.min.js');
+});
+
+test('path substitution — replacing qrcode with a different vendor path becomes VERIFICATION_UNAVAILABLE', async () => {
+  const verification = loadVerification();
+  const substitutedBody = { ...REQUIRED_ASSET_BODIES, 'js/vendor/qrcode-patched.min.js': 'patched-vendor-body' };
+  delete substitutedBody['js/vendor/qrcode.min.js'];
+  const substitutedAssets = validIntegrityManifest().assets.map((asset) =>
+    asset.path === 'js/vendor/qrcode.min.js'
+      ? { ...asset, path: 'js/vendor/qrcode-patched.min.js',
+          sha256: sha256Hex('patched-vendor-body') }
+      : asset
+  );
+  const manifest = validIntegrityManifest({ assets: substitutedAssets });
+
+  const result = await verification.loadIntegrityManifest('coin-card-manifest.json', async () => ({
+    ok: true,
+    json: async () => manifest,
+  }));
+
+  assert.equal(result.state, verification.STATES.VERIFICATION_UNAVAILABLE);
+  assert.equal(result.error, 'integrity-manifest-asset-policy-mismatch');
+});
+
+test('VERIFIED result carries verifiedAssets for post-verification QR library injection', async () => {
+  const keyPair = await webcrypto.subtle.generateKey(
+    { name: 'ECDSA', namedCurve: 'P-256' },
+    true,
+    ['sign', 'verify'],
+  );
+  const publicKey = await webcrypto.subtle.exportKey('jwk', keyPair.publicKey);
+  const verifyingRuntime = loadVerification({
+    crypto: webcrypto,
+    atob: nodeAtob,
+    btoa: nodeBtoa,
+    trustedPublicKeys: Object.freeze({
+      'coin-card-test-key': trustedKeyRecord('coin-card-test-key', publicKey),
+    }),
+  });
+  const validManifest = await signManifestWithKeyPair(verifyingRuntime, signedManifest(), keyPair);
+  const result = await verifyingRuntime.evaluateSignaturePolicy(validManifest, {
+    state: verifyingRuntime.STATES.ASSET_HASHES_PASSED,
+    integrityManifest: validManifest,
+    metadata: { assetIntegrityStatus: 'passed' },
+    error: null,
+  });
+
+  assert.equal(result.state, verifyingRuntime.STATES.VERIFIED,
+    'VERIFIED result must carry verifiedAssets for QR library injection');
+  assert.ok(Array.isArray(result.verifiedAssets),
+    'VERIFIED result must carry verifiedAssets array');
+  const qrcodeAsset = result.verifiedAssets.find((a) => a && a.path === 'js/vendor/qrcode.min.js');
+  assert.ok(qrcodeAsset,
+    'verifiedAssets must contain qrcode.min.js entry for dynamic injection');
+  assert.ok(typeof qrcodeAsset.sha256 === 'string' && qrcodeAsset.sha256.startsWith('sha256:'),
+    'qrcode.min.js verifiedAsset must have sha256 field in sha256:HEX format');
 });

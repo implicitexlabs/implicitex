@@ -55,6 +55,8 @@ coin-card-package/
     card.css
   js/
     ix-execution.js
+  js/vendor/
+    qrcode.min.js
 ```
 
 This placement keeps the Integrity Manifest portable with the card package and avoids
@@ -86,6 +88,7 @@ The v1 protected asset set is:
 
 ```text
 js/ix-execution.js
+js/vendor/qrcode.min.js
 card/coin-card-trusted-keys.js
 card/coin-card-trusted-key-resolution.js
 card/coin-card-lifecycle-registry.js
