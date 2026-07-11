@@ -6,9 +6,9 @@
       "sha256": "sha256:b80d627301b80c247a9473325f7fc151fecd3d6add4079ae2e4a7b4a1aa8f86d"
     },
     {
-      "bytes": 38167,
+      "bytes": 38443,
       "path": "card/card.js",
-      "sha256": "sha256:756c9b950ea122aa41854a4e344b527aff22ad72a5996cd66e355cf99bd3b9a6"
+      "sha256": "sha256:6676238807ec62bc9842b4231c24eb35a7d70683aebc04fe233787d74378bc97"
     },
     {
       "bytes": 17152,
@@ -61,11 +61,11 @@
       "sha256": "sha256:d59af15f40bc321f78871fe9d892d1dbbf05e35e20ad22aa51203c68185b58b6"
     }
   ],
-  "buildVersion": "commit-d",
+  "buildVersion": "commit-e",
   "cardId": "cc_demo_implicitex",
   "coinCardVersion": "coin-card.v1",
   "layoutVersion": "coin-card-layout.v1",
-  "manifestHash": "sha256:ce755d13f0eec9bc37a3206fb391f9a6638d956edf3d2b0507a4b36a97316b7c",
+  "manifestHash": "sha256:308ae4b89e2352daded795e622f0b01636d062b7e1ca8d81967a7bfc9163f337",
   "network": "polygon-mainnet",
   "recipient": "0xa7cE4232811021d2Dd01f4f0f264Df2427ab3919",
   "registryStatus": "active",

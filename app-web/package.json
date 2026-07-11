@@ -31,6 +31,7 @@
     "dotenv": "^17.4.2",
     "esbuild": "0.25.5",
     "hardhat": "^2.22.0",
+    "jsqr": "^1.4.0",
     "png-to-ico": "^3.0.1",
     "puppeteer": "^25.1.0",
     "qrcode": "1.5.4",

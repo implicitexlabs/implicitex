@@ -656,8 +656,11 @@
           return;
         }
 
-        /* Load the QR rendering library now that verification has passed. */
-        loadQrLibrary(state.qrLibraryAttestation);
+        /* Load the QR rendering library now that verification has passed.
+         * A failed load is a controlled product state (FAILED → "QR unavailable").
+         * The rejection is handled inside loadQrLibrary via .catch() on the cached
+         * promise; consume it explicitly here too so no unhandled rejection fires. */
+        loadQrLibrary(state.qrLibraryAttestation).catch(function () {});
 
         initAmountSurface(registryRecord);
         transition('VERIFIED');

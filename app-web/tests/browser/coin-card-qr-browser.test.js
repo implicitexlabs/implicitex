@@ -35,6 +35,7 @@ const http = require('node:http');
 const path = require('node:path');
 const { test, describe, before, after } = require('node:test');
 const puppeteer = require('puppeteer');
+const jsQR = require('jsqr');
 
 /* ----------------------------------------------------------------
  * Paths
@@ -449,15 +450,20 @@ describe('Coin Card QR handoff — browser tests', async () => {
 
   /* ---- Tests ---- */
 
-  test('qrcode.min.js is not present in the DOM at DOMContentLoaded — not a static script', async () => {
-    /* Prove that qrcode.min.js is not a static script tag: it must be absent from
-     * the DOM immediately at DOMContentLoaded, before any async verification completes.
-     * Dynamic injection happens only after the async verification pipeline resolves. */
+  test('qrcode.min.js injection is ordered after VERIFIED — deterministic gate proof', async () => {
+    /* Prove ordering deterministically by holding the manifest response until
+     * DOMContentLoaded fires. At that point, verification has not yet completed
+     * (the response is still held), so no qrcode <script> element can exist.
+     * After releasing the manifest, VERIFIED is reached and injection occurs. */
     const page = await browser.newPage();
     try {
+      let releaseManifest;
+      const manifestGate = new Promise((resolve) => { releaseManifest = resolve; });
+      let manifestHeld = true;
+
       await page.setRequestInterception(true);
 
-      page.on('request', (request) => {
+      page.on('request', async (request) => {
         const urlPath = new URL(request.url()).pathname;
         if (urlPath === '/card/coin-card-trusted-keys.js' ||
             urlPath === '/card/card/coin-card-trusted-keys.js') {
@@ -469,6 +475,8 @@ describe('Coin Card QR handoff — browser tests', async () => {
           return;
         }
         if (urlPath === '/card/coin-card-manifest.json') {
+          /* Hold until explicitly released — pauses verification pipeline. */
+          if (manifestHeld) await manifestGate;
           request.respond({
             status: 200,
             headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
@@ -479,18 +487,36 @@ describe('Coin Card QR handoff — browser tests', async () => {
         request.continue();
       });
 
-      /* Stop at DOMContentLoaded — before async verification fetches complete. */
+      /* Navigate and stop at DOMContentLoaded — manifest response is still held. */
       await page.goto(`${serverUrl}/card/qr-test`, { waitUntil: 'domcontentloaded', timeout: 15000 });
 
-      /* At DOMContentLoaded, qrcode must not yet be in the DOM as a script element.
-       * It can only arrive via loadQrLibrary(), which requires VERIFIED first. */
-      const qrcodeScriptPresentAtLoad = await page.evaluate(
+      /* At DOMContentLoaded with manifest still pending: no qrcode script must exist. */
+      const scriptWhileManifestPending = await page.evaluate(
         () => !!document.querySelector('script[src*="qrcode.min.js"]'),
       );
       assert.equal(
-        qrcodeScriptPresentAtLoad,
+        scriptWhileManifestPending,
         false,
-        'qrcode.min.js must not be in the DOM as a script element at DOMContentLoaded',
+        'qrcode <script> must be absent while manifest response is still pending',
+      );
+
+      /* Release the manifest → verification completes → VERIFIED → injection. */
+      manifestHeld = false;
+      releaseManifest();
+
+      await page.waitForSelector('#ccFrame[data-state="VERIFIED"]', { timeout: 15000 });
+      await page.waitForFunction(
+        () => !!document.querySelector('script[src="/js/vendor/qrcode.min.js"]'),
+        { timeout: 10000 },
+      );
+
+      const scriptAfterVerified = await page.evaluate(
+        () => !!document.querySelector('script[src="/js/vendor/qrcode.min.js"]'),
+      );
+      assert.equal(
+        scriptAfterVerified,
+        true,
+        'qrcode <script> must be present after VERIFIED — injection is ordered after gate',
       );
     } finally {
       await page.close();
@@ -826,17 +852,31 @@ describe('Coin Card QR handoff — browser tests', async () => {
     }
   });
 
-  test('qrcode.min.js is NOT injected as a <script> element before VERIFIED — only via fetch for hashing', async () => {
-    /* The verifier legitimately fetch()es qrcode.min.js bytes during asset hash checking
-     * (before VERIFIED). That is correct and expected. This test proves something different:
-     * that no <script> element with qrcode src is added to the DOM until AFTER VERIFIED.
-     * Script injection is only triggered by loadQrLibrary(), which requires VERIFIED first. */
+  test('QR load failure produces no unhandledrejection event — controlled failure state', async () => {
+    /* A failed QR library load is a controlled product state (FAILED → "QR unavailable"),
+     * not an uncaught program error. The cached promise rejection must be consumed at
+     * every call site so no unhandledrejection event fires to the browser console. */
     const page = await browser.newPage();
     try {
+      /* Inject rejection tracker before page navigates. */
+      await page.evaluateOnNewDocument(() => {
+        window.__unhandledRejections = [];
+        window.addEventListener('unhandledrejection', (e) => {
+          window.__unhandledRejections.push(
+            (e.reason && e.reason.message) || String(e.reason),
+          );
+        });
+      });
+
       await page.setRequestInterception(true);
 
       page.on('request', (request) => {
         const urlPath = new URL(request.url()).pathname;
+        /* Abort qrcode to trigger a controlled FAILED state. */
+        if (urlPath === '/js/vendor/qrcode.min.js') {
+          request.abort('failed');
+          return;
+        }
         if (urlPath === '/card/coin-card-trusted-keys.js' ||
             urlPath === '/card/card/coin-card-trusted-keys.js') {
           request.respond({
@@ -857,18 +897,30 @@ describe('Coin Card QR handoff — browser tests', async () => {
         request.continue();
       });
 
-      /* Stop at DOMContentLoaded — asset hash fetches have not yet completed. */
-      await page.goto(`${serverUrl}/card/qr-test`, { waitUntil: 'domcontentloaded', timeout: 15000 });
+      await page.goto(`${serverUrl}/card/qr-test`, { waitUntil: 'networkidle0', timeout: 30000 });
+      await page.waitForSelector('#ccFrame[data-state="VERIFIED"]', { timeout: 15000 });
 
-      /* At DOMContentLoaded, loadQrLibrary() has not yet been called because
-       * verification is still pending. No qrcode <script> element must exist. */
-      const scriptAtDomContentLoaded = await page.evaluate(
-        () => !!document.querySelector('script[src*="qrcode.min.js"]'),
+      /* Open the QR panel so the failure path runs. */
+      await page.click('#ccReceiveBtn');
+      await page.waitForSelector('#ccFrame.cc-qr-active', { timeout: 5000 });
+
+      /* Wait for the failure state to settle. */
+      await page.waitForFunction(
+        () => {
+          const el = document.getElementById('ccQrUrl');
+          return el && el.textContent && el.textContent.includes('QR unavailable');
+        },
+        { timeout: 10000 },
       );
+
+      /* Allow the microtask queue to drain so any unhandled rejection would have fired. */
+      await page.evaluate(() => new Promise((resolve) => setTimeout(resolve, 200)));
+
+      const rejections = await page.evaluate(() => window.__unhandledRejections);
       assert.equal(
-        scriptAtDomContentLoaded,
-        false,
-        'qrcode <script> element must not exist at DOMContentLoaded — VERIFIED not reached yet',
+        rejections.length,
+        0,
+        `No unhandledrejection must fire on QR load failure; got: ${JSON.stringify(rejections)}`,
       );
     } finally {
       await page.close();
@@ -1021,6 +1073,169 @@ describe('Coin Card QR handoff — browser tests', async () => {
       const focusedId = await page.evaluate(() => document.activeElement && document.activeElement.id);
       assert.equal(focusedId, 'ccReceiveBtn',
         'focus must return to #ccReceiveBtn after pressing Escape to close QR panel');
+    } finally {
+      await page.close();
+    }
+  });
+
+  test('QR canvas decodes to the exact canonical card URL — independent jsQR verification', async () => {
+    /* Decode the rendered QR canvas with jsQR to prove the pixels encode exactly
+     * {origin}/card/{cardId} with no amount, recipient, or query parameters.
+     * A non-white canvas and a visible URL text string are insufficient proofs. */
+    const page = await browser.newPage();
+    try {
+      await openCardPage(page, 'qr-test');
+
+      await page.waitForFunction(
+        () => !!document.querySelector('script[src="/js/vendor/qrcode.min.js"]'),
+        { timeout: 10000 },
+      );
+
+      await page.click('#ccReceiveBtn');
+      await page.waitForSelector('#ccFrame.cc-qr-active', { timeout: 5000 });
+
+      /* Wait for ccQrUrl to be populated (proxy that generateQR() ran). */
+      await page.waitForFunction(
+        () => {
+          const el = document.getElementById('ccQrUrl');
+          return el && el.textContent && el.textContent.includes('/card/');
+        },
+        { timeout: 5000 },
+      );
+
+      /* Extract canvas ImageData: width, height, and flat RGBA pixel array. */
+      const imageData = await page.evaluate(() => {
+        const canvas = document.getElementById('ccQrCanvas');
+        if (!canvas) return null;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return null;
+        const { width, height } = canvas;
+        const data = ctx.getImageData(0, 0, width, height).data;
+        /* Transfer as plain array — Puppeteer serialises Uint8ClampedArray safely. */
+        return { width, height, data: Array.from(data) };
+      });
+
+      assert.ok(imageData, 'Canvas imageData must be extractable');
+      assert.ok(imageData.width > 0 && imageData.height > 0, 'Canvas must have non-zero dimensions');
+
+      /* Decode with jsQR in Node.js. */
+      const pixels = new Uint8ClampedArray(imageData.data);
+      const qrResult = jsQR(pixels, imageData.width, imageData.height);
+
+      assert.ok(qrResult, 'jsQR must successfully decode a QR code from the canvas pixels');
+
+      const decoded = qrResult.data;
+
+      /* Must end with /card/qr-test — the canonical card URL. */
+      assert.ok(
+        decoded.endsWith('/card/qr-test'),
+        `Decoded QR payload must end with /card/qr-test; got "${decoded}"`,
+      );
+
+      /* Must start with the test server origin (http://127.0.0.1:...). */
+      assert.ok(
+        decoded.startsWith('http://127.0.0.1:'),
+        `Decoded QR payload must start with server origin; got "${decoded}"`,
+      );
+
+      /* Must be exactly {origin}/card/qr-test — no query params, no extra segments. */
+      const url = new URL(decoded);
+      assert.equal(url.pathname, '/card/qr-test',
+        `Decoded QR pathname must be exactly /card/qr-test; got "${url.pathname}"`);
+      assert.equal(url.search, '',
+        `Decoded QR must have no query parameters; got "${url.search}"`);
+      assert.equal(url.hash, '',
+        `Decoded QR must have no hash fragment; got "${url.hash}"`);
+    } finally {
+      await page.close();
+    }
+  });
+
+  test('SRI-mismatch blocks qrcode.min.js execution — altered bytes refused by browser', async () => {
+    /* Serve altered qrcode.min.js bytes at the expected URL while card.js sets
+     * the original SRI integrity hash on the injected <script> element.
+     * The browser must block execution (SRI check fails), onerror fires,
+     * loader transitions to FAILED, and "QR unavailable" appears in the UI. */
+    const page = await browser.newPage();
+    try {
+      await page.setRequestInterception(true);
+
+      /* Load the real file bytes, then modify them so the hash will differ. */
+      const realQrcodeBytes = readFileSync(
+        path.join(publicDir, 'js/vendor/qrcode.min.js'),
+      );
+      /* Prepend a benign comment — changes the bytes, defeats SRI. */
+      const alteredBytes = Buffer.concat([
+        Buffer.from('/* sri-mismatch-test */\n', 'utf8'),
+        realQrcodeBytes,
+      ]);
+
+      page.on('request', (request) => {
+        const urlPath = new URL(request.url()).pathname;
+
+        /* Serve altered bytes — SRI hash will not match. */
+        if (urlPath === '/js/vendor/qrcode.min.js') {
+          request.respond({
+            status: 200,
+            headers: {
+              'Content-Type': 'application/javascript',
+              'Access-Control-Allow-Origin': '*',
+            },
+            body: alteredBytes,
+          });
+          return;
+        }
+        if (urlPath === '/card/coin-card-trusted-keys.js' ||
+            urlPath === '/card/card/coin-card-trusted-keys.js') {
+          request.respond({
+            status: 200,
+            headers: { 'Content-Type': 'application/javascript', 'Access-Control-Allow-Origin': '*' },
+            body: testTrustedKeysJs,
+          });
+          return;
+        }
+        if (urlPath === '/card/coin-card-manifest.json') {
+          request.respond({
+            status: 200,
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+            body: JSON.stringify(signedManifest),
+          });
+          return;
+        }
+        request.continue();
+      });
+
+      await page.goto(`${serverUrl}/card/qr-test`, { waitUntil: 'networkidle0', timeout: 30000 });
+      await page.waitForSelector('#ccFrame[data-state="VERIFIED"]', { timeout: 15000 });
+
+      /* Open the QR panel — script injection runs, but SRI blocks execution. */
+      await page.click('#ccReceiveBtn');
+      await page.waitForSelector('#ccFrame.cc-qr-active', { timeout: 5000 });
+
+      /* Wait for failure state — onerror must fire, loader → FAILED, UI → "QR unavailable". */
+      await page.waitForFunction(
+        () => {
+          const el = document.getElementById('ccQrUrl');
+          return el && el.textContent && el.textContent.includes('QR unavailable');
+        },
+        { timeout: 12000 },
+      );
+
+      /* QRCode global must be undefined — the altered script was not executed. */
+      const qrcodeGlobalDefined = await page.evaluate(() => typeof QRCode !== 'undefined');
+      assert.equal(
+        qrcodeGlobalDefined,
+        false,
+        'QRCode global must be undefined — SRI must have blocked execution of altered bytes',
+      );
+
+      /* Canvas must be hidden (renderQrFailed ran). */
+      const canvasDisplay = await page.$eval(
+        '#ccQrCanvas',
+        (el) => window.getComputedStyle(el).display,
+      );
+      assert.equal(canvasDisplay, 'none',
+        'Canvas must be hidden when SRI blocks qrcode execution');
     } finally {
       await page.close();
     }

@@ -411,6 +411,19 @@ test('loadQrLibrary calls verification.isQrLibraryAttestation before injecting t
   );
 });
 
+test('loadQrLibrary call site attaches .catch() to suppress unhandled rejection', () => {
+  /* The primary call site in card.js must consume the promise rejection explicitly.
+   * A failed QR load (network or SRI) is a controlled product state, not an
+   * uncaught program error. */
+  const loadCallSite = cardJsSource.match(
+    /loadQrLibrary\(state\.qrLibraryAttestation\)\.catch\([^)]+\)/
+  );
+  assert.ok(
+    loadCallSite,
+    'Primary loadQrLibrary() call must chain .catch() to suppress unhandled rejection'
+  );
+});
+
 test('loadQrLibrary returns a cached promise — repeated calls are idempotent', () => {
   assert.ok(
     cardJsSource.includes('qrLibraryPromise'),
