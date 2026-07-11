@@ -1015,6 +1015,38 @@ test('selector keeps success and failure envelopes deeply frozen and operational
   assertFrozenDeep(notFound);
 });
 
+test('selector selected-evidence private predicate accepts only the genuine success result', async () => {
+  const runtime = await makeSignedSelectionRuntime(makeRegistryOrderedLineageDefinitions(), {});
+  const proof = await runtime.bundleVerifier.authenticateLifecycleRegistryBundle(runtime.bundle);
+  const success = runtime.selector.selectLifecycleEvidence(proof, { cardId: 'card_test_001' });
+  const notFound = runtime.selector.selectLifecycleEvidence(proof, { cardId: 'card_missing' });
+  const conflict = runtime.selector.selectLifecycleEvidence(proof, {
+    cardId: 'card_test_001',
+    manifestId: 'manifest_missing',
+  });
+  const shallowCopy = Object.freeze({ ...success });
+  const deepCopy = deepFreeze(clone(success));
+  const fabricated = Object.freeze({
+    ...clone(success),
+    selectedRecordCount: success.selectedRecordCount,
+  });
+  const otherRuntime = await makeSignedSelectionRuntime(makeRegistryOrderedLineageDefinitions(), {});
+  const otherSuccess = otherRuntime.selector.selectLifecycleEvidence(
+    await otherRuntime.bundleVerifier.authenticateLifecycleRegistryBundle(otherRuntime.bundle),
+    { cardId: 'card_test_001' }
+  );
+
+  assert.equal(runtime.selector.isSelectedLifecycleEvidenceResult(success), true);
+  assert.equal(runtime.selector.isSelectedLifecycleEvidenceResult(notFound), false);
+  assert.equal(runtime.selector.isSelectedLifecycleEvidenceResult(conflict), false);
+  assert.equal(runtime.selector.isSelectedLifecycleEvidenceResult(shallowCopy), false);
+  assert.equal(runtime.selector.isSelectedLifecycleEvidenceResult(deepCopy), false);
+  assert.equal(runtime.selector.isSelectedLifecycleEvidenceResult(fabricated), false);
+  assert.equal(runtime.selector.isSelectedLifecycleEvidenceResult(otherSuccess), false);
+  assert.equal(runtime.selector.isSelectedLifecycleEvidenceResult({}), false);
+  assert.equal(runtime.selector.isSelectedLifecycleEvidenceResult('nope'), false);
+});
+
 test('selector source omits forbidden dependencies', () => {
   assert.equal(lifecycleSelectionSource.includes('IX_COIN_CARD_VERIFICATION'), false);
   assert.equal(lifecycleSelectionSource.includes('IX_EXECUTION'), false);

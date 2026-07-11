@@ -14,6 +14,8 @@
     CONFLICT: 'CONFLICT',
   });
 
+  var selectedEvidenceResults = new WeakSet();
+
   var OUTCOMES = Object.freeze({
     LIFECYCLE_EVIDENCE_SELECTED: 'LIFECYCLE_EVIDENCE_SELECTED',
     LIFECYCLE_EVIDENCE_CARD_NOT_FOUND: 'LIFECYCLE_EVIDENCE_CARD_NOT_FOUND',
@@ -298,6 +300,14 @@
     }
 
     return freezeDeep(result);
+  }
+
+  function isSelectedLifecycleEvidenceResult(value) {
+    try {
+      return selectedEvidenceResults.has(value);
+    } catch (error) {
+      return false;
+    }
   }
 
   function buildTupleKey(registryApi, tuple) {
@@ -1060,7 +1070,7 @@
       })),
     });
 
-    return freezeDeep({
+    var frozenResult = freezeDeep({
       fact: TOP_LEVEL_FACTS.SELECTED,
       outcome: OUTCOMES.LIFECYCLE_EVIDENCE_SELECTED,
       selected: true,
@@ -1080,6 +1090,9 @@
       successorRecords: freezeDeep(successorRecords.slice()),
       lineage: lineage,
     });
+
+    selectedEvidenceResults.add(frozenResult);
+    return frozenResult;
   }
 
   function makeNotFound(outcome, reason, request, proof) {
@@ -1261,6 +1274,7 @@
     value: Object.freeze({
       TOP_LEVEL_FACTS: TOP_LEVEL_FACTS,
       OUTCOMES: OUTCOMES,
+      isSelectedLifecycleEvidenceResult: isSelectedLifecycleEvidenceResult,
       selectLifecycleEvidence: selectLifecycleEvidence,
     }),
     writable: false,
