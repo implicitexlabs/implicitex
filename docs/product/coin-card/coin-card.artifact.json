@@ -179,6 +179,11 @@
         "relationship": "consumes"
       },
       {
+        "from": "lifecycleRecordSelection",
+        "to": "lifecycleResolution",
+        "relationship": "consumes"
+      },
+      {
         "from": "coinCard",
         "to": "ixExecute",
         "relationship": "consumes"
@@ -298,10 +303,40 @@
         "reason": "Lifecycle record selection must not depend on IX execution."
       },
       {
-        "from": "lifecycleRecordSelection",
-        "to": "lifecycleResolution",
+        "from": "lifecycleResolution",
+        "to": "lifecycleRecordVerification",
         "relationship": "depends-on",
-        "reason": "Lifecycle record selection must not depend on lifecycle resolution."
+        "reason": "Lifecycle resolution must not depend on lifecycle record verification."
+      },
+      {
+        "from": "lifecycleResolution",
+        "to": "lifecycleBundle",
+        "relationship": "depends-on",
+        "reason": "Lifecycle resolution must not depend on lifecycle bundle validation."
+      },
+      {
+        "from": "lifecycleResolution",
+        "to": "manifestVerification",
+        "relationship": "depends-on",
+        "reason": "Lifecycle resolution must not depend on manifest verification."
+      },
+      {
+        "from": "lifecycleResolution",
+        "to": "presentation",
+        "relationship": "depends-on",
+        "reason": "Lifecycle resolution must not depend on presentation."
+      },
+      {
+        "from": "lifecycleResolution",
+        "to": "wallet",
+        "relationship": "depends-on",
+        "reason": "Lifecycle resolution must not depend on wallet state."
+      },
+      {
+        "from": "lifecycleResolution",
+        "to": "ixExecute",
+        "relationship": "depends-on",
+        "reason": "Lifecycle resolution must not depend on IX execution."
       }
     ]
   },

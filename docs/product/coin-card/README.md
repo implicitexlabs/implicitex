@@ -37,6 +37,7 @@ Implementation-local checkpoint notes may exist under `app-web/docs/product/coin
 - `COIN_CARD_LIFECYCLE_RECORD_AUTHENTICATION_AND_CANONICALIZATION_CONTRACT_V1.md` — canonical JSON, lifecycle record signatures, operational outcome composition, registry bundle rollback limits, and administration evidence hashes.
 - `COIN_CARD_LIFECYCLE_BUNDLE_VERIFICATION_CONTRACT_V1.md` — non-empty bundle wrapper validation, atomic record-collection authentication, and bundle-level coherence rules.
 - `COIN_CARD_LIFECYCLE_RECORD_SELECTION_CONTRACT_V1.md` — authenticated evidence selection, lineage coherence, and non-operational record-collection facts.
+- `COIN_CARD_LIFECYCLE_RESOLUTION_CONTRACT_V1.md` — selected evidence interpretation, temporal resolution, and non-operational lifecycle facts.
 - `COIN_CARD_LIFECYCLE_REGISTRY_CONTRACT_V1.md` — lifecycle registry authority, publication evidence, card status, manifest status, supersession, and rollback rules.
 - `COIN_CARD_VERIFICATION_STATE_COPY_V1.md` — user-facing copy contract for manifest verification states.
 - `../../../tools/coin-card-integrity/README.md` — proof tooling usage for generating, verifying, and tamper-checking Coin Card manifests.
@@ -62,6 +63,7 @@ The manifest integrity docs are intentionally split by responsibility:
 - Lifecycle record authentication and canonicalization: `COIN_CARD_LIFECYCLE_RECORD_AUTHENTICATION_AND_CANONICALIZATION_CONTRACT_V1.md`
 - Lifecycle registry: `COIN_CARD_LIFECYCLE_REGISTRY_CONTRACT_V1.md`
 - Lifecycle evidence selection: `COIN_CARD_LIFECYCLE_RECORD_SELECTION_CONTRACT_V1.md`
+- Lifecycle resolution: `COIN_CARD_LIFECYCLE_RESOLUTION_CONTRACT_V1.md`
 - Verification state copy: `COIN_CARD_VERIFICATION_STATE_COPY_V1.md`
 - Proof tooling: `../../../tools/coin-card-integrity/README.md`
 
