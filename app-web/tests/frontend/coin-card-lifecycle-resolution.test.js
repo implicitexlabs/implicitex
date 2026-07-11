@@ -1091,6 +1091,57 @@ test('unsupported status combinations are unavailable', async () => {
   assertUnavailable(fakeRuntime.resolution.resolveLifecycle(fabricated), fakeRuntime.resolution.OUTCOMES.LIFECYCLE_RESOLUTION_STATUS_INVALID);
 });
 
+test('partially invalid status pairs are unavailable', async () => {
+  const runtime = await makeSignedResolutionRuntime([
+    recordDefinition({
+      recordId: 'registry-record-001',
+      cardId: 'card_test_partial_invalid',
+      manifestId: 'manifest_test_001',
+      revision: 1,
+      registryVersion: 1,
+      publishedAt: '2026-07-10T08:05:00.000Z',
+      effectiveFrom: '2026-07-10T08:05:00.000Z',
+      effectiveUntil: null,
+      previousManifestId: null,
+      supersededByManifestId: null,
+      cardStatus: 'CARD_ACTIVE',
+      manifestStatus: 'MANIFEST_CURRENT',
+    }),
+  ], { cardId: 'card_test_partial_invalid', manifestId: 'manifest_test_001' }, { fixedNow: DEFAULT_FIXED_NOW });
+
+  const cases = [
+    ['CARD_REVOKED', 'MANIFEST_GARBAGE'],
+    ['CARD_SUSPENDED', 'MANIFEST_GARBAGE'],
+    ['CARD_GARBAGE', 'MANIFEST_REVOKED'],
+    ['CARD_GARBAGE', 'MANIFEST_SUPERSEDED'],
+  ];
+
+  for (const [cardStatus, manifestStatus] of cases) {
+    const fabricated = makeFakeSelectedProof(runtime.selected, (proof) => {
+      proof.selectedRecords[0].cardStatus = cardStatus;
+      proof.selectedRecords[0].manifestStatus = manifestStatus;
+      proof.lineageOrderedRecords[0].cardStatus = cardStatus;
+      proof.lineageOrderedRecords[0].manifestStatus = manifestStatus;
+      proof.registryOrderedRecords[0].cardStatus = cardStatus;
+      proof.registryOrderedRecords[0].manifestStatus = manifestStatus;
+    });
+    const fakeSelector = makeFakeSelectorApi(fabricated);
+    const fakeRuntime = makeResolutionContext({
+      includeRecordVerifier: false,
+      includeBundleVerifier: false,
+      includeSelection: false,
+      includeResolution: true,
+      selectorApiStub: fakeSelector,
+      fixedNow: DEFAULT_FIXED_NOW,
+    });
+
+    assertUnavailable(
+      fakeRuntime.resolution.resolveLifecycle(fabricated),
+      fakeRuntime.resolution.OUTCOMES.LIFECYCLE_RESOLUTION_STATUS_INVALID,
+    );
+  }
+});
+
 test('every output remains deeply frozen and keeps presentation and execution false', async () => {
   const activeRuntime = await makeSignedResolutionRuntime([
     recordDefinition({

@@ -692,42 +692,10 @@
   }
 
   function interpretStatus(record) {
-    if (RESOLUTION_CARD_STATUS[record.cardStatus] !== true || RESOLUTION_MANIFEST_STATUS[record.manifestStatus] !== true) {
-      if (record.cardStatus === 'CARD_REVOKED') {
-        return {
-          ok: true,
-          fact: TOP_LEVEL_FACTS.TERMINAL,
-          outcome: OUTCOMES.LIFECYCLE_CARD_REVOKED,
-        };
-      }
-      if (record.cardStatus === 'CARD_SUSPENDED') {
-        return {
-          ok: true,
-          fact: TOP_LEVEL_FACTS.RESOLVED,
-          outcome: OUTCOMES.LIFECYCLE_CARD_SUSPENDED,
-        };
-      }
-      if (record.manifestStatus === 'MANIFEST_REVOKED') {
-        return {
-          ok: true,
-          fact: TOP_LEVEL_FACTS.TERMINAL,
-          outcome: OUTCOMES.LIFECYCLE_MANIFEST_REVOKED,
-        };
-      }
-      if (record.manifestStatus === 'MANIFEST_SUPERSEDED') {
-        return {
-          ok: true,
-          fact: TOP_LEVEL_FACTS.TERMINAL,
-          outcome: OUTCOMES.LIFECYCLE_MANIFEST_SUPERSEDED,
-        };
-      }
-      if (record.cardStatus === 'CARD_ACTIVE' && record.manifestStatus === 'MANIFEST_CURRENT') {
-        return {
-          ok: true,
-          fact: TOP_LEVEL_FACTS.RESOLVED,
-          outcome: OUTCOMES.LIFECYCLE_ACTIVE,
-        };
-      }
+    if (
+      RESOLUTION_CARD_STATUS[record.cardStatus] !== true
+      || RESOLUTION_MANIFEST_STATUS[record.manifestStatus] !== true
+    ) {
       return {
         ok: false,
         reason: REASONS.STATUS_INVALID,

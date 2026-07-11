@@ -179,8 +179,8 @@
         "relationship": "consumes"
       },
       {
-        "from": "lifecycleRecordSelection",
-        "to": "lifecycleResolution",
+        "from": "lifecycleResolution",
+        "to": "lifecycleRecordSelection",
         "relationship": "consumes"
       },
       {
@@ -301,6 +301,12 @@
         "to": "ixExecute",
         "relationship": "depends-on",
         "reason": "Lifecycle record selection must not depend on IX execution."
+      },
+      {
+        "from": "lifecycleRecordSelection",
+        "to": "lifecycleResolution",
+        "relationship": "depends-on",
+        "reason": "Lifecycle record selection must not depend on lifecycle resolution."
       },
       {
         "from": "lifecycleResolution",
