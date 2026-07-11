@@ -720,9 +720,49 @@
    *   URL: https://implicitex.com/card/antoine
    *   pathname.split('/') → ['', 'card', 'antoine']
    * ---------------------------------------------------------------- */
+  /* ----------------------------------------------------------------
+   * QR receive — generates QR encoding the canonical card URL.
+   *   With amount: https://implicitex.com/card/[id]?amount=X.XX
+   *   Without:     https://implicitex.com/card/[id]
+   * ---------------------------------------------------------------- */
+  function generateQR() {
+    if (typeof QRCode === 'undefined' || !QRCode.toCanvas) return;
+    var canvas = el('ccQrCanvas');
+    if (!canvas || !state.cardId) return;
+
+    /* Canonical card URL — uses the page's own origin so staging and
+     * local environments do not silently route into production. */
+    var url    = window.location.origin + '/card/' + encodeURIComponent(state.cardId);
+    var urlEl  = el('ccQrUrl');
+    if (urlEl) urlEl.textContent = url;
+
+    QRCode.toCanvas(canvas, url, {
+      width: 200,
+      margin: 2,
+      color: { dark: '#0c0c0a', light: '#ffffff' }
+    }, function (err) {
+      if (err) console.warn('[IX] QR generation error', err);
+    });
+  }
+
+  function openQrPanel() {
+    if (frame) frame.classList.add('cc-qr-active');
+    generateQR();
+  }
+
+  function closeQrPanel() {
+    if (frame) frame.classList.remove('cc-qr-active');
+  }
+
   function init() {
     var chip = el('ccChip');
     if (chip) chip.addEventListener('click', handleChipClick);
+
+    var receiveBtn = el('ccReceiveBtn');
+    if (receiveBtn) receiveBtn.addEventListener('click', openQrPanel);
+
+    var qrClose = el('ccQrClose');
+    if (qrClose) qrClose.addEventListener('click', closeQrPanel);
 
     var parts  = window.location.pathname.split('/').filter(Boolean);
     var cardId = (parts[1] || '').trim();
