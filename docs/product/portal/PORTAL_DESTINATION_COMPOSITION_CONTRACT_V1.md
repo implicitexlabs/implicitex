@@ -15,6 +15,7 @@ Committed runtime anchors:
 - `ebb8e33` — `feat: add portal view state`;
 - `65fcfab` — `feat: add portal view projection`;
 - `92fd61d` — `feat: add portal surface registry`.
+- `5b0c60c` — `feat: add recipients destination shell`.
 
 This contract distinguishes:
 
@@ -37,7 +38,7 @@ TRANSFER:
   #transferMod
 
 RECIPIENTS:
-  none
+  #recipientsMod
 
 ACTIVITY:
   #receiptHistory
@@ -58,13 +59,23 @@ The following islands are deliberately unresolved and must not be silently assig
 network module
 ```
 
-`#ccIntake` is currently Coin Card handoff context within the active transfer flow.
+`#recipientsMod` is a dedicated empty/unavailable shell. It introduces no
+recipient-data behavior.
 
 `#recipientIntel` is current-recipient context within the active transfer flow.
 
 The current network module mixes Transfer-critical network facts with operational and diagnostic System detail.
 
 A registered surface must not rely for visibility on an ancestor registered to a different primary surface when that ancestor may become inactive.
+
+`#ccIntake` is an unregistered Transfer-context island inside `#modules`,
+positioned outside `#transferMod`. Its first resolution is registration in
+place by adding `data-portal-primary-surface="TRANSFER"` to the existing
+island. That slice must not move, clone, wrap, or otherwise relocate
+`#ccIntake` into `#transferMod`. It communicates Coin Card handoff context for
+the active transfer, is not a complete Recipients destination, does not
+inherit visibility from `#transferMod`, and without explicit registration it
+could remain visible while another primary destination is active.
 
 ## 3. Composition Rules
 
@@ -84,26 +95,34 @@ When the primary destination is `TRANSFER`, the composition includes:
 
 - `#transferMod`;
 - `#companion`;
-- any unregistered descendant contained inside `#transferMod`, including `#ccIntake` and `#recipientIntel`, through containment inheritance only.
+- `#ccIntake` as a separate unregistered Transfer-context island under `#modules`;
+- any unregistered descendant contained inside `#transferMod`, including `#recipientIntel`, through containment inheritance only.
 
 Transfer is the default launch destination and remains the primary workspace. It must remain the place where execution blockers surface at the point of action.
 
 ### Recipients
 
-When the primary destination is `RECIPIENTS`, the registry currently has no canonical destination island to display.
+When the primary destination is `RECIPIENTS`, the composition includes:
 
-The first implementation must provide a dedicated Recipients destination shell before visible Recipients navigation ships. That shell may initially present a staged unavailable or empty state, but it must be its own registered Recipients surface.
+- the registered dedicated Recipients shell `#recipientsMod`.
+
+The shell is currently an empty/unavailable state and introduces no recipient-
+data behavior.
 
 The initial Recipients-shell slice introduces no recipient persistence,
 recipient list, recent-recipient cache, import, scanning, Coin Card intake,
 address adoption, or other recipient-data behavior. Those capabilities require
 separate implementation slices and evidence.
 
-The shell may later contain local recipient-book entries, imported recipient records, scanned recipients, recent recipient suggestions, and Coin Card route intake. It must preserve the browser-local, non-custodial data boundary unless a separate storage contract explicitly changes that boundary.
+The shell may later contain local recipient-book entries, imported recipient
+records, scanned recipients, recent recipient suggestions, and Coin Card route
+intake. It must preserve the browser-local, non-custodial data boundary unless
+a separate storage contract explicitly changes that boundary.
 
-The implementation must not silently reuse `#ccIntake` or `#recipientIntel` as the complete Recipients destination. Those elements are current Transfer context and may only become Recipients content after an explicit refactor and registry update.
-
-`#ccIntake` and `#recipientIntel` remain Transfer-contained context. They are not the first Recipients shell.
+The implementation must not silently reuse `#ccIntake` or `#recipientIntel` as
+the complete Recipients destination. Those elements are current Transfer context
+and may only become Recipients content after an explicit refactor and registry
+update.
 
 ### Activity
 
@@ -127,8 +146,14 @@ If `#transferMod` is inactive, descendants inside it may become inactive because
 
 Applied examples:
 
-- `#ccIntake` may disappear when `#transferMod` is inactive because it is contained by the Transfer surface. It remains unresolved and is not a Recipients surface.
-- `#recipientIntel` may disappear when `#transferMod` is inactive because it is contained by the Transfer surface. It remains current-recipient context and is not a Recipients surface.
+- `#ccIntake` is a separate island under `#modules`. It does not inherit from
+  `#transferMod`, and its first implementation is registration in place as
+  `TRANSFER` by adding `data-portal-primary-surface="TRANSFER"` to the existing
+  island. That slice must not move, clone, wrap, or otherwise relocate
+  `#ccIntake` into `#transferMod`.
+- `#recipientIntel` is an unregistered descendant of `#transferMod`. It
+  inherits Transfer presentation visibility, but that inheritance does not
+  independently register it.
 
 Containment inheritance must never be used to manufacture a destination or to infer that a descendant owns transaction, recipient, verification, or execution state.
 
@@ -264,6 +289,7 @@ If a required registered surface is missing, the visibility controller must fail
 Visible destination navigation cannot ship until:
 
 - the Recipients shell exists and is registered;
+- `#ccIntake` is explicitly registered in place as `TRANSFER`;
 - the Activity shell exists and no longer depends on a Transfer-owned ancestor;
 - the network module is explicitly treated as globally persistent.
 
@@ -295,14 +321,15 @@ The portal must not:
 
 Freeze this order:
 
-1. add and register the dedicated Recipients empty-state shell;
-2. add and register the dedicated Activity shell and place `#receiptHistory` within it;
-3. mark the unresolved network module as globally persistent for presentation purposes;
-4. add the presentation-only visibility controller;
-5. add accessible navigation controls;
-6. partition network facts in a later explicit slice;
-7. add contextual Verification and System controls;
-8. conduct mobile and desktop state-preservation QA.
+1. dedicated Recipients shell — completed by `5b0c60c`;
+2. register `#ccIntake` explicitly in place as `TRANSFER`;
+3. add and register the dedicated Activity shell and place `#receiptHistory` within it;
+4. mark the network module as globally persistent for presentation purposes;
+5. add the presentation-only visibility controller;
+6. add accessible navigation controls;
+7. partition network facts in a later explicit slice;
+8. add contextual Verification and System controls;
+9. conduct mobile and desktop state-preservation QA.
 
 ## 14. Acceptance Criteria
 
@@ -311,7 +338,8 @@ Future implementation work must prove:
 - no fact authority or execution authority is redefined;
 - no five-equal-tab model is introduced;
 - Transfer blockers remain at the point of action;
-- Recipients is not fabricated from Transfer fragments;
+- `#recipientsMod` exists as a dedicated empty/unavailable shell and is not fabricated from Transfer fragments;
+- `#ccIntake` is explicitly registered in place as `TRANSFER` before destination hiding ships;
 - current and historical transaction states remain distinct;
 - visibility changes cannot mutate product state;
 - contextual layers preserve the primary destination;
