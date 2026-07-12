@@ -25,7 +25,7 @@ implicitex/
 │
 ├── docs/
 │   ├── product/mvp-roadmap.md        Launch gate sequence and board
-│   ├── product/portal/               Portal information architecture contract
+│   ├── product/portal/               Portal documentation (contract + inventory)
 │   ├── product/agent-financial-infrastructure-initiative.md
 │   │                                  Agent infrastructure thesis
 │   ├── attorney-review/              Attorney review package (Gate 3)
@@ -54,6 +54,7 @@ Gate 5: Public soft launch
 
 Full roadmap: `docs/product/mvp-roadmap.md`
 Portal contract: `docs/product/portal/PORTAL_INFORMATION_ARCHITECTURE_CONTRACT_V1.md`
+Portal inventory: `docs/product/portal/PORTAL_FACT_AND_AUTHORITY_INVENTORY_V1.md`
 
 ---
 

@@ -15,16 +15,19 @@ Implementation-local checkpoint notes may exist here, but they must not redefine
 Canonical docs:
 
 - `../../../../docs/product/portal/PORTAL_INFORMATION_ARCHITECTURE_CONTRACT_V1.md` — portal destination hierarchy, authoritative state, interruption policy, and responsive equivalence rules.
+- `../../../../docs/product/portal/PORTAL_FACT_AND_AUTHORITY_INVENTORY_V1.md` — current portal facts, source modules, authority types, volatility, and duplicated presentation sources.
 
 Mirrored files in this directory:
 
 - `PORTAL_INFORMATION_ARCHITECTURE_CONTRACT_V1.md`
+- `PORTAL_FACT_AND_AUTHORITY_INVENTORY_V1.md`
 
 The mirrored file is a convenience copy for app-web readers. The canonical version lives under `docs/product/portal/`.
 
 ## Portal Architecture Stack
 
 - Portal information architecture: `docs/product/portal/PORTAL_INFORMATION_ARCHITECTURE_CONTRACT_V1.md`
+- Portal fact and authority inventory: `docs/product/portal/PORTAL_FACT_AND_AUTHORITY_INVENTORY_V1.md`
 
 The boundary is:
 
