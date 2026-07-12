@@ -101,6 +101,11 @@
         "role": "presentation-promotion-policy"
       },
       {
+        "id": "executionAuthorization",
+        "type": "responsibility",
+        "role": "execution-authorization-policy"
+      },
+      {
         "id": "presentation",
         "type": "responsibility",
         "role": "presentation-projection"
@@ -191,6 +196,11 @@
       {
         "from": "lifecyclePresentationPromotion",
         "to": "lifecycleResolution",
+        "relationship": "consumes"
+      },
+      {
+        "from": "executionAuthorization",
+        "to": "lifecyclePresentationPromotion",
         "relationship": "consumes"
       },
       {
@@ -395,6 +405,42 @@
         "to": "ixExecute",
         "relationship": "depends-on",
         "reason": "Lifecycle resolution must not depend on IX execution."
+      },
+      {
+        "from": "executionAuthorization",
+        "to": "lifecycleResolution",
+        "relationship": "depends-on",
+        "reason": "Execution authorization must not bypass the presentation-promotion layer."
+      },
+      {
+        "from": "executionAuthorization",
+        "to": "lifecycleRecordSelection",
+        "relationship": "depends-on",
+        "reason": "Execution authorization must not access raw lifecycle evidence."
+      },
+      {
+        "from": "executionAuthorization",
+        "to": "lifecycleBundle",
+        "relationship": "depends-on",
+        "reason": "Execution authorization must not access raw lifecycle bundles."
+      },
+      {
+        "from": "executionAuthorization",
+        "to": "lifecycleRecordVerification",
+        "relationship": "depends-on",
+        "reason": "Execution authorization must not access raw lifecycle records."
+      },
+      {
+        "from": "executionAuthorization",
+        "to": "lifecycleRegistry",
+        "relationship": "depends-on",
+        "reason": "Execution authorization must not access the registry layer."
+      },
+      {
+        "from": "executionAuthorization",
+        "to": "ixExecute",
+        "relationship": "depends-on",
+        "reason": "Execution authorization must not call IX_EXECUTION; it authorizes a result that IX_EXECUTION validates."
       }
     ]
   },
