@@ -501,7 +501,7 @@
     </div>
 
     <!-- 01 Transfer -->
-    <div class="mod"
+    <div class="mod" id="transferMod" data-portal-primary-surface="TRANSFER"
       data-agent-step="1"
       data-agent-purpose="Collect transfer details: wallet connection, recipient address, USDC amount, and optional purpose tag."
       data-agent-requires-wallet="true">
@@ -694,7 +694,7 @@
 
       <div class="receipt-history" aria-label="Recent transaction attempts">
         <p class="receipt-history-label">Receipts</p>
-        <div id="receiptHistory" class="receipt-history-list">
+        <div id="receiptHistory" class="receipt-history-list" data-portal-primary-surface="ACTIVITY">
           <p class="receipt-empty">No local receipts yet.</p>
         </div>
       </div>
@@ -785,7 +785,7 @@
       </div>
     </div>
 
-    <div class="mod" id="verificationMod"
+    <div class="mod" id="verificationMod" data-portal-contextual-surface="VERIFICATION"
       data-agent-step="3"
       data-agent-purpose="Expose Coin Card registry status and recipient verification signals. Independent verification link available.">
       <span class="mod-tag">03 — Verification</span>
@@ -882,7 +882,7 @@
     </div><!-- /.mod-col -->
 
     <!-- Transaction Companion Tray -->
-    <div id="companion" class="companion" role="complementary" aria-label="Transaction status">
+    <div id="companion" class="companion" role="complementary" aria-label="Transaction status" data-portal-primary-surface="TRANSFER">
       <div class="companion-bar" id="companionBar" role="button" tabindex="0"
            aria-expanded="false" aria-controls="companionDetail"
            aria-label="Transaction status — click to expand">
@@ -917,7 +917,7 @@
     </div>
 
     <!-- Telemetry -->
-    <section class="telemetry" id="telemetry" aria-label="System telemetry">
+    <section class="telemetry" id="telemetry" aria-label="System telemetry" data-portal-contextual-surface="SYSTEM">
       <div class="telemetry-bar" id="telemetryBar"
            role="button" tabindex="0"
            aria-expanded="false" aria-controls="telemetryPanel"
@@ -952,7 +952,7 @@
   </main>
 
   <!-- Portal footer -->
-  <footer class="portal-footer" aria-label="Portal information">
+  <footer class="portal-footer" id="portalFooter" aria-label="Portal information" data-portal-contextual-surface="SYSTEM">
     <div class="portal-footer-row">
       <p class="portal-footer-statement">ImplicitEx is non-custodial. The portal opens directly from the web or as an installed shortcut. Transfers are confirmed by the sender's wallet and cannot be reversed once confirmed on-chain.</p>
       <div class="portal-footer-actions">
@@ -1025,6 +1025,7 @@
   <script src="js/consent.js"></script>
   <script src="js/portal-view-state.js"></script>
   <script src="js/portal-view-projection.js"></script>
+  <script src="js/portal-surface-registry.js"></script>
   <script src="js/wallet.js"></script>
   <script src="js/coincard.js"></script>
   <script src="js/app.js"></script>
