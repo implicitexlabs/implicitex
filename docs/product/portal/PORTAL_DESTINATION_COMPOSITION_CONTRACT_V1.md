@@ -16,6 +16,7 @@ Committed runtime anchors:
 - `65fcfab` — `feat: add portal view projection`;
 - `92fd61d` — `feat: add portal surface registry`.
 - `5b0c60c` — `feat: add recipients destination shell`.
+- `1c01ebe` — `feat: register coin card intake as transfer surface`.
 
 This contract distinguishes:
 
@@ -34,6 +35,7 @@ The committed Portal Surface Registry V1 declares this canonical ownership:
 
 ```text
 TRANSFER:
+  #ccIntake
   #companion
   #transferMod
 
@@ -51,16 +53,16 @@ SYSTEM:
   #telemetry
 ```
 
-The following islands are deliberately unresolved and must not be silently assigned by a visibility controller:
+`#recipientsMod` is a dedicated empty/unavailable shell. It introduces no
+recipient-data behavior.
+
+The following islands are deliberately unresolved and must not be silently
+assigned by a visibility controller:
 
 ```text
-#ccIntake
 #recipientIntel
 network module
 ```
-
-`#recipientsMod` is a dedicated empty/unavailable shell. It introduces no
-recipient-data behavior.
 
 `#recipientIntel` is current-recipient context within the active transfer flow.
 
@@ -68,14 +70,14 @@ The current network module mixes Transfer-critical network facts with operationa
 
 A registered surface must not rely for visibility on an ancestor registered to a different primary surface when that ancestor may become inactive.
 
-`#ccIntake` is an unregistered Transfer-context island inside `#modules`,
-positioned outside `#transferMod`. Its first resolution is registration in
-place by adding `data-portal-primary-surface="TRANSFER"` to the existing
-island. That slice must not move, clone, wrap, or otherwise relocate
+`#ccIntake` is a Transfer-context island inside `#modules`, positioned outside
+`#transferMod`. Its first resolution was registration in place by
+`1c01ebe`, which added `data-portal-primary-surface="TRANSFER"` to the existing
+island. That slice did not move, clone, wrap, or otherwise relocate
 `#ccIntake` into `#transferMod`. It communicates Coin Card handoff context for
 the active transfer, is not a complete Recipients destination, does not
-inherit visibility from `#transferMod`, and without explicit registration it
-could remain visible while another primary destination is active.
+inherit visibility from `#transferMod`, and must be treated as a Transfer
+surface for destination visibility.
 
 ## 3. Composition Rules
 
@@ -95,7 +97,7 @@ When the primary destination is `TRANSFER`, the composition includes:
 
 - `#transferMod`;
 - `#companion`;
-- `#ccIntake` as a separate unregistered Transfer-context island under `#modules`;
+- `#ccIntake`;
 - any unregistered descendant contained inside `#transferMod`, including `#recipientIntel`, through containment inheritance only.
 
 Transfer is the default launch destination and remains the primary workspace. It must remain the place where execution blockers surface at the point of action.
@@ -120,8 +122,9 @@ intake. It must preserve the browser-local, non-custodial data boundary unless
 a separate storage contract explicitly changes that boundary.
 
 The implementation must not silently reuse `#ccIntake` or `#recipientIntel` as
-the complete Recipients destination. Those elements are current Transfer context
-and may only become Recipients content after an explicit refactor and registry
+the complete Recipients destination. `#ccIntake` is now a registered Transfer
+surface, and `#recipientIntel` remains current Transfer context. `#recipientIntel`
+may only become Recipients content after an explicit refactor and registry
 update.
 
 ### Activity
@@ -147,9 +150,9 @@ If `#transferMod` is inactive, descendants inside it may become inactive because
 Applied examples:
 
 - `#ccIntake` is a separate island under `#modules`. It does not inherit from
-  `#transferMod`, and its first implementation is registration in place as
+  `#transferMod`, and its first implementation was registration in place as
   `TRANSFER` by adding `data-portal-primary-surface="TRANSFER"` to the existing
-  island. That slice must not move, clone, wrap, or otherwise relocate
+  island. That slice did not move, clone, wrap, or otherwise relocate
   `#ccIntake` into `#transferMod`.
 - `#recipientIntel` is an unregistered descendant of `#transferMod`. It
   inherits Transfer presentation visibility, but that inheritance does not
@@ -288,8 +291,8 @@ If a required registered surface is missing, the visibility controller must fail
 
 Visible destination navigation cannot ship until:
 
-- the Recipients shell exists and is registered;
-- `#ccIntake` is explicitly registered in place as `TRANSFER`;
+- the Recipients shell exists and is registered — satisfied by `5b0c60c`;
+- `#ccIntake` is explicitly registered in place as `TRANSFER` — satisfied by `1c01ebe`;
 - the Activity shell exists and no longer depends on a Transfer-owned ancestor;
 - the network module is explicitly treated as globally persistent.
 
@@ -322,7 +325,7 @@ The portal must not:
 Freeze this order:
 
 1. dedicated Recipients shell — completed by `5b0c60c`;
-2. register `#ccIntake` explicitly in place as `TRANSFER`;
+2. register `#ccIntake` explicitly in place as `TRANSFER` — completed by `1c01ebe`;
 3. add and register the dedicated Activity shell and place `#receiptHistory` within it;
 4. mark the network module as globally persistent for presentation purposes;
 5. add the presentation-only visibility controller;
@@ -339,7 +342,7 @@ Future implementation work must prove:
 - no five-equal-tab model is introduced;
 - Transfer blockers remain at the point of action;
 - `#recipientsMod` exists as a dedicated empty/unavailable shell and is not fabricated from Transfer fragments;
-- `#ccIntake` is explicitly registered in place as `TRANSFER` before destination hiding ships;
+- `#ccIntake` is explicitly registered in place as `TRANSFER` — already completed by `1c01ebe`;
 - current and historical transaction states remain distinct;
 - visibility changes cannot mutate product state;
 - contextual layers preserve the primary destination;
