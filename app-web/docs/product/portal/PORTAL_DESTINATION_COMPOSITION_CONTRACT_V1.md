@@ -17,6 +17,7 @@ Committed runtime anchors:
 - `92fd61d` — `feat: add portal surface registry`.
 - `5b0c60c` — `feat: add recipients destination shell`.
 - `1c01ebe` — `feat: register coin card intake as transfer surface`.
+- `9a3daa3` — `feat: add activity destination shell`.
 
 This contract distinguishes:
 
@@ -43,7 +44,7 @@ RECIPIENTS:
   #recipientsMod
 
 ACTIVITY:
-  #receiptHistory
+  #activityMod
 
 VERIFICATION:
   #verificationMod
@@ -131,15 +132,16 @@ update.
 
 When the primary destination is `ACTIVITY`, the composition includes:
 
-- a dedicated Activity shell outside `#transferMod`;
-- `#receiptHistory` moved or structurally wrapped into that shell;
-- future Activity-specific receipt and evidence retrieval regions once explicitly registered.
+- the registered dedicated Activity shell `#activityMod`;
+- `#receiptHistory` as an unregistered historical-content child inside that shell.
 
 `#companion` remains Transfer-owned active transaction status. It must not be treated as Activity merely because it contains transaction state.
 
 Pending or current transaction state belongs with Transfer. Historical receipts, hashes, and evidence retrieval belong with Activity. Historical evidence does not independently block a new transfer, though it may link to a current blocker or show an actionable warning.
 
-The Activity shell must be created and registered before visible navigation ships. A registered Activity surface must not depend for visibility on a Transfer-owned ancestor.
+`#receiptHistory` was moved intact into `#activityMod` by `9a3daa3`. Its stable ID, existing classes, accessibility structure, empty-state markup, and direct receipt-render lookup were preserved. Receipt rendering continues to resolve `#receiptHistory` directly and does not depend on its former parent. No receipt, transaction, or execution authority changed.
+
+`#receiptHistory` no longer depends for visibility on a Transfer-owned ancestor. A registered surface must not rely for visibility on an ancestor registered to a different primary destination when that ancestor may become inactive.
 
 ## 5. Containment Inheritance
 
@@ -293,7 +295,8 @@ Visible destination navigation cannot ship until:
 
 - the Recipients shell exists and is registered — satisfied by `5b0c60c`;
 - `#ccIntake` is explicitly registered in place as `TRANSFER` — satisfied by `1c01ebe`;
-- the Activity shell exists and no longer depends on a Transfer-owned ancestor;
+- the Activity shell exists and is registered — satisfied by `9a3daa3`;
+- `#receiptHistory` is placed within the Activity shell — satisfied by `9a3daa3`;
 - the network module is explicitly treated as globally persistent.
 
 If Recipients has no implemented destination, Recipients navigation must not be enabled as an ordinary destination. The product may show a deliberate unavailable state only after a dedicated Recipients shell exists and is registered.
@@ -326,10 +329,10 @@ Freeze this order:
 
 1. dedicated Recipients shell — completed by `5b0c60c`;
 2. register `#ccIntake` explicitly in place as `TRANSFER` — completed by `1c01ebe`;
-3. add and register the dedicated Activity shell and place `#receiptHistory` within it;
-4. mark the network module as globally persistent for presentation purposes;
+3. add and register the Activity shell and place `#receiptHistory` within it — completed by `9a3daa3`;
+4. explicitly govern the mixed network module as globally persistent;
 5. add the presentation-only visibility controller;
-6. add accessible navigation controls;
+6. add accessible primary navigation controls;
 7. partition network facts in a later explicit slice;
 8. add contextual Verification and System controls;
 9. conduct mobile and desktop state-preservation QA.
@@ -343,7 +346,11 @@ Future implementation work must prove:
 - Transfer blockers remain at the point of action;
 - `#recipientsMod` exists as a dedicated empty/unavailable shell and is not fabricated from Transfer fragments;
 - `#ccIntake` is explicitly registered in place as `TRANSFER` — already completed by `1c01ebe`;
+- `#activityMod` is the sole registered Activity root;
+- `#receiptHistory` is its unregistered historical-content child;
+- `#receiptHistory` no longer depends on Transfer ancestry;
 - current and historical transaction states remain distinct;
+- receipt rendering remains keyed to the stable `#receiptHistory` identity;
 - visibility changes cannot mutate product state;
 - contextual layers preserve the primary destination;
 - unresolved islands are explicitly governed;
