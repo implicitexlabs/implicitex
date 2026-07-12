@@ -2,10 +2,16 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="ImplicitEx Transfer Portal — direct wallet-to-wallet USDC transfers on Polygon.">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="description" content="ImplicitEx Transfer Portal — installable, direct wallet-to-wallet USDC transfers on Polygon.">
   <meta name="robots" content="noindex">
   <link rel="canonical" href="https://portal.implicitex.com/">
+  <meta name="application-name" content="ImplicitEx Transfer Portal">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="ImplicitEx">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#080808">
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -40,17 +46,24 @@
   }
   </script>
   <title>ImplicitEx — Transfer Portal</title>
-  <link rel="icon" href="assets/icons/favicon.ico" sizes="any">
-  <link rel="icon" href="assets/icons/favicon-32x32.png" type="image/png" sizes="32x32">
-  <link rel="icon" href="assets/icons/favicon-16x16.png" type="image/png" sizes="16x16">
-  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+  <link rel="icon" href="/assets/icons/favicon.ico" sizes="any">
+  <link rel="icon" href="/assets/icons/favicon-32x32.png" type="image/png" sizes="32x32">
+  <link rel="icon" href="/assets/icons/favicon-16x16.png" type="image/png" sizes="16x16">
+  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png">
   <script>(function(){try{var t=localStorage.getItem('implicitex-theme');if(t==='light'||t==='dark'){document.documentElement.dataset.theme=t;}else{var h=new Date().getHours();document.documentElement.dataset.theme=(h>=7&&h<19)?'light':'dark';}}catch(e){}})();</script>
+  <script defer src="js/portal-install.js"></script>
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="components/companion/companion.css">
   <link rel="stylesheet" href="components/telemetry/telemetry.css">
-  <link rel="manifest" href="manifest.json">
+  <link rel="manifest" href="/portal.webmanifest">
   <style>
     /* ---- Portal shell overrides (portal-index.html only) ---- */
+    body[data-portal-shell="direct"] {
+      --portal-safe-top: env(safe-area-inset-top, 0px);
+      --portal-safe-right: env(safe-area-inset-right, 0px);
+      --portal-safe-bottom: env(safe-area-inset-bottom, 0px);
+      --portal-safe-left: env(safe-area-inset-left, 0px);
+    }
 
     /* Brand integrated into portal header — left side of the header bar */
     [data-portal-shell="direct"] .portal-header-brand {
@@ -78,9 +91,38 @@
     [data-portal-shell="direct"] .portal-header-controls {
       margin-left: 0;
     }
+    [data-portal-shell="direct"] .portal-ctrl-btn--install {
+      gap: 0.35rem;
+    }
+    [data-portal-shell="direct"] .portal-install-label {
+      font-family: var(--font-ui);
+      font-size: 9px;
+      font-weight: var(--weight-semibold);
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      pointer-events: none;
+    }
     /* Even padding either side of the title/controls divider */
     [data-portal-shell="direct"] .portal-header-title {
       padding-right: 0.875rem;
+    }
+    [data-portal-shell="direct"] .portal-zone {
+      padding-inline: calc(0px + var(--portal-safe-left)) calc(0px + var(--portal-safe-right));
+    }
+    [data-portal-shell="direct"] .portal-zone::before {
+      right: calc(-14px + var(--portal-safe-right));
+    }
+    [data-portal-shell="direct"] .portal-zone::after {
+      left: calc(-14px + var(--portal-safe-left));
+    }
+    [data-portal-shell="direct"] .portal-header {
+      padding-top: calc(0.875rem + var(--portal-safe-top));
+    }
+    [data-portal-shell="direct"] .portal-footer {
+      padding-inline: calc(0.75rem + var(--portal-safe-left)) calc(0.75rem + var(--portal-safe-right));
+    }
+    [data-portal-shell="direct"] .portal-footer-row {
+      padding-bottom: calc(1rem + var(--portal-safe-bottom));
     }
 
     /* Inline wallet row inside 01 Transfer module */
@@ -137,35 +179,89 @@
 
     /* Portal footer */
     .portal-footer {
-      padding: 1.25rem 2rem 2.5rem;
-      border-top: 1px solid var(--border-1);
+      max-width: var(--ix-interface-max);
+      margin: 0 auto 0;
+      padding: 0 0.75rem;
+    }
+    .portal-footer-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 1rem 1.25rem;
+      border: 1px solid var(--border);
+      background: var(--surface);
     }
     .portal-footer-statement {
       font-family: var(--font-mono);
-      font-size: 10px;
+      font-size: var(--size-xs);
       font-weight: 400;
       letter-spacing: 0.03em;
       color: var(--dim);
-      text-align: center;
+      text-align: left;
       line-height: 1.7;
-      margin-bottom: 1.25rem;
-      padding: 0 1rem;
+      max-width: 48rem;
+    }
+    .portal-footer-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      flex-shrink: 0;
+    }
+    .portal-footer-more {
+      display: block;
+    }
+    .portal-footer-more > summary {
+      list-style: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 24px;
+      padding: 0 10px;
+      font-family: var(--font-ui);
+      font-size: var(--size-xs);
+      font-weight: var(--weight-semibold);
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--dim);
+      border: 1px solid var(--border-2);
+      cursor: pointer;
+      user-select: none;
+    }
+    .portal-footer-more > summary::-webkit-details-marker {
+      display: none;
+    }
+    .portal-footer-more[open] > summary {
+      color: var(--white);
+      border-color: var(--white);
+    }
+    .portal-footer-more-panel {
+      margin-top: 0.75rem;
+      padding: 0.9rem 1rem 1rem;
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+    }
+    .portal-footer-install-note {
+      font-family: var(--font-ui);
+      font-size: var(--size-xs);
+      line-height: 1.6;
+      color: var(--dim);
+      margin-bottom: 0.9rem;
     }
     .portal-footer-nav {
       display: flex;
       flex-wrap: wrap;
-      justify-content: center;
-      gap: 1.5rem 3rem;
+      gap: 1rem 2rem;
     }
     .portal-footer-group {
       display: flex;
       flex-direction: column;
       gap: 0.3rem;
-      min-width: 110px;
+      min-width: 9rem;
     }
     .portal-footer-label {
       font-family: var(--font-mono);
-      font-size: 9px;
+      font-size: var(--size-xs);
       font-weight: 600;
       letter-spacing: 0.14em;
       text-transform: uppercase;
@@ -185,12 +281,41 @@
     .portal-footer-group a:hover {
       color: var(--white);
     }
+    .portal-ctrl-icon--install {
+      width: 12px;
+      height: 12px;
+    }
+    .portal-install-icon-line {
+      stroke: currentColor;
+      stroke-width: 1.6;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+    }
+    .portal-install-icon-fill {
+      fill: currentColor;
+    }
     @media (max-width: 600px) {
-      .portal-footer-nav {
-        gap: 1.25rem 2rem;
+      .portal-footer-row {
+        flex-direction: column;
+      }
+      .portal-footer-actions {
+        width: 100%;
+        flex-direction: row;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .portal-footer-more-panel {
+        padding: 0.8rem 0.9rem 0.9rem;
       }
       .portal-footer-group {
-        min-width: 90px;
+        min-width: 8.5rem;
+      }
+    }
+
+    @media (max-width: 680px) {
+      [data-portal-shell="direct"] .portal-install-label {
+        display: none;
       }
     }
 
@@ -199,7 +324,7 @@
       /* Allow brand and right group to break onto separate rows */
       [data-portal-shell="direct"] .portal-header {
         flex-wrap: wrap;
-        padding: 0.75rem 1rem;
+        padding: calc(0.75rem + var(--portal-safe-top)) 1rem 0.75rem;
         row-gap: var(--sp-2);
       }
 
@@ -236,6 +361,42 @@
        portal context. Title re-appears above 680px. */
     @media (max-width: 680px) {
       [data-portal-shell="direct"] .portal-header-title {
+        display: none;
+      }
+
+      [data-portal-shell="direct"] .portal-zone {
+        margin: 0.5rem 0;
+      }
+
+      [data-portal-shell="direct"] .portal-zone::before,
+      [data-portal-shell="direct"] .portal-zone::after,
+      [data-portal-shell="direct"] .transfer-portal::before,
+      [data-portal-shell="direct"] .transfer-portal::after {
+        display: none;
+      }
+
+      .portal-footer {
+        margin-bottom: 0;
+        padding-inline: 0.5rem;
+      }
+      [data-portal-shell="direct"] .portal-footer {
+        padding-inline: calc(0.5rem + var(--portal-safe-left)) calc(0.5rem + var(--portal-safe-right));
+      }
+
+      [data-portal-shell="direct"] .portal-footer-row {
+        padding-bottom: calc(1rem + var(--portal-safe-bottom));
+      }
+
+      .portal-footer-nav {
+        gap: 0.9rem 1.25rem;
+      }
+    }
+
+    @media (max-width: 900px) and (max-height: 500px) {
+      [data-portal-shell="direct"] .portal-zone::before,
+      [data-portal-shell="direct"] .portal-zone::after,
+      [data-portal-shell="direct"] .transfer-portal::before,
+      [data-portal-shell="direct"] .transfer-portal::after {
         display: none;
       }
     }
@@ -792,38 +953,58 @@
 
   <!-- Portal footer -->
   <footer class="portal-footer" aria-label="Portal information">
-    <p class="portal-footer-statement">ImplicitEx is non-custodial. Transfers are confirmed by the sender's wallet and cannot be reversed once confirmed on-chain.</p>
-    <nav class="portal-footer-nav" aria-label="Footer links">
-      <div class="portal-footer-group">
-        <span class="portal-footer-label">Legal</span>
-        <a href="/terms.html">Terms</a>
-        <a href="/privacy.html">Privacy</a>
-        <a href="/legal.html">Legal</a>
-        <a href="/risk-disclosure.html">Risk Disclosure</a>
-        <a href="/fee-disclosure.html">Fee &amp; Network</a>
-        <a href="/acceptable-use.html">Acceptable Use</a>
+    <div class="portal-footer-row">
+      <p class="portal-footer-statement">ImplicitEx is non-custodial. The portal opens directly from the web or as an installed shortcut. Transfers are confirmed by the sender's wallet and cannot be reversed once confirmed on-chain.</p>
+      <div class="portal-footer-actions">
+        <button class="portal-ctrl-btn portal-ctrl-btn--install" id="portalInstallBtn" type="button" aria-label="Install ImplicitEx Transfer Portal" title="Install ImplicitEx Transfer Portal">
+          <svg class="portal-ctrl-icon portal-ctrl-icon--install" width="12" height="12" viewBox="0 0 14 14" aria-hidden="true" focusable="false">
+            <path class="portal-install-icon-line" d="M7 1v6"></path>
+            <path class="portal-install-icon-line" d="M4.5 4.5L7 7l2.5-2.5"></path>
+            <path class="portal-install-icon-line" d="M2 9.5h10"></path>
+            <path class="portal-install-icon-line" d="M2.5 10.5v1h9v-1"></path>
+            <path class="portal-install-icon-fill" d="M6.25 8.5h1.5v2h-1.5z"></path>
+          </svg>
+          <span class="portal-install-label">Install</span>
+        </button>
+        <details class="portal-footer-more" id="portalFooterMore">
+          <summary>More</summary>
+          <div class="portal-footer-more-panel">
+            <p class="portal-footer-install-note">iPhone: tap Share, then Add to Home Screen. Desktop and Android browsers may show an Install prompt. The portal remains available directly in the browser.</p>
+            <nav class="portal-footer-nav" aria-label="Footer links">
+              <div class="portal-footer-group">
+                <span class="portal-footer-label">Legal</span>
+                <a href="/terms.html">Terms</a>
+                <a href="/privacy.html">Privacy</a>
+                <a href="/legal.html">Legal</a>
+                <a href="/risk-disclosure.html">Risk Disclosure</a>
+                <a href="/fee-disclosure.html">Fee &amp; Network</a>
+                <a href="/acceptable-use.html">Acceptable Use</a>
+              </div>
+              <div class="portal-footer-group">
+                <span class="portal-footer-label">Trust</span>
+                <a href="/contract-addresses.html">Contract Addresses</a>
+                <a href="/security.html">Security</a>
+                <a href="/status.html">Status</a>
+                <a href="/verify.html">Coin Card Verification</a>
+              </div>
+              <div class="portal-footer-group">
+                <span class="portal-footer-label">Agent / Index</span>
+                <a href="/llms.txt">llms.txt</a>
+                <a href="/robots.txt">robots.txt</a>
+                <a href="/sitemap.xml">sitemap.xml</a>
+                <a href="/metadata.html">Metadata</a>
+              </div>
+              <div class="portal-footer-group">
+                <span class="portal-footer-label">Contact</span>
+                <a href="/contact.html">Support</a>
+                <a href="mailto:connect@implicitex.com">Legal Contact</a>
+                <a href="/security.html">Report a Security Issue</a>
+              </div>
+            </nav>
+          </div>
+        </details>
       </div>
-      <div class="portal-footer-group">
-        <span class="portal-footer-label">Trust</span>
-        <a href="/contract-addresses.html">Contract Addresses</a>
-        <a href="/security.html">Security</a>
-        <a href="/status.html">Status</a>
-        <a href="/verify.html">Coin Card Verification</a>
-      </div>
-      <div class="portal-footer-group">
-        <span class="portal-footer-label">Agent / Index</span>
-        <a href="/llms.txt">llms.txt</a>
-        <a href="/robots.txt">robots.txt</a>
-        <a href="/sitemap.xml">sitemap.xml</a>
-        <a href="/metadata.html">Metadata</a>
-      </div>
-      <div class="portal-footer-group">
-        <span class="portal-footer-label">Contact</span>
-        <a href="/contact.html">Support</a>
-        <a href="mailto:connect@implicitex.com">Legal Contact</a>
-        <a href="/security.html">Report a Security Issue</a>
-      </div>
-    </nav>
+    </div>
   </footer>
 
   <!-- Scripts — same as index.html minus canvas.js, feeds.js, news-data.js -->

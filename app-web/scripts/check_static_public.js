@@ -87,7 +87,7 @@ for (const file of files) {
     const contents = fs.readFileSync(file, "utf8");
     references.push(...collectHtmlTargets(file, contents));
   }
-  if (base === "manifest.json") {
+  if (base === "manifest.json" || base.endsWith(".webmanifest")) {
     const contents = fs.readFileSync(file, "utf8");
     references.push(...collectManifestTargets(file, contents));
   }
