@@ -9,7 +9,8 @@ It is governed by:
 - `PORTAL_INFORMATION_ARCHITECTURE_CONTRACT_V1.md`;
 - `PORTAL_FACT_AND_AUTHORITY_INVENTORY_V1.md`;
 - `PORTAL_INTENT_BASED_PRESENTATION_PROJECTION_V1.md`;
-- `PORTAL_GLOBAL_SURFACE_REGISTRATION_CONTRACT_V1.md`.
+- `PORTAL_GLOBAL_SURFACE_REGISTRATION_CONTRACT_V1.md`;
+- `PORTAL_VISIBILITY_CONTROLLER_ACTIVATION_CONTRACT_V1.md`.
 
 Committed runtime anchors:
 
@@ -31,6 +32,10 @@ This contract distinguishes:
 - unresolved DOM islands.
 
 It does not redefine fact authority, storage authority, wallet authority, Coin Card authority, receipt authority, or execution authority.
+
+The visibility controller activation model is defined separately. The
+controller remains dormant until a later navigation coordinator explicitly
+activates it.
 
 ## 2. Current Canonical Registry
 
@@ -232,16 +237,11 @@ Presentation-controller visibility and feature-owned visibility are distinct.
 - Presentation-controller visibility is owned by the destination controller.
 - Feature-owned visibility remains owned by existing product logic inside a destination.
 
-The controller may change visibility only on registered surface roots or dedicated destination shells. It may remove only `hidden`, `inert`, `aria-hidden`, classes, styles, or other markers that it previously applied and owns.
+The controller may change visibility only on registered surface roots or dedicated destination shells. It may add or remove only its own `data-portal-controller-inactive` marker.
 
 The controller must not broadly reveal descendants when activating a surface.
 
-Inactive primary surfaces should use an accessible visibility mechanism that prevents focus inside inactive content. The default implementation should prefer both:
-
-- `hidden`, for removal from visual and accessibility presentation;
-- `inert`, where supported or safely polyfilled, for interaction containment during transitions.
-
-If a browser lacks safe `inert` support, the controller must still prevent keyboard focus and screen-reader ambiguity through an equivalent accessible mechanism.
+Inactive primary surfaces are represented by the controller-owned inactive marker. The later controller implementation and stylesheet determine how that marker suppresses presentation and interaction.
 
 Unregistered top-level islands must remain visible until they are explicitly resolved, registered, or governed by containment inheritance. A controller must not hide unregistered top-level content merely because it is not in the registry.
 
@@ -303,7 +303,10 @@ Visible destination navigation cannot ship until:
 - `#ccIntake` is explicitly registered in place as `TRANSFER` — satisfied by `1c01ebe`;
 - the Activity shell exists and is registered — satisfied by `9a3daa3`;
 - `#receiptHistory` is placed within the Activity shell — satisfied by `9a3daa3`;
-- the network module has explicit GLOBAL registration — satisfied by `2285218`.
+- the network module has explicit GLOBAL registration — satisfied by `2285218`;
+- all structural prerequisites for the visibility controller are satisfied.
+  Visibility-controller rollout and activation are governed by
+  `PORTAL_VISIBILITY_CONTROLLER_ACTIVATION_CONTRACT_V1.md`.
 
 If Recipients has no implemented destination, Recipients navigation must not be enabled as an ordinary destination. The product may show a deliberate unavailable state only after a dedicated Recipients shell exists and is registered.
 
@@ -363,8 +366,11 @@ Future implementation work must prove:
 - the network module is explicitly registered as GLOBAL / NETWORK and is no
   longer structurally unresolved;
 - the later Transfer/System network fact partition remains deferred;
+- all structural prerequisites for the visibility controller are satisfied;
 - mobile and desktop remain semantically equivalent.
 
-## 15. Open Questions
+## 15. Visibility Controller
 
-None for the first visibility-controller implementation.
+The dormant visibility-controller contract is `PORTAL_VISIBILITY_CONTROLLER_ACTIVATION_CONTRACT_V1.md`.
+
+It requires a later visible navigation slice to activate destination hiding.

@@ -19,6 +19,7 @@ Canonical docs:
 - `../../../../docs/product/portal/PORTAL_INTENT_BASED_PRESENTATION_PROJECTION_V1.md` — how inventoried facts project into Transfer, Recipients, Activity, contextual Verification, and System without creating new authority.
 - `../../../../docs/product/portal/PORTAL_DESTINATION_COMPOSITION_CONTRACT_V1.md` — how canonical registered surfaces compose into visible destinations before navigation changes presentation.
 - `../../../../docs/product/portal/PORTAL_GLOBAL_SURFACE_REGISTRATION_CONTRACT_V1.md` — explicit GLOBAL/NETWORK registration rules for portal surfaces that must remain present regardless of destination state.
+- `../../../../docs/product/portal/PORTAL_VISIBILITY_CONTROLLER_ACTIVATION_CONTRACT_V1.md` — dormant visibility-controller rollout and later activation boundary for destination hiding.
 
 Mirrored files in this directory:
 
@@ -27,6 +28,7 @@ Mirrored files in this directory:
 - `PORTAL_INTENT_BASED_PRESENTATION_PROJECTION_V1.md`
 - `PORTAL_DESTINATION_COMPOSITION_CONTRACT_V1.md`
 - `PORTAL_GLOBAL_SURFACE_REGISTRATION_CONTRACT_V1.md`
+- `PORTAL_VISIBILITY_CONTROLLER_ACTIVATION_CONTRACT_V1.md`
 
 The mirrored file is a convenience copy for app-web readers. The canonical version lives under `docs/product/portal/`.
 
@@ -37,6 +39,7 @@ The mirrored file is a convenience copy for app-web readers. The canonical versi
 - Portal intent-based presentation projection: `docs/product/portal/PORTAL_INTENT_BASED_PRESENTATION_PROJECTION_V1.md`
 - Portal destination composition: `docs/product/portal/PORTAL_DESTINATION_COMPOSITION_CONTRACT_V1.md`
 - Portal global surface registration: `docs/product/portal/PORTAL_GLOBAL_SURFACE_REGISTRATION_CONTRACT_V1.md`
+- Portal visibility-controller activation: `docs/product/portal/PORTAL_VISIBILITY_CONTROLLER_ACTIVATION_CONTRACT_V1.md`
 
 The boundary is:
 

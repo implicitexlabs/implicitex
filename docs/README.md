@@ -7,7 +7,7 @@ Product, operations, and legal documentation for ImplicitEx.
 ```
 docs/
 ├── product/
-│   ├── portal/                       Portal documentation (contract + inventory + projection + composition)
+│   ├── portal/                       Portal documentation (contract + inventory + projection + composition + global + visibility)
 │   ├── mvp-roadmap.md                Launch gate sequence and board (primary reference)
 │   ├── agent-financial-infrastructure-initiative.md
 │   │                                  Strategic thesis for agent treasury, permissions, settlement, and audit
@@ -44,6 +44,7 @@ docs/
 - **How do portal facts project into surfaces without creating new authority?** `product/portal/PORTAL_INTENT_BASED_PRESENTATION_PROJECTION_V1.md`
 - **How do registered portal surfaces compose into visible destinations?** `product/portal/PORTAL_DESTINATION_COMPOSITION_CONTRACT_V1.md`
 - **How do persistent portal surfaces remain outside destination hiding?** `product/portal/PORTAL_GLOBAL_SURFACE_REGISTRATION_CONTRACT_V1.md`
+- **How does the visibility controller activate without a locked-door state?** `product/portal/PORTAL_VISIBILITY_CONTROLLER_ACTIVATION_CONTRACT_V1.md`
 - **How do we review transaction trust before launch?** `operations/transaction-trust-gate.md`
 - **Attorney review materials?** `attorney-review/README.md`
 - **Live transfer proof?** `operations/evidence/gate2-live-transfer-smoke-2026-06-01.md`

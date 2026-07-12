@@ -13,6 +13,7 @@ Implementation-local mirrors may exist under `app-web/docs/product/portal/`, but
 - `PORTAL_INTENT_BASED_PRESENTATION_PROJECTION_V1.md` — how inventoried facts project into Transfer, Recipients, Activity, contextual Verification, and System without creating new authority.
 - `PORTAL_DESTINATION_COMPOSITION_CONTRACT_V1.md` — how canonical registered surfaces compose into visible destinations before navigation changes presentation.
 - `PORTAL_GLOBAL_SURFACE_REGISTRATION_CONTRACT_V1.md` — explicit GLOBAL/NETWORK registration rules for portal surfaces that must remain present regardless of destination state.
+- `PORTAL_VISIBILITY_CONTROLLER_ACTIVATION_CONTRACT_V1.md` — dormant visibility-controller rollout and later activation boundary for destination hiding.
 
 ## Portal Architecture Stack
 
@@ -21,6 +22,7 @@ Implementation-local mirrors may exist under `app-web/docs/product/portal/`, but
 - Intent-based presentation projection: `PORTAL_INTENT_BASED_PRESENTATION_PROJECTION_V1.md`
 - Destination composition: `PORTAL_DESTINATION_COMPOSITION_CONTRACT_V1.md`
 - Global surface registration: `PORTAL_GLOBAL_SURFACE_REGISTRATION_CONTRACT_V1.md`
+- Visibility-controller activation: `PORTAL_VISIBILITY_CONTROLLER_ACTIVATION_CONTRACT_V1.md`
 
 The boundary is:
 
