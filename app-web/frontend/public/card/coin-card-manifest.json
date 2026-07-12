@@ -16,6 +16,11 @@
       "sha256": "sha256:b5c2be2dd38af28be878102ccbbad4bb0aff6556ecc47da2284768edc54df6b3"
     },
     {
+      "bytes": 7950,
+      "path": "card/coin-card-lifecycle-presentation.js",
+      "sha256": "sha256:7472a6b094f73e3c0d957659e6d82da71d70a881f93ee89e924279b43a9ad607"
+    },
+    {
       "bytes": 42723,
       "path": "card/coin-card-lifecycle-record-selection.js",
       "sha256": "sha256:5bfbd90a061c6816c21398e77a4b091eca77b0034560b095527e10787029d1e4"
@@ -46,9 +51,9 @@
       "sha256": "sha256:e5c70fd96dbe7e2e4bdf1734293078d8beaf11c45aa25a108b1ef780d781320d"
     },
     {
-      "bytes": 30256,
+      "bytes": 30304,
       "path": "card/coin-card-verification.js",
-      "sha256": "sha256:0ea657f7b163d785b0ac0a8efcb9416d4cb2d06e0a8e4a1d39c5c45d228b21b5"
+      "sha256": "sha256:d13e46728c50e7c9c81b76d62a931517364ade4447071b2dbcd00b476631b8d2"
     },
     {
       "bytes": 19672,
@@ -61,10 +66,10 @@
       "sha256": "sha256:d59af15f40bc321f78871fe9d892d1dbbf05e35e20ad22aa51203c68185b58b6"
     }
   ],
-  "buildVersion": "commit-f",
+  "buildVersion": "commit-h",
   "coinCardVersion": "coin-card.v1",
   "layoutVersion": "coin-card-layout.v1",
-  "manifestHash": "sha256:e84d75173283078d2a712422171187f7033a464d558812095afbb4635c890987",
+  "manifestHash": "sha256:708287dc3c46e17cc1e1a9320814c91fd0f911b72736b3feb298b58903256b3a",
   "schemaVersion": "coin-card-manifest.v1",
   "scope": "coin-card-runtime-package",
   "signature": {

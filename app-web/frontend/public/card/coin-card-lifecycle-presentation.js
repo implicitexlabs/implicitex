@@ -8,9 +8,23 @@
  *
  *   LIFECYCLE_ACTIVE (fact RESOLVED) → presentationEligible: true
  *
+ * presentationEligible: true authorizes the payment and recipient facts into
+ * the interactive transfer surface. The generic card status shell (error state,
+ * suspended notice) may render without presentationEligible: true — that
+ * rendering is driven by the application layer, not by this module.
+ *
  * All other outcomes — including LIFECYCLE_CARD_SUSPENDED, all TERMINAL
  * outcomes, all NOT_EFFECTIVE outcomes, and all UNAVAILABLE outcomes —
  * produce presentationEligible: false.
+ *
+ * Note on PRESENTATION_BLOCKED_UNAVAILABLE: this outcome fires when the
+ * resolver's isResolvedLifecycleResult() predicate does not recognize the
+ * input. Genuine UNAVAILABLE results from the resolver (network errors,
+ * registry failures) are not branded by isResolvedLifecycleResult() under
+ * the resolver contract, so they arrive here as unrecognized inputs
+ * (PRESENTATION_INPUT_INVALID), not as PRESENTATION_BLOCKED_UNAVAILABLE.
+ * PRESENTATION_BLOCKED_UNAVAILABLE is reserved for the case where a genuine
+ * branded resolver result carries fact === 'UNAVAILABLE'.
  *
  * executionEligible is never set by this module. Execution authority is a
  * separate gate that this module does not open.
@@ -39,10 +53,14 @@
 
   /* ----------------------------------------------------------------
    * Private branded result identity
+   *
+   * Only positively promoted results are branded. Blocked results are not.
+   * isPromotedPresentationResult() returns false for any blocked result,
+   * for any result from a different VM context, and for any non-result.
    * ---------------------------------------------------------------- */
   var PROMOTION_RESULTS = new WeakSet();
 
-  function isPresentationResult(value) {
+  function isPromotedPresentationResult(value) {
     try {
       return PROMOTION_RESULTS.has(value);
     } catch (error) {
@@ -140,7 +158,9 @@
       return makePromoted(resolvedFact, resolvedOutcome);
     }
 
-    /* Suspended: card exists but is not operational for new transfers. */
+    /* Suspended: card exists but is not operational for new transfers.
+     * The status shell may still render; presentationEligible: true is not
+     * required for generic status display, only for the transfer surface. */
     if (resolvedFact === RESOLVED_FACT && resolvedOutcome === SUSPENDED_OUTCOME) {
       return makeBlocked(OUTCOMES.PRESENTATION_BLOCKED_SUSPENDED, resolvedFact, resolvedOutcome);
     }
@@ -155,7 +175,9 @@
       return makeBlocked(OUTCOMES.PRESENTATION_BLOCKED_NOT_EFFECTIVE, resolvedFact, resolvedOutcome);
     }
 
-    /* Unavailable outcomes (resolution failures). */
+    /* Unavailable outcomes: a genuine branded resolver result whose fact is
+     * UNAVAILABLE. See module header for the distinction between this case
+     * and an unrecognized input (PRESENTATION_INPUT_INVALID). */
     if (resolvedFact === UNAVAILABLE_FACT) {
       return makeBlocked(OUTCOMES.PRESENTATION_BLOCKED_UNAVAILABLE, resolvedFact, resolvedOutcome);
     }
@@ -169,7 +191,7 @@
       TOP_LEVEL_FACTS: TOP_LEVEL_FACTS,
       OUTCOMES: OUTCOMES,
       promotePresentation: promotePresentation,
-      isPresentationResult: isPresentationResult,
+      isPromotedPresentationResult: isPromotedPresentationResult,
     }),
     writable: false,
     enumerable: true,

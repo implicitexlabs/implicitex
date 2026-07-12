@@ -67,6 +67,7 @@
     'card/coin-card-lifecycle-bundle-verification.js',
     'card/coin-card-lifecycle-record-selection.js',
     'card/coin-card-lifecycle-resolution.js',
+    'card/coin-card-lifecycle-presentation.js',
     'card/coin-card-verification.js',
     'card/card.js',
     'card/card.css',

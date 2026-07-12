@@ -96,6 +96,11 @@
         "role": "operational-lifecycle-resolution"
       },
       {
+        "id": "lifecyclePresentationPromotion",
+        "type": "responsibility",
+        "role": "presentation-promotion-policy"
+      },
+      {
         "id": "presentation",
         "type": "responsibility",
         "role": "presentation-projection"
@@ -181,6 +186,11 @@
       {
         "from": "lifecycleResolution",
         "to": "lifecycleRecordSelection",
+        "relationship": "consumes"
+      },
+      {
+        "from": "lifecyclePresentationPromotion",
+        "to": "lifecycleResolution",
         "relationship": "consumes"
       },
       {
@@ -313,6 +323,48 @@
         "to": "lifecycleBundle",
         "relationship": "depends-on",
         "reason": "Lifecycle resolution must not depend on lifecycle bundle validation."
+      },
+      {
+        "from": "lifecycleResolution",
+        "to": "lifecyclePresentationPromotion",
+        "relationship": "depends-on",
+        "reason": "Lifecycle resolution must not depend on presentation-promotion policy."
+      },
+      {
+        "from": "lifecyclePresentationPromotion",
+        "to": "lifecycleRecordSelection",
+        "relationship": "depends-on",
+        "reason": "Presentation-promotion policy must not depend on record selection."
+      },
+      {
+        "from": "lifecyclePresentationPromotion",
+        "to": "lifecycleBundle",
+        "relationship": "depends-on",
+        "reason": "Presentation-promotion policy must not depend on bundle verification."
+      },
+      {
+        "from": "lifecyclePresentationPromotion",
+        "to": "lifecycleRecordVerification",
+        "relationship": "depends-on",
+        "reason": "Presentation-promotion policy must not depend on record verification."
+      },
+      {
+        "from": "lifecyclePresentationPromotion",
+        "to": "lifecycleRegistry",
+        "relationship": "depends-on",
+        "reason": "Presentation-promotion policy must not depend on the registry layer."
+      },
+      {
+        "from": "lifecyclePresentationPromotion",
+        "to": "wallet",
+        "relationship": "depends-on",
+        "reason": "Presentation-promotion policy must not depend on wallet state."
+      },
+      {
+        "from": "lifecyclePresentationPromotion",
+        "to": "ixExecute",
+        "relationship": "depends-on",
+        "reason": "Presentation-promotion policy must not depend on IX execution."
       },
       {
         "from": "lifecycleResolution",

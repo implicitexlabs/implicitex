@@ -24,6 +24,10 @@
     "transferPortal": {
       "implementation": "app-web/frontend/public/js/wallet.js",
       "relationship": "separate-surface"
+    },
+    "lifecyclePresentationPromotion": {
+      "implementation": "app-web/frontend/public/card/coin-card-lifecycle-presentation.js",
+      "symbol": "window.IX_COIN_CARD_LIFECYCLE_PRESENTATION"
     }
   },
   "implementedEdges": [
@@ -66,6 +70,11 @@
       "from": "ixExecute",
       "to": "executionFulfillment",
       "relationship": "owns"
+    },
+    {
+      "from": "lifecyclePresentationPromotion",
+      "to": "lifecycleResolution",
+      "relationship": "consumes"
     }
   ],
   "regions": [

@@ -259,7 +259,7 @@ test('IX_COIN_CARD_LIFECYCLE_PRESENTATION is exposed on window and frozen', () =
   assert.ok(api, 'IX_COIN_CARD_LIFECYCLE_PRESENTATION must be defined');
   assert.ok(Object.isFrozen(api), 'API object must be frozen');
   assert.equal(typeof api.promotePresentation, 'function');
-  assert.equal(typeof api.isPresentationResult, 'function');
+  assert.equal(typeof api.isPromotedPresentationResult, 'function');
   assert.ok(api.TOP_LEVEL_FACTS, 'TOP_LEVEL_FACTS must be exposed');
   assert.ok(api.OUTCOMES, 'OUTCOMES must be exposed');
 });
@@ -391,17 +391,17 @@ test('promoted result is frozen', async () => {
   assert.ok(Object.isFrozen(result));
 });
 
-test('promoted result is a genuine isPresentationResult', async () => {
+test('promoted result is a genuine isPromotedPresentationResult', async () => {
   const runtime = await makeSignedPresentationRuntime([activeRecordSpec()]);
   const result = runtime.presentation.promotePresentation(runtime.resolved);
-  assert.equal(runtime.presentation.isPresentationResult(result), true);
+  assert.equal(runtime.presentation.isPromotedPresentationResult(result), true);
 });
 
-test('blocked result is NOT a genuine isPresentationResult', async () => {
+test('blocked result is NOT a genuine isPromotedPresentationResult', async () => {
   const runtime = await makeSignedPresentationRuntime([activeRecordSpec()]);
   /* fabricated input → blocked result */
   const blocked = runtime.presentation.promotePresentation(null);
-  assert.equal(runtime.presentation.isPresentationResult(blocked), false);
+  assert.equal(runtime.presentation.isPromotedPresentationResult(blocked), false);
 });
 
 test('executionEligible is always false — even for LIFECYCLE_ACTIVE', async () => {
@@ -575,26 +575,26 @@ test('UNAVAILABLE lifecycle result produces PRESENTATION_BLOCKED_UNAVAILABLE', (
 });
 
 /* ----------------------------------------------------------------
- * isPresentationResult brand checks
+ * isPromotedPresentationResult brand checks
  * ---------------------------------------------------------------- */
-test('isPresentationResult returns false for null', () => {
+test('isPromotedPresentationResult returns false for null', () => {
   const runtime = makePresentationContext();
-  assert.equal(runtime.presentation.isPresentationResult(null), false);
+  assert.equal(runtime.presentation.isPromotedPresentationResult(null), false);
 });
 
-test('isPresentationResult returns false for plain objects', () => {
+test('isPromotedPresentationResult returns false for plain objects', () => {
   const runtime = makePresentationContext();
-  assert.equal(runtime.presentation.isPresentationResult({}), false);
-  assert.equal(runtime.presentation.isPresentationResult({ presentationEligible: true }), false);
+  assert.equal(runtime.presentation.isPromotedPresentationResult({}), false);
+  assert.equal(runtime.presentation.isPromotedPresentationResult({ presentationEligible: true }), false);
 });
 
-test('isPresentationResult returns false for blocked results', () => {
+test('isPromotedPresentationResult returns false for blocked results', () => {
   const runtime = makePresentationContext();
   const blocked = runtime.presentation.promotePresentation(null);
-  assert.equal(runtime.presentation.isPresentationResult(blocked), false);
+  assert.equal(runtime.presentation.isPromotedPresentationResult(blocked), false);
 });
 
-test('isPresentationResult from different VM context cannot be forged', async () => {
+test('isPromotedPresentationResult from different VM context cannot be forged', async () => {
   /* Two separate VM contexts each have their own PROMOTION_RESULTS WeakSet. */
   const runtimeA = await makeSignedPresentationRuntime([activeRecordSpec()]);
   const runtimeB = await makeSignedPresentationRuntime([{
@@ -605,9 +605,9 @@ test('isPresentationResult from different VM context cannot be forged', async ()
   }], { cardId: 'card_b' });
 
   const promotedA = runtimeA.presentation.promotePresentation(runtimeA.resolved);
-  assert.equal(runtimeA.presentation.isPresentationResult(promotedA), true);
+  assert.equal(runtimeA.presentation.isPromotedPresentationResult(promotedA), true);
   /* Context B cannot recognize a result from context A. */
-  assert.equal(runtimeB.presentation.isPresentationResult(promotedA), false);
+  assert.equal(runtimeB.presentation.isPromotedPresentationResult(promotedA), false);
 });
 
 /* ----------------------------------------------------------------
