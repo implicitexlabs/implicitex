@@ -106,6 +106,7 @@ function createDocument(nodes) {
 function createRegisteredNodes(order = 'normal') {
   const nodes = [
     createFakeElement('transferMod', { 'data-portal-primary-surface': 'TRANSFER' }),
+    createFakeElement('recipientsMod', { 'data-portal-primary-surface': 'RECIPIENTS' }),
     createFakeElement('ccIntake'),
     createFakeElement('recipientIntel'),
     createFakeElement('receiptHistory', { 'data-portal-primary-surface': 'ACTIVITY' }),
@@ -216,6 +217,63 @@ function plainSnapshot(snapshot) {
   }));
 }
 
+function findElementSpan(html, id) {
+  const idToken = `id="${id}"`;
+  const idIndex = html.indexOf(idToken);
+
+  if (idIndex < 0) {
+    return null;
+  }
+
+  const begin = html.lastIndexOf('<', idIndex);
+  if (begin < 0) {
+    return null;
+  }
+
+  const openTagEnd = html.indexOf('>', begin);
+  if (openTagEnd < 0) {
+    return null;
+  }
+
+  const openTag = html.slice(begin, openTagEnd + 1);
+  const match = /^<([A-Za-z][\w:-]*)\b/.exec(openTag);
+  if (!match) {
+    return null;
+  }
+
+  const tagName = match[1];
+  const tokenPattern = new RegExp(`<\\/?${tagName}\\b[^>]*>`, 'g');
+  let depth = 1;
+  let cursor = openTagEnd + 1;
+
+  while (cursor < html.length) {
+    tokenPattern.lastIndex = cursor;
+    const nextToken = tokenPattern.exec(html);
+
+    if (!nextToken) {
+      return null;
+    }
+
+    if (nextToken[0][1] === '/') {
+      depth -= 1;
+      if (depth === 0) {
+        return {
+          start: begin,
+          end: nextToken.index + nextToken[0].length,
+        };
+      }
+
+      cursor = nextToken.index + nextToken[0].length;
+      continue;
+    }
+
+    depth += 1;
+    cursor = nextToken.index + nextToken[0].length;
+  }
+
+  return null;
+}
+
 test('real portal markup declares the expected surface anchors', () => {
   const html = read(portalIndexPath);
   const primaryMatches = [...html.matchAll(
@@ -230,6 +288,7 @@ test('real portal markup declares the expected surface anchors', () => {
     [
       'companion:TRANSFER',
       'receiptHistory:ACTIVITY',
+      'recipientsMod:RECIPIENTS',
       'transferMod:TRANSFER',
     ].sort()
   );
@@ -262,10 +321,58 @@ test('registry exposes separate primary and contextual surface buckets', () => {
 
   assert.equal(api.validate(), true);
   assert.deepEqual(ids(api.getPrimarySurfaceRegistrations('TRANSFER')), ['companion', 'transferMod']);
-  assert.deepEqual(ids(api.getPrimarySurfaceRegistrations('RECIPIENTS')), []);
+  assert.deepEqual(ids(api.getPrimarySurfaceRegistrations('RECIPIENTS')), ['recipientsMod']);
   assert.deepEqual(ids(api.getPrimarySurfaceRegistrations('ACTIVITY')), ['receiptHistory']);
   assert.deepEqual(ids(api.getContextualSurfaceRegistrations('VERIFICATION')), ['verificationMod']);
   assert.deepEqual(ids(api.getContextualSurfaceRegistrations('SYSTEM')), ['portalFooter', 'telemetry']);
+});
+
+test('recipients shell exists exactly once with an accessible heading and no recipient-data controls', () => {
+  const html = read(portalIndexPath);
+  const portalSpan = findElementSpan(html, 'modules');
+  const transferSpan = findElementSpan(html, 'transferMod');
+  const recipientsSpan = findElementSpan(html, 'recipientsMod');
+  const ccIntakeSpan = findElementSpan(html, 'ccIntake');
+  const recipientIntelSpan = findElementSpan(html, 'recipientIntel');
+
+  assert.ok(portalSpan, 'transfer portal markup is missing');
+  assert.ok(transferSpan, 'transfer shell markup is missing');
+  assert.ok(recipientsSpan, 'recipients shell markup is missing');
+  assert.ok(ccIntakeSpan, 'ccIntake markup is missing');
+  assert.ok(recipientIntelSpan, 'recipientIntel markup is missing');
+
+  const shell = html.slice(recipientsSpan.start, recipientsSpan.end);
+  const portalShell = html.slice(portalSpan.start, portalSpan.end);
+
+  assert.equal((html.match(/id="recipientsMod"/g) || []).length, 1);
+  assert.equal((html.match(/id="recipientsHeading"/g) || []).length, 1);
+  assert.match(html, /<p class="mod-title" id="recipientsHeading">Recipients<\/p>/);
+  assert.match(html, /<div class="mod" id="recipientsMod" data-portal-primary-surface="RECIPIENTS" aria-labelledby="recipientsHeading">/);
+  assert.match(html, /<span class="data-v">No saved recipients yet\.<\/span>/);
+  assert.match(html, /Recipient tools are not enabled in this version\./);
+  assert.doesNotMatch(shell, /<input\b/);
+  assert.doesNotMatch(shell, /<button\b/);
+  assert.doesNotMatch(shell, /<a\b/);
+  assert.doesNotMatch(shell, /\bon[a-z]+\s*=/i);
+  assert.doesNotMatch(shell, /\bhidden\b/);
+  assert.doesNotMatch(shell, /\binert\b/);
+  assert.doesNotMatch(shell, /\baria-hidden\b/);
+  assert.doesNotMatch(shell, /<form\b/);
+  assert.doesNotMatch(shell, /<input\b/);
+  assert.doesNotMatch(shell, /<select\b/);
+  assert.doesNotMatch(shell, /<textarea\b/);
+  assert.doesNotMatch(shell, /<button\b/);
+  assert.doesNotMatch(shell, /<a\b/);
+  assert.doesNotMatch(shell, /<script\b/);
+  assert.doesNotMatch(shell, /id="ccIntake"|id="recipientIntel"/);
+  assert.ok(transferSpan.end < recipientsSpan.start, 'transfer shell must close before recipients shell begins');
+  assert.doesNotMatch(shell, /id="ccIntake"|id="recipientIntel"/);
+  assert.ok(ccIntakeSpan.start > portalSpan.start && ccIntakeSpan.end < portalSpan.end, 'ccIntake must remain inside the transfer portal surface');
+  assert.ok(recipientIntelSpan.start > portalSpan.start && recipientIntelSpan.end < portalSpan.end, 'recipientIntel must remain inside the transfer portal surface');
+  assert.ok(html.indexOf('id="ccIntake"') < recipientsSpan.start || html.indexOf('id="ccIntake"') > recipientsSpan.end, 'ccIntake must not appear inside recipients shell');
+  assert.ok(html.indexOf('id="recipientIntel"') < recipientsSpan.start || html.indexOf('id="recipientIntel"') > recipientsSpan.end, 'recipientIntel must not appear inside recipients shell');
+  assert.match(portalShell, /id="ccIntake"/);
+  assert.match(portalShell, /id="recipientIntel"/);
 });
 
 test('DOM order does not change ordered surface snapshots', () => {
@@ -387,13 +494,12 @@ test('registered IDs resolve to the registered element', () => {
   const snapshot = loaded.api.getRegistrationSnapshot();
   const registered = [
     ...snapshot.primary.TRANSFER,
+    ...snapshot.primary.RECIPIENTS,
     ...snapshot.primary.ACTIVITY,
     ...snapshot.contextual.VERIFICATION,
     ...snapshot.contextual.SYSTEM,
   ];
   const byId = new Map(nodes.map((node) => [node.id, node]));
-
-  assert.deepEqual(ids(snapshot.primary.RECIPIENTS), []);
 
   for (const entry of registered) {
     assert.equal(byId.get(entry.id).id, entry.id);
