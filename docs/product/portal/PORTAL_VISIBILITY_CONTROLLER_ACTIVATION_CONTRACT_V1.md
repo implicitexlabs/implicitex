@@ -105,20 +105,33 @@ The V1 controller must not implement contextual-layer visibility.
 
 ## 5. Feature-Owned Versus Controller-Owned Visibility
 
-Before modifying a registered primary root, the controller must distinguish its
-baseline feature-owned state.
+`data-portal-controller-inactive` is reserved exclusively for
+`IX_PORTAL_VISIBILITY_CONTROLLER`.
 
-For every root, track whether the controller itself added:
+Requirements:
 
-- `data-portal-controller-inactive`.
+- static portal markup must not contain the marker;
+- feature logic must not add, remove, copy, or interpret the marker;
+- navigation logic must not mutate the marker directly;
+- projection and view-state modules must not mutate the marker;
+- only the visibility controller may add or remove it;
+- marker presence is presentation state, not destination authority.
 
-Require:
+The controller may privately record the exact registered roots on which it
+added `data-portal-controller-inactive`.
 
-- inactive primary roots receive `data-portal-controller-inactive`;
-- the controller claims ownership only for the inactive marker it actually adds;
-- an attribute already present before controller mutation remains feature-owned;
-- reactivating a root removes only the controller-owned inactive marker;
-- restoration removes only controller-owned inactive markers;
+Marker ownership rules:
+
+- a marker is controller-owned only when the controller added it during a
+  successful presentation transaction and the root is present in the controller's
+  private ownership record;
+- before first successful activation, no registered primary root may already
+  carry the marker;
+- an unowned marker on any registered primary root is a deterministic conflict;
+- the controller must not adopt or remove an unowned marker;
+- reactivating a root removes the marker only from roots recorded as
+  controller-owned;
+- restoration removes markers only from controller-owned roots;
 - the controller never broadly reveals descendants;
 - it never clears child-level feature visibility.
 
@@ -156,6 +169,8 @@ getStatus()
 - requires a valid frozen portal view-state snapshot;
 - accepts the already-established `primaryDestination`;
 - validates the complete surface registry before mutation;
+- verifies no global or contextual root carries the controller marker;
+- verifies no registered primary root carries an unowned marker;
 - computes the full visibility transaction before changing the DOM;
 - applies the selected primary destination;
 - does not transition view state;
@@ -203,6 +218,20 @@ If any precondition fails:
 - remain dormant or preserve the last successfully applied state;
 - expose a deterministic error;
 - keep the long-page presentation intact when no successful activation has occurred.
+
+If a preflight marker conflict is detected, the controller must fail with:
+
+```text
+portal-visibility-marker-conflict
+```
+
+On marker conflict:
+
+- perform no DOM mutation;
+- preserve the last successful status;
+- preserve authoritative view state and projection;
+- do not alter focus;
+- do not silently adopt the foreign marker.
 
 If an unexpected mutation failure occurs partway through application:
 
@@ -322,6 +351,9 @@ The contract must prove:
 - the controller never mutates `hidden`, `inert`, or `aria-hidden`;
 - feature-owned `hidden` on `#ccIntake` is preserved;
 - the controller removes only the inactive marker it owns;
+- an unowned marker fails with `portal-visibility-marker-conflict`;
+- the marker namespace is reserved exclusively for the controller;
+- static markup contains no inactive marker;
 - `restore()` is idempotent;
 - failures do not leave partial presentation;
 - focus conflicts fail before mutation;
