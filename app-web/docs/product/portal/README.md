@@ -16,11 +16,13 @@ Canonical docs:
 
 - `../../../../docs/product/portal/PORTAL_INFORMATION_ARCHITECTURE_CONTRACT_V1.md` — portal destination hierarchy, authoritative state, interruption policy, and responsive equivalence rules.
 - `../../../../docs/product/portal/PORTAL_FACT_AND_AUTHORITY_INVENTORY_V1.md` — current portal facts, source modules, authority types, volatility, and duplicated presentation sources.
+- `../../../../docs/product/portal/PORTAL_INTENT_BASED_PRESENTATION_PROJECTION_V1.md` — how inventoried facts project into Transfer, Recipients, Activity, contextual Verification, and System without creating new authority.
 
 Mirrored files in this directory:
 
 - `PORTAL_INFORMATION_ARCHITECTURE_CONTRACT_V1.md`
 - `PORTAL_FACT_AND_AUTHORITY_INVENTORY_V1.md`
+- `PORTAL_INTENT_BASED_PRESENTATION_PROJECTION_V1.md`
 
 The mirrored file is a convenience copy for app-web readers. The canonical version lives under `docs/product/portal/`.
 
@@ -28,6 +30,7 @@ The mirrored file is a convenience copy for app-web readers. The canonical versi
 
 - Portal information architecture: `docs/product/portal/PORTAL_INFORMATION_ARCHITECTURE_CONTRACT_V1.md`
 - Portal fact and authority inventory: `docs/product/portal/PORTAL_FACT_AND_AUTHORITY_INVENTORY_V1.md`
+- Portal intent-based presentation projection: `docs/product/portal/PORTAL_INTENT_BASED_PRESENTATION_PROJECTION_V1.md`
 
 The boundary is:
 

@@ -7,7 +7,7 @@ Product, operations, and legal documentation for ImplicitEx.
 ```
 docs/
 ├── product/
-│   ├── portal/                       Portal documentation (contract + inventory)
+│   ├── portal/                       Portal documentation (contract + inventory + projection)
 │   ├── mvp-roadmap.md                Launch gate sequence and board (primary reference)
 │   ├── agent-financial-infrastructure-initiative.md
 │   │                                  Strategic thesis for agent treasury, permissions, settlement, and audit
@@ -41,6 +41,7 @@ docs/
 - **What is the larger agent infrastructure thesis?** `product/agent-financial-infrastructure-initiative.md`
 - **What governs portal navigation and presentation hierarchy?** `product/portal/PORTAL_INFORMATION_ARCHITECTURE_CONTRACT_V1.md`
 - **What facts and authorities are currently visible in the portal?** `product/portal/PORTAL_FACT_AND_AUTHORITY_INVENTORY_V1.md`
+- **How do portal facts project into surfaces without creating new authority?** `product/portal/PORTAL_INTENT_BASED_PRESENTATION_PROJECTION_V1.md`
 - **How do we review transaction trust before launch?** `operations/transaction-trust-gate.md`
 - **Attorney review materials?** `attorney-review/README.md`
 - **Live transfer proof?** `operations/evidence/gate2-live-transfer-smoke-2026-06-01.md`
