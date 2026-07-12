@@ -6961,6 +6961,10 @@ input[type="number"] {
   display: block;
 }
 
+[data-portal-controller-inactive] {
+  display: none !important;
+}
+
 /* ================================================================
    DIRECT PORTAL — MOBILE RESPONSIVE
    This block must stay at the end of main.css, after the layout
