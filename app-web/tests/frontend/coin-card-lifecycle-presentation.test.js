@@ -281,10 +281,9 @@ test('OUTCOMES vocabulary is complete and frozen', () => {
   assert.equal(OUTCOMES.PRESENTATION_BLOCKED_SUSPENDED,     'PRESENTATION_BLOCKED_SUSPENDED');
   assert.equal(OUTCOMES.PRESENTATION_BLOCKED_TERMINAL,      'PRESENTATION_BLOCKED_TERMINAL');
   assert.equal(OUTCOMES.PRESENTATION_BLOCKED_NOT_EFFECTIVE, 'PRESENTATION_BLOCKED_NOT_EFFECTIVE');
-  assert.equal(OUTCOMES.PRESENTATION_BLOCKED_UNAVAILABLE,   'PRESENTATION_BLOCKED_UNAVAILABLE');
   assert.equal(OUTCOMES.PRESENTATION_AUTHORITY_UNAVAILABLE, 'PRESENTATION_AUTHORITY_UNAVAILABLE');
   assert.equal(OUTCOMES.PRESENTATION_INPUT_INVALID,         'PRESENTATION_INPUT_INVALID');
-  assert.equal(Object.keys(OUTCOMES).length, 7);
+  assert.equal(Object.keys(OUTCOMES).length, 6);
 });
 
 /* ----------------------------------------------------------------
@@ -550,28 +549,6 @@ test('LIFECYCLE_NOT_YET_EFFECTIVE produces PRESENTATION_BLOCKED_NOT_EFFECTIVE', 
   assert.equal(result.outcome, 'PRESENTATION_BLOCKED_NOT_EFFECTIVE');
   assert.equal(result.presentationEligible, false);
   assert.equal(result.resolvedOutcome, 'LIFECYCLE_NOT_YET_EFFECTIVE');
-});
-
-/* ----------------------------------------------------------------
- * UNAVAILABLE outcomes → blocked
- * ---------------------------------------------------------------- */
-test('UNAVAILABLE lifecycle result produces PRESENTATION_BLOCKED_UNAVAILABLE', () => {
-  /* Inject a resolution API stub that returns a fake "genuine" UNAVAILABLE result. */
-  const fakeUnavailableResult = Object.freeze({
-    fact: 'UNAVAILABLE',
-    outcome: 'LIFECYCLE_RESOLUTION_INPUT_INVALID',
-  });
-  const stub = Object.freeze({
-    isResolvedLifecycleResult(value) { return value === fakeUnavailableResult; },
-  });
-  const runtime = makePresentationContext({ resolutionApiStub: stub });
-
-  const result = runtime.presentation.promotePresentation(fakeUnavailableResult);
-  assert.equal(result.fact, 'PRESENTATION_BLOCKED');
-  assert.equal(result.outcome, 'PRESENTATION_BLOCKED_UNAVAILABLE');
-  assert.equal(result.presentationEligible, false);
-  assert.equal(result.resolvedFact, 'UNAVAILABLE');
-  assert.equal(result.resolvedOutcome, 'LIFECYCLE_RESOLUTION_INPUT_INVALID');
 });
 
 /* ----------------------------------------------------------------

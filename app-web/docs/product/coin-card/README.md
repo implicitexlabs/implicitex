@@ -28,6 +28,7 @@ Canonical docs:
 - `../../../../docs/product/coin-card/COIN_CARD_LIFECYCLE_BUNDLE_VERIFICATION_CONTRACT_V1.md` — non-empty bundle wrapper validation, atomic record-collection authentication, and bundle-level coherence rules.
 - `../../../../docs/product/coin-card/COIN_CARD_LIFECYCLE_RECORD_SELECTION_CONTRACT_V1.md` — authenticated evidence selection, lineage coherence, and non-operational record-collection facts.
 - `../../../../docs/product/coin-card/COIN_CARD_LIFECYCLE_RESOLUTION_CONTRACT_V1.md` — selected evidence interpretation, temporal resolution, and non-operational lifecycle facts.
+- `../../../../docs/product/coin-card/COIN_CARD_LIFECYCLE_PRESENTATION_PROMOTION_CONTRACT_V1.md` — presentation-promotion policy: exclusive promotion rule, blocked outcome classification, private proof predicate, and scope boundary.
 - `../../../../docs/product/coin-card/COIN_CARD_LIFECYCLE_REGISTRY_CONTRACT_V1.md` — lifecycle registry authority, publication evidence, card status, manifest status, supersession, and rollback rules.
 - `../../../../docs/product/coin-card/COIN_CARD_VERIFICATION_STATE_COPY_V1.md` — user-facing copy contract for manifest verification states.
 - `../../../../tools/coin-card-integrity/README.md` — proof tooling usage for generating, verifying, and tamper-checking Coin Card manifests.
@@ -63,6 +64,7 @@ The manifest integrity docs are intentionally split by responsibility:
 - Lifecycle registry: `docs/product/coin-card/COIN_CARD_LIFECYCLE_REGISTRY_CONTRACT_V1.md`
 - Lifecycle evidence selection: `docs/product/coin-card/COIN_CARD_LIFECYCLE_RECORD_SELECTION_CONTRACT_V1.md`
 - Lifecycle resolution: `docs/product/coin-card/COIN_CARD_LIFECYCLE_RESOLUTION_CONTRACT_V1.md`
+- Presentation-promotion policy: `docs/product/coin-card/COIN_CARD_LIFECYCLE_PRESENTATION_PROMOTION_CONTRACT_V1.md`
 - Verification state copy: `docs/product/coin-card/COIN_CARD_VERIFICATION_STATE_COPY_V1.md`
 - Proof tooling: `tools/coin-card-integrity/README.md`
 

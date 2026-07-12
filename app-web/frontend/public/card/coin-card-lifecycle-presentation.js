@@ -14,17 +14,23 @@
  * rendering is driven by the application layer, not by this module.
  *
  * All other outcomes — including LIFECYCLE_CARD_SUSPENDED, all TERMINAL
- * outcomes, all NOT_EFFECTIVE outcomes, and all UNAVAILABLE outcomes —
- * produce presentationEligible: false.
+ * outcomes (REVOKED, MANIFEST_REVOKED, MANIFEST_SUPERSEDED, EXPIRED), and
+ * all NOT_EFFECTIVE outcomes (NOT_YET_EFFECTIVE, TEMPORAL_GAP) — produce
+ * presentationEligible: false.
  *
- * Note on PRESENTATION_BLOCKED_UNAVAILABLE: this outcome fires when the
- * resolver's isResolvedLifecycleResult() predicate does not recognize the
- * input. Genuine UNAVAILABLE results from the resolver (network errors,
- * registry failures) are not branded by isResolvedLifecycleResult() under
- * the resolver contract, so they arrive here as unrecognized inputs
- * (PRESENTATION_INPUT_INVALID), not as PRESENTATION_BLOCKED_UNAVAILABLE.
- * PRESENTATION_BLOCKED_UNAVAILABLE is reserved for the case where a genuine
- * branded resolver result carries fact === 'UNAVAILABLE'.
+ * Two non-outcome failure paths exist:
+ *
+ *   resolution authority missing or predicate throws
+ *       → PRESENTATION_AUTHORITY_UNAVAILABLE
+ *
+ *   input not recognized as a genuine resolved lifecycle result
+ *       → PRESENTATION_INPUT_INVALID
+ *
+ * There is no PRESENTATION_BLOCKED_UNAVAILABLE outcome in V1. The resolver's
+ * private WeakSet does not brand UNAVAILABLE results, so no genuine resolver
+ * output can carry (isResolvedLifecycleResult === true, fact === UNAVAILABLE).
+ * Inputs that fail isResolvedLifecycleResult() — including genuine resolver
+ * UNAVAILABLE outputs — produce PRESENTATION_INPUT_INVALID.
  *
  * executionEligible is never set by this module. Execution authority is a
  * separate gate that this module does not open.
@@ -46,7 +52,6 @@
     PRESENTATION_BLOCKED_SUSPENDED:      'PRESENTATION_BLOCKED_SUSPENDED',
     PRESENTATION_BLOCKED_TERMINAL:       'PRESENTATION_BLOCKED_TERMINAL',
     PRESENTATION_BLOCKED_NOT_EFFECTIVE:  'PRESENTATION_BLOCKED_NOT_EFFECTIVE',
-    PRESENTATION_BLOCKED_UNAVAILABLE:    'PRESENTATION_BLOCKED_UNAVAILABLE',
     PRESENTATION_AUTHORITY_UNAVAILABLE:  'PRESENTATION_AUTHORITY_UNAVAILABLE',
     PRESENTATION_INPUT_INVALID:          'PRESENTATION_INPUT_INVALID',
   });
@@ -81,7 +86,6 @@
   var RESOLVED_FACT = 'RESOLVED';
   var TERMINAL_FACT = 'TERMINAL';
   var NOT_EFFECTIVE_FACT = 'NOT_EFFECTIVE';
-  var UNAVAILABLE_FACT = 'UNAVAILABLE';
   var ACTIVE_OUTCOME = 'LIFECYCLE_ACTIVE';
   var SUSPENDED_OUTCOME = 'LIFECYCLE_CARD_SUSPENDED';
 
@@ -175,14 +179,9 @@
       return makeBlocked(OUTCOMES.PRESENTATION_BLOCKED_NOT_EFFECTIVE, resolvedFact, resolvedOutcome);
     }
 
-    /* Unavailable outcomes: a genuine branded resolver result whose fact is
-     * UNAVAILABLE. See module header for the distinction between this case
-     * and an unrecognized input (PRESENTATION_INPUT_INVALID). */
-    if (resolvedFact === UNAVAILABLE_FACT) {
-      return makeBlocked(OUTCOMES.PRESENTATION_BLOCKED_UNAVAILABLE, resolvedFact, resolvedOutcome);
-    }
-
-    /* Unrecognized fact — reject rather than promote. */
+    /* Unrecognized fact — reject rather than promote.
+     * Note: UNAVAILABLE resolver results are not branded by isResolvedLifecycleResult(),
+     * so they cannot reach this point. Any unrecognized fact is invalid input. */
     return makeBlocked(OUTCOMES.PRESENTATION_INPUT_INVALID, resolvedFact, resolvedOutcome);
   }
 
