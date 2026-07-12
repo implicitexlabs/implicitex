@@ -19,6 +19,7 @@ Committed runtime anchors:
 - `5b0c60c` — `feat: add recipients destination shell`.
 - `1c01ebe` — `feat: register coin card intake as transfer surface`.
 - `9a3daa3` — `feat: add activity destination shell`.
+- `2285218` — `feat: register global network surface`.
 
 This contract distinguishes:
 
@@ -63,12 +64,13 @@ assigned by a visibility controller:
 
 ```text
 #recipientIntel
-network module
 ```
 
 `#recipientIntel` is current-recipient context within the active transfer flow.
 
-The current network module mixes Transfer-critical network facts with operational and diagnostic System detail.
+The network root's presentation ownership is resolved as `GLOBAL / NETWORK`.
+Its internal Transfer/System fact partition remains deferred and does not make
+the root structurally unresolved.
 
 A registered surface must not rely for visibility on an ancestor registered to a different primary surface when that ancestor may become inactive.
 
@@ -168,8 +170,9 @@ A registered surface may be structurally nested inside another element for marku
 ## 6. Network Module Partition
 
 The existing network module remains globally visible and outside destination
-hiding during the first navigation implementation. The explicit GLOBAL/NETWORK
-representation is defined by `PORTAL_GLOBAL_SURFACE_REGISTRATION_CONTRACT_V1.md`.
+hiding during the first navigation implementation. The explicit GLOBAL / NETWORK
+representation is committed by `2285218` and defined by
+`PORTAL_GLOBAL_SURFACE_REGISTRATION_CONTRACT_V1.md`.
 
 Transfer-critical network facts include, at minimum:
 
@@ -300,7 +303,7 @@ Visible destination navigation cannot ship until:
 - `#ccIntake` is explicitly registered in place as `TRANSFER` — satisfied by `1c01ebe`;
 - the Activity shell exists and is registered — satisfied by `9a3daa3`;
 - `#receiptHistory` is placed within the Activity shell — satisfied by `9a3daa3`;
-- the network module has explicit GLOBAL registration — pending the runtime marker and registry extension.
+- the network module has explicit GLOBAL registration — satisfied by `2285218`.
 
 If Recipients has no implemented destination, Recipients navigation must not be enabled as an ordinary destination. The product may show a deliberate unavailable state only after a dedicated Recipients shell exists and is registered.
 
@@ -333,7 +336,7 @@ Freeze this order:
 1. dedicated Recipients shell — completed by `5b0c60c`;
 2. register `#ccIntake` explicitly in place as `TRANSFER` — completed by `1c01ebe`;
 3. add and register the Activity shell and place `#receiptHistory` within it — completed by `9a3daa3`;
-4. add explicit GLOBAL / NETWORK registration for the existing mixed network module;
+4. add explicit GLOBAL / NETWORK registration for the existing mixed network module — completed by `2285218`;
 5. add the presentation-only visibility controller;
 6. add accessible primary navigation controls;
 7. partition network facts in a later explicit slice;
@@ -356,8 +359,10 @@ Future implementation work must prove:
 - receipt rendering remains keyed to the stable `#receiptHistory` identity;
 - visibility changes cannot mutate product state;
 - contextual layers preserve the primary destination;
-- unresolved islands are explicitly governed;
-- the network module is explicitly registered as GLOBAL before hiding System;
+- `#recipientIntel` is the only unresolved island;
+- the network module is explicitly registered as GLOBAL / NETWORK and is no
+  longer structurally unresolved;
+- the later Transfer/System network fact partition remains deferred;
 - mobile and desktop remain semantically equivalent.
 
 ## 15. Open Questions

@@ -26,13 +26,17 @@ This contract does not redefine product authority, execution authority, or
 data retention. It only freezes how certain portal surfaces are represented for
 presentation-controller purposes.
 
+### Committed Runtime Anchor
+
+- `2285218` — `feat: register global network surface`
+
 ## 2. V1 Global Surface
 
 Freeze exactly one V1 global surface:
 
 - `NETWORK`
 
-The planned runtime representation is:
+The committed runtime representation is:
 
 ```html
 <div
@@ -41,12 +45,12 @@ The planned runtime representation is:
 >
 ```
 
-The exact existing element type and class must be preserved during
-implementation. A future runtime slice may add only the stable ID and global
-surface attribute unless focused tests expose a real defect.
+The exact existing element type and class were preserved during the committed
+runtime slice. That slice added only the stable ID and global surface
+attribute, and it did so in place unless focused tests exposed a real defect.
 
-The current mixed network module remains presently unregistered until the
-runtime slice lands.
+The current mixed network module is committed as a global surface root and
+remains structurally in place under the portal application region.
 
 ## 3. Why Explicit Registration Is Required
 
@@ -65,7 +69,7 @@ Record the following:
 
 ## 4. Surface Registry Extension
 
-Freeze the future `IX_PORTAL_SURFACE_REGISTRY` extension:
+The committed `IX_PORTAL_SURFACE_REGISTRY` extension is:
 
 - `primary`
 - `contextual`
@@ -79,7 +83,7 @@ global:
     #networkMod
 ```
 
-Add a future read API:
+The public read API includes:
 
 ```text
 getGlobalSurfaceRegistrations(surface)
@@ -225,7 +229,7 @@ GLOBAL:
   none
 ```
 
-### Planned result after implementation
+### Committed result
 
 ```text
 GLOBAL:
@@ -233,18 +237,12 @@ GLOBAL:
     #networkMod
 ```
 
-Do not describe `#networkMod` or the global registry API as already committed.
+`#networkMod` and the global registry API are committed by `2285218`.
 
 ## 10. Atomic Implementation Boundary
 
-The first NETWORK resolution is registration in place on the existing mixed
-network-module root. The runtime slice adds only the stable `networkMod` ID and
-`data-portal-global-surface="NETWORK"` unless focused evidence exposes a real
-defect.
-
-The marker and registry extension must not ship as separate intermediate
-slices. The future runtime implementation must land in one isolated commit
-containing:
+The atomic implementation boundary was completed by `2285218`. The marker and
+registry extension landed in the same isolated commit containing:
 
 - the stable `networkMod` ID on the existing network root;
 - `data-portal-global-surface="NETWORK"`;
@@ -277,10 +275,9 @@ global:
 
 ## 11. Registration In Place
 
-The first NETWORK resolution is registration in place on the existing mixed
-network-module root. The runtime slice adds only the stable `networkMod` ID and
-`data-portal-global-surface="NETWORK"` unless focused evidence exposes a real
-defect.
+The first NETWORK resolution was registration in place on the existing mixed
+network-module root. The committed runtime slice added only the stable
+`networkMod` ID and `data-portal-global-surface="NETWORK"`.
 
 The slice must:
 
@@ -292,8 +289,6 @@ The slice must:
 - keep it outside every registered primary surface;
 - keep it outside every contextual surface that may close;
 - not move, clone, wrap, reconstruct, or restyle it.
-
-Do not describe `#networkMod` as already committed.
 
 ## 12. Feature-Owned Visibility
 
@@ -316,7 +311,7 @@ visually expanded.
 
 ## 13. Global API Behavior
 
-`getGlobalSurfaceRegistrations("NETWORK")` must return a fresh immutable
+`getGlobalSurfaceRegistrations("NETWORK")` returns a fresh immutable
 descriptor projection ordered by selector.
 
 Descriptors remain exactly:
@@ -357,11 +352,11 @@ This documentation slice proves:
   authority, nor execution authority;
 - NETWORK is the only permitted V1 global surface;
 - global persistence is explicit and never inferred from missing metadata;
-- the planned marker is exactly `data-portal-global-surface="NETWORK"`;
-- the planned stable ID is exactly `networkMod`;
+- the committed marker is exactly `data-portal-global-surface="NETWORK"`;
+- the committed stable ID is exactly `networkMod`;
 - primary, contextual, and global registrations are pairwise mutually
   exclusive;
-- the future runtime extension lands atomically with the marker;
+- the runtime extension landed atomically with the marker;
 - the existing network module is registered in place and not moved or
   reconstructed;
 - the snapshot gains a global bucket;
@@ -371,6 +366,6 @@ This documentation slice proves:
 - registered global roots are exempt from destination and contextual hiding;
 - feature-owned state inside the global root remains untouched;
 - missing or invalid NETWORK registration prevents destination hiding;
-- the current committed runtime still contains no global registration;
+- the current committed runtime includes the committed global registration;
 - later removal requires explicit Transfer/System network partition evidence;
 - this documentation slice changes no runtime behavior or product authority.
