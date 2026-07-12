@@ -12,6 +12,7 @@ Implementation-local mirrors may exist under `app-web/docs/product/portal/`, but
 - `PORTAL_FACT_AND_AUTHORITY_INVENTORY_V1.md` — current portal facts, source modules, authority types, volatility, and duplicated presentation sources.
 - `PORTAL_INTENT_BASED_PRESENTATION_PROJECTION_V1.md` — how inventoried facts project into Transfer, Recipients, Activity, contextual Verification, and System without creating new authority.
 - `PORTAL_DESTINATION_COMPOSITION_CONTRACT_V1.md` — how canonical registered surfaces compose into visible destinations before navigation changes presentation.
+- `PORTAL_GLOBAL_SURFACE_REGISTRATION_CONTRACT_V1.md` — explicit GLOBAL/NETWORK registration rules for portal surfaces that must remain present regardless of destination state.
 
 ## Portal Architecture Stack
 
@@ -19,6 +20,7 @@ Implementation-local mirrors may exist under `app-web/docs/product/portal/`, but
 - Fact and authority inventory: `PORTAL_FACT_AND_AUTHORITY_INVENTORY_V1.md`
 - Intent-based presentation projection: `PORTAL_INTENT_BASED_PRESENTATION_PROJECTION_V1.md`
 - Destination composition: `PORTAL_DESTINATION_COMPOSITION_CONTRACT_V1.md`
+- Global surface registration: `PORTAL_GLOBAL_SURFACE_REGISTRATION_CONTRACT_V1.md`
 
 The boundary is:
 

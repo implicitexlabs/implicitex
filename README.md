@@ -57,6 +57,7 @@ Portal contract: `docs/product/portal/PORTAL_INFORMATION_ARCHITECTURE_CONTRACT_V
 Portal inventory: `docs/product/portal/PORTAL_FACT_AND_AUTHORITY_INVENTORY_V1.md`
 Portal projection: `docs/product/portal/PORTAL_INTENT_BASED_PRESENTATION_PROJECTION_V1.md`
 Portal composition: `docs/product/portal/PORTAL_DESTINATION_COMPOSITION_CONTRACT_V1.md`
+Portal global surface: `docs/product/portal/PORTAL_GLOBAL_SURFACE_REGISTRATION_CONTRACT_V1.md`
 
 ---
 

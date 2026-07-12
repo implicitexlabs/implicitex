@@ -8,7 +8,8 @@ It is governed by:
 
 - `PORTAL_INFORMATION_ARCHITECTURE_CONTRACT_V1.md`;
 - `PORTAL_FACT_AND_AUTHORITY_INVENTORY_V1.md`;
-- `PORTAL_INTENT_BASED_PRESENTATION_PROJECTION_V1.md`.
+- `PORTAL_INTENT_BASED_PRESENTATION_PROJECTION_V1.md`;
+- `PORTAL_GLOBAL_SURFACE_REGISTRATION_CONTRACT_V1.md`.
 
 Committed runtime anchors:
 
@@ -166,7 +167,9 @@ A registered surface may be structurally nested inside another element for marku
 
 ## 6. Network Module Partition
 
-The existing network module remains globally visible and outside destination hiding during the first navigation implementation.
+The existing network module remains globally visible and outside destination
+hiding during the first navigation implementation. The explicit GLOBAL/NETWORK
+representation is defined by `PORTAL_GLOBAL_SURFACE_REGISTRATION_CONTRACT_V1.md`.
 
 Transfer-critical network facts include, at minimum:
 
@@ -297,7 +300,7 @@ Visible destination navigation cannot ship until:
 - `#ccIntake` is explicitly registered in place as `TRANSFER` — satisfied by `1c01ebe`;
 - the Activity shell exists and is registered — satisfied by `9a3daa3`;
 - `#receiptHistory` is placed within the Activity shell — satisfied by `9a3daa3`;
-- the network module is explicitly treated as globally persistent.
+- the network module has explicit GLOBAL registration — pending the runtime marker and registry extension.
 
 If Recipients has no implemented destination, Recipients navigation must not be enabled as an ordinary destination. The product may show a deliberate unavailable state only after a dedicated Recipients shell exists and is registered.
 
@@ -330,7 +333,7 @@ Freeze this order:
 1. dedicated Recipients shell — completed by `5b0c60c`;
 2. register `#ccIntake` explicitly in place as `TRANSFER` — completed by `1c01ebe`;
 3. add and register the Activity shell and place `#receiptHistory` within it — completed by `9a3daa3`;
-4. explicitly govern the mixed network module as globally persistent;
+4. add explicit GLOBAL / NETWORK registration for the existing mixed network module;
 5. add the presentation-only visibility controller;
 6. add accessible primary navigation controls;
 7. partition network facts in a later explicit slice;
@@ -354,7 +357,7 @@ Future implementation work must prove:
 - visibility changes cannot mutate product state;
 - contextual layers preserve the primary destination;
 - unresolved islands are explicitly governed;
-- the network module is partitioned or kept globally visible before hiding System;
+- the network module is explicitly registered as GLOBAL before hiding System;
 - mobile and desktop remain semantically equivalent.
 
 ## 15. Open Questions
