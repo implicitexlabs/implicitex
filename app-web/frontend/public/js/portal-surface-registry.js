@@ -17,6 +17,7 @@
 
   var PRIMARY_ATTR = 'data-portal-primary-surface';
   var CONTEXTUAL_ATTR = 'data-portal-contextual-surface';
+  var GLOBAL_ATTR = 'data-portal-global-surface';
 
   var PRIMARY_SURFACES = Object.freeze({
     TRANSFER: 'TRANSFER',
@@ -27,6 +28,10 @@
   var CONTEXTUAL_SURFACES = Object.freeze({
     VERIFICATION: 'VERIFICATION',
     SYSTEM: 'SYSTEM',
+  });
+
+  var GLOBAL_SURFACES = Object.freeze({
+    NETWORK: 'NETWORK',
   });
 
   function fail(reason) {
@@ -48,6 +53,10 @@
   function isContextualSurface(value) {
     return value === CONTEXTUAL_SURFACES.VERIFICATION
       || value === CONTEXTUAL_SURFACES.SYSTEM;
+  }
+
+  function isGlobalSurface(value) {
+    return value === GLOBAL_SURFACES.NETWORK;
   }
 
   function createEmptyBuckets(surfaces) {
@@ -97,6 +106,20 @@
     return value;
   }
 
+  function isDescendantOf(element, ancestor) {
+    var current = element;
+
+    while (current) {
+      if (current === ancestor) {
+        return true;
+      }
+
+      current = current.parentNode || null;
+    }
+
+    return false;
+  }
+
   function validateStableIdentity(element, selectors) {
     if (!element.id || typeof element.id !== 'string' || !/^[A-Za-z][A-Za-z0-9_-]*$/.test(element.id)) {
       fail('portal-surface-registration-unstable');
@@ -114,12 +137,35 @@
     selectors[selector] = true;
   }
 
+  function validateGlobalPlacement(element) {
+    var modulesRoot = document.getElementById('modules');
+
+    if (!modulesRoot || !isDescendantOf(element, modulesRoot)) {
+      fail('portal-global-surface-outside-region');
+    }
+
+    var current = element.parentNode || null;
+
+    while (current) {
+      if (current.hasAttribute && (
+        current.hasAttribute(PRIMARY_ATTR) || current.hasAttribute(CONTEXTUAL_ATTR)
+      )) {
+        fail('portal-global-surface-nested');
+      }
+
+      current = current.parentNode || null;
+    }
+  }
+
   function buildRegistry() {
     var primaryBuckets = createEmptyBuckets(PRIMARY_SURFACES);
     var contextualBuckets = createEmptyBuckets(CONTEXTUAL_SURFACES);
+    var globalBuckets = createEmptyBuckets(GLOBAL_SURFACES);
     var selectors = {};
     var seen = [];
-    var nodes = document.querySelectorAll('[' + PRIMARY_ATTR + '], [' + CONTEXTUAL_ATTR + ']');
+    var nodes = document.querySelectorAll(
+      '[' + PRIMARY_ATTR + '], [' + CONTEXTUAL_ATTR + '], [' + GLOBAL_ATTR + ']'
+    );
 
     for (var i = 0; i < nodes.length; i += 1) {
       var element = nodes[i];
@@ -129,31 +175,44 @@
 
       seen.push(element);
 
-      var primaryValue = readSurfaceAttribute(element, PRIMARY_ATTR);
-      var contextualValue = readSurfaceAttribute(element, CONTEXTUAL_ATTR);
+      var hasPrimaryAttr = element.hasAttribute(PRIMARY_ATTR);
+      var hasContextualAttr = element.hasAttribute(CONTEXTUAL_ATTR);
+      var hasGlobalAttr = element.hasAttribute(GLOBAL_ATTR);
+      var categoryCount = (hasPrimaryAttr ? 1 : 0) + (hasContextualAttr ? 1 : 0) + (hasGlobalAttr ? 1 : 0);
 
-      if (primaryValue && contextualValue) {
+      if (categoryCount > 1) {
         fail('portal-surface-registration-dual-role');
       }
 
-      if (!primaryValue && !contextualValue) {
+      if (categoryCount === 0) {
         fail('portal-surface-registration-malformed');
       }
 
       validateStableIdentity(element, selectors);
 
-      if (primaryValue) {
+      if (hasPrimaryAttr) {
+        var primaryValue = readSurfaceAttribute(element, PRIMARY_ATTR);
         if (!isPrimarySurface(primaryValue)) {
           fail('portal-primary-surface-invalid');
         }
 
         primaryBuckets[primaryValue].push(createRegistration(element, primaryValue, 'primary'));
-      } else {
+      } else if (hasContextualAttr) {
+        var contextualValue = readSurfaceAttribute(element, CONTEXTUAL_ATTR);
         if (!isContextualSurface(contextualValue)) {
           fail('portal-contextual-surface-invalid');
         }
 
         contextualBuckets[contextualValue].push(createRegistration(element, contextualValue, 'contextual'));
+      } else {
+        var globalValue = readSurfaceAttribute(element, GLOBAL_ATTR);
+
+        if (!isGlobalSurface(globalValue)) {
+          fail('portal-global-surface-invalid');
+        }
+
+        validateGlobalPlacement(element);
+        globalBuckets[globalValue].push(createRegistration(element, globalValue, 'GLOBAL'));
       }
     }
 
@@ -161,9 +220,18 @@
       fail('portal-transfer-surface-missing');
     }
 
+    if (globalBuckets[GLOBAL_SURFACES.NETWORK].length === 0) {
+      fail('portal-global-surface-missing');
+    }
+
+    if (globalBuckets[GLOBAL_SURFACES.NETWORK].length > 1) {
+      fail('portal-global-surface-duplicate');
+    }
+
     return Object.freeze({
       primary: freezeBuckets(primaryBuckets),
       contextual: freezeBuckets(contextualBuckets),
+      global: freezeBuckets(globalBuckets),
     });
   }
 
@@ -181,6 +249,12 @@
     }
   }
 
+  function requireGlobalSurface(surface) {
+    if (!isGlobalSurface(surface)) {
+      fail('portal-global-surface-invalid');
+    }
+  }
+
   function cloneRegistrations(registrations) {
     return Object.freeze(registrations.slice());
   }
@@ -193,6 +267,11 @@
   function getContextualSurfaceRegistrations(surface) {
     requireContextualSurface(surface);
     return cloneRegistrations(registry.contextual[surface]);
+  }
+
+  function getGlobalSurfaceRegistrations(surface) {
+    requireGlobalSurface(surface);
+    return cloneRegistrations(registry.global[surface]);
   }
 
   function cloneBuckets(buckets) {
@@ -210,6 +289,7 @@
     return Object.freeze({
       primary: cloneBuckets(registry.primary),
       contextual: cloneBuckets(registry.contextual),
+      global: cloneBuckets(registry.global),
     });
   }
 
@@ -221,12 +301,15 @@
   window.IX_PORTAL_SURFACE_REGISTRY = Object.freeze({
     PRIMARY_SURFACES: PRIMARY_SURFACES,
     CONTEXTUAL_SURFACES: CONTEXTUAL_SURFACES,
+    GLOBAL_SURFACES: GLOBAL_SURFACES,
     ATTRIBUTES: Object.freeze({
       PRIMARY_SURFACE: PRIMARY_ATTR,
       CONTEXTUAL_SURFACE: CONTEXTUAL_ATTR,
+      GLOBAL_SURFACE: GLOBAL_ATTR,
     }),
     getPrimarySurfaceRegistrations: getPrimarySurfaceRegistrations,
     getContextualSurfaceRegistrations: getContextualSurfaceRegistrations,
+    getGlobalSurfaceRegistrations: getGlobalSurfaceRegistrations,
     getRegistrationSnapshot: getRegistrationSnapshot,
     validate: validate,
   });

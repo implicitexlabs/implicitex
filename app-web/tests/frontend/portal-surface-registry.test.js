@@ -37,6 +37,7 @@ function createFakeElement(id, attributes = {}) {
     hidden: false,
     className: 'existing-class',
     expando: { preserve: true },
+    parentNode: null,
     children,
     listeners,
     getAttribute(name) {
@@ -89,12 +90,13 @@ function createDocument(nodes) {
     querySelectorAll(selector) {
       assert.equal(
         selector,
-        '[data-portal-primary-surface], [data-portal-contextual-surface]'
+        '[data-portal-primary-surface], [data-portal-contextual-surface], [data-portal-global-surface]'
       );
 
       return nodes.filter((node) => (
         node.hasAttribute('data-portal-primary-surface')
         || node.hasAttribute('data-portal-contextual-surface')
+        || node.hasAttribute('data-portal-global-surface')
       ));
     },
     getElementById(id) {
@@ -104,7 +106,9 @@ function createDocument(nodes) {
 }
 
 function createRegisteredNodes(order = 'normal') {
+  const modulesRoot = createFakeElement('modules');
   const nodes = [
+    modulesRoot,
     createFakeElement('ccIntake', { 'data-portal-primary-surface': 'TRANSFER' }),
     createFakeElement('transferMod', { 'data-portal-primary-surface': 'TRANSFER' }),
     createFakeElement('recipientsMod', { 'data-portal-primary-surface': 'RECIPIENTS' }),
@@ -113,10 +117,31 @@ function createRegisteredNodes(order = 'normal') {
     createFakeElement('receiptHistory'),
     createFakeElement('companion', { 'data-portal-primary-surface': 'TRANSFER' }),
     createFakeElement('verificationMod', { 'data-portal-contextual-surface': 'VERIFICATION' }),
-    createFakeElement('networkMod'),
+    createFakeElement('networkMod', { 'data-portal-global-surface': 'NETWORK' }),
     createFakeElement('telemetry', { 'data-portal-contextual-surface': 'SYSTEM' }),
     createFakeElement('portalFooter', { 'data-portal-contextual-surface': 'SYSTEM' }),
   ];
+
+  const byId = new Map(nodes.map((node) => [node.id, node]));
+  const link = (parentId, childId) => {
+    const parent = byId.get(parentId);
+    const child = byId.get(childId);
+
+    child.parentNode = parent;
+    return child;
+  };
+
+  link('modules', 'ccIntake');
+  link('modules', 'transferMod');
+  link('modules', 'recipientsMod');
+  link('modules', 'activityMod');
+  link('modules', 'companion');
+  link('modules', 'verificationMod');
+  link('modules', 'networkMod');
+  link('modules', 'telemetry');
+  link('modules', 'portalFooter');
+  link('transferMod', 'recipientIntel');
+  link('activityMod', 'receiptHistory');
 
   if (order === 'reverse') {
     return nodes.slice().reverse();
@@ -215,6 +240,17 @@ function plainSnapshot(snapshot) {
         })),
       ])
     ),
+    global: Object.fromEntries(
+      Object.entries(snapshot.global).map(([surface, registrations]) => [
+        surface,
+        registrations.map((entry) => ({
+          id: entry.id,
+          selector: entry.selector,
+          surface: entry.surface,
+          category: entry.category,
+        })),
+      ])
+    ),
   }));
 }
 
@@ -275,6 +311,10 @@ function findElementSpan(html, id) {
   return null;
 }
 
+function assertNonOverlap(left, right, message) {
+  assert.ok(left.end <= right.start || left.start >= right.end, message);
+}
+
 test('real portal markup declares the expected surface anchors', () => {
   const html = read(portalIndexPath);
   const primaryMatches = [...html.matchAll(
@@ -282,6 +322,9 @@ test('real portal markup declares the expected surface anchors', () => {
   )];
   const contextualMatches = [...html.matchAll(
     /<[^>]+\bid="([^"]+)"[^>]+\bdata-portal-contextual-surface="([^"]+)"/g
+  )];
+  const globalMatches = [...html.matchAll(
+    /<[^>]+\bid="([^"]+)"[^>]+\bdata-portal-global-surface="([^"]+)"/g
   )];
 
   assert.deepEqual(
@@ -302,6 +345,10 @@ test('real portal markup declares the expected surface anchors', () => {
       'verificationMod:VERIFICATION',
     ].sort()
   );
+  assert.deepEqual(
+    globalMatches.map((match) => `${match[1]}:${match[2]}`).sort(),
+    ['networkMod:NETWORK']
+  );
 });
 
 test('script order loads surface registry after view projection and before wallet', () => {
@@ -318,15 +365,17 @@ test('script order loads surface registry after view projection and before walle
   assert.equal((html.match(/portal-surface-registry\.js/g) || []).length, 1);
 });
 
-test('registry exposes separate primary and contextual surface buckets', () => {
+test('registry exposes separate primary, contextual, and global surface buckets', () => {
   const { api } = loadRegistry();
 
   assert.equal(api.validate(), true);
+  assert.deepEqual(Object.keys(api.getRegistrationSnapshot()).sort(), ['contextual', 'global', 'primary']);
   assert.deepEqual(ids(api.getPrimarySurfaceRegistrations('TRANSFER')), ['ccIntake', 'companion', 'transferMod']);
   assert.deepEqual(ids(api.getPrimarySurfaceRegistrations('RECIPIENTS')), ['recipientsMod']);
   assert.deepEqual(ids(api.getPrimarySurfaceRegistrations('ACTIVITY')), ['activityMod']);
   assert.deepEqual(ids(api.getContextualSurfaceRegistrations('VERIFICATION')), ['verificationMod']);
   assert.deepEqual(ids(api.getContextualSurfaceRegistrations('SYSTEM')), ['portalFooter', 'telemetry']);
+  assert.deepEqual(ids(api.getGlobalSurfaceRegistrations('NETWORK')), ['networkMod']);
 });
 
 test('recipients shell exists exactly once with an accessible heading and no recipient-data controls', () => {
@@ -426,6 +475,51 @@ test('activity shell exists exactly once with receipt history inside and no rece
   assert.doesNotMatch(activityShell, /<script\b/);
 });
 
+test('network root exists exactly once with global registration in place and no destination registration on the child root', () => {
+  const html = read(portalIndexPath);
+  const portalSpan = findElementSpan(html, 'modules');
+  const networkSpan = findElementSpan(html, 'networkMod');
+  const transferSpan = findElementSpan(html, 'transferMod');
+  const ccIntakeSpan = findElementSpan(html, 'ccIntake');
+  const recipientsSpan = findElementSpan(html, 'recipientsMod');
+  const activitySpan = findElementSpan(html, 'activityMod');
+  const verificationSpan = findElementSpan(html, 'verificationMod');
+  const telemetrySpan = findElementSpan(html, 'telemetry');
+  const footerSpan = findElementSpan(html, 'portalFooter');
+
+  assert.ok(portalSpan, 'portal modules markup is missing');
+  assert.ok(networkSpan, 'network module markup is missing');
+  assert.ok(transferSpan, 'transfer shell markup is missing');
+  assert.ok(ccIntakeSpan, 'ccIntake markup is missing');
+  assert.ok(recipientsSpan, 'recipients shell markup is missing');
+  assert.ok(activitySpan, 'activity shell markup is missing');
+  assert.ok(verificationSpan, 'verification shell markup is missing');
+  assert.ok(telemetrySpan, 'telemetry markup is missing');
+  assert.ok(footerSpan, 'portal footer markup is missing');
+
+  const networkShell = html.slice(networkSpan.start, networkSpan.end);
+
+  assert.equal((html.match(/id="networkMod"/g) || []).length, 1);
+  assert.equal((html.match(/data-portal-global-surface="NETWORK"/g) || []).length, 1);
+  assert.match(networkShell, /<div class="mod" id="networkMod" data-portal-global-surface="NETWORK"/);
+  assert.match(networkShell, /data-agent-step="2"/);
+  assert.match(networkShell, /data-agent-purpose="Expose network, gas price, RPC latency, contract address, and chain status before execution\."/);
+  assert.match(networkShell, /id="networkNameDisplay"/);
+  assert.match(networkShell, /id="gasRow"/);
+  assert.match(networkShell, /id="networkStatus"/);
+  assert.doesNotMatch(networkShell, /data-portal-primary-surface|data-portal-contextual-surface/);
+  assert.ok(networkSpan.start > portalSpan.start && networkSpan.end < portalSpan.end, 'network root must remain inside the portal surface');
+  assertNonOverlap(networkSpan, transferSpan, 'network root must remain outside transferMod');
+  assertNonOverlap(networkSpan, ccIntakeSpan, 'network root must remain outside ccIntake');
+  assertNonOverlap(networkSpan, recipientsSpan, 'network root must remain outside recipientsMod');
+  assertNonOverlap(networkSpan, activitySpan, 'network root must remain outside activityMod');
+  assertNonOverlap(networkSpan, verificationSpan, 'network root must remain outside verificationMod');
+  assertNonOverlap(networkSpan, telemetrySpan, 'network root must remain outside telemetry');
+  assertNonOverlap(networkSpan, footerSpan, 'network root must remain outside portalFooter');
+  assert.doesNotMatch(networkShell, /<form\b/);
+  assert.doesNotMatch(networkShell, /<script\b/);
+});
+
 test('DOM order does not change ordered surface snapshots', () => {
   const normal = loadRegistry(createRegisteredNodes('normal')).api;
   const reversed = loadRegistry(createRegisteredNodes('reverse')).api;
@@ -440,81 +534,104 @@ test('returned collections and API objects are immutable fresh projections', () 
   const { api } = loadRegistry();
   const first = api.getPrimarySurfaceRegistrations('TRANSFER');
   const second = api.getPrimarySurfaceRegistrations('TRANSFER');
+  const globalFirst = api.getGlobalSurfaceRegistrations('NETWORK');
+  const globalSecond = api.getGlobalSurfaceRegistrations('NETWORK');
   const snapshot = api.getRegistrationSnapshot();
 
   assert.notEqual(first, second);
+  assert.notEqual(globalFirst, globalSecond);
   assert.equal(Object.isFrozen(api), true);
   assert.equal(Object.isFrozen(api.PRIMARY_SURFACES), true);
   assert.equal(Object.isFrozen(api.CONTEXTUAL_SURFACES), true);
+  assert.equal(Object.isFrozen(api.GLOBAL_SURFACES), true);
   assert.equal(Object.isFrozen(first), true);
   assert.equal(Object.isFrozen(first[0]), true);
+  assert.equal(Object.isFrozen(globalFirst), true);
+  assert.equal(Object.isFrozen(globalFirst[0]), true);
+  assert.equal(globalFirst[0].category, 'GLOBAL');
   assert.deepEqual(Object.keys(first[0]).sort(), ['category', 'id', 'selector', 'surface']);
   assert.equal(Object.prototype.hasOwnProperty.call(first[0], 'element'), false);
   assert.equal(Object.isFrozen(snapshot), true);
   assert.equal(Object.isFrozen(snapshot.primary), true);
   assert.equal(Object.isFrozen(snapshot.primary.RECIPIENTS), true);
+  assert.equal(Object.isFrozen(snapshot.global), true);
+  assert.equal(Object.isFrozen(snapshot.global.NETWORK), true);
+  assert.equal(snapshot.global.NETWORK[0].category, 'GLOBAL');
 });
 
 test('unsupported or malformed registrations fail deterministically', () => {
   assertErrorCode(
-    () => loadRegistry([
-      createFakeElement('transferMod', { 'data-portal-primary-surface': 'TRANSFER' }),
-      createFakeElement('badPrimary', { 'data-portal-primary-surface': 'SYSTEM' }),
-    ]),
+    () => {
+      const nodes = createRegisteredNodes();
+      nodes.push(createFakeElement('badPrimary', { 'data-portal-primary-surface': 'SYSTEM' }));
+      return loadRegistry(nodes);
+    },
     'portal-primary-surface-invalid'
   );
   assertErrorCode(
-    () => loadRegistry([
-      createFakeElement('transferMod', { 'data-portal-primary-surface': 'TRANSFER' }),
-      createFakeElement('badContextual', { 'data-portal-contextual-surface': 'ACTIVITY' }),
-    ]),
+    () => {
+      const nodes = createRegisteredNodes();
+      nodes.push(createFakeElement('badContextual', { 'data-portal-contextual-surface': 'ACTIVITY' }));
+      return loadRegistry(nodes);
+    },
     'portal-contextual-surface-invalid'
   );
   assertErrorCode(
-    () => loadRegistry([
-      createFakeElement('transferMod', { 'data-portal-primary-surface': 'TRANSFER' }),
-      createFakeElement('emptyPrimary', { 'data-portal-primary-surface': '' }),
-    ]),
+    () => {
+      const nodes = createRegisteredNodes();
+      nodes.push(createFakeElement('emptyPrimary', { 'data-portal-primary-surface': '' }));
+      return loadRegistry(nodes);
+    },
     'portal-surface-registration-malformed'
   );
 });
 
 test('duplicate, unstable, dual-role, and missing Transfer registrations fail', () => {
   assertErrorCode(
-    () => loadRegistry([
-      createFakeElement('transferMod', { 'data-portal-primary-surface': 'TRANSFER' }),
-      createFakeElement('transferMod', { 'data-portal-primary-surface': 'ACTIVITY' }),
-    ]),
+    () => {
+      const nodes = createRegisteredNodes();
+      nodes.push(createFakeElement('transferMod', { 'data-portal-primary-surface': 'ACTIVITY' }));
+      return loadRegistry(nodes);
+    },
     'portal-surface-registration-duplicate'
   );
   assertErrorCode(
-    () => loadRegistry([
-      createFakeElement('transferMod', { 'data-portal-primary-surface': 'TRANSFER' }),
-      createFakeElement('', { 'data-portal-primary-surface': 'RECIPIENTS' }),
-    ]),
+    () => {
+      const nodes = createRegisteredNodes();
+      nodes.push(createFakeElement('', { 'data-portal-primary-surface': 'RECIPIENTS' }));
+      return loadRegistry(nodes);
+    },
     'portal-surface-registration-unstable'
   );
   assertErrorCode(
-    () => loadRegistry([
-      createFakeElement('transferMod', { 'data-portal-primary-surface': 'TRANSFER' }),
-      createFakeElement('bad:id', { 'data-portal-primary-surface': 'RECIPIENTS' }),
-    ]),
+    () => {
+      const nodes = createRegisteredNodes();
+      nodes.push(createFakeElement('bad:id', { 'data-portal-primary-surface': 'RECIPIENTS' }));
+      return loadRegistry(nodes);
+    },
     'portal-surface-registration-unstable'
   );
   assertErrorCode(
-    () => loadRegistry([
-      createFakeElement('transferMod', { 'data-portal-primary-surface': 'TRANSFER' }),
-      createFakeElement('dual', {
+    () => {
+      const nodes = createRegisteredNodes();
+      nodes.push(createFakeElement('dual', {
         'data-portal-primary-surface': 'RECIPIENTS',
         'data-portal-contextual-surface': 'SYSTEM',
-      }),
-    ]),
+      }));
+      return loadRegistry(nodes);
+    },
     'portal-surface-registration-dual-role'
   );
   assertErrorCode(
-    () => loadRegistry([
-      createFakeElement('receiptHistory', { 'data-portal-primary-surface': 'ACTIVITY' }),
-    ]),
+    () => {
+      const modules = createFakeElement('modules');
+      const network = createFakeElement('networkMod', { 'data-portal-global-surface': 'NETWORK' });
+      const receipt = createFakeElement('receiptHistory', { 'data-portal-primary-surface': 'ACTIVITY' });
+
+      network.parentNode = modules;
+
+      return loadRegistry([modules, network, receipt]);
+    },
     'portal-transfer-surface-missing'
   );
 });
@@ -524,6 +641,61 @@ test('invalid API lookup values fail deterministically', () => {
 
   assertErrorCode(() => api.getPrimarySurfaceRegistrations('SYSTEM'), 'portal-primary-surface-invalid');
   assertErrorCode(() => api.getContextualSurfaceRegistrations('TRANSFER'), 'portal-contextual-surface-invalid');
+  assertErrorCode(() => api.getGlobalSurfaceRegistrations('TRANSFER'), 'portal-global-surface-invalid');
+});
+
+test('global network registration validates in place and rejects drift deterministically', () => {
+  const loaded = loadRegistry();
+  const snapshotBefore = plainSnapshot(loaded.api.getRegistrationSnapshot());
+  const network = loaded.nodes.find((node) => node.id === 'networkMod');
+  const transfer = loaded.nodes.find((node) => node.id === 'transferMod');
+  const verification = loaded.nodes.find((node) => node.id === 'verificationMod');
+  const modules = loaded.nodes.find((node) => node.id === 'modules');
+
+  network.removeAttribute('data-portal-global-surface');
+  assertErrorCode(() => loaded.api.validate(), 'portal-global-surface-missing');
+  assert.deepEqual(plainSnapshot(loaded.api.getRegistrationSnapshot()), snapshotBefore);
+
+  network.setAttribute('data-portal-global-surface', 'SYSTEM');
+  assertErrorCode(() => loaded.api.validate(), 'portal-global-surface-invalid');
+  network.setAttribute('data-portal-global-surface', 'NETWORK');
+
+  const missingIdRoot = createFakeElement('', { 'data-portal-global-surface': 'NETWORK' });
+  missingIdRoot.parentNode = modules;
+  assertErrorCode(() => loadRegistry(loaded.nodes.concat([missingIdRoot])), 'portal-surface-registration-unstable');
+
+  const unsafeIdRoot = createFakeElement('bad:id', { 'data-portal-global-surface': 'NETWORK' });
+  unsafeIdRoot.parentNode = modules;
+  assertErrorCode(() => loadRegistry(loaded.nodes.concat([unsafeIdRoot])), 'portal-surface-registration-unstable');
+
+  const duplicateRoot = createFakeElement('networkTwin', { 'data-portal-global-surface': 'NETWORK' });
+  duplicateRoot.parentNode = modules;
+  assertErrorCode(() => loadRegistry(loaded.nodes.concat([duplicateRoot])), 'portal-global-surface-duplicate');
+
+  const duplicateIdRoot = createFakeElement('networkMod', { 'data-portal-global-surface': 'NETWORK' });
+  duplicateIdRoot.parentNode = modules;
+  assertErrorCode(() => loadRegistry(loaded.nodes.concat([duplicateIdRoot])), 'portal-surface-registration-duplicate');
+
+  network.setAttribute('data-portal-primary-surface', 'TRANSFER');
+  assertErrorCode(() => loaded.api.validate(), 'portal-surface-registration-dual-role');
+  network.removeAttribute('data-portal-primary-surface');
+
+  network.setAttribute('data-portal-contextual-surface', 'SYSTEM');
+  assertErrorCode(() => loaded.api.validate(), 'portal-surface-registration-dual-role');
+  network.removeAttribute('data-portal-contextual-surface');
+
+  network.setAttribute('data-portal-primary-surface', 'TRANSFER');
+  network.setAttribute('data-portal-contextual-surface', 'SYSTEM');
+  assertErrorCode(() => loaded.api.validate(), 'portal-surface-registration-dual-role');
+  network.removeAttribute('data-portal-primary-surface');
+  network.removeAttribute('data-portal-contextual-surface');
+
+  network.parentNode = transfer;
+  assertErrorCode(() => loaded.api.validate(), 'portal-global-surface-nested');
+  network.parentNode = verification;
+  assertErrorCode(() => loaded.api.validate(), 'portal-global-surface-nested');
+  network.parentNode = null;
+  assertErrorCode(() => loaded.api.validate(), 'portal-global-surface-outside-region');
 });
 
 test('validate rescans current metadata without mutating original snapshot', () => {
@@ -551,6 +723,7 @@ test('registered IDs resolve to the registered element', () => {
     ...snapshot.primary.ACTIVITY,
     ...snapshot.contextual.VERIFICATION,
     ...snapshot.contextual.SYSTEM,
+    ...snapshot.global.NETWORK,
   ];
   const byId = new Map(nodes.map((node) => [node.id, node]));
 
@@ -559,6 +732,9 @@ test('registered IDs resolve to the registered element', () => {
     assert.equal(entry.selector, `#${entry.id}`);
     assert.deepEqual(Object.keys(entry).sort(), ['category', 'id', 'selector', 'surface']);
     assert.equal(Object.prototype.hasOwnProperty.call(entry, 'element'), false);
+    if (entry.id === 'networkMod') {
+      assert.equal(entry.category, 'GLOBAL');
+    }
   }
 });
 
