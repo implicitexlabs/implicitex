@@ -108,8 +108,9 @@ function createRegisteredNodes(order = 'normal') {
     createFakeElement('ccIntake', { 'data-portal-primary-surface': 'TRANSFER' }),
     createFakeElement('transferMod', { 'data-portal-primary-surface': 'TRANSFER' }),
     createFakeElement('recipientsMod', { 'data-portal-primary-surface': 'RECIPIENTS' }),
+    createFakeElement('activityMod', { 'data-portal-primary-surface': 'ACTIVITY' }),
     createFakeElement('recipientIntel'),
-    createFakeElement('receiptHistory', { 'data-portal-primary-surface': 'ACTIVITY' }),
+    createFakeElement('receiptHistory'),
     createFakeElement('companion', { 'data-portal-primary-surface': 'TRANSFER' }),
     createFakeElement('verificationMod', { 'data-portal-contextual-surface': 'VERIFICATION' }),
     createFakeElement('networkMod'),
@@ -288,7 +289,7 @@ test('real portal markup declares the expected surface anchors', () => {
     [
       'ccIntake:TRANSFER',
       'companion:TRANSFER',
-      'receiptHistory:ACTIVITY',
+      'activityMod:ACTIVITY',
       'recipientsMod:RECIPIENTS',
       'transferMod:TRANSFER',
     ].sort()
@@ -323,7 +324,7 @@ test('registry exposes separate primary and contextual surface buckets', () => {
   assert.equal(api.validate(), true);
   assert.deepEqual(ids(api.getPrimarySurfaceRegistrations('TRANSFER')), ['ccIntake', 'companion', 'transferMod']);
   assert.deepEqual(ids(api.getPrimarySurfaceRegistrations('RECIPIENTS')), ['recipientsMod']);
-  assert.deepEqual(ids(api.getPrimarySurfaceRegistrations('ACTIVITY')), ['receiptHistory']);
+  assert.deepEqual(ids(api.getPrimarySurfaceRegistrations('ACTIVITY')), ['activityMod']);
   assert.deepEqual(ids(api.getContextualSurfaceRegistrations('VERIFICATION')), ['verificationMod']);
   assert.deepEqual(ids(api.getContextualSurfaceRegistrations('SYSTEM')), ['portalFooter', 'telemetry']);
 });
@@ -378,6 +379,51 @@ test('recipients shell exists exactly once with an accessible heading and no rec
   assert.ok(html.indexOf('id="ccIntake"') < recipientsSpan.start || html.indexOf('id="ccIntake"') > recipientsSpan.end, 'ccIntake must not appear inside recipients shell');
   assert.ok(html.indexOf('id="recipientIntel"') < recipientsSpan.start || html.indexOf('id="recipientIntel"') > recipientsSpan.end, 'recipientIntel must not appear inside recipients shell');
   assert.match(portalShell, /id="recipientIntel"/);
+});
+
+test('activity shell exists exactly once with receipt history inside and no receipt registration on the child', () => {
+  const html = read(portalIndexPath);
+  const portalSpan = findElementSpan(html, 'modules');
+  const transferSpan = findElementSpan(html, 'transferMod');
+  const activitySpan = findElementSpan(html, 'activityMod');
+  const receiptHistorySpan = findElementSpan(html, 'receiptHistory');
+  const companionSpan = findElementSpan(html, 'companion');
+
+  assert.ok(portalSpan, 'transfer portal markup is missing');
+  assert.ok(transferSpan, 'transfer shell markup is missing');
+  assert.ok(activitySpan, 'activity shell markup is missing');
+  assert.ok(receiptHistorySpan, 'receiptHistory markup is missing');
+  assert.ok(companionSpan, 'companion markup is missing');
+
+  const activityShell = html.slice(activitySpan.start, activitySpan.end);
+  const receiptShell = html.slice(receiptHistorySpan.start, receiptHistorySpan.end);
+
+  assert.equal((html.match(/id="activityMod"/g) || []).length, 1);
+  assert.equal((html.match(/id="activityHeading"/g) || []).length, 1);
+  assert.equal((html.match(/id="receiptHistory"/g) || []).length, 1);
+  assert.equal((html.match(/data-portal-primary-surface="ACTIVITY"/g) || []).length, 1);
+  assert.match(html, /<div class="mod" id="activityMod" data-portal-primary-surface="ACTIVITY" aria-labelledby="activityHeading">/);
+  assert.match(html, /<p class="mod-title" id="activityHeading">Activity<\/p>/);
+  assert.match(html, /<div id="receiptHistory" class="receipt-history-list">/);
+  assert.ok(transferSpan.end < activitySpan.start, 'transfer shell must close before activity shell begins');
+  assert.ok(activitySpan.start > portalSpan.start && activitySpan.end < portalSpan.end, 'activity shell must remain inside the portal surface');
+  assert.ok(receiptHistorySpan.start > activitySpan.start && receiptHistorySpan.end < activitySpan.end, 'receiptHistory must remain inside activityMod');
+  assert.ok(receiptHistorySpan.start > transferSpan.end, 'receiptHistory must no longer be inside transferMod');
+  assert.ok(
+    companionSpan.end <= activitySpan.start || companionSpan.start >= activitySpan.end,
+    'companion must remain outside activityMod'
+  );
+  assert.doesNotMatch(activityShell, /\bhidden\b/);
+  assert.doesNotMatch(activityShell, /\binert\b/);
+  assert.doesNotMatch(activityShell, /\baria-hidden\b/);
+  assert.doesNotMatch(receiptShell, /data-portal-primary-surface|data-portal-contextual-surface/);
+  assert.doesNotMatch(activityShell, /<form\b/);
+  assert.doesNotMatch(activityShell, /<input\b/);
+  assert.doesNotMatch(activityShell, /<select\b/);
+  assert.doesNotMatch(activityShell, /<textarea\b/);
+  assert.doesNotMatch(activityShell, /<button\b/);
+  assert.doesNotMatch(activityShell, /<a\b/);
+  assert.doesNotMatch(activityShell, /<script\b/);
 });
 
 test('DOM order does not change ordered surface snapshots', () => {

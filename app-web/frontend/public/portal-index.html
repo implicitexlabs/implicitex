@@ -692,12 +692,6 @@
         Using an AI assistant? Ask it to help verify the recipient address, fee, network state, and contract before you confirm. Assistants may explain state and guide review — final confirmation must happen in your wallet.
       </p>
 
-      <div class="receipt-history" aria-label="Recent transaction attempts">
-        <p class="receipt-history-label">Receipts</p>
-        <div id="receiptHistory" class="receipt-history-list" data-portal-primary-surface="ACTIVITY">
-          <p class="receipt-empty">No local receipts yet.</p>
-        </div>
-      </div>
     </div>
 
     <div class="mod" id="recipientsMod" data-portal-primary-surface="RECIPIENTS" aria-labelledby="recipientsHeading">
@@ -711,6 +705,17 @@
         <div class="data-row">
           <span class="data-k">Tools</span>
           <span class="data-v">Recipient tools are not enabled in this version.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="mod" id="activityMod" data-portal-primary-surface="ACTIVITY" aria-labelledby="activityHeading">
+      <span class="mod-tag">05 — Activity</span>
+      <p class="mod-title" id="activityHeading">Activity</p>
+      <div class="receipt-history" aria-label="Recent transaction attempts">
+        <p class="receipt-history-label">Receipts</p>
+        <div id="receiptHistory" class="receipt-history-list">
+          <p class="receipt-empty">No local receipts yet.</p>
         </div>
       </div>
     </div>
