@@ -21,6 +21,7 @@ Committed runtime anchors:
 - `1c01ebe` — `feat: register coin card intake as transfer surface`.
 - `9a3daa3` — `feat: add activity destination shell`.
 - `2285218` — `feat: register global network surface`.
+- `369fd8f` — `feat: add dormant portal visibility controller`.
 
 This contract distinguishes:
 
@@ -34,8 +35,8 @@ This contract distinguishes:
 It does not redefine fact authority, storage authority, wallet authority, Coin Card authority, receipt authority, or execution authority.
 
 The visibility controller activation model is defined separately. The
-controller remains dormant until a later navigation coordinator explicitly
-activates it.
+controller is committed but dormant, and the current long-page presentation
+remains active until a later navigation coordinator explicitly activates it.
 
 ## 2. Current Canonical Registry
 
@@ -305,8 +306,10 @@ Visible destination navigation cannot ship until:
 - `#receiptHistory` is placed within the Activity shell — satisfied by `9a3daa3`;
 - the network module has explicit GLOBAL registration — satisfied by `2285218`;
 - all structural prerequisites for the visibility controller are satisfied.
-  Visibility-controller rollout and activation are governed by
-  `PORTAL_VISIBILITY_CONTROLLER_ACTIVATION_CONTRACT_V1.md`.
+
+The dormant visibility-controller runtime is committed by `369fd8f`.
+Visibility-controller rollout and activation are governed by
+`PORTAL_VISIBILITY_CONTROLLER_ACTIVATION_CONTRACT_V1.md`.
 
 If Recipients has no implemented destination, Recipients navigation must not be enabled as an ordinary destination. The product may show a deliberate unavailable state only after a dedicated Recipients shell exists and is registered.
 
@@ -340,7 +343,7 @@ Freeze this order:
 2. register `#ccIntake` explicitly in place as `TRANSFER` — completed by `1c01ebe`;
 3. add and register the Activity shell and place `#receiptHistory` within it — completed by `9a3daa3`;
 4. add explicit GLOBAL / NETWORK registration for the existing mixed network module — completed by `2285218`;
-5. add the presentation-only visibility controller;
+5. add the presentation-only visibility controller — completed by `369fd8f`;
 6. add accessible primary navigation controls;
 7. partition network facts in a later explicit slice;
 8. add contextual Verification and System controls;

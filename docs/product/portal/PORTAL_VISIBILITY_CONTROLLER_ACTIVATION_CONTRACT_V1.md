@@ -6,6 +6,22 @@ This contract defines the rollout boundary for the portal visibility controller.
 The controller is presentation-only. It may become fully implemented before
 navigation, but it must remain dormant on load.
 
+Committed runtime anchor:
+
+```text
+369fd8f — feat: add dormant portal visibility controller
+```
+
+Completed:
+
+- dormant visibility-controller runtime.
+
+Not yet implemented:
+
+- accessible primary navigation;
+- first controller activation;
+- contextual-layer visibility.
+
 Dormant means:
 
 - loading the module changes no element visibility;
