@@ -22,6 +22,50 @@ Not yet implemented:
 - first controller activation;
 - contextual-layer visibility.
 
+## 2. Committed Dormant Runtime Evidence
+
+`369fd8f` committed exactly:
+
+```text
+app-web/frontend/public/js/portal-visibility-controller.js
+app-web/tests/frontend/portal-visibility-controller.test.js
+app-web/frontend/public/portal-index.html
+app-web/frontend/public/css/main.css
+```
+
+The committed module:
+
+- exports only `window.IX_PORTAL_VISIBILITY_CONTROLLER`;
+- exposes the frozen API:
+
+```text
+apply(viewStateSnapshot)
+restore()
+getStatus()
+```
+
+- begins with `activated = false` and `primaryDestination = null`;
+- does not invoke `apply()` during load;
+- does not query the registry during load;
+- does not read view-state authority during load;
+- registers no event listeners;
+- creates no navigation;
+- adds no inactive marker;
+- changes no focus or presentation.
+
+The committed stylesheet rule is:
+
+```css
+[data-portal-controller-inactive] {
+  display: none !important;
+}
+```
+
+Static portal markup contains no inactive marker, so the rule has no effect
+before explicit activation.
+
+## 3. Dormant Means
+
 Dormant means:
 
 - loading the module changes no element visibility;
@@ -38,7 +82,7 @@ Dormant means:
 The controller may mutate presentation only after explicit activation from a
 later navigation coordinator.
 
-## 2. Visible Activation Boundary
+## 4. Visible Activation Boundary
 
 Accessible primary navigation and first controller activation must land
 together in one later visible runtime slice.
@@ -55,7 +99,7 @@ That later slice must:
 The controller must never automatically hide Recipients or Activity before
 users have controls capable of returning to them.
 
-## 3. Authority Boundary
+## 5. Authority Boundary
 
 The controller is presentation-only.
 
@@ -83,7 +127,7 @@ It must not:
 The navigation coordinator owns sequencing. The controller owns only
 application of an already-established primary destination.
 
-## 4. Frozen Surface Behavior
+## 6. Frozen Surface Behavior
 
 After explicit activation, exactly one primary destination is active:
 
@@ -119,7 +163,7 @@ Require:
 
 The V1 controller must not implement contextual-layer visibility.
 
-## 5. Feature-Owned Versus Controller-Owned Visibility
+## 7. Feature-Owned Versus Controller-Owned Visibility
 
 `data-portal-controller-inactive` is reserved exclusively for
 `IX_PORTAL_VISIBILITY_CONTROLLER`.
@@ -164,7 +208,7 @@ Do not require `aria-hidden` in V1 unless later accessibility evidence
 demonstrates that the controller-owned inactive marker plus feature-owned
 visibility semantics is insufficient.
 
-## 6. Dormant Controller API
+## 8. Dormant Controller API
 
 Freeze a single future browser global:
 
@@ -215,7 +259,7 @@ Returns a fresh immutable descriptor such as:
 
 It must expose no live element, WeakMap, mutation record, or authority object.
 
-## 7. Transaction and Failure Behavior
+## 9. Transaction and Failure Behavior
 
 Require an all-or-nothing presentation transaction.
 
@@ -258,7 +302,7 @@ If an unexpected mutation failure occurs partway through application:
 
 A failed registry rescan must not cause the controller to use stale or guessed ownership.
 
-## 8. Global and Contextual Protection
+## 10. Global and Contextual Protection
 
 The controller must never add or remove the inactive marker on:
 
@@ -277,7 +321,7 @@ V1 primary visibility application must leave those roots exactly as it found the
 This does not make contextual roots globally persistent forever. Their later
 behavior belongs to the contextual-layer implementation.
 
-## 9. Initial Page Behavior
+## 11. Initial Page Behavior
 
 Before visible navigation and explicit activation:
 
@@ -295,7 +339,7 @@ Script load order alone must not trigger hiding.
 
 The existing long-page presentation remains the fallback and pre-activation state.
 
-## 10. Later Navigation Coordinator
+## 12. Later Navigation Coordinator
 
 Freeze the future activation sequence:
 
@@ -324,7 +368,7 @@ focus to the selected navigation control before calling `apply(snapshot)`.
 After a successful application, it may move focus to the newly active
 destination heading or stable work region.
 
-## 11. Accessibility Requirements
+## 13. Accessibility Requirements
 
 The dormant controller adds no focus behavior.
 
@@ -338,19 +382,19 @@ After activation:
 - reduced-motion behavior belongs to the later visible-navigation slice;
 - mobile and desktop must use the same semantic destination state.
 
-## 12. Runtime Implementation Sequence
+## 14. Runtime Implementation Sequence
 
 Freeze:
 
-1. define visibility-controller activation contract
-2. implement dormant visibility controller with focused tests
-3. sync documentation after dormant controller commit
+1. define visibility-controller activation contract — completed by `de7610d`, hardened by `544666d`
+2. implement dormant visibility controller with focused tests — completed by `369fd8f`
+3. sync documentation after dormant controller commit — completed by `7895ac5` and this committed-evidence follow-up
 4. implement accessible primary navigation and first controller activation atomically
 5. conduct mobile and desktop destination/state-preservation QA
 6. partition network facts in a later explicit slice
 7. implement contextual Verification and System presentation
 
-## 13. Acceptance Criteria
+## 15. Acceptance Criteria
 
 The contract must prove:
 
@@ -376,7 +420,22 @@ The contract must prove:
 - no wallet, Coin Card, receipt, storage, network, URL, or execution authority is added;
 - mobile and desktop retain equivalent semantics.
 
-## 14. Files and Maps
+## 16. Validation Evidence
+
+The committed dormant runtime is supported by:
+
+- portal visibility controller: 23 tests passed
+- portal surface registry: 18 tests passed
+- portal view projection: 14 tests passed
+- portal view state: 11 tests passed
+- Coin Card evidence: 8 tests passed
+- IX execution: 6 tests passed
+- observability: passed
+- static public validation: passed
+- architecture validation: passed
+- git diff check: passed
+
+## 17. Files and Maps
 
 Add canonical and mirrored copies:
 
