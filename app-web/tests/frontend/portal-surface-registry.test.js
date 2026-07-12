@@ -105,9 +105,9 @@ function createDocument(nodes) {
 
 function createRegisteredNodes(order = 'normal') {
   const nodes = [
+    createFakeElement('ccIntake', { 'data-portal-primary-surface': 'TRANSFER' }),
     createFakeElement('transferMod', { 'data-portal-primary-surface': 'TRANSFER' }),
     createFakeElement('recipientsMod', { 'data-portal-primary-surface': 'RECIPIENTS' }),
-    createFakeElement('ccIntake'),
     createFakeElement('recipientIntel'),
     createFakeElement('receiptHistory', { 'data-portal-primary-surface': 'ACTIVITY' }),
     createFakeElement('companion', { 'data-portal-primary-surface': 'TRANSFER' }),
@@ -286,6 +286,7 @@ test('real portal markup declares the expected surface anchors', () => {
   assert.deepEqual(
     primaryMatches.map((match) => `${match[1]}:${match[2]}`).sort(),
     [
+      'ccIntake:TRANSFER',
       'companion:TRANSFER',
       'receiptHistory:ACTIVITY',
       'recipientsMod:RECIPIENTS',
@@ -320,7 +321,7 @@ test('registry exposes separate primary and contextual surface buckets', () => {
   const { api } = loadRegistry();
 
   assert.equal(api.validate(), true);
-  assert.deepEqual(ids(api.getPrimarySurfaceRegistrations('TRANSFER')), ['companion', 'transferMod']);
+  assert.deepEqual(ids(api.getPrimarySurfaceRegistrations('TRANSFER')), ['ccIntake', 'companion', 'transferMod']);
   assert.deepEqual(ids(api.getPrimarySurfaceRegistrations('RECIPIENTS')), ['recipientsMod']);
   assert.deepEqual(ids(api.getPrimarySurfaceRegistrations('ACTIVITY')), ['receiptHistory']);
   assert.deepEqual(ids(api.getContextualSurfaceRegistrations('VERIFICATION')), ['verificationMod']);
@@ -346,10 +347,16 @@ test('recipients shell exists exactly once with an accessible heading and no rec
 
   assert.equal((html.match(/id="recipientsMod"/g) || []).length, 1);
   assert.equal((html.match(/id="recipientsHeading"/g) || []).length, 1);
+  assert.equal((html.match(/id="ccIntake"/g) || []).length, 1);
+  assert.match(html, /<div class="cc-intake" id="ccIntake" hidden aria-live="polite" aria-label="Coin Card handoff status" data-portal-primary-surface="TRANSFER">/);
+  assert.match(html, /<p class="cc-intake-label" id="ccIntakeLabel">—<\/p>/);
+  assert.match(html, /<span class="cc-intake-status" id="ccIntakeStatus" data-verify-state="pending">CHECKING REGISTRY<\/span>/);
   assert.match(html, /<p class="mod-title" id="recipientsHeading">Recipients<\/p>/);
   assert.match(html, /<div class="mod" id="recipientsMod" data-portal-primary-surface="RECIPIENTS" aria-labelledby="recipientsHeading">/);
   assert.match(html, /<span class="data-v">No saved recipients yet\.<\/span>/);
   assert.match(html, /Recipient tools are not enabled in this version\./);
+  assert.equal(ccIntakeSpan.start > portalSpan.start && ccIntakeSpan.end < portalSpan.end, true);
+  assert.equal(ccIntakeSpan.end < transferSpan.start, true, 'ccIntake must remain outside transferMod');
   assert.doesNotMatch(shell, /<input\b/);
   assert.doesNotMatch(shell, /<button\b/);
   assert.doesNotMatch(shell, /<a\b/);
@@ -367,11 +374,9 @@ test('recipients shell exists exactly once with an accessible heading and no rec
   assert.doesNotMatch(shell, /id="ccIntake"|id="recipientIntel"/);
   assert.ok(transferSpan.end < recipientsSpan.start, 'transfer shell must close before recipients shell begins');
   assert.doesNotMatch(shell, /id="ccIntake"|id="recipientIntel"/);
-  assert.ok(ccIntakeSpan.start > portalSpan.start && ccIntakeSpan.end < portalSpan.end, 'ccIntake must remain inside the transfer portal surface');
-  assert.ok(recipientIntelSpan.start > portalSpan.start && recipientIntelSpan.end < portalSpan.end, 'recipientIntel must remain inside the transfer portal surface');
+  assert.ok(recipientIntelSpan.start > transferSpan.start && recipientIntelSpan.end < transferSpan.end, 'recipientIntel must remain inside transferMod');
   assert.ok(html.indexOf('id="ccIntake"') < recipientsSpan.start || html.indexOf('id="ccIntake"') > recipientsSpan.end, 'ccIntake must not appear inside recipients shell');
   assert.ok(html.indexOf('id="recipientIntel"') < recipientsSpan.start || html.indexOf('id="recipientIntel"') > recipientsSpan.end, 'recipientIntel must not appear inside recipients shell');
-  assert.match(portalShell, /id="ccIntake"/);
   assert.match(portalShell, /id="recipientIntel"/);
 });
 
@@ -478,9 +483,11 @@ test('invalid API lookup values fail deterministically', () => {
 test('validate rescans current metadata without mutating original snapshot', () => {
   const loaded = loadRegistry();
   const snapshotBefore = plainSnapshot(loaded.api.getRegistrationSnapshot());
+  const ccIntake = loaded.nodes.find((node) => node.id === 'ccIntake');
   const transfer = loaded.nodes.find((node) => node.id === 'transferMod');
   const companion = loaded.nodes.find((node) => node.id === 'companion');
 
+  ccIntake.removeAttribute('data-portal-primary-surface');
   transfer.removeAttribute('data-portal-primary-surface');
   companion.removeAttribute('data-portal-primary-surface');
 
@@ -504,6 +511,8 @@ test('registered IDs resolve to the registered element', () => {
   for (const entry of registered) {
     assert.equal(byId.get(entry.id).id, entry.id);
     assert.equal(entry.selector, `#${entry.id}`);
+    assert.deepEqual(Object.keys(entry).sort(), ['category', 'id', 'selector', 'surface']);
+    assert.equal(Object.prototype.hasOwnProperty.call(entry, 'element'), false);
   }
 });
 
