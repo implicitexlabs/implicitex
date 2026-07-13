@@ -24,6 +24,7 @@ Committed runtime anchors:
 - `2285218` — `feat: register global network surface`.
 - `369fd8f` — `feat: add dormant portal visibility controller`.
 - `ac475b2` — `feat: make portal view projection atomic`.
+- `ff775f9` — `feat: add portal primary navigation`.
 
 This contract distinguishes:
 
@@ -37,11 +38,10 @@ This contract distinguishes:
 It does not redefine fact authority, storage authority, wallet authority, Coin Card authority, receipt authority, or execution authority.
 
 The visibility controller activation model is defined separately. The
-controller is committed but dormant, and the current long-page presentation
-remains active until a later navigation coordinator explicitly activates it.
-The projection-atomicity prerequisite was satisfied by `ac475b2`.
-The primary navigation coordinator is defined separately, and the static
-navigation remains hidden until that coordinator completes first activation.
+controller is committed but dormant, the primary navigation coordinator is
+committed by `ff775f9`, and the current long-page presentation remains the
+fallback whenever initialization fails. The projection-atomicity prerequisite
+was satisfied by `ac475b2`.
 
 The committed projection runtime file boundary is:
 
@@ -356,7 +356,7 @@ Freeze this order:
 4. add explicit GLOBAL / NETWORK registration for the existing mixed network module — completed by `2285218`;
 5. make projection transitions internally atomic — completed by `ac475b2`;
 6. add the presentation-only visibility controller — completed by `369fd8f`;
-7. add accessible primary navigation controls;
+7. add accessible primary navigation controls — completed by `ff775f9`;
 8. partition network facts in a later explicit slice;
 9. add contextual Verification and System controls;
 10. conduct mobile and desktop state-preservation QA.
@@ -375,8 +375,8 @@ Future implementation work must prove:
 - `#receiptHistory` no longer depends on Transfer ancestry;
 - projection transitions are internally atomic and the navigation prerequisite
   is satisfied;
-- the primary navigation coordinator contract is defined, and navigation
-  runtime and first activation remain pending;
+- the primary navigation coordinator runtime is committed by `ff775f9`, and
+  desktop and mobile browser QA remain pending;
 - current and historical transaction states remain distinct;
 - receipt rendering remains keyed to the stable `#receiptHistory` identity;
 - visibility changes cannot mutate product state;

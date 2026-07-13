@@ -22,6 +22,7 @@ Committed anchors:
 - `799340d` — `docs: define atomic portal view projection`;
 - `f73a616` — `docs: harden portal projection atomicity contract`;
 - `ac475b2` — `feat: make portal view projection atomic`;
+- `ff775f9` — `feat: add portal primary navigation`;
 - `f831da5` — `docs: sync portal contracts after atomic projection`.
 
 Governing contracts:
@@ -653,7 +654,7 @@ Future manual evidence must cover:
 - status copy after injected recoverable failure;
 - long-page fallback when coordinator initialization is prevented.
 
-These checks occur only after implementation.
+These checks occur after the committed runtime and remain pending here.
 
 ## 23. Documentation Maps
 
@@ -675,8 +676,8 @@ Keep the README pair byte-identical.
 
 The projection-atomicity prerequisite is complete.
 The dormant visibility controller is complete.
-The primary-navigation coordinator contract is now defined.
-Navigation runtime and first activation remain unimplemented.
+The primary-navigation coordinator runtime is committed by `ff775f9`.
+Desktop and mobile browser QA remain pending.
 
 Cross-link this contract from:
 
@@ -690,7 +691,7 @@ Do not mark visible navigation complete.
 
 This contract must prove:
 
-- navigation exists statically but remains hidden until first successful activation;
+- navigation exists statically and remains hidden until first successful activation;
 - the coordinator is presentation-only and not a second state authority;
 - projection remains the sole live projected-state owner;
 - the visibility controller owns primary-surface suppression;

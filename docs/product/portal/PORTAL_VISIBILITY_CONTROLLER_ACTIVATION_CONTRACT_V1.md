@@ -10,6 +10,7 @@ Committed runtime anchor:
 
 ```text
 369fd8f — feat: add dormant portal visibility controller
+ff775f9 — feat: add portal primary navigation
 ```
 
 Completed:
@@ -84,8 +85,8 @@ later navigation coordinator.
 
 ## 4. Visible Activation Boundary
 
-Accessible primary navigation and first controller activation must land
-together in one later visible runtime slice.
+Accessible primary navigation and first controller activation now land together
+in the committed portal primary-navigation runtime.
 
 The primary navigation coordinator is defined separately by
 `PORTAL_PRIMARY_NAVIGATION_COORDINATOR_CONTRACT_V1.md`.
@@ -392,7 +393,7 @@ Freeze:
 1. define visibility-controller activation contract — completed by `de7610d`, hardened by `544666d`
 2. implement dormant visibility controller with focused tests — completed by `369fd8f`
 3. sync documentation after dormant controller commit — completed by `7895ac5` and this committed-evidence follow-up
-4. implement accessible primary navigation and first controller activation atomically
+4. implement accessible primary navigation and first controller activation atomically — completed by `ff775f9`
 5. conduct mobile and desktop destination/state-preservation QA
 6. partition network facts in a later explicit slice
 7. implement contextual Verification and System presentation
@@ -407,7 +408,7 @@ The contract must prove:
 - view-state default `TRANSFER` does not itself cause hiding;
 - projection metadata does not itself cause hiding;
 - the controller consumes state but cannot transition it;
-- navigation and first activation land together later;
+- navigation and first activation land together in the committed runtime;
 - all registered roots for the selected primary destination are handled together;
 - inactive primary roots receive controller-owned inactive markers;
 - global and contextual roots remain untouched;
