@@ -87,6 +87,9 @@ later navigation coordinator.
 Accessible primary navigation and first controller activation must land
 together in one later visible runtime slice.
 
+The primary navigation coordinator is defined separately by
+`PORTAL_PRIMARY_NAVIGATION_COORDINATOR_CONTRACT_V1.md`.
+
 That later slice must:
 
 1. create reachable Transfer, Recipients, and Activity controls;

@@ -10,6 +10,7 @@ It is governed by:
 - `PORTAL_FACT_AND_AUTHORITY_INVENTORY_V1.md`;
 - `PORTAL_INTENT_BASED_PRESENTATION_PROJECTION_V1.md`;
 - `PORTAL_GLOBAL_SURFACE_REGISTRATION_CONTRACT_V1.md`;
+- `PORTAL_PRIMARY_NAVIGATION_COORDINATOR_CONTRACT_V1.md`;
 - `PORTAL_VISIBILITY_CONTROLLER_ACTIVATION_CONTRACT_V1.md`.
 
 Committed runtime anchors:
@@ -39,6 +40,8 @@ The visibility controller activation model is defined separately. The
 controller is committed but dormant, and the current long-page presentation
 remains active until a later navigation coordinator explicitly activates it.
 The projection-atomicity prerequisite was satisfied by `ac475b2`.
+The primary navigation coordinator is defined separately, and the static
+navigation remains hidden until that coordinator completes first activation.
 
 The committed projection runtime file boundary is:
 
@@ -372,6 +375,8 @@ Future implementation work must prove:
 - `#receiptHistory` no longer depends on Transfer ancestry;
 - projection transitions are internally atomic and the navigation prerequisite
   is satisfied;
+- the primary navigation coordinator contract is defined, and navigation
+  runtime and first activation remain pending;
 - current and historical transaction states remain distinct;
 - receipt rendering remains keyed to the stable `#receiptHistory` identity;
 - visibility changes cannot mutate product state;

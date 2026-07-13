@@ -346,6 +346,8 @@ The projection-atomicity prerequisite was satisfied by `ac475b2`.
 
 Visible primary navigation and first controller activation remain blocked until
 the later atomic navigation-and-first-activation slice is implemented.
+The coordinator contract for that slice is defined separately by
+`PORTAL_PRIMARY_NAVIGATION_COORDINATOR_CONTRACT_V1.md`.
 
 The pending navigation design remains:
 

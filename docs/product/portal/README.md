@@ -14,6 +14,7 @@ Implementation-local mirrors may exist under `app-web/docs/product/portal/`, but
 - `PORTAL_DESTINATION_COMPOSITION_CONTRACT_V1.md` — how canonical registered surfaces compose into visible destinations before navigation changes presentation.
 - `PORTAL_GLOBAL_SURFACE_REGISTRATION_CONTRACT_V1.md` — explicit GLOBAL/NETWORK registration rules for portal surfaces that must remain present regardless of destination state.
 - `PORTAL_VISIBILITY_CONTROLLER_ACTIVATION_CONTRACT_V1.md` — dormant visibility-controller rollout and later activation boundary for destination hiding.
+- `PORTAL_PRIMARY_NAVIGATION_COORDINATOR_CONTRACT_V1.md` — accessible primary navigation, first visibility-controller activation, focus behavior, selected-state ownership, and cross-authority compensation.
 
 ## Portal Architecture Stack
 
@@ -23,6 +24,7 @@ Implementation-local mirrors may exist under `app-web/docs/product/portal/`, but
 - Destination composition: `PORTAL_DESTINATION_COMPOSITION_CONTRACT_V1.md`
 - Global surface registration: `PORTAL_GLOBAL_SURFACE_REGISTRATION_CONTRACT_V1.md`
 - Visibility-controller activation: `PORTAL_VISIBILITY_CONTROLLER_ACTIVATION_CONTRACT_V1.md`
+- Primary navigation coordinator: `PORTAL_PRIMARY_NAVIGATION_COORDINATOR_CONTRACT_V1.md`
 
 The boundary is:
 
