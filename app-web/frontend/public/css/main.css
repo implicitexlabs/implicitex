@@ -1306,6 +1306,42 @@ body.portal-active #nav {
   display: none;
 }
 
+.portal-install-strip {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  padding: 0.375rem 1rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  font-family: var(--font-ui);
+  font-size: var(--size-xs);
+  line-height: 1.4;
+}
+
+.portal-install-strip-label {
+  color: var(--accent-dim);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: var(--weight-semibold);
+  flex-shrink: 0;
+}
+
+.portal-install-strip-link {
+  color: var(--white);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+}
+
+.portal-install-strip-link:hover,
+.portal-install-strip-link:focus-visible {
+  border-bottom-color: var(--white);
+}
+
+.portal-install-strip[hidden] {
+  display: none;
+}
+
 .portal-install-promo {
   grid-column: 1 / -1;
   display: grid;
@@ -1440,6 +1476,76 @@ body.portal-active #nav {
 .portal-install-status[hidden],
 .portal-install-instructions[hidden] {
   display: none;
+}
+
+.install-page {
+  width: 100%;
+  max-width: var(--ix-interface-max);
+  margin: 0 auto;
+  padding: var(--sp-4) 0 0;
+}
+
+.install-page-intro {
+  padding: 0 var(--sp-4) var(--sp-4);
+  max-width: 52rem;
+}
+
+.install-page-title {
+  font-family: var(--font-display);
+  font-size: var(--size-xl);
+  line-height: var(--leading-tight);
+  color: var(--white);
+  margin-bottom: var(--sp-2);
+}
+
+.install-page-copy {
+  font-family: var(--font-ui);
+  font-size: var(--size-md);
+  line-height: 1.6;
+  color: var(--dim);
+}
+
+.install-page-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-ui);
+  font-size: var(--size-xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--white);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+}
+
+.install-page-back:hover,
+.install-page-back:focus-visible {
+  border-bottom-color: var(--white);
+}
+
+.portal-footer-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.portal-footer-install-link {
+  font-family: var(--font-ui);
+  font-size: var(--size-xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--white);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+}
+
+.portal-footer-install-link:hover,
+.portal-footer-install-link:focus-visible {
+  border-bottom-color: var(--white);
 }
 
 .portal-minimized-tray {
@@ -7203,6 +7309,16 @@ input[type="number"] {
   .portal-install-promo-icon {
     width: 56px;
     height: 56px;
+  }
+
+  .portal-install-strip {
+    flex-wrap: wrap;
+    gap: 0.35rem 0.5rem;
+    padding-inline: 1rem;
+  }
+
+  .portal-footer-actions {
+    align-items: flex-start;
   }
 
   /* Panels must not impose desktop minimum widths */

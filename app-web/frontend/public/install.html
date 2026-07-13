@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="description" content="Install ImplicitEx on your phone, tablet, or desktop for faster access.">
+  <meta name="robots" content="noindex">
+  <link rel="canonical" href="https://portal.implicitex.com/install.html">
+  <meta name="application-name" content="ImplicitEx Transfer Portal">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="ImplicitEx">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#080808">
+  <title>ImplicitEx — Install</title>
+  <link rel="icon" href="/assets/icons/favicon.ico" sizes="any">
+  <link rel="icon" href="/assets/icons/favicon-32x32.png" type="image/png" sizes="32x32">
+  <link rel="icon" href="/assets/icons/favicon-16x16.png" type="image/png" sizes="16x16">
+  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon-v2.png">
+  <script>(function(){try{var t=localStorage.getItem('implicitex-theme');if(t==='light'||t==='dark'){document.documentElement.dataset.theme=t;}else{var h=new Date().getHours();document.documentElement.dataset.theme=(h>=7&&h<19)?'light':'dark';}}catch(e){}})();</script>
+  <script defer src="js/portal-install.js"></script>
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="manifest" href="/portal.webmanifest">
+</head>
+<body data-portal-shell="direct">
+  <header class="portal-header">
+    <div class="portal-header-left">
+      <a class="portal-header-brand" href="/portal-index.html" aria-label="ImplicitEx portal">
+        <img class="wordmark" src="/components/images/wordmark-white.svg" alt="ImplicitEx">
+      </a>
+    </div>
+    <div class="portal-header-right">
+      <a class="install-page-back" href="/portal-index.html">Back to portal</a>
+    </div>
+  </header>
+
+  <main class="install-page">
+    <section class="install-page-intro">
+      <h1 class="install-page-title">Install ImplicitEx</h1>
+      <p class="install-page-copy">Add ImplicitEx to your phone, tablet, or desktop for faster access without leaving the browser.</p>
+    </section>
+
+    <section class="portal-install-promo" id="portalInstallPromotion" aria-labelledby="portalInstallPromotionTitle">
+      <img
+        class="portal-install-promo-icon"
+        id="portalInstallPromotionIcon"
+        src="/assets/icons/icon-192-v2.png"
+        alt=""
+        aria-hidden="true"
+        width="64"
+        height="64"
+      >
+      <div class="portal-install-promo-copy">
+        <p class="portal-install-kicker">Install ImplicitEx</p>
+        <h2 class="portal-install-title" id="portalInstallPromotionTitle">Keep the transfer portal one tap away.</h2>
+        <p class="portal-install-summary">Add ImplicitEx to your phone or desktop for faster access.</p>
+        <p class="portal-install-status" id="portalInstallStatus" role="status" aria-live="polite"></p>
+        <div class="portal-install-actions">
+          <button class="portal-install-action" id="portalInstallAction" type="button">Install ImplicitEx</button>
+          <button class="portal-install-help" id="portalInstallHelp" type="button" aria-expanded="false" aria-controls="portalInstallInstructions">How installation works</button>
+        </div>
+        <div class="portal-install-instructions" id="portalInstallInstructions" hidden></div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

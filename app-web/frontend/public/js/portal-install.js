@@ -16,6 +16,7 @@
   var status = document.getElementById('portalInstallStatus');
   var deferredPrompt = null;
   var installedThisSession = false;
+  var hasGuide = !!instructions;
 
   function isStandalone() {
     try {
@@ -146,15 +147,21 @@
 
     if (isStandalone() || installedThisSession) {
       setHidden(promotion, true);
-      hideInstructions();
-      if (status) {
-        status.textContent = '';
-        status.hidden = true;
+      if (hasGuide) {
+        hideInstructions();
+        if (status) {
+          status.textContent = '';
+          status.hidden = true;
+        }
       }
       return;
     }
 
     setHidden(promotion, false);
+
+    if (!hasGuide) {
+      return;
+    }
 
     var mode = getMode();
     if (status) {
@@ -173,6 +180,8 @@
   }
 
   function openOrToggleInstructions() {
+    if (!hasGuide) return;
+
     var mode = getMode();
 
     if (!instructions) return;
@@ -185,7 +194,7 @@
     showInstructions(mode);
   }
 
-  if (actionBtn) {
+  if (hasGuide && actionBtn) {
     actionBtn.addEventListener('click', function () {
       if (isStandalone()) {
         return;
@@ -231,7 +240,7 @@
     });
   }
 
-  if (helpBtn) {
+  if (hasGuide && helpBtn) {
     helpBtn.addEventListener('click', function () {
       if (isStandalone()) {
         return;
