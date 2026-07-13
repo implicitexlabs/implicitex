@@ -1306,6 +1306,142 @@ body.portal-active #nav {
   display: none;
 }
 
+.portal-install-promo {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--sp-4);
+  align-items: start;
+  padding: var(--sp-4);
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.portal-install-promo-icon {
+  display: block;
+  width: 68px;
+  height: 68px;
+  flex-shrink: 0;
+  background: #000;
+  object-fit: cover;
+}
+
+.portal-install-promo-copy {
+  min-width: 0;
+}
+
+.portal-install-kicker {
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent-dim);
+  margin-bottom: var(--sp-1);
+}
+
+.portal-install-title {
+  font-family: var(--font-ui);
+  font-size: var(--size-md);
+  font-weight: var(--weight-semibold);
+  line-height: 1.35;
+  letter-spacing: 0;
+  color: var(--white);
+}
+
+.portal-install-summary {
+  margin-top: var(--sp-1);
+  font-family: var(--font-ui);
+  font-size: var(--size-sm);
+  line-height: 1.55;
+  color: var(--dim);
+  max-width: 52rem;
+}
+
+.portal-install-status {
+  margin-top: var(--sp-2);
+  font-family: var(--font-ui);
+  font-size: var(--size-xs);
+  line-height: 1.5;
+  color: var(--telemetry-amber-dim);
+}
+
+.portal-install-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+}
+
+.portal-install-action,
+.portal-install-help {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--border-2);
+  background: var(--surface-2);
+  color: var(--white);
+  font-family: var(--font-ui);
+  font-size: var(--size-xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+}
+
+.portal-install-action:hover,
+.portal-install-action:focus-visible,
+.portal-install-help:hover,
+.portal-install-help:focus-visible {
+  background: var(--surface-3);
+  border-color: var(--white);
+}
+
+.portal-install-help {
+  background: transparent;
+  color: var(--dim);
+}
+
+.portal-install-action:focus-visible,
+.portal-install-help:focus-visible {
+  outline: 1px solid var(--white);
+  outline-offset: 1px;
+}
+
+.portal-install-instructions {
+  margin-top: var(--sp-3);
+  padding: var(--sp-3);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--dim);
+  font-family: var(--font-ui);
+  font-size: var(--size-sm);
+  line-height: 1.55;
+}
+
+.portal-install-instructions p + ol,
+.portal-install-instructions p + ul {
+  margin-top: var(--sp-2);
+}
+
+.portal-install-instructions ol,
+.portal-install-instructions ul {
+  padding-left: 1.25rem;
+}
+
+.portal-install-instructions li + li {
+  margin-top: var(--sp-1);
+}
+
+.portal-install-promo[hidden],
+.portal-install-status[hidden],
+.portal-install-instructions[hidden] {
+  display: none;
+}
+
 .portal-minimized-tray {
   display: none;
   grid-column: 1 / -1;
@@ -7058,6 +7194,15 @@ input[type="number"] {
      regardless of the data-portal-layout attribute value. */
   .modules[data-portal-layout="columns"] {
     grid-template-columns: 1fr;
+  }
+
+  .portal-install-promo {
+    grid-template-columns: 1fr;
+  }
+
+  .portal-install-promo-icon {
+    width: 56px;
+    height: 56px;
   }
 
   /* Panels must not impose desktop minimum widths */

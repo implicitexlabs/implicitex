@@ -49,7 +49,7 @@
   <link rel="icon" href="/assets/icons/favicon.ico" sizes="any">
   <link rel="icon" href="/assets/icons/favicon-32x32.png" type="image/png" sizes="32x32">
   <link rel="icon" href="/assets/icons/favicon-16x16.png" type="image/png" sizes="16x16">
-  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png">
+  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon-v2.png">
   <script>(function(){try{var t=localStorage.getItem('implicitex-theme');if(t==='light'||t==='dark'){document.documentElement.dataset.theme=t;}else{var h=new Date().getHours();document.documentElement.dataset.theme=(h>=7&&h<19)?'light':'dark';}}catch(e){}})();</script>
   <script defer src="js/portal-install.js"></script>
   <link rel="stylesheet" href="css/main.css">
@@ -90,17 +90,6 @@
     /* Reset controls auto-margin — the right group carries the push */
     [data-portal-shell="direct"] .portal-header-controls {
       margin-left: 0;
-    }
-    [data-portal-shell="direct"] .portal-ctrl-btn--install {
-      gap: 0.35rem;
-    }
-    [data-portal-shell="direct"] .portal-install-label {
-      font-family: var(--font-ui);
-      font-size: 9px;
-      font-weight: var(--weight-semibold);
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      pointer-events: none;
     }
     /* Even padding either side of the title/controls divider */
     [data-portal-shell="direct"] .portal-header-title {
@@ -281,41 +270,12 @@
     .portal-footer-group a:hover {
       color: var(--white);
     }
-    .portal-ctrl-icon--install {
-      width: 12px;
-      height: 12px;
-    }
-    .portal-install-icon-line {
-      stroke: currentColor;
-      stroke-width: 1.6;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-      fill: none;
-    }
-    .portal-install-icon-fill {
-      fill: currentColor;
-    }
     @media (max-width: 600px) {
       .portal-footer-row {
         flex-direction: column;
       }
-      .portal-footer-actions {
-        width: 100%;
-        flex-direction: row;
-        align-items: center;
-        flex-wrap: wrap;
-      }
-      .portal-footer-more-panel {
-        padding: 0.8rem 0.9rem 0.9rem;
-      }
       .portal-footer-group {
         min-width: 8.5rem;
-      }
-    }
-
-    @media (max-width: 680px) {
-      [data-portal-shell="direct"] .portal-install-label {
-        display: none;
       }
     }
 
@@ -496,6 +456,29 @@
       </div><!-- /.portal-header-right -->
     </div>
     <p class="portal-header-sub">TRANSFER DETAILS &middot; NETWORK STATE &middot; RECIPIENT VERIFICATION</p>
+
+    <section class="portal-install-promo" id="portalInstallPromotion" aria-labelledby="portalInstallPromotionTitle">
+      <img
+        class="portal-install-promo-icon"
+        id="portalInstallPromotionIcon"
+        src="/assets/icons/icon-192-v2.png"
+        alt=""
+        aria-hidden="true"
+        width="64"
+        height="64"
+      >
+      <div class="portal-install-promo-copy">
+        <p class="portal-install-kicker">Install ImplicitEx</p>
+        <h2 class="portal-install-title" id="portalInstallPromotionTitle">Keep the transfer portal one tap away.</h2>
+        <p class="portal-install-summary">Add ImplicitEx to your phone or desktop for faster access.</p>
+        <p class="portal-install-status" id="portalInstallStatus" role="status" aria-live="polite"></p>
+        <div class="portal-install-actions">
+          <button class="portal-install-action" id="portalInstallAction" type="button">Install ImplicitEx</button>
+          <button class="portal-install-help" id="portalInstallHelp" type="button" aria-expanded="false" aria-controls="portalInstallInstructions">How installation works</button>
+        </div>
+        <div class="portal-install-instructions" id="portalInstallInstructions" hidden></div>
+      </div>
+    </section>
 
     <!-- Coin Card intake banner — shown when opened via Coin Card handoff -->
     <div class="cc-intake" id="ccIntake" hidden aria-live="polite" aria-label="Coin Card handoff status" data-portal-primary-surface="TRANSFER">
@@ -981,55 +964,37 @@
   <footer class="portal-footer" id="portalFooter" aria-label="Portal information" data-portal-contextual-surface="SYSTEM">
     <div class="portal-footer-row">
       <p class="portal-footer-statement">ImplicitEx is non-custodial. The portal opens directly from the web or as an installed shortcut. Transfers are confirmed by the sender's wallet and cannot be reversed once confirmed on-chain.</p>
-      <div class="portal-footer-actions">
-        <button class="portal-ctrl-btn portal-ctrl-btn--install" id="portalInstallBtn" type="button" aria-label="Install ImplicitEx Transfer Portal" title="Install ImplicitEx Transfer Portal">
-          <svg class="portal-ctrl-icon portal-ctrl-icon--install" width="12" height="12" viewBox="0 0 14 14" aria-hidden="true" focusable="false">
-            <path class="portal-install-icon-line" d="M7 1v6"></path>
-            <path class="portal-install-icon-line" d="M4.5 4.5L7 7l2.5-2.5"></path>
-            <path class="portal-install-icon-line" d="M2 9.5h10"></path>
-            <path class="portal-install-icon-line" d="M2.5 10.5v1h9v-1"></path>
-            <path class="portal-install-icon-fill" d="M6.25 8.5h1.5v2h-1.5z"></path>
-          </svg>
-          <span class="portal-install-label">Install</span>
-        </button>
-        <details class="portal-footer-more" id="portalFooterMore">
-          <summary>More</summary>
-          <div class="portal-footer-more-panel">
-            <p class="portal-footer-install-note">iPhone: tap Share, then Add to Home Screen. Desktop and Android browsers may show an Install prompt. The portal remains available directly in the browser.</p>
-            <nav class="portal-footer-nav" aria-label="Footer links">
-              <div class="portal-footer-group">
-                <span class="portal-footer-label">Legal</span>
-                <a href="/terms.html">Terms</a>
-                <a href="/privacy.html">Privacy</a>
-                <a href="/legal.html">Legal</a>
-                <a href="/risk-disclosure.html">Risk Disclosure</a>
-                <a href="/fee-disclosure.html">Fee &amp; Network</a>
-                <a href="/acceptable-use.html">Acceptable Use</a>
-              </div>
-              <div class="portal-footer-group">
-                <span class="portal-footer-label">Trust</span>
-                <a href="/contract-addresses.html">Contract Addresses</a>
-                <a href="/security.html">Security</a>
-                <a href="/status.html">Status</a>
-                <a href="/verify.html">Coin Card Verification</a>
-              </div>
-              <div class="portal-footer-group">
-                <span class="portal-footer-label">Agent / Index</span>
-                <a href="/llms.txt">llms.txt</a>
-                <a href="/robots.txt">robots.txt</a>
-                <a href="/sitemap.xml">sitemap.xml</a>
-                <a href="/metadata.html">Metadata</a>
-              </div>
-              <div class="portal-footer-group">
-                <span class="portal-footer-label">Contact</span>
-                <a href="/contact.html">Support</a>
-                <a href="mailto:connect@implicitex.com">Legal Contact</a>
-                <a href="/security.html">Report a Security Issue</a>
-              </div>
-            </nav>
-          </div>
-        </details>
-      </div>
+      <nav class="portal-footer-nav" aria-label="Footer links">
+        <div class="portal-footer-group">
+          <span class="portal-footer-label">Legal</span>
+          <a href="/terms.html">Terms</a>
+          <a href="/privacy.html">Privacy</a>
+          <a href="/legal.html">Legal</a>
+          <a href="/risk-disclosure.html">Risk Disclosure</a>
+          <a href="/fee-disclosure.html">Fee &amp; Network</a>
+          <a href="/acceptable-use.html">Acceptable Use</a>
+        </div>
+        <div class="portal-footer-group">
+          <span class="portal-footer-label">Trust</span>
+          <a href="/contract-addresses.html">Contract Addresses</a>
+          <a href="/security.html">Security</a>
+          <a href="/status.html">Status</a>
+          <a href="/verify.html">Coin Card Verification</a>
+        </div>
+        <div class="portal-footer-group">
+          <span class="portal-footer-label">Agent / Index</span>
+          <a href="/llms.txt">llms.txt</a>
+          <a href="/robots.txt">robots.txt</a>
+          <a href="/sitemap.xml">sitemap.xml</a>
+          <a href="/metadata.html">Metadata</a>
+        </div>
+        <div class="portal-footer-group">
+          <span class="portal-footer-label">Contact</span>
+          <a href="/contact.html">Support</a>
+          <a href="mailto:connect@implicitex.com">Legal Contact</a>
+          <a href="/security.html">Report a Security Issue</a>
+        </div>
+      </nav>
     </div>
   </footer>
 
