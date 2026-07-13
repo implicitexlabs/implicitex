@@ -37,25 +37,109 @@ function createElementSnapshot(element) {
   };
 }
 
-function createFakeElement(id) {
-  const attributes = {};
+function createMutationError(code = 'portal-view-projection-mutation-failed') {
+  const error = new Error(code);
+  error.code = code;
+  return error;
+}
+
+function createFakeElement(id, options = {}) {
+  const attributes = Object.assign(Object.create(null), options.attributes || {});
   const writeLog = [];
-  return {
+  const element = {
     id,
-    value: 'preserve-value',
-    checked: true,
-    disabled: false,
-    hidden: false,
-    className: 'existing-class',
-    expando: { keep: true },
+    value: options.value !== undefined ? options.value : 'preserve-value',
+    checked: options.checked !== undefined ? options.checked : true,
+    disabled: options.disabled !== undefined ? options.disabled : false,
+    hidden: options.hidden !== undefined ? options.hidden : false,
+    className: options.className !== undefined ? options.className : 'existing-class',
+    expando: options.expando !== undefined ? options.expando : { keep: true },
+    parentNode: options.parentNode || null,
+    childNodes: [],
+    beforeWriteHook: null,
+    throwOnSetAttributeCallNumber: null,
+    throwOnSetAttributeTiming: 'before',
+    throwOnSetAttributeName: null,
+    throwOnRemoveAttributeCallNumber: null,
+    throwOnRemoveAttributeTiming: 'before',
+    throwOnRemoveAttributeName: null,
+    _setAttributeCalls: 0,
+    _removeAttributeCalls: 0,
+    appendChild(child) {
+      child.parentNode = element;
+      element.childNodes.push(child);
+      return child;
+    },
     setAttribute(name, value) {
+      const callNumber = element._setAttributeCalls + 1;
       const stringValue = String(value);
-      writeLog.push({
+      const entry = {
         order: writeLog.length,
+        operation: 'set',
         name,
         value: stringValue,
-      });
+        callNumber,
+      };
+
+      if (typeof element.beforeWriteHook === 'function') {
+        element.beforeWriteHook(entry);
+      }
+
+      if (
+        element.throwOnSetAttributeCallNumber === callNumber
+        && (element.throwOnSetAttributeName === null || element.throwOnSetAttributeName === name)
+        && element.throwOnSetAttributeTiming === 'before'
+      ) {
+        throw createMutationError();
+      }
+
+      element._setAttributeCalls = callNumber;
+      writeLog.push(entry);
       attributes[name] = stringValue;
+
+      if (
+        element.throwOnSetAttributeCallNumber === callNumber
+        && (element.throwOnSetAttributeName === null || element.throwOnSetAttributeName === name)
+        && element.throwOnSetAttributeTiming === 'after'
+      ) {
+        throw createMutationError();
+      }
+    },
+    removeAttribute(name) {
+      const callNumber = element._removeAttributeCalls + 1;
+      const entry = {
+        order: writeLog.length,
+        operation: 'remove',
+        name,
+        value: null,
+        callNumber,
+      };
+
+      if (typeof element.beforeWriteHook === 'function') {
+        element.beforeWriteHook(entry);
+      }
+
+      if (
+        element.throwOnRemoveAttributeCallNumber === callNumber
+        && (element.throwOnRemoveAttributeName === null || element.throwOnRemoveAttributeName === name)
+        && element.throwOnRemoveAttributeTiming === 'before'
+      ) {
+        throw createMutationError();
+      }
+
+      element._removeAttributeCalls = callNumber;
+      if (Object.prototype.hasOwnProperty.call(attributes, name)) {
+        delete attributes[name];
+        writeLog.push(entry);
+      }
+
+      if (
+        element.throwOnRemoveAttributeCallNumber === callNumber
+        && (element.throwOnRemoveAttributeName === null || element.throwOnRemoveAttributeName === name)
+        && element.throwOnRemoveAttributeTiming === 'after'
+      ) {
+        throw createMutationError();
+      }
     },
     getAttribute(name) {
       return Object.prototype.hasOwnProperty.call(attributes, name)
@@ -73,26 +157,130 @@ function createFakeElement(id) {
     },
     clearWriteLog() {
       writeLog.length = 0;
+      element._setAttributeCalls = 0;
+      element._removeAttributeCalls = 0;
     },
   };
+
+  if (options.parentNode) {
+    options.parentNode.appendChild(element);
+  }
+
+  return element;
 }
 
 function createDocumentHarness(options = {}) {
-  const root = createFakeElement('modules');
   const fallbackRoot = createFakeElement('documentElement');
+  const root = createFakeElement('modules');
+  const ccIntake = createFakeElement('ccIntake', {
+    attributes: {
+      'data-portal-primary-surface': 'TRANSFER',
+    },
+    hidden: true,
+    className: 'cc-intake',
+  });
+  const transferMod = createFakeElement('transferMod', {
+    attributes: {
+      'data-portal-primary-surface': 'TRANSFER',
+    },
+    className: 'mod transfer-mod',
+  });
+  const recipientIntel = createFakeElement('recipientIntel', {
+    hidden: true,
+    className: 'intel-panel',
+  });
+  const recipientsMod = createFakeElement('recipientsMod', {
+    attributes: {
+      'data-portal-primary-surface': 'RECIPIENTS',
+      'aria-labelledby': 'recipientsHeading',
+    },
+    className: 'mod recipients-mod',
+  });
+  const activityMod = createFakeElement('activityMod', {
+    attributes: {
+      'data-portal-primary-surface': 'ACTIVITY',
+      'aria-labelledby': 'activityHeading',
+    },
+    className: 'mod activity-mod',
+  });
+  const receiptHistory = createFakeElement('receiptHistory', {
+    className: 'receipt-history-list',
+  });
+  const networkMod = createFakeElement('networkMod', {
+    attributes: {
+      'data-portal-global-surface': 'NETWORK',
+    },
+    className: 'mod network-mod',
+  });
+  const verificationMod = createFakeElement('verificationMod', {
+    attributes: {
+      'data-portal-contextual-surface': 'VERIFICATION',
+    },
+    className: 'mod verification-mod',
+  });
+  const companion = createFakeElement('companion', {
+    attributes: {
+      'data-portal-primary-surface': 'TRANSFER',
+    },
+    className: 'companion',
+  });
+  const telemetry = createFakeElement('telemetry', {
+    attributes: {
+      'data-portal-contextual-surface': 'SYSTEM',
+    },
+    className: 'telemetry',
+  });
+  const portalFooter = createFakeElement('portalFooter', {
+    attributes: {
+      'data-portal-contextual-surface': 'SYSTEM',
+    },
+    className: 'portal-footer',
+  });
+  const txRecipient = createFakeElement('txRecipient');
+  const txAmount = createFakeElement('txAmount');
+  const txConfirmAck = createFakeElement('txConfirmAck');
+  const txBtn = createFakeElement('txBtn');
+
+  root.appendChild(ccIntake);
+  root.appendChild(transferMod);
+  transferMod.appendChild(recipientIntel);
+  root.appendChild(recipientsMod);
+  root.appendChild(activityMod);
+  activityMod.appendChild(receiptHistory);
+  root.appendChild(networkMod);
+  root.appendChild(verificationMod);
+  root.appendChild(companion);
+  root.appendChild(telemetry);
+  root.appendChild(portalFooter);
+  root.appendChild(txRecipient);
+  root.appendChild(txAmount);
+  root.appendChild(txConfirmAck);
+  root.appendChild(txBtn);
+
   const existingElements = [
     root,
-    createFakeElement('txRecipient'),
-    createFakeElement('txAmount'),
-    createFakeElement('txConfirmAck'),
-    createFakeElement('txBtn'),
-    createFakeElement('verificationMod'),
-    createFakeElement('receiptHistory'),
+    fallbackRoot,
+    ccIntake,
+    transferMod,
+    recipientIntel,
+    recipientsMod,
+    activityMod,
+    receiptHistory,
+    networkMod,
+    verificationMod,
+    companion,
+    telemetry,
+    portalFooter,
+    txRecipient,
+    txAmount,
+    txConfirmAck,
+    txBtn,
   ];
-  const byId = new Map(existingElements.map((element) => [element.id, element]));
+  const byId = new Map(existingElements.filter((element) => element.id !== 'documentElement').map((element) => [element.id, element]));
 
   const document = {
     documentElement: fallbackRoot,
+    activeElement: null,
     getElementById(id) {
       if (options.rootMissing && id === 'modules') return null;
       return byId.get(id) || null;
@@ -221,6 +409,35 @@ function assertWriteLog(element, expected) {
   );
 }
 
+function markerState(element, name) {
+  return {
+    exists: element.hasAttribute(name),
+    value: element.hasAttribute(name) ? element.getAttribute(name) : null,
+  };
+}
+
+function setMarkerState(element, name, state) {
+  if (state.exists) {
+    element.setAttribute(name, state.value);
+  } else {
+    element.removeAttribute(name);
+  }
+}
+
+function makeState(api, primaryDestination, contextualLayer = null) {
+  const state = api.setPrimaryDestination(api.createDefaultState(), primaryDestination);
+  if (contextualLayer === null) {
+    return state;
+  }
+  return api.openContextualLayer(state, contextualLayer);
+}
+
+function clearProjectionWrites(harness) {
+  for (const element of harness.existingElements) {
+    element.clearWriteLog();
+  }
+}
+
 test('default projection is Transfer plus NONE on the portal root', () => {
   const { api, harness } = loadProjection();
 
@@ -232,6 +449,227 @@ test('default projection is Transfer plus NONE on the portal root', () => {
   ]);
   assert.equal(api.getState().primaryDestination, 'TRANSFER');
   assert.equal(api.getState().contextualLayer, null);
+});
+
+test('projection API exports the committed frozen marker descriptor', () => {
+  const { api } = loadProjection();
+
+  assert.deepEqual(Object.keys(api), [
+    'MARKERS',
+    'getState',
+    'setPrimaryDestination',
+    'openContextualLayer',
+    'closeContextualLayer',
+    'projectCurrentState',
+  ]);
+  assert.equal(Object.isFrozen(api), true);
+  assert.equal(Object.isFrozen(api.MARKERS), true);
+  assert.deepEqual(Object.keys(api.MARKERS), [
+    'PRIMARY_DESTINATION',
+    'CONTEXTUAL_LAYER',
+    'CONTEXTUAL_LAYER_NONE',
+  ]);
+  assert.equal(api.MARKERS.PRIMARY_DESTINATION, 'data-portal-primary-destination');
+  assert.equal(api.MARKERS.CONTEXTUAL_LAYER, 'data-portal-contextual-layer');
+  assert.equal(api.MARKERS.CONTEXTUAL_LAYER_NONE, 'NONE');
+});
+
+test('successful primary transition commits DOM before private state', () => {
+  const { api, harness } = loadProjection();
+  const observedStates = [];
+
+  clearProjectionWrites(harness);
+  harness.root.beforeWriteHook = () => {
+    observedStates.push(api.getState().primaryDestination);
+  };
+
+  const result = api.setPrimaryDestination('RECIPIENTS');
+
+  assert.deepEqual(observedStates, ['TRANSFER']);
+  assert.equal(result.primaryDestination, 'RECIPIENTS');
+  assert.equal(result.contextualLayer, null);
+  assert.equal(api.getState().primaryDestination, 'RECIPIENTS');
+  assert.equal(api.getState().contextualLayer, null);
+  assertWriteLog(harness.root, [
+    { name: 'data-portal-primary-destination', value: 'RECIPIENTS' },
+  ]);
+});
+
+test('first-write failure preserves prior state and markers', () => {
+  const { api, harness } = loadProjection();
+  const priorState = api.getState();
+  const priorPrimary = markerState(harness.root, 'data-portal-primary-destination');
+  const priorLayer = markerState(harness.root, 'data-portal-contextual-layer');
+
+  clearProjectionWrites(harness);
+  harness.root.throwOnSetAttributeCallNumber = 1;
+  harness.root.throwOnSetAttributeTiming = 'before';
+
+  assert.throws(
+    () => api.setPrimaryDestination('RECIPIENTS'),
+    (error) =>
+      error
+      && error.code === 'portal-view-projection-transaction-failed'
+      && error.cause
+      && error.cause.code === 'portal-view-projection-mutation-failed'
+  );
+
+  assert.deepEqual(api.getState(), priorState);
+  assert.deepEqual(markerState(harness.root, 'data-portal-primary-destination'), priorPrimary);
+  assert.deepEqual(markerState(harness.root, 'data-portal-contextual-layer'), priorLayer);
+  assert.equal(harness.root.writeLog.length, 0);
+});
+
+test('rollback restores an originally absent attribute as absent', () => {
+  const { api, harness } = loadProjection();
+
+  api.setPrimaryDestination('ACTIVITY');
+  api.openContextualLayer('SYSTEM');
+  harness.root.removeAttribute('data-portal-primary-destination');
+  harness.root.removeAttribute('data-portal-contextual-layer');
+  harness.root.setAttribute('data-portal-contextual-layer', 'DRIFTED');
+  clearProjectionWrites(harness);
+  harness.root.throwOnSetAttributeCallNumber = 2;
+  harness.root.throwOnSetAttributeTiming = 'after';
+
+  const priorState = api.getState();
+
+  assert.throws(
+    () => api.projectCurrentState(),
+    (error) =>
+      error
+      && error.code === 'portal-view-projection-transaction-failed'
+      && error.cause
+      && error.cause.code === 'portal-view-projection-mutation-failed'
+  );
+
+  assert.deepEqual(api.getState(), priorState);
+  assert.deepEqual(markerState(harness.root, 'data-portal-primary-destination'), {
+    exists: false,
+    value: null,
+  });
+  assert.deepEqual(markerState(harness.root, 'data-portal-contextual-layer'), {
+    exists: true,
+    value: 'DRIFTED',
+  });
+  assert.deepEqual(harness.root.writeLog.map(({ operation, name, value }) => ({ operation, name, value })), [
+    { operation: 'set', name: 'data-portal-primary-destination', value: 'ACTIVITY' },
+    { operation: 'set', name: 'data-portal-contextual-layer', value: 'SYSTEM' },
+    { operation: 'set', name: 'data-portal-contextual-layer', value: 'DRIFTED' },
+    { operation: 'remove', name: 'data-portal-primary-destination', value: null },
+  ]);
+});
+
+test('rollback restores an originally empty-string attribute as an empty string', () => {
+  const { api, harness } = loadProjection();
+
+  api.setPrimaryDestination('ACTIVITY');
+  api.openContextualLayer('SYSTEM');
+  harness.root.setAttribute('data-portal-primary-destination', '');
+  harness.root.removeAttribute('data-portal-contextual-layer');
+  harness.root.setAttribute('data-portal-contextual-layer', 'DRIFTED');
+  clearProjectionWrites(harness);
+  harness.root.throwOnSetAttributeCallNumber = 2;
+  harness.root.throwOnSetAttributeTiming = 'after';
+
+  const priorPrimary = markerState(harness.root, 'data-portal-primary-destination');
+  const priorLayer = markerState(harness.root, 'data-portal-contextual-layer');
+
+  assert.throws(
+    () => api.projectCurrentState(),
+    (error) =>
+      error
+      && error.code === 'portal-view-projection-transaction-failed'
+      && error.cause
+      && error.cause.code === 'portal-view-projection-mutation-failed'
+  );
+
+  assert.deepEqual(markerState(harness.root, 'data-portal-primary-destination'), priorPrimary);
+  assert.deepEqual(markerState(harness.root, 'data-portal-contextual-layer'), priorLayer);
+  assert.equal(harness.root.getAttribute('data-portal-primary-destination'), '');
+});
+
+test('rollback restores a nonempty prior value exactly', () => {
+  const { api, harness } = loadProjection();
+
+  api.setPrimaryDestination('ACTIVITY');
+  api.openContextualLayer('SYSTEM');
+  harness.root.setAttribute('data-portal-primary-destination', 'LEGACY');
+  harness.root.removeAttribute('data-portal-contextual-layer');
+  harness.root.setAttribute('data-portal-contextual-layer', 'DRIFTED');
+  clearProjectionWrites(harness);
+  harness.root.throwOnSetAttributeCallNumber = 2;
+  harness.root.throwOnSetAttributeTiming = 'after';
+
+  const priorPrimary = markerState(harness.root, 'data-portal-primary-destination');
+  const priorLayer = markerState(harness.root, 'data-portal-contextual-layer');
+
+  assert.throws(
+    () => api.projectCurrentState(),
+    (error) =>
+      error
+      && error.code === 'portal-view-projection-transaction-failed'
+      && error.cause
+      && error.cause.code === 'portal-view-projection-mutation-failed'
+  );
+
+  assert.deepEqual(markerState(harness.root, 'data-portal-primary-destination'), priorPrimary);
+  assert.deepEqual(markerState(harness.root, 'data-portal-contextual-layer'), priorLayer);
+  assert.equal(harness.root.getAttribute('data-portal-primary-destination'), 'LEGACY');
+});
+
+test('rollback failure continues attempting later restorations after one restoration fails', () => {
+  const { api, harness } = loadProjection();
+
+  api.setPrimaryDestination('ACTIVITY');
+  api.openContextualLayer('SYSTEM');
+  harness.root.setAttribute('data-portal-primary-destination', 'LEGACY');
+  harness.root.setAttribute('data-portal-contextual-layer', 'DRIFTED');
+  clearProjectionWrites(harness);
+  harness.root.beforeWriteHook = (entry) => {
+    if (entry.operation === 'set' && entry.name === 'data-portal-contextual-layer' && entry.callNumber === 3) {
+      throw createMutationError();
+    }
+  };
+  harness.root.throwOnSetAttributeCallNumber = 2;
+  harness.root.throwOnSetAttributeTiming = 'after';
+
+  const priorState = api.getState();
+
+  assert.throws(
+    () => api.projectCurrentState(),
+    (error) =>
+      error
+      && error.code === 'portal-view-projection-rollback-failed'
+      && error.cause
+      && error.cause.code === 'portal-view-projection-mutation-failed'
+  );
+
+  assert.deepEqual(api.getState(), priorState);
+  assert.deepEqual(markerState(harness.root, 'data-portal-primary-destination'), {
+    exists: true,
+    value: 'LEGACY',
+  });
+  assert.deepEqual(markerState(harness.root, 'data-portal-contextual-layer'), {
+    exists: true,
+    value: 'SYSTEM',
+  });
+  assert.deepEqual(harness.root.writeLog.map(({ operation, name, value }) => ({ operation, name, value })), [
+    { operation: 'set', name: 'data-portal-primary-destination', value: 'ACTIVITY' },
+    { operation: 'set', name: 'data-portal-contextual-layer', value: 'SYSTEM' },
+    { operation: 'set', name: 'data-portal-primary-destination', value: 'LEGACY' },
+  ]);
+});
+
+test('projection validation failures perform zero DOM writes', () => {
+  const { api, harness } = loadProjection();
+
+  clearProjectionWrites(harness);
+  assert.throws(
+    () => api.setPrimaryDestination('SYSTEM'),
+    (error) => error && error.code === 'portal-primary-destination-invalid'
+  );
+  assert.equal(harness.root.writeLog.length, 0);
 });
 
 test('primary transitions update only the primary marker', () => {
