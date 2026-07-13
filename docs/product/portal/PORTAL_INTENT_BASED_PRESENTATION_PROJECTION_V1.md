@@ -162,10 +162,20 @@ execution state.
 
 ## 9. Projection Atomicity
 
-The committed projection runtime is not yet atomic across its private `currentState`
-and DOM metadata writes. A DOM write failure can advance private state before the
-projected markers finish updating, leaving projection state, root metadata, and
-visibility out of sync.
+Historical pre-hardening fact: the committed projection runtime was not atomic
+before `ac475b2`.
+
+Current committed fact: projection transitions are internally atomic as
+committed by `ac475b2`.
+
+The committed runtime anchor is:
+
+- `ac475b2` — `feat: make portal view projection atomic`
+
+The committed runtime file boundary is:
+
+- `app-web/frontend/public/js/portal-view-projection.js`
+- `app-web/tests/frontend/portal-view-projection.test.js`
 
 Every projection transition that changes projected state must therefore be an
 atomic transaction:
@@ -314,10 +324,28 @@ The future runtime-hardening slice must prove:
 17. no new public global or API method appears;
 18. no visibility-controller, registry, wallet, Coin Card, receipt, storage, URL, history, or execution authority is added.
 
+Committed runtime evidence:
+
+- portal view projection: 22/22 passed;
+- portal view state: 11/11 passed;
+- portal surface registry: 18/18 passed;
+- portal visibility controller: 23/23 passed;
+- observability: passed;
+- Coin Card evidence: passed;
+- IX execution: passed;
+- static public validation: passed;
+- architecture validation: passed;
+- git diff check: passed.
+
+These results prove projection atomicity and dependent compatibility. They do not
+constitute visible-navigation QA or mobile/desktop navigation QA.
+
 ## 13. Navigation Prerequisite
 
+The projection-atomicity prerequisite was satisfied by `ac475b2`.
+
 Visible primary navigation and first controller activation remain blocked until
-projection runtime atomicity is committed and tested.
+the later atomic navigation-and-first-activation slice is implemented.
 
 The pending navigation design remains:
 

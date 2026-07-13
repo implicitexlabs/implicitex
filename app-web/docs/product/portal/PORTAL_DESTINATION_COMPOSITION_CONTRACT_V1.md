@@ -22,6 +22,7 @@ Committed runtime anchors:
 - `9a3daa3` — `feat: add activity destination shell`.
 - `2285218` — `feat: register global network surface`.
 - `369fd8f` — `feat: add dormant portal visibility controller`.
+- `ac475b2` — `feat: make portal view projection atomic`.
 
 This contract distinguishes:
 
@@ -37,6 +38,12 @@ It does not redefine fact authority, storage authority, wallet authority, Coin C
 The visibility controller activation model is defined separately. The
 controller is committed but dormant, and the current long-page presentation
 remains active until a later navigation coordinator explicitly activates it.
+The projection-atomicity prerequisite was satisfied by `ac475b2`.
+
+The committed projection runtime file boundary is:
+
+- `app-web/frontend/public/js/portal-view-projection.js`
+- `app-web/tests/frontend/portal-view-projection.test.js`
 
 ## 2. Current Canonical Registry
 
@@ -305,6 +312,7 @@ Visible destination navigation cannot ship until:
 - the Activity shell exists and is registered — satisfied by `9a3daa3`;
 - `#receiptHistory` is placed within the Activity shell — satisfied by `9a3daa3`;
 - the network module has explicit GLOBAL registration — satisfied by `2285218`;
+- projection transitions are internally atomic — satisfied by `ac475b2`;
 - all structural prerequisites for the visibility controller are satisfied.
 
 The dormant visibility-controller runtime is committed by `369fd8f`.
@@ -343,11 +351,12 @@ Freeze this order:
 2. register `#ccIntake` explicitly in place as `TRANSFER` — completed by `1c01ebe`;
 3. add and register the Activity shell and place `#receiptHistory` within it — completed by `9a3daa3`;
 4. add explicit GLOBAL / NETWORK registration for the existing mixed network module — completed by `2285218`;
-5. add the presentation-only visibility controller — completed by `369fd8f`;
-6. add accessible primary navigation controls;
-7. partition network facts in a later explicit slice;
-8. add contextual Verification and System controls;
-9. conduct mobile and desktop state-preservation QA.
+5. make projection transitions internally atomic — completed by `ac475b2`;
+6. add the presentation-only visibility controller — completed by `369fd8f`;
+7. add accessible primary navigation controls;
+8. partition network facts in a later explicit slice;
+9. add contextual Verification and System controls;
+10. conduct mobile and desktop state-preservation QA.
 
 ## 14. Acceptance Criteria
 
@@ -361,6 +370,8 @@ Future implementation work must prove:
 - `#activityMod` is the sole registered Activity root;
 - `#receiptHistory` is its unregistered historical-content child;
 - `#receiptHistory` no longer depends on Transfer ancestry;
+- projection transitions are internally atomic and the navigation prerequisite
+  is satisfied;
 - current and historical transaction states remain distinct;
 - receipt rendering remains keyed to the stable `#receiptHistory` identity;
 - visibility changes cannot mutate product state;
