@@ -616,6 +616,15 @@ test('contract mirror is byte-identical and runtime boundary is four files', () 
   assert.match(css, /:focus-visible/);
 });
 
+test('hidden portal navigation fallback remains hidden when coordinator is unavailable', () => {
+  const html = read(portalIndexPath);
+  const css = read(stylesheetPath);
+
+  assert.match(html, /<nav\s+id="portalPrimaryNav"[\s\S]*?\shidden>/);
+  assert.match(html, /<p\s+id="portalPrimaryNavStatus"[\s\S]*?\shidden><\/p>/);
+  assert.match(css, /\.portal-primary-nav\[hidden\],\s*\.portal-primary-nav-status\[hidden\]\s*\{\s*display:\s*none;\s*\}/s);
+});
+
 test('module exports before initialization and initialization remains contained', () => {
   const runtime = loadPortalRuntime();
   const beforeStatus = runtime.api.getStatus();

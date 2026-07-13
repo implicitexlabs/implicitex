@@ -1301,6 +1301,11 @@ body.portal-active #nav {
   text-transform: none;
 }
 
+.portal-primary-nav[hidden],
+.portal-primary-nav-status[hidden] {
+  display: none;
+}
+
 .portal-minimized-tray {
   display: none;
   grid-column: 1 / -1;
