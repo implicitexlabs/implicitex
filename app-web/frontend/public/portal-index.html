@@ -434,6 +434,12 @@
   <div class="portal-zone">
 
   <section class="modules transfer-portal" id="modules" aria-label="Transfer Portal" data-transaction-window>
+    <nav id="portalPrimaryNav" class="portal-primary-nav" aria-label="Portal destinations" hidden>
+      <button id="portalNavTransfer" class="portal-primary-nav-button" type="button" data-portal-navigation-destination="TRANSFER" aria-current="page">Transfer</button>
+      <button id="portalNavRecipients" class="portal-primary-nav-button" type="button" data-portal-navigation-destination="RECIPIENTS">Recipients</button>
+      <button id="portalNavActivity" class="portal-primary-nav-button" type="button" data-portal-navigation-destination="ACTIVITY">Activity</button>
+    </nav>
+    <p id="portalPrimaryNavStatus" class="portal-primary-nav-status" role="status" aria-live="polite" hidden></p>
     <div class="portal-header">
       <!-- Left: brand identity — trust anchor at first glance -->
       <a href="https://implicitex.com" class="portal-header-brand" aria-label="ImplicitEx">
@@ -1047,6 +1053,7 @@
   <script src="js/portal-view-projection.js"></script>
   <script src="js/portal-surface-registry.js"></script>
   <script src="js/portal-visibility-controller.js"></script>
+  <script src="js/portal-navigation-coordinator.js"></script>
   <script src="js/wallet.js"></script>
   <script src="js/coincard.js"></script>
   <script src="js/app.js"></script>
