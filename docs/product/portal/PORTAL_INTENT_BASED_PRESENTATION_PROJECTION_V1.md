@@ -21,6 +21,14 @@ appearance of a fact.
 
 ## 2. Projection Rules
 
+- `IX_PORTAL_VIEW_STATE` is a pure validation and transition authority.
+- `IX_PORTAL_VIEW_STATE` retains no runtime current state and performs no DOM projection.
+- `IX_PORTAL_VIEW_PROJECTION` owns the live projected portal state in private `currentState`.
+- `IX_PORTAL_VIEW_PROJECTION.getState()` is the committed current-state read.
+- `IX_PORTAL_VISIBILITY_CONTROLLER` consumes a frozen projected snapshot and does not own or transition view state.
+- The navigation coordinator must not create another current-state store.
+- The navigation coordinator may retain a prior frozen projection snapshot only for compensation.
+- The navigation coordinator must use projection transition methods rather than separately calling view-state helpers and then mutating DOM.
 - A fact may appear in more than one surface for safety or continuity.
 - Every appearance must project the same authoritative state.
 - Projection does not create a second source of truth.
@@ -106,3 +114,53 @@ Future implementation work should be able to prove:
 - labels do not independently block;
 - historical evidence does not independently block;
 - no new authority, navigation, storage, or execution behavior is introduced.
+- projection transitions are internally atomic;
+- failed projection transitions preserve exact prior marker presence and value;
+- `projectCurrentState()` is transactional drift repair, not rollback;
+- primary rollback may use the existing destination setter because it preserves contextual state;
+- no exact-snapshot restoration API is required for the first primary-navigation slice;
+- navigation activation remains blocked until projection atomicity is implemented at runtime.
+
+## 7. Projection Atomicity
+
+The committed projection runtime is not yet atomic across its private `currentState`
+and DOM metadata writes. A DOM write failure can advance private state before the
+projected markers finish updating, leaving projection state, root metadata, and
+visibility out of sync.
+
+Every projection transition that changes projected state must therefore be an
+atomic transaction:
+
+- `setPrimaryDestination(primaryDestination)`
+- `openContextualLayer(contextualLayer)`
+- `closeContextualLayer()`
+
+The required order is:
+
+1. retain the prior frozen `currentState`;
+2. compute the candidate next frozen state through `IX_PORTAL_VIEW_STATE`;
+3. resolve the projection target;
+4. capture the exact prior state of every projection-owned DOM marker;
+5. compute the full DOM mutation plan;
+6. perform all DOM writes;
+7. assign `currentState = nextState` only after all DOM writes succeed;
+8. return a fresh frozen snapshot equivalent to the committed state.
+
+If any marker write fails, the runtime must reverse every successful DOM
+operation already performed, restore exact prior marker presence and value, keep
+private `currentState` equal to the prior state, and expose a deterministic
+`portal-view-projection-transaction-failed` error. If restoration itself fails,
+it must preserve the prior private state and expose
+`portal-view-projection-rollback-failed`.
+
+`projectCurrentState()` remains transactional drift repair only. It uses the
+existing private `currentState`, applies marker changes transactionally, and
+must not create a new state or serve as navigation rollback.
+
+Primary-navigation rollback may use:
+
+```text
+setPrimaryDestination(priorProjectionSnapshot.primaryDestination)
+```
+
+because primary rollback preserves the contextual layer.
