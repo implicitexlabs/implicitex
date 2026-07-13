@@ -90,6 +90,21 @@ The navigation remains `hidden` until first activation succeeds. If JavaScript
 is unavailable or coordinator initialization fails, the long-page portal
 remains available and the static navigation stays hidden.
 
+The future status region is:
+
+```html
+<p
+  id="portalPrimaryNavStatus"
+  class="portal-primary-nav-status"
+  role="status"
+  aria-live="polite"
+  hidden
+></p>
+```
+
+It must be the immediate sibling after `#portalPrimaryNav`, before the existing
+portal header and the remainder of the portal content.
+
 ## 4. Controls
 
 The navigation contains exactly three native buttons:
@@ -127,6 +142,7 @@ The coordinator owns:
 
 - `aria-current` on these three buttons;
 - navigation-root `hidden`;
+- status-region `hidden`;
 - navigation status copy;
 - button event listeners.
 
@@ -167,7 +183,8 @@ JavaScript unavailable or coordinator initialization fails
 ```
 
 The navigation must not become visible before the first controller activation
-succeeds.
+succeeds. The status region must also remain hidden until a failure message is
+required.
 
 ## 7. Coordinator Module
 
@@ -257,7 +274,7 @@ Before any initialization mutation, require:
 - exactly one initial `aria-current="page"` agrees with the projected destination.
 
 Complete validation must occur before controller activation, navigation reveal,
-selected-state mutation, or focus movement.
+status reveal, selected-state mutation, or focus movement.
 
 Deterministic failures:
 
@@ -302,6 +319,7 @@ IX_PORTAL_VISIBILITY_CONTROLLER.apply(
 
 - commit the matching `aria-current="page"`;
 - remove `hidden` from `#portalPrimaryNav`;
+- keep `#portalPrimaryNavStatus` hidden and empty;
 - set coordinator availability to true.
 
 Visible commit order:
@@ -324,6 +342,8 @@ If first activation fails:
 - the long-page portal remains available;
 - coordinator status records failure;
 - no destination control becomes reachable.
+- `#portalPrimaryNavStatus` remains hidden and empty unless compensation also
+  fails.
 
 Controller restoration:
 
@@ -474,6 +494,7 @@ Compensation itself can fail. On compensation failure:
 - retain all original and compensation errors diagnostically;
 - set coordinator availability to false;
 - hide navigation;
+- reveal `#portalPrimaryNavStatus`;
 - expose `portal-navigation-compensation-failed`;
 - do not claim which destination is safely active;
 - do not silently fall back to Transfer.
@@ -496,7 +517,7 @@ destination.
 
 ## 17. Status Region
 
-The navigation includes:
+The status region is:
 
 ```html
 <p
@@ -575,42 +596,46 @@ remain unchanged unless implementation reveals a documented contract defect.
 
 `package.json` must remain untouched.
 
+The status region is not inside the navigation.
+
 ## 21. Automated Tests
 
 Future focused tests must prove at minimum:
 
 1. exact navigation markup and first-child placement;
-2. navigation is statically hidden;
-3. no registered root is moved or wrapped;
-4. no tab semantics or `aria-controls` appear;
-5. exactly three native destination buttons exist;
-6. exactly one initial hidden `aria-current="page"` matches projection;
-7. module authority and structure preflight precedes mutation;
-8. successful first activation applies controller before revealing navigation;
-9. failed first activation leaves navigation hidden and long-page presentation restored;
-10. successful Transfer, Recipients, and Activity transitions;
-11. focus moves to the requested button before closing roots;
-12. focus remains on the selected button after success;
-13. projection transition precedes controller application;
-14. navigation selection commits after controller success;
-15. exactly one `aria-current="page"` after success;
-16. same-destination requests cause no projection or controller writes;
-17. projection failure preserves prior controller and navigation state;
-18. controller failure compensates projection;
-19. selected-state mutation failure compensates projection and controller;
-20. prior dormant controller compensation uses `restore()`;
-21. prior active controller compensation uses `apply(priorSnapshot)`;
-22. compensation attempts continue after one compensation failure;
-23. compensation failure disables and hides navigation;
-24. ordinary failure status copy is truthful;
-25. compensation-failure copy is truthful;
-26. no second current-state store is introduced;
-27. no direct `IX_PORTAL_VIEW_STATE` access occurs;
-28. no contextual transition occurs;
-29. no controller marker is directly mutated;
-30. no URL, history, storage, wallet, Coin Card, receipt, network, or execution authority is added;
-31. public coordinator API and returned statuses are frozen;
-32. mobile and desktop markup remains structurally usable.
+2. status is the second direct child and immediate navigation sibling;
+3. navigation is statically hidden;
+4. status is statically hidden and empty;
+5. no registered root is moved or wrapped;
+6. no tab semantics or `aria-controls` appear;
+7. exactly three native destination buttons exist;
+8. exactly one initial hidden `aria-current="page"` matches projection;
+9. module authority and structure preflight precedes mutation;
+10. successful first activation applies controller before revealing navigation;
+11. failed first activation leaves navigation hidden and long-page presentation restored;
+12. successful Transfer, Recipients, and Activity transitions;
+13. focus moves to the requested button before closing roots;
+14. focus remains on the selected button after success;
+15. projection transition precedes controller application;
+16. navigation selection commits after controller success;
+17. exactly one `aria-current="page"` after success;
+18. same-destination requests cause no projection or controller writes;
+19. projection failure preserves prior controller and navigation state;
+20. controller failure compensates projection;
+21. selected-state mutation failure compensates projection and controller;
+22. prior dormant controller compensation uses `restore()`;
+23. prior active controller compensation uses `apply(priorSnapshot)`;
+24. compensation attempts continue after one compensation failure;
+25. compensation failure disables navigation and reveals status;
+26. ordinary failure status copy is truthful;
+27. compensation-failure copy is truthful;
+28. no second current-state store is introduced;
+29. no direct `IX_PORTAL_VIEW_STATE` access occurs;
+30. no contextual transition occurs;
+31. no controller marker is directly mutated;
+32. no URL, history, storage, wallet, Coin Card, receipt, network, or execution authority is added;
+33. public coordinator API and returned statuses are frozen;
+34. mobile and desktop markup remains structurally usable.
 
 ## 22. Manual QA
 
