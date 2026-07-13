@@ -113,15 +113,54 @@ Future implementation work should be able to prove:
 - compact trust state appears on Transfer whenever a Coin Card or verified route is active;
 - labels do not independently block;
 - historical evidence does not independently block;
-- no new authority, navigation, storage, or execution behavior is introduced.
-- projection transitions are internally atomic;
-- failed projection transitions preserve exact prior marker presence and value;
-- `projectCurrentState()` is transactional drift repair, not rollback;
+- no new authority, navigation, storage, or execution behavior is introduced;
+- projection transitions must become internally atomic before visible navigation;
+- failed projection transitions must restore exact prior marker presence and value;
+- `projectCurrentState()` must remain transactional drift repair, not rollback;
 - primary rollback may use the existing destination setter because it preserves contextual state;
 - no exact-snapshot restoration API is required for the first primary-navigation slice;
 - navigation activation remains blocked until projection atomicity is implemented at runtime.
 
-## 7. Projection Atomicity
+## 7. API Inventory
+
+The committed pure view-state API is:
+
+- `createDefaultState()`
+- `normalizeState(state)`
+- `setPrimaryDestination(state, primaryDestination)`
+- `openContextualLayer(state, contextualLayer)`
+- `closeContextualLayer(state)`
+
+These functions retain no current state, write no DOM, do not mutate their
+supplied snapshots, and return frozen snapshots.
+
+The committed projection API is:
+
+- `getState()`
+- `setPrimaryDestination(primaryDestination)`
+- `openContextualLayer(contextualLayer)`
+- `closeContextualLayer()`
+- `projectCurrentState()`
+
+The runtime-hardening slice must preserve this public API exactly.
+
+## 8. Marker Domains
+
+The only projection-owned DOM markers in V1 are:
+
+- `data-portal-primary-destination`
+- `data-portal-contextual-layer`
+
+Their value domains are:
+
+- primary: `TRANSFER`, `RECIPIENTS`, `ACTIVITY`
+- contextual: `NONE`, `VERIFICATION`, `SYSTEM`
+
+Projection atomicity must not mutate controller inactive markers, surface
+registration markers, classes, styles, content, form state, wallet state, or
+execution state.
+
+## 9. Projection Atomicity
 
 The committed projection runtime is not yet atomic across its private `currentState`
 and DOM metadata writes. A DOM write failure can advance private state before the
@@ -146,6 +185,18 @@ The required order is:
 7. assign `currentState = nextState` only after all DOM writes succeed;
 8. return a fresh frozen snapshot equivalent to the committed state.
 
+Before any projection transaction, capture separately for every projection-owned
+attribute:
+
+- whether the attribute existed
+- the exact prior string value when present
+
+Preserve the distinction between:
+
+- attribute absent
+- attribute present with `""`
+- attribute present with a nonempty value
+
 If any marker write fails, the runtime must reverse every successful DOM
 operation already performed, restore exact prior marker presence and value, keep
 private `currentState` equal to the prior state, and expose a deterministic
@@ -164,3 +215,120 @@ setPrimaryDestination(priorProjectionSnapshot.primaryDestination)
 ```
 
 because primary rollback preserves the contextual layer.
+
+The projection target is the committed portal root:
+
+- preferred: `#modules`
+- fallback: `document.documentElement` when `#modules` is absent
+
+The resolved target must remain stable throughout a transaction.
+
+## 10. Coordinator Compensation
+
+The future coordinator retains:
+
+```text
+priorProjectionSnapshot =
+  IX_PORTAL_VIEW_PROJECTION.getState()
+
+priorControllerStatus =
+  IX_PORTAL_VISIBILITY_CONTROLLER.getStatus()
+```
+
+Forward transition:
+
+```text
+nextSnapshot =
+  IX_PORTAL_VIEW_PROJECTION.setPrimaryDestination(
+    requestedDestination
+  )
+
+IX_PORTAL_VISIBILITY_CONTROLLER.apply(nextSnapshot)
+```
+
+Navigation selected state commits only after controller success.
+
+If controller application fails after projection succeeds, compensate projection
+through:
+
+```text
+IX_PORTAL_VIEW_PROJECTION.setPrimaryDestination(
+  priorProjectionSnapshot.primaryDestination
+)
+```
+
+This preserves the live contextual layer because the pure primary transition
+preserves `contextualLayer`.
+
+Controller compensation:
+
+```text
+priorControllerStatus.activated === false:
+  IX_PORTAL_VISIBILITY_CONTROLLER.restore()
+
+priorControllerStatus.activated === true:
+  IX_PORTAL_VISIBILITY_CONTROLLER.apply(
+    priorProjectionSnapshot
+  )
+```
+
+The coordinator restores its own navigation selected state. Compensation itself
+can fail and must be surfaced rather than hidden. The coordinator must never
+silently fall back to Transfer.
+
+## 11. Success Invariants
+
+After every successful projection transition:
+
+- private `currentState` describes the same state as both DOM markers;
+- `getState()` returns an equivalent frozen snapshot;
+- no partial marker state exists;
+- only changed projection-owned attributes were written;
+- contextual state is preserved during primary transitions;
+- primary state is preserved during contextual transitions;
+- supplied arguments were validated by view-state authority.
+
+Applying the already-current destination or contextual state remains
+deterministic and change-aware.
+
+## 12. Focused Runtime Test Plan
+
+The future runtime-hardening slice must prove:
+
+1. current state commits only after DOM success;
+2. first-write failure preserves prior state and markers;
+3. second-write failure reverses the first write;
+4. absent attributes restore as absent;
+5. empty-string values restore as empty strings;
+6. nonempty prior values restore exactly;
+7. `getState()` reports prior state after failure;
+8. retry can succeed after ordinary transaction failure;
+9. primary transition preserves contextual layer;
+10. contextual open preserves primary destination;
+11. contextual close preserves primary destination;
+12. `projectCurrentState()` repairs drift transactionally;
+13. drift-repair failure restores exact prior metadata;
+14. rollback failure exposes `portal-view-projection-rollback-failed`;
+15. successful transitions return fresh frozen snapshots;
+16. idempotent transitions perform no unnecessary writes;
+17. no new public global or API method appears;
+18. no visibility-controller, registry, wallet, Coin Card, receipt, storage, URL, history, or execution authority is added.
+
+## 13. Navigation Prerequisite
+
+Visible primary navigation and first controller activation remain blocked until
+projection runtime atomicity is committed and tested.
+
+The pending navigation design remains:
+
+- `#portalPrimaryNav` is the first direct child of `#modules`;
+- it spans the full grid;
+- it is a labeled native `<nav>`;
+- it contains native Transfer, Recipients, and Activity buttons;
+- exactly one button has `aria-current="page"`;
+- no tablist, tab, or tabpanel roles;
+- no misleading `aria-controls`;
+- focus remains on the selected navigation button in V1;
+- selected state commits only after controller application succeeds.
+
+This slice must not implement those decisions.
