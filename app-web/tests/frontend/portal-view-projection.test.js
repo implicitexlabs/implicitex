@@ -886,13 +886,31 @@ test('script order in portal-index loads state before projection', () => {
   assert.ok(stateIndex < projectionIndex, 'view-state must load before projection');
 });
 
-test('no visible navigation control is introduced', () => {
+test('projection does not own or create primary navigation', () => {
+  const source = read(projectionModulePath);
   const html = read(portalIndexPath);
 
   assert.equal((html.match(/portal-view-projection\.js/g) || []).length, 1);
-  assert.doesNotMatch(html, /data-portal-nav/);
-  assert.doesNotMatch(html, /id="portalNav/);
-  assert.doesNotMatch(html, /class="[^"]*portal-nav/);
+  assert.doesNotMatch(source, /\bIX_PORTAL_NAVIGATION_COORDINATOR\b/);
+  assert.doesNotMatch(source, /\bportalPrimaryNav\b/);
+  assert.doesNotMatch(source, /\bportalPrimaryNavStatus\b/);
+  assert.doesNotMatch(source, /\bportalNavTransfer\b/);
+  assert.doesNotMatch(source, /\bportalNavRecipients\b/);
+  assert.doesNotMatch(source, /\bportalNavActivity\b/);
+  assert.doesNotMatch(source, /\bdata-portal-navigation-destination\b/);
+  assert.doesNotMatch(source, /\baria-current\b/);
+  assert.doesNotMatch(source, /\.addEventListener\s*\(/);
+  assert.doesNotMatch(source, /\bfocus\s*\(/);
+
+  if (html.includes('id="portalPrimaryNav"')) {
+    const navStart = html.indexOf('<nav id="portalPrimaryNav"');
+    const statusStart = html.indexOf('<p id="portalPrimaryNavStatus"');
+    const navTag = html.slice(navStart, html.indexOf('>', navStart) + 1);
+    const statusTag = html.slice(statusStart, html.indexOf('>', statusStart) + 1);
+
+    assert.doesNotMatch(navTag, /data-portal-(primary|contextual|global)-surface=/);
+    assert.doesNotMatch(statusTag, /data-portal-(primary|contextual|global)-surface=/);
+  }
 });
 
 test('projection API is immutable and exports only IX_PORTAL_VIEW_PROJECTION', () => {

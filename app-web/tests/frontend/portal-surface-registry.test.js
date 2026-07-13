@@ -797,10 +797,35 @@ test('module exports only IX_PORTAL_SURFACE_REGISTRY', () => {
   assert.deepEqual(added.filter((key) => typeof key === 'symbol'), []);
 });
 
-test('no visible navigation control is introduced', () => {
+test('primary navigation remains outside surface registration', () => {
+  const source = read(registryModulePath);
   const html = read(portalIndexPath);
+  const api = loadRegistry().api;
+  const snapshot = api.getRegistrationSnapshot();
 
-  assert.doesNotMatch(html, /data-portal-nav/i);
-  assert.doesNotMatch(html, /id="portalNav/i);
-  assert.doesNotMatch(html, /aria-controls="[^"]*portal-view/i);
+  assert.doesNotMatch(source, /\bIX_PORTAL_NAVIGATION_COORDINATOR\b/);
+  assert.doesNotMatch(source, /\bdata-portal-navigation-destination\b/);
+  assert.doesNotMatch(source, /\baria-current\b/);
+  assert.equal(ids(snapshot.primary.TRANSFER).join(','), 'ccIntake,companion,transferMod');
+  assert.equal(ids(snapshot.primary.RECIPIENTS).join(','), 'recipientsMod');
+  assert.equal(ids(snapshot.primary.ACTIVITY).join(','), 'activityMod');
+  assert.equal(ids(snapshot.contextual.VERIFICATION).join(','), 'verificationMod');
+  assert.equal(ids(snapshot.contextual.SYSTEM).join(','), 'portalFooter,telemetry');
+  assert.equal(ids(snapshot.global.NETWORK).join(','), 'networkMod');
+  assert.equal(
+    snapshot.primary.TRANSFER.map((entry) => entry.selector).join(','),
+    '#ccIntake,#companion,#transferMod'
+  );
+
+  if (html.includes('id="portalPrimaryNav"')) {
+    const navStart = html.indexOf('<nav id="portalPrimaryNav"');
+    const statusStart = html.indexOf('<p id="portalPrimaryNavStatus"');
+    const navTag = html.slice(navStart, html.indexOf('>', navStart) + 1);
+    const statusTag = html.slice(statusStart, html.indexOf('>', statusStart) + 1);
+
+    assert.doesNotMatch(navTag, /data-portal-(primary|contextual|global)-surface=/);
+    assert.doesNotMatch(statusTag, /data-portal-(primary|contextual|global)-surface=/);
+    assert.doesNotMatch(navTag, /aria-controls=/);
+    assert.doesNotMatch(statusTag, /aria-controls=/);
+  }
 });
