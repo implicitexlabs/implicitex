@@ -14,6 +14,7 @@
   var helpBtn = document.getElementById('portalInstallHelp');
   var instructions = document.getElementById('portalInstallInstructions');
   var status = document.getElementById('portalInstallStatus');
+  var footerInstallLink = document.getElementById('portalFooterInstallLink');
   var deferredPrompt = null;
   var installedThisSession = false;
   var hasGuide = !!instructions;
@@ -147,6 +148,7 @@
 
     if (isStandalone() || installedThisSession) {
       setHidden(promotion, true);
+      setHidden(footerInstallLink, true);
       if (hasGuide) {
         hideInstructions();
         if (status) {
@@ -158,6 +160,7 @@
     }
 
     setHidden(promotion, false);
+    setHidden(footerInstallLink, false);
 
     if (!hasGuide) {
       return;
@@ -260,6 +263,7 @@
     deferredPrompt = null;
     installedThisSession = true;
     setHidden(promotion, true);
+    setHidden(footerInstallLink, true);
     hideInstructions();
     if (status) {
       status.textContent = '';

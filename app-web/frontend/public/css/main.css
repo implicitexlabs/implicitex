@@ -1311,12 +1311,18 @@ body.portal-active #nav {
   display: flex;
   align-items: baseline;
   gap: var(--sp-2);
-  padding: 0.375rem 1rem 0.75rem;
+  justify-content: flex-start;
+  padding: 0.4rem 1rem 0.45rem;
+  border-top: 0;
   border-bottom: 1px solid var(--border);
   background: var(--surface);
   font-family: var(--font-ui);
   font-size: var(--size-xs);
   line-height: 1.4;
+}
+
+.portal-header-sub.portal-install-strip {
+  text-transform: none;
 }
 
 .portal-install-strip-label {
@@ -1546,6 +1552,10 @@ body.portal-active #nav {
 .portal-footer-install-link:hover,
 .portal-footer-install-link:focus-visible {
   border-bottom-color: var(--white);
+}
+
+.portal-footer-install-link[hidden] {
+  display: none;
 }
 
 .portal-minimized-tray {

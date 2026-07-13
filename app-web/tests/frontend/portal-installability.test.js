@@ -94,6 +94,10 @@ function createHarness(options = {}) {
   const instructions = guide
     ? createElement({ hidden: true })
     : null;
+  const footerInstallLink = createElement({
+    hidden: !!options.standalone || !!options.displayModeStandalone,
+    href: '/install.html',
+  });
   const windowListeners = {};
   const documentListeners = {};
 
@@ -123,6 +127,7 @@ function createHarness(options = {}) {
         if (id === 'portalInstallHelp') return help;
         if (id === 'portalInstallStatus') return status;
         if (id === 'portalInstallInstructions') return instructions;
+        if (id === 'portalFooterInstallLink') return footerInstallLink;
         return null;
       },
       addEventListener(type, handler) {
@@ -140,7 +145,7 @@ function createHarness(options = {}) {
   context.window.__listeners = windowListeners;
   context.__listeners = documentListeners;
 
-  return { context, promotion, action, help, status, instructions, windowListeners, documentListeners };
+  return { context, promotion, action, help, status, instructions, footerInstallLink, windowListeners, documentListeners };
 }
 
 async function runInstallScript(options = {}) {
@@ -210,9 +215,9 @@ test('portal shell keeps the install strip quiet and restores the compact footer
 
   assert.match(html, /<link rel="manifest" href="\/portal\.webmanifest">/);
   assert.match(html, /<link rel="apple-touch-icon" href="\/assets\/icons\/apple-touch-icon-v2\.png">/);
-  assert.match(html, /<p class="portal-install-strip" id="portalInstallPromotion">/);
+  assert.match(html, /<p class="portal-header-sub portal-install-strip" id="portalInstallPromotion">/);
   assert.match(html, /href="\/install\.html">Add ImplicitEx to this device<\/a>/);
-  assert.match(html, /<a class="portal-footer-install-link" href="\/install\.html">Add ImplicitEx to a device<\/a>/);
+  assert.match(html, /<a class="portal-footer-install-link" id="portalFooterInstallLink" href="\/install\.html">Add ImplicitEx to a device<\/a>/);
   assert.match(html, /<details class="portal-footer-more" id="portalFooterMore">/);
   assert.match(html, /<summary>More<\/summary>/);
   assert.match(html, /id="portalInstallAction"/);
@@ -220,6 +225,7 @@ test('portal shell keeps the install strip quiet and restores the compact footer
   assert.equal((html.match(/portalInstallHelp/g) || []).length, 0);
   assert.equal((html.match(/portalInstallInstructions/g) || []).length, 0);
   assert.equal((html.match(/portalInstallStatus/g) || []).length, 0);
+  assert.equal((html.match(/portal-header-sub portal-install-strip/g) || []).length, 1);
   assert.equal((html.match(/portalFooterMore/g) || []).length, 1);
   assert.doesNotMatch(html, /Share, then Add to Home Screen/);
   assert.doesNotMatch(html, /Desktop and Android browsers may show an Install prompt/);
@@ -275,9 +281,11 @@ test('compact portal strip hides in standalone mode and the guide page stays ins
   const stripHarness = await runInstallScript({ displayModeStandalone: false, standalone: false });
   assert.equal(stripHarness.promotion.hidden, false);
   assert.equal(stripHarness.action.textContent, 'Add ImplicitEx to this device');
+  assert.equal(stripHarness.footerInstallLink.hidden, false);
 
   const standaloneStrip = await runInstallScript({ displayModeStandalone: true, standalone: true });
   assert.equal(standaloneStrip.promotion.hidden, true);
+  assert.equal(standaloneStrip.footerInstallLink.hidden, true);
 
   const guideHarness = await runInstallScript({ guide: true, displayModeStandalone: false, standalone: false });
   const { action, help, promotion, status, instructions, windowListeners } = guideHarness;
@@ -377,6 +385,7 @@ test('portal install guide hides after appinstalled and stays out of the service
   assert.equal(harness.promotion.hidden, true);
   assert.equal(harness.status.hidden, true);
   assert.equal(harness.instructions.hidden, true);
+  assert.equal(harness.footerInstallLink.hidden, true);
 
   const installScript = read(portalInstallPath);
   assert.doesNotMatch(installScript, /serviceWorker|navigator\.serviceWorker|register\s*\(/);
