@@ -123,11 +123,6 @@
 
     /* CONNECT WALLET — full-width form element, flush above recipient input */
     .portal-connect-inline {
-      font-family: var(--font-mono);
-      font-size: 10px;
-      font-weight: 600;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
       color: var(--dim);
       background: transparent;
       border: 1px solid var(--border-2);
@@ -155,10 +150,6 @@
 
     /* Assistant guidance note */
     .agent-guidance-note {
-      font-family: var(--font-mono);
-      font-size: 10px;
-      font-weight: 500;
-      letter-spacing: 0.04em;
       color: var(--dim);
       border-left: 2px solid var(--border-2);
       padding: 0.5rem 0.75rem;
@@ -182,14 +173,8 @@
       background: var(--surface);
     }
     .portal-footer-statement {
-      font-family: var(--font-mono);
-      font-size: var(--size-xs);
-      font-weight: 400;
-      letter-spacing: 0.03em;
       color: var(--dim);
       text-align: left;
-      line-height: 1.7;
-      max-width: 48rem;
     }
     .portal-footer-actions {
       display: flex;
@@ -207,11 +192,6 @@
       justify-content: center;
       min-height: 24px;
       padding: 0 10px;
-      font-family: var(--font-ui);
-      font-size: var(--size-xs);
-      font-weight: var(--weight-semibold);
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
       color: var(--dim);
       border: 1px solid var(--border-2);
       cursor: pointer;
@@ -231,9 +211,6 @@
       background: var(--surface-2);
     }
     .portal-footer-install-note {
-      font-family: var(--font-ui);
-      font-size: var(--size-xs);
-      line-height: 1.6;
       color: var(--dim);
       margin-bottom: 0.9rem;
     }
@@ -249,20 +226,11 @@
       min-width: 9rem;
     }
     .portal-footer-label {
-      font-family: var(--font-mono);
-      font-size: var(--size-xs);
-      font-weight: 600;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
       color: var(--dim);
       opacity: 0.55;
       margin-bottom: 0.2rem;
     }
     .portal-footer-group a {
-      font-family: var(--font-mono);
-      font-size: 10px;
-      font-weight: 500;
-      letter-spacing: 0.05em;
       color: var(--dim);
       text-decoration: none;
       transition: color 0.12s;
@@ -483,7 +451,7 @@
         </div>
         <!-- Inline wallet connect — portal.implicitex.com self-contained experience -->
         <div class="portal-wallet-inline">
-          <button class="portal-connect-inline" id="connectBtn" type="button" onclick="IX.connect()">CONNECT WALLET</button>
+          <button class="portal-connect-inline" id="connectBtn" type="button" onclick="IX.connect()">Connect wallet</button>
           <div class="wallet-menu" id="walletMenu" hidden>
             <button class="wallet-menu-trigger" id="walletMenuTrigger" type="button" aria-expanded="false" aria-controls="walletMenuPanel" aria-label="Wallet account menu">
               <span class="wallet-dot" aria-hidden="true"></span>
