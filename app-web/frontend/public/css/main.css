@@ -500,10 +500,10 @@ code, kbd, pre,
 .send-usdc-link:link,
 .send-usdc-link:visited {
   font-family: var(--font-ui);
-  font-size: var(--size-sm);
+  font-size: var(--text-ui);
   font-weight: var(--weight-semibold);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  letter-spacing: var(--tracking-button);
+  text-transform: none;
   color: var(--bg);
   background: var(--white);
   border: 1px solid #e0e0e0;
@@ -527,10 +527,10 @@ code, kbd, pre,
 
 .connect-btn {
   font-family: var(--font-ui);
-  font-size: var(--size-sm);
+  font-size: var(--text-ui);
   font-weight: var(--weight-semibold);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  letter-spacing: var(--tracking-button);
+  text-transform: none;
   color: var(--bg);
   background: var(--white);
   border: 1px solid #e0e0e0;
@@ -1533,10 +1533,10 @@ body.portal-active #nav {
 
 [data-portal-shell="direct"] .agent-guidance-note {
   font-family: var(--font-sans);
-  font-size: var(--text-caption);
-  font-weight: 500;
-  letter-spacing: 0.01em;
-  line-height: 1.45;
+  font-size: var(--text-ui);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-button);
+  line-height: 1.5;
 }
 
 [data-portal-shell="direct"] .portal-footer-statement {
@@ -1613,10 +1613,10 @@ body.portal-active #nav {
   align-items: center;
   gap: 0.5rem;
   font-family: var(--font-ui);
-  font-size: var(--size-xs);
+  font-size: var(--text-ui);
   font-weight: var(--weight-semibold);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  letter-spacing: var(--tracking-button);
+  text-transform: none;
   color: var(--white);
   text-decoration: none;
   border-bottom: 1px solid transparent;
