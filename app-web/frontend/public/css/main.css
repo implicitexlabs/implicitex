@@ -2002,7 +2002,7 @@ body.portal-active #nav {
 }
 
 /* Corner instrument ticks — perimeter markers around the portal's protected zone.
-   Positioned outside the frame to act as keep-clear brackets, not border ornament.
+   Kept inside the frame so they preserve the bracket look without widening the layout.
    Diagonal pair (top-left / bottom-right) in both collapsed and expanded states.
    var(--dim) adapts to page theme; no separate light/dark rule needed. */
 .transfer-portal::before,
@@ -2019,14 +2019,14 @@ body.portal-active #nav {
   border-width: 0;
 }
 .transfer-portal::before {
-  top: -14px;
-  left: -14px;
+  top: 0;
+  left: 0;
   border-top-width: 2px;
   border-left-width: 2px;
 }
 .transfer-portal::after {
-  bottom: -14px;
-  right: -14px;
+  bottom: 0;
+  right: 0;
   border-bottom-width: 2px;
   border-right-width: 2px;
 }
@@ -5276,7 +5276,7 @@ h1 + .gs-section-head {
     margin-inline: 1.25rem;
   }
 
-  /* Ticks scale back on mobile — still outside the frame, but tighter */
+  /* Ticks scale back on mobile while staying inside the frame */
   .transfer-portal::before,
   .transfer-portal::after,
   .portal-zone::before,
@@ -5286,12 +5286,12 @@ h1 + .gs-section-head {
     opacity: 0.65;
   }
   .transfer-portal::before {
-    top: -10px;
-    left: -10px;
+    top: 0;
+    left: 0;
   }
   .transfer-portal::after {
-    bottom: -10px;
-    right: -10px;
+    bottom: 0;
+    right: 0;
   }
   .portal-zone::before {
     top: -10px;
@@ -7630,6 +7630,16 @@ input[type="number"] {
     flex-wrap: wrap;
     gap: 0.35rem 0.5rem;
     padding-inline: 1rem;
+  }
+
+  .portal-display-panel {
+    position: fixed;
+    top: calc(var(--nav-h) + 0.75rem + var(--portal-safe-top));
+    left: calc(0.75rem + var(--portal-safe-left));
+    right: auto;
+    width: min(18rem, calc(100vw - 1.5rem - var(--portal-safe-left) - var(--portal-safe-right)));
+    min-width: 0;
+    max-width: min(18rem, calc(100vw - 1.5rem - var(--portal-safe-left) - var(--portal-safe-right)));
   }
 
   .portal-footer-actions {

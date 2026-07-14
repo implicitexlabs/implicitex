@@ -305,6 +305,11 @@ test('fullscreen unsupported browsers present the control as unavailable', async
   assert.equal(fullscreenBtn.attributes['title'], 'Fullscreen unavailable on this device');
   assert.equal(fullscreenBtn.attributes['data-fullscreen-active'], 'false');
   assert.match(css, /\.transfer-portal:fullscreen/);
+  assert.match(css, /\.transfer-portal::before\s*\{[^}]*top:\s*0;[^}]*left:\s*0;/s);
+  assert.match(css, /\.transfer-portal::after\s*\{[^}]*bottom:\s*0;[^}]*right:\s*0;/s);
+  assert.doesNotMatch(css, /\.transfer-portal::before\s*\{[^}]*top:\s*-\d+px/s);
+  assert.doesNotMatch(css, /\.transfer-portal::after\s*\{[^}]*bottom:\s*-\d+px/s);
+  assert.match(css, /@media \(max-width: 760px\)[\s\S]*\.portal-display-panel\s*\{[^}]*position:\s*fixed;[^}]*left:\s*calc\(0\.75rem \+ var\(--portal-safe-left\)\);/s);
 });
 
 test('wake lock toggle stays session-only and reacquires after visibility returns', async () => {
