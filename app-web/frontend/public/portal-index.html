@@ -114,7 +114,7 @@
       padding-bottom: calc(1rem + var(--portal-safe-bottom));
     }
 
-    /* Inline wallet row inside 01 Transfer module */
+    /* Inline wallet row inside Transfer module */
     .portal-wallet-inline {
       display: flex;
       align-items: center;
@@ -408,25 +408,53 @@
             <rect x="0" y="9" width="12" height="2" fill="currentColor"/>
           </svg>
         </button>
+        <button class="portal-ctrl-btn portal-fullscreen-ctrl" id="portalFullscreenAction" type="button" aria-pressed="false" aria-label="Enter fullscreen" title="Enter fullscreen">
+          <svg class="portal-ctrl-icon portal-fullscreen-icon portal-fullscreen-icon--enter" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false">
+            <path d="M2.5 5V2.5H5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M9 2.5h2.5V5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M2.5 9V11.5H5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M9 11.5h2.5V9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <svg class="portal-ctrl-icon portal-fullscreen-icon portal-fullscreen-icon--exit" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" hidden>
+            <path d="M5 2.5V5H2.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M9 5V2.5h2.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M5 11.5V9H2.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M9 9v2.5h2.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <div class="portal-display-menu" id="portalDisplayMenu">
+          <button class="portal-ctrl-btn portal-display-ctrl" id="portalDisplayMenuToggle" type="button" aria-expanded="false" aria-controls="portalDisplayPanel" aria-label="Display settings" title="Display settings">
+            <svg class="portal-ctrl-icon" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false">
+              <rect x="1.5" y="2" width="11" height="7.5" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.4"/>
+              <path d="M5.25 11.25h3.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+              <path d="M7 9.5v1.75" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+            </svg>
+          </button>
+          <div class="portal-display-panel" id="portalDisplayPanel" hidden>
+            <label class="portal-display-switch" for="portalWakeLockToggle">
+              <span class="portal-display-switch-copy">Keep screen awake</span>
+              <span class="portal-display-switch-state" id="portalWakeLockState">Off</span>
+              <input id="portalWakeLockToggle" type="checkbox">
+            </label>
+            <p class="portal-display-note">Prevent this screen from sleeping during the current portal session.</p>
+            <p class="portal-display-status" id="portalWakeLockStatus" role="status" aria-live="polite"></p>
+          </div>
+        </div>
+        <button class="portal-ctrl-btn portal-install-ctrl" id="portalInstallAction" type="button" aria-label="Install ImplicitEx" title="Install ImplicitEx">
+          <svg class="portal-ctrl-icon" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false">
+            <path d="M7 2.25v6.25" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+            <path d="M4.1 6.7 7 9.6l2.9-2.9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M2.25 11.5h9.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+          </svg>
+        </button>
         <button class="portal-ctrl-btn" id="modulesMinimize" type="button" aria-expanded="true" aria-label="Minimize transfer portal">
           <svg class="portal-ctrl-icon portal-ctrl-chevron" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" focusable="false">
             <polyline points="2,4.5 6,8.5 10,4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </button>
-        <button class="portal-ctrl-btn" id="modulesClose" type="button" aria-label="Close transfer portal">
-          <svg class="portal-ctrl-icon" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" focusable="false">
-            <line x1="2.5" y1="2.5" x2="9.5" y2="9.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            <line x1="9.5" y1="2.5" x2="2.5" y2="9.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-          </svg>
-        </button>
       </div>
       </div><!-- /.portal-header-right -->
     </div>
-    <p class="portal-header-sub portal-install-strip" id="portalInstallPromotion">
-      <span class="portal-install-strip-label">Quick access</span>
-      <a class="portal-install-strip-link" id="portalInstallAction" href="/install.html">Add ImplicitEx to this device</a>
-    </p>
-
     <!-- Coin Card intake banner — shown when opened via Coin Card handoff -->
     <div class="cc-intake" id="ccIntake" hidden aria-live="polite" aria-label="Coin Card handoff status" data-portal-primary-surface="TRANSFER">
       <div class="cc-intake-inner">
@@ -436,7 +464,7 @@
       </div>
     </div>
 
-    <!-- 01 Transfer -->
+    <!-- Transfer -->
     <div class="mod" id="transferMod" data-portal-primary-surface="TRANSFER"
       data-agent-step="1"
       data-agent-purpose="Collect transfer details: wallet connection, recipient address, USDC amount, and optional purpose tag."
@@ -631,7 +659,7 @@
     </div>
 
     <div class="mod" id="recipientsMod" data-portal-primary-surface="RECIPIENTS" aria-labelledby="recipientsHeading">
-      <span class="mod-tag">04 — Recipients</span>
+      <span class="mod-tag">Recipients</span>
       <p class="mod-title" id="recipientsHeading">Recipients</p>
       <div class="data-table" aria-label="Recipients destination">
         <div class="data-row">
@@ -646,7 +674,7 @@
     </div>
 
     <div class="mod" id="activityMod" data-portal-primary-surface="ACTIVITY" aria-labelledby="activityHeading">
-      <span class="mod-tag">05 — Activity</span>
+      <span class="mod-tag">Activity</span>
       <p class="mod-title" id="activityHeading">Activity</p>
       <div class="receipt-history" aria-label="Recent transaction attempts">
         <p class="receipt-history-label">Receipts</p>
@@ -656,7 +684,7 @@
       </div>
     </div>
 
-    <!-- Right column: 02 Network + 03 Verification -->
+    <!-- Right column: Network + Verification -->
     <div class="mod-col">
 
     <div class="mod" id="networkMod" data-portal-global-surface="NETWORK"
@@ -975,6 +1003,7 @@
   <script src="js/portal-visibility-controller.js"></script>
   <script src="js/portal-navigation-coordinator.js"></script>
   <script src="js/wallet.js"></script>
+  <script src="js/portal-display.js"></script>
   <script src="js/coincard.js"></script>
   <script src="js/app.js"></script>
   <script src="js/mobile-menu.js"></script>

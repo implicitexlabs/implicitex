@@ -1793,8 +1793,98 @@ body.portal-active #nav {
   background: var(--surface-2);
 }
 
+.portal-install-ctrl {
+  padding: 0 8px;
+}
+
+.portal-fullscreen-ctrl {
+  padding: 0 8px;
+}
+
+.portal-display-menu {
+  position: relative;
+  display: inline-flex;
+}
+
+.portal-display-ctrl {
+  padding: 0 8px;
+}
+
+.portal-display-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 16rem;
+  max-width: min(18rem, calc(100vw - 1rem));
+  padding: 0.85rem 0.9rem 0.95rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  z-index: 6;
+}
+
+.portal-display-switch {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-family: var(--font-sans);
+  font-size: var(--text-ui);
+  line-height: 1.45;
+  color: var(--white);
+}
+
+.portal-display-switch input {
+  margin-left: auto;
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--white);
+}
+
+.portal-display-switch-state {
+  margin-left: auto;
+  color: var(--dim);
+  font-family: var(--font-sans);
+  font-size: var(--text-caption);
+  line-height: 1.3;
+  flex-shrink: 0;
+}
+
+.portal-display-note {
+  margin-top: 0.5rem;
+  color: var(--dim);
+  font-family: var(--font-sans);
+  font-size: var(--text-ui);
+  line-height: 1.45;
+}
+
+.portal-display-status {
+  margin-top: 0.4rem;
+  color: var(--dim);
+  font-family: var(--font-sans);
+  font-size: var(--text-caption);
+  line-height: 1.35;
+}
+
+.portal-display-panel[hidden] {
+  display: none;
+}
+
+.portal-fullscreen-ctrl[disabled],
+.portal-display-ctrl[disabled],
+.portal-display-switch input[disabled] {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 .transfer-portal.is-minimized {
   grid-template-columns: 1fr;
+}
+
+.transfer-portal:fullscreen,
+.transfer-portal:-webkit-full-screen {
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  overflow: auto;
 }
 
 /* Corner instrument ticks — perimeter markers around the portal's protected zone.
