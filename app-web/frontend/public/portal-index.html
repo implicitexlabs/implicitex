@@ -58,11 +58,16 @@
   <link rel="manifest" href="/portal.webmanifest">
   <style>
     /* ---- Portal shell overrides (portal-index.html only) ---- */
+    html {
+      overflow-x: clip;
+    }
     body[data-portal-shell="direct"] {
       --portal-safe-top: env(safe-area-inset-top, 0px);
       --portal-safe-right: env(safe-area-inset-right, 0px);
       --portal-safe-bottom: env(safe-area-inset-bottom, 0px);
       --portal-safe-left: env(safe-area-inset-left, 0px);
+      overflow-x: clip;
+      overscroll-behavior-x: none;
     }
 
     /* Brand integrated into portal header — left side of the header bar */
