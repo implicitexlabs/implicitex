@@ -99,10 +99,11 @@ function createHarness(options = {}) {
     attributes: {
       'aria-label': 'Enter fullscreen',
       'aria-pressed': 'false',
+      'data-fullscreen-active': 'false',
     },
   });
-  const fullscreenEnterIcon = createElement();
-  const fullscreenExitIcon = createElement({ hidden: true });
+  const fullscreenEnterGlyph = createElement();
+  const fullscreenExitGlyph = createElement();
   const displayMenu = createElement();
   const displayMenuToggle = createElement({
     title: 'Display settings',
@@ -165,8 +166,8 @@ function createHarness(options = {}) {
       return null;
     },
     querySelector(selector) {
-      if (selector === '.portal-fullscreen-icon--enter') return fullscreenEnterIcon;
-      if (selector === '.portal-fullscreen-icon--exit') return fullscreenExitIcon;
+      if (selector === '.portal-fullscreen-glyph--enter') return fullscreenEnterGlyph;
+      if (selector === '.portal-fullscreen-glyph--exit') return fullscreenExitGlyph;
       return null;
     },
     addEventListener(type, handler) {
@@ -228,8 +229,8 @@ function createHarness(options = {}) {
     state,
     elements: {
       fullscreenBtn,
-      fullscreenEnterIcon,
-      fullscreenExitIcon,
+      fullscreenEnterGlyph,
+      fullscreenExitGlyph,
       displayMenu,
       displayMenuToggle,
       displayPanel,
@@ -258,14 +259,13 @@ async function flushPromises(times = 4) {
 
 test('fullscreen toggles state, labels, and Escape-driven exit', async () => {
   const harness = await loadHarness({ fullscreenSupported: true });
-  const { fullscreenBtn, fullscreenEnterIcon, fullscreenExitIcon, displayMenuToggle, displayPanel } = harness.elements;
+  const { fullscreenBtn, fullscreenEnterGlyph, fullscreenExitGlyph, displayMenuToggle, displayPanel } = harness.elements;
   const { state } = harness;
 
   assert.equal(fullscreenBtn.disabled, false);
   assert.equal(fullscreenBtn.attributes['aria-label'], 'Enter fullscreen');
   assert.equal(fullscreenBtn.attributes['aria-pressed'], 'false');
-  assert.equal(fullscreenEnterIcon.hidden, false);
-  assert.equal(fullscreenExitIcon.hidden, true);
+  assert.equal(fullscreenBtn.attributes['data-fullscreen-active'], 'false');
 
   displayMenuToggle.click();
   assert.equal(displayPanel.hidden, false);
@@ -275,16 +275,15 @@ test('fullscreen toggles state, labels, and Escape-driven exit', async () => {
   assert.equal(state.fullscreenRequests, 1);
   assert.equal(state.fullscreenTarget, harness.elements.modules);
   assert.equal(harness.context.document.fullscreenElement, harness.elements.modules);
-  assert.equal(fullscreenBtn.attributes['aria-label'], 'Exit fullscreen');
+  assert.equal(fullscreenBtn.attributes['aria-label'], 'Return to browser view');
   assert.equal(fullscreenBtn.attributes['aria-pressed'], 'true');
-  assert.equal(fullscreenEnterIcon.hidden, true);
-  assert.equal(fullscreenExitIcon.hidden, false);
+  assert.equal(fullscreenBtn.attributes['data-fullscreen-active'], 'true');
 
   harness.emit('document', 'keydown', { key: 'Escape' });
   assert.equal(displayPanel.hidden, true);
   assert.equal(displayMenuToggle.attributes['aria-expanded'], 'false');
   assert.equal(harness.context.document.fullscreenElement, harness.elements.modules);
-  assert.equal(fullscreenBtn.attributes['aria-label'], 'Exit fullscreen');
+  assert.equal(fullscreenBtn.attributes['aria-label'], 'Return to browser view');
   assert.equal(fullscreenBtn.attributes['aria-pressed'], 'true');
 
   fullscreenBtn.click();
@@ -292,21 +291,19 @@ test('fullscreen toggles state, labels, and Escape-driven exit', async () => {
   assert.equal(harness.context.document.fullscreenElement, null);
   assert.equal(fullscreenBtn.attributes['aria-label'], 'Enter fullscreen');
   assert.equal(fullscreenBtn.attributes['aria-pressed'], 'false');
-  assert.equal(fullscreenEnterIcon.hidden, false);
-  assert.equal(fullscreenExitIcon.hidden, true);
+  assert.equal(fullscreenBtn.attributes['data-fullscreen-active'], 'false');
 });
 
 test('fullscreen unsupported browsers present the control as unavailable', async () => {
   const harness = await loadHarness({ fullscreenSupported: false });
-  const { fullscreenBtn, fullscreenEnterIcon, fullscreenExitIcon } = harness.elements;
+  const { fullscreenBtn, fullscreenEnterGlyph, fullscreenExitGlyph } = harness.elements;
   const css = read(path.join(repoRoot, 'app-web/frontend/public/css/main.css'));
 
   assert.equal(fullscreenBtn.disabled, true);
   assert.equal(fullscreenBtn.attributes['aria-disabled'], 'true');
   assert.equal(fullscreenBtn.attributes['aria-label'], 'Fullscreen unavailable on this device');
   assert.equal(fullscreenBtn.attributes['title'], 'Fullscreen unavailable on this device');
-  assert.equal(fullscreenEnterIcon.hidden, false);
-  assert.equal(fullscreenExitIcon.hidden, true);
+  assert.equal(fullscreenBtn.attributes['data-fullscreen-active'], 'false');
   assert.match(css, /\.transfer-portal:fullscreen/);
 });
 

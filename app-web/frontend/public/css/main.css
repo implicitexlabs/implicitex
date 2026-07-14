@@ -1801,6 +1801,26 @@ body.portal-active #nav {
   padding: 0 8px;
 }
 
+.portal-fullscreen-glyph--exit {
+  display: none;
+}
+
+.portal-fullscreen-ctrl[data-fullscreen-active="true"] .portal-fullscreen-glyph--enter {
+  display: none;
+}
+
+.portal-fullscreen-ctrl[data-fullscreen-active="true"] .portal-fullscreen-glyph--exit {
+  display: inline;
+}
+
+.portal-fullscreen-ctrl[data-fullscreen-active="false"] .portal-fullscreen-glyph--enter {
+  display: inline;
+}
+
+.portal-fullscreen-ctrl[data-fullscreen-active="false"] .portal-fullscreen-glyph--exit {
+  display: none;
+}
+
 .portal-display-menu {
   position: relative;
   display: inline-flex;

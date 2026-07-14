@@ -2,8 +2,8 @@
   'use strict';
 
   var fullscreenBtn = document.getElementById('portalFullscreenAction');
-  var fullscreenEnterIcon = document.querySelector('.portal-fullscreen-icon--enter');
-  var fullscreenExitIcon = document.querySelector('.portal-fullscreen-icon--exit');
+  var fullscreenEnterGlyph = document.querySelector('.portal-fullscreen-glyph--enter');
+  var fullscreenExitGlyph = document.querySelector('.portal-fullscreen-glyph--exit');
   var displayMenu = document.getElementById('portalDisplayMenu');
   var displayMenuToggle = document.getElementById('portalDisplayMenuToggle');
   var displayPanel = document.getElementById('portalDisplayPanel');
@@ -47,7 +47,7 @@
     var active = isFullscreenActive();
     var supported = hasFullscreenSupport();
     var available = supported && !fullscreenUnavailable;
-    var label = active ? 'Exit fullscreen' : (available ? 'Enter fullscreen' : 'Fullscreen unavailable on this device');
+    var label = active ? 'Return to browser view' : (available ? 'Enter fullscreen' : 'Fullscreen unavailable on this device');
 
     if (fullscreenBtn) {
       fullscreenBtn.disabled = !available && !active;
@@ -55,13 +55,14 @@
       fullscreenBtn.setAttribute('aria-label', label);
       fullscreenBtn.setAttribute('title', label);
       fullscreenBtn.setAttribute('aria-disabled', (!available && !active) ? 'true' : 'false');
+      fullscreenBtn.setAttribute('data-fullscreen-active', active ? 'true' : 'false');
     }
 
-    if (fullscreenEnterIcon) {
-      fullscreenEnterIcon.hidden = active;
+    if (fullscreenEnterGlyph) {
+      fullscreenEnterGlyph.hidden = active;
     }
-    if (fullscreenExitIcon) {
-      fullscreenExitIcon.hidden = !active;
+    if (fullscreenExitGlyph) {
+      fullscreenExitGlyph.hidden = !active;
     }
   }
 

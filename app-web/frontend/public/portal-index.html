@@ -408,18 +408,20 @@
             <rect x="0" y="9" width="12" height="2" fill="currentColor"/>
           </svg>
         </button>
-        <button class="portal-ctrl-btn portal-fullscreen-ctrl" id="portalFullscreenAction" type="button" aria-pressed="false" aria-label="Enter fullscreen" title="Enter fullscreen">
-          <svg class="portal-ctrl-icon portal-fullscreen-icon portal-fullscreen-icon--enter" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false">
-            <path d="M2.5 5V2.5H5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M9 2.5h2.5V5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M2.5 9V11.5H5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M9 11.5h2.5V9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          <svg class="portal-ctrl-icon portal-fullscreen-icon portal-fullscreen-icon--exit" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false" hidden>
-            <path d="M5 2.5V5H2.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M9 5V2.5h2.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M5 11.5V9H2.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M9 9v2.5h2.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        <button class="portal-ctrl-btn portal-fullscreen-ctrl" id="portalFullscreenAction" type="button" aria-pressed="false" aria-label="Enter fullscreen" title="Enter fullscreen" data-fullscreen-active="false">
+          <svg class="portal-ctrl-icon portal-fullscreen-icon" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false">
+            <g class="portal-fullscreen-glyph portal-fullscreen-glyph--enter">
+              <path d="M2.5 5V2.5H5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M9 2.5h2.5V5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M2.5 9V11.5H5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M9 11.5h2.5V9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            </g>
+            <g class="portal-fullscreen-glyph portal-fullscreen-glyph--exit">
+              <path d="M5 2.5V5H2.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M9 5V2.5h2.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M5 11.5V9H2.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M9 9v2.5h2.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            </g>
           </svg>
         </button>
         <div class="portal-display-menu" id="portalDisplayMenu">
