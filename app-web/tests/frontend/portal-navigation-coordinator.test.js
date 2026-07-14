@@ -815,4 +815,16 @@ test('static source does not expose forbidden authority access and scripts are o
   assert.match(html, /id="portalPrimaryNavStatus"/);
   assert.match(css, /\.portal-primary-nav-button/);
   assert.match(css, /grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/);
+  assert.match(
+    css,
+    /@media \(max-width: 1024px\)[\s\S]*?\.portal-primary-nav\s*\{[^}]*position:\s*sticky;[^}]*top:\s*0;[^}]*z-index:\s*140;[^}]*background:\s*var\(--surface\);[^}]*border-bottom:\s*1px solid var\(--border-2\);[^}]*\}/s
+  );
+  assert.match(
+    css,
+    /@media \(max-width: 1024px\) and \(display-mode:\s*standalone\)[\s\S]*?\.portal-primary-nav\s*\{[^}]*padding-top:\s*calc\(env\(safe-area-inset-top, 0px\) \+ 0\.35rem\);[^}]*\}/s
+  );
+  assert.doesNotMatch(css, /\.portal-primary-nav\s*\{[^}]*position:\s*fixed;/s);
+  assert.doesNotMatch(css, /\.portal-header\s*\{[^}]*position:\s*sticky;/s);
+  assert.doesNotMatch(css, /\.portal-header-controls\s*\{[^}]*position:\s*sticky;/s);
+  assert.doesNotMatch(css, /\.portal-header-brand\s*\{[^}]*position:\s*sticky;/s);
 });

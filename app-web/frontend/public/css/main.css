@@ -1306,6 +1306,22 @@ body.portal-active #nav {
   display: none;
 }
 
+@media (max-width: 1024px) {
+  .portal-primary-nav {
+    position: sticky;
+    top: 0;
+    z-index: 140;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border-2);
+  }
+}
+
+@media (max-width: 1024px) and (display-mode: standalone) {
+  .portal-primary-nav {
+    padding-top: calc(env(safe-area-inset-top, 0px) + 0.35rem);
+  }
+}
+
 .portal-install-strip {
   grid-column: 1 / -1;
   display: flex;
