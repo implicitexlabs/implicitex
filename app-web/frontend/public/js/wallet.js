@@ -2170,7 +2170,7 @@
 
     els.connectBtn.hidden = false;
     els.connectBtn.disabled = false;
-    els.connectBtn.textContent = 'Connect Wallet';
+    els.connectBtn.textContent = 'Connect wallet';
     els.connectBtn.classList.remove('connected');
   }
 
@@ -2215,7 +2215,7 @@
     if (els.connectBtn) {
       els.connectBtn.hidden = false;
       els.connectBtn.disabled = false;
-      els.connectBtn.textContent = 'Connect Wallet';
+      els.connectBtn.textContent = 'Connect wallet';
       els.connectBtn.classList.remove('connected');
     }
   }
@@ -2430,12 +2430,12 @@
    * Keeps setTxState() and presentation functions consistent.
    */
   function currentButtonLabel() {
-    if (!state.connected) return 'Connect Wallet to Continue';
+    if (!state.connected) return 'Connect wallet to continue';
     const netState = getNetworkState();
     if (netState === 'WRONG_NETWORK' || netState === 'CONTRACT_UNAVAILABLE') return 'Switch to Polygon';
     if (netState === 'TRANSFERS_DISABLED') return 'Transfers disabled';
     if (state.txPhase === 'SIMULATING') return 'Checking…';
-    return 'Review Transfer';
+    return 'Review transfer';
   }
 
   // ----------------------------------------------------------------
@@ -3448,7 +3448,7 @@
           const btn = document.createElement('button');
           btn.type = 'button';
           btn.textContent = 'Use lowercase address';
-          btn.style.cssText = 'display:block;margin-top:0.35rem;background:none;border:none;padding:0;color:var(--accent);font:inherit;font-size:var(--size-sm);text-decoration:underline;cursor:pointer;letter-spacing:0.04em;';
+          btn.style.cssText = 'display:block;margin-top:0.35rem;background:none;border:none;padding:0;color:var(--accent);font:inherit;font-size:14px;text-decoration:underline;cursor:pointer;letter-spacing:normal;';
           btn.addEventListener('click', function () {
             if (els.txRecipient) {
               els.txRecipient.value = lowercase;
@@ -3853,7 +3853,7 @@
     state.reviewDraft = refreshedSummary;
     state.reviewDraft.metadata = metadata;
     renderTransferSummary(refreshedSummary, {
-      label: 'Review Transfer',
+      label: 'Review transfer',
       mode: 'On-chain refreshed',
       note: 'Contract preview refreshed. Recipient, network, pause state, contract, and USDC token checks passed before wallet prompt.',
     });

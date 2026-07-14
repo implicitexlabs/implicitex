@@ -1558,8 +1558,9 @@ body.portal-active #nav {
   font-family: var(--font-sans);
   font-size: var(--text-ui);
   font-weight: var(--weight-semibold);
-  letter-spacing: var(--tracking-button);
+  letter-spacing: normal;
   text-transform: none;
+  line-height: 1;
 }
 
 [data-portal-shell="direct"] .install-page-nav {
@@ -1572,7 +1573,7 @@ body.portal-active #nav {
   font-family: var(--font-sans);
   font-size: var(--text-ui);
   font-weight: var(--weight-medium);
-  letter-spacing: var(--tracking-button);
+  letter-spacing: normal;
   line-height: 1.5;
 }
 
@@ -2175,40 +2176,60 @@ body.portal-active #nav {
 /* Transfer form */
 .tx-form { display: flex; flex-direction: column; gap: 0; }
 
+.tx-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.tx-field-label {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: var(--weight-semibold);
+  line-height: 1.35;
+  color: var(--white);
+  letter-spacing: normal;
+}
+
 .tx-field {
   background: var(--surface-2);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-2);
   border-bottom: none;
   color: var(--white);
   font-family: var(--font-mono);  /* user-typed addresses and amounts — mono */
-  font-size: var(--size-sm);
+  font-size: 15px;
   line-height: 1.2;
-  min-height: 42px;
+  min-height: 44px;
   padding: 11px 12px;
   width: 100%;
   box-sizing: border-box;
+  border-radius: 2px;
   outline: none;
   transition: border-color 0.12s;
 }
 
-.tx-field:last-of-type { border-bottom: 1px solid var(--border); }
+.tx-field:last-of-type { border-bottom: 1px solid var(--border-2); }
 .tx-field::placeholder { color: var(--muted); }
-.tx-field:focus { border-color: var(--border-2); }
+.tx-field:focus {
+  border-color: var(--white);
+  box-shadow: 0 0 0 1px currentColor;
+}
 
 .tx-field--primary {
-  background: var(--white);
-  border-color: var(--white);
-  color: var(--bg);
-  font-weight: var(--weight-semibold);
+  background: var(--surface-3);
+  border-color: var(--border-2);
+  color: var(--white);
+  font-weight: var(--weight-medium);
 }
 
 .tx-field--primary::placeholder {
-  color: rgba(8, 8, 8, 0.52);
+  color: var(--muted);
 }
 
 .tx-field--primary:focus {
   border-color: var(--white);
-  box-shadow: 0 0 0 1px var(--white);
+  box-shadow: 0 0 0 1px currentColor;
 }
 
 .tx-field--primary:disabled {
@@ -2217,35 +2238,12 @@ body.portal-active #nav {
   color: var(--dim);
 }
 
-/* Light-theme override: --white and --bg invert, which turns --primary fields
-   black. Pin to literal white surface so transfer entry fields are always
-   white-background / dark-text regardless of theme. */
-[data-theme="light"] .tx-field--primary {
-  background: #ffffff;
-  border-color: #c8c8c6;
-  border-bottom: 1px solid #c8c8c6;
-  color: #111111;
-}
-
-/* When two primary fields stack, the first field's bottom + second field's top
-   would produce a 2px double border. Suppress the top of the follower so the
-   separator stays 1px, matching the dark-theme stacking convention. */
-[data-theme="light"] .tx-field--primary + .tx-field--primary {
-  border-top: none;
-}
-
-[data-theme="light"] .tx-field--primary::placeholder {
-  color: rgba(8, 8, 8, 0.45);
-}
-
-[data-theme="light"] .tx-field--primary:focus {
-  border-color: #888888;
-  box-shadow: 0 0 0 1px #888888;
-}
-
 .tx-field--select {
   appearance: none;
   color: var(--dim);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: var(--weight-medium);
   /* Force OS popup to render in dark mode — prevents browser-default blue highlight,
      which carries no meaning in ImplicitEx's signal vocabulary (gray/amber/red). */
   color-scheme: dark;
@@ -2264,15 +2262,17 @@ body.portal-active #nav {
 
 .tx-meta-grid {
   display: grid;
-  grid-template-columns: minmax(0, 0.82fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+  margin-bottom: 16px;
 }
 
 .tx-meta-grid .tx-field {
   border-top: none;
 }
 
-.tx-meta-grid .tx-field + .tx-field {
-  border-left: none;
+.tx-meta-grid .tx-field-group {
+  margin-bottom: 0;
 }
 
 .tx-field--error {
@@ -2283,13 +2283,13 @@ body.portal-active #nav {
 .tx-field--error:focus { border-color: var(--warn) !important; }
 
 .tx-recipient-error {
-  font-family: var(--font-ui);
-  font-size: var(--size-xs);
+  font-family: var(--font-sans);
+  font-size: 13px;
   line-height: 1.45;
-  letter-spacing: 0.035em;
+  letter-spacing: normal;
   color: var(--warn);
-  margin-top: 0.65rem;
-  margin-bottom: 1rem;
+  margin-top: 0;
+  margin-bottom: 0;
   min-height: 1.4em;
 }
 
@@ -2303,31 +2303,51 @@ body.portal-active #nav {
 }
 
 .fee-label {
-  font-family: var(--font-ui);   /* label — not a value */
-  font-size: var(--size-sm);
-  letter-spacing: 0.08em;
+  font-family: var(--font-sans);   /* label — not a value */
+  font-size: 13px;
+  font-weight: var(--weight-semibold);
+  letter-spacing: normal;
   color: var(--white);
 }
 
 .fee-val {
   font-family: var(--font-mono);  /* numeric fee amount — stays mono */
-  font-size: var(--size-xs);
+  font-size: 15px;
+  font-weight: var(--weight-medium);
+  color: var(--white);
+}
+
+#transferMod .data-k {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: var(--weight-semibold);
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--dim);
+}
+
+#transferMod .data-v {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: var(--weight-medium);
+  letter-spacing: normal;
   color: var(--white);
 }
 
 .tx-btn {
   font-family: var(--font-ui);
-  font-size: var(--size-sm);
+  font-size: 14px;
   font-weight: var(--weight-semibold);
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  letter-spacing: normal;
+  text-transform: none;
   color: var(--bg);
   background: var(--white);
   border: 1px solid #e0e0e0;
-  border-radius: 4px;
-  padding: var(--sp-4) var(--sp-5);
+  border-radius: 2px;
+  padding: 0 var(--sp-4);
   width: auto;
   min-width: 240px;
+  min-height: 44px;
   display: block;
   margin: var(--sp-6) auto var(--sp-6);
   cursor: pointer;
@@ -2380,7 +2400,7 @@ body.portal-active #nav {
 .tx-btn--cancel {
   background: transparent;
   color: var(--dim);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-2);
   width: 100%;
   min-width: unset;
   margin-top: 0;
@@ -2388,16 +2408,16 @@ body.portal-active #nav {
 .tx-btn--cancel:hover { background: var(--surface-2); color: var(--white); }
 
 .tx-state-note {
-  font-family: var(--font-ui);
-  font-size: var(--size-xs);
+  font-family: var(--font-sans);
+  font-size: 13px;
   color: var(--dim);
   margin-top: 8px;
   text-align: center;
 }
 
 .tx-status {
-  font-family: var(--font-ui);
-  font-size: var(--size-sm);
+  font-family: var(--font-sans);
+  font-size: 13px;
   color: var(--white);
   min-height: 1.4em;
   margin-top: 8px;
@@ -2452,10 +2472,11 @@ body.portal-active #nav {
 }
 
 .tx-preview-label {
-  font-family: var(--font-ui);
-  font-size: var(--size-sm);
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: var(--weight-semibold);
+  letter-spacing: normal;
+  text-transform: none;
   color: var(--dim);
   margin-bottom: 8px;
 }
@@ -2463,9 +2484,9 @@ body.portal-active #nav {
 .tx-preview .data-row:last-of-type { border-bottom: none; }
 
 .tx-preview-note {
-  font-family: var(--font-ui);
-  font-size: var(--size-sm);
-  letter-spacing: 0.04em;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  letter-spacing: normal;
   color: var(--white);
   text-align: center;
   margin-top: 10px;
@@ -2526,16 +2547,16 @@ body.portal-active #nav {
   margin-top: 12px;
   margin-bottom: 10px;
   padding-top: 12px;
-  font-family: var(--font-body);  /* confirmation text the user reads carefully — prose */
-  font-size: var(--size-sm);
+  font-family: var(--font-sans);  /* confirmation text the user reads carefully — prose */
+  font-size: 14px;
   line-height: var(--leading-body);
   color: var(--white);
 }
 
 .tx-confirm input {
   flex: 0 0 auto;
-  width: 15px;
-  height: 15px;
+  width: 16px;
+  height: 16px;
   margin: 1px 0 0;
   accent-color: var(--white);
 }
@@ -2554,10 +2575,11 @@ body.portal-active #nav {
 }
 
 .intel-label {
-  font-family: var(--font-ui);
-  font-size: var(--size-sm);
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: var(--weight-semibold);
+  letter-spacing: normal;
+  text-transform: none;
   color: var(--dim);
   margin-bottom: 7px;
 }
@@ -5330,6 +5352,15 @@ h1 + .gs-section-head {
   /* Prevent iOS Safari from auto-zooming the page when the user taps a
      transfer input. Safari zooms any input with font-size < 16px on focus. */
   .tx-field {
+    font-size: 16px;
+  }
+
+  .tx-field--select {
+    font-size: 16px;
+  }
+
+  .fee-val,
+  #transferMod .data-v {
     font-size: 16px;
   }
 

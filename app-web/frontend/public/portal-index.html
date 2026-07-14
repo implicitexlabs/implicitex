@@ -130,7 +130,7 @@
       border-bottom: none;
       cursor: pointer;
       padding: 0 12px;
-      height: 36px;
+      height: 44px;
       display: inline-flex;
       align-items: center;
       transition: color 0.12s, border-color 0.12s, background 0.12s;
@@ -337,7 +337,7 @@
     <div class="wallet-choice-backdrop" id="walletChoiceBackdrop" aria-hidden="true"></div>
     <div class="wallet-choice-inner">
       <div class="wallet-choice-head">
-        <span class="wallet-choice-title">Connect Wallet</span>
+        <span class="wallet-choice-title">Connect wallet</span>
         <button class="wallet-choice-close" id="walletChoiceClose" type="button" aria-label="Close">
           <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
             <line x1="1" y1="1" x2="11" y2="11" stroke="currentColor" stroke-width="1.6"/>
@@ -498,63 +498,78 @@
             </div>
           </div>
         </div>
-        <input
-          class="tx-field tx-field--primary"
-          type="text"
-          id="txRecipient"
-          placeholder="Wallet address or ENS name"
-          autocomplete="off"
-          spellcheck="false"
-          aria-label="Recipient wallet address"
-          aria-describedby="recipientError"
-        >
-        <p class="tx-recipient-error" id="recipientError" aria-live="assertive"></p>
-        <div class="intel-panel" id="recipientIntel" aria-live="polite" hidden>
-          <p class="intel-label">Recipient</p>
-          <ul class="intel-list" id="recipientIntelList"></ul>
+        <div class="tx-field-group">
+          <label class="tx-field-label" for="txRecipient">Recipient</label>
+          <input
+            class="tx-field tx-field--primary"
+            type="text"
+            id="txRecipient"
+            placeholder="Wallet address or ENS name"
+            autocomplete="off"
+            spellcheck="false"
+            aria-label="Recipient wallet address"
+            aria-describedby="recipientError"
+          >
+          <p class="tx-recipient-error" id="recipientError" aria-live="assertive"></p>
+          <div class="intel-panel" id="recipientIntel" aria-live="polite" hidden>
+            <p class="intel-label">Recipient</p>
+            <ul class="intel-list" id="recipientIntelList"></ul>
+          </div>
         </div>
-        <input
-          class="tx-field tx-field--primary"
-          type="number"
-          id="txAmount"
-          placeholder="Enter amount in USDC"
-          inputmode="decimal"
-          min="1"
-          step="0.000001"
-          aria-label="Amount recipient gets in USDC"
-        >
+        <div class="tx-field-group">
+          <label class="tx-field-label" for="txAmount">Amount</label>
+          <input
+            class="tx-field tx-field--primary"
+            type="number"
+            id="txAmount"
+            placeholder="Enter amount in USDC"
+            inputmode="decimal"
+            min="1"
+            step="0.000001"
+            aria-label="Amount recipient gets in USDC"
+          >
+        </div>
         <div class="tx-meta-grid" aria-label="Transfer metadata">
-          <select class="tx-field tx-field--select" id="txPurposeTag" aria-label="Transfer purpose tag">
-            <option value="">Purpose tag</option>
-            <option value="invoice">Invoice</option>
-            <option value="contractor">Contractor</option>
-            <option value="refund">Refund</option>
-            <option value="family">Family</option>
-            <option value="donation">Donation</option>
-            <option value="purchase">Purchase</option>
-            <option value="subscription">Subscription</option>
-            <option value="test">Test</option>
-            <option value="other">Other</option>
-          </select>
+          <div class="tx-field-group">
+            <label class="tx-field-label" for="txPurposeTag">Purpose</label>
+            <select class="tx-field tx-field--select" id="txPurposeTag" aria-label="Transfer purpose tag">
+              <option value="">Purpose tag</option>
+              <option value="invoice">Invoice</option>
+              <option value="contractor">Contractor</option>
+              <option value="refund">Refund</option>
+              <option value="family">Family</option>
+              <option value="donation">Donation</option>
+              <option value="purchase">Purchase</option>
+              <option value="subscription">Subscription</option>
+              <option value="test">Test</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="tx-field-group">
+            <label class="tx-field-label" for="txReference">Reference</label>
+            <input
+              class="tx-field"
+              type="text"
+              id="txReference"
+              placeholder="Invoice / reference"
+              maxlength="80"
+              autocomplete="off"
+              aria-label="Invoice or internal reference"
+            >
+          </div>
+        </div>
+        <div class="tx-field-group">
+          <label class="tx-field-label" for="txMemo">Memo</label>
           <input
             class="tx-field"
             type="text"
-            id="txReference"
-            placeholder="Invoice / reference"
-            maxlength="80"
+            id="txMemo"
+            placeholder="Memo (local receipt only)"
+            maxlength="140"
             autocomplete="off"
-            aria-label="Invoice or internal reference"
+            aria-label="Transfer memo"
           >
         </div>
-        <input
-          class="tx-field"
-          type="text"
-          id="txMemo"
-          placeholder="Memo (local receipt only)"
-          maxlength="140"
-          autocomplete="off"
-          aria-label="Transfer memo"
-        >
         <div class="fee-row" aria-live="polite">
           <span class="fee-label">Your USDC balance</span>
           <span class="fee-val" id="usdcBalance">0.00 USDC</span>
@@ -569,9 +584,9 @@
         </label>
         <button class="tx-btn" id="txBtn" onclick="IX.handleTxAction()"
           data-agent-action="review-transfer"
-          data-agent-requires-user-confirmation="true">Review Transfer</button>
+          data-agent-requires-user-confirmation="true">Review transfer</button>
         <button class="tx-btn tx-btn--cancel" id="txCancelReview" type="button" aria-label="Return to editing transfer details" hidden>
-          Edit Details
+          Edit details
         </button>
         <p class="tx-state-note" id="transferStateNote"></p>
         <p class="tx-status" id="txStatus" aria-live="assertive"></p>
