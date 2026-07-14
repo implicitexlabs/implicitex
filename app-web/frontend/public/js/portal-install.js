@@ -53,6 +53,18 @@
     return /Android/i.test(getUserAgent());
   }
 
+  function isWindows() {
+    return /Win/i.test((window.navigator && window.navigator.platform) || '') || /Windows/i.test(getUserAgent());
+  }
+
+  function isMac() {
+    return /Mac/i.test((window.navigator && window.navigator.platform) || '') || /Mac OS X/i.test(getUserAgent());
+  }
+
+  function isLinux() {
+    return /Linux/i.test((window.navigator && window.navigator.platform) || '') || /Linux/i.test(getUserAgent());
+  }
+
   function isSafari() {
     var ua = getUserAgent().toLowerCase();
     return ua.indexOf('safari') !== -1
@@ -99,7 +111,7 @@
     if (isAndroid()) return isChrome() ? 'android-chrome' : 'android-browser';
     if (isBrave()) return 'desktop-brave';
     if (isEdge()) return 'desktop-edge';
-    if (isFirefox()) return 'desktop-firefox';
+    if (isFirefox()) return isWindows() ? 'desktop-firefox-windows' : 'desktop-firefox-unsupported';
     if (isChrome()) return 'desktop-chrome';
     return 'desktop-generic';
   }
@@ -114,7 +126,8 @@
     if (mode === 'desktop-brave') return 'Brave · Desktop';
     if (mode === 'desktop-chrome') return 'Chrome · Desktop';
     if (mode === 'desktop-edge') return 'Edge · Desktop';
-    if (mode === 'desktop-firefox') return 'Firefox · Desktop';
+    if (mode === 'desktop-firefox-windows') return 'Firefox · Windows';
+    if (mode === 'desktop-firefox-unsupported') return 'Firefox · macOS/Linux';
     return 'Desktop browser';
   }
 
@@ -210,9 +223,8 @@
       return [
         '<p>Install on this computer</p>',
         '<ol>',
-        '<li>Open the Brave menu in the upper-right corner.</li>',
-        '<li>Choose Save and share.</li>',
-        '<li>Choose Install ImplicitEx.</li>',
+        '<li>Open Brave&rsquo;s main menu.</li>',
+        '<li>Choose Save and Share, then Install ImplicitEx.</li>',
         '<li>Confirm Install.</li>',
         '<li>If the address-bar install icon appears, use it instead.</li>',
         '</ol>',
@@ -227,8 +239,9 @@
       return [
         '<p>Install on this computer</p>',
         '<ol>',
-        '<li>Open Chrome&rsquo;s menu in the upper-right corner.</li>',
-        '<li>Choose the install command Chrome offers for this page.</li>',
+        '<li>Open Chrome&rsquo;s main menu.</li>',
+        '<li>Choose More, then Cast, save, and share.</li>',
+        '<li>Choose Install page as app.</li>',
         '<li>Confirm Install.</li>',
         '<li>If Chrome shows an address-bar install icon, use that instead.</li>',
         '</ol>',
@@ -255,14 +268,25 @@
       ].join('');
     }
 
-    if (mode === 'desktop-firefox') {
+    if (mode === 'desktop-firefox-windows') {
       return [
-        '<p>Install on this computer</p>',
+        '<p>Install on this Windows computer</p>',
         '<ol>',
-        '<li>Open Firefox&rsquo;s menu in the upper-right corner.</li>',
-        '<li>Choose the shortcut or app command Firefox provides for this page.</li>',
-        '<li>Confirm the shortcut or app creation.</li>',
+        '<li>Open Firefox on Windows.</li>',
+        '<li>Use the web-app button in the address bar.</li>',
+        '<li>Confirm Add or Install.</li>',
         '</ol>',
+        '<details class="portal-install-other">',
+        '<summary>Other devices</summary>',
+        otherDevicesMarkup(mode),
+        '</details>'
+      ].join('');
+    }
+
+    if (mode === 'desktop-firefox-unsupported') {
+      return [
+        '<p>Firefox web apps are supported on Windows.</p>',
+        '<p>On macOS or Linux, create a normal desktop shortcut if you need one.</p>',
         '<details class="portal-install-other">',
         '<summary>Other devices</summary>',
         otherDevicesMarkup(mode),
@@ -275,8 +299,8 @@
         '<p>Install on this Android device</p>',
         '<ol>',
         '<li>Open this page in Chrome.</li>',
-        '<li>Tap Chrome&rsquo;s menu or install icon.</li>',
-        '<li>Choose Install app or Add to Home screen.</li>',
+        '<li>Tap Chrome&rsquo;s menu, then Add to Home screen.</li>',
+        '<li>Choose Install when Chrome shows the install prompt.</li>',
         '<li>Confirm the install.</li>',
         '</ol>',
         '<details class="portal-install-other">',
@@ -336,23 +360,27 @@
     }
 
     if (mode === 'android-chrome') {
-      return 'Chrome on Android can install ImplicitEx from the browser menu or install icon.';
+      return 'Chrome on Android can install ImplicitEx from More > Add to Home screen > Install.';
     }
 
     if (mode === 'desktop-brave') {
-      return 'Brave can install ImplicitEx from its menu or address-bar install icon.';
+      return 'Brave can install ImplicitEx from Save and Share > Install ImplicitEx or the address-bar install icon.';
     }
 
     if (mode === 'desktop-chrome') {
-      return 'Chrome can install ImplicitEx from its menu or address-bar install icon.';
+      return 'Chrome can install ImplicitEx from More > Cast, save, and share > Install page as app.';
     }
 
     if (mode === 'desktop-edge') {
       return 'Edge can install ImplicitEx from its menu or address-bar install icon.';
     }
 
-    if (mode === 'desktop-firefox') {
-      return 'Firefox can create a shortcut to ImplicitEx from its menu.';
+    if (mode === 'desktop-firefox-windows') {
+      return 'Firefox on Windows can install ImplicitEx from the address-bar web-app button.';
+    }
+
+    if (mode === 'desktop-firefox-unsupported') {
+      return 'Firefox web apps are available on Windows; on macOS or Linux, create a normal desktop shortcut if needed.';
     }
 
     if (mode === 'standalone') {
@@ -381,18 +409,20 @@
   function syncPromotion() {
     if (!actionBtn) return;
 
-    var mode = getMode();
     var installedState = isStandalone() || installedThisSession;
+    var mode = installedState ? 'standalone' : getMode();
+    var browserState = installedState ? 'Installed · this device' : getBrowserLabel(mode);
+    var statusState = installedState ? 'ImplicitEx is installed on this device.' : statusCopy(mode);
 
     if (browserLabel) {
-      browserLabel.textContent = getBrowserLabel(mode);
+      browserLabel.textContent = browserState;
     }
 
     if (hasInstallPage) {
       setHidden(promotion, false);
 
       if (status) {
-        status.textContent = statusCopy(mode);
+        status.textContent = statusState;
         status.hidden = false;
       }
 
@@ -498,9 +528,10 @@
 
   if (actionBtn) {
     actionBtn.addEventListener('click', function () {
-      var mode = getMode();
+      var installedState = isStandalone() || installedThisSession;
+      var mode = installedState ? 'standalone' : getMode();
 
-      if (hasInstallPage && (mode === 'standalone' || installedThisSession)) {
+      if (hasInstallPage && installedState) {
         window.location.assign('/portal-index.html');
         return;
       }

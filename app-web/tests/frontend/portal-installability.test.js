@@ -352,8 +352,10 @@ test('portal shell stays quiet and install page shows browser-specific direction
   assert.equal(promptHarness.action.hidden, true);
   assert.equal(promptHarness.help.hidden, true);
   assert.equal(promptHarness.instructions.hidden, false);
-  assert.match(promptHarness.instructions.innerHTML, /Open Chrome&rsquo;s menu in the upper-right corner/);
-  assert.match(promptHarness.status.textContent, /Chrome can install ImplicitEx from its menu or address-bar install icon\./);
+  assert.match(promptHarness.instructions.innerHTML, /Open Chrome&rsquo;s main menu\./);
+  assert.match(promptHarness.instructions.innerHTML, /Choose More, then Cast, save, and share\./);
+  assert.match(promptHarness.instructions.innerHTML, /Choose Install page as app\./);
+  assert.equal(promptHarness.status.textContent, 'Chrome can install ImplicitEx from More > Cast, save, and share > Install page as app.');
 
   const acceptedHarness = await runInstallScript({
     guide: true,
@@ -378,6 +380,8 @@ test('portal shell stays quiet and install page shows browser-specific direction
   await Promise.resolve();
 
   assert.deepEqual(acceptedCalls, ['preventDefault', 'prompt']);
+  assert.equal(acceptedHarness.browserLabel.textContent, 'Installed · this device');
+  assert.equal(acceptedHarness.status.textContent, 'ImplicitEx is installed on this device.');
   assert.equal(acceptedHarness.actions.hidden, false);
   assert.equal(acceptedHarness.action.textContent, 'Open Transfer Portal');
   assert.equal(acceptedHarness.action.title, 'Open Transfer Portal');
@@ -398,9 +402,10 @@ test('portal shell stays quiet and install page shows browser-specific direction
   assert.equal(braveHarness.action.hidden, true);
   assert.equal(braveHarness.help.hidden, true);
   assert.equal(braveHarness.status.hidden, false);
-  assert.equal(braveHarness.status.textContent, 'Brave can install ImplicitEx from its menu or address-bar install icon.');
+  assert.equal(braveHarness.status.textContent, 'Brave can install ImplicitEx from Save and Share > Install ImplicitEx or the address-bar install icon.');
   assert.match(braveHarness.instructions.innerHTML, /Install on this computer/);
-  assert.match(braveHarness.instructions.innerHTML, /Open the Brave menu in the upper-right corner/);
+  assert.match(braveHarness.instructions.innerHTML, /Open Brave&rsquo;s main menu/);
+  assert.match(braveHarness.instructions.innerHTML, /Choose Save and Share, then Install ImplicitEx\./);
   assert.match(braveHarness.instructions.innerHTML, /Other devices/);
 
   const chromeHarness = await runInstallScript({
@@ -414,9 +419,10 @@ test('portal shell stays quiet and install page shows browser-specific direction
   assert.equal(chromeHarness.actions.hidden, true);
   assert.equal(chromeHarness.action.hidden, true);
   assert.equal(chromeHarness.help.hidden, true);
-  assert.equal(chromeHarness.status.textContent, 'Chrome can install ImplicitEx from its menu or address-bar install icon.');
-  assert.match(chromeHarness.instructions.innerHTML, /Open Chrome&rsquo;s menu in the upper-right corner/);
-  assert.match(chromeHarness.instructions.innerHTML, /install command Chrome offers for this page/);
+  assert.equal(chromeHarness.status.textContent, 'Chrome can install ImplicitEx from More > Cast, save, and share > Install page as app.');
+  assert.match(chromeHarness.instructions.innerHTML, /Open Chrome&rsquo;s main menu\./);
+  assert.match(chromeHarness.instructions.innerHTML, /Choose More, then Cast, save, and share\./);
+  assert.match(chromeHarness.instructions.innerHTML, /Choose Install page as app\./);
 
   const iosHarness = await runInstallScript({
     guide: true,
@@ -441,11 +447,36 @@ test('portal shell stays quiet and install page shows browser-specific direction
   });
 
   assert.equal(androidHarness.browserLabel.textContent, 'Chrome · Android');
-  assert.equal(androidHarness.status.textContent, 'Chrome on Android can install ImplicitEx from the browser menu or install icon.');
+  assert.equal(androidHarness.status.textContent, 'Chrome on Android can install ImplicitEx from More > Add to Home screen > Install.');
   assert.equal(androidHarness.actions.hidden, true);
   assert.equal(androidHarness.action.hidden, true);
   assert.match(androidHarness.instructions.innerHTML, /Install on this Android device/);
-  assert.match(androidHarness.instructions.innerHTML, /Tap Chrome&rsquo;s menu or install icon/);
+  assert.match(androidHarness.instructions.innerHTML, /Tap Chrome&rsquo;s menu, then Add to Home screen\./);
+  assert.match(androidHarness.instructions.innerHTML, /Choose Install when Chrome shows the install prompt\./);
+
+  const firefoxWindowsHarness = await runInstallScript({
+    guide: true,
+    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:127.0) Gecko/20100101 Firefox/127.0',
+    platform: 'Win32',
+    maxTouchPoints: 0,
+  });
+
+  assert.equal(firefoxWindowsHarness.browserLabel.textContent, 'Firefox · Windows');
+  assert.equal(firefoxWindowsHarness.status.textContent, 'Firefox on Windows can install ImplicitEx from the address-bar web-app button.');
+  assert.match(firefoxWindowsHarness.instructions.innerHTML, /Install on this Windows computer/);
+  assert.match(firefoxWindowsHarness.instructions.innerHTML, /Use the web-app button in the address bar\./);
+
+  const firefoxUnsupportedHarness = await runInstallScript({
+    guide: true,
+    userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0; rv:127.0) Gecko/20100101 Firefox/127.0',
+    platform: 'MacIntel',
+    maxTouchPoints: 0,
+  });
+
+  assert.equal(firefoxUnsupportedHarness.browserLabel.textContent, 'Firefox · macOS/Linux');
+  assert.equal(firefoxUnsupportedHarness.status.textContent, 'Firefox web apps are available on Windows; on macOS or Linux, create a normal desktop shortcut if needed.');
+  assert.match(firefoxUnsupportedHarness.instructions.innerHTML, /Firefox web apps are supported on Windows\./);
+  assert.match(firefoxUnsupportedHarness.instructions.innerHTML, /create a normal desktop shortcut if you need one\./);
 
   const standaloneGuide = await runInstallScript({ guide: true, displayModeStandalone: true, standalone: true });
   assert.equal(standaloneGuide.browserLabel.textContent, 'Installed · this device');
