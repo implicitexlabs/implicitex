@@ -1393,6 +1393,8 @@ body.portal-active #nav {
   grid-template-columns: auto minmax(0, 1fr);
   gap: var(--sp-4);
   align-items: start;
+  max-width: 52rem;
+  margin: 0 auto var(--sp-4);
   padding: var(--sp-4);
   border-bottom: 1px solid var(--border);
   background: var(--surface);
@@ -1411,16 +1413,6 @@ body.portal-active #nav {
   min-width: 0;
 }
 
-.portal-install-kicker {
-  font-family: var(--font-sans);
-  font-size: var(--text-caption);
-  font-weight: var(--weight-semibold);
-  letter-spacing: var(--tracking-label);
-  text-transform: uppercase;
-  color: var(--accent-dim);
-  margin-bottom: var(--sp-1);
-}
-
 .portal-install-title {
   font-family: var(--font-sans);
   font-size: var(--text-heading-sm);
@@ -1436,7 +1428,7 @@ body.portal-active #nav {
   font-size: var(--text-body);
   line-height: 1.55;
   color: var(--dim);
-  max-width: var(--measure-lead);
+  max-width: var(--measure-body);
 }
 
 .portal-install-status {
@@ -1444,7 +1436,7 @@ body.portal-active #nav {
   font-family: var(--font-sans);
   font-size: var(--text-caption);
   line-height: 1.45;
-  color: var(--telemetry-amber-dim);
+  color: var(--dim);
 }
 
 .portal-install-actions {
@@ -1497,10 +1489,46 @@ body.portal-active #nav {
   padding: var(--sp-3);
   border: 1px solid var(--border);
   background: var(--surface-2);
-  color: var(--dim);
+  color: var(--white);
   font-family: var(--font-ui);
   font-size: var(--size-sm);
   line-height: 1.55;
+}
+
+.portal-install-other {
+  margin-top: var(--sp-3);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--border);
+}
+
+.portal-install-other > summary {
+  list-style: none;
+  display: inline-flex;
+  align-items: center;
+  color: var(--dim);
+  cursor: pointer;
+  user-select: none;
+  font-family: var(--font-sans);
+  font-size: var(--text-ui);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0;
+}
+
+.portal-install-other > summary::-webkit-details-marker {
+  display: none;
+}
+
+.portal-install-other[open] > summary {
+  color: var(--white);
+}
+
+.portal-install-other p {
+  margin-top: var(--sp-2);
+  color: var(--dim);
+}
+
+.portal-install-other p + p {
+  margin-top: var(--sp-2);
 }
 
 .portal-install-instructions p + ol,
@@ -1529,6 +1557,12 @@ body.portal-active #nav {
   font-weight: var(--weight-semibold);
   letter-spacing: var(--tracking-button);
   text-transform: none;
+}
+
+[data-portal-shell="direct"] .install-page-nav {
+  padding: 0 var(--sp-4) var(--sp-2);
+  max-width: 52rem;
+  margin: 0 auto;
 }
 
 [data-portal-shell="direct"] .agent-guidance-note {
@@ -1580,7 +1614,7 @@ body.portal-active #nav {
 
 .install-page {
   width: 100%;
-  max-width: var(--ix-interface-max);
+  max-width: 56rem;
   margin: 0 auto;
   padding: var(--sp-4) 0 0;
 }
@@ -1588,6 +1622,16 @@ body.portal-active #nav {
 .install-page-intro {
   padding: 0 var(--sp-4) var(--sp-4);
   max-width: 52rem;
+}
+
+.install-page-browser {
+  font-family: var(--font-sans);
+  font-size: var(--text-caption);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--dim);
+  margin-bottom: var(--sp-2);
 }
 
 .install-page-title {
@@ -1611,19 +1655,20 @@ body.portal-active #nav {
 .install-page-back {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  font-family: var(--font-ui);
+  gap: 0.35rem;
+  font-family: var(--font-sans);
   font-size: var(--text-ui);
-  font-weight: var(--weight-semibold);
-  letter-spacing: var(--tracking-button);
+  font-weight: var(--weight-medium);
+  letter-spacing: 0;
   text-transform: none;
-  color: var(--white);
+  color: var(--dim);
   text-decoration: none;
   border-bottom: 1px solid transparent;
 }
 
 .install-page-back:hover,
 .install-page-back:focus-visible {
+  color: var(--white);
   border-bottom-color: var(--white);
 }
 

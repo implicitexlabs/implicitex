@@ -79,14 +79,16 @@ function createElement(initial = {}) {
 
 function createHarness(options = {}) {
   const guide = !!options.guide;
-  const promotion = createElement({
-    hidden: !!options.standalone || !!options.displayModeStandalone,
-  });
+  const promotion = guide
+    ? createElement({
+        hidden: !!options.standalone || !!options.displayModeStandalone,
+      })
+    : null;
   const action = guide
-    ? createElement({ textContent: 'Install ImplicitEx', title: 'Show installation instructions' })
-    : createElement({ textContent: 'Add ImplicitEx to this device', href: '/install.html' });
+    ? createElement({ textContent: 'Install on this device', title: 'Show installation instructions' })
+    : createElement({ title: 'Install ImplicitEx', attributes: { 'aria-label': 'Install ImplicitEx' } });
   const help = guide
-    ? createElement({ textContent: 'How installation works', attributes: { 'aria-expanded': 'false' } })
+    ? createElement({ textContent: 'Show installation steps', attributes: { 'aria-expanded': 'false' } })
     : null;
   const status = guide
     ? createElement({ hidden: !!options.standalone || !!options.displayModeStandalone })
@@ -94,10 +96,13 @@ function createHarness(options = {}) {
   const instructions = guide
     ? createElement({ hidden: true })
     : null;
-  const footerInstallLink = createElement({
+  const browserLabel = guide ? createElement({ textContent: '' }) : null;
+  const actions = guide ? createElement({ hidden: false }) : null;
+  const footerInstallLink = guide ? null : createElement({
     hidden: !!options.standalone || !!options.displayModeStandalone,
     href: '/install.html',
   });
+  const locationCalls = [];
   const windowListeners = {};
   const documentListeners = {};
 
@@ -110,6 +115,7 @@ function createHarness(options = {}) {
         userAgent: options.userAgent || 'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15',
         platform: options.platform || 'MacIntel',
         maxTouchPoints: options.maxTouchPoints === undefined ? 0 : options.maxTouchPoints,
+        brave: options.brave ? {} : undefined,
       },
       matchMedia(query) {
         return {
@@ -119,6 +125,11 @@ function createHarness(options = {}) {
       addEventListener(type, handler) {
         windowListeners[type] = handler;
       },
+      location: {
+        assign(url) {
+          locationCalls.push(url);
+        },
+      },
     },
     document: {
       getElementById(id) {
@@ -127,6 +138,8 @@ function createHarness(options = {}) {
         if (id === 'portalInstallHelp') return help;
         if (id === 'portalInstallStatus') return status;
         if (id === 'portalInstallInstructions') return instructions;
+        if (id === 'portalInstallBrowser') return browserLabel;
+        if (id === 'portalInstallActions') return actions;
         if (id === 'portalFooterInstallLink') return footerInstallLink;
         return null;
       },
@@ -145,7 +158,7 @@ function createHarness(options = {}) {
   context.window.__listeners = windowListeners;
   context.__listeners = documentListeners;
 
-  return { context, promotion, action, help, status, instructions, footerInstallLink, windowListeners, documentListeners };
+  return { context, promotion, action, help, status, instructions, browserLabel, actions, footerInstallLink, locationCalls, windowListeners, documentListeners };
 }
 
 async function runInstallScript(options = {}) {
@@ -209,14 +222,15 @@ async function assertIconMatchesCanonical(filePath, size) {
   assert.ok(heightRatio >= 0.72 && heightRatio <= 0.75, `unexpected icon height ratio: ${heightRatio}`);
 }
 
-test('portal shell keeps the install strip quiet and restores the compact footer', () => {
+test('portal shell keeps the install icon quiet and restores the compact footer', () => {
   const html = read(portalIndexPath);
   const installScript = read(portalInstallPath);
 
   assert.match(html, /<link rel="manifest" href="\/portal\.webmanifest">/);
   assert.match(html, /<link rel="apple-touch-icon" href="\/assets\/icons\/apple-touch-icon-v2\.png">/);
-  assert.match(html, /<p class="portal-header-sub portal-install-strip" id="portalInstallPromotion">/);
-  assert.match(html, /href="\/install\.html">Add ImplicitEx to this device<\/a>/);
+  assert.match(html, /<button class="portal-ctrl-btn portal-install-ctrl" id="portalInstallAction" type="button" aria-label="Install ImplicitEx" title="Install ImplicitEx">/);
+  assert.doesNotMatch(html, /portal-header-sub portal-install-strip/);
+  assert.doesNotMatch(html, /Add ImplicitEx to this device<\/a>/);
   assert.match(html, /<a class="portal-footer-install-link" id="portalFooterInstallLink" href="\/install\.html">Add ImplicitEx to a device<\/a>/);
   assert.match(html, /<details class="portal-footer-more" id="portalFooterMore">/);
   assert.match(html, /<summary>More<\/summary>/);
@@ -225,7 +239,7 @@ test('portal shell keeps the install strip quiet and restores the compact footer
   assert.equal((html.match(/portalInstallHelp/g) || []).length, 0);
   assert.equal((html.match(/portalInstallInstructions/g) || []).length, 0);
   assert.equal((html.match(/portalInstallStatus/g) || []).length, 0);
-  assert.equal((html.match(/portal-header-sub portal-install-strip/g) || []).length, 1);
+  assert.equal((html.match(/portalInstallPromotion/g) || []).length, 0);
   assert.equal((html.match(/portalFooterMore/g) || []).length, 1);
   assert.doesNotMatch(html, /Share, then Add to Home Screen/);
   assert.doesNotMatch(html, /Desktop and Android browsers may show an Install prompt/);
@@ -240,14 +254,18 @@ test('install page carries the detailed install guide and versioned icons', () =
   assert.match(html, /<link rel="apple-touch-icon" href="\/assets\/icons\/apple-touch-icon-v2\.png">/);
   assert.match(html, /<section class="portal-install-promo" id="portalInstallPromotion"/);
   assert.match(html, /id="portalInstallPromotionIcon"/);
+  assert.match(html, /id="portalInstallBrowser"/);
   assert.match(html, /id="portalInstallAction"/);
   assert.match(html, /id="portalInstallHelp"/);
   assert.match(html, /id="portalInstallInstructions"/);
   assert.match(html, /id="portalInstallStatus"/);
+  assert.match(html, /id="portalInstallActions"/);
   assert.match(html, /Install ImplicitEx/);
-  assert.match(html, /How installation works/);
-  assert.match(html, /Back to portal/);
+  assert.match(html, /Show installation steps/);
+  assert.match(html, /Back to Transfer Portal/);
   assert.match(html, /href="\/portal-index\.html"/);
+  assert.doesNotMatch(html, /portal-install-kicker/);
+  assert.doesNotMatch(html, /Back to portal<\/a>/);
 });
 
 test('portal manifest points to the versioned install artwork', () => {
@@ -277,37 +295,72 @@ test('versioned portal icons match the canonical centered artwork', async () => 
   await assertIconMatchesCanonical(icon512Path, 512);
 });
 
-test('compact portal strip hides in standalone mode and the guide page stays install-aware', async () => {
+test('portal shell stays quiet and install page shows browser-specific direction', async () => {
   const stripHarness = await runInstallScript({ displayModeStandalone: false, standalone: false });
-  assert.equal(stripHarness.promotion.hidden, false);
-  assert.equal(stripHarness.action.textContent, 'Add ImplicitEx to this device');
+  assert.equal(stripHarness.promotion, null);
+  assert.equal(stripHarness.action.hidden, false);
+  assert.equal(stripHarness.action.textContent, '');
+  assert.equal(stripHarness.action.title, 'Install ImplicitEx');
+  assert.equal(stripHarness.action.attributes['aria-label'], 'Install ImplicitEx');
   assert.equal(stripHarness.footerInstallLink.hidden, false);
 
+  await stripHarness.action.click();
+  assert.deepEqual(stripHarness.locationCalls, ['/install.html']);
+
   const standaloneStrip = await runInstallScript({ displayModeStandalone: true, standalone: true });
-  assert.equal(standaloneStrip.promotion.hidden, true);
+  assert.equal(standaloneStrip.promotion, null);
+  assert.equal(standaloneStrip.action.hidden, true);
   assert.equal(standaloneStrip.footerInstallLink.hidden, true);
 
-  const guideHarness = await runInstallScript({ guide: true, displayModeStandalone: false, standalone: false });
-  const { action, help, promotion, status, instructions, windowListeners } = guideHarness;
+  const promptHarness = await runInstallScript({
+    guide: true,
+    displayModeStandalone: false,
+    standalone: false,
+    userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) AppleWebKit/605.1.15 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/605.1.15',
+  });
+  const promptCalls = [];
+  const promptChoice = Promise.resolve({ outcome: 'dismissed' });
+  promptHarness.windowListeners.beforeinstallprompt({
+    preventDefault() {
+      promptCalls.push('preventDefault');
+    },
+    prompt() {
+      promptCalls.push('prompt');
+    },
+    userChoice: promptChoice,
+  });
 
-  assert.equal(promotion.hidden, false);
-  assert.equal(status.hidden, false);
-  assert.equal(action.textContent, 'Install ImplicitEx');
-  assert.equal(action.title, 'Show installation instructions');
-  assert.equal(action.attributes['aria-label'], 'Show installation instructions');
-  assert.equal(help.attributes['aria-expanded'], 'false');
-  assert.match(status.textContent, /browser’s install icon|browser.*installation menu/i);
+  assert.equal(promptHarness.browserLabel.textContent, 'Install ready');
+  assert.equal(promptHarness.status.hidden, false);
+  assert.equal(promptHarness.status.textContent, 'Your browser can install ImplicitEx directly.');
+  assert.equal(promptHarness.actions.hidden, false);
+  assert.equal(promptHarness.action.hidden, false);
+  assert.equal(promptHarness.action.textContent, 'Install on this device');
+  assert.equal(promptHarness.action.title, 'Install on this device');
+  assert.equal(promptHarness.action.attributes['aria-label'], 'Install on this device');
+  assert.equal(promptHarness.help.hidden, false);
+  assert.equal(promptHarness.help.textContent, 'Show installation steps');
+  assert.equal(promptHarness.help.attributes['aria-expanded'], 'false');
 
-  action.click();
-  assert.equal(instructions.hidden, false);
-  assert.match(instructions.innerHTML, /Use your browser&rsquo;s install icon or browser menu/i);
-  assert.equal(help.attributes['aria-expanded'], 'true');
+  await promptHarness.action.click();
+  await promptChoice;
+  await Promise.resolve();
 
-  help.click();
-  assert.equal(instructions.hidden, true);
-  assert.equal(help.attributes['aria-expanded'], 'false');
+  assert.deepEqual(promptCalls, ['preventDefault', 'prompt']);
+  assert.equal(promptHarness.browserLabel.textContent, 'Chrome · Desktop');
+  assert.equal(promptHarness.actions.hidden, true);
+  assert.equal(promptHarness.action.hidden, true);
+  assert.equal(promptHarness.help.hidden, true);
+  assert.equal(promptHarness.instructions.hidden, false);
+  assert.match(promptHarness.instructions.innerHTML, /Open Chrome&rsquo;s menu in the upper-right corner/);
+  assert.match(promptHarness.status.textContent, /Chrome can install ImplicitEx from its menu or address-bar install icon\./);
 
-  const acceptedHarness = await runInstallScript({ guide: true, displayModeStandalone: false, standalone: false });
+  const acceptedHarness = await runInstallScript({
+    guide: true,
+    displayModeStandalone: false,
+    standalone: false,
+    userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) AppleWebKit/605.1.15 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/605.1.15',
+  });
   const acceptedCalls = [];
   const acceptedChoice = Promise.resolve({ outcome: 'accepted' });
   acceptedHarness.windowListeners.beforeinstallprompt({
@@ -325,30 +378,45 @@ test('compact portal strip hides in standalone mode and the guide page stays ins
   await Promise.resolve();
 
   assert.deepEqual(acceptedCalls, ['preventDefault', 'prompt']);
-  assert.equal(acceptedHarness.promotion.hidden, true);
-  assert.equal(acceptedHarness.status.hidden, true);
+  assert.equal(acceptedHarness.actions.hidden, false);
+  assert.equal(acceptedHarness.action.textContent, 'Open Transfer Portal');
+  assert.equal(acceptedHarness.action.title, 'Open Transfer Portal');
+  assert.equal(acceptedHarness.action.attributes['aria-label'], 'Open Transfer Portal');
+  assert.equal(acceptedHarness.help.hidden, true);
   assert.equal(acceptedHarness.instructions.hidden, true);
 
-  const dismissedHarness = await runInstallScript({ guide: true, displayModeStandalone: false, standalone: false });
-  const dismissedCalls = [];
-  const dismissedChoice = Promise.resolve({ outcome: 'dismissed' });
-  dismissedHarness.windowListeners.beforeinstallprompt({
-    preventDefault() {
-      dismissedCalls.push('preventDefault');
-    },
-    prompt() {
-      dismissedCalls.push('prompt');
-    },
-    userChoice: dismissedChoice,
+  const braveHarness = await runInstallScript({
+    guide: true,
+    displayModeStandalone: false,
+    standalone: false,
+    brave: true,
+    userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) AppleWebKit/605.1.15 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/605.1.15 Brave/126.1.0.0',
   });
 
-  await dismissedHarness.action.click();
-  await dismissedChoice;
-  await Promise.resolve();
+  assert.equal(braveHarness.browserLabel.textContent, 'Brave · Desktop');
+  assert.equal(braveHarness.actions.hidden, true);
+  assert.equal(braveHarness.action.hidden, true);
+  assert.equal(braveHarness.help.hidden, true);
+  assert.equal(braveHarness.status.hidden, false);
+  assert.equal(braveHarness.status.textContent, 'Brave can install ImplicitEx from its menu or address-bar install icon.');
+  assert.match(braveHarness.instructions.innerHTML, /Install on this computer/);
+  assert.match(braveHarness.instructions.innerHTML, /Open the Brave menu in the upper-right corner/);
+  assert.match(braveHarness.instructions.innerHTML, /Other devices/);
 
-  assert.deepEqual(dismissedCalls, ['preventDefault', 'prompt']);
-  assert.equal(dismissedHarness.promotion.hidden, false);
-  assert.equal(dismissedHarness.status.hidden, false);
+  const chromeHarness = await runInstallScript({
+    guide: true,
+    displayModeStandalone: false,
+    standalone: false,
+    userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) AppleWebKit/605.1.15 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/605.1.15',
+  });
+
+  assert.equal(chromeHarness.browserLabel.textContent, 'Chrome · Desktop');
+  assert.equal(chromeHarness.actions.hidden, true);
+  assert.equal(chromeHarness.action.hidden, true);
+  assert.equal(chromeHarness.help.hidden, true);
+  assert.equal(chromeHarness.status.textContent, 'Chrome can install ImplicitEx from its menu or address-bar install icon.');
+  assert.match(chromeHarness.instructions.innerHTML, /Open Chrome&rsquo;s menu in the upper-right corner/);
+  assert.match(chromeHarness.instructions.innerHTML, /install command Chrome offers for this page/);
 
   const iosHarness = await runInstallScript({
     guide: true,
@@ -357,22 +425,53 @@ test('compact portal strip hides in standalone mode and the guide page stays ins
     maxTouchPoints: 5,
   });
 
-  assert.match(iosHarness.status.textContent, /Safari installs this portal through Share and Add to Home Screen\./);
-  iosHarness.action.click();
+  assert.equal(iosHarness.browserLabel.textContent, 'Safari · iPhone or iPad');
+  assert.equal(iosHarness.status.textContent, 'Safari installs this portal through Share and Add to Home Screen.');
+  assert.equal(iosHarness.actions.hidden, true);
+  assert.equal(iosHarness.action.hidden, true);
   assert.match(iosHarness.instructions.innerHTML, /Add ImplicitEx to your iPhone or iPad/);
   assert.match(iosHarness.instructions.innerHTML, /View More when Add to Home Screen is not immediately visible/);
   assert.match(iosHarness.instructions.innerHTML, /Leave Open as Web App enabled/);
 
-  const iosNonSafariHarness = await runInstallScript({
+  const androidHarness = await runInstallScript({
     guide: true,
-    userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/126.0.0.0 Mobile/15E148 Safari/604.1',
-    platform: 'iPhone',
+    userAgent: 'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/605.1.15 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/605.1.15',
+    platform: 'Linux armv8l',
     maxTouchPoints: 5,
   });
 
-  assert.match(iosNonSafariHarness.status.textContent, /Open this page in Safari to install ImplicitEx as a Home Screen web app\./);
-  iosNonSafariHarness.action.click();
-  assert.match(iosNonSafariHarness.instructions.innerHTML, /Open this page in Safari to add ImplicitEx as a Home Screen web app\./);
+  assert.equal(androidHarness.browserLabel.textContent, 'Chrome · Android');
+  assert.equal(androidHarness.status.textContent, 'Chrome on Android can install ImplicitEx from the browser menu or install icon.');
+  assert.equal(androidHarness.actions.hidden, true);
+  assert.equal(androidHarness.action.hidden, true);
+  assert.match(androidHarness.instructions.innerHTML, /Install on this Android device/);
+  assert.match(androidHarness.instructions.innerHTML, /Tap Chrome&rsquo;s menu or install icon/);
+
+  const standaloneGuide = await runInstallScript({ guide: true, displayModeStandalone: true, standalone: true });
+  assert.equal(standaloneGuide.browserLabel.textContent, 'Installed · this device');
+  assert.equal(standaloneGuide.status.textContent, 'ImplicitEx is installed on this device.');
+  assert.equal(standaloneGuide.actions.hidden, false);
+  assert.equal(standaloneGuide.action.hidden, false);
+  assert.equal(standaloneGuide.action.textContent, 'Open Transfer Portal');
+  assert.equal(standaloneGuide.action.title, 'Open Transfer Portal');
+  assert.equal(standaloneGuide.help.hidden, true);
+  assert.equal(standaloneGuide.instructions.hidden, true);
+  await standaloneGuide.action.click();
+  assert.deepEqual(standaloneGuide.locationCalls, ['/portal-index.html']);
+
+  const unsupportedHarness = await runInstallScript({
+    guide: true,
+    userAgent: 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Safari/537.36',
+    platform: 'Linux x86_64',
+    maxTouchPoints: 0,
+  });
+
+  assert.equal(unsupportedHarness.browserLabel.textContent, 'Desktop browser');
+  assert.equal(unsupportedHarness.actions.hidden, true);
+  assert.equal(unsupportedHarness.action.hidden, true);
+  assert.equal(unsupportedHarness.help.hidden, true);
+  assert.equal(unsupportedHarness.status.textContent, 'This browser does not support automatic installation.');
+  assert.match(unsupportedHarness.instructions.innerHTML, /This browser does not support automatic installation\./);
 });
 
 test('portal install guide hides after appinstalled and stays out of the service-worker path', async () => {
@@ -382,10 +481,12 @@ test('portal install guide hides after appinstalled and stays out of the service
 
   harness.windowListeners.appinstalled();
 
-  assert.equal(harness.promotion.hidden, true);
-  assert.equal(harness.status.hidden, true);
+  assert.equal(harness.promotion.hidden, false);
+  assert.equal(harness.status.hidden, false);
+  assert.equal(harness.action.hidden, false);
+  assert.equal(harness.action.textContent, 'Open Transfer Portal');
   assert.equal(harness.instructions.hidden, true);
-  assert.equal(harness.footerInstallLink.hidden, true);
+  assert.equal(harness.help.hidden, true);
 
   const installScript = read(portalInstallPath);
   assert.doesNotMatch(installScript, /serviceWorker|navigator\.serviceWorker|register\s*\(/);

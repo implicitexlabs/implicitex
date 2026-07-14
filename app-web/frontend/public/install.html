@@ -29,15 +29,16 @@
         <img class="wordmark" src="/components/images/wordmark-white.svg" alt="ImplicitEx">
       </a>
     </div>
-    <div class="portal-header-right">
-      <a class="install-page-back" href="/portal-index.html">Back to portal</a>
-    </div>
   </header>
 
   <main class="install-page">
+    <nav class="install-page-nav" aria-label="Install page">
+      <a class="install-page-back" href="/portal-index.html">← Back to Transfer Portal</a>
+    </nav>
     <section class="install-page-intro">
+      <p class="install-page-browser" id="portalInstallBrowser"></p>
       <h1 class="install-page-title">Install ImplicitEx</h1>
-      <p class="install-page-copy">Add ImplicitEx to your phone, tablet, or desktop for faster access without leaving the browser.</p>
+      <p class="install-page-copy">Open the Transfer Portal in its own window and keep it one tap away.</p>
     </section>
 
     <section class="portal-install-promo" id="portalInstallPromotion" aria-labelledby="portalInstallPromotionTitle">
@@ -51,13 +52,12 @@
         height="64"
       >
       <div class="portal-install-promo-copy">
-        <p class="portal-install-kicker">Install ImplicitEx</p>
         <h2 class="portal-install-title" id="portalInstallPromotionTitle">Keep the transfer portal one tap away.</h2>
-        <p class="portal-install-summary">Add ImplicitEx to your phone or desktop for faster access.</p>
+        <p class="portal-install-summary">The steps below match the current browser and device.</p>
         <p class="portal-install-status" id="portalInstallStatus" role="status" aria-live="polite"></p>
-        <div class="portal-install-actions">
-          <button class="portal-install-action" id="portalInstallAction" type="button">Install ImplicitEx</button>
-          <button class="portal-install-help" id="portalInstallHelp" type="button" aria-expanded="false" aria-controls="portalInstallInstructions">How installation works</button>
+        <div class="portal-install-actions" id="portalInstallActions">
+          <button class="portal-install-action" id="portalInstallAction" type="button">Install on this device</button>
+          <button class="portal-install-help" id="portalInstallHelp" type="button" aria-expanded="false" aria-controls="portalInstallInstructions">Show installation steps</button>
         </div>
         <div class="portal-install-instructions" id="portalInstallInstructions" hidden></div>
       </div>
