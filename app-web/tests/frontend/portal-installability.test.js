@@ -74,6 +74,21 @@ function createElement(initial = {}) {
       }
       return undefined;
     },
+    getBoundingClientRect() {
+      return {
+        width: 0,
+        height: 0,
+        left: 0,
+        top: 0,
+        right: 0,
+        bottom: 0,
+        x: 0,
+        y: 0,
+        toJSON() {
+          return this;
+        },
+      };
+    },
   };
 }
 
@@ -477,6 +492,23 @@ test('portal shell stays quiet and install page shows browser-specific direction
   assert.equal(firefoxUnsupportedHarness.status.textContent, 'Firefox web apps are available on Windows; on macOS or Linux, create a normal desktop shortcut if needed.');
   assert.match(firefoxUnsupportedHarness.instructions.innerHTML, /Firefox web apps are supported on Windows\./);
   assert.match(firefoxUnsupportedHarness.instructions.innerHTML, /create a normal desktop shortcut if you need one\./);
+
+  const manualBraveHarness = await runInstallScript({
+    guide: true,
+    brave: true,
+    userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) AppleWebKit/605.1.15 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/605.1.15 Brave/126.1.0.0',
+  });
+
+  assert.equal(manualBraveHarness.browserLabel.textContent, 'Brave · Desktop');
+  assert.equal(manualBraveHarness.action.textContent, 'Install on this device');
+  assert.equal(manualBraveHarness.action.hidden, true);
+  assert.equal(manualBraveHarness.action.title, 'Show installation instructions');
+  assert.equal(manualBraveHarness.actions.hidden, true);
+  assert.equal(manualBraveHarness.help.hidden, true);
+  assert.equal(manualBraveHarness.action.getBoundingClientRect().width, 0);
+  assert.equal(manualBraveHarness.action.getBoundingClientRect().height, 0);
+  assert.equal(manualBraveHarness.actions.getBoundingClientRect().width, 0);
+  assert.equal(manualBraveHarness.actions.getBoundingClientRect().height, 0);
 
   const standaloneGuide = await runInstallScript({ guide: true, displayModeStandalone: true, standalone: true });
   assert.equal(standaloneGuide.browserLabel.textContent, 'Installed · this device');

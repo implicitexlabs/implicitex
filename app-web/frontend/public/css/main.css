@@ -1546,6 +1546,9 @@ body.portal-active #nav {
 }
 
 .portal-install-promo[hidden],
+.portal-install-actions[hidden],
+.portal-install-action[hidden],
+.portal-install-help[hidden],
 .portal-install-status[hidden],
 .portal-install-instructions[hidden] {
   display: none;
