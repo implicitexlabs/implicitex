@@ -21,6 +21,9 @@ function loadConsent(opts) {
   opts = opts || {};
 
   var storedConsent = opts.storedConsent !== undefined ? opts.storedConsent : null;
+  var storedSchemaVersion = opts.storedSchemaVersion !== undefined ? opts.storedSchemaVersion : null;
+  var cookieConsent = opts.cookieConsent !== undefined ? opts.cookieConsent : null;
+  var cookieSchemaVersion = opts.cookieSchemaVersion !== undefined ? opts.cookieSchemaVersion : null;
   var preIX         = opts.preIX || {};
   var readyState    = opts.readyState || 'complete';
 
@@ -30,6 +33,43 @@ function loadConsent(opts) {
   // Track DOM mutations
   var appendedChildren = [];
   var eventListeners   = {};
+  var cookieJar = {};
+
+  function setCookieFromString(value) {
+    var segments = value.split(';').map(function (part) { return part.trim(); });
+    var pair = segments.shift();
+    var eqIndex = pair.indexOf('=');
+    var key = pair.slice(0, eqIndex);
+    var rawValue = pair.slice(eqIndex + 1);
+    var maxAge = null;
+
+    segments.forEach(function (segment) {
+      var lower = segment.toLowerCase();
+      if (lower.indexOf('max-age=') === 0) {
+        maxAge = parseInt(segment.slice(8), 10);
+      }
+    });
+
+    if (maxAge === 0) {
+      delete cookieJar[key];
+      return;
+    }
+
+    cookieJar[key] = decodeURIComponent(rawValue);
+  }
+
+  function cookieString() {
+    return Object.keys(cookieJar).map(function (key) {
+      return key + '=' + encodeURIComponent(cookieJar[key]);
+    }).join('; ');
+  }
+
+  if (cookieConsent !== null) {
+    cookieJar['implicitex-analytics-consent'] = cookieConsent;
+  }
+  if (cookieSchemaVersion !== null) {
+    cookieJar['implicitex-analytics-consent-schema'] = cookieSchemaVersion;
+  }
 
   global.document = {
     readyState: readyState,
@@ -59,8 +99,22 @@ function loadConsent(opts) {
     },
   };
 
+  Object.defineProperty(global.document, 'cookie', {
+    configurable: true,
+    enumerable: true,
+    get: function () {
+      return cookieString();
+    },
+    set: function (value) {
+      setCookieFromString(value);
+    },
+  });
+
   global.localStorage = {
-    _store: storedConsent !== null ? { 'implicitex-analytics-consent': storedConsent } : {},
+    _store: {
+      'implicitex-analytics-consent': storedConsent,
+      'implicitex-analytics-consent-schema': storedSchemaVersion,
+    },
     getItem: function (k) { return this._store[k] !== undefined ? this._store[k] : null; },
     setItem: function (k, v) { this._store[k] = v; },
   };
@@ -75,6 +129,7 @@ function loadConsent(opts) {
   return {
     IX:              global.window.IX,
     localStorage:    global.localStorage,
+    cookieJar:       cookieJar,
     appendedChildren: appendedChildren,
     eventListeners:  eventListeners,
     triggerDOMReady: function () {
@@ -105,6 +160,11 @@ test('stored accepted: no banner injected into DOM', () => {
   assert.equal(appendedChildren.length, 0);
 });
 
+test('stored accepted in cookie: IX._analyticsEnabled becomes true', () => {
+  var { IX } = loadConsent({ cookieConsent: 'accepted' });
+  assert.equal(IX._analyticsEnabled, true);
+});
+
 // ---- Stored consent: declined ----
 
 test('stored declined: IX._analyticsEnabled stays false', () => {
@@ -114,6 +174,11 @@ test('stored declined: IX._analyticsEnabled stays false', () => {
 
 test('stored declined: no banner injected into DOM', () => {
   var { appendedChildren } = loadConsent({ storedConsent: 'declined' });
+  assert.equal(appendedChildren.length, 0);
+});
+
+test('stored declined in cookie: no banner injected into DOM', () => {
+  var { appendedChildren } = loadConsent({ cookieConsent: 'declined' });
   assert.equal(appendedChildren.length, 0);
 });
 
@@ -167,6 +232,18 @@ test('stored declined: localStorage value is preserved', () => {
   assert.equal(localStorage.getItem('implicitex-analytics-consent'), 'declined');
 });
 
+test('stored accepted writes consent schema version', () => {
+  var { localStorage, cookieJar } = loadConsent({ storedConsent: 'accepted' });
+  assert.equal(localStorage.getItem('implicitex-analytics-consent-schema'), '1');
+  assert.equal(cookieJar['implicitex-analytics-consent-schema'], '1');
+});
+
+test('stored declined writes consent schema version', () => {
+  var { localStorage, cookieJar } = loadConsent({ storedConsent: 'declined' });
+  assert.equal(localStorage.getItem('implicitex-analytics-consent-schema'), '1');
+  assert.equal(cookieJar['implicitex-analytics-consent-schema'], '1');
+});
+
 // ---- Safety: no IX object ----
 
 test('stored accepted with no IX object does not throw', () => {
@@ -217,4 +294,60 @@ test('localStorage throws: does not crash, banner shows instead', () => {
   assert.doesNotThrow(() => require(consentPath));
   // When storage is unavailable, banner should still appear (no stored preference readable)
   assert.equal(appendedChildren.length, 1);
+});
+
+test('schema version mismatch causes the banner to reappear', () => {
+  var { appendedChildren } = loadConsent({
+    storedConsent: 'accepted',
+    storedSchemaVersion: '0',
+  });
+
+  assert.equal(appendedChildren.length, 1);
+});
+
+test('cookie persistence survives localStorage failure', () => {
+  var consentPath = path.resolve(__dirname, '../../frontend/public/js/consent.js');
+  delete require.cache[consentPath];
+
+  global.localStorage = {
+    getItem: function () { throw new Error('storage unavailable'); },
+    setItem: function () { throw new Error('storage unavailable'); },
+  };
+  global.window = {
+    IX: { _analyticsEnabled: false, track: null },
+    location: { pathname: '/', protocol: 'https:' },
+  };
+  global.document = {
+    readyState: 'complete',
+    addEventListener: function () {},
+    getElementById: function () {
+      return { addEventListener: function () {} };
+    },
+    createElement: function () {
+      return { id: '', className: '', innerHTML: '', setAttribute: function () {},
+                parentNode: { removeChild: function () {} } };
+    },
+    body: { appendChild: function () {} },
+  };
+
+  var cookieJar = { 'implicitex-analytics-consent': 'accepted', 'implicitex-analytics-consent-schema': '1' };
+  Object.defineProperty(global.document, 'cookie', {
+    configurable: true,
+    enumerable: true,
+    get: function () {
+      return Object.keys(cookieJar).map(function (key) {
+        return key + '=' + encodeURIComponent(cookieJar[key]);
+      }).join('; ');
+    },
+    set: function (value) {
+      var segments = value.split(';').map(function (part) { return part.trim(); });
+      var pair = segments.shift();
+      var eqIndex = pair.indexOf('=');
+      var key = pair.slice(0, eqIndex);
+      cookieJar[key] = decodeURIComponent(pair.slice(eqIndex + 1));
+    },
+  });
+
+  assert.doesNotThrow(() => require(consentPath));
+  assert.equal(global.window.IX._analyticsEnabled, true);
 });

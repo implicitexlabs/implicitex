@@ -1,7 +1,7 @@
 /**
  * consent.js — Analytics consent banner.
  *
- * Reads and writes a single localStorage key: 'implicitex-analytics-consent'
+ * Reads and writes consent state from same-origin browser storage.
  * Values: 'accepted' | 'declined' | (absent = no decision yet)
  *
  * Behavior:
@@ -20,7 +20,78 @@
 (function () {
   'use strict';
 
+  var CONSENT_SCHEMA_VERSION = '1';
   var STORAGE_KEY = 'implicitex-analytics-consent';
+  var SCHEMA_KEY = 'implicitex-analytics-consent-schema';
+  var COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
+
+  function isValidConsent(value) {
+    return value === 'accepted' || value === 'declined';
+  }
+
+  function readStorage(key) {
+    try { return localStorage.getItem(key); } catch (_) { return null; }
+  }
+
+  function writeStorage(key, value) {
+    try { localStorage.setItem(key, value); } catch (_) {}
+  }
+
+  function readCookie(key) {
+    if (typeof document === 'undefined' || typeof document.cookie !== 'string' || document.cookie === '') return null;
+
+    var prefix = key + '=';
+    var parts = document.cookie.split(';');
+
+    for (var i = 0; i < parts.length; i++) {
+      var part = parts[i].trim();
+      if (part.indexOf(prefix) === 0) {
+        try { return decodeURIComponent(part.slice(prefix.length)); } catch (_) { return null; }
+      }
+    }
+
+    return null;
+  }
+
+  function writeCookie(key, value) {
+    if (typeof document === 'undefined') return;
+
+    var pieces = [
+      key + '=' + encodeURIComponent(value),
+      'path=/',
+      'max-age=' + COOKIE_MAX_AGE,
+      'samesite=lax',
+    ];
+
+    if (window.location && window.location.protocol === 'https:') {
+      pieces.push('secure');
+    }
+
+    document.cookie = pieces.join('; ');
+  }
+
+  function readPersistedValue(key) {
+    var value = readStorage(key);
+    if (value !== null) return value;
+    return readCookie(key);
+  }
+
+  function readStoredConsent() {
+    var schema = readPersistedValue(SCHEMA_KEY);
+
+    if (schema !== null && schema !== CONSENT_SCHEMA_VERSION) return null;
+
+    var consent = readPersistedValue(STORAGE_KEY);
+    if (isValidConsent(consent)) {
+      if (schema === null) {
+        writeStorage(SCHEMA_KEY, CONSENT_SCHEMA_VERSION);
+        writeCookie(SCHEMA_KEY, CONSENT_SCHEMA_VERSION);
+      }
+      return consent;
+    }
+
+    return null;
+  }
 
   function activateAnalytics() {
     if (window.IX) {
@@ -32,12 +103,18 @@
   }
 
   function storeAndActivate() {
-    try { localStorage.setItem(STORAGE_KEY, 'accepted'); } catch (_) {}
+    writeStorage(STORAGE_KEY, 'accepted');
+    writeStorage(SCHEMA_KEY, CONSENT_SCHEMA_VERSION);
+    writeCookie(STORAGE_KEY, 'accepted');
+    writeCookie(SCHEMA_KEY, CONSENT_SCHEMA_VERSION);
     activateAnalytics();
   }
 
   function storeDecline() {
-    try { localStorage.setItem(STORAGE_KEY, 'declined'); } catch (_) {}
+    writeStorage(STORAGE_KEY, 'declined');
+    writeStorage(SCHEMA_KEY, CONSENT_SCHEMA_VERSION);
+    writeCookie(STORAGE_KEY, 'declined');
+    writeCookie(SCHEMA_KEY, CONSENT_SCHEMA_VERSION);
   }
 
   function removeBanner(banner) {
@@ -77,8 +154,7 @@
   }
 
   function init() {
-    var stored;
-    try { stored = localStorage.getItem(STORAGE_KEY); } catch (_) { stored = null; }
+    var stored = readStoredConsent();
 
     if (stored === 'accepted') {
       activateAnalytics();
