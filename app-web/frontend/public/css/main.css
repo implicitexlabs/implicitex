@@ -1362,7 +1362,7 @@ body.portal-active #nav {
   font-family: var(--font-sans);
   font-size: var(--text-caption);
   font-weight: var(--weight-semibold);
-  color: var(--accent-dim);
+  color: var(--dim);
   letter-spacing: var(--tracking-label);
   text-transform: uppercase;
   flex-shrink: 0;
@@ -1425,7 +1425,7 @@ body.portal-active #nav {
   font-weight: var(--weight-semibold);
   letter-spacing: var(--tracking-label);
   text-transform: uppercase;
-  color: var(--accent-dim);
+  color: var(--dim);
 }
 
 .portal-entry-title {
@@ -1548,7 +1548,7 @@ body.portal-active #nav {
   font-size: var(--size-xs);
   font-weight: var(--weight-semibold);
   letter-spacing: 0.08em;
-  color: var(--accent-dim);
+  color: var(--dim);
 }
 
 .portal-entry-preview-title {
@@ -3606,7 +3606,7 @@ footer {
   font-family: var(--font-ui);
   font-size: var(--size-sm);
   color: var(--dim);
-  letter-spacing: 0.06em;
+  letter-spacing: 0.02em;
   margin-top: var(--sp-2);
 }
 

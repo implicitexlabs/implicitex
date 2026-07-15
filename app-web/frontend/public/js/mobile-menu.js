@@ -181,14 +181,7 @@
   if (els.menuOpenPortalBtn) {
     els.menuOpenPortalBtn.addEventListener('click', () => {
       closeMenu();
-      // openTransferPortal opens the workspace without requesting wallet permission.
-      // Connect Wallet in the Wallet section is the authorization action.
-      // On secondary pages the portal DOM is absent — fall back to navigating home.
-      if (document.getElementById('modules') && window.IX && window.IX.openTransferPortal) {
-        window.IX.openTransferPortal();
-      } else {
-        window.location.href = '/#transfer';
-      }
+      window.location.href = 'https://portal.implicitex.com/';
     });
   }
 
