@@ -3,7 +3,8 @@
  *
  * Produces a signed package manifest, trusted public-key allowlist, and a
  * lifecycle bundle bound to the signed manifest hash. Private keys are read
- * from environment variables unless --generate-keys is passed.
+ * from protected local files by default, or from explicitly named environment
+ * variables when requested. This script must never print private key material.
  */
 
 'use strict';
@@ -21,7 +22,6 @@ const BUNDLE_OUT = path.join(PUBLIC_ROOT, 'card/coin-card-lifecycle-bundle.js');
 const CARD_RECORD_PATH = path.join(PUBLIC_ROOT, 'registry/coincards/cc_demo_implicitex.json');
 
 const args = process.argv.slice(2);
-const GENERATE_KEYS = args.includes('--generate-keys');
 const DRY_RUN = args.includes('--dry-run');
 
 const MANIFEST_KEY_ID = 'ix-coin-card-manifest-v1';
@@ -127,26 +127,13 @@ async function sha256Hex(bytes) {
   return 'sha256:' + Buffer.from(digest).toString('hex');
 }
 
-async function sha256File(relativePath) {
-  return sha256Hex(fs.readFileSync(path.join(PUBLIC_ROOT, relativePath)));
+async function sha256Base64Url(bytes) {
+  const digest = await subtle.digest('SHA-256', bytes);
+  return toBase64Url(digest);
 }
 
-async function generateKeyPair() {
-  const pair = await subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign', 'verify']);
-  const publicJwk = await subtle.exportKey('jwk', pair.publicKey);
-  const privatePkcs8 = await subtle.exportKey('pkcs8', pair.privateKey);
-  return {
-    privateKey: pair.privateKey,
-    publicJwk: {
-      kty: publicJwk.kty,
-      crv: publicJwk.crv,
-      x: publicJwk.x,
-      y: publicJwk.y,
-      key_ops: ['verify'],
-      ext: true,
-    },
-    privatePkcs8B64: Buffer.from(privatePkcs8).toString('base64'),
-  };
+async function sha256File(relativePath) {
+  return sha256Hex(fs.readFileSync(path.join(PUBLIC_ROOT, relativePath)));
 }
 
 async function importPrivateKey(pkcs8B64) {
@@ -164,12 +151,56 @@ async function publicJwkFromPrivate(privateKey) {
   return { kty: jwk.kty, crv: jwk.crv, x: jwk.x, y: jwk.y, key_ops: ['verify'], ext: true };
 }
 
-async function getKey(label, envName) {
-  if (GENERATE_KEYS) return generateKeyPair();
-  const raw = process.env[envName];
-  if (!raw) throw new Error(`${envName} is required unless --generate-keys is passed`);
+function readArgValue(name) {
+  const index = args.indexOf(name);
+  if (index === -1) return null;
+  const value = args[index + 1];
+  if (!value || value.startsWith('--')) throw new Error(`${name} requires a value`);
+  return value;
+}
+
+function assertProtectedFileMode(filePath) {
+  const stat = fs.statSync(filePath);
+  if (!stat.isFile()) throw new Error(`Signing key path is not a file: ${filePath}`);
+  if ((stat.mode & 0o077) !== 0) {
+    throw new Error(`Signing key file must not be readable by group/other: ${filePath}`);
+  }
+}
+
+function readPrivateKeyMaterial(label, fileArg, envArg, defaultEnvName) {
+  const filePath = readArgValue(fileArg);
+  const envName = readArgValue(envArg);
+  if (filePath && envName) {
+    throw new Error(`${label} key source must be either ${fileArg} or ${envArg}, not both`);
+  }
+  if (filePath) {
+    assertProtectedFileMode(filePath);
+    return fs.readFileSync(filePath, 'utf8').trim();
+  }
+  const selectedEnvName = envName || defaultEnvName;
+  if (process.env[selectedEnvName]) return process.env[selectedEnvName].trim();
+  throw new Error(`${label} private key missing; provide ${fileArg} or ${envArg}`);
+}
+
+async function getKey(label, fileArg, envArg, defaultEnvName) {
+  const raw = readPrivateKeyMaterial(label, fileArg, envArg, defaultEnvName);
   const privateKey = await importPrivateKey(raw);
-  return { privateKey, publicJwk: await publicJwkFromPrivate(privateKey), privatePkcs8B64: null, label };
+  const publicJwk = await publicJwkFromPrivate(privateKey);
+  const fingerprint = await sha256Base64Url(Buffer.from(JSON.stringify({
+    crv: publicJwk.crv,
+    kty: publicJwk.kty,
+    x: publicJwk.x,
+    y: publicJwk.y,
+  }), 'utf8'));
+  return { privateKey, publicJwk, fingerprint, label };
+}
+
+function getBuildVersion() {
+  const buildVersion = readArgValue('--build-version') || process.env.COIN_CARD_ACCEPTANCE_BUILD_VERSION || '';
+  if (!buildVersion || buildVersion === 'commit-i' || buildVersion === 'dev') {
+    throw new Error('A non-placeholder --build-version or COIN_CARD_ACCEPTANCE_BUILD_VERSION is required');
+  }
+  return buildVersion;
 }
 
 function trustedKeyRecord(keyId, publicJwk, issuerId, usage) {
@@ -238,7 +269,7 @@ ${entries},
 `;
 }
 
-async function buildManifest(manifestKey) {
+async function buildManifest(manifestKey, buildVersion) {
   const assets = [];
   for (const assetPath of PROTECTED_ASSETS.slice().sort()) {
     assets.push({
@@ -251,7 +282,7 @@ async function buildManifest(manifestKey) {
   const signedAt = new Date().toISOString();
   const manifest = {
     assets,
-    buildVersion: 'commit-i',
+    buildVersion,
     coinCardVersion: 'coin-card.v1',
     environment: ENVIRONMENT,
     issuerId: MANIFEST_ISSUER_ID,
@@ -383,16 +414,19 @@ async function verifySignature(publicJwk, signatureValue, bytes) {
 }
 
 async function main() {
-  const manifestKey = await getKey('manifest', 'COIN_CARD_MANIFEST_PRIVATE_KEY_B64');
-  const lifecycleKey = await getKey('lifecycle', 'COIN_CARD_LIFECYCLE_PRIVATE_KEY_B64');
-
-  if (GENERATE_KEYS) {
-    console.log('=== COIN_CARD_MANIFEST_PRIVATE_KEY_B64 ===');
-    console.log(manifestKey.privatePkcs8B64);
-    console.log('=== COIN_CARD_LIFECYCLE_PRIVATE_KEY_B64 ===');
-    console.log(lifecycleKey.privatePkcs8B64);
-    console.log('=== END PRIVATE KEYS ===');
-  }
+  const buildVersion = getBuildVersion();
+  const manifestKey = await getKey(
+    'manifest',
+    '--manifest-key-file',
+    '--manifest-key-env',
+    'COIN_CARD_MANIFEST_PRIVATE_KEY_B64',
+  );
+  const lifecycleKey = await getKey(
+    'lifecycle',
+    '--lifecycle-key-file',
+    '--lifecycle-key-env',
+    'COIN_CARD_LIFECYCLE_PRIVATE_KEY_B64',
+  );
 
   const trustedKeys = renderTrustedKeys([
     trustedKeyRecord(MANIFEST_KEY_ID, manifestKey.publicJwk, MANIFEST_ISSUER_ID, ['coin-card-manifest-signing']),
@@ -400,7 +434,7 @@ async function main() {
   ]);
   if (!DRY_RUN) fs.writeFileSync(TRUSTED_KEYS_OUT, trustedKeys, 'utf8');
 
-  const manifest = await buildManifest(manifestKey);
+  const manifest = await buildManifest(manifestKey, buildVersion);
   const manifestPayload = Buffer.from(canonicalizeIntegrityManifestPayload(manifest), 'utf8');
   if (!await verifySignature(manifestKey.publicJwk, manifest.signature.value, manifestPayload)) {
     throw new Error('manifest signature self-verification failed');
@@ -424,8 +458,12 @@ async function main() {
   if (!DRY_RUN) fs.writeFileSync(BUNDLE_OUT, renderLifecycleBundle(record, now), 'utf8');
 
   console.log(`manifest key: ${MANIFEST_KEY_ID}`);
+  console.log(`manifest public fingerprint: ${manifestKey.fingerprint}`);
   console.log(`lifecycle key: ${LIFECYCLE_KEY_ID}`);
+  console.log(`lifecycle public fingerprint: ${lifecycleKey.fingerprint}`);
+  console.log(`buildVersion: ${buildVersion}`);
   console.log(`manifestHash: ${manifest.manifestHash}`);
+  console.log(`lifecycle recordId: ${record.recordId}`);
   console.log(`cardId: ${card.cardId}`);
 }
 
