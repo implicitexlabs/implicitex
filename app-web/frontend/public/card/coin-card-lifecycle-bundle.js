@@ -2,10 +2,10 @@
  *
  * GENERATED FILE — do not edit by hand. Run scripts/generate_signed_coin_card_acceptance.js.
  *
- * GeneratedAt:      2026-07-15T21:16:25.142Z
+ * GeneratedAt:      2026-07-15T21:36:43.556Z
  * RegistryVersion:  1
  * CardId:           cc_demo_implicitex
- * ManifestId:       sha256:4492795bd896c2fdf13dad6b307669731e41fc1da3571d48a7d1635808c53efb
+ * ManifestId:       sha256:a3308b11d516817c221d006c29ec139db1ae79e5e987247c1f2bee7fa0d89285
  * RecordId:         implicitex-production-r1-cc_demo_implicitex
  * Signer:           ix-lifecycle-pub-v1
  */
@@ -24,7 +24,7 @@
     "registryId": "implicitex-production",
     "environment": "production",
     "registryVersion": 1,
-    "generatedAt": "2026-07-15T21:16:25.142Z",
+    "generatedAt": "2026-07-15T21:36:43.556Z",
     "entries": [
       {
         "registryId": "implicitex-production",
@@ -32,14 +32,14 @@
         "environment": "production",
         "registryVersion": 1,
         "recordId": "implicitex-production-r1-cc_demo_implicitex",
-        "publishedAt": "2026-07-15T21:16:25.142Z",
+        "publishedAt": "2026-07-15T21:36:43.556Z",
         "cardId": "cc_demo_implicitex",
-        "manifestId": "sha256:4492795bd896c2fdf13dad6b307669731e41fc1da3571d48a7d1635808c53efb",
+        "manifestId": "sha256:a3308b11d516817c221d006c29ec139db1ae79e5e987247c1f2bee7fa0d89285",
         "revision": 1,
         "previousManifestId": null,
         "cardStatus": "CARD_ACTIVE",
         "manifestStatus": "MANIFEST_CURRENT",
-        "effectiveFrom": "2026-07-15T21:16:25.142Z",
+        "effectiveFrom": "2026-07-15T21:36:43.556Z",
         "effectiveUntil": null,
         "supersededByManifestId": null,
         "reasonCode": null,
@@ -53,8 +53,8 @@
           "signatureValueEncoding": "base64url-unpadded",
           "keyId": "ix-lifecycle-pub-v1",
           "authorityId": "implicitex-registry",
-          "signedAt": "2026-07-15T21:16:25.142Z",
-          "value": "YYE2gKF9r3QR2g5csvCGRIRveCH0oP8gvEvJAD8ka1w5GxXQYjow0gw6_nlIUK8H2ax984ZYoKi2P6xxUFfa8g"
+          "signedAt": "2026-07-15T21:36:43.556Z",
+          "value": "eXrYswppE8z00oKZbN9vyhB2j7if786_Yx9RaSSz55qdAEbeH1ZkvxfAskoK0Mda-UD_GWuRmr3u4qrseEMyuQ"
         }
       }
     ]

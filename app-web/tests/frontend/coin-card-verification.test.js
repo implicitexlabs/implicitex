@@ -1361,7 +1361,7 @@ test('evaluateSignaturePolicy invalid supported signature becomes INTEGRITY_FAIL
   const result = await verification.evaluateSignaturePolicy(manifest, {
     state: verification.STATES.ASSET_HASHES_PASSED,
     integrityManifest: manifest,
-    metadata: { assetIntegrityStatus: 'passed' },
+    metadata: { assetIntegrityStatus: 'passed', manifestHash: manifest.manifestHash },
     error: null,
   });
 
@@ -1433,7 +1433,7 @@ test('evaluateSignaturePolicy mutable trusted key source stays unavailable', asy
   const result = await verification.evaluateSignaturePolicy(manifest, {
     state: verification.STATES.ASSET_HASHES_PASSED,
     integrityManifest: manifest,
-    metadata: { assetIntegrityStatus: 'passed' },
+    metadata: { assetIntegrityStatus: 'passed', manifestHash: manifest.manifestHash },
     error: null,
   });
 
@@ -1481,7 +1481,7 @@ test('evaluateSignaturePolicy supported valid signature with known key can verif
   const result = await verification.evaluateSignaturePolicy(manifest, {
     state: verification.STATES.ASSET_HASHES_PASSED,
     integrityManifest: manifest,
-    metadata: { assetIntegrityStatus: 'passed' },
+    metadata: { assetIntegrityStatus: 'passed', manifestHash: manifest.manifestHash },
     error: null,
   });
 
@@ -1489,6 +1489,9 @@ test('evaluateSignaturePolicy supported valid signature with known key can verif
   assert.equal(result.valid, true);
   assert.equal(result.signatureMode, 'signed-p256-v1');
   assert.equal(result.keyId, 'coin-card-test-key');
+  assert.equal(result.integrityManifest, manifest);
+  assert.equal(result.metadata.assetIntegrityStatus, 'passed');
+  assert.equal(result.metadata.manifestHash, manifest.manifestHash);
 });
 
 test('loadIntegrityManifest hash mismatch becomes INTEGRITY_FAILED', async () => {

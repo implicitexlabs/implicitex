@@ -706,7 +706,11 @@
               qrLibraryAttestation: null,
             };
           }
-          return Object.assign({}, result, { qrLibraryAttestation: qrAttestation });
+          return Object.assign({}, result, {
+            integrityManifest: integrityManifest,
+            metadata: assetHashResult.metadata || buildIntegrityManifestMetadata(integrityManifest),
+            qrLibraryAttestation: qrAttestation,
+          });
         }
         if (result && result.state === STATES.INTEGRITY_FAILED) {
           return result;
