@@ -22,6 +22,7 @@
     "build:qrcode-vendor": "esbuild node_modules/qrcode/lib/browser.js --bundle --minify --global-name=QRCode --format=iife --outfile=frontend/public/js/vendor/qrcode.min.js",
     "check:qrcode-vendor": "node scripts/check_qrcode_vendor.js",
     "test:ix-execution": "node tests/frontend/ix-execution.test.js",
+    "test:ix-execution-authorized": "node tests/frontend/ix-execution-authorized-path.test.js",
     "test:observability": "node tests/frontend/observability.test.js",
     "test:analytics": "node tests/frontend/analytics.test.js",
     "test:consent": "node tests/frontend/consent.test.js",

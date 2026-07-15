@@ -28,6 +28,10 @@
     "lifecyclePresentationPromotion": {
       "implementation": "app-web/frontend/public/card/coin-card-lifecycle-presentation.js",
       "symbol": "window.IX_COIN_CARD_LIFECYCLE_PRESENTATION"
+    },
+    "executionAuthorization": {
+      "implementation": "app-web/frontend/public/card/coin-card-execution-authorization.js",
+      "symbol": "window.IX_COIN_CARD_EXECUTION_AUTHORIZATION"
     }
   },
   "implementedEdges": [
@@ -74,6 +78,11 @@
     {
       "from": "lifecyclePresentationPromotion",
       "to": "lifecycleResolution",
+      "relationship": "consumes"
+    },
+    {
+      "from": "executionAuthorization",
+      "to": "lifecyclePresentationPromotion",
       "relationship": "consumes"
     }
   ],

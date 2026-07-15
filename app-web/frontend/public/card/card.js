@@ -82,8 +82,13 @@
     amount:              null,
     fee:                 null,
     total:               null,
+    rawAmount:           null,   /* BigInt — recipientAmountAtomic for authorization */
+    rawFee:              null,   /* BigInt — platformFeeAtomic for authorization */
+    rawTotal:            null,   /* BigInt — totalDebitAtomic for authorization */
     intent:              null,
     sender:              null,
+    manifestId:          null,   /* manifestHash from verification result, used as lifecycle manifestId */
+    promotedPresentationResult: null, /* result of lifecycle pipeline; set async after VERIFIED */
     integrityManifestVerificationState: 'VERIFICATION_UNAVAILABLE',
     qrLibraryState:       QR_LIBRARY_STATE.NOT_REQUESTED,
     qrLibraryAttestation: null,
@@ -191,6 +196,38 @@
   }
 
   /* ----------------------------------------------------------------
+   * Lifecycle pipeline — runs asynchronously after manifest verification
+   * succeeds. Stores the promoted presentation result in state so it is
+   * available at commitment time (startExecution). Failure is silently
+   * absorbed; state.promotedPresentationResult stays null.
+   * ---------------------------------------------------------------- */
+  function runLifecyclePipeline(registryRecord) {
+    var bundleVerifier = window.IX_COIN_CARD_LIFECYCLE_BUNDLE_VERIFICATION;
+    var selector       = window.IX_COIN_CARD_LIFECYCLE_RECORD_SELECTION;
+    var resolver       = window.IX_COIN_CARD_LIFECYCLE_RESOLUTION;
+    var presenter      = window.IX_COIN_CARD_LIFECYCLE_PRESENTATION;
+
+    if (!bundleVerifier || typeof bundleVerifier.authenticateLifecycleRegistryBundle !== 'function') return;
+    if (!selector || !resolver || !presenter) return;
+
+    var bundle = window.IX_COIN_CARD_LIFECYCLE_REGISTRY_BUNDLE;
+
+    bundleVerifier.authenticateLifecycleRegistryBundle(bundle)
+      .then(function (bundleResult) {
+        var selectionRequest = {
+          cardId:     registryRecord.cardId,
+          manifestId: state.manifestId,
+        };
+        var selected = selector.selectLifecycleEvidence(bundleResult, selectionRequest);
+        var resolved = resolver.resolveLifecycle(selected);
+        state.promotedPresentationResult = presenter.promotePresentation(resolved);
+      })
+      .catch(function () {
+        state.promotedPresentationResult = null;
+      });
+  }
+
+  /* ----------------------------------------------------------------
    * Trust population — runs once on registry record load.
    * Populates recipient identity across all body panels so each panel
    * shows the correct data when it becomes visible.
@@ -262,9 +299,12 @@
       return;
     }
 
-    state.amount = amount;
-    state.fee    = fee;
-    state.total  = total;
+    state.amount   = amount;
+    state.fee      = fee;
+    state.total    = total;
+    state.rawAmount = rawAmount;
+    state.rawFee    = feeResult.fee;
+    state.rawTotal  = feeResult.total;
 
     var token = (state.registryRecord && state.registryRecord.token || 'USDC').toUpperCase();
     setText('ccFeeValue',   fee.toFixed(2)   + ' ' + token);
@@ -276,10 +316,13 @@
   }
 
   function clearFee() {
-    state.amount = null;
-    state.fee    = null;
-    state.total  = null;
-    state.intent = null;
+    state.amount    = null;
+    state.fee       = null;
+    state.total     = null;
+    state.rawAmount = null;
+    state.rawFee    = null;
+    state.rawTotal  = null;
+    state.intent    = null;
     setText('ccFeeValue',   '\u2014');
     setText('ccTotalValue', '\u2014');
     setChipState('cc-card-chip--waiting', true, 'Enter amount to continue');
@@ -290,16 +333,24 @@
    * ---------------------------------------------------------------- */
   function buildIntent() {
     if (!state.registryRecord || state.amount == null) return;
-    var m = state.registryRecord;
+    var m          = state.registryRecord;
+    var chainParams = window.IX_EXECUTION ? window.IX_EXECUTION.getChainParams(m.chainId) : null;
     state.intent = {
-      cardId:    m.cardId,
-      recipient: m.recipient,
-      amount:    state.amount,
-      fee:       state.fee,
-      total:     state.total,
-      chainId:   m.chainId,
-      token:     m.token,
-      owner:     m.owner || null,
+      cardId:                   m.cardId,
+      recipient:                m.recipient,
+      amount:                   state.amount,
+      fee:                      state.fee,
+      total:                    state.total,
+      chainId:                  m.chainId,
+      token:                    m.token,
+      owner:                    m.owner || null,
+      /* Atomic string amounts for execution authorization. */
+      recipientAmountAtomic:    state.rawAmount != null ? String(state.rawAmount) : null,
+      platformFeeAtomic:        state.rawFee    != null ? String(state.rawFee)    : null,
+      totalDebitAtomic:         state.rawTotal  != null ? String(state.rawTotal)  : null,
+      /* Chain contract addresses for execution authorization. */
+      tokenAddress:             chainParams ? chainParams.usdcAddress    : null,
+      executionContractAddress: chainParams ? chainParams.contractAddress : null,
     };
     transition('TRANSFER_INTENT_READY');
     setChipState('cc-card-chip--ready', false, 'Connect wallet to send USDC');
@@ -474,105 +525,166 @@
   /* ----------------------------------------------------------------
    * Execution — all writes through window.IX_EXECUTION
    * ---------------------------------------------------------------- */
+
+  /* Map authorization outcome codes to user-visible messages. */
+  function describeAuthFailure(authResult) {
+    if (!authResult || !authResult.outcome) return 'Transfer not authorized';
+    var messages = {
+      EXECUTION_PRESENTATION_PROOF_INVALID: 'Card not authorized for transfer',
+      EXECUTION_INTENT_INVALID:             'Transfer intent invalid',
+      EXECUTION_WALLET_UNAVAILABLE:         'Wallet not ready',
+      EXECUTION_ACCOUNT_INVALID:            'Invalid wallet account',
+      EXECUTION_NETWORK_MISMATCH:           'Wrong network',
+      EXECUTION_RECIPIENT_INVALID:          'Invalid recipient',
+      EXECUTION_SELF_SEND_BLOCKED:          'Cannot send to yourself',
+      EXECUTION_AMOUNT_INVALID:             'Invalid amount',
+      EXECUTION_AMOUNT_OUT_OF_RANGE:        'Amount out of range',
+      EXECUTION_TOTAL_MISMATCH:             'Fee calculation mismatch',
+      EXECUTION_FUNDS_INSUFFICIENT:         'Insufficient USDC balance',
+      EXECUTION_POLICY_UNAVAILABLE:         'Authorization module unavailable',
+    };
+    return messages[authResult.outcome] || 'Transfer not authorized';
+  }
+
   function startExecution() {
     if (!state.intent || !state.sender || !state.registryRecord || !window.IX_EXECUTION) return;
+
+    /* Existing verification gate — remains until authorization integration is proven. */
     if (!verification || !verification.canExecuteTransfer(state.integrityManifestVerificationState)) {
       renderVerificationBlocked();
       return;
     }
+
+    var authModule = window.IX_COIN_CARD_EXECUTION_AUTHORIZATION;
+    if (!authModule || typeof authModule.authorizeExecution !== 'function') {
+      renderTxError('Authorization module unavailable');
+      return;
+    }
+
     var intent  = state.intent;
     var chainId = state.registryRecord.chainId;
-    var token     = (state.registryRecord.token || 'USDC').toUpperCase();
+    var token   = (state.registryRecord.token || 'USDC').toUpperCase();
 
-    /* Prime exec panel with amount (name+recipient already populated by renderTrust) */
-    setText('ccExecAmount', intent.amount.toFixed(2));
+    /* Freeze the transfer intent snapshot at commitment time. */
+    var transferIntent = Object.freeze({
+      cardId:                   intent.cardId || null,
+      manifestId:               state.manifestId || null,
+      tokenAddress:             intent.tokenAddress || null,
+      executionContractAddress: intent.executionContractAddress || null,
+      chainId:                  chainId,
+      recipient:                intent.recipient,
+      recipientAmountAtomic:    intent.recipientAmountAtomic || null,
+      platformFeeAtomic:        intent.platformFeeAtomic || null,
+      totalDebitAtomic:         intent.totalDebitAtomic || null,
+    });
 
-    transition('APPROVE_PENDING');
-    setChipState('cc-card-chip--active', true, 'Confirm USDC approval in wallet\u2026');
-    setText('ccExecLabel', 'Confirm USDC approval in wallet\u2026');
-    setStatus('pending', 'Pending');
+    /* Read live wallet state for the wallet snapshot input. */
+    window.IX_EXECUTION.readWalletSnapshot(state.sender, chainId)
+      .then(function (walletSnapshot) {
+        if (!walletSnapshot) {
+          renderTxError('Wallet state unavailable for authorization');
+          return;
+        }
 
-    window.IX_EXECUTION.executeTransfer({
-      action:    'execute',
-      chainId:   chainId,
-      sender:    state.sender,
-      recipient: intent.recipient,
-      amount:    intent.amount,
-      fee:       intent.fee,
-      total:     intent.total,
-      token:     token,
-      source:    'coincard',
-      traceId:   generateTraceId(),
-    }, {
-      onApprovalSubmitted: function () {
-        setText('ccExecLabel', 'Approval submitted. Awaiting confirmation\u2026');
-      },
-      onTransferRequested: function () {
-        transition('EXECUTE_PENDING');
-        setChipState('cc-card-chip--active', true, 'Confirm transfer in wallet\u2026');
-        setText('ccExecLabel', 'Confirm transfer in wallet\u2026');
-      },
-      onTransferSubmitted: function () {
-        setText('ccExecLabel', 'Transfer submitted. Awaiting on-chain confirmation\u2026');
-        setStatus('submitted', 'Confirming');
-      },
-    })
-      .then(function (result) {
-        if (result.status === 'confirmed') {
-          /* Populate confirmed panel from normalized receipt */
-          var receipt = result.receipt;
-          setText('ccConfirmedAmount', intent.amount.toFixed(2));
-          var txHashEl = el('ccTxHash');
-          if (txHashEl && receipt) {
-            txHashEl.href        = receipt.explorerUrl || '#';
-            txHashEl.textContent = receipt.txHash.slice(0, 10) + '\u2026' + receipt.txHash.slice(-6);
-            txHashEl.title       = receipt.txHash;
-          }
-          setStatus('confirmed', 'Confirmed');
-          transition('CONFIRMED');
-          setChipState('cc-card-chip--done', true, 'Transfer confirmed');
-          emit('CC_CONFIRMED', { txHash: receipt && receipt.txHash, sender: state.sender, intent: intent, receipt: receipt });
+        /* Request authorization — three-input gate. */
+        var authResult = authModule.authorizeExecution(
+          state.promotedPresentationResult,
+          transferIntent,
+          walletSnapshot
+        );
+
+        if (!authModule.isExecutionAuthorizedResult(authResult)) {
+          renderTxError(describeAuthFailure(authResult));
           return;
         }
-        if (result.status === 'wallet-rejected') {
-          /* User declined — return to review panel to retry */
-          transition('READY_TO_SEND');
-          setStatus('verified', 'Verified');
-          setChipState('cc-card-chip--ready', false, 'Confirm transfer in wallet');
-          return;
-        }
-        if (result.status === 'wallet-busy') {
-          /* Wallet has a pending request — not a failure; return to review */
-          transition('READY_TO_SEND');
-          setStatus('verified', 'Verified');
-          setChipState('cc-card-chip--ready', false, 'Wallet busy — retry when ready');
-          return;
-        }
-        if (result.status === 'outcome-unknown') {
-          /* Transfer may have been broadcast — do not claim failure */
-          var explorerUrl = result.error && result.error.explorerUrl;
-          var unknownMsg  = explorerUrl
-            ? 'Transfer submitted. Check the explorer to confirm.'
-            : 'Transfer status unknown. Check the explorer before retrying.';
-          var txHashLink = el('ccTxHash');
-          if (txHashLink && explorerUrl) {
-            txHashLink.href        = explorerUrl;
-            txHashLink.textContent = 'View on explorer';
-            txHashLink.title       = result.error && result.error.txHash || '';
-          }
-          renderTxError(unknownMsg);
-          return;
-        }
-        if (result.status === 'failed') {
-          var msg = result.error && result.error.message || 'Transfer failed';
-          renderTxError(msg.length > 80 ? msg.slice(0, 80) + '\u2026' : msg);
-          return;
-        }
-        renderTxError('Unexpected execution result');
+
+        /* Authorization proof obtained — proceed with execution. */
+        var traceId = generateTraceId();
+
+        /* Prime exec panel with amount (name+recipient populated by renderTrust). */
+        setText('ccExecAmount', intent.amount.toFixed(2));
+        transition('APPROVE_PENDING');
+        setChipState('cc-card-chip--active', true, 'Confirm USDC approval in wallet\u2026');
+        setText('ccExecLabel', 'Confirm USDC approval in wallet\u2026');
+        setStatus('pending', 'Pending');
+
+        window.IX_EXECUTION.executeTransfer({
+          action:             'execute-authorized',
+          authorizationProof: authResult,
+          token:              token,
+          source:             'coincard',
+          traceId:            traceId,
+        }, {
+          onApprovalSubmitted: function () {
+            setText('ccExecLabel', 'Approval submitted. Awaiting confirmation\u2026');
+          },
+          onTransferRequested: function () {
+            transition('EXECUTE_PENDING');
+            setChipState('cc-card-chip--active', true, 'Confirm transfer in wallet\u2026');
+            setText('ccExecLabel', 'Confirm transfer in wallet\u2026');
+          },
+          onTransferSubmitted: function () {
+            setText('ccExecLabel', 'Transfer submitted. Awaiting on-chain confirmation\u2026');
+            setStatus('submitted', 'Confirming');
+          },
+        })
+          .then(function (result) {
+            if (result.status === 'confirmed') {
+              var receipt = result.receipt;
+              setText('ccConfirmedAmount', intent.amount.toFixed(2));
+              var txHashEl = el('ccTxHash');
+              if (txHashEl && receipt) {
+                txHashEl.href        = receipt.explorerUrl || '#';
+                txHashEl.textContent = receipt.txHash.slice(0, 10) + '\u2026' + receipt.txHash.slice(-6);
+                txHashEl.title       = receipt.txHash;
+              }
+              setStatus('confirmed', 'Confirmed');
+              transition('CONFIRMED');
+              setChipState('cc-card-chip--done', true, 'Transfer confirmed');
+              emit('CC_CONFIRMED', { txHash: receipt && receipt.txHash, sender: state.sender, intent: intent, receipt: receipt });
+              return;
+            }
+            if (result.status === 'wallet-rejected') {
+              /* Proof is consumed — user must re-authorize on next attempt. */
+              transition('READY_TO_SEND');
+              setStatus('verified', 'Verified');
+              setChipState('cc-card-chip--ready', false, 'Confirm transfer in wallet');
+              return;
+            }
+            if (result.status === 'wallet-busy') {
+              transition('READY_TO_SEND');
+              setStatus('verified', 'Verified');
+              setChipState('cc-card-chip--ready', false, 'Wallet busy — retry when ready');
+              return;
+            }
+            if (result.status === 'outcome-unknown') {
+              var explorerUrl = result.error && result.error.explorerUrl;
+              var unknownMsg  = explorerUrl
+                ? 'Transfer submitted. Check the explorer to confirm.'
+                : 'Transfer status unknown. Check the explorer before retrying.';
+              var txHashLink = el('ccTxHash');
+              if (txHashLink && explorerUrl) {
+                txHashLink.href        = explorerUrl;
+                txHashLink.textContent = 'View on explorer';
+                txHashLink.title       = result.error && result.error.txHash || '';
+              }
+              renderTxError(unknownMsg);
+              return;
+            }
+            if (result.status === 'failed') {
+              var msg = result.error && result.error.message || 'Transfer failed';
+              renderTxError(msg.length > 80 ? msg.slice(0, 80) + '\u2026' : msg);
+              return;
+            }
+            renderTxError('Unexpected execution result');
+          })
+          .catch(function (err) {
+            var msg = err && err.message || 'Transfer failed';
+            renderTxError(msg.length > 80 ? msg.slice(0, 80) + '\u2026' : msg);
+          });
       })
-      .catch(function (err) {
-        var msg = err && err.message || 'Transfer failed';
-        renderTxError(msg.length > 80 ? msg.slice(0, 80) + '\u2026' : msg);
+      .catch(function () {
+        renderTxError('Wallet state check failed');
       });
   }
 
@@ -646,6 +758,10 @@
           ? verification.normalizeState(result && result.state)
           : 'VERIFICATION_UNAVAILABLE';
 
+        /* Store the manifest hash as the lifecycle manifestId. This binds
+         * lifecycle records to this specific package version. */
+        state.manifestId = (result && result.metadata && result.metadata.manifestHash) || null;
+
         /* Store the frozen QR library attestation issued by the verifier.
          * This is the only token passed to loadQrLibrary(); it contains
          * exactly the path and sha256 of qrcode.min.js and nothing more. */
@@ -655,6 +771,11 @@
           renderVerificationBlocked();
           return;
         }
+
+        /* Run lifecycle pipeline async — result stored for commitment time.
+         * With the current empty lifecycle bundle this produces a blocked
+         * result; authorization will fail until real lifecycle records exist. */
+        runLifecyclePipeline(registryRecord);
 
         initAmountSurface(registryRecord);
         transition('VERIFIED');

@@ -376,16 +376,92 @@
       });
   }
 
+  /* ----------------------------------------------------------------
+   * getCurrentAccount — silently read connected accounts (no popup)
+   * ---------------------------------------------------------------- */
+  function getCurrentAccount() {
+    ensureProvider();
+    return window.ethereum.request({ method: 'eth_accounts' })
+      .then(function (accounts) {
+        return (accounts && accounts.length) ? accounts[0] : null;
+      });
+  }
+
+  /* ----------------------------------------------------------------
+   * getChainParams — expose public chain parameters needed for transfer
+   * intent construction. Internal config (RPC URL, fee bps) stays private.
+   * ---------------------------------------------------------------- */
+  function getChainParams(chainId) {
+    var cfg = CHAINS[chainId];
+    if (!cfg) return null;
+    return Object.freeze({
+      usdcAddress:     cfg.usdcAddress,
+      contractAddress: cfg.contractAddress,
+    });
+  }
+
+  /* ----------------------------------------------------------------
+   * readWalletSnapshot — read USDC balance and allowance via eth_call.
+   * Returns a frozen snapshot at the moment of the call, or null on
+   * any failure (provider missing, unsupported chain, RPC error).
+   *
+   * balanceOf(address)       selector: 0x70a08231
+   * allowance(address,address) selector: 0xdd62ed3e
+   * ---------------------------------------------------------------- */
+  function readWalletSnapshot(account, chainId) {
+    if (!window.ethereum) return Promise.resolve(null);
+    var cfg = CHAINS[chainId];
+    if (!cfg) return Promise.resolve(null);
+
+    var balanceData  = '0x70a08231' + encodeAddress(account);
+    var allowanceData = '0xdd62ed3e' + encodeAddress(account) + encodeAddress(cfg.contractAddress);
+
+    return window.ethereum.request({
+      method: 'eth_call',
+      params: [{ to: cfg.usdcAddress, data: balanceData }, 'latest'],
+    }).then(function (balanceHex) {
+      var balanceBig = (balanceHex && balanceHex !== '0x') ? BigInt(balanceHex) : 0n;
+      return window.ethereum.request({
+        method: 'eth_call',
+        params: [{ to: cfg.usdcAddress, data: allowanceData }, 'latest'],
+      }).then(function (allowanceHex) {
+        var allowanceBig = (allowanceHex && allowanceHex !== '0x') ? BigInt(allowanceHex) : 0n;
+        return Object.freeze({
+          account:         account,
+          chainId:         chainId,
+          providerReady:   true,
+          balanceAtomic:   String(balanceBig),
+          allowanceAtomic: String(allowanceBig),
+        });
+      });
+    }).catch(function () { return null; });
+  }
+
+  /* ----------------------------------------------------------------
+   * consumedAuthorizationProofs — one-shot consumption registry.
+   * A proof is marked consumed before the first wallet interaction.
+   * Wallet rejections still consume the proof — the caller must
+   * request fresh authorization for the next attempt.
+   * ---------------------------------------------------------------- */
+  var consumedAuthorizationProofs = new WeakSet();
+
   function executeTransfer(request, hooks) {
     request = request || {};
     hooks = hooks || {};
     var action = request.action || 'execute';
-    var chainId = request.chainId;
+    /* Normalize chainId: registry records serialize it as a JSON string ('137').
+     * Convert to a number so provider comparisons (currentChainId !== chainId) are
+     * type-safe. Null/undefined pass through unchanged → chainConfig returns null. */
+    var chainId = (request.chainId != null) ? Number(request.chainId) : request.chainId;
     var cfg = chainConfig(chainId);
 
-    if (!cfg) return Promise.resolve(makeResult('failed', {
-      error: { code: 'UNSUPPORTED_CHAIN', message: 'Unsupported chainId: ' + chainId },
-    }));
+    /* execute-authorized derives its chain authority from proof.chainId, not request.chainId.
+     * Skip the early chain guard for that path; it validates chain internally. */
+    if (action !== 'execute-authorized' && !cfg) {
+      return Promise.resolve(makeResult('failed', {
+        error: { code: 'UNSUPPORTED_CHAIN', message: 'Unsupported chainId: ' + chainId },
+      }));
+    }
 
     if (action === 'prepare') {
       if (hooks.onWalletRequested) hooks.onWalletRequested();
@@ -421,6 +497,146 @@
           }
           if (code === -32002) return walletBusyResult();
           return makeResult('failed', { error: { code: code, message: providerErrorMessage(err) } });
+        });
+    }
+
+    if (action === 'execute-authorized') {
+      /* ----------------------------------------------------------------
+       * Coin Card authorized execution path.
+       *
+       * Requires a branded IX_COIN_CARD_EXECUTION_AUTHORIZATION result:
+       *   1. Validate proof via isExecutionAuthorizedResult (WeakSet check).
+       *   2. Consume before any wallet interaction (one-shot doctrine).
+       *   3. TOCTOU: silently re-read account and chainId; fail if drifted.
+       *   4. Use pinned values from proof for approval and transfer.
+       *   5. Transfer Portal uses action:'execute' — this path is untouched.
+       * ---------------------------------------------------------------- */
+      var authModule = window.IX_COIN_CARD_EXECUTION_AUTHORIZATION || null;
+      if (!authModule || typeof authModule.isExecutionAuthorizedResult !== 'function') {
+        return Promise.resolve(makeResult('failed', {
+          error: { code: 'AUTH_MODULE_UNAVAILABLE', message: 'Execution authorization module not available.' },
+        }));
+      }
+
+      var proof = request.authorizationProof;
+
+      if (!authModule.isExecutionAuthorizedResult(proof)) {
+        return Promise.resolve(makeResult('failed', {
+          error: { code: 'AUTHORIZATION_PROOF_INVALID', message: 'Authorization proof is missing, invalid, or blocked.' },
+        }));
+      }
+
+      if (consumedAuthorizationProofs.has(proof)) {
+        return Promise.resolve(makeResult('failed', {
+          error: { code: 'AUTHORIZATION_PROOF_CONSUMED', message: 'Authorization proof has already been used.' },
+        }));
+      }
+      /* Mark consumed before any wallet interaction. */
+      consumedAuthorizationProofs.add(proof);
+
+      if (!window.ethereum) {
+        return Promise.resolve(makeResult('wallet-missing'));
+      }
+
+      var authorizedCfg = chainConfig(proof.chainId);
+      if (!authorizedCfg) {
+        return Promise.resolve(makeResult('failed', {
+          error: { code: 'UNSUPPORTED_CHAIN', message: 'Unsupported chainId: ' + proof.chainId },
+        }));
+      }
+
+      /* TOCTOU: silent account/chain check — no wallet popup. */
+      return getCurrentAccount()
+        .then(function (currentAccount) {
+          return getChainId().then(function (currentChainId) {
+            if (!currentAccount || currentAccount.toLowerCase() !== proof.sender.toLowerCase()) {
+              return makeResult('failed', {
+                error: { code: 'TOCTOU_ACCOUNT_DRIFT', message: 'Wallet account changed since authorization.' },
+              });
+            }
+            if (currentChainId !== proof.chainId) {
+              return makeResult('failed', {
+                error: { code: 'TOCTOU_CHAIN_DRIFT', message: 'Network changed since authorization.' },
+              });
+            }
+
+            var totalDebit    = BigInt(proof.totalDebitAtomic);
+            var recipientAmt  = BigInt(proof.recipientAmountAtomic);
+            var platformFee   = BigInt(proof.platformFeeAtomic);
+
+            /* Construct a request-compatible object for receipt building. */
+            var authorizedRequest = {
+              sender:    proof.sender,
+              recipient: proof.recipient,
+              amount:    Number(recipientAmt) / 1e6,
+              fee:       Number(platformFee)  / 1e6,
+              total:     Number(totalDebit)   / 1e6,
+              chainId:   proof.chainId,
+              token:     request.token   || 'USDC',
+              source:    request.source  || null,
+              traceId:   request.traceId || null,
+            };
+
+            var transferSubmitted = false;
+            var submittedHash     = null;
+            var onBroadcast = function (hash) {
+              transferSubmitted = true;
+              submittedHash     = hash;
+            };
+
+            if (proof.executionPlan === 'TRANSFER_ONLY') {
+              /* Allowance already sufficient — skip approval. */
+              return executeTransferStep(
+                proof.chainId, authorizedRequest, null, recipientAmt,
+                authorizedCfg, hooks, onBroadcast
+              );
+            }
+
+            /* APPROVE_THEN_TRANSFER — approval uses pinned totalDebit. */
+            if (hooks.onApprovalRequested) hooks.onApprovalRequested();
+            return approve(proof.chainId, proof.sender, totalDebit)
+              .then(function (approvalHash) {
+                if (hooks.onApprovalSubmitted) hooks.onApprovalSubmitted(approvalHash);
+                return waitForReceipt(approvalHash).then(function (approvalReceipt) {
+                  if (!receiptSucceeded(approvalReceipt)) {
+                    var approveErr = { code: 'APPROVE_FAILED', message: 'Approval transaction failed' };
+                    if (hooks.onFailed) hooks.onFailed(approveErr);
+                    return makeResult('failed', { sender: proof.sender, error: approveErr });
+                  }
+                  if (hooks.onApprovalConfirmed) hooks.onApprovalConfirmed(approvalHash, approvalReceipt);
+                  return executeTransferStep(
+                    proof.chainId, authorizedRequest, approvalHash, recipientAmt,
+                    authorizedCfg, hooks, onBroadcast
+                  );
+                });
+              })
+              .catch(function (err) {
+                var code = providerErrorCode(err);
+                if (code === 4001)    return makeResult('wallet-rejected', { sender: proof.sender });
+                if (code === -32002)  return walletBusyResult(proof.sender);
+                if (transferSubmitted) {
+                  var postBroadcastErr = {
+                    code: 'POST_BROADCAST_ERROR',
+                    message: providerErrorMessage(err, 'Error after transfer broadcast.'),
+                    txHash: submittedHash,
+                    explorerUrl: authorizedCfg.explorerUrl + '/tx/' + submittedHash,
+                  };
+                  if (hooks.onFailed) hooks.onFailed(postBroadcastErr);
+                  return makeResult('outcome-unknown', { sender: proof.sender, error: postBroadcastErr });
+                }
+                var execErr = {
+                  code: code || 'EXECUTION_FAILED',
+                  message: providerErrorMessage(err, 'Execution failed'),
+                };
+                if (hooks.onFailed) hooks.onFailed(execErr);
+                return makeResult('failed', { sender: proof.sender, error: execErr });
+              });
+          });
+        })
+        .catch(function (err) {
+          return makeResult('failed', {
+            error: { code: 'TOCTOU_CHECK_FAILED', message: 'Cannot verify current wallet state before execution.' },
+          });
         });
     }
 
@@ -493,9 +709,11 @@
    * Public API
    * ---------------------------------------------------------------- */
   window.IX_EXECUTION = {
-    executeTransfer: executeTransfer,
-    toRawUsdc:       toRawUsdc,
-    calculateFee:    calculateFee,
+    executeTransfer:    executeTransfer,
+    toRawUsdc:          toRawUsdc,
+    calculateFee:       calculateFee,
+    getChainParams:     getChainParams,
+    readWalletSnapshot: readWalletSnapshot,
   };
 
 })();

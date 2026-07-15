@@ -58,6 +58,7 @@ const PROTECTED_ASSET_PATHS = [
   'card/coin-card-lifecycle-record-selection.js',
   'card/coin-card-lifecycle-resolution.js',
   'card/coin-card-lifecycle-presentation.js',
+  'card/coin-card-execution-authorization.js',
   'card/coin-card-verification.js',
   'card/card.js',
   'card/card.css',
@@ -1236,6 +1237,111 @@ describe('Coin Card QR handoff — browser tests', async () => {
       );
       assert.equal(canvasDisplay, 'none',
         'Canvas must be hidden when SRI blocks qrcode execution');
+    } finally {
+      await page.close();
+    }
+  });
+
+  /* ----------------------------------------------------------------
+   * Execution gate — no eth_sendTransaction without authorization proof
+   *
+   * With an empty lifecycle registry bundle the promoted presentation
+   * result is always blocked. authorizeExecution returns a non-authorized
+   * result, so card.js must not call IX_EXECUTION.executeTransfer for
+   * the execute-authorized action, and ethereum.request must never be
+   * called with method:'eth_sendTransaction'.
+   *
+   * The test:
+   *   1. Injects a mock window.ethereum that records all method calls and
+   *      returns scripted responses for prepare-phase calls.
+   *   2. Loads the card to VERIFIED state.
+   *   3. Types a valid amount and waits for TRANSFER_INTENT_READY.
+   *   4. Simulates chip click → wallet connect (prepare phase) → READY_TO_SEND.
+   *   5. Simulates chip click → startExecution → authorization fails.
+   *   6. Verifies eth_sendTransaction was NOT called.
+   * ---------------------------------------------------------------- */
+  test('no eth_sendTransaction when authorization proof is absent (empty lifecycle bundle)', async () => {
+    const page = await browser.newPage();
+    try {
+      /* Inject mock ethereum before page load — records all request calls. */
+      await page.evaluateOnNewDocument(() => {
+        window.__ethereumCalls = [];
+        window.ethereum = {
+          isMetaMask: true,
+          request: function (args) {
+            window.__ethereumCalls.push(args.method);
+            /* prepare-phase responses */
+            if (args.method === 'eth_requestAccounts') {
+              return Promise.resolve(['0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA']);
+            }
+            if (args.method === 'eth_chainId') {
+              /* Return Polygon mainnet (chainId 137 = 0x89) */
+              return Promise.resolve('0x89');
+            }
+            if (args.method === 'eth_accounts') {
+              return Promise.resolve(['0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA']);
+            }
+            /* eth_call for balance/allowance reads — return zero (ABI-encoded uint256 zero) */
+            if (args.method === 'eth_call') {
+              return Promise.resolve('0x' + '0'.repeat(64));
+            }
+            /* eth_sendTransaction must never be reached */
+            return Promise.reject(new Error('eth_sendTransaction-should-not-be-called'));
+          },
+        };
+      });
+
+      /* Standard request interception for manifest and trusted keys. */
+      await page.setRequestInterception(true);
+      page.on('request', (req) => {
+        const urlPath = new URL(req.url()).pathname;
+        if (urlPath === '/card/coin-card-trusted-keys.js' ||
+            urlPath === '/card/card/coin-card-trusted-keys.js') {
+          req.respond({
+            status: 200,
+            headers: { 'Content-Type': 'application/javascript', 'Access-Control-Allow-Origin': '*' },
+            body: testTrustedKeysJs,
+          });
+          return;
+        }
+        if (urlPath === '/card/coin-card-manifest.json') {
+          req.respond({
+            status: 200,
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+            body: JSON.stringify(signedManifest),
+          });
+          return;
+        }
+        req.continue();
+      });
+
+      await page.goto(`${serverUrl}/card/qr-test`, { waitUntil: 'networkidle0', timeout: 30000 });
+      await page.waitForSelector('#ccFrame[data-state="VERIFIED"]', { timeout: 15000 });
+
+      /* Enter a valid amount (10 USDC) → TRANSFER_INTENT_READY. */
+      await page.focus('#ccAmountInput');
+      await page.type('#ccAmountInput', '10');
+      await page.waitForSelector('#ccFrame[data-state="TRANSFER_INTENT_READY"]', { timeout: 5000 });
+
+      /* Click chip → prepare phase → card resolves to READY_TO_SEND (chain matches mock 0x89 = 137). */
+      await page.click('#ccChip');
+      await page.waitForSelector('#ccFrame[data-state="READY_TO_SEND"]', { timeout: 10000 });
+
+      /* Click chip again → startExecution → authorization fails (empty bundle) → TX_FAILED. */
+      await page.click('#ccChip');
+
+      /* Wait briefly for the async authorization path to complete. */
+      await page.waitForSelector('#ccFrame[data-state="TX_FAILED"]', { timeout: 10000 });
+
+      /* Verify eth_sendTransaction was NOT called at any point. */
+      const sendTxCalled = await page.evaluate(
+        () => window.__ethereumCalls.includes('eth_sendTransaction'),
+      );
+      assert.equal(
+        sendTxCalled,
+        false,
+        'eth_sendTransaction must not be called when authorization proof is absent',
+      );
     } finally {
       await page.close();
     }
