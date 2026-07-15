@@ -34,6 +34,35 @@ function startStaticServer() {
     }
 
     const ext = path.extname(filePath).toLowerCase();
+    if (path.basename(filePath) === 'portal-index.html') {
+      const html = fs.readFileSync(filePath, 'utf8').replace(
+        /<script\s+src="https:\/\/cdn\.jsdelivr\.net\/npm\/ethers@6\.13\.4\/dist\/ethers\.umd\.min\.js"[\s\S]*?<\/script>\s*/m,
+        `<script>
+          window.ethers = {
+            getAddress(address) {
+              const value = String(address || '').trim();
+              if (!/^0x[0-9a-fA-F]{40}$/.test(value)) {
+                throw new Error('invalid address');
+              }
+              if (/[a-f]/.test(value) && /[A-F]/.test(value) && value === '0x52908400098527886E0F7030069857D2E4169ee7') {
+                throw new Error('bad checksum');
+              }
+              return value.toLowerCase();
+            },
+            formatUnits(value, decimals) {
+              const big = typeof value === 'bigint' ? value : BigInt(value);
+              const scale = BigInt(10) ** BigInt(decimals || 0);
+              const whole = big / scale;
+              const fraction = big % scale;
+              return fraction === 0n ? String(whole) : String(whole) + '.' + String(fraction).padStart(Number(decimals || 0), '0');
+            }
+          };
+        </script>\n`
+      );
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end(html);
+      return;
+    }
     const contentType = {
       '.html': 'text/html; charset=utf-8',
       '.css': 'text/css; charset=utf-8',
@@ -160,7 +189,7 @@ async function injectState(page, stateName) {
       setValue(purpose, 'contractor');
       setValue(reference, 'Checksum review');
       setValue(memo, 'Lowercase action should appear');
-      recipient?.focus();
+      document.querySelector('.tx-recipient-lowercase-action')?.focus();
       return;
     }
 
@@ -185,11 +214,12 @@ async function collectState(page, stateName) {
     const amount = document.getElementById('txAmount');
     const purpose = document.getElementById('txPurposeTag');
     const reference = document.getElementById('txReference');
-    const memo = document.getElementById('txMemo');
-    const error = document.getElementById('recipientError');
-    const button = document.getElementById('txBtn');
-    const lowercaseAction = document.querySelector('.tx-recipient-lowercase-action');
-    const active = document.activeElement;
+      const memo = document.getElementById('txMemo');
+      const error = document.getElementById('recipientError');
+      const button = document.getElementById('txBtn');
+      const lowercaseAction = document.querySelector('.tx-recipient-lowercase-action');
+      const active = document.activeElement;
+      const lowercaseComputed = lowercaseAction ? getComputedStyle(lowercaseAction) : null;
 
     return {
       state: name,
@@ -210,6 +240,16 @@ async function collectState(page, stateName) {
       lowercaseActionText: lowercaseAction?.textContent.trim() || '',
       lowercaseActionDisplay: lowercaseAction ? getComputedStyle(lowercaseAction).display : '',
       lowercaseActionRect: lowercaseAction ? lowercaseAction.getBoundingClientRect().toJSON() : null,
+      lowercaseActionComputed: lowercaseComputed ? {
+        color: lowercaseComputed.color,
+        fontFamily: lowercaseComputed.fontFamily,
+        fontSize: lowercaseComputed.fontSize,
+        textDecorationLine: lowercaseComputed.textDecorationLine,
+        outlineColor: lowercaseComputed.outlineColor,
+        outlineOffset: lowercaseComputed.outlineOffset,
+        fontWeight: lowercaseComputed.fontWeight,
+        letterSpacing: lowercaseComputed.letterSpacing,
+      } : null,
       recipientRect: recipient ? recipient.getBoundingClientRect().toJSON() : null,
       recipientComputed: recipient ? {
         fontFamily: getComputedStyle(recipient).fontFamily,
@@ -245,24 +285,13 @@ test('Send USDC real portal states render cleanly at mobile and desktop widths',
 
   const pageErrors = [];
   const consoleErrors = [];
-  const requestUrls = [];
   const { server, baseUrl } = await startStaticServer();
 
   try {
     const page = await browser.newPage();
-    await page.setRequestInterception(true);
-    page.on('request', (request) => {
-      const url = request.url();
-      requestUrls.push(url);
-      if (url.includes('cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js')) {
-        request.abort();
-        return;
-      }
-      request.continue();
-    });
     page.on('pageerror', (error) => pageErrors.push(error.message));
     page.on('console', (message) => {
-      if (message.type() === 'error' && !message.text().includes('Failed to load resource: net::ERR_FAILED')) {
+      if (message.type() === 'error') {
         consoleErrors.push(message.text());
       }
     });
@@ -310,6 +339,17 @@ test('Send USDC real portal states render cleanly at mobile and desktop widths',
           assert.equal(state.lowercaseActionText, 'Use lowercase address', `${entry.width} ${entry.theme} invalid: lowercase action should appear`);
           assert.equal(state.lowercaseActionDisplay !== 'none', true, `${entry.width} ${entry.theme} invalid: lowercase action should render`);
           assert.equal(state.lowercaseActionRect.width > 0 && state.lowercaseActionRect.height > 0, true, `${entry.width} ${entry.theme} invalid: lowercase action should have layout`);
+          assert.equal(state.lowercaseActionComputed.fontFamily.includes('Inter'), true, `${entry.width} ${entry.theme} invalid: lowercase action should use Inter`);
+          assert.equal(state.lowercaseActionComputed.fontSize, '14px', `${entry.width} ${entry.theme} invalid: lowercase action should be 14px`);
+          assert.equal(state.lowercaseActionComputed.textDecorationLine.includes('underline'), true, `${entry.width} ${entry.theme} invalid: lowercase action should remain underlined`);
+          assert.equal(
+            entry.theme === 'dark'
+              ? state.lowercaseActionComputed.outlineColor === 'rgba(242, 242, 240, 0.84)'
+              : state.lowercaseActionComputed.outlineColor === 'rgba(8, 8, 8, 0.72)',
+            true,
+            `${entry.width} ${entry.theme} invalid: lowercase action outline color should match neutral control focus`
+          );
+          assert.equal(state.lowercaseActionComputed.outlineOffset, '2px', `${entry.width} ${entry.theme} invalid: lowercase action outline offset should remain fixed`);
         }
         if (stateName === 'disabled') {
           assert.equal(state.recipientDisabled, true, `${entry.width} ${entry.theme} disabled: recipient should be disabled`);
