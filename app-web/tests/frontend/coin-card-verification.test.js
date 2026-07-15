@@ -497,7 +497,7 @@ test('unknown verification state copy normalizes to VERIFICATION_UNAVAILABLE', (
   );
 });
 
-test('trusted key source bootstrap initializes a frozen empty allowlist', () => {
+test('trusted key source bootstrap initializes a frozen production allowlist', () => {
   const context = {
     Object,
     window: {},
@@ -507,7 +507,8 @@ test('trusted key source bootstrap initializes a frozen empty allowlist', () => 
 
   assert.equal(context.window.IX_COIN_CARD_TRUSTED_PUBLIC_KEYS && typeof context.window.IX_COIN_CARD_TRUSTED_PUBLIC_KEYS, 'object');
   assert.equal(Object.isFrozen(context.window.IX_COIN_CARD_TRUSTED_PUBLIC_KEYS), true);
-  assert.deepEqual(Object.keys(context.window.IX_COIN_CARD_TRUSTED_PUBLIC_KEYS), []);
+  // Production bootstrap contains one registry publication key
+  assert.deepEqual(Object.keys(context.window.IX_COIN_CARD_TRUSTED_PUBLIC_KEYS), ['ix-lifecycle-pub-v1']);
 });
 
 test('trusted key source rejects frozen accessor entries', () => {

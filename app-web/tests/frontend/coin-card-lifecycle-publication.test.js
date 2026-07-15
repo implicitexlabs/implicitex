@@ -79,8 +79,10 @@ const DEMO_REGISTRY_ID = 'implicitex-production';
 const DEMO_AUTHORITY_ID = 'implicitex-registry';
 const DEMO_RECORD_KEY_ID = 'ix-lifecycle-pub-v1';
 
-/* Fixed verification time used throughout synthetic tests */
-const FIXED_NOW = '2026-07-15T12:00:00.000Z';
+/* Fixed verification time used throughout synthetic tests.
+ * Must be after the real bundle's generatedAt for test 29 to pass.
+ * The real bundle was generated on 2026-07-15 at ~19:25 UTC. */
+const FIXED_NOW = '2026-07-15T20:00:00.000Z';
 
 /* ----------------------------------------------------------------
  * Helpers
@@ -147,14 +149,14 @@ function makeRecord(overrides = {}) {
     environment: 'production',
     registryVersion: 1,
     recordId: 'pub-test-record-001',
-    publishedAt: '2026-07-15T00:00:00.000Z',
+    publishedAt: '2026-07-15T18:00:00.000Z',
     cardId: DEMO_CARD_ID,
     manifestId: DEMO_MANIFEST_ID,
     revision: 1,
     previousManifestId: null,
     cardStatus: 'CARD_ACTIVE',
     manifestStatus: 'MANIFEST_CURRENT',
-    effectiveFrom: '2026-07-15T00:00:00.000Z',
+    effectiveFrom: '2026-07-15T18:00:00.000Z',
     effectiveUntil: null,
     supersededByManifestId: null,
     reasonCode: null,
@@ -168,7 +170,7 @@ function makeRecord(overrides = {}) {
       signatureValueEncoding: 'base64url-unpadded',
       keyId: DEMO_RECORD_KEY_ID,
       authorityId: DEMO_AUTHORITY_ID,
-      signedAt: '2026-07-15T00:00:00.000Z',
+      signedAt: '2026-07-15T18:00:00.000Z',
       value: '',
     },
   };
@@ -982,15 +984,16 @@ test('real production bundle file authenticates and promotes cc_demo_implicitex'
   context.Date = FixedDate;
   context.window.Date = FixedDate;
 
-  /* Load modules in dependency order.
-   * coin-card-trusted-keys.js must come before coin-card-trusted-key-resolution.js
-   * so IX_COIN_CARD_TRUSTED_PUBLIC_KEYS is set before resolution reads it.
-   * coin-card-lifecycle-bundle.js sets IX_COIN_CARD_LIFECYCLE_REGISTRY_BUNDLE.
-   * coin-card-lifecycle-registry.js must NOT overwrite it if it's already defined. */
+  /* Load modules in dependency order matching index.html:
+   *   coin-card-trusted-keys.js       (sets IX_COIN_CARD_TRUSTED_PUBLIC_KEYS)
+   *   coin-card-trusted-key-resolution.js
+   *   coin-card-lifecycle-bundle.js   (pre-defines IX_COIN_CARD_LIFECYCLE_REGISTRY_BUNDLE)
+   *   coin-card-lifecycle-registry.js (skips redefining if bundle already set)
+   */
   vm.runInNewContext(trustedKeysSource, context, { filename: trustedKeysPath });
   vm.runInNewContext(trustedKeyResolutionSource, context, { filename: trustedKeyResolutionPath });
-  vm.runInNewContext(lifecycleRegistrySource, context, { filename: lifecycleRegistryPath });
   vm.runInNewContext(lifecycleBundleSource, context, { filename: lifecycleBundlePath });
+  vm.runInNewContext(lifecycleRegistrySource, context, { filename: lifecycleRegistryPath });
   vm.runInNewContext(lifecycleRecordVerifSource, context, { filename: lifecycleRecordVerifPath });
   vm.runInNewContext(lifecycleBundleVerifSource, context, { filename: lifecycleBundleVerifPath });
   vm.runInNewContext(lifecycleSelectionSource, context, { filename: lifecycleSelectionPath });

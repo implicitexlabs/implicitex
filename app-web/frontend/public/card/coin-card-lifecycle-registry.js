@@ -432,12 +432,17 @@
     };
   }
 
-  Object.defineProperty(window, 'IX_COIN_CARD_LIFECYCLE_REGISTRY_BUNDLE', {
-    value: lifecycleRegistryBundle,
-    writable: false,
-    enumerable: true,
-    configurable: false,
-  });
+  /* Only install the empty bundle if no bundle has been pre-loaded.
+   * A signed bundle file loaded before this module may pre-define
+   * IX_COIN_CARD_LIFECYCLE_REGISTRY_BUNDLE with a real registry publication. */
+  if (!Object.prototype.hasOwnProperty.call(window, 'IX_COIN_CARD_LIFECYCLE_REGISTRY_BUNDLE')) {
+    Object.defineProperty(window, 'IX_COIN_CARD_LIFECYCLE_REGISTRY_BUNDLE', {
+      value: lifecycleRegistryBundle,
+      writable: false,
+      enumerable: true,
+      configurable: false,
+    });
+  }
 
   Object.defineProperty(window, 'IX_COIN_CARD_LIFECYCLE_REGISTRY', {
     value: Object.freeze({
