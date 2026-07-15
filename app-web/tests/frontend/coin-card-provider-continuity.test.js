@@ -382,13 +382,14 @@ test('provider: injected provider connects and executes normally (happy path)', 
     action: 'execute-authorized',
     authorizationProof: proof,
     provider: injected,
+    snapshotProvider: injected,
     token: 'USDC',
     source: 'coincard',
     traceId: 'trace-injected-happy',
   });
   /* Must succeed end-to-end using the injected provider. */
   assert.equal(result.status, 'confirmed', `expected confirmed, got ${result.status}`);
-  assert.equal(result.receipt.txHash, '0xBBBB');
+  assert.equal(result.receipt.txHash, '0xINJ-TX');
   /* Injected provider must have received the wallet calls. */
   assert.ok(injected.calls.length > 0, 'injected provider must have received calls');
 });
@@ -407,14 +408,15 @@ test('provider: WalletConnect provider connects and executes normally (happy pat
   const result = await runtime.ixExecution.executeTransfer({
     action: 'execute-authorized',
     authorizationProof: proof,
-    provider: wcProvider,   /* <— caller-supplied WalletConnect provider */
+    provider: wcProvider,          /* <— caller-supplied WalletConnect provider */
+    snapshotProvider: wcProvider,
     token: 'USDC',
     source: 'coincard',
     traceId: 'trace-wc-happy',
   });
   /* Must succeed using wcProvider, not window.ethereum. */
   assert.equal(result.status, 'confirmed', `expected confirmed, got ${result.status}: ${result.error && result.error.message}`);
-  assert.equal(result.receipt.txHash, '0xBBBB');
+  assert.equal(result.receipt.txHash, '0xWC-TX');
   /* WC provider must have received the wallet calls. */
   assert.ok(wcProvider.calls.length > 0, 'WalletConnect provider must have received calls');
 });

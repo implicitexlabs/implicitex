@@ -87,6 +87,15 @@
     rawTotal:            null,   /* BigInt — totalDebitAtomic for authorization */
     intent:              null,
     sender:              null,
+    /*
+     * activeProvider — the EIP-1193 provider resolved at wallet connect time.
+     * Set by connectWallet() when the 'prepare' action returns 'ready-to-send'
+     * or 'wrong-network'. Remains set through snapshot, authorization, and
+     * execution. The same provider object is passed to readWalletSnapshot()
+     * and to executeTransfer() as both request.provider and request.snapshotProvider.
+     * Cleared if the card transitions back to TRANSFER_INTENT_READY.
+     */
+    activeProvider:      null,
     manifestId:          null,   /* manifestHash from verification result, used as lifecycle manifestId */
     promotedPresentationResult: null, /* result of lifecycle pipeline; set async after VERIFIED */
     integrityManifestVerificationState: 'VERIFICATION_UNAVAILABLE',
@@ -389,6 +398,29 @@
   }
 
   /* ----------------------------------------------------------------
+   * resolveProvider — select the active EIP-1193 provider.
+   *
+   * Rule: prefer the injected provider (window.ethereum) if it is present.
+   * Fall back to the WalletConnect provider from IX_WC.getProvider() if a
+   * WalletConnect session has already been established. Returns null when
+   * neither is available.
+   *
+   * This is called once at wallet-connect time. The resolved provider is
+   * stored in state.activeProvider and used for all subsequent operations
+   * (snapshot read, TOCTOU check, approval, transfer) in the same session.
+   * ---------------------------------------------------------------- */
+  function resolveProvider() {
+    if (window.ethereum && typeof window.ethereum.request === 'function') {
+      return window.ethereum;
+    }
+    if (window.IX_WC && typeof window.IX_WC.getProvider === 'function') {
+      var wcp = window.IX_WC.getProvider();
+      if (wcp && typeof wcp.request === 'function') return wcp;
+    }
+    return null;
+  }
+
+  /* ----------------------------------------------------------------
    * Wallet connect + network switch
    * ---------------------------------------------------------------- */
   function connectWallet() {
@@ -398,6 +430,9 @@
       return;
     }
 
+    /* Resolve the active provider once at connect time. */
+    var resolvedProvider = resolveProvider();
+
     transition('CONNECTING');
     setText('ccExecLabel', 'Connecting wallet\u2026');
     if (state.intent) setText('ccExecAmount', state.intent.amount.toFixed(2));
@@ -405,8 +440,9 @@
     setStatus('pending', 'Connecting');
 
     window.IX_EXECUTION.executeTransfer({
-      action: 'prepare',
-      chainId: state.registryRecord && state.registryRecord.chainId,
+      action:    'prepare',
+      chainId:   state.registryRecord && state.registryRecord.chainId,
+      provider:  resolvedProvider,
     })
       .then(function (result) {
         if (result.status === 'wallet-missing') {
@@ -414,6 +450,7 @@
           return;
         }
         if (result.status === 'wallet-rejected') {
+          state.activeProvider = null;
           transition('TRANSFER_INTENT_READY');
           setText('ccTxLabel', 'Send USDC');
           setStatus('verified', 'Verified');
@@ -421,9 +458,13 @@
           return;
         }
         if (result.status === 'failed') {
+          state.activeProvider = null;
           renderError('Wallet error', result.error && result.error.message);
           return;
         }
+
+        /* Provider is confirmed active — store for snapshot and execution. */
+        state.activeProvider = resolvedProvider;
 
         if (result.sender) {
           state.sender = result.sender;
@@ -450,6 +491,7 @@
         renderError('Wallet connection failed');
       })
       .catch(function (err) {
+        state.activeProvider = null;
         renderError('Wallet error', err && err.message);
       });
   }
@@ -578,8 +620,9 @@
       totalDebitAtomic:         intent.totalDebitAtomic || null,
     });
 
-    /* Read live wallet state for the wallet snapshot input. */
-    window.IX_EXECUTION.readWalletSnapshot(state.sender, chainId)
+    /* Read live wallet state for the wallet snapshot input.
+     * Pass the resolved provider so the snapshot and execution use the same session. */
+    window.IX_EXECUTION.readWalletSnapshot(state.sender, chainId, state.activeProvider)
       .then(function (walletSnapshot) {
         if (!walletSnapshot) {
           renderTxError('Wallet state unavailable for authorization');
@@ -611,6 +654,8 @@
         window.IX_EXECUTION.executeTransfer({
           action:             'execute-authorized',
           authorizationProof: authResult,
+          provider:           state.activeProvider,
+          snapshotProvider:   state.activeProvider,
           token:              token,
           source:             'coincard',
           traceId:            traceId,

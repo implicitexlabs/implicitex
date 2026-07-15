@@ -10,6 +10,18 @@
  *   executeTransfer(request, hooks?) → Promise<execution result>
  *   toRawUsdc(floatVal)           → BigInt
  *   calculateFee(rawAmount, chainId, feeBps?) → { fee, total }
+ *   readWalletSnapshot(account, chainId, provider?) → Promise<snapshot|null>
+ *
+ * Provider resolution — execute-authorized path only:
+ *   request.provider         — the active EIP-1193 provider (resolved at connect time)
+ *   request.snapshotProvider — the provider used to read the wallet snapshot
+ *
+ *   If request.provider !== request.snapshotProvider the call is rejected with
+ *   PROVIDER_MISMATCH before the proof is consumed.
+ *   If request.provider is absent the path falls back to window.ethereum (injected).
+ *
+ *   The Transfer Portal uses action:'execute' which continues to use window.ethereum.
+ *   No change to Transfer Portal behavior.
  *
  * Self-contained IIFE. No imports. No dependency on chains.js or wallet.js.
  */
@@ -124,6 +136,85 @@
 
   function ensureProvider() {
     if (!window.ethereum) throw providerUnavailableError();
+  }
+
+  /* ----------------------------------------------------------------
+   * resolveActiveProvider — return an EIP-1193 provider for the
+   * execute-authorized path.
+   *
+   * Preference order (execute-authorized only):
+   *   1. caller-supplied provider (request.provider)
+   *   2. window.ethereum (injected fallback when no explicit provider given)
+   *   3. null — caller must handle wallet-missing
+   *
+   * The Transfer Portal (action:'execute') continues to use window.ethereum
+   * directly via ensureProvider(). This helper is only called from the
+   * execute-authorized handler.
+   * ---------------------------------------------------------------- */
+  function resolveActiveProvider(requestProvider) {
+    if (requestProvider && typeof requestProvider.request === 'function') {
+      return requestProvider;
+    }
+    return window.ethereum || null;
+  }
+
+  /* ----------------------------------------------------------------
+   * Provider-scoped helpers — used only in the execute-authorized path.
+   * All accept an explicit provider rather than reading window.ethereum.
+   * ---------------------------------------------------------------- */
+
+  function getCurrentAccountVia(provider) {
+    return provider.request({ method: 'eth_accounts' })
+      .then(function (accounts) {
+        return (accounts && accounts.length) ? accounts[0] : null;
+      });
+  }
+
+  function getChainIdVia(provider) {
+    return provider.request({ method: 'eth_chainId' })
+      .then(function (hex) { return parseInt(hex, 16); });
+  }
+
+  function approveVia(provider, chainId, sender, totalRaw) {
+    var cfg = CHAINS[chainId];
+    if (!cfg) return Promise.reject(new Error('Unsupported chainId: ' + chainId));
+    var data = encodeApprove(cfg.contractAddress, totalRaw);
+    return provider.request({
+      method: 'eth_sendTransaction',
+      params: [{ from: sender, to: cfg.usdcAddress, data: data }],
+    });
+  }
+
+  function transferWithFeeVia(provider, chainId, sender, recipient, amountRaw) {
+    var cfg = CHAINS[chainId];
+    if (!cfg) return Promise.reject(new Error('Unsupported chainId: ' + chainId));
+    var data = encodeTransferWithFee(recipient, amountRaw);
+    return provider.request({
+      method: 'eth_sendTransaction',
+      params: [{ from: sender, to: cfg.contractAddress, data: data }],
+    });
+  }
+
+  function waitForReceiptVia(provider, hash) {
+    var MAX_ATTEMPTS = 90;
+    var INTERVAL_MS  = 2000;
+    var attempt = 0;
+    return new Promise(function (resolve, reject) {
+      function poll() {
+        attempt++;
+        provider.request({ method: 'eth_getTransactionReceipt', params: [hash] })
+          .then(function (receipt) {
+            if (receipt) { resolve(receipt); return; }
+            if (attempt >= MAX_ATTEMPTS) {
+              reject(new Error('Transaction not mined after ' + MAX_ATTEMPTS + ' attempts'));
+              return;
+            }
+            setTimeout(poll, INTERVAL_MS);
+          })
+          .catch(function (err) { reject(err); });
+      }
+      poll();
+    });
   }
 
   /* ----------------------------------------------------------------
@@ -376,6 +467,38 @@
       });
   }
 
+  /* Provider-aware variant used only in the execute-authorized path. */
+  function executeTransferStepVia(provider, chainId, request, approvalHash, amountRaw, cfg, hooks, onBroadcast) {
+    if (hooks.onTransferRequested) hooks.onTransferRequested();
+    return transferWithFeeVia(provider, chainId, request.sender, request.recipient, amountRaw)
+      .then(function (transferHash) {
+        if (onBroadcast) onBroadcast(transferHash);
+        if (hooks.onTransferSubmitted) hooks.onTransferSubmitted(transferHash);
+        return waitForReceiptVia(provider, transferHash)
+          .then(function (transferReceipt) {
+            if (!receiptSucceeded(transferReceipt)) {
+              var transferErr = { code: 'TRANSFER_FAILED', message: 'Transfer transaction failed' };
+              if (hooks.onFailed) hooks.onFailed(transferErr);
+              return makeResult('failed', { sender: request.sender, error: transferErr });
+            }
+            var receipt = buildReceipt(request, approvalHash, transferHash, transferReceipt, cfg);
+            var confirmed = makeResult('confirmed', { sender: request.sender, receipt: receipt });
+            if (hooks.onConfirmed) hooks.onConfirmed(confirmed);
+            return confirmed;
+          })
+          .catch(function (receiptErr) {
+            var ambiguousErr = {
+              code:    'RECEIPT_UNAVAILABLE',
+              message: receiptErr && receiptErr.message || 'Transfer broadcast but confirmation could not be verified.',
+              txHash:  transferHash,
+              explorerUrl: cfg.explorerUrl + '/tx/' + transferHash,
+            };
+            if (hooks.onFailed) hooks.onFailed(ambiguousErr);
+            return makeResult('outcome-unknown', { sender: request.sender, error: ambiguousErr });
+          });
+      });
+  }
+
   /* ----------------------------------------------------------------
    * getCurrentAccount — silently read connected accounts (no popup)
    * ---------------------------------------------------------------- */
@@ -405,23 +528,28 @@
    * Returns a frozen snapshot at the moment of the call, or null on
    * any failure (provider missing, unsupported chain, RPC error).
    *
+   * provider  — optional EIP-1193 provider; falls back to window.ethereum
+   *             when absent. Coin Card passes its resolved provider so the
+   *             snapshot and execution always use the same session.
+   *
    * balanceOf(address)       selector: 0x70a08231
    * allowance(address,address) selector: 0xdd62ed3e
    * ---------------------------------------------------------------- */
-  function readWalletSnapshot(account, chainId) {
-    if (!window.ethereum) return Promise.resolve(null);
+  function readWalletSnapshot(account, chainId, provider) {
+    var p = (provider && typeof provider.request === 'function') ? provider : window.ethereum;
+    if (!p) return Promise.resolve(null);
     var cfg = CHAINS[chainId];
     if (!cfg) return Promise.resolve(null);
 
-    var balanceData  = '0x70a08231' + encodeAddress(account);
+    var balanceData   = '0x70a08231' + encodeAddress(account);
     var allowanceData = '0xdd62ed3e' + encodeAddress(account) + encodeAddress(cfg.contractAddress);
 
-    return window.ethereum.request({
+    return p.request({
       method: 'eth_call',
       params: [{ to: cfg.usdcAddress, data: balanceData }, 'latest'],
     }).then(function (balanceHex) {
       var balanceBig = (balanceHex && balanceHex !== '0x') ? BigInt(balanceHex) : 0n;
-      return window.ethereum.request({
+      return p.request({
         method: 'eth_call',
         params: [{ to: cfg.usdcAddress, data: allowanceData }, 'latest'],
       }).then(function (allowanceHex) {
@@ -506,10 +634,14 @@
        *
        * Requires a branded IX_COIN_CARD_EXECUTION_AUTHORIZATION result:
        *   1. Validate proof via isExecutionAuthorizedResult (WeakSet check).
-       *   2. Consume before any wallet interaction (one-shot doctrine).
-       *   3. TOCTOU: silently re-read account and chainId; fail if drifted.
-       *   4. Use pinned values from proof for approval and transfer.
-       *   5. Transfer Portal uses action:'execute' — this path is untouched.
+       *   2. Provider continuity: if request.snapshotProvider is supplied it
+       *      must be the same object as request.provider; reject with
+       *      PROVIDER_MISMATCH before consuming the proof.
+       *   3. Consume before any wallet interaction (one-shot doctrine).
+       *   4. Resolve the active provider (request.provider → window.ethereum).
+       *   5. TOCTOU: silently re-read account and chainId via resolved provider.
+       *   6. Use pinned values from proof for approval and transfer.
+       *   7. Transfer Portal uses action:'execute' — this path is untouched.
        * ---------------------------------------------------------------- */
       var authModule = window.IX_COIN_CARD_EXECUTION_AUTHORIZATION || null;
       if (!authModule || typeof authModule.isExecutionAuthorizedResult !== 'function') {
@@ -526,6 +658,18 @@
         }));
       }
 
+      /* Provider continuity check — before consuming the proof.
+       * If the caller supplies both provider and snapshotProvider they must be
+       * the same object (same session). A mismatch means the provider changed
+       * between snapshot and execution, which must be rejected immediately. */
+      var execProvider     = request.provider     || null;
+      var snapshotProvider = request.snapshotProvider || null;
+      if (execProvider && snapshotProvider && execProvider !== snapshotProvider) {
+        return Promise.resolve(makeResult('failed', {
+          error: { code: 'PROVIDER_MISMATCH', message: 'Execution provider does not match the provider used for the wallet snapshot.' },
+        }));
+      }
+
       if (consumedAuthorizationProofs.has(proof)) {
         return Promise.resolve(makeResult('failed', {
           error: { code: 'AUTHORIZATION_PROOF_CONSUMED', message: 'Authorization proof has already been used.' },
@@ -534,7 +678,10 @@
       /* Mark consumed before any wallet interaction. */
       consumedAuthorizationProofs.add(proof);
 
-      if (!window.ethereum) {
+      /* Resolve the provider to use for all wallet operations in this path.
+       * Preference: request.provider → window.ethereum → wallet-missing. */
+      var activeProvider = resolveActiveProvider(execProvider);
+      if (!activeProvider) {
         return Promise.resolve(makeResult('wallet-missing'));
       }
 
@@ -545,10 +692,10 @@
         }));
       }
 
-      /* TOCTOU: silent account/chain check — no wallet popup. */
-      return getCurrentAccount()
+      /* TOCTOU: silent account/chain check via the resolved provider — no wallet popup. */
+      return getCurrentAccountVia(activeProvider)
         .then(function (currentAccount) {
-          return getChainId().then(function (currentChainId) {
+          return getChainIdVia(activeProvider).then(function (currentChainId) {
             if (!currentAccount || currentAccount.toLowerCase() !== proof.sender.toLowerCase()) {
               return makeResult('failed', {
                 error: { code: 'TOCTOU_ACCOUNT_DRIFT', message: 'Wallet account changed since authorization.' },
@@ -586,26 +733,26 @@
 
             if (proof.executionPlan === 'TRANSFER_ONLY') {
               /* Allowance already sufficient — skip approval. */
-              return executeTransferStep(
-                proof.chainId, authorizedRequest, null, recipientAmt,
+              return executeTransferStepVia(
+                activeProvider, proof.chainId, authorizedRequest, null, recipientAmt,
                 authorizedCfg, hooks, onBroadcast
               );
             }
 
             /* APPROVE_THEN_TRANSFER — approval uses pinned totalDebit. */
             if (hooks.onApprovalRequested) hooks.onApprovalRequested();
-            return approve(proof.chainId, proof.sender, totalDebit)
+            return approveVia(activeProvider, proof.chainId, proof.sender, totalDebit)
               .then(function (approvalHash) {
                 if (hooks.onApprovalSubmitted) hooks.onApprovalSubmitted(approvalHash);
-                return waitForReceipt(approvalHash).then(function (approvalReceipt) {
+                return waitForReceiptVia(activeProvider, approvalHash).then(function (approvalReceipt) {
                   if (!receiptSucceeded(approvalReceipt)) {
                     var approveErr = { code: 'APPROVE_FAILED', message: 'Approval transaction failed' };
                     if (hooks.onFailed) hooks.onFailed(approveErr);
                     return makeResult('failed', { sender: proof.sender, error: approveErr });
                   }
                   if (hooks.onApprovalConfirmed) hooks.onApprovalConfirmed(approvalHash, approvalReceipt);
-                  return executeTransferStep(
-                    proof.chainId, authorizedRequest, approvalHash, recipientAmt,
+                  return executeTransferStepVia(
+                    activeProvider, proof.chainId, authorizedRequest, approvalHash, recipientAmt,
                     authorizedCfg, hooks, onBroadcast
                   );
                 });
