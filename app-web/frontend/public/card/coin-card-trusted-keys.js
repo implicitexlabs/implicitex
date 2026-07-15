@@ -14,8 +14,8 @@
       publicKey:        Object.freeze(Object.assign(Object.create(Object.prototype), {
         kty:     "EC",
         crv:     "P-256",
-        x:       "vBu_HYcJYHb1R8ED0cixUxefS06vbL9_HmLIm4gisKo",
-        y:       "F7d-p9odLxJ4dXmM3iM_CHpK9Ce2mxsb8-IDcjqW5wk",
+        x:       "cou_3PIzr9qKAexjZA1I7DlJfv9YbKlAAyhc37HWei8",
+        y:       "8SS2shxDV2LgSCanO7vNhn4_zPAu4KXebcsnK4-YCbc",
         key_ops: Object.freeze(["verify"]),
         ext:     true,
       })),
@@ -37,8 +37,8 @@
       publicKey:        Object.freeze(Object.assign(Object.create(Object.prototype), {
         kty:     "EC",
         crv:     "P-256",
-        x:       "V6m6D9g83f90_JYgKXKgL2muizX1traoYk3abaj_O0w",
-        y:       "aq9YrHM9U5P26U4ZVzueRi1BF56dBM7C52-cSstTnGw",
+        x:       "Mwab07cytYUbpfiYKgaXdxGie_yvvQcwTsgwhUXgEA8",
+        y:       "6UrRJewADZeCmL6r4I5FkCFtusI65izk-Sniyk0-peM",
         key_ops: Object.freeze(["verify"]),
         ext:     true,
       })),

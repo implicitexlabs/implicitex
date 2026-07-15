@@ -74,7 +74,7 @@ const TRUSTED_KEY_SCHEMA_VERSION = 'coin-card-trusted-key-record.v1';
 
 /* The demo card constants */
 const DEMO_CARD_ID = 'cc_demo_implicitex';
-const DEMO_MANIFEST_ID = 'sha256:f6e3ba5946c48d0fe6bd3fb866d64f3a2adff828cdf6e26975023cc60d4b6e04';
+const DEMO_MANIFEST_ID = 'sha256:4492795bd896c2fdf13dad6b307669731e41fc1da3571d48a7d1635808c53efb';
 const DEMO_REGISTRY_ID = 'implicitex-production';
 const DEMO_AUTHORITY_ID = 'implicitex-registry';
 const DEMO_RECORD_KEY_ID = 'ix-lifecycle-pub-v1';
