@@ -70,7 +70,6 @@ function makeContext(options = {}) {
   const context = {
     Buffer,
     Date: FixedDate,
-    Object,
     Promise,
     String,
     TextEncoder,

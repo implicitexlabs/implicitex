@@ -507,8 +507,11 @@ test('trusted key source bootstrap initializes a frozen production allowlist', (
 
   assert.equal(context.window.IX_COIN_CARD_TRUSTED_PUBLIC_KEYS && typeof context.window.IX_COIN_CARD_TRUSTED_PUBLIC_KEYS, 'object');
   assert.equal(Object.isFrozen(context.window.IX_COIN_CARD_TRUSTED_PUBLIC_KEYS), true);
-  // Production bootstrap contains one registry publication key
-  assert.deepEqual(Object.keys(context.window.IX_COIN_CARD_TRUSTED_PUBLIC_KEYS), ['ix-lifecycle-pub-v1']);
+  // Production bootstrap contains separate manifest-signing and registry-publication keys.
+  assert.deepEqual(
+    Object.keys(context.window.IX_COIN_CARD_TRUSTED_PUBLIC_KEYS),
+    ['ix-coin-card-manifest-v1', 'ix-lifecycle-pub-v1'],
+  );
 });
 
 test('trusted key source rejects frozen accessor entries', () => {

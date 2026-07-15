@@ -1,15 +1,11 @@
 /* coin-card-lifecycle-bundle.js — signed lifecycle registry publication
  *
- * GENERATED FILE — do not edit by hand. Run scripts/generate_lifecycle_bundle.js.
+ * GENERATED FILE — do not edit by hand. Run scripts/generate_signed_coin_card_acceptance.js.
  *
- * This file pre-defines IX_COIN_CARD_LIFECYCLE_REGISTRY_BUNDLE before
- * coin-card-lifecycle-registry.js loads. The registry module skips
- * redefining the property when it is already present.
- *
- * GeneratedAt:      2026-07-15T19:25:47.597Z
+ * GeneratedAt:      2026-07-15T21:04:54.879Z
  * RegistryVersion:  1
  * CardId:           cc_demo_implicitex
- * ManifestId:       sha256:f6b5bbd4229cf0d214e5aecb9ffda10bbbbe53550a0ef9b47960731869b116a8
+ * ManifestId:       sha256:f6e3ba5946c48d0fe6bd3fb866d64f3a2adff828cdf6e26975023cc60d4b6e04
  * RecordId:         implicitex-production-r1-cc_demo_implicitex
  * Signer:           ix-lifecycle-pub-v1
  */
@@ -28,7 +24,7 @@
     "registryId": "implicitex-production",
     "environment": "production",
     "registryVersion": 1,
-    "generatedAt": "2026-07-15T19:25:47.597Z",
+    "generatedAt": "2026-07-15T21:04:54.879Z",
     "entries": [
       {
         "registryId": "implicitex-production",
@@ -36,14 +32,14 @@
         "environment": "production",
         "registryVersion": 1,
         "recordId": "implicitex-production-r1-cc_demo_implicitex",
-        "publishedAt": "2026-07-15T19:25:47.597Z",
+        "publishedAt": "2026-07-15T21:04:54.879Z",
         "cardId": "cc_demo_implicitex",
-        "manifestId": "sha256:f6b5bbd4229cf0d214e5aecb9ffda10bbbbe53550a0ef9b47960731869b116a8",
+        "manifestId": "sha256:f6e3ba5946c48d0fe6bd3fb866d64f3a2adff828cdf6e26975023cc60d4b6e04",
         "revision": 1,
         "previousManifestId": null,
         "cardStatus": "CARD_ACTIVE",
         "manifestStatus": "MANIFEST_CURRENT",
-        "effectiveFrom": "2026-07-15T19:25:47.597Z",
+        "effectiveFrom": "2026-07-15T21:04:54.879Z",
         "effectiveUntil": null,
         "supersededByManifestId": null,
         "reasonCode": null,
@@ -57,8 +53,8 @@
           "signatureValueEncoding": "base64url-unpadded",
           "keyId": "ix-lifecycle-pub-v1",
           "authorityId": "implicitex-registry",
-          "signedAt": "2026-07-15T19:25:47.597Z",
-          "value": "ZfKpDR1She6ul5w6b8xvyo0gfj7d8LjNa4AlFX0P4AKRpqGSdNAvFG7x4206i661bTuTVMXyNXEx6xaHGN7vqA"
+          "signedAt": "2026-07-15T21:04:54.879Z",
+          "value": "8XPhNIWfDPhHR2aE25Zury2T7V9fCGWlHvrwHBzSisNnOX4hHlE93ywKbR6y4Gk8BGMpxXmql6EX9qXtjfaY7A"
         }
       }
     ]

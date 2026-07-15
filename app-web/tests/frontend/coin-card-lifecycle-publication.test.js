@@ -74,15 +74,15 @@ const TRUSTED_KEY_SCHEMA_VERSION = 'coin-card-trusted-key-record.v1';
 
 /* The demo card constants */
 const DEMO_CARD_ID = 'cc_demo_implicitex';
-const DEMO_MANIFEST_ID = 'sha256:f6b5bbd4229cf0d214e5aecb9ffda10bbbbe53550a0ef9b47960731869b116a8';
+const DEMO_MANIFEST_ID = 'sha256:f6e3ba5946c48d0fe6bd3fb866d64f3a2adff828cdf6e26975023cc60d4b6e04';
 const DEMO_REGISTRY_ID = 'implicitex-production';
 const DEMO_AUTHORITY_ID = 'implicitex-registry';
 const DEMO_RECORD_KEY_ID = 'ix-lifecycle-pub-v1';
 
 /* Fixed verification time used throughout synthetic tests.
  * Must be after the real bundle's generatedAt for test 29 to pass.
- * The real bundle was generated on 2026-07-15 at ~19:25 UTC. */
-const FIXED_NOW = '2026-07-15T20:00:00.000Z';
+ * The real bundle was generated on 2026-07-15. Keep this after generatedAt. */
+const FIXED_NOW = '2026-07-16T00:00:00.000Z';
 
 /* ----------------------------------------------------------------
  * Helpers

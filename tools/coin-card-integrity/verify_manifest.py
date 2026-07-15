@@ -2,8 +2,7 @@
 """Verify a deterministic Coin Card integrity manifest.
 
 This proof verifier checks manifest structure, manifestHash, and protected asset
-hashes. It only accepts signature.mode = unsigned-dev for now; production
-signature verification is a future layer.
+hashes. Browser runtime tests perform cryptographic signature verification.
 """
 
 import argparse
@@ -74,8 +73,38 @@ def verify_manifest(manifest: dict, root: Path) -> list[str]:
     signature = manifest.get("signature")
     if not isinstance(signature, dict):
         errors.append("signature object is required")
-    elif signature.get("mode") != "unsigned-dev":
-        errors.append("only signature.mode 'unsigned-dev' is supported by this proof verifier")
+    else:
+        signature_mode = signature.get("mode")
+        if signature_mode == "unsigned-dev":
+            if signature.get("value") is not None:
+                errors.append("unsigned-dev signature.value must be null")
+        elif signature_mode == "signed-p256-v1":
+            for field in (
+                "algorithm",
+                "keyId",
+                "issuerId",
+                "environment",
+                "signedAt",
+                "signatureEncoding",
+                "signatureLengthBytes",
+                "signatureValueEncoding",
+                "value",
+            ):
+                if not signature.get(field):
+                    errors.append(f"signed-p256-v1 signature.{field} is required")
+            if signature.get("algorithm") != "ECDSA_P256_SHA256":
+                errors.append("signed-p256-v1 signature.algorithm must be 'ECDSA_P256_SHA256'")
+            if signature.get("signatureEncoding") != "ieee-p1363":
+                errors.append("signed-p256-v1 signature.signatureEncoding must be 'ieee-p1363'")
+            if signature.get("signatureLengthBytes") != 64:
+                errors.append("signed-p256-v1 signature.signatureLengthBytes must be 64")
+            if signature.get("signatureValueEncoding") != "base64url-unpadded":
+                errors.append("signed-p256-v1 signature.signatureValueEncoding must be 'base64url-unpadded'")
+            for field in ("keyId", "issuerId", "environment", "signedAt"):
+                if manifest.get(field) != signature.get(field):
+                    errors.append(f"signed-p256-v1 top-level {field} must match signature.{field}")
+        else:
+            errors.append("signature.mode must be 'unsigned-dev' or 'signed-p256-v1'")
 
     declared_hash = manifest.get("manifestHash")
     computed_hash = expected_manifest_hash(manifest)

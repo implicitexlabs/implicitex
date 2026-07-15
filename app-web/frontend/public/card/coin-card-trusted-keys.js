@@ -1,17 +1,35 @@
 /* coin-card-trusted-keys.js — protected bootstrap for trusted Coin Card key records
  *
- * This module creates the runtime allowlist used by the Coin Card verifier.
- * GENERATED FILE — do not edit by hand. Run scripts/generate_lifecycle_bundle.js.
- *
- * Key:     ix-lifecycle-pub-v1
- * Usage:   coin-card-registry-publication
- * ValidFrom: 2026-07-15T00:00:00.000Z
+ * GENERATED FILE — do not edit by hand. Run scripts/generate_signed_coin_card_acceptance.js.
  */
 
 (function () {
   'use strict';
 
   var trustedPublicKeys = Object.freeze(Object.assign(Object.create(null), {
+    "ix-coin-card-manifest-v1": Object.freeze(Object.assign(Object.create(Object.prototype), {
+      schemaVersion:    "coin-card-trusted-key-record.v1",
+      keyId:            "ix-coin-card-manifest-v1",
+      algorithm:        "ECDSA_P256_SHA256",
+      publicKey:        Object.freeze(Object.assign(Object.create(Object.prototype), {
+        kty:     "EC",
+        crv:     "P-256",
+        x:       "vBu_HYcJYHb1R8ED0cixUxefS06vbL9_HmLIm4gisKo",
+        y:       "F7d-p9odLxJ4dXmM3iM_CHpK9Ce2mxsb8-IDcjqW5wk",
+        key_ops: Object.freeze(["verify"]),
+        ext:     true,
+      })),
+      issuerId:         "implicitex",
+      usage:            Object.freeze(["coin-card-manifest-signing"]),
+      status:           "ACTIVE",
+      validFrom:        "2026-07-15T00:00:00.000Z",
+      validUntil:       null,
+      revokedAt:        null,
+      revocationReason: null,
+      revocationPolicy: null,
+      successorKeyId:   null,
+      environment:      "production",
+    })),
     "ix-lifecycle-pub-v1": Object.freeze(Object.assign(Object.create(Object.prototype), {
       schemaVersion:    "coin-card-trusted-key-record.v1",
       keyId:            "ix-lifecycle-pub-v1",
@@ -19,8 +37,8 @@
       publicKey:        Object.freeze(Object.assign(Object.create(Object.prototype), {
         kty:     "EC",
         crv:     "P-256",
-        x:       "rP__P2nUpYDUUVHgLHlWvZFOz_sYafMMyZqrXELdQSw",
-        y:       "J4F09ciEIv-lqdCCBnLvGUcZnFAZ9oShMw08uPWW2MM",
+        x:       "V6m6D9g83f90_JYgKXKgL2muizX1traoYk3abaj_O0w",
+        y:       "aq9YrHM9U5P26U4ZVzueRi1BF56dBM7C52-cSstTnGw",
         key_ops: Object.freeze(["verify"]),
         ext:     true,
       })),
