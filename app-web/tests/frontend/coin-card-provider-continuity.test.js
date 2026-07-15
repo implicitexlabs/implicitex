@@ -949,3 +949,227 @@ test('provider: no transaction before live account and chain equality checks pas
   assert.equal(sends.length, 0,
     'no eth_sendTransaction must occur if TOCTOU account check fails');
 });
+
+/* ================================================================
+ * Policy B — proof consumption on PROVIDER_MISMATCH
+ * ================================================================
+ *
+ * A valid execution authorization is one-shot once submitted to the
+ * authorized execution boundary. Provider discontinuity requires fresh
+ * snapshot authority. These tests verify that a proof is consumed even
+ * when execution is rejected due to PROVIDER_MISMATCH.
+ */
+
+test('policy-b: valid proof + mismatched providers → PROVIDER_MISMATCH result', async () => {
+  /* Test A: Establish that a valid proof with mismatched providers returns PROVIDER_MISMATCH. */
+  const providerA = makeMockProvider({ label: 'snapshot-provider' });
+  const providerB = makeMockProvider({ label: 'exec-provider' });
+
+  const runtime  = await makeAuthorizedRuntime({ ethereum: providerA });
+  const intent   = makeTransferIntent();
+  const snapshot = makeWalletSnapshot({ allowanceAtomic: '0' });
+  const proof    = runtime.authorization.authorizeExecution(runtime.promoted, intent, snapshot);
+  assert.ok(runtime.authorization.isExecutionAuthorizedResult(proof), 'proof must be valid');
+
+  const result = await runtime.ixExecution.executeTransfer({
+    action: 'execute-authorized',
+    authorizationProof: proof,
+    provider: providerB,
+    snapshotProvider: providerA,
+    token: 'USDC',
+    source: 'coincard',
+    traceId: 'policy-b-test-a',
+  });
+  assert.equal(result.status, 'failed', `expected failed, got ${result.status}`);
+  assert.equal(result.error.code, 'PROVIDER_MISMATCH',
+    `expected PROVIDER_MISMATCH, got ${result.error && result.error.code}`);
+});
+
+test('policy-b: provider mismatch — no account read, chain read, approval, or transfer', async () => {
+  /* Test B: No wallet interaction must occur on PROVIDER_MISMATCH. */
+  const providerA = makeMockProvider({ label: 'snapshot-provider' });
+  const providerB = makeMockProvider({ label: 'exec-provider' });
+
+  const runtime  = await makeAuthorizedRuntime({ ethereum: providerA });
+  const intent   = makeTransferIntent();
+  const snapshot = makeWalletSnapshot({ allowanceAtomic: '0' });
+  const proof    = runtime.authorization.authorizeExecution(runtime.promoted, intent, snapshot);
+
+  await runtime.ixExecution.executeTransfer({
+    action: 'execute-authorized',
+    authorizationProof: proof,
+    provider: providerB,
+    snapshotProvider: providerA,
+    token: 'USDC',
+    source: 'coincard',
+    traceId: 'policy-b-test-b',
+  });
+
+  /* Neither provider should have received wallet interaction calls. */
+  const walletMethods = ['eth_accounts', 'eth_requestAccounts', 'eth_chainId', 'eth_call', 'eth_sendTransaction'];
+  const providerBWalletCalls = providerB.calls.filter((c) => walletMethods.includes(c.method));
+  assert.equal(providerBWalletCalls.length, 0,
+    'exec provider must not receive any wallet calls on PROVIDER_MISMATCH');
+  const providerAWalletCalls = providerA.calls.filter((c) => walletMethods.includes(c.method));
+  assert.equal(providerAWalletCalls.length, 0,
+    'snapshot provider must not receive any wallet calls on PROVIDER_MISMATCH');
+});
+
+test('policy-b: proof is permanently consumed after PROVIDER_MISMATCH', async () => {
+  /* Test C: After a PROVIDER_MISMATCH, the same proof used with corrected providers
+   * must return AUTHORIZATION_PROOF_CONSUMED, not succeed. */
+  const providerA = makeMockProvider({ label: 'snapshot-provider' });
+  const providerB = makeMockProvider({ label: 'exec-provider' });
+
+  const runtime  = await makeAuthorizedRuntime({ ethereum: providerA });
+  const intent   = makeTransferIntent();
+  const snapshot = makeWalletSnapshot({ allowanceAtomic: '0' });
+  const proof    = runtime.authorization.authorizeExecution(runtime.promoted, intent, snapshot);
+
+  /* First call: PROVIDER_MISMATCH — proof should be consumed. */
+  const first = await runtime.ixExecution.executeTransfer({
+    action: 'execute-authorized',
+    authorizationProof: proof,
+    provider: providerB,
+    snapshotProvider: providerA,
+    token: 'USDC',
+    source: 'coincard',
+    traceId: 'policy-b-test-c-first',
+  });
+  assert.equal(first.error.code, 'PROVIDER_MISMATCH', 'first call must produce PROVIDER_MISMATCH');
+
+  /* Second call: corrected providers — must return AUTHORIZATION_PROOF_CONSUMED. */
+  const second = await runtime.ixExecution.executeTransfer({
+    action: 'execute-authorized',
+    authorizationProof: proof,
+    provider: providerA,
+    snapshotProvider: providerA,
+    token: 'USDC',
+    source: 'coincard',
+    traceId: 'policy-b-test-c-second',
+  });
+  assert.equal(second.status, 'failed', `expected failed, got ${second.status}`);
+  assert.equal(second.error.code, 'AUTHORIZATION_PROOF_CONSUMED',
+    `expected AUTHORIZATION_PROOF_CONSUMED on corrected retry, got ${second.error && second.error.code}`);
+});
+
+test('policy-b: second call with corrected providers returns AUTHORIZATION_PROOF_CONSUMED not PROVIDER_MISMATCH', async () => {
+  /* Test D: Explicit disambiguation — the consumed check must fire before the
+   * mismatch check on the second call. This is required so that Policy B
+   * cannot be bypassed by re-submitting with corrected providers. */
+  const providerA = makeMockProvider({ label: 'snapshot-provider' });
+  const providerB = makeMockProvider({ label: 'exec-provider' });
+
+  const runtime  = await makeAuthorizedRuntime({ ethereum: providerA });
+  const intent   = makeTransferIntent();
+  const snapshot = makeWalletSnapshot({ allowanceAtomic: '0' });
+  const proof    = runtime.authorization.authorizeExecution(runtime.promoted, intent, snapshot);
+
+  /* First call: trigger PROVIDER_MISMATCH. */
+  await runtime.ixExecution.executeTransfer({
+    action: 'execute-authorized',
+    authorizationProof: proof,
+    provider: providerB,
+    snapshotProvider: providerA,
+    token: 'USDC',
+    source: 'coincard',
+    traceId: 'policy-b-test-d-first',
+  });
+
+  /* Second call: corrected providers — AUTHORIZATION_PROOF_CONSUMED, not PROVIDER_MISMATCH. */
+  const second = await runtime.ixExecution.executeTransfer({
+    action: 'execute-authorized',
+    authorizationProof: proof,
+    provider: providerA,
+    snapshotProvider: providerA,
+    token: 'USDC',
+    source: 'coincard',
+    traceId: 'policy-b-test-d-second',
+  });
+  assert.notEqual(second.error.code, 'PROVIDER_MISMATCH',
+    'second call must not return PROVIDER_MISMATCH (consumed check fires first)');
+  assert.equal(second.error.code, 'AUTHORIZATION_PROOF_CONSUMED',
+    `expected AUTHORIZATION_PROOF_CONSUMED, got ${second.error && second.error.code}`);
+});
+
+test('policy-b: malformed proof + provider mismatch → AUTHORIZATION_PROOF_INVALID, proof never consumed', async () => {
+  /* Test E: A proof that fails isExecutionAuthorizedResult() must return
+   * AUTHORIZATION_PROOF_INVALID. The identity check fires before the
+   * consumption set, so the object is never added to consumedAuthorizationProofs. */
+  const providerA = makeMockProvider({ label: 'snapshot-provider' });
+  const providerB = makeMockProvider({ label: 'exec-provider' });
+
+  const runtime  = await makeAuthorizedRuntime({ ethereum: providerA });
+
+  /* Malformed proof: plain object, not a branded authorization result. */
+  const malformedProof = { fake: true, sender: '0x1234', recipient: '0x5678' };
+
+  const result = await runtime.ixExecution.executeTransfer({
+    action: 'execute-authorized',
+    authorizationProof: malformedProof,
+    provider: providerB,
+    snapshotProvider: providerA,
+    token: 'USDC',
+    source: 'coincard',
+    traceId: 'policy-b-test-e',
+  });
+  assert.equal(result.status, 'failed', `expected failed, got ${result.status}`);
+  assert.equal(result.error.code, 'AUTHORIZATION_PROOF_INVALID',
+    `expected AUTHORIZATION_PROOF_INVALID, got ${result.error && result.error.code}`);
+
+  /* Submitting the same malformed proof again must also return INVALID (never consumed). */
+  const second = await runtime.ixExecution.executeTransfer({
+    action: 'execute-authorized',
+    authorizationProof: malformedProof,
+    provider: providerB,
+    snapshotProvider: providerA,
+    token: 'USDC',
+    source: 'coincard',
+    traceId: 'policy-b-test-e-retry',
+  });
+  assert.equal(second.error.code, 'AUTHORIZATION_PROOF_INVALID',
+    'malformed proof must never enter consumption set; second call also INVALID');
+});
+
+test('policy-b: already-consumed proof + provider mismatch → AUTHORIZATION_PROOF_CONSUMED not PROVIDER_MISMATCH', async () => {
+  /* Test F: If a proof was previously consumed (e.g., via a successful execution),
+   * a subsequent call with mismatched providers must return AUTHORIZATION_PROOF_CONSUMED,
+   * not PROVIDER_MISMATCH. The has() check fires before the mismatch check. */
+  const providerA = makeMockProvider({ label: 'provider-a' });
+  const providerB = makeMockProvider({ label: 'provider-b' });
+
+  const runtime  = await makeAuthorizedRuntime({ ethereum: providerA });
+  const intent   = makeTransferIntent();
+  const snapshot = makeWalletSnapshot({ allowanceAtomic: '0' });
+  const proof    = runtime.authorization.authorizeExecution(runtime.promoted, intent, snapshot);
+  assert.ok(runtime.authorization.isExecutionAuthorizedResult(proof), 'proof must be valid');
+
+  /* First call: correct providers — consume the proof. */
+  const first = await runtime.ixExecution.executeTransfer({
+    action: 'execute-authorized',
+    authorizationProof: proof,
+    provider: providerA,
+    snapshotProvider: providerA,
+    token: 'USDC',
+    source: 'coincard',
+    traceId: 'policy-b-test-f-first',
+  });
+  /* This should succeed (consume the proof). */
+  assert.ok(first.status !== undefined, 'first call must return a result');
+
+  /* Second call: mismatched providers + consumed proof → AUTHORIZATION_PROOF_CONSUMED. */
+  const second = await runtime.ixExecution.executeTransfer({
+    action: 'execute-authorized',
+    authorizationProof: proof,
+    provider: providerB,
+    snapshotProvider: providerA,
+    token: 'USDC',
+    source: 'coincard',
+    traceId: 'policy-b-test-f-second',
+  });
+  assert.equal(second.status, 'failed', `expected failed, got ${second.status}`);
+  assert.notEqual(second.error.code, 'PROVIDER_MISMATCH',
+    'already-consumed proof must not produce PROVIDER_MISMATCH');
+  assert.equal(second.error.code, 'AUTHORIZATION_PROOF_CONSUMED',
+    `expected AUTHORIZATION_PROOF_CONSUMED, got ${second.error && second.error.code}`);
+});

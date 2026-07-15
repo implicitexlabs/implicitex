@@ -658,7 +658,16 @@
         }));
       }
 
-      /* Provider continuity check — before consuming the proof.
+      if (consumedAuthorizationProofs.has(proof)) {
+        return Promise.resolve(makeResult('failed', {
+          error: { code: 'AUTHORIZATION_PROOF_CONSUMED', message: 'Authorization proof has already been used.' },
+        }));
+      }
+      /* A valid execution authorization is one-shot once submitted to the authorized
+       * execution boundary. Provider discontinuity requires fresh snapshot authority. */
+      consumedAuthorizationProofs.add(proof);
+
+      /* Provider continuity check — after consuming the proof.
        * If the caller supplies both provider and snapshotProvider they must be
        * the same object (same session). A mismatch means the provider changed
        * between snapshot and execution, which must be rejected immediately. */
@@ -669,14 +678,6 @@
           error: { code: 'PROVIDER_MISMATCH', message: 'Execution provider does not match the provider used for the wallet snapshot.' },
         }));
       }
-
-      if (consumedAuthorizationProofs.has(proof)) {
-        return Promise.resolve(makeResult('failed', {
-          error: { code: 'AUTHORIZATION_PROOF_CONSUMED', message: 'Authorization proof has already been used.' },
-        }));
-      }
-      /* Mark consumed before any wallet interaction. */
-      consumedAuthorizationProofs.add(proof);
 
       /* Resolve the provider to use for all wallet operations in this path.
        * Preference: request.provider → window.ethereum → wallet-missing. */
