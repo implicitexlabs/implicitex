@@ -53,6 +53,7 @@
   --status-ok:  rgba(242, 242, 240, 0.7);
   --warn:       #c0392b;
   --warn-border: rgba(192, 57, 43, 0.7);
+  --control-focus: rgba(242, 242, 240, 0.84);
   --telemetry-amber:     #b87a1e;
   --telemetry-amber-dim: rgba(184, 122, 30, 0.82);
   --telemetry-amber-border: rgba(184, 122, 30, 0.28);
@@ -156,6 +157,7 @@
   --status-ok:  rgba(8, 8, 8, 0.7);
   --warn:       #b03020;
   --warn-border: rgba(176, 48, 32, 0.7);
+  --control-focus: rgba(8, 8, 8, 0.72);
   --telemetry-amber:     #a06818;
   --telemetry-amber-dim: rgba(160, 104, 24, 0.82);
   --telemetry-amber-border: rgba(160, 104, 24, 0.28);
@@ -2361,7 +2363,6 @@ body.portal-active #nav {
 .tx-field {
   background: var(--surface-2);
   border: 1px solid var(--border-2);
-  border-bottom: none;
   color: var(--white);
   font-family: var(--font-mono);  /* user-typed addresses and amounts — mono */
   font-size: 15px;
@@ -2375,11 +2376,10 @@ body.portal-active #nav {
   transition: border-color 0.12s;
 }
 
-.tx-field:last-of-type { border-bottom: 1px solid var(--border-2); }
 .tx-field::placeholder { color: var(--muted); }
 .tx-field:focus {
   border-color: var(--white);
-  box-shadow: 0 0 0 1px currentColor;
+  box-shadow: 0 0 0 1px var(--control-focus);
 }
 
 .tx-field--primary {
@@ -2395,7 +2395,7 @@ body.portal-active #nav {
 
 .tx-field--primary:focus {
   border-color: var(--white);
-  box-shadow: 0 0 0 1px currentColor;
+  box-shadow: 0 0 0 1px var(--control-focus);
 }
 
 .tx-field--primary:disabled {
@@ -2433,20 +2433,18 @@ body.portal-active #nav {
   margin-bottom: 16px;
 }
 
-.tx-meta-grid .tx-field {
-  border-top: none;
-}
-
 .tx-meta-grid .tx-field-group {
   margin-bottom: 0;
 }
 
 .tx-field--error {
   border-color: var(--warn-border) !important;
-  border-bottom: 1px solid var(--warn-border) !important;
 }
 
-.tx-field--error:focus { border-color: var(--warn) !important; }
+.tx-field--error:focus {
+  border-color: var(--warn) !important;
+  box-shadow: 0 0 0 1px var(--control-focus) !important;
+}
 
 .tx-recipient-error {
   font-family: var(--font-sans);
@@ -2481,6 +2479,36 @@ body.portal-active #nav {
   font-size: 15px;
   font-weight: var(--weight-medium);
   color: var(--white);
+}
+
+.tx-recipient-lowercase-action {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 0.35rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--dim);
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: var(--weight-medium);
+  line-height: 1.35;
+  letter-spacing: normal;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.12em;
+}
+
+.tx-recipient-lowercase-action:hover {
+  color: var(--white);
+}
+
+.tx-recipient-lowercase-action:focus-visible {
+  color: var(--white);
+  outline: 1px solid var(--control-focus);
+  outline-offset: 2px;
+  border-radius: 2px;
 }
 
 #transferMod .data-k {
@@ -5492,10 +5520,6 @@ h1 + .gs-section-head {
 
   .tx-meta-grid {
     grid-template-columns: 1fr;
-  }
-
-  .tx-meta-grid .tx-field + .tx-field {
-    border-left: 1px solid var(--border);
   }
 
   .proof-panel {

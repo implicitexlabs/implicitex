@@ -33,6 +33,9 @@ test('Send USDC control system uses labeled groups and sentence-case actions', (
 test('Send USDC typography remains role-based and readable', () => {
   const css = read(portalCssPath);
   const js = read(walletJsPath);
+  const txFieldBlock = css.match(/\.tx-field\s*\{([\s\S]*?)\n\}/)?.[1] || '';
+  const txMetaGridFieldBlock = css.match(/\.tx-meta-grid \.tx-field\s*\{([\s\S]*?)\n\}/)?.[1] || '';
+  const txMetaGridAdjacentBlock = css.match(/\.tx-meta-grid \.tx-field \+ \.tx-field\s*\{([\s\S]*?)\n\}/)?.[1] || '';
 
   assert.match(css, /\.tx-field-group\s*\{\s*display: flex;\s*flex-direction: column;\s*gap: 6px;\s*margin-bottom: 16px;/);
   assert.match(css, /\.tx-field-label\s*\{\s*font-family: var\(--font-sans\);\s*font-size: 13px;\s*font-weight: var\(--weight-semibold\);/);
@@ -48,6 +51,16 @@ test('Send USDC typography remains role-based and readable', () => {
   assert.match(css, /\.tx-state-note\s*\{\s*font-family: var\(--font-sans\);\s*font-size: 13px;/);
   assert.match(css, /\.tx-status\s*\{\s*font-family: var\(--font-sans\);\s*font-size: 13px;/);
   assert.match(css, /\.tx-confirm\s*\{\s*[\s\S]*font-family: var\(--font-sans\);[\s\S]*font-size: 14px;/);
-  assert.match(js, /Connect wallet to continue/);
-  assert.match(js, /Review transfer/);
+  assert.match(css, /--control-focus:\s*rgba\(/);
+  assert.match(css, /\.tx-field:focus\s*\{\s*border-color: var\(--white\);\s*box-shadow: 0 0 0 1px var\(--control-focus\);/);
+  assert.match(css, /\.tx-field--primary:focus\s*\{\s*border-color: var\(--white\);\s*box-shadow: 0 0 0 1px var\(--control-focus\);/);
+  assert.match(css, /\.tx-field--error:focus\s*\{\s*border-color: var\(--warn\) !important;\s*box-shadow: 0 0 0 1px var\(--control-focus\) !important;/);
+  assert.match(css, /\.tx-recipient-lowercase-action\s*\{/);
+  assert.match(js, /className = 'tx-recipient-lowercase-action'/);
+  assert.match(js, /textContent = 'Use lowercase address'/);
+  assert.doesNotMatch(css, /\.tx-field:last-of-type/);
+  assert.doesNotMatch(txFieldBlock, /border-bottom:\s*none;/);
+  assert.doesNotMatch(txMetaGridFieldBlock, /border-top:\s*none;/);
+  assert.doesNotMatch(txMetaGridAdjacentBlock, /border-left:/);
+  assert.doesNotMatch(js, /color:var\(--accent\)/);
 });

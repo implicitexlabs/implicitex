@@ -3447,8 +3447,8 @@
           msg.textContent = 'Invalid checksum. This address uses mixed uppercase and lowercase letters with an invalid capitalization pattern. Most wallet addresses can be safely entered in lowercase.';
           const btn = document.createElement('button');
           btn.type = 'button';
+          btn.className = 'tx-recipient-lowercase-action';
           btn.textContent = 'Use lowercase address';
-          btn.style.cssText = 'display:block;margin-top:0.35rem;background:none;border:none;padding:0;color:var(--accent);font:inherit;font-size:14px;text-decoration:underline;cursor:pointer;letter-spacing:normal;';
           btn.addEventListener('click', function () {
             if (els.txRecipient) {
               els.txRecipient.value = lowercase;
