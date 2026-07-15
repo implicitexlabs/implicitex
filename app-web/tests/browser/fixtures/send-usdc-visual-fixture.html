@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex">
+  <title>Send USDC Visual Fixture</title>
+  <link rel="stylesheet" href="../../../frontend/public/css/main.css">
+  <style>
+    body {
+      padding: 1.5rem;
+    }
+
+    .fixture-shell {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .fixture-head {
+      max-width: 76ch;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .fixture-head h1 {
+      font-family: var(--font-display);
+      font-size: clamp(1.75rem, 3vw, 2.5rem);
+      line-height: 1.08;
+      color: var(--white);
+    }
+
+    .fixture-head p {
+      font-family: var(--font-sans);
+      font-size: var(--text-body);
+      line-height: var(--leading-body);
+      color: var(--dim);
+      margin: 0;
+    }
+
+    .fixture-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1rem;
+    }
+
+    .fixture-card {
+      border: 1px solid var(--border);
+      background: var(--surface);
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      min-width: 0;
+    }
+
+    .fixture-card-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .fixture-card-title {
+      font-family: var(--font-ui);
+      font-size: var(--text-ui);
+      font-weight: var(--weight-semibold);
+      color: var(--white);
+      letter-spacing: 0.01em;
+    }
+
+    .fixture-card-state {
+      font-family: var(--font-ui);
+      font-size: var(--text-caption);
+      font-weight: var(--weight-semibold);
+      letter-spacing: var(--tracking-label);
+      text-transform: uppercase;
+      color: var(--dim);
+    }
+
+    .fixture-note {
+      font-family: var(--font-sans);
+      font-size: var(--text-caption);
+      line-height: 1.45;
+      color: var(--dim);
+      margin: 0;
+    }
+
+    .fixture-card .tx-form {
+      gap: 0;
+    }
+
+    .fixture-card .tx-field-group {
+      margin-bottom: 12px;
+    }
+
+    .fixture-card .tx-field,
+    .fixture-card .tx-field--select {
+      width: 100%;
+    }
+
+    .fixture-card .tx-state-note,
+    .fixture-card .tx-status {
+      text-align: left;
+      margin-top: 6px;
+    }
+
+    .fixture-card .tx-confirm {
+      margin-top: 10px;
+    }
+
+    .fixture-card .tx-preview {
+      display: block;
+    }
+
+    .fixture-card .tx-preview[hidden],
+    .fixture-card .tx-confirm[hidden] {
+      display: none;
+    }
+
+    .fixture-card .tx-btn {
+      width: 100%;
+      min-width: 0;
+      margin: 1rem 0 0;
+    }
+
+    .fixture-card .fee-row {
+      margin-bottom: 8px;
+    }
+
+    .fixture-readonly {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 0.75rem 0;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 0.75rem;
+    }
+
+    .fixture-readonly-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      font-family: var(--font-sans);
+      font-size: var(--text-ui);
+      line-height: 1.45;
+      color: var(--dim);
+    }
+
+    .fixture-readonly-row span:last-child {
+      font-family: var(--font-mono);
+      color: var(--white);
+      text-align: right;
+    }
+
+    .tx-field:focus,
+    .tx-field--primary:focus,
+    .tx-field--select:focus,
+    .tx-btn:focus-visible {
+      outline: 1px solid var(--white);
+      outline-offset: 2px;
+    }
+
+    @media (max-width: 900px) {
+      .fixture-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="fixture-shell" id="sendUsdcVisualFixture">
+    <header class="fixture-head">
+      <h1>Send USDC Visual Fixture</h1>
+      <p>Deterministic renderer for the Send USDC control system. No wallet, RPC, registry, analytics, storage, or contract calls.</p>
+    </header>
+
+    <section class="fixture-grid" id="fixtureGrid" aria-label="Send USDC presentation states"></section>
+
+    <template id="fixtureCardTemplate">
+      <article class="fixture-card">
+        <header class="fixture-card-head">
+          <span class="fixture-card-title"></span>
+          <span class="fixture-card-state"></span>
+        </header>
+
+        <div class="tx-form">
+          <div class="tx-field-group">
+            <label class="tx-field-label" for="fixtureRecipient"></label>
+            <input class="tx-field tx-field--primary" id="fixtureRecipient" type="text" placeholder="Wallet address or ENS name" autocomplete="off" spellcheck="false">
+          </div>
+          <p class="tx-recipient-error" aria-live="assertive"></p>
+
+          <div class="tx-field-group">
+            <label class="tx-field-label" for="fixtureAmount"></label>
+            <input class="tx-field tx-field--primary" id="fixtureAmount" type="number" inputmode="decimal" min="1" step="0.000001" placeholder="Enter amount in USDC">
+          </div>
+
+          <div class="tx-field-group">
+            <label class="tx-field-label" for="fixturePurpose">Purpose</label>
+            <select class="tx-field tx-field--select" id="fixturePurpose">
+              <option value="">Purpose tag</option>
+              <option value="invoice">Invoice</option>
+              <option value="contractor">Contractor</option>
+              <option value="refund">Refund</option>
+              <option value="family">Family</option>
+              <option value="donation">Donation</option>
+              <option value="purchase">Purchase</option>
+              <option value="subscription">Subscription</option>
+              <option value="test">Test</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          <div class="tx-field-group">
+            <label class="tx-field-label" for="fixtureReference">Reference</label>
+            <input class="tx-field" id="fixtureReference" type="text" placeholder="Invoice / reference" maxlength="80" autocomplete="off">
+          </div>
+
+          <div class="tx-field-group">
+            <label class="tx-field-label" for="fixtureMemo">Memo</label>
+            <input class="tx-field" id="fixtureMemo" type="text" placeholder="Memo (local receipt only)" maxlength="140" autocomplete="off">
+          </div>
+
+          <div class="fixture-readonly" aria-label="Readonly transfer values">
+            <div class="fixture-readonly-row">
+              <span>Connected wallet</span>
+              <span class="fixture-wallet">—</span>
+            </div>
+            <div class="fixture-readonly-row">
+              <span>Your USDC balance</span>
+              <span class="fixture-balance">—</span>
+            </div>
+            <div class="fixture-readonly-row">
+              <span>Platform fee</span>
+              <span class="fixture-fee">—</span>
+            </div>
+          </div>
+
+          <label class="tx-confirm" hidden>
+            <input type="checkbox">
+            <span>I confirm the recipient, amount, fee, and total debit. Transfers confirmed on-chain cannot be reversed.</span>
+          </label>
+
+          <div class="tx-preview" hidden aria-label="Transfer preview">
+            <p class="tx-preview-label">Transfer Preview</p>
+            <div class="data-row">
+              <span class="data-k">Recipient</span>
+              <span class="data-v fixture-preview-recipient">—</span>
+            </div>
+            <div class="data-row">
+              <span class="data-k">Recipient gets</span>
+              <span class="data-v fixture-preview-amount">—</span>
+            </div>
+            <div class="data-row">
+              <span class="data-k">Platform fee</span>
+              <span class="data-v fixture-preview-fee">—</span>
+            </div>
+            <div class="data-row">
+              <span class="data-k">Total from wallet</span>
+              <span class="data-v fixture-preview-total">—</span>
+            </div>
+          </div>
+
+          <button class="tx-btn" type="button">Review transfer</button>
+          <button class="tx-btn tx-btn--cancel" type="button">Edit details</button>
+          <p class="tx-state-note"></p>
+          <p class="tx-status" aria-live="polite"></p>
+        </div>
+      </article>
+    </template>
+  </main>
+
+  <script>
+  (function () {
+    'use strict';
+
+    var states = [
+      {
+        id: 'empty',
+        title: 'Empty',
+        state: 'Draft',
+        note: 'Blank controls, ready for entry.',
+      },
+      {
+        id: 'focused',
+        title: 'Focused',
+        state: 'Draft',
+        focused: true,
+        note: 'Recipient has focus and the visible focus ring is active.',
+      },
+      {
+        id: 'populated',
+        title: 'Populated',
+        state: 'Draft',
+        recipient: '0xa7cE4232811021d2Dd01f4f0f264Df2427ab3919',
+        amount: '100.00',
+        purpose: 'invoice',
+        reference: 'INV-2048',
+        memo: 'Monthly settlement',
+        wallet: '0x2f9d…81a4',
+        balance: '248.43 USDC',
+        fee: '1.00 USDC',
+        note: 'Editable values are filled; machine values stay separate.',
+      },
+      {
+        id: 'invalid',
+        title: 'Invalid recipient',
+        state: 'Error',
+        recipient: 'invalid-address',
+        amount: '24.00',
+        purpose: 'test',
+        reference: 'INV-2049',
+        memo: 'Address validation failed',
+        wallet: '0x2f9d…81a4',
+        balance: '248.43 USDC',
+        fee: '0.24 USDC',
+        error: 'Enter a valid recipient wallet address or ENS name.',
+        status: 'Recipient address is invalid.',
+        note: 'Error treatment stays neutral and readable.',
+      },
+      {
+        id: 'disabled',
+        title: 'Disabled',
+        state: 'Unavailable',
+        disabled: true,
+        wallet: 'No wallet connected',
+        balance: '—',
+        fee: '—',
+        status: 'Wallet connection required.',
+        note: 'Fields are disabled without suggesting an active transfer.',
+      },
+      {
+        id: 'review-ready',
+        title: 'Review ready',
+        state: 'Ready',
+        recipient: '0x71B4…A92F',
+        amount: '12.34',
+        purpose: 'contractor',
+        reference: 'PAY-017',
+        memo: 'Final review state',
+        wallet: '0x2f9d…81a4',
+        balance: '248.43 USDC',
+        fee: '0.12 USDC',
+        preview: {
+          recipient: '0x71B4…A92F',
+          amount: '12.34 USDC',
+          fee: '0.12 USDC',
+          total: '12.46 USDC',
+        },
+        confirm: true,
+        armed: true,
+        button: 'Execute Transfer',
+        status: 'Confirm the details before sending.',
+        note: 'Summary, acknowledgement, and action are all visible.',
+      },
+    ];
+
+    var grid = document.getElementById('fixtureGrid');
+    var template = document.getElementById('fixtureCardTemplate');
+
+    function fill(card, selector, value, fallback) {
+      var node = card.querySelector(selector);
+      if (!node) return;
+      node.textContent = value != null && value !== '' ? value : (fallback || '—');
+    }
+
+    function setInput(card, selector, value) {
+      var node = card.querySelector(selector);
+      if (!node) return;
+      if (value != null) node.value = value;
+    }
+
+    states.forEach(function (entry) {
+      var card = template.content.firstElementChild.cloneNode(true);
+      card.id = 'fixture-' + entry.id;
+
+      fill(card, '.fixture-card-title', entry.title);
+      fill(card, '.fixture-card-state', entry.state);
+      fill(card, '.fixture-wallet', entry.wallet);
+      fill(card, '.fixture-balance', entry.balance);
+      fill(card, '.fixture-fee', entry.fee);
+      fill(card, '.tx-state-note', entry.note);
+      var statusNode = card.querySelector('.tx-status');
+      if (statusNode) statusNode.textContent = entry.status || '';
+
+      var recipient = card.querySelector('#fixtureRecipient');
+      var amount = card.querySelector('#fixtureAmount');
+      var purpose = card.querySelector('#fixturePurpose');
+      var reference = card.querySelector('#fixtureReference');
+      var memo = card.querySelector('#fixtureMemo');
+      var confirm = card.querySelector('.tx-confirm');
+      var preview = card.querySelector('.tx-preview');
+      var button = card.querySelector('.tx-btn');
+      var cancel = card.querySelector('.tx-btn--cancel');
+      var error = card.querySelector('.tx-recipient-error');
+
+      recipient.id = entry.id + '-recipient';
+      amount.id = entry.id + '-amount';
+      purpose.id = entry.id + '-purpose';
+      reference.id = entry.id + '-reference';
+      memo.id = entry.id + '-memo';
+      card.querySelector('label[for="fixtureRecipient"]').setAttribute('for', recipient.id);
+      card.querySelector('label[for="fixtureAmount"]').setAttribute('for', amount.id);
+      card.querySelector('label[for="fixturePurpose"]').setAttribute('for', purpose.id);
+      card.querySelector('label[for="fixtureReference"]').setAttribute('for', reference.id);
+      card.querySelector('label[for="fixtureMemo"]').setAttribute('for', memo.id);
+
+      setInput(card, '#'+recipient.id, entry.recipient || '');
+      setInput(card, '#'+amount.id, entry.amount || '');
+      setInput(card, '#'+reference.id, entry.reference || '');
+      setInput(card, '#'+memo.id, entry.memo || '');
+      if (entry.purpose) purpose.value = entry.purpose;
+
+      if (entry.disabled) {
+        [recipient, amount, purpose, reference, memo, button, cancel].forEach(function (node) {
+          if (node) node.disabled = true;
+        });
+        recipient.setAttribute('disabled', '');
+        amount.setAttribute('disabled', '');
+        purpose.setAttribute('disabled', '');
+        reference.setAttribute('disabled', '');
+        memo.setAttribute('disabled', '');
+      }
+
+      if (entry.focused) {
+        requestAnimationFrame(function () { recipient.focus(); });
+      }
+
+      if (entry.confirm) {
+        confirm.removeAttribute('hidden');
+      }
+      if (entry.preview) {
+        preview.removeAttribute('hidden');
+        fill(card, '.fixture-preview-recipient', entry.preview.recipient);
+        fill(card, '.fixture-preview-amount', entry.preview.amount);
+        fill(card, '.fixture-preview-fee', entry.preview.fee);
+        fill(card, '.fixture-preview-total', entry.preview.total);
+      }
+
+      if (entry.error) {
+        recipient.classList.add('tx-field--error');
+        error.textContent = entry.error;
+      } else {
+        error.textContent = '';
+      }
+
+      if (entry.armed) {
+        button.classList.add('tx-btn--armed');
+      }
+      button.textContent = entry.button || 'Review transfer';
+      cancel.textContent = entry.reviewButton || 'Edit details';
+      grid.appendChild(card);
+    });
+  }());
+  </script>
+</body>
+</html>

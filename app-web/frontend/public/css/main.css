@@ -1400,6 +1400,172 @@ body.portal-active #nav {
   background: var(--surface);
 }
 
+.portal-entry {
+  max-width: var(--ix-interface-max);
+  margin: clamp(2rem, 5vh, 3.5rem) auto 0;
+  padding: 0 1.5rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1.08fr) minmax(280px, 0.92fr);
+  gap: var(--sp-5);
+  align-items: start;
+}
+
+.portal-entry-copy {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-5);
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.portal-entry-kicker {
+  font-family: var(--font-ui);
+  font-size: var(--text-caption);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--accent-dim);
+}
+
+.portal-entry-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.75rem, 3vw, 2.75rem);
+  line-height: 1.08;
+  letter-spacing: 0.01em;
+  color: var(--white);
+}
+
+.portal-entry-lede,
+.portal-entry-note {
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
+  letter-spacing: normal;
+  color: var(--dim);
+  max-width: var(--measure-lead);
+}
+
+.portal-entry-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  margin-top: var(--sp-2);
+}
+
+.portal-entry-action,
+.portal-entry-action:link,
+.portal-entry-action:visited {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 var(--sp-4);
+  border-radius: 2px;
+  border: 1px solid var(--border-2);
+  font-family: var(--font-ui);
+  font-size: var(--text-ui);
+  font-weight: var(--weight-semibold);
+  letter-spacing: normal;
+  text-decoration: none;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+}
+
+.portal-entry-action--primary {
+  background: var(--white);
+  border-color: var(--white);
+  color: var(--bg);
+}
+
+.portal-entry-action--primary:hover,
+.portal-entry-action--primary:focus-visible {
+  background: var(--button-hover);
+  border-color: var(--button-hover);
+}
+
+.portal-entry-action--secondary {
+  background: transparent;
+  color: var(--white);
+}
+
+.portal-entry-action--secondary:hover,
+.portal-entry-action--secondary:focus-visible {
+  background: var(--surface-2);
+  border-color: var(--border-2);
+}
+
+.portal-entry-action:focus-visible {
+  outline: 1px solid var(--white);
+  outline-offset: 2px;
+}
+
+.portal-entry-preview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-5);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+}
+
+.portal-entry-preview-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.portal-entry-preview-label,
+.portal-entry-preview-meta {
+  font-family: var(--font-ui);
+  font-size: var(--text-caption);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+.portal-entry-preview-label { color: var(--white); }
+.portal-entry-preview-meta { color: var(--dim); }
+
+.portal-entry-preview-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  background: var(--border);
+}
+
+.portal-entry-preview-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 0.9fr) minmax(0, 1fr);
+  gap: var(--sp-3);
+  padding: 0.9rem 1rem;
+  background: var(--surface);
+  align-items: start;
+}
+
+.portal-entry-preview-step {
+  font-family: var(--font-mono);
+  font-size: var(--size-xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.08em;
+  color: var(--accent-dim);
+}
+
+.portal-entry-preview-title {
+  font-family: var(--font-sans);
+  font-size: var(--text-ui);
+  font-weight: var(--weight-semibold);
+  color: var(--white);
+}
+
+.portal-entry-preview-copy {
+  font-family: var(--font-sans);
+  font-size: var(--text-caption);
+  line-height: 1.45;
+  color: var(--dim);
+  text-align: right;
+}
+
 .portal-install-promo-icon {
   display: block;
   width: 68px;
@@ -7646,6 +7812,25 @@ input[type="number"] {
      regardless of the data-portal-layout attribute value. */
   .modules[data-portal-layout="columns"] {
     grid-template-columns: 1fr;
+  }
+
+  .portal-entry {
+    grid-template-columns: 1fr;
+    padding-inline: 1rem;
+  }
+
+  .portal-entry-copy,
+  .portal-entry-preview {
+    padding: var(--sp-4);
+  }
+
+  .portal-entry-preview-row {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .portal-entry-preview-copy {
+    grid-column: 1 / -1;
+    text-align: left;
   }
 
   .portal-install-promo {

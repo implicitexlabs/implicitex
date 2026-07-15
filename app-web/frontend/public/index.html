@@ -108,7 +108,7 @@
         </svg>
       </button>
       <span class="nav-status">Polygon · Live</span>
-      <a class="send-usdc-link" href="#transfer" onclick="if (window.IX && IX.focusTransferPortal) { IX.focusTransferPortal(); return false; }">Transfer portal</a>
+      <a class="send-usdc-link" href="#transfer">Transfer portal</a>
       <button class="connect-btn" id="connectBtn" onclick="IX.connect()">
         Connect wallet
       </button>
@@ -173,11 +173,11 @@
       <!-- Transaction section -->
       <section class="mobile-menu-section" aria-label="Transaction">
         <p class="mobile-menu-label">Transaction</p>
-        <button class="mobile-menu-btn mobile-menu-btn--primary" id="menuOpenPortalBtn" type="button">
-          Transfer Portal
-        </button>
-        <p class="mobile-menu-portal-note">Open the USDC transfer interface.</p>
-      </section>
+          <button class="mobile-menu-btn mobile-menu-btn--primary" id="menuOpenPortalBtn" type="button">
+            Transfer Portal
+          </button>
+          <p class="mobile-menu-portal-note">Open the canonical portal.</p>
+        </section>
 
       <!-- Navigation links -->
       <section class="mobile-menu-section" aria-label="Navigation">
@@ -315,511 +315,51 @@
 
     <p class="product-intro-copy">
       Receive USDC directly to your wallet on Polygon with a transparent 1% platform fee
-      and a verifiable on-chain record. Use the Transfer Portal below to prepare, review,
+      and a verifiable on-chain record. Open the Transfer Portal to prepare, review,
       and verify the transfer before sending.
     </p>
   </section>
-  <!-- Transfer anchor -->
-  <div class="transfer-anchor" id="transfer" aria-hidden="true"></div>
-
-  <!-- Portal zone — perimeter wrapper that provides four-corner tick markers -->
-  <div class="portal-zone">
-
-  <!-- Transfer Portal — default collapsed instrument -->
-  <section class="modules transfer-portal" id="modules" aria-label="Transfer Portal" data-transaction-window hidden>
-    <!-- Portal header — always visible in both expanded and collapsed states -->
-    <div class="portal-header">
-      <span class="portal-header-title">Transfer Portal</span>
-      <div class="portal-header-controls">
-        <button class="portal-ctrl-btn" id="layoutToggle" type="button" data-layout="columns" aria-label="Switch to stacked layout">
-          <!-- columns icon — two 2px vertical bars; visible when layout = columns -->
-          <svg class="portal-ctrl-icon portal-layout-icon portal-layout-icon--columns" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" focusable="false">
-            <rect x="2" y="1" width="2" height="10" fill="currentColor"/>
-            <rect x="8" y="1" width="2" height="10" fill="currentColor"/>
-          </svg>
-          <!-- stacked icon — three 2px horizontal bars; visible when layout = stacked -->
-          <svg class="portal-ctrl-icon portal-layout-icon portal-layout-icon--stacked" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" focusable="false">
-            <rect x="0" y="1" width="12" height="2" fill="currentColor"/>
-            <rect x="0" y="5" width="12" height="2" fill="currentColor"/>
-            <rect x="0" y="9" width="12" height="2" fill="currentColor"/>
-          </svg>
-        </button>
-        <button class="portal-ctrl-btn portal-fullscreen-ctrl" id="portalFullscreenAction" type="button" aria-pressed="false" aria-label="Enter fullscreen" title="Enter fullscreen" data-fullscreen-active="false">
-          <svg class="portal-ctrl-icon portal-fullscreen-icon" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false">
-            <g class="portal-fullscreen-glyph portal-fullscreen-glyph--enter">
-              <path d="M2.5 5V2.5H5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M9 2.5h2.5V5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M2.5 9V11.5H5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M9 11.5h2.5V9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-            </g>
-            <g class="portal-fullscreen-glyph portal-fullscreen-glyph--exit">
-              <path d="M5 2.5V5H2.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M9 2.5V5h2.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M2.5 9H5v2.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M11.5 9H9v2.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-            </g>
-          </svg>
-        </button>
-        <div class="portal-display-menu" id="portalDisplayMenu">
-          <button class="portal-ctrl-btn portal-display-ctrl" id="portalDisplayMenuToggle" type="button" aria-expanded="false" aria-controls="portalDisplayPanel" aria-label="Display settings" title="Display settings">
-            <svg class="portal-ctrl-icon" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false">
-              <rect x="1.5" y="2" width="11" height="7.5" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.4"/>
-              <path d="M5.25 11.25h3.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-              <path d="M7 9.5v1.75" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-            </svg>
-          </button>
-          <div class="portal-display-panel" id="portalDisplayPanel" hidden>
-            <label class="portal-display-switch" for="portalWakeLockToggle">
-              <span class="portal-display-switch-copy">Keep screen awake</span>
-              <span class="portal-display-switch-state" id="portalWakeLockState">Off</span>
-              <input id="portalWakeLockToggle" type="checkbox">
-            </label>
-            <p class="portal-display-note">Prevent this screen from sleeping during the current portal session.</p>
-            <p class="portal-display-status" id="portalWakeLockStatus" role="status" aria-live="polite"></p>
-          </div>
-        </div>
-        <button class="portal-ctrl-btn" id="modulesMinimize" type="button" aria-expanded="false" aria-label="Expand transfer portal">
-          <svg class="portal-ctrl-icon portal-ctrl-chevron" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" focusable="false">
-            <polyline points="2,4.5 6,8.5 10,4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </button>
+  <section class="portal-entry" id="transfer" aria-labelledby="portalEntryTitle">
+    <div class="portal-entry-copy">
+      <p class="portal-entry-kicker">Canonical portal</p>
+      <h2 class="portal-entry-title" id="portalEntryTitle">Send USDC with ImplicitEx</h2>
+      <p class="portal-entry-lede">
+        The public site explains the transfer flow. The canonical transaction interface lives on the portal,
+        where you connect a wallet and review the transfer before sending.
+      </p>
+      <div class="portal-entry-actions">
+        <a class="portal-entry-action portal-entry-action--primary" href="/portal-index.html">Open Transfer Portal</a>
+        <a class="portal-entry-action portal-entry-action--secondary" href="/install.html">Install ImplicitEx</a>
       </div>
-    </div>
-    <p class="portal-header-sub">TRANSFER DETAILS &middot; NETWORK STATE &middot; RECIPIENT VERIFICATION</p>
-
-    <!-- Coin Card intake banner — shown when portal opened via Coin Card handoff -->
-    <div class="cc-intake" id="ccIntake" hidden aria-live="polite" aria-label="Coin Card handoff status">
-      <div class="cc-intake-inner">
-        <span class="cc-intake-badge" aria-hidden="true">COIN CARD</span>
-        <p class="cc-intake-label" id="ccIntakeLabel">—</p>
-        <span class="cc-intake-status" id="ccIntakeStatus" data-verify-state="pending">CHECKING REGISTRY</span>
-      </div>
+      <p class="portal-entry-note">
+        No recipient, amount, wallet, verification, or execution controls appear on the public site.
+      </p>
     </div>
 
-    <!-- 01 Transfer -->
-    <div class="mod">
-      <span class="mod-tag">01 — Transfer</span>
-      <p class="mod-title">Send USDC</p>
-      <div class="tx-form">
-        <div class="fee-row tx-sender-row" aria-live="polite">
-          <div class="tx-sender-meta">
-            <span class="fee-label">CONNECTED WALLET</span>
-            <span class="tx-sender-sub">Wallet paying for this transfer</span>
-          </div>
-          <span class="fee-val" id="senderAddressDisplay">—</span>
-        </div>
-        <!-- "SENDING TO" label — hidden by default; shown by coincard-handoff when recipient is locked from registry -->
-        <div class="tx-recipient-label" id="txRecipientLabel" hidden>
-          <span class="fee-label">SENDING TO</span>
-        </div>
-        <!-- Coin Card identity hierarchy: name dominant → credential → address as cryptographic proof.
-             Shown above the input so identity leads, wallet address follows. -->
-        <div class="cc-recipient-context" id="ccRecipientContext" hidden>
-          <span class="cc-recipient-name" id="ccRecipientName">—</span>
-          <span class="cc-recipient-meta" id="ccRecipientMeta">—</span>
-        </div>
-        <input
-          class="tx-field tx-field--primary"
-          type="text"
-          id="txRecipient"
-          placeholder="Wallet address or ENS name"
-          autocomplete="off"
-          spellcheck="false"
-          aria-label="Recipient wallet address"
-          aria-describedby="recipientError"
-        >
-        <p class="tx-recipient-error" id="recipientError" aria-live="assertive"></p>
-        <div class="intel-panel" id="recipientIntel" aria-live="polite" hidden>
-          <p class="intel-label">Recipient</p>
-          <ul class="intel-list" id="recipientIntelList"></ul>
-        </div>
-        <input
-          class="tx-field tx-field--primary"
-          type="number"
-          id="txAmount"
-          placeholder="Enter amount in USDC"
-          inputmode="decimal"
-          min="1"
-          step="0.000001"
-          aria-label="Amount recipient gets in USDC"
-        >
-        <div class="tx-meta-grid" aria-label="Transfer metadata">
-          <select class="tx-field tx-field--select" id="txPurposeTag" aria-label="Transfer purpose tag">
-            <option value="">Purpose tag</option>
-            <option value="invoice">Invoice</option>
-            <option value="contractor">Contractor</option>
-            <option value="refund">Refund</option>
-            <option value="family">Family</option>
-            <option value="donation">Donation</option>
-            <option value="purchase">Purchase</option>
-            <option value="subscription">Subscription</option>
-            <option value="test">Test</option>
-            <option value="other">Other</option>
-          </select>
-          <input
-            class="tx-field"
-            type="text"
-            id="txReference"
-            placeholder="Invoice / reference"
-            maxlength="80"
-            autocomplete="off"
-            aria-label="Invoice or internal reference"
-          >
-        </div>
-        <input
-          class="tx-field"
-          type="text"
-          id="txMemo"
-          placeholder="Memo (local receipt only)"
-          maxlength="140"
-          autocomplete="off"
-          aria-label="Transfer memo"
-        >
-        <div class="fee-row" aria-live="polite">
-          <span class="fee-label">Your USDC balance</span>
-          <span class="fee-val" id="usdcBalance">0.00 USDC</span>
-        </div>
-        <div class="fee-row" aria-live="polite">
-          <span class="fee-label">Platform fee (1%)</span>
-          <span class="fee-val" id="feeDisplay">0.00 USDC</span>
-        </div>
-        <label class="tx-confirm" id="txConfirmWrap" hidden>
-          <input type="checkbox" id="txConfirmAck">
-          <span>I confirm the recipient, amount, fee, and total debit. Transfers confirmed on-chain cannot be reversed.</span>
-        </label>
-        <button class="tx-btn" id="txBtn" onclick="IX.handleTxAction()">
-          Review Transfer
-        </button>
-        <button class="tx-btn tx-btn--cancel" id="txCancelReview" type="button" aria-label="Return to editing transfer details" hidden>
-          Edit Details
-        </button>
-        <p class="tx-state-note" id="transferStateNote"></p>
-        <p class="tx-status" id="txStatus" aria-live="assertive"></p>
+    <div class="portal-entry-preview" aria-hidden="true">
+      <div class="portal-entry-preview-head">
+        <span class="portal-entry-preview-label">Portal preview</span>
+        <span class="portal-entry-preview-meta">Static reference</span>
       </div>
-
-      <div class="preflight-panel" id="preflightPanel" aria-live="polite">
-        <p class="intel-label">Preflight</p>
-        <ul class="preflight-list" id="preflightList"></ul>
-      </div>
-
-      <div id="txPreview" class="tx-preview" hidden aria-live="polite" aria-label="Transfer preview">
-        <p class="tx-preview-label" id="txPreviewLabel">Transfer Preview</p>
-        <div class="data-row">
-          <span class="data-k">Recipient</span>
-          <span class="data-v" id="previewRecipient">—</span>
+      <div class="portal-entry-preview-grid">
+        <div class="portal-entry-preview-row">
+          <span class="portal-entry-preview-step">01</span>
+          <span class="portal-entry-preview-title">Transfer</span>
+          <span class="portal-entry-preview-copy">Direct portal</span>
         </div>
-        <div class="data-row">
-          <span class="data-k">Recipient gets</span>
-          <span class="data-v" id="previewAmount">—</span>
+        <div class="portal-entry-preview-row">
+          <span class="portal-entry-preview-step">02</span>
+          <span class="portal-entry-preview-title">Network</span>
+          <span class="portal-entry-preview-copy">Gas and chain data</span>
         </div>
-        <div class="data-row">
-          <span class="data-k">Platform fee</span>
-          <span class="data-v" id="previewFee">—</span>
-        </div>
-        <div class="data-row">
-          <span class="data-k">Total from wallet</span>
-          <span class="data-v" id="previewTotal">—</span>
-        </div>
-        <div class="data-row">
-          <span class="data-k">Network</span>
-          <span class="data-v" id="previewNetwork">—</span>
-        </div>
-        <div class="data-row">
-          <span class="data-k">Contract</span>
-          <span class="data-v" id="previewContract">—</span>
-        </div>
-        <div class="data-row">
-          <span class="data-k">Mode</span>
-          <span class="data-v" id="previewMode">—</span>
-        </div>
-        <div class="data-row">
-          <span class="data-k">Purpose</span>
-          <span class="data-v" id="previewPurpose">—</span>
-        </div>
-        <p class="tx-preview-note" id="previewNote">Preview only — no funds will move.</p>
-        <div class="tx-timeline" id="txTimeline" hidden></div>
-      </div>
-
-      <details class="fee-explanation">
-        <summary class="fee-explanation-label">Fee &amp; Routing</summary>
-        <p class="fee-explanation-body">
-          The recipient amount and total wallet debit are different. The total debit is
-          recipient amount plus platform fee. Approval, when needed, must cover the full
-          total debit. Approval alone does not send funds.
-        </p>
-      </details>
-
-      <details class="fee-explanation">
-        <summary class="fee-explanation-label">Preview Discipline</summary>
-        <p class="fee-explanation-body">
-          Preview data is refreshed from the contract before any wallet prompt. Recipient,
-          network, pause state, contract address, and USDC token checks remain separate
-          execution gates.
-        </p>
-      </details>
-
-      <details class="fee-explanation">
-        <summary class="fee-explanation-label">Network Note</summary>
-        <p class="fee-explanation-body">
-          This transfer uses USDC on Polygon. Do not use this form to send Bitcoin,
-          Ethereum mainnet USDC, bank USD, or unsupported assets. A valid-looking
-          address does not prove the recipient controls it.
-        </p>
-      </details>
-
-      <details class="fee-explanation">
-        <summary class="fee-explanation-label">Direct Send Warning</summary>
-        <p class="fee-explanation-body">
-          Do not send USDC directly to the ImplicitEx contract address. Direct transfers
-          may be unrecoverable. See <a href="/legal.html">Legal</a> for current notices.
-        </p>
-      </details>
-
-      <div class="receipt-history" aria-label="Recent transaction attempts">
-        <p class="receipt-history-label">Receipts</p>
-        <div id="receiptHistory" class="receipt-history-list">
-          <p class="receipt-empty">No local receipts yet.</p>
+        <div class="portal-entry-preview-row">
+          <span class="portal-entry-preview-step">03</span>
+          <span class="portal-entry-preview-title">Verification</span>
+          <span class="portal-entry-preview-copy">Coin Card handoff</span>
         </div>
       </div>
     </div>
-
-    <!-- Right column: 02 Network + 03 Verification -->
-    <div class="mod-col">
-
-    <!-- 02 Network -->
-    <div class="mod">
-      <span class="mod-tag">02 — Network</span>
-      <p class="mod-title">Gas &amp; Chain Data</p>
-      <div class="data-table">
-        <div class="data-row">
-          <span class="data-k">Network</span>
-          <span class="data-v" id="networkNameDisplay">Polygon mainnet</span>
-        </div>
-        <div class="data-row data-row--expandable" id="gasRow">
-          <button class="data-row-toggle" id="gasRowToggle" type="button"
-                  aria-expanded="false" aria-controls="gasRowDetail">
-            <span class="data-k">Gas price</span>
-            <span class="data-v" id="gweiDisplay">Fetching…</span>
-            <span class="data-toggle-icon" aria-hidden="true"></span>
-          </button>
-          <div class="data-row-detail" id="gasRowDetail" hidden>
-            <p class="gas-chart-title">GAS TREND · GWEI · LAST 5 MIN</p>
-            <div class="gas-chart-frame" aria-label="Gas trend over time">
-              <div class="gas-chart-yaxis">
-                <span id="gasAxisMax">—</span>
-                <span id="gasAxisMid">—</span>
-                <span id="gasAxisMin">0</span>
-              </div>
-              <div class="gas-chart-plot" id="gasChart">
-                <div class="gas-chart-pending">DATA COLLECTION…</div>
-              </div>
-              <div class="gas-chart-xaxis">
-                <span id="gasAxisStart">−5m</span>
-                <span id="gasAxisNow">NOW</span>
-              </div>
-            </div>
-            <div class="gas-detail-row">
-              <span class="gas-detail-k">Low</span>
-              <span class="gas-detail-v" id="gasLow">—</span>
-            </div>
-            <div class="gas-detail-row">
-              <span class="gas-detail-k">Avg</span>
-              <span class="gas-detail-v" id="gasAvg">—</span>
-            </div>
-            <div class="gas-detail-row">
-              <span class="gas-detail-k">High</span>
-              <span class="gas-detail-v" id="gasHigh">—</span>
-            </div>
-            <div class="gas-detail-row">
-              <span class="gas-detail-k">Trend</span>
-              <span class="gas-detail-v" id="gasTrend">Collecting</span>
-            </div>
-            <div class="gas-detail-row gas-detail-row--meta">
-              <span class="gas-detail-k">Samples</span>
-              <span class="gas-detail-v" id="gasSamples">0</span>
-            </div>
-          </div>
-        </div>
-        <div class="data-row">
-          <span class="data-k">Block</span>
-          <span class="data-v" id="blockDisplay">—</span>
-        </div>
-        <div class="data-row">
-          <span class="data-k">Confirmation</span>
-          <span class="data-v" id="confirmTimeDisplay">—</span>
-        </div>
-        <div class="data-row">
-          <span class="data-k">USDC / USD</span>
-          <span class="data-v">$1.00</span>
-        </div>
-        <div class="data-row">
-          <span class="data-k">Contract</span>
-          <span class="data-v" id="contractStatus">0x5015841D…</span>
-        </div>
-        <div class="data-row">
-          <span class="data-k">RPC latency</span>
-          <span class="data-v" id="rpcLatencyDisplay">—</span>
-        </div>
-        <div class="data-row">
-          <span class="data-k">Status</span>
-          <span class="data-v status-ok" id="networkStatus">Operational</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- 03 Verification -->
-    <div class="mod" id="verificationMod">
-      <span class="mod-tag">03 — Verification</span>
-      <p class="mod-title">Coin Card Verification</p>
-      <div class="data-table">
-        <div class="data-row">
-          <span class="data-k">Status</span>
-          <span class="data-v" id="cardStatus">No card</span>
-        </div>
-        <div class="data-row" id="cardIdRow" hidden>
-          <span class="data-k">Card ID</span>
-          <span class="data-v" id="cardIdDisplay">—</span>
-        </div>
-        <div class="data-row" id="cardOwnerRow" hidden>
-          <span class="data-k">Issued by</span>
-          <span class="data-v" id="cardOwnerDisplay">—</span>
-        </div>
-        <div class="data-row" id="cardRecipientRow" hidden>
-          <span class="data-k">Recipient</span>
-          <span class="data-v" id="cardRecipientDisplay">—</span>
-        </div>
-        <div class="data-row" id="cardChainRow" hidden>
-          <span class="data-k">Chain</span>
-          <span class="data-v" id="cardChainDisplay">—</span>
-        </div>
-        <div class="data-row" id="cardTokenRow" hidden>
-          <span class="data-k">Token</span>
-          <span class="data-v" id="cardTokenDisplay">—</span>
-        </div>
-        <div class="data-row" id="cardDomainRow" hidden>
-          <span class="data-k">Source</span>
-          <span class="data-v" id="cardDomainDisplay">—</span>
-        </div>
-        <div class="data-row" id="cardRegistryRow" hidden>
-          <span class="data-k">Registry</span>
-          <span class="data-v" id="cardRegistryDisplay">—</span>
-        </div>
-      </div>
-      <div class="card-verify-footer" id="cardVerifyFooter" hidden>
-        <a class="card-verify-link" href="/verify.html" id="cardVerifyLink">Verify independently →</a>
-      </div>
-
-      <!-- CONFIRMED TRANSFER — execution proof, shown only when a confirmed receipt exists -->
-      <div class="verif-transfer-block" id="confirmedTransferBlock" hidden>
-        <div class="verif-transfer-divider"></div>
-        <p class="verif-transfer-heading">CONFIRMED TRANSFER</p>
-        <div class="data-table">
-          <div class="data-row">
-            <span class="data-k">Receipt</span>
-            <span class="data-v" id="verifReceiptId">—</span>
-          </div>
-          <div class="data-row">
-            <span class="data-k">Amount</span>
-            <span class="data-v" id="verifAmount">—</span>
-          </div>
-          <div class="data-row">
-            <span class="data-k">Recipient</span>
-            <span class="data-v" id="verifRecipient">—</span>
-          </div>
-          <div class="data-row">
-            <span class="data-k">Network</span>
-            <span class="data-v" id="verifNetwork">—</span>
-          </div>
-          <div class="data-row">
-            <span class="data-k">Tx hash</span>
-            <span class="data-v" id="verifTxHash">—</span>
-          </div>
-          <div class="data-row">
-            <span class="data-k">Block</span>
-            <span class="data-v" id="verifBlock">—</span>
-          </div>
-          <div class="data-row">
-            <span class="data-k">Confirmed</span>
-            <span class="data-v" id="verifTimestamp">—</span>
-          </div>
-        </div>
-        <div class="verif-transfer-actions" id="verifTransferActions"></div>
-      </div>
-    </div>
-
-    </div><!-- /.mod-col -->
-
-    <!-- Transaction Companion Tray — owned by the Transfer Portal -->
-    <div id="companion" class="companion" role="complementary" aria-label="Transaction status">
-      <div class="companion-bar" id="companionBar" role="button" tabindex="0"
-           aria-expanded="false" aria-controls="companionDetail"
-           aria-label="Transaction status — click to expand">
-        <span class="companion-indicator" aria-hidden="true"></span>
-        <span class="companion-status" id="companionStatus">Ready · No active transaction</span>
-        <span class="companion-toggle" aria-hidden="true"></span>
-      </div>
-      <div class="companion-detail" id="companionDetail" aria-hidden="true">
-        <div class="companion-body">
-          <div class="companion-row">
-            <span class="companion-k">Status</span>
-            <span class="companion-v" id="companionStateVal">Ready</span>
-          </div>
-          <div class="companion-row">
-            <span class="companion-k">Funds Moved</span>
-            <span class="companion-v" id="companionFundsVal">No active transaction</span>
-          </div>
-          <div class="companion-row">
-            <span class="companion-k">Network</span>
-            <span class="companion-v" id="companionNetworkVal">—</span>
-          </div>
-          <div class="companion-row">
-            <span class="companion-k">Last Event</span>
-            <span class="companion-v" id="companionEventVal">—</span>
-          </div>
-          <div class="companion-row">
-            <span class="companion-k">Next Step</span>
-            <span class="companion-v companion-action" id="companionActionVal">Connect wallet to begin.</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- TELEMETRY — owned by the Transfer Portal -->
-    <section class="telemetry" id="telemetry" aria-label="System telemetry">
-      <div class="telemetry-bar" id="telemetryBar"
-           role="button" tabindex="0"
-           aria-expanded="false" aria-controls="telemetryPanel"
-           aria-label="Telemetry — click to expand">
-        <span class="telemetry-dot" id="telemetryDot" aria-hidden="true"></span>
-        <span class="telemetry-label">Telemetry</span>
-        <span class="telemetry-summary" id="telemetrySummary">Nominal</span>
-        <span class="telemetry-chevron" aria-hidden="true"></span>
-      </div>
-      <div class="telemetry-panel" id="telemetryPanel" hidden aria-hidden="true">
-        <div class="telemetry-body">
-
-          <div class="telemetry-section" id="telemetrySectionStatus">
-            <div class="telemetry-section-label">Status</div>
-            <div class="telemetry-rows" id="telemetryStatusRows"></div>
-          </div>
-
-          <div class="telemetry-section" id="telemetrySectionDetails">
-            <div class="telemetry-section-label">Details</div>
-            <div class="telemetry-rows" id="telemetryDetailsRows"></div>
-          </div>
-
-          <div class="telemetry-section" id="telemetrySectionGuidance">
-            <div class="telemetry-section-label">Guidance</div>
-            <div class="telemetry-rows" id="telemetryGuidanceRows"></div>
-          </div>
-
-        </div>
-      </div>
-    </section>
-
   </section>
-
-  </div><!-- /portal-zone -->
 
   <!-- HOW IT WORKS -->
   <section class="how-it-works" id="howItWorks" aria-labelledby="howItWorksTitle">
