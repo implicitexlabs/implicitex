@@ -127,6 +127,7 @@ test('homepage portal entry renders cleanly at mobile and desktop widths', async
 
   const pageErrors = [];
   const consoleErrors = [];
+  const requestUrls = [];
   const { server, baseUrl } = await startStaticServer();
 
   try {
@@ -139,33 +140,13 @@ test('homepage portal entry renders cleanly at mobile and desktop widths', async
 
     for (const entry of cases) {
       const page = await browser.newPage();
-      await page.setRequestInterception(true);
       page.on('request', (request) => {
-        if (request.url().startsWith('https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js')) {
-          request.respond({
-            status: 200,
-            contentType: 'application/javascript; charset=utf-8',
-            headers: {
-              'Access-Control-Allow-Origin': '*',
-            },
-            body: 'window.ethers = window.ethers || {};',
-          });
-          return;
-        }
-        request.continue();
+        requestUrls.push(request.url());
       });
       page.on('pageerror', (error) => pageErrors.push(error.message));
       page.on('console', (message) => {
         if (message.type() === 'error') {
-          const text = message.text();
-          if (
-            text.includes('ethers.umd.min.js') ||
-            text.includes('computed SHA-384 integrity') ||
-            text.includes('Access to script at')
-          ) {
-            return;
-          }
-          consoleErrors.push(text);
+          consoleErrors.push(message.text());
         }
       });
 
@@ -203,4 +184,8 @@ test('homepage portal entry renders cleanly at mobile and desktop widths', async
 
   assert.equal(pageErrors.length, 0, `homepage should not emit page errors: ${pageErrors.join(' | ')}`);
   assert.equal(consoleErrors.length, 0, `homepage should not emit console errors: ${consoleErrors.join(' | ')}`);
+  const forbiddenRequest = requestUrls.find((url) =>
+    /ethers|walletconnect|transfer-status|receipt|proof-packet|wallet\.js|portal-display|coincard|rehydrate|ix-execution|telemetry|companion|config\/chains/i.test(url)
+  );
+  assert.equal(forbiddenRequest, undefined, `homepage should not request transaction runtime: ${forbiddenRequest || ''}`);
 });
