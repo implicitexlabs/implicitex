@@ -33,8 +33,10 @@ const lifecyclePresentationSource = fs.readFileSync(lifecyclePresentationPath, '
 const authorizationSource = fs.readFileSync(authorizationPath, 'utf8');
 
 const CARD_ID = 'cc_demo_implicitex';
-const MANIFEST_KEY_ID = 'ix-coin-card-manifest-v1';
-const LIFECYCLE_KEY_ID = 'ix-lifecycle-pub-v1';
+const MANIFEST_KEY_ID = 'ix-coin-card-manifest-v2';
+const LIFECYCLE_KEY_ID = 'ix-lifecycle-pub-v2';
+const LEGACY_MANIFEST_KEY_ID = 'ix-coin-card-manifest-v1';
+const LEGACY_LIFECYCLE_KEY_ID = 'ix-lifecycle-pub-v1';
 const OLD_TRANSCRIPT_EXPOSED_MANIFEST_PUBLIC_X = 'vBu_HYcJYHb1R8ED0cixUxefS06vbL9_HmLIm4gisKo';
 const OLD_TRANSCRIPT_EXPOSED_MANIFEST_PUBLIC_Y = 'F7d-p9odLxJ4dXmM3iM_CHpK9Ce2mxsb8-IDcjqW5wk';
 const OLD_TRANSCRIPT_EXPOSED_LIFECYCLE_PUBLIC_X = 'V6m6D9g83f90_JYgKXKgL2muizX1traoYk3abaj_O0w';
@@ -82,7 +84,7 @@ function makeFixedDateClass(isoString) {
 }
 
 function makeContext(options = {}) {
-  const FixedDate = makeFixedDateClass(options.now || '2026-07-16T00:00:00.000Z');
+  const FixedDate = makeFixedDateClass(options.now || '2026-07-16T23:59:00.000Z');
   const context = {
     Buffer,
     Date: FixedDate,
@@ -216,7 +218,7 @@ test('actual committed manifest verifies, lifecycle promotes, and authorization 
   const verification = await runVerification(context, manifest);
   assert.equal(verification.state, 'VERIFIED');
   assert.equal(verification.signatureMode, 'signed-p256-v1');
-  assert.equal(verification.keyId, 'ix-coin-card-manifest-v1');
+  assert.equal(verification.keyId, MANIFEST_KEY_ID);
 
   const lifecycle = await runLifecycle(context, manifest.manifestHash);
   assert.equal(lifecycle.proof.authenticated, true);
@@ -229,13 +231,13 @@ test('actual committed manifest verifies, lifecycle promotes, and authorization 
 
 test('transcript-exposed old manifest signer is no longer trusted', async () => {
   const trustedKeys = makeContext().window.IX_COIN_CARD_TRUSTED_PUBLIC_KEYS;
-  const manifestRecord = trustedKeys[MANIFEST_KEY_ID];
+  const manifestRecord = trustedKeys[LEGACY_MANIFEST_KEY_ID];
   assert.notEqual(manifestRecord.publicKey.x, OLD_TRANSCRIPT_EXPOSED_MANIFEST_PUBLIC_X);
   assert.notEqual(manifestRecord.publicKey.y, OLD_TRANSCRIPT_EXPOSED_MANIFEST_PUBLIC_Y);
 
   const valid = await verifyP256WithTrustedKey(
     makeContext(),
-    MANIFEST_KEY_ID,
+    LEGACY_MANIFEST_KEY_ID,
     'coin-card-manifest-signing',
     'implicitex',
     '2026-07-15T21:04:54.876Z',
@@ -247,7 +249,7 @@ test('transcript-exposed old manifest signer is no longer trusted', async () => 
 
 test('transcript-exposed old lifecycle signer is no longer trusted', async () => {
   const trustedKeys = makeContext().window.IX_COIN_CARD_TRUSTED_PUBLIC_KEYS;
-  const lifecycleRecord = trustedKeys[LIFECYCLE_KEY_ID];
+  const lifecycleRecord = trustedKeys[LEGACY_LIFECYCLE_KEY_ID];
   assert.notEqual(lifecycleRecord.publicKey.x, OLD_TRANSCRIPT_EXPOSED_LIFECYCLE_PUBLIC_X);
   assert.notEqual(lifecycleRecord.publicKey.y, OLD_TRANSCRIPT_EXPOSED_LIFECYCLE_PUBLIC_Y);
 
@@ -258,7 +260,7 @@ test('transcript-exposed old lifecycle signer is no longer trusted', async () =>
   ]);
   const valid = await verifyP256WithTrustedKey(
     makeContext(),
-    LIFECYCLE_KEY_ID,
+    LEGACY_LIFECYCLE_KEY_ID,
     'coin-card-registry-publication',
     'implicitex-registry',
     '2026-07-15T21:04:54.879Z',
@@ -309,10 +311,12 @@ test('unknown manifest signing key with ACTIVE lifecycle does not authorize', as
 });
 
 test('trusted key without manifest-signing usage blocks manifest verification', async () => {
-  const source = trustedKeysSource.replace(
-    'Object.freeze(["coin-card-manifest-signing"])',
-    'Object.freeze(["coin-card-registry-publication"])',
-  );
+  const firstManifestUsage = trustedKeysSource.indexOf('Object.freeze(["coin-card-manifest-signing"])');
+  const secondManifestUsage = trustedKeysSource.indexOf('Object.freeze(["coin-card-manifest-signing"])', firstManifestUsage + 1);
+  assert.notEqual(secondManifestUsage, -1, 'transition trust set must contain a v2 manifest-signing usage');
+  const source = trustedKeysSource.slice(0, secondManifestUsage)
+    + 'Object.freeze(["coin-card-registry-publication"])'
+    + trustedKeysSource.slice(secondManifestUsage + 'Object.freeze(["coin-card-manifest-signing"])'.length);
   const context = makeContext({ trustedKeysSource: source });
   const verification = await runVerification(context, readManifest());
   assert.equal(verification.state, 'VERIFICATION_UNAVAILABLE');

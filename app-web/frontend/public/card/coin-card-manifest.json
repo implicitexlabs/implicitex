@@ -6,9 +6,9 @@
       "sha256": "sha256:b80d627301b80c247a9473325f7fc151fecd3d6add4079ae2e4a7b4a1aa8f86d"
     },
     {
-      "bytes": 47141,
+      "bytes": 59382,
       "path": "card/card.js",
-      "sha256": "sha256:25414f5f62ea464011f9420d4d390d6ea02bd509afbe2928ce3ef6286ead1ea6"
+      "sha256": "sha256:c40b3702c9a9314e3f83e80ce599d9da185242512b0d6f01377bf673d6195251"
     },
     {
       "bytes": 14575,
@@ -46,19 +46,24 @@
       "sha256": "sha256:e35875433ade1bb36e9f382ec2eb0a565d45b939d69da3cd41bdbdbc8ef9d8e7"
     },
     {
+      "bytes": 41975,
+      "path": "card/coin-card-review-projection-contract.js",
+      "sha256": "sha256:1f4d8adb67a5c1846751d9f8aa62b026d9250e058b1168fa5e225b41a66bf10c"
+    },
+    {
       "bytes": 16420,
       "path": "card/coin-card-trusted-key-resolution.js",
       "sha256": "sha256:821f8d1490931ed219d7fe53acae0f99376fc8e4a2e3872f71440363a45cedb6"
     },
     {
-      "bytes": 2461,
+      "bytes": 4434,
       "path": "card/coin-card-trusted-keys.js",
-      "sha256": "sha256:0c861a9c63ba9ab86e318e41d5d6a0074dcd3a00fef0033227c2bc111e6d9a23"
+      "sha256": "sha256:ac20bace012ddf724eda6d53c775a44efd4bb865d845fdf1351b9146e24b96b7"
     },
     {
-      "bytes": 30527,
+      "bytes": 30579,
       "path": "card/coin-card-verification.js",
-      "sha256": "sha256:2f3e45cda5590ecc0db144c813a93fe35f0465e0560c6c9ca90bbf6c93d5c046"
+      "sha256": "sha256:fd3320bfa7fd9b08e22332fb07e07079b3d097500064121a59bfa4eb35b6ccad"
     },
     {
       "bytes": 37305,
@@ -71,26 +76,26 @@
       "sha256": "sha256:d59af15f40bc321f78871fe9d892d1dbbf05e35e20ad22aa51203c68185b58b6"
     }
   ],
-  "buildVersion": "acceptance-runtime-metadata-fix-2026-07-15",
+  "buildVersion": "coin-card-review-runtime-v2-20260716",
   "coinCardVersion": "coin-card.v1",
   "environment": "production",
   "issuerId": "implicitex",
-  "keyId": "ix-coin-card-manifest-v1",
+  "keyId": "ix-coin-card-manifest-v2",
   "layoutVersion": "coin-card-layout.v1",
   "schemaVersion": "coin-card-manifest.v1",
   "scope": "coin-card-runtime-package",
-  "signedAt": "2026-07-15T21:36:43.553Z",
+  "signedAt": "2026-07-16T19:22:07.713Z",
   "signature": {
     "mode": "signed-p256-v1",
     "algorithm": "ECDSA_P256_SHA256",
-    "keyId": "ix-coin-card-manifest-v1",
+    "keyId": "ix-coin-card-manifest-v2",
     "issuerId": "implicitex",
     "environment": "production",
-    "signedAt": "2026-07-15T21:36:43.553Z",
+    "signedAt": "2026-07-16T19:22:07.713Z",
     "signatureEncoding": "ieee-p1363",
     "signatureLengthBytes": 64,
     "signatureValueEncoding": "base64url-unpadded",
-    "value": "ZJr9Pq2mDbGqNO94Wu6VeKilmLJfweScYQwdO5-rfUEX7WdQwL4Cy-I4cMuTtX_O8IPnL956psGDFvSgIUTaDQ"
+    "value": "g7oD2wETgMRJil_wLj9sC-h7UVVhrasYzRCenrwsgYXt8J541YLzKpFDewflToyorBc0sSmk8B6UXYpJEeTsTQ"
   },
-  "manifestHash": "sha256:a3308b11d516817c221d006c29ec139db1ae79e5e987247c1f2bee7fa0d89285"
+  "manifestHash": "sha256:a6988130a633b6f1555e7a8418feafbe93fa1ef7748d2cdb5d022b46cc99e248"
 }

@@ -2,12 +2,12 @@
  *
  * GENERATED FILE — do not edit by hand. Run scripts/generate_signed_coin_card_acceptance.js.
  *
- * GeneratedAt:      2026-07-15T21:36:43.556Z
+ * GeneratedAt:      2026-07-16T19:22:07.716Z
  * RegistryVersion:  1
  * CardId:           cc_demo_implicitex
- * ManifestId:       sha256:a3308b11d516817c221d006c29ec139db1ae79e5e987247c1f2bee7fa0d89285
+ * ManifestId:       sha256:a6988130a633b6f1555e7a8418feafbe93fa1ef7748d2cdb5d022b46cc99e248
  * RecordId:         implicitex-production-r1-cc_demo_implicitex
- * Signer:           ix-lifecycle-pub-v1
+ * Signer:           ix-lifecycle-pub-v2
  */
 
 (function () {
@@ -24,7 +24,7 @@
     "registryId": "implicitex-production",
     "environment": "production",
     "registryVersion": 1,
-    "generatedAt": "2026-07-15T21:36:43.556Z",
+    "generatedAt": "2026-07-16T19:22:07.716Z",
     "entries": [
       {
         "registryId": "implicitex-production",
@@ -32,14 +32,14 @@
         "environment": "production",
         "registryVersion": 1,
         "recordId": "implicitex-production-r1-cc_demo_implicitex",
-        "publishedAt": "2026-07-15T21:36:43.556Z",
+        "publishedAt": "2026-07-16T19:22:07.716Z",
         "cardId": "cc_demo_implicitex",
-        "manifestId": "sha256:a3308b11d516817c221d006c29ec139db1ae79e5e987247c1f2bee7fa0d89285",
+        "manifestId": "sha256:a6988130a633b6f1555e7a8418feafbe93fa1ef7748d2cdb5d022b46cc99e248",
         "revision": 1,
         "previousManifestId": null,
         "cardStatus": "CARD_ACTIVE",
         "manifestStatus": "MANIFEST_CURRENT",
-        "effectiveFrom": "2026-07-15T21:36:43.556Z",
+        "effectiveFrom": "2026-07-16T19:22:07.716Z",
         "effectiveUntil": null,
         "supersededByManifestId": null,
         "reasonCode": null,
@@ -51,10 +51,10 @@
           "signatureEncoding": "ieee-p1363",
           "signatureLengthBytes": 64,
           "signatureValueEncoding": "base64url-unpadded",
-          "keyId": "ix-lifecycle-pub-v1",
+          "keyId": "ix-lifecycle-pub-v2",
           "authorityId": "implicitex-registry",
-          "signedAt": "2026-07-15T21:36:43.556Z",
-          "value": "eXrYswppE8z00oKZbN9vyhB2j7if786_Yx9RaSSz55qdAEbeH1ZkvxfAskoK0Mda-UD_GWuRmr3u4qrseEMyuQ"
+          "signedAt": "2026-07-16T19:22:07.716Z",
+          "value": "FBx98Xh1L1f_uuymAwuyQuGss6cAMkIIHjTfrORRN21TJCEY2setUbzvskuzyOfvpUv_sduqIntBpq-axl-GVQ"
         }
       }
     ]

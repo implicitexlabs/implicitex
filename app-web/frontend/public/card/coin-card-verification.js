@@ -69,6 +69,7 @@
     'card/coin-card-lifecycle-resolution.js',
     'card/coin-card-lifecycle-presentation.js',
     'card/coin-card-execution-authorization.js',
+    'card/coin-card-review-projection-contract.js',
     'card/coin-card-verification.js',
     'card/card.js',
     'card/card.css',

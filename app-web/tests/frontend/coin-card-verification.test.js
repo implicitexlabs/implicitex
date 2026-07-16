@@ -27,6 +27,7 @@ const REQUIRED_ASSET_BODIES = {
   'card/coin-card-lifecycle-resolution.js': 'coin-card-lifecycle-resolution asset body',
   'card/coin-card-lifecycle-presentation.js': 'coin-card-lifecycle-presentation asset body',
   'card/coin-card-execution-authorization.js': 'coin-card-execution-authorization asset body',
+  'card/coin-card-review-projection-contract.js': 'coin-card-review-projection-contract asset body',
   'card/coin-card-verification.js': 'coin-card-verification asset body',
   'card/card.js': 'card runtime asset body',
   'card/card.css': 'card stylesheet asset body',
@@ -232,6 +233,7 @@ const requiredAssetPaths = [
   'card/coin-card-lifecycle-resolution.js',
   'card/coin-card-lifecycle-presentation.js',
   'card/coin-card-execution-authorization.js',
+  'card/coin-card-review-projection-contract.js',
   'card/coin-card-verification.js',
   'card/card.js',
   'card/card.css',
@@ -507,10 +509,15 @@ test('trusted key source bootstrap initializes a frozen production allowlist', (
 
   assert.equal(context.window.IX_COIN_CARD_TRUSTED_PUBLIC_KEYS && typeof context.window.IX_COIN_CARD_TRUSTED_PUBLIC_KEYS, 'object');
   assert.equal(Object.isFrozen(context.window.IX_COIN_CARD_TRUSTED_PUBLIC_KEYS), true);
-  // Production bootstrap contains separate manifest-signing and registry-publication keys.
+  // Production bootstrap contains v1 and v2 manifest-signing and registry-publication keys.
   assert.deepEqual(
     Object.keys(context.window.IX_COIN_CARD_TRUSTED_PUBLIC_KEYS),
-    ['ix-coin-card-manifest-v1', 'ix-lifecycle-pub-v1'],
+    [
+      'ix-coin-card-manifest-v1',
+      'ix-coin-card-manifest-v2',
+      'ix-lifecycle-pub-v1',
+      'ix-lifecycle-pub-v2',
+    ],
   );
 });
 

@@ -168,9 +168,15 @@ plain object is not a valid ReviewRecord.
 
 ## Branding and Authority Preservation
 
-CONTRACT DECISION: `createReviewRecord()` requires a caller-supplied predicate
-for promoted authority, such as the existing
-`isPromotedPresentationResult(value)`. The predicate remains authoritative.
+CONTRACT DECISION: trusted lifecycle-presentation, lifecycle-resolution, and
+execution-authorization APIs are bound once when the review-projection runtime
+instance is created through `createReviewProjectionRuntime(...)`. Individual
+operations, including `createReviewRecord()`, cannot replace those predicates or
+substitute caller-provided security checks.
+
+Runtime-instance private brands are not interchangeable. A ReviewRecord,
+ReviewEligibilityEvaluation, AuthorizationInputBundle, or ExecutionAttemptBinding
+created by one configured runtime instance is not accepted by another instance.
 
 The module stores the opaque promoted result as an opaque runtime reference. It
 also stores a plain authority descriptor for fingerprinting, display, and
@@ -192,6 +198,11 @@ on the supplied branded resolved lifecycle result. The promoted result stored in
 the ReviewRecord is the result returned from that call. Independently supplied
 promoted results are not accepted as source-binding evidence and cannot be paired
 with a different resolved lifecycle result.
+
+Current authority is re-established the same way: the runtime receives genuine
+branded lifecycle evidence, promotes that exact source through the bound
+canonical presentation API, and compares the derived descriptor against the
+ReviewRecord binding. Plain descriptors remain diagnostic data only.
 
 The descriptor binds, where exposed by the existing lifecycle result:
 
