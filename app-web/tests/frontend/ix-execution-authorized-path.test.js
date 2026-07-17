@@ -35,6 +35,7 @@ const lifecycleSelectionPath     = path.join(repoRoot, 'app-web/frontend/public/
 const lifecycleResolutionPath    = path.join(repoRoot, 'app-web/frontend/public/card/coin-card-lifecycle-resolution.js');
 const lifecyclePresentationPath  = path.join(repoRoot, 'app-web/frontend/public/card/coin-card-lifecycle-presentation.js');
 const executionAuthorizationPath = path.join(repoRoot, 'app-web/frontend/public/card/coin-card-execution-authorization.js');
+const gasPolicyPath              = path.join(repoRoot, 'app-web/frontend/public/js/ix-execution-gas-policy.js');
 const ixExecutionPath            = path.join(repoRoot, 'app-web/frontend/public/js/ix-execution.js');
 
 const trustedKeyResolutionSource   = fs.readFileSync(trustedKeyResolutionPath, 'utf8');
@@ -45,6 +46,7 @@ const lifecycleSelectionSource     = fs.readFileSync(lifecycleSelectionPath, 'ut
 const lifecycleResolutionSource    = fs.readFileSync(lifecycleResolutionPath, 'utf8');
 const lifecyclePresentationSource  = fs.readFileSync(lifecyclePresentationPath, 'utf8');
 const executionAuthorizationSource = fs.readFileSync(executionAuthorizationPath, 'utf8');
+const gasPolicySource              = fs.readFileSync(gasPolicyPath, 'utf8');
 const ixExecutionSource            = fs.readFileSync(ixExecutionPath, 'utf8');
 
 const BUNDLE_SCHEMA_VERSION = 'coin-card-lifecycle-registry-bundle.v1';
@@ -199,6 +201,7 @@ function makeContext(options = {}) {
   vm.runInNewContext(lifecycleResolutionSource,    context, { filename: lifecycleResolutionPath });
   vm.runInNewContext(lifecyclePresentationSource,  context, { filename: lifecyclePresentationPath });
   vm.runInNewContext(executionAuthorizationSource, context, { filename: executionAuthorizationPath });
+  vm.runInNewContext(gasPolicySource,              context, { filename: gasPolicyPath });
   vm.runInNewContext(ixExecutionSource,            context, { filename: ixExecutionPath });
 
   return {
@@ -344,6 +347,47 @@ function makeMockEthereum(options = {}) {
     },
   };
   return ethereum;
+}
+
+function makeGasProvider(options = {}) {
+  const calls = [];
+  return {
+    calls,
+    request(args) {
+      calls.push({ method: args.method, params: args.params });
+      if (args.method === 'eth_maxPriorityFeePerGas') {
+        if (options.maxPriorityReject) return Promise.reject(new Error('priority unavailable'));
+        return Promise.resolve(options.maxPriorityFeeHex || '0x2');
+      }
+      if (args.method === 'eth_getBlockByNumber') {
+        if (options.blockReject) return Promise.reject(new Error('block unavailable'));
+        return Promise.resolve({ baseFeePerGas: options.baseFeeHex || '0x3' });
+      }
+      if (args.method === 'eth_gasPrice') {
+        if (options.gasPriceReject) return Promise.reject(new Error('gas price unavailable'));
+        return Promise.resolve(options.gasPriceHex || '0x7');
+      }
+      if (args.method === 'eth_estimateGas') {
+        const estimateCount = calls.filter((c) => c.method === 'eth_estimateGas').length;
+        if (options.approvalEstimateReject && estimateCount === 1) return Promise.reject(new Error('approval estimate rejected'));
+        if (options.transferEstimateReject && estimateCount >= 2) return Promise.reject(new Error('transfer estimate rejected'));
+        return Promise.resolve(options.estimateHex || '0x5208');
+      }
+      return Promise.reject(new Error('Unhandled gas method: ' + args.method));
+    },
+  };
+}
+
+function gasInput(overrides = {}) {
+  return {
+    chainId: 137,
+    sender: '0x2222222222222222222222222222222222222222',
+    recipient: '0xa7cE4232811021d2Dd01f4f0f264Df2427ab3919',
+    recipientAmountAtomic: '2000000',
+    totalDebitAtomic: '2020000',
+    allowanceAtomic: '2020000',
+    ...overrides,
+  };
 }
 
 /* ================================================================
@@ -755,4 +799,51 @@ test('execute-authorized: no DOM value reread — no eth_sendTransaction before 
 
   const sendTxCalls = ethereum.calls.filter((c) => c.method === 'eth_sendTransaction');
   assert.equal(sendTxCalls.length, 0, 'eth_sendTransaction must not be called with fabricated proof');
+});
+
+test('estimateNativeGasRequirement: TRANSFER_ONLY uses real helper with EIP-1559 max fee evidence', async () => {
+  const runtime = makeContext();
+  const provider = makeGasProvider({ estimateHex: '0x10', baseFeeHex: '0x3', maxPriorityFeeHex: '0x2' });
+  const result = await runtime.ixExecution.estimateNativeGasRequirement(provider, gasInput());
+  assert.equal(result.status, 'AVAILABLE');
+  assert.equal(result.gasLimitTotal, '16');
+  assert.equal(result.feePerGasAtomic, '8');
+  assert.equal(result.nativeGasRequiredAtomic, '128');
+  assert.equal(provider.calls.some((c) => c.method === 'eth_gasPrice'), false);
+});
+
+test('estimateNativeGasRequirement: gasPrice fallback is used when max fee evidence is unavailable', async () => {
+  const runtime = makeContext();
+  const provider = makeGasProvider({ maxPriorityReject: true, gasPriceHex: '0x9', estimateHex: '0x10' });
+  const result = await runtime.ixExecution.estimateNativeGasRequirement(provider, gasInput());
+  assert.equal(result.status, 'AVAILABLE');
+  assert.equal(result.feePerGasAtomic, '9');
+  assert.equal(result.nativeGasRequiredAtomic, '144');
+});
+
+test('estimateNativeGasRequirement: failed transfer estimate is unavailable', async () => {
+  const runtime = makeContext();
+  const provider = makeGasProvider({ approvalEstimateReject: true });
+  const result = await runtime.ixExecution.estimateNativeGasRequirement(provider, gasInput());
+  assert.equal(result.status, 'UNAVAILABLE');
+  assert.equal(result.reason, 'gas-estimate-unavailable');
+});
+
+test('estimateNativeGasRequirement: approval-required path does not fake post-approval transfer evidence', async () => {
+  const runtime = makeContext();
+  const provider = makeGasProvider({ transferEstimateReject: true });
+  const result = await runtime.ixExecution.estimateNativeGasRequirement(provider, gasInput({ allowanceAtomic: '0' }));
+  assert.equal(result.status, 'UNAVAILABLE');
+  assert.equal(result.reason, 'post-approval-transfer-gas-bound-unavailable');
+  assert.equal(result.transactionCount, 2);
+  assert.equal(provider.calls.filter((c) => c.method === 'eth_estimateGas').length, 1);
+});
+
+test('estimateNativeGasRequirement: unavailable fee data is unavailable and no balance shortcut exists', async () => {
+  const runtime = makeContext();
+  const provider = makeGasProvider({ maxPriorityReject: true, gasPriceReject: true });
+  const result = await runtime.ixExecution.estimateNativeGasRequirement(provider, gasInput());
+  assert.equal(result.status, 'UNAVAILABLE');
+  assert.equal(result.reason, 'fee-data-unavailable');
+  assert.equal(provider.calls.filter((c) => c.method === 'eth_estimateGas').length, 0);
 });

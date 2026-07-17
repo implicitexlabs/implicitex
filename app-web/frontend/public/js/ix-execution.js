@@ -105,6 +105,103 @@
     return CHAINS[chainId] || null;
   }
 
+  function freezeDeep(value) {
+    if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
+    Object.getOwnPropertyNames(value).forEach(function (key) { freezeDeep(value[key]); });
+    return Object.freeze(value);
+  }
+
+  function isPlainObject(value) {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+    return Object.prototype.toString.call(value) === '[object Object]';
+  }
+
+  function canonicalizeValue(value) {
+    if (value === null) return null;
+    if (typeof value === 'string' || typeof value === 'boolean') return value;
+    if (typeof value === 'bigint') return value.toString(10);
+    if (typeof value === 'number') {
+      if (!Number.isFinite(value) || Object.is(value, -0)) throw new Error('unsupported number in canonical payload');
+      return String(value);
+    }
+    if (Array.isArray(value)) return value.map(canonicalizeValue);
+    if (!isPlainObject(value)) throw new Error('unsupported non-plain object in canonical payload');
+    var out = {};
+    Object.keys(value).sort().forEach(function (key) {
+      var next = value[key];
+      if (typeof next === 'undefined' || typeof next === 'function' || typeof next === 'symbol') {
+        throw new Error('unsupported canonical field value');
+      }
+      out[key] = canonicalizeValue(next);
+    });
+    return out;
+  }
+
+  function canonicalizeJson(value) {
+    return JSON.stringify(canonicalizeValue(value));
+  }
+
+  function normalizeAtomicQuantity(value) {
+    if (typeof value === 'bigint') return value;
+    if (typeof value === 'number' && Number.isSafeInteger(value) && value >= 0) return BigInt(value);
+    if (typeof value === 'string' && /^(0|[1-9][0-9]*)$/.test(value)) return BigInt(value);
+    return null;
+  }
+
+  function getGasPolicyApi() {
+    var external = window.IX_EXECUTION_GAS_POLICY;
+    if (
+      external &&
+      typeof external.resolveGasPolicy === 'function' &&
+      typeof external.validateGasPolicy === 'function' &&
+      typeof external.getPolicySecurityPayload === 'function' &&
+      typeof external.getCanonicalPolicyBinding === 'function' &&
+      typeof external.getGasLimit === 'function' &&
+      typeof external.validateExecutionDomain === 'function'
+    ) {
+      return external;
+    }
+    return null;
+  }
+
+  function loadValidatedGasPolicy(policyId) {
+    var gasPolicyApi = getGasPolicyApi();
+    if (!gasPolicyApi) {
+      return { ok: false, code: 'GAS_POLICY_UNAVAILABLE', message: 'Gas policy unavailable.' };
+    }
+    var resolved;
+    var validation;
+    var payload;
+    var binding;
+    try {
+      resolved = gasPolicyApi.resolveGasPolicy(policyId);
+      if (!resolved || !resolved.security || resolved.security.policyId !== policyId) {
+        return { ok: false, code: 'GAS_POLICY_UNAVAILABLE', message: 'Gas policy unavailable.' };
+      }
+      validation = gasPolicyApi.validateGasPolicy(policyId);
+      if (!validation || validation.valid !== true) {
+        return { ok: false, code: 'GAS_POLICY_UNAVAILABLE', message: 'Gas policy unavailable.' };
+      }
+      payload = gasPolicyApi.getPolicySecurityPayload(policyId);
+      if (!payload || payload.policyId !== policyId) {
+        return { ok: false, code: 'GAS_POLICY_UNAVAILABLE', message: 'Gas policy unavailable.' };
+      }
+      binding = gasPolicyApi.getCanonicalPolicyBinding(policyId);
+      if (typeof binding !== 'string' || !binding.length) {
+        return { ok: false, code: 'GAS_POLICY_UNAVAILABLE', message: 'Gas policy unavailable.' };
+      }
+    } catch (error) {
+      return { ok: false, code: 'GAS_POLICY_UNAVAILABLE', message: 'Gas policy unavailable.' };
+    }
+    return {
+      ok: true,
+      api: gasPolicyApi,
+      policy: resolved,
+      security: payload,
+      binding: binding,
+    };
+  }
+
   function providerUnavailableError() {
     var err = new Error('No wallet detected');
     err.code = 'NO_WALLET';
@@ -410,11 +507,19 @@
    * (eth_getTransactionReceipt responses) must not leave this function.
    * ---------------------------------------------------------------- */
   function buildReceipt(request, approvalHash, transferHash, transferReceipt, cfg) {
-    var amount = request.amount != null ? Number(request.amount) : null;
-    var total  = request.total  != null ? Number(request.total)  : null;
-    var fee    = request.fee    != null
-      ? Number(request.fee)
-      : (amount != null && total != null ? total - amount : null);
+    var amount = request.amountAtomic != null
+      ? atomicToUsdcDecimalString(request.amountAtomic)
+      : (request.amount != null ? Number(request.amount) : null);
+    var total = request.totalAtomic != null
+      ? atomicToUsdcDecimalString(request.totalAtomic)
+      : (request.total != null ? Number(request.total) : null);
+    var fee = request.feeAtomic != null
+      ? atomicToUsdcDecimalString(request.feeAtomic)
+      : (request.fee != null
+        ? Number(request.fee)
+        : (amount != null && total != null && typeof amount === 'number' && typeof total === 'number'
+          ? total - amount
+          : null));
 
     return {
       schema:       'implicitex.receipt.v1',
@@ -563,6 +668,154 @@
         });
       });
     }).catch(function () { return null; });
+  }
+
+  function normalizeHexQuantity(value) {
+    if (typeof value === 'bigint') return value;
+    if (typeof value === 'number' && Number.isSafeInteger(value) && value >= 0) return BigInt(value);
+    if (typeof value === 'string' && /^0x[0-9a-fA-F]+$/.test(value)) return BigInt(value);
+    if (typeof value === 'string' && /^(0|[1-9][0-9]*)$/.test(value)) return BigInt(value);
+    return null;
+  }
+
+  function atomicToUsdcDecimalString(value) {
+    var atomic = normalizeAtomicQuantity(value);
+    if (atomic == null) return null;
+    var whole = atomic / 1000000n;
+    var fraction = atomic % 1000000n;
+    if (fraction === 0n) return whole.toString(10);
+    var fractionString = fraction.toString(10);
+    while (fractionString.length < 6) fractionString = '0' + fractionString;
+    return whole.toString(10) + '.' + fractionString;
+  }
+
+  function deriveCanonicalExecutionPlan(request) {
+    return request && request.requiresApproval === false ? 'TRANSFER_ONLY' : 'APPROVE_THEN_TRANSFER';
+  }
+
+  function buildAuthorizedTransactionRequests(input) {
+    input = input || {};
+    var cfg = CHAINS[input.chainId];
+    if (!cfg) return null;
+    if (!input.sender || !input.recipient || input.totalDebitAtomic == null || input.recipientAmountAtomic == null) return null;
+    var totalDebit = BigInt(input.totalDebitAtomic);
+    var recipientAmount = BigInt(input.recipientAmountAtomic);
+    var allowance = BigInt(input.allowanceAtomic || '0');
+    var gasPolicyId = input.gasPolicyId || null;
+    if (gasPolicyId) {
+      var gasPolicy = loadValidatedGasPolicy(gasPolicyId);
+      if (!gasPolicy.ok) return null;
+      var canonicalPlan = allowance < totalDebit ? 'APPROVE_THEN_TRANSFER' : 'TRANSFER_ONLY';
+      if (input.executionPlan && input.executionPlan !== canonicalPlan) return null;
+      var expectedFeeAtomic = (recipientAmount * BigInt(gasPolicy.security.amountPolicy.feeBasisPoints)) / 10000n;
+      var expectedTotalAtomic = recipientAmount + expectedFeeAtomic;
+      if (input.platformFeeAtomic != null) {
+        var suppliedFeeAtomic = normalizeAtomicQuantity(input.platformFeeAtomic);
+        if (suppliedFeeAtomic == null || suppliedFeeAtomic !== expectedFeeAtomic) return null;
+      }
+      if (input.totalDebitAtomic != null && totalDebit !== expectedTotalAtomic) return null;
+      var validation;
+      try {
+        validation = gasPolicy.api.validateExecutionDomain(gasPolicyId, {
+          executionPlan: canonicalPlan,
+          amountAtomic: recipientAmount,
+          totalDebitAtomic: totalDebit,
+          platformFeeAtomic: expectedFeeAtomic,
+        });
+      } catch (error) {
+        return null;
+      }
+      if (!validation || validation.ok !== true) return null;
+    }
+    var txs = [];
+    if (allowance < totalDebit) {
+      txs.push({
+        from: input.sender,
+        to: cfg.usdcAddress,
+        data: encodeApprove(cfg.contractAddress, totalDebit),
+      });
+    }
+    txs.push({
+      from: input.sender,
+      to: cfg.contractAddress,
+      data: encodeTransferWithFee(input.recipient, recipientAmount),
+    });
+    return Object.freeze(txs.map(function (tx) { return Object.freeze(tx); }));
+  }
+
+  function readFeePerGas(provider) {
+    function readGasPrice() {
+      return provider.request({ method: 'eth_gasPrice' })
+        .then(function (gasPrice) {
+          var parsed = normalizeHexQuantity(gasPrice);
+          return parsed != null && parsed > 0n ? parsed : null;
+        })
+        .catch(function () { return null; });
+    }
+    return provider.request({ method: 'eth_maxPriorityFeePerGas' })
+      .then(function (priorityFee) {
+        var priority = normalizeHexQuantity(priorityFee);
+        if (priority == null || priority <= 0n) return readGasPrice();
+        return provider.request({ method: 'eth_getBlockByNumber', params: ['latest', false] })
+          .then(function (block) {
+            var base = block && normalizeHexQuantity(block.baseFeePerGas);
+            if (base == null || base <= 0n) return readGasPrice();
+            return (base * 2n) + priority;
+          }).catch(readGasPrice);
+      })
+      .catch(readGasPrice);
+  }
+
+  function estimateNativeGasRequirement(provider, input) {
+    if (!provider || typeof provider.request !== 'function') {
+      return Promise.resolve(Object.freeze({ status: 'UNAVAILABLE', reason: 'provider-unavailable' }));
+    }
+    var txs;
+    try {
+      txs = buildAuthorizedTransactionRequests(input);
+    } catch (error) {
+      return Promise.resolve(Object.freeze({ status: 'UNAVAILABLE', reason: 'plan-invalid' }));
+    }
+    if (!txs || !txs.length) {
+      return Promise.resolve(Object.freeze({ status: 'UNAVAILABLE', reason: 'plan-unavailable' }));
+    }
+    return readFeePerGas(provider).then(function (feePerGas) {
+      if (feePerGas == null) return Object.freeze({ status: 'UNAVAILABLE', reason: 'fee-data-unavailable' });
+      var totalGas = 0n;
+      var approvalRequired = txs.length > 1;
+      var sequence = Promise.resolve();
+      txs.forEach(function (tx) {
+        if (approvalRequired && tx !== txs[0]) return;
+        sequence = sequence.then(function () {
+          return provider.request({ method: 'eth_estimateGas', params: [tx] })
+            .then(function (gas) {
+              var parsed = normalizeHexQuantity(gas);
+              if (parsed == null || parsed <= 0n) throw new Error('gas-estimate-unavailable');
+              totalGas += parsed;
+            });
+        });
+      });
+      return sequence.then(function () {
+        if (approvalRequired) {
+          return Object.freeze({
+            status: 'UNAVAILABLE',
+            reason: 'post-approval-transfer-gas-bound-unavailable',
+            approvalGasLimit: totalGas.toString(10),
+            transactionCount: txs.length,
+          });
+        }
+        var required = totalGas * feePerGas;
+        return Object.freeze({
+          status: 'AVAILABLE',
+          transactionCount: txs.length,
+          gasLimitTotal: totalGas.toString(10),
+          feePerGasAtomic: feePerGas.toString(10),
+          nativeGasRequiredAtomic: required.toString(10),
+        });
+      }).catch(function () {
+        return Object.freeze({ status: 'UNAVAILABLE', reason: 'gas-estimate-unavailable' });
+      });
+    });
   }
 
   /* ----------------------------------------------------------------
@@ -794,8 +1047,79 @@
       }));
     }
 
-    var amountRaw = toRawUsdc(request.amount);
-    var totalRaw = toRawUsdc(request.total);
+    var gasPolicyId = request.gasPolicyId || null;
+    var gasPolicy = gasPolicyId ? loadValidatedGasPolicy(gasPolicyId) : null;
+    if (gasPolicyId && (!gasPolicy || !gasPolicy.ok)) {
+      return Promise.resolve(makeResult('failed', {
+        error: { code: 'GAS_POLICY_UNAVAILABLE', message: 'Gas policy unavailable.' },
+      }));
+    }
+
+    var amountRaw = normalizeAtomicQuantity(request.amountAtomic);
+    if (amountRaw == null) amountRaw = toRawUsdc(request.amount);
+    if (amountRaw == null) {
+      return Promise.resolve(makeResult('failed', {
+        error: { code: 'INVALID_AMOUNT', message: 'Execution amount must be provided.' },
+      }));
+    }
+
+    var canonicalPlan = deriveCanonicalExecutionPlan(request);
+    if (request.executionPlan && request.executionPlan !== canonicalPlan) {
+      return Promise.resolve(makeResult('failed', {
+        error: { code: 'EXECUTION_PLAN_MISMATCH', message: 'Execution plan does not match the request behavior.' },
+      }));
+    }
+
+    var feeBasisPoints = gasPolicy ? BigInt(gasPolicy.security.amountPolicy.feeBasisPoints) : 100n;
+    var expectedFeeAtomic = (amountRaw * feeBasisPoints) / 10000n;
+    var expectedTotalAtomic = amountRaw + expectedFeeAtomic;
+
+    var suppliedFeeAtomic = request.platformFeeAtomic != null ? normalizeAtomicQuantity(request.platformFeeAtomic) : null;
+    if (request.platformFeeAtomic != null && suppliedFeeAtomic !== expectedFeeAtomic) {
+      return Promise.resolve(makeResult('failed', {
+        error: { code: 'PLATFORM_FEE_MISMATCH', message: 'Platform fee does not match the policy rate.' },
+      }));
+    }
+
+    var totalRaw = normalizeAtomicQuantity(request.totalDebitAtomic);
+    if (totalRaw == null) totalRaw = normalizeAtomicQuantity(request.totalAtomic);
+    if (totalRaw == null) totalRaw = toRawUsdc(request.total);
+    if (totalRaw != null && totalRaw !== expectedTotalAtomic) {
+      return Promise.resolve(makeResult('failed', {
+        error: { code: 'TOTAL_DEBIT_MISMATCH', message: 'Amount, fee, and total debit must reconcile.' },
+      }));
+    }
+    if (totalRaw == null) totalRaw = expectedTotalAtomic;
+
+    if (gasPolicy) {
+      var validation = gasPolicy.api.validateExecutionDomain(gasPolicyId, {
+        executionPlan: canonicalPlan,
+        amountAtomic: amountRaw,
+        totalDebitAtomic: totalRaw,
+        platformFeeAtomic: expectedFeeAtomic,
+      });
+      if (!validation || validation.ok !== true) {
+        return Promise.resolve(makeResult('failed', {
+          error: {
+            code: validation && validation.code || 'GAS_POLICY_UNAVAILABLE',
+            message: validation && validation.message || 'Gas policy validation failed.',
+          },
+        }));
+      }
+    }
+
+    var executionRequest = request;
+    if (gasPolicy) {
+      executionRequest = Object.freeze(Object.assign({}, request, {
+        amountAtomic: amountRaw.toString(10),
+        totalAtomic: totalRaw.toString(10),
+        feeAtomic: expectedFeeAtomic.toString(10),
+        amount: atomicToUsdcDecimalString(amountRaw),
+        total: atomicToUsdcDecimalString(totalRaw),
+        fee: atomicToUsdcDecimalString(expectedFeeAtomic),
+        executionPlan: canonicalPlan,
+      }));
+    }
 
     /* transferSubmitted tracks whether eth_sendTransaction returned a hash.
      * Any error after that point is outcome-unknown — we cannot assert that
@@ -803,27 +1127,27 @@
     var transferSubmitted = false;
     var submittedHash     = null;
 
-    var requiresApproval = request.requiresApproval !== false;
+    var requiresApproval = canonicalPlan !== 'TRANSFER_ONLY';
 
     if (!requiresApproval) {
-      return executeTransferStep(chainId, request, null, amountRaw, cfg, hooks, function (transferHash) {
+      return executeTransferStep(chainId, executionRequest, null, amountRaw, cfg, hooks, function (transferHash) {
         transferSubmitted = true;
         submittedHash = transferHash;
       });
     }
 
     if (hooks.onApprovalRequested) hooks.onApprovalRequested();
-    return approve(chainId, request.sender, totalRaw)
+    return approve(chainId, executionRequest.sender, totalRaw)
       .then(function (approvalHash) {
         if (hooks.onApprovalSubmitted) hooks.onApprovalSubmitted(approvalHash);
         return waitForReceipt(approvalHash).then(function (approvalReceipt) {
           if (!receiptSucceeded(approvalReceipt)) {
             var approveErr = { code: 'APPROVE_FAILED', message: 'Approval transaction failed' };
             if (hooks.onFailed) hooks.onFailed(approveErr);
-            return makeResult('failed', { sender: request.sender, error: approveErr });
+            return makeResult('failed', { sender: executionRequest.sender, error: approveErr });
           }
           if (hooks.onApprovalConfirmed) hooks.onApprovalConfirmed(approvalHash, approvalReceipt);
-          return executeTransferStep(chainId, request, approvalHash, amountRaw, cfg, hooks, function (transferHash) {
+          return executeTransferStep(chainId, executionRequest, approvalHash, amountRaw, cfg, hooks, function (transferHash) {
             transferSubmitted = true;
             submittedHash = transferHash;
           });
@@ -831,10 +1155,10 @@
       })
       .catch(function (err) {
         var code = providerErrorCode(err);
-        if (code === 4001) return makeResult('wallet-rejected', { sender: request.sender });
+        if (code === 4001) return makeResult('wallet-rejected', { sender: executionRequest.sender });
         if (code === -32002) {
           /* Wallet already has a pending request — no broadcast occurred, safe to retry. */
-          return walletBusyResult(request.sender);
+          return walletBusyResult(executionRequest.sender);
         }
         if (transferSubmitted) {
           /* Error after broadcast — outcome ambiguous. Surface hash for explorer lookup. */
@@ -845,11 +1169,11 @@
             explorerUrl: cfg.explorerUrl + '/tx/' + submittedHash,
           };
           if (hooks.onFailed) hooks.onFailed(postBroadcastErr);
-          return makeResult('outcome-unknown', { sender: request.sender, error: postBroadcastErr });
+          return makeResult('outcome-unknown', { sender: executionRequest.sender, error: postBroadcastErr });
         }
         var execErr = { code: code || 'EXECUTION_FAILED', message: providerErrorMessage(err, 'Execution failed') };
         if (hooks.onFailed) hooks.onFailed(execErr);
-        return makeResult('failed', { sender: request.sender, error: execErr });
+        return makeResult('failed', { sender: executionRequest.sender, error: execErr });
       });
   }
 
@@ -860,8 +1184,16 @@
     executeTransfer:    executeTransfer,
     toRawUsdc:          toRawUsdc,
     calculateFee:       calculateFee,
+    resolveGasPolicy:   function (policyId) { var api = getGasPolicyApi(); return api ? api.resolveGasPolicy(policyId) : null; },
+    validateGasPolicy:  function (policyId) { var api = getGasPolicyApi(); return api ? api.validateGasPolicy(policyId) : Object.freeze({ valid: false, errors: ['unknown policy'] }); },
+    getPolicySecurityPayload: function (policyId) { var api = getGasPolicyApi(); return api ? api.getPolicySecurityPayload(policyId) : null; },
+    getCanonicalPolicyBinding: function (policyId) { var api = getGasPolicyApi(); return api ? api.getCanonicalPolicyBinding(policyId) : null; },
+    getGasLimit:        function (policyId, executionPlan, stepName) { var api = getGasPolicyApi(); return api ? api.getGasLimit(policyId, executionPlan, stepName) : null; },
+    validateExecutionDomain: function (policyId, input) { var api = getGasPolicyApi(); return api ? api.validateExecutionDomain(policyId, input) : Object.freeze({ ok: false, code: 'GAS_POLICY_UNAVAILABLE', message: 'Gas policy unavailable.' }); },
     getChainParams:     getChainParams,
     readWalletSnapshot: readWalletSnapshot,
+    buildAuthorizedTransactionRequests: buildAuthorizedTransactionRequests,
+    estimateNativeGasRequirement: estimateNativeGasRequirement,
   };
 
 })();
