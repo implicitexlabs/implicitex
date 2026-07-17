@@ -222,9 +222,41 @@ test('lifecycle contradiction fails review creation', () => {
 test('gas readiness is explicit and fail-closed', () => {
   assert.throws(() => review({ walletOverrides: { gasReadiness: undefined } }), /gasReadiness must/);
   assert.throws(() => review({ walletOverrides: { gasReadiness: 'UNKNOWN' } }), /gasReadiness must/);
-  assert.throws(() => review({ walletOverrides: { gasReadiness: 'INSUFFICIENT' } }), /gas readiness must be SUFFICIENT/);
-  assert.throws(() => review({ walletOverrides: { gasReadiness: 'UNAVAILABLE' } }), /gas readiness must be SUFFICIENT/);
+  assert.equal(review({ walletOverrides: { gasReadiness: 'INSUFFICIENT' } }).record.walletSnapshot.gasReadiness, 'INSUFFICIENT');
+  assert.equal(review({ walletOverrides: { gasReadiness: 'UNAVAILABLE', nativeGasBalanceAtomic: null } }).record.walletSnapshot.gasReadiness, 'UNAVAILABLE');
   assert.equal((() => { const rr = review({ walletOverrides: { gasReadiness: 'SUFFICIENT' } }); return rr.runtime.isReviewRecord(rr.record); })(), true);
+});
+
+test('blocked gas creates review but cannot authorize at contract boundary', () => {
+  for (const gasReadiness of ['INSUFFICIENT', 'UNAVAILABLE']) {
+    const r = review({ walletOverrides: { gasReadiness, nativeGasBalanceAtomic: gasReadiness === 'UNAVAILABLE' ? null : '1' } });
+    assert.equal(r.runtime.isReviewRecord(r.record), true);
+    assert.equal(Object.isFrozen(r.record), true);
+    const evaluation = r.runtime.evaluateReviewEligibility({
+      reviewRecord: r.record,
+      evaluationId: `blocked-gas-${gasReadiness}`,
+      evaluatedAt: '2026-07-16T10:02:00.000Z',
+      currentEvidence: currentEvidence(r),
+    });
+    assert.equal(evaluation.status, contract.REVIEW_STATUS.INVALIDATED);
+    assert.throws(() => r.runtime.buildAuthorizationInputs(r.record, evaluation), /review must be CURRENT/);
+    const projection = r.runtime.deriveInteractionProjection({
+      draftValid: true,
+      integrity: 'VERIFIED',
+      lifecycle: 'ACTIVE',
+      promotion: 'PRESENTATION_PROMOTED',
+      evidenceResolution: 'CONSISTENT',
+      walletConnection: 'CONNECTED',
+      networkCompatibility: 'MATCHED',
+      fundingReadiness: gasReadiness === 'INSUFFICIENT' ? 'INSUFFICIENT_GAS' : 'UNAVAILABLE',
+      reviewRecord: r.record,
+      reviewEligibilityEvaluation: evaluation,
+    });
+    const actions = r.runtime.evaluateProjectionActions(projection.projection, { allowAuthorization: false });
+    assert.equal(projection.projection, contract.PROJECTIONS.INSUFFICIENT_FUNDS);
+    assert.equal(actions.allowed.includes(contract.ACTIONS.AUTHORIZE), false);
+    assert.equal(r.record.walletSnapshot.gasReadiness, gasReadiness);
+  }
 });
 
 test('draft construction is deterministic, immutable, and rejects atomic ambiguity', () => {
@@ -321,6 +353,40 @@ test('current branded evaluation produces frozen authorization inputs', () => {
   assert.equal(r.runtime.isAuthorizationInputBundle(inputs), true);
   assert.equal(r.runtime.isAuthorizationInputBundle({ ...inputs }), false);
   assert.equal(inputs.providerReference, 'provider:injected:1');
+  assert.equal(inputs.reviewWalletSnapshot, r.record.walletSnapshot);
+  assert.equal(inputs.reviewWalletSnapshotFingerprint, r.record.walletSnapshot.walletSnapshotFingerprint);
+  assert.equal(inputs.authorizationWalletSnapshotFingerprint, evaluation.authorizationWalletSnapshotFingerprint);
+  assert.equal(inputs.walletSnapshot.account, ADDR.sender);
+  assert.equal(inputs.walletSnapshot.balanceAtomic, '10000000');
+});
+
+test('authorization inputs use evaluation-bound wallet evidence only', () => {
+  const r = review();
+  const evaluationA = currentEvaluation(r, {
+    currentEvidenceOverrides: { walletOverrides: { createdAt: '2026-07-16T10:02:01.000Z' } },
+  });
+  assert.equal(evaluationA.status, contract.REVIEW_STATUS.CURRENT);
+  const substituted = wallet({
+    providerReference: 'provider:other',
+    tokenBalanceAtomic: '999999999',
+    allowanceAtomic: '999999999',
+    createdAt: '2026-07-16T10:03:00.000Z',
+  });
+  const bundleA = r.runtime.buildAuthorizationInputs(r.record, evaluationA, substituted);
+  assert.equal(bundleA.providerReference, 'provider:injected:1');
+  assert.equal(bundleA.walletSnapshot.balanceAtomic, '10000000');
+  assert.equal(bundleA.walletSnapshot.allowanceAtomic, '0');
+  assert.equal(bundleA.authorizationWalletSnapshotFingerprint, evaluationA.authorizationWalletSnapshotFingerprint);
+  assert.notEqual(bundleA.authorizationWalletSnapshotFingerprint, r.record.walletSnapshot.walletSnapshotFingerprint);
+
+  const evaluationB = currentEvaluation(r, {
+    evaluationOverrides: { evaluationId: 'eval-b' },
+    currentEvidenceOverrides: { walletOverrides: { createdAt: '2026-07-16T10:02:02.000Z' } },
+  });
+  const bundleB = r.runtime.buildAuthorizationInputs(r.record, evaluationB);
+  assert.notEqual(bundleA.authorizationInputFingerprint, bundleB.authorizationInputFingerprint);
+  assert.notEqual(bundleA.authorizationWalletSnapshotFingerprint, bundleB.authorizationWalletSnapshotFingerprint);
+  assert.equal(bundleA.reviewWalletSnapshotFingerprint, bundleB.reviewWalletSnapshotFingerprint);
 });
 
 test('complete current wallet observation is required for current eligibility', () => {
@@ -362,7 +428,11 @@ test('changed authorization-relevant wallet evidence is stale and cannot authori
       evaluatedAt: '2026-07-16T10:02:00.000Z',
       currentEvidence: currentEvidence(r, { walletOverrides }),
     });
-    assert.equal(evaluation.status, contract.REVIEW_STATUS.STALE, JSON.stringify(walletOverrides));
+    assert.equal(
+      evaluation.status,
+      walletOverrides.gasReadiness ? contract.REVIEW_STATUS.INVALIDATED : contract.REVIEW_STATUS.STALE,
+      JSON.stringify(walletOverrides),
+    );
     assert.throws(() => r.runtime.buildAuthorizationInputs(r.record, evaluation), /review must be CURRENT/);
   }
 });
@@ -382,6 +452,11 @@ test('real execution authorization integrates with review authorization inputs a
   });
   assert.equal(r.runtime.isExecutionAttemptBinding(binding), true);
   assert.equal(binding.executionPlan, authorized.executionPlan);
+  assert.equal(binding.reviewBindingFingerprint, r.record.reviewBindingFingerprint);
+  assert.equal(binding.reviewWalletSnapshotFingerprint, inputs.reviewWalletSnapshotFingerprint);
+  assert.equal(binding.authorizationWalletSnapshotFingerprint, inputs.authorizationWalletSnapshotFingerprint);
+  assert.equal(binding.eligibilityFingerprint, inputs.eligibilityFingerprint);
+  assert.equal(binding.authorizationInputFingerprint, inputs.authorizationInputFingerprint);
 });
 
 test('authorization-input bundle for one review cannot bind another review attempt', () => {
@@ -564,6 +639,28 @@ test('compact projection retains expansion path without bypassing review', () =>
   assert.equal(projected.projection, contract.PROJECTIONS.READY_FOR_REVIEW);
   assert.equal(projected.allowedActions.includes(contract.ACTIONS.ENTER_REVIEW), false);
   assert.equal(projected.allowedActions.includes(contract.ACTIONS.EXPAND_PRESENTATION), true);
+});
+
+test('pre-review not-evaluated funding can enter review but cannot authorize', () => {
+  const r = review();
+  const projected = r.runtime.deriveInteractionProjection({
+    integrity: 'VERIFIED',
+    promotion: 'PRESENTATION_PROMOTED',
+    evidenceResolution: 'CONSISTENT',
+    draftValid: true,
+    walletConnection: 'CONNECTED',
+    networkCompatibility: 'MATCHED',
+    fundingReadiness: 'NOT_EVALUATED',
+  });
+  assert.equal(projected.projection, contract.PROJECTIONS.READY_FOR_REVIEW);
+  assert.equal(projected.allowedActions.includes(contract.ACTIONS.ENTER_REVIEW), true);
+  assert.equal(projected.allowedActions.includes(contract.ACTIONS.AUTHORIZE), false);
+  assert.equal(r.runtime.deriveInteractionProjection({
+    draftValid: true,
+    walletConnection: 'CONNECTED',
+    networkCompatibility: 'MATCHED',
+    fundingReadiness: 'NOT_A_STATE',
+  }).projection, contract.PROJECTIONS.INTERNAL_INCONSISTENCY);
 });
 
 function executionBindingFor(overrides = {}) {

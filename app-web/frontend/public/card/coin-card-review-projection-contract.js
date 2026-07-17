@@ -236,6 +236,7 @@
     var evaluations = new WeakSet();
     var bundles = new WeakSet();
     var attempts = new WeakSet();
+    var evaluationWalletEvidence = new WeakMap();
 
     function isDraftIntent(v) { try { return drafts.has(v); } catch (e) { return false; } }
     function isReviewRecord(v) { try { return reviews.has(v); } catch (e) { return false; } }
@@ -274,7 +275,6 @@
       if (!isDraftIntent(input.draftIntent)) throw err('INVALID_DRAFT_INTENT', 'draftIntent must come from this runtime');
       var draftValue = input.draftIntent;
       var wallet = normalizeWalletObservation(input.walletSnapshot, false);
-      if (wallet.gasReadiness !== 'SUFFICIENT') throw err('GAS_READINESS_INSUFFICIENT', 'gas readiness must be SUFFICIENT');
       if (wallet.observedChainId !== draftValue.requiredChainId) throw err('WALLET_CHAIN_MISMATCH', 'wallet chain mismatch');
       if (BigInt(wallet.tokenBalanceAtomic) < BigInt(draftValue.totalDebitAtomic)) throw err('TOKEN_FUNDS_INSUFFICIENT', 'token balance insufficient');
       if (input.providerContinuity !== 'ESTABLISHED') throw err('PROVIDER_CONTINUITY_NOT_ESTABLISHED', 'provider continuity required');
@@ -350,23 +350,40 @@
       }
       if (ev.evidenceResolution === undefined) stale.push('evidence resolution required');
       else if (ev.evidenceResolution !== 'CONSISTENT') reasons.push('evidence no longer consistent');
+      var authorizationWalletEvidence = null;
       try {
         var obs = normalizeWalletObservation(ev.walletObservation, record.walletSnapshot.nativeGasBalanceAtomic !== null);
+        obs.walletSnapshotFingerprint = fingerprint(DOMAINS.WALLET_SNAPSHOT, Object.keys(obs).filter(function (k) { return k !== 'walletSnapshotFingerprint'; }).map(function (k) { return [k, obs[k]]; }));
+        freezeDeep(obs);
+        authorizationWalletEvidence = obs;
         var snap = record.walletSnapshot;
         ['senderAddress', 'observedChainId', 'tokenBalanceAtomic', 'allowanceAtomic', 'gasReadiness', 'nativeGasBalanceAtomic', 'providerReference', 'accountGeneration', 'chainGeneration', 'providerGeneration'].forEach(function (field) {
           if (obs[field] !== snap[field]) stale.push('wallet evidence changed: ' + field);
         });
+        if (obs.gasReadiness !== 'SUFFICIENT') reasons.push('gas readiness blocks authorization');
       } catch (e2) {
         stale.push('complete current wallet observation required: ' + e2.code);
       }
       if (record.invalidation) reasons.push('explicit invalidation: ' + record.invalidation.reason);
       if (input.freshnessPolicy && input.freshnessPolicy.stale === true) stale.push('freshness policy marked stale');
-      if (reasons.length) return makeEval(record, REVIEW_STATUS.INVALIDATED, reasons, input);
-      if (stale.length) return makeEval(record, REVIEW_STATUS.STALE, stale, input);
-      return makeEval(record, REVIEW_STATUS.CURRENT, [], input);
+      if (reasons.length) return makeEval(record, REVIEW_STATUS.INVALIDATED, reasons, input, authorizationWalletEvidence);
+      if (stale.length) return makeEval(record, REVIEW_STATUS.STALE, stale, input, authorizationWalletEvidence);
+      return makeEval(record, REVIEW_STATUS.CURRENT, [], input, authorizationWalletEvidence);
     }
 
-    function makeEval(record, status, reasons, input) {
+    function authorizationWalletSnapshotFromObservation(obs) {
+      return freezeDeep({
+        account: obs.senderAddress,
+        chainId: obs.observedChainId,
+        balanceAtomic: obs.tokenBalanceAtomic,
+        allowanceAtomic: obs.allowanceAtomic,
+        providerReady: true,
+      });
+    }
+
+    function makeEval(record, status, reasons, input, authorizationWalletEvidence) {
+      var authorizationWalletSnapshot = authorizationWalletEvidence ? authorizationWalletSnapshotFromObservation(authorizationWalletEvidence) : null;
+      var authorizationWalletSnapshotFingerprint = authorizationWalletEvidence ? authorizationWalletEvidence.walletSnapshotFingerprint : null;
       var e = {
         schemaVersion: SCHEMAS.REVIEW_ELIGIBILITY,
         evaluationId: input && input.evaluationId ? String(input.evaluationId) : null,
@@ -374,15 +391,24 @@
         reviewBindingFingerprint: record ? record.reviewBindingFingerprint : null,
         status: status,
         reasons: reasons.slice(),
-        currentEvidenceFingerprint: input && input.currentEvidenceFingerprint ? String(input.currentEvidenceFingerprint) : null,
+        currentEvidenceFingerprint: authorizationWalletSnapshotFingerprint,
+        authorizationWalletSnapshotFingerprint: authorizationWalletSnapshotFingerprint,
       };
       e.evaluationFingerprint = fingerprint(DOMAINS.REVIEW_ELIGIBILITY, [
         ['schemaVersion', e.schemaVersion], ['evaluationId', e.evaluationId], ['evaluatedAt', e.evaluatedAt],
         ['reviewBindingFingerprint', e.reviewBindingFingerprint], ['status', e.status], ['reasons', e.reasons],
         ['currentEvidenceFingerprint', e.currentEvidenceFingerprint],
+        ['authorizationWalletSnapshotFingerprint', e.authorizationWalletSnapshotFingerprint],
       ]);
       freezeDeep(e);
       evaluations.add(e);
+      if (authorizationWalletEvidence) {
+        evaluationWalletEvidence.set(e, freezeDeep({
+          observation: authorizationWalletEvidence,
+          authorizationWalletSnapshot: authorizationWalletSnapshot,
+          authorizationWalletSnapshotFingerprint: authorizationWalletSnapshotFingerprint,
+        }));
+      }
       return e;
     }
 
@@ -396,7 +422,10 @@
     function buildAuthorizationInputs(record, evaluation) {
       assertCurrent(record, evaluation);
       var t = record.reviewedPaymentTerms;
-      var w = record.walletSnapshot;
+      var reviewWallet = record.walletSnapshot;
+      var evidence = evaluationWalletEvidence.get(evaluation);
+      if (!evidence || evidence.authorizationWalletSnapshotFingerprint !== evaluation.authorizationWalletSnapshotFingerprint) throw err('AUTHORIZATION_WALLET_EVIDENCE_MISSING', 'evaluation-bound wallet evidence required');
+      var w = evidence.observation;
       var bundle = {
         schemaVersion: SCHEMAS.AUTHORIZATION_INPUT_BUNDLE,
         reviewBindingFingerprint: record.reviewBindingFingerprint,
@@ -408,17 +437,18 @@
           recipient: t.recipientAddress, recipientAmountAtomic: t.recipientAmountAtomic,
           platformFeeAtomic: t.platformFeeAtomic, totalDebitAtomic: t.totalDebitAtomic,
         }),
-        walletSnapshot: Object.freeze({
-          account: w.senderAddress, chainId: w.observedChainId,
-          balanceAtomic: w.tokenBalanceAtomic, allowanceAtomic: w.allowanceAtomic, providerReady: true,
-        }),
-        reviewWalletSnapshot: w,
+        walletSnapshot: evidence.authorizationWalletSnapshot,
+        reviewWalletSnapshot: reviewWallet,
+        reviewWalletSnapshotFingerprint: reviewWallet.walletSnapshotFingerprint,
+        authorizationWalletSnapshotFingerprint: evidence.authorizationWalletSnapshotFingerprint,
         providerReference: w.providerReference,
       };
       bundle.authorizationInputFingerprint = fingerprint(DOMAINS.AUTHORIZATION_INPUT_BUNDLE, [
         ['reviewBindingFingerprint', bundle.reviewBindingFingerprint], ['eligibilityFingerprint', bundle.eligibilityFingerprint],
         ['transferIntent', bundle.transferIntent], ['walletSnapshot', bundle.walletSnapshot],
-        ['reviewWalletSnapshotFingerprint', w.walletSnapshotFingerprint], ['providerReference', bundle.providerReference],
+        ['reviewWalletSnapshotFingerprint', bundle.reviewWalletSnapshotFingerprint],
+        ['authorizationWalletSnapshotFingerprint', bundle.authorizationWalletSnapshotFingerprint],
+        ['providerReference', bundle.providerReference],
       ]);
       freezeDeep(bundle);
       bundles.add(bundle);
@@ -448,11 +478,19 @@
         executionPlan: nonempty(auth.executionPlan, 'executionPlan'),
         providerReference: providerReference,
         reviewBindingFingerprint: bundle.reviewBindingFingerprint,
+        reviewWalletSnapshotFingerprint: bundle.reviewWalletSnapshotFingerprint,
+        authorizationWalletSnapshotFingerprint: bundle.authorizationWalletSnapshotFingerprint,
+        eligibilityFingerprint: bundle.eligibilityFingerprint,
         authorizationInputFingerprint: bundle.authorizationInputFingerprint,
       };
       attempt.executionAttemptFingerprint = fingerprint(DOMAINS.EXECUTION_ATTEMPT, [
         ['attemptId', attempt.attemptId], ['executionPlan', attempt.executionPlan],
-        ['providerReference', attempt.providerReference], ['authorizationInputFingerprint', attempt.authorizationInputFingerprint],
+        ['reviewBindingFingerprint', attempt.reviewBindingFingerprint],
+        ['reviewWalletSnapshotFingerprint', attempt.reviewWalletSnapshotFingerprint],
+        ['authorizationWalletSnapshotFingerprint', attempt.authorizationWalletSnapshotFingerprint],
+        ['eligibilityFingerprint', attempt.eligibilityFingerprint],
+        ['providerReference', attempt.providerReference],
+        ['authorizationInputFingerprint', attempt.authorizationInputFingerprint],
       ]);
       freezeDeep(attempt);
       attempts.add(attempt);
@@ -511,7 +549,7 @@
     evidenceResolution: ['CONSISTENT', 'CONFLICT', 'UNAVAILABLE'],
     walletConnection: ['NOT_CONNECTED', 'CONNECTING', 'CONNECTED', 'CONNECTION_REJECTED', 'CONNECTION_UNAVAILABLE'],
     networkCompatibility: ['UNKNOWN', 'MATCHED', 'MISMATCHED', 'SWITCH_REQUESTED', 'SWITCH_REJECTED'],
-    fundingReadiness: ['UNKNOWN', 'SUFFICIENT', 'INSUFFICIENT_TOKEN', 'INSUFFICIENT_GAS', 'UNAVAILABLE'],
+    fundingReadiness: ['UNKNOWN', 'NOT_EVALUATED', 'SUFFICIENT', 'INSUFFICIENT_TOKEN', 'INSUFFICIENT_GAS', 'UNAVAILABLE'],
     authorization: ['NOT_REQUESTED', 'EVALUATING', 'EXECUTION_AUTHORIZED', 'BLOCKED', 'PROOF_CONSUMED'],
     allowanceApproval: ['NOT_REQUIRED', 'REQUIRED', 'WALLET_DECISION_PENDING', 'SUBMITTED', 'CONFIRMED', 'REJECTED', 'FAILED', 'OUTCOME_UNKNOWN'],
     transferExecution: ['NOT_STARTED', 'WALLET_DECISION_PENDING', 'SUBMISSION_PENDING', 'SUBMITTED', 'REJECTED', 'FAILED'],
@@ -561,8 +599,8 @@
     if (input.draftValid === true) {
       if (input.walletConnection !== 'CONNECTED') return projection(PROJECTIONS.WALLET_REQUIRED, ['wallet not connected'], input.presentation);
       if (input.networkCompatibility === 'MISMATCHED') return projection(PROJECTIONS.WRONG_NETWORK, ['wrong network'], input.presentation);
-      if (input.fundingReadiness === 'INSUFFICIENT_TOKEN' || input.fundingReadiness === 'INSUFFICIENT_GAS') return projection(PROJECTIONS.INSUFFICIENT_FUNDS, ['insufficient funds'], input.presentation);
-      if (input.integrity === 'VERIFIED' && input.promotion === 'PRESENTATION_PROMOTED' && input.networkCompatibility === 'MATCHED' && input.fundingReadiness === 'SUFFICIENT') return projection(PROJECTIONS.READY_FOR_REVIEW, ['ready for review'], input.presentation);
+      if (input.fundingReadiness === 'INSUFFICIENT_TOKEN' || input.fundingReadiness === 'INSUFFICIENT_GAS' || input.fundingReadiness === 'UNAVAILABLE') return projection(PROJECTIONS.INSUFFICIENT_FUNDS, ['funding readiness blocked'], input.presentation);
+      if (input.integrity === 'VERIFIED' && input.promotion === 'PRESENTATION_PROMOTED' && input.networkCompatibility === 'MATCHED' && (input.fundingReadiness === 'SUFFICIENT' || input.fundingReadiness === 'NOT_EVALUATED' || input.fundingReadiness === 'UNKNOWN')) return projection(PROJECTIONS.READY_FOR_REVIEW, ['ready to collect review evidence'], input.presentation);
       return projection(PROJECTIONS.CONFIGURING, ['configuring'], input.presentation);
     }
     if (input.cardPresented === true) return projection(PROJECTIONS.PRESENTED, ['card presented'], input.presentation);
@@ -591,6 +629,15 @@
     if (options.compact === true) {
       allowed = allowed.filter(function (a) { return a !== ACTIONS.AUTHORIZE && a !== ACTIONS.ENTER_REVIEW; });
       allow(ACTIONS.EXPAND_PRESENTATION);
+    }
+    if (options.allowAuthorization === false) {
+      allowed = allowed.filter(function (a) { return a !== ACTIONS.AUTHORIZE; });
+    }
+    if (options.allowReview === false) {
+      allowed = allowed.filter(function (a) { return a !== ACTIONS.ENTER_REVIEW; });
+    }
+    if (options.allowEdit === false) {
+      allowed = allowed.filter(function (a) { return a !== ACTIONS.EDIT_DRAFT && a !== ACTIONS.EXIT_REVIEW; });
     }
     var all = Object.keys(ACTIONS).map(function (k) { return ACTIONS[k]; });
     return freezeDeep({ allowed: allowed, prohibited: all.filter(function (a) { return allowed.indexOf(a) === -1; }) });
