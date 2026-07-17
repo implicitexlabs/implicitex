@@ -101,6 +101,21 @@ function loadCardRuntime(overrides = {}) {
         const fee = (BigInt(rawAmount) * bps) / 10000n;
         return { fee, total: BigInt(rawAmount) + fee };
       },
+      getChainParams() {
+        return Object.freeze({
+          usdcAddress: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359',
+          contractAddress: '0x5015841D6E665e63Ea174aD6b8FeF854026dE0C0',
+        });
+      },
+      estimateNativeGasRequirement() {
+        return Promise.resolve(Object.freeze({
+          status: 'AVAILABLE',
+          transactionCount: 2,
+          gasLimitTotal: '42000',
+          feePerGasAtomic: '1000000000',
+          nativeGasRequiredAtomic: '42000000000000',
+        }));
+      },
       readWalletSnapshot() {
         return Promise.resolve({
           account: '0x1111111111111111111111111111111111111111',
@@ -155,6 +170,18 @@ function loadCardRuntime(overrides = {}) {
     setActiveProviderForTest: function (provider) {
       state.activeProvider = provider;
       return noteProvider(provider);
+    },
+    setDraftForTest: function (amountText) {
+      state.registryRecord = {
+        cardId: 'cc_demo_implicitex',
+        displayName: 'Demo Card',
+        recipient: '0xa7cE4232811021d2Dd01f4f0f264Df2427ab3919',
+        chainId: 137,
+        token: 'USDC',
+        feeBps: 100
+      };
+      state.manifestId = 'manifest-001';
+      return commitDraftFromInput(amountText || '2.00');
     },
     clearActiveProviderForTest: function () {
       state.activeProvider = null;
@@ -408,6 +435,7 @@ test('card required chain does not masquerade as observed wallet chain', async (
   const internals = runtime.window.__CC_TEST_INTERNALS;
   const provider = makeProvider({ chainHex: '0x89' });
   internals.setActiveProviderForTest(provider);
+  internals.setDraftForTest('2.00');
   assert.equal(api.getStateSnapshot().observedChainId, null);
   assert.equal(api.getStateSnapshot().chainGeneration, 0);
   api.prepareContractDraftAmounts('2.00', 1, 100);
@@ -424,15 +452,16 @@ test('complete wallet observation gathers read-only evidence and fails closed on
   const runtime = loadCardRuntime({ reviewContract: makeReviewContract(), exposeInternals: true });
   const internals = runtime.window.__CC_TEST_INTERNALS;
   internals.setActiveProviderForTest(provider);
+  internals.setDraftForTest('2.00');
   const result = await internals.readCompleteWalletObservation(provider);
-  assert.equal(result.status, 'UNAVAILABLE');
-  assert.equal(result.reason, 'gas-readiness-policy-unavailable');
+  assert.equal(result.status, 'AVAILABLE');
+  assert.equal(result.reason, null);
   assert.equal(result.walletObservation.senderAddress, '0x1111111111111111111111111111111111111111');
   assert.equal(result.walletObservation.observedChainId, 137);
   assert.equal(result.walletObservation.tokenBalanceAtomic, '10000000');
   assert.equal(result.walletObservation.allowanceAtomic, '0');
   assert.equal(result.walletObservation.nativeGasBalanceAtomic, '1000000000000000000');
-  assert.equal(result.walletObservation.gasReadiness, 'UNAVAILABLE');
+  assert.equal(result.walletObservation.gasReadiness, 'SUFFICIENT');
   assert.equal(result.walletObservation.providerReference, 'provider:session:1');
   assert(!provider.calls.includes('eth_sendTransaction'), 'adapter performs no wallet write');
 });
@@ -442,10 +471,12 @@ test('native gas read failure is distinct from unavailable gas policy', async ()
   const runtime = loadCardRuntime({ reviewContract: makeReviewContract(), exposeInternals: true });
   const internals = runtime.window.__CC_TEST_INTERNALS;
   internals.setActiveProviderForTest(provider);
+  internals.setDraftForTest('2.00');
   const result = await internals.readCompleteWalletObservation(provider);
-  assert.equal(result.status, 'UNAVAILABLE');
+  assert.equal(result.status, 'AVAILABLE');
   assert.equal(result.reason, 'native-gas-balance-unavailable');
-  assert.equal(result.walletObservation, null);
+  assert.equal(result.walletObservation.gasReadiness, 'UNAVAILABLE');
+  assert.equal(result.walletObservation.nativeGasBalanceAtomic, null);
 });
 
 test('wallet observation fails closed when required read evidence is missing', async () => {
@@ -453,7 +484,16 @@ test('wallet observation fails closed when required read evidence is missing', a
     reviewContract: makeReviewContract(),
     exposeInternals: true,
     execution: {
-      calculateFee() { return { fee: 0n, total: 0n }; },
+      calculateFee(rawAmount) { return { fee: 0n, total: BigInt(rawAmount) }; },
+      getChainParams() {
+        return Object.freeze({
+          usdcAddress: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359',
+          contractAddress: '0x5015841D6E665e63Ea174aD6b8FeF854026dE0C0',
+        });
+      },
+      estimateNativeGasRequirement() {
+        return Promise.resolve(Object.freeze({ status: 'AVAILABLE', nativeGasRequiredAtomic: '1', transactionCount: 1 }));
+      },
       readWalletSnapshot() {
         return Promise.resolve({ allowanceAtomic: '0' });
       },
@@ -461,6 +501,7 @@ test('wallet observation fails closed when required read evidence is missing', a
   });
   const missingBalanceProvider = makeProvider();
   missingBalanceRuntime.window.__CC_TEST_INTERNALS.setActiveProviderForTest(missingBalanceProvider);
+  missingBalanceRuntime.window.__CC_TEST_INTERNALS.setDraftForTest('2.00');
   const missingBalance = await missingBalanceRuntime.window.__CC_TEST_INTERNALS
     .readCompleteWalletObservation(missingBalanceProvider);
   assert.equal(missingBalance.status, 'UNAVAILABLE');
@@ -470,7 +511,16 @@ test('wallet observation fails closed when required read evidence is missing', a
     reviewContract: makeReviewContract(),
     exposeInternals: true,
     execution: {
-      calculateFee() { return { fee: 0n, total: 0n }; },
+      calculateFee(rawAmount) { return { fee: 0n, total: BigInt(rawAmount) }; },
+      getChainParams() {
+        return Object.freeze({
+          usdcAddress: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359',
+          contractAddress: '0x5015841D6E665e63Ea174aD6b8FeF854026dE0C0',
+        });
+      },
+      estimateNativeGasRequirement() {
+        return Promise.resolve(Object.freeze({ status: 'AVAILABLE', nativeGasRequiredAtomic: '1', transactionCount: 1 }));
+      },
       readWalletSnapshot() {
         return Promise.resolve({ balanceAtomic: '10000000' });
       },
@@ -478,6 +528,7 @@ test('wallet observation fails closed when required read evidence is missing', a
   });
   const missingAllowanceProvider = makeProvider({ gasReject: true });
   missingAllowanceRuntime.window.__CC_TEST_INTERNALS.setActiveProviderForTest(missingAllowanceProvider);
+  missingAllowanceRuntime.window.__CC_TEST_INTERNALS.setDraftForTest('2.00');
   const missingAllowance = await missingAllowanceRuntime.window.__CC_TEST_INTERNALS
     .readCompleteWalletObservation(missingAllowanceProvider);
   assert.equal(missingAllowance.status, 'UNAVAILABLE');
@@ -494,6 +545,7 @@ test('wallet observation requires the active provider and mismatch does not muta
   assert.equal(result.status, 'UNAVAILABLE');
   assert.equal(result.reason, 'provider-unavailable');
   internals.setActiveProviderForTest(p1);
+  internals.setDraftForTest('2.00');
   const before = api.getStateSnapshot();
   result = await internals.readCompleteWalletObservation(p2);
   assert.equal(result.status, 'UNAVAILABLE');
@@ -503,8 +555,66 @@ test('wallet observation requires the active provider and mismatch does not muta
   assert.equal(after.accountGeneration, before.accountGeneration);
   assert.equal(after.chainGeneration, before.chainGeneration);
   result = await internals.readCompleteWalletObservation(p1);
-  assert.equal(result.status, 'UNAVAILABLE');
-  assert.equal(result.reason, 'gas-readiness-policy-unavailable');
+  assert.equal(result.status, 'AVAILABLE');
+  assert.equal(result.reason, null);
+});
+
+/* ----------------------------------------------------------------
+ * Gas-policy load-order assertions (Step 4 of D2A correction)
+ * ---------------------------------------------------------------- */
+
+test('ix-execution-gas-policy.js is present in index.html', () => {
+  assert.match(indexHtml, /ix-execution-gas-policy\.js/, 'gas-policy script tag must exist');
+});
+
+test('ix-execution-gas-policy.js loads before ix-execution.js in index.html', () => {
+  const gasPolicyPos = indexHtml.indexOf('ix-execution-gas-policy.js');
+  const executionPos = indexHtml.indexOf('ix-execution.js');
+  assert(gasPolicyPos !== -1, 'gas-policy script must be present');
+  assert(executionPos !== -1, 'ix-execution.js must be present');
+  assert(
+    gasPolicyPos < executionPos,
+    'ix-execution-gas-policy.js must appear before ix-execution.js'
+  );
+});
+
+test('card.js defines COIN_CARD_GAS_POLICY_ID as the canonical policy binding constant', () => {
+  assert.match(
+    cardSource,
+    /COIN_CARD_GAS_POLICY_ID\s*=\s*['"]COIN_CARD_POLYGON_V1['"]/,
+    'card must define COIN_CARD_GAS_POLICY_ID = "COIN_CARD_POLYGON_V1"'
+  );
+  /* Must be in the constants section, not inside a function body */
+  const constantsSection = cardSource.indexOf('COIN_CARD_GAS_POLICY_ID');
+  const firstFunctionPos = cardSource.search(/^\s+function\s+/m);
+  assert(constantsSection !== -1, 'constant must be defined');
+  assert(constantsSection < firstFunctionPos, 'constant must be at module scope before function definitions');
+});
+
+test('card.js passes COIN_CARD_GAS_POLICY_ID as gasPolicyId to executeTransfer', () => {
+  assert.match(
+    cardSource,
+    /gasPolicyId\s*:\s*COIN_CARD_GAS_POLICY_ID/,
+    'executeTransfer call must include gasPolicyId: COIN_CARD_GAS_POLICY_ID'
+  );
+});
+
+test('card.js contains fail-closed guard for IX_EXECUTION_GAS_POLICY before executeTransfer', () => {
+  /* Verify the guard appears in card.js and is positioned before the executeTransfer call */
+  const guardPos = cardSource.indexOf('IX_EXECUTION_GAS_POLICY');
+  const executeTransferPos = cardSource.indexOf("window.IX_EXECUTION.executeTransfer({");
+  /* Find the last occurrence of executeTransfer call (the execute-authorized one in executeBoundAttempt) */
+  let lastExecPos = -1;
+  let searchFrom = 0;
+  while (true) {
+    const pos = cardSource.indexOf("window.IX_EXECUTION.executeTransfer({", searchFrom);
+    if (pos === -1) break;
+    lastExecPos = pos;
+    searchFrom = pos + 1;
+  }
+  assert(guardPos !== -1, 'IX_EXECUTION_GAS_POLICY guard must be present in card.js');
+  assert(lastExecPos !== -1, 'executeTransfer call must be present');
+  assert(guardPos < lastExecPos, 'gas-policy guard must appear before executeTransfer call');
 });
 
 process.on('beforeExit', () => {

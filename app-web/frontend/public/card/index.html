@@ -49,12 +49,12 @@
     <!-- Body: content zone — one panel visible at a time via CSS data-state rules -->
     <div class="cc-card-body">
 
-      <!-- Input — VERIFIED, AMOUNT_READY, TRANSFER_INTENT_READY, WRONG_NETWORK -->
+      <!-- Input — CONFIGURE, WRONG_NETWORK -->
       <div class="cc-body-panel" id="ccBodyInput">
-        <p class="cc-card-tx-label" id="ccTxLabel">Send USDC</p>
+        <p class="cc-card-tx-label" id="ccTxLabel">Configure payment</p>
         <div class="cc-card-amount-field" id="ccAmountField">
           <input class="cc-card-amount-input" id="ccAmountInput"
-            type="number" min="0" step="0.01" placeholder="0.00"
+            type="text" placeholder="0.00"
             autocomplete="off" inputmode="decimal"
             aria-label="Transfer amount in USDC">
           <span class="cc-card-amount-unit-lock" id="ccAmountToken" aria-hidden="true">USDC</span>
@@ -72,9 +72,9 @@
         <p class="cc-selfsend-warn"  id="ccSelfSendWarn">You appear to be the card holder. Share this URL with a sender.</p>
       </div>
 
-      <!-- Review — READY_TO_SEND -->
+      <!-- Review — REVIEW -->
       <div class="cc-body-panel" id="ccBodyReview">
-        <p class="cc-card-tx-label">Review Transfer</p>
+        <p class="cc-card-tx-label">Review payment</p>
         <p class="cc-card-tx-amount"><span id="ccReviewAmount">&mdash;</span><span class="cc-card-tx-unit"> USDC</span></p>
         <div class="cc-card-tx-row">
           <span id="ccReviewFeePct">Fee 1%</span>
@@ -84,11 +84,29 @@
           <span>Total</span>
           <span class="cc-card-tx-row-value" id="ccReviewTotal">&mdash;</span>
         </div>
+        <div class="cc-card-tx-row">
+          <span>Network</span>
+          <span class="cc-card-tx-row-value" id="ccReviewNetwork">&mdash;</span>
+        </div>
+        <div class="cc-card-tx-row">
+          <span>Recipient wallet</span>
+          <span class="cc-card-tx-row-value" id="ccReviewRecipientAddress">&mdash;</span>
+        </div>
+        <div class="cc-card-tx-row">
+          <span>Wallet</span>
+          <span class="cc-card-tx-row-value" id="ccReviewWallet">&mdash;</span>
+        </div>
+        <div class="cc-card-tx-row">
+          <span>Gas readiness</span>
+          <span class="cc-card-tx-row-value" id="ccReviewGas">&mdash;</span>
+        </div>
+        <p class="cc-card-review-block" id="ccReviewBlockReason"></p>
         <p class="cc-card-name"      id="ccReviewName"></p>
         <p class="cc-card-recipient" id="ccReviewRecipient" title="">&mdash;</p>
+        <button class="cc-card-secondary-action" id="ccEditPayment" type="button">Edit payment</button>
       </div>
 
-      <!-- Execution — CONNECTING, SWITCHING_NETWORK, APPROVE_PENDING, EXECUTE_PENDING -->
+      <!-- Execution — CONNECTING, REVIEW_PREPARING, AUTHORIZING, EXECUTING, CONFIRMATION_PENDING -->
       <div class="cc-body-panel" id="ccBodyExec">
         <p class="cc-card-tx-label" id="ccExecLabel">Connecting&hellip;</p>
         <span class="cc-card-tx-spinner" aria-label="Processing"></span>
@@ -152,6 +170,7 @@
 
 </div><!-- /.cc-frame -->
 
+<script src="/js/ix-execution-gas-policy.js"></script>
 <script src="/js/ix-execution.js"></script>
 <script src="coin-card-trusted-keys.js"></script>
 <script src="coin-card-trusted-key-resolution.js"></script>

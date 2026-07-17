@@ -3,23 +3,23 @@
  * States:
  *   BOOT                  → initializing; reading card ID from URL
  *   MANIFEST_LOADING      → fetching Coin Card Registry Record
- *   VERIFIED              → registry record valid; input panel shown
- *   AMOUNT_READY          → valid amount entered; fee calculated
- *   TRANSFER_INTENT_READY → intent ready; chip --ready
+ *   CONFIGURE             → registry record valid; payer configures draft
+ *   REVIEW_PREPARING      → collecting frozen review evidence
+ *   REVIEW                → visible frozen review projection
+ *   AUTHORIZING           → synchronously evaluating current authorization
+ *   EXECUTING             → wallet write path active before broadcast
+ *   CONFIRMATION_PENDING  → transaction broadcast; awaiting receipt
+ *   COMPLETE              → transfer confirmed on-chain
  *   REVOKED               → registry record revoked; transfer blocked
  *   CONNECTING            → wallet connect in progress
  *   WRONG_NETWORK         → connected but on wrong chain
  *   SWITCHING_NETWORK     → chain switch in progress
- *   READY_TO_SEND         → review panel shown; awaiting chip tap
- *   APPROVE_PENDING       → USDC approval submitted
- *   EXECUTE_PENDING       → transferWithFee submitted
- *   CONFIRMED             → transfer confirmed on-chain
  *   TX_FAILED             → execution error (card visible; error panel shown)
  *   ERROR                 → registry-record-level error (card hidden; frame error shown)
  *
  * Body panels (CSS data-state rules control visibility):
  *   #ccBodyInput     — amount entry
- *   #ccBodyReview    — confirm review
+ *   #ccBodyReview    — frozen visible review
  *   #ccBodyExec      — execution in-progress
  *   #ccBodyConfirmed — settled
  *   #ccBodyError     — TX_FAILED / REVOKED
@@ -36,9 +36,8 @@
  *
  * PostMessage bridge (iframe → parent):
  *   { source:'implicitex-coincard', type:'CC_READY',          cardId, payload:{ recipient, chainId, token, owner } }
- *   { source:'implicitex-coincard', type:'CC_AMOUNT_CHANGED',  cardId, payload:{ amount, fee, total } }
- *   { source:'implicitex-coincard', type:'CC_INTENT_READY',    cardId, payload:{ intent } }
- *   { source:'implicitex-coincard', type:'CC_READY_TO_SEND',   cardId, payload:{ sender, intent } }
+ *   { source:'implicitex-coincard', type:'CC_AMOUNT_CHANGED',  cardId, payload:{ amountText, fee, total } }
+ *   { source:'implicitex-coincard', type:'CC_REVIEW_READY',    cardId, payload:{ sender, reviewId } }
  *   { source:'implicitex-coincard', type:'CC_CONFIRMED',       cardId, payload:{ txHash, sender, intent, receipt } }
  *   { source:'implicitex-coincard', type:'CC_ERROR',           cardId, payload:{ message } }
  *
@@ -64,6 +63,20 @@
   var CHAIN_MIN_USDC = { 137: 1,   80002: 1,   1: 1   };
   var CHAIN_MAX_USDC = { 137: 250, 80002: 250, 1: 250  };
 
+  /*
+   * COIN_CARD_GAS_POLICY_ID — Coin Card's authoritative policy binding.
+   *
+   * This is the Coin Card's canonical policy registration with the gas-policy
+   * registry (window.IX_EXECUTION_GAS_POLICY). The value matches the POLICY_ID
+   * constant inside ix-execution-gas-policy.js and the registry key
+   * REGISTRY['COIN_CARD_POLYGON_V1']. If the gas-policy module is absent or
+   * does not recognize this ID, execution fails closed before any wallet call.
+   *
+   * Do NOT derive this ID from a dynamic source. It is a static policy binding
+   * owned by the Coin Card and must match the policy module exactly.
+   */
+  var COIN_CARD_GAS_POLICY_ID = 'COIN_CARD_POLYGON_V1';
+
   /* ----------------------------------------------------------------
    * State machine
    * ---------------------------------------------------------------- */
@@ -80,12 +93,26 @@
     registryRecord:      null,
     trustedParentOrigin: null,
     amount:              null,
+    amountText:          '',
     fee:                 null,
     total:               null,
     rawAmount:           null,   /* BigInt — recipientAmountAtomic for authorization */
     rawFee:              null,   /* BigInt — platformFeeAtomic for authorization */
     rawTotal:            null,   /* BigInt — totalDebitAtomic for authorization */
-    intent:              null,
+    draft:               null,
+    draftRevision:       0,
+    editGeneration:      0,
+    draftId:             'coin-card-draft-session',
+    reviewRecord:        null,
+    reviewEligibility:   null,
+    currentWalletObservation: null,
+    currentEvidenceState: 'UNAVAILABLE',
+    authorizationInputBundle: null,
+    executionAttemptBinding: null,
+    operationInFlight:   false,
+    activeExecutionAttempt: null,
+    reviewSequence:      0,
+    lastReviewBlockReason: null,
     sender:              null,
     /*
      * activeProvider — the EIP-1193 provider resolved at wallet connect time.
@@ -93,7 +120,7 @@
      * or 'wrong-network'. Remains set through snapshot, authorization, and
      * execution. The same provider object is passed to readWalletSnapshot()
      * and to executeTransfer() as both request.provider and request.snapshotProvider.
-     * Cleared if the card transitions back to TRANSFER_INTENT_READY.
+     * Cleared if the card returns to an unconnected Configure state.
      */
     activeProvider:      null,
     providerReference:   null,
@@ -122,15 +149,17 @@
   var verification = window.IX_COIN_CARD_VERIFICATION || null;
   var providerReferences = typeof WeakMap === 'function' ? new WeakMap() : null;
   var providerListeners = typeof WeakSet === 'function' ? new WeakSet() : null;
+  var startedExecutionAttempts = typeof WeakSet === 'function' ? new WeakSet() : null;
   var providerReferenceSeq = 0;
   var USDC_ATOMIC_SCALE = 1000000n;
 
   var SHELL_ACTIVE_STATES = {
-    VERIFIED: true, AMOUNT_READY: true, TRANSFER_INTENT_READY: true,
+    CONFIGURE: true, REVIEW_PREPARING: true, REVIEW: true,
+    AUTHORIZING: true, EXECUTING: true, CONFIRMATION_PENDING: true,
+    COMPLETE: true, VERIFIED: true,
     REVOKED: true, CONNECTING: true, WRONG_NETWORK: true,
-    SWITCHING_NETWORK: true, READY_TO_SEND: true,
-    APPROVE_PENDING: true, EXECUTE_PENDING: true,
-    CONFIRMED: true, TX_FAILED: true,
+    SWITCHING_NETWORK: true, TX_FAILED: true,
+    OUTCOME_UNKNOWN: true,
   };
 
   function transition(next) {
@@ -334,6 +363,220 @@
     });
   }
 
+  function freezeDeep(value) {
+    if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
+    Object.getOwnPropertyNames(value).forEach(function (key) { freezeDeep(value[key]); });
+    return Object.freeze(value);
+  }
+
+  function atomicToDecimal(atomic) {
+    var text = String(atomic || '0');
+    while (text.length <= 6) text = '0' + text;
+    var whole = text.slice(0, -6);
+    var frac = text.slice(-6).replace(/0+$/, '');
+    return frac ? whole + '.' + frac : whole;
+  }
+
+  function atomicToFixed2(atomic) {
+    var value = BigInt(atomic || '0');
+    var cents = (value + 5000n) / 10000n;
+    var whole = cents / 100n;
+    var frac = String(cents % 100n).padStart(2, '0');
+    return whole.toString(10) + '.' + frac;
+  }
+
+  function atomicToExactDisplay(atomic) {
+    var text = String(atomic || '0');
+    while (text.length <= 6) text = '0' + text;
+    var whole = text.slice(0, -6);
+    var frac = text.slice(-6).replace(/0+$/, '');
+    if (!frac) return whole + '.00';
+    return whole + '.' + frac;
+  }
+
+  function abbreviate(value) {
+    if (typeof value !== 'string') return '\u2014';
+    return value.length >= 12 ? value.slice(0, 6) + '\u2026' + value.slice(-4) : value;
+  }
+
+  function invalidateReview(reason) {
+    state.reviewRecord = null;
+    state.reviewEligibility = null;
+    state.currentWalletObservation = null;
+    state.currentEvidenceState = 'UNAVAILABLE';
+    state.authorizationInputBundle = null;
+    state.executionAttemptBinding = null;
+    state.activeExecutionAttempt = null;
+    state.lastReviewBlockReason = reason || null;
+  }
+
+  function draftSemanticFingerprint(draft) {
+    if (!draft) return null;
+    return [
+      draft.cardId, draft.manifestId, draft.recipientAddress,
+      draft.tokenAddress, draft.executionContractAddress, draft.requiredChainId,
+      draft.token, draft.recipientAmountAtomic, draft.platformFeeAtomic,
+      draft.totalDebitAtomic,
+    ].join('|');
+  }
+
+  function buildDraftFromAmountText(amountText, revisionOverride) {
+    if (!state.registryRecord || !state.manifestId) return null;
+    var m = state.registryRecord;
+    var chainParams = window.IX_EXECUTION && window.IX_EXECUTION.getChainParams
+      ? window.IX_EXECUTION.getChainParams(m.chainId)
+      : null;
+    if (!chainParams) return null;
+    var amounts = prepareContractDraftAmounts(amountText, m.chainId, m.feeBps);
+    var revision = String(revisionOverride || (state.draftRevision + 1));
+    var draft = freezeDeep({
+      schemaVersion: 'coin-card-runtime-draft.v1',
+      draftId: state.draftId,
+      revision: revision,
+      cardId: m.cardId,
+      manifestId: state.manifestId,
+      displayName: m.displayName || '',
+      recipientAddress: m.recipient,
+      tokenAddress: chainParams.usdcAddress,
+      executionContractAddress: chainParams.contractAddress,
+      requiredChainId: normalizeChainId(m.chainId),
+      token: (m.token || 'USDC').toUpperCase(),
+      originalAmountText: amountText,
+      canonicalAmountText: atomicToDecimal(amounts.recipientAmountAtomic),
+      amountText: amountText,
+      recipientAmountAtomic: amounts.recipientAmountAtomic,
+      platformFeeAtomic: amounts.platformFeeAtomic,
+      totalDebitAtomic: amounts.totalDebitAtomic,
+      createdAt: 'draft-revision:' + revision,
+      updatedAt: 'draft-revision:' + revision,
+    });
+    return draft;
+  }
+
+  function commitDraftFromInput(amountText) {
+    var nextDraft;
+    try {
+      nextDraft = buildDraftFromAmountText(amountText);
+    } catch (error) {
+      nextDraft = null;
+    }
+    var previous = state.draft;
+    var changed = !previous || !nextDraft || draftSemanticFingerprint(previous) !== draftSemanticFingerprint(nextDraft);
+    if (nextDraft && changed) {
+      state.editGeneration += 1;
+      state.draftRevision += 1;
+      nextDraft = buildDraftFromAmountText(amountText, state.draftRevision);
+      state.draft = nextDraft;
+      invalidateReview('draft-changed');
+    } else if (nextDraft && previous) {
+      state.editGeneration += previous.originalAmountText === amountText ? 0 : 1;
+      state.draft = previous;
+    } else if (!nextDraft) {
+      state.editGeneration += 1;
+      state.draft = null;
+      invalidateReview('draft-invalid');
+    }
+    return state.draft;
+  }
+
+  function transferIntentFromDraft(draft) {
+    if (!draft) return null;
+    return Object.freeze({
+      cardId: draft.cardId,
+      manifestId: draft.manifestId,
+      tokenAddress: draft.tokenAddress,
+      executionContractAddress: draft.executionContractAddress,
+      chainId: draft.requiredChainId,
+      recipient: draft.recipientAddress,
+      recipientAmountAtomic: draft.recipientAmountAtomic,
+      platformFeeAtomic: draft.platformFeeAtomic,
+      totalDebitAtomic: draft.totalDebitAtomic,
+    });
+  }
+
+  function reviewDraftIntentFromDraft(draft) {
+    return state.reviewRuntime.createDraftIntent({
+      draftId: draft.draftId,
+      revision: draft.revision,
+      cardId: draft.cardId,
+      manifestId: draft.manifestId,
+      recipientAddress: draft.recipientAddress,
+      tokenAddress: draft.tokenAddress,
+      executionContractAddress: draft.executionContractAddress,
+      requiredChainId: draft.requiredChainId,
+      recipientAmountAtomic: draft.recipientAmountAtomic,
+      platformFeeAtomic: draft.platformFeeAtomic,
+      totalDebitAtomic: draft.totalDebitAtomic,
+    });
+  }
+
+  function captureContinuity() {
+    return Object.freeze({
+      provider: state.activeProvider,
+      providerReference: state.providerReference,
+      providerGeneration: state.providerGeneration,
+      accountGeneration: state.accountGeneration,
+      chainGeneration: state.chainGeneration,
+      editGeneration: state.editGeneration,
+      observedAccount: state.observedAccount,
+      observedChainId: state.observedChainId,
+      resolvedLifecycleResult: state.resolvedLifecycleResult,
+      promotedPresentationResult: state.promotedPresentationResult,
+      lifecycleReference: state.lifecycleReference,
+    });
+  }
+
+  function continuityMatches(capture) {
+    return !!capture
+      && capture.provider === state.activeProvider
+      && capture.providerReference === state.providerReference
+      && capture.providerGeneration === state.providerGeneration
+      && capture.accountGeneration === state.accountGeneration
+      && capture.chainGeneration === state.chainGeneration
+      && capture.editGeneration === state.editGeneration
+      && capture.resolvedLifecycleResult === state.resolvedLifecycleResult
+      && capture.promotedPresentationResult === state.promotedPresentationResult;
+  }
+
+  function buildPlanInput(draft, walletObservation) {
+    return Object.freeze({
+      chainId: draft.requiredChainId,
+      sender: walletObservation.senderAddress,
+      recipient: draft.recipientAddress,
+      recipientAmountAtomic: draft.recipientAmountAtomic,
+      totalDebitAtomic: draft.totalDebitAtomic,
+      allowanceAtomic: walletObservation.allowanceAtomic,
+    });
+  }
+
+  function assessGasReadiness(provider, draft, partialObservation) {
+    if (!window.IX_EXECUTION || typeof window.IX_EXECUTION.estimateNativeGasRequirement !== 'function') {
+      return Promise.resolve(Object.freeze({ status: 'UNAVAILABLE', reason: 'gas-policy-unavailable' }));
+    }
+    return window.IX_EXECUTION.estimateNativeGasRequirement(provider, buildPlanInput(draft, partialObservation))
+      .then(function (estimate) {
+        if (!estimate || estimate.status !== 'AVAILABLE') {
+          return Object.freeze({
+            status: 'UNAVAILABLE',
+            reason: estimate && estimate.reason || 'gas-estimate-unavailable',
+            estimate: estimate || null,
+          });
+        }
+        var balance = BigInt(partialObservation.nativeGasBalanceAtomic || '0');
+        var required = BigInt(estimate.nativeGasRequiredAtomic);
+        return Object.freeze({
+          status: balance >= required ? 'SUFFICIENT' : 'INSUFFICIENT',
+          requiredAtomic: estimate.nativeGasRequiredAtomic,
+          balanceAtomic: partialObservation.nativeGasBalanceAtomic,
+          transactionCount: estimate.transactionCount,
+          estimate: estimate,
+        });
+      })
+      .catch(function () {
+        return Object.freeze({ status: 'UNAVAILABLE', reason: 'gas-readiness-unavailable' });
+      });
+  }
+
   function buildLifecycleReference(resolved) {
     if (!resolved || typeof resolved !== 'object') return null;
     return Object.freeze({
@@ -372,7 +615,7 @@
     });
   }
 
-  function readCompleteWalletObservation(provider) {
+  function readCompleteWalletObservation(provider, draftOverride) {
     if (provider && provider !== state.activeProvider) {
       return Promise.resolve(makeUnavailableWalletObservation('provider-mismatch'));
     }
@@ -389,10 +632,16 @@
       return Promise.resolve(makeUnavailableWalletObservation('provider-reference-unavailable'));
     }
 
+    var draftForGas = draftOverride || state.draft;
+    if (!draftForGas) {
+      return Promise.resolve(makeUnavailableWalletObservation('draft-unavailable'));
+    }
+
     return provider.request({ method: 'eth_accounts' })
       .then(function (accounts) {
         var sender = accounts && accounts.length ? accounts[0] : null;
         if (!sender) throw new Error('account-unavailable');
+        state.sender = sender;
         noteAccount(sender);
         return provider.request({ method: 'eth_chainId' }).then(function (chainHex) {
           var observedChainId = noteChain(chainHex);
@@ -403,16 +652,13 @@
               if (typeof snapshot.balanceAtomic !== 'string') throw new Error('token-balance-unavailable');
               if (typeof snapshot.allowanceAtomic !== 'string') throw new Error('allowance-unavailable');
               return readNativeGasBalance(provider, sender).then(function (nativeGasBalanceResult) {
-                if (!nativeGasBalanceResult || nativeGasBalanceResult.status !== 'AVAILABLE') {
-                  return makeUnavailableWalletObservation('native-gas-balance-unavailable');
-                }
                 state.observationGeneration += 1;
                 var observation = {
                   senderAddress: sender,
                   observedChainId: observedChainId,
                   tokenBalanceAtomic: snapshot.balanceAtomic,
                   allowanceAtomic: snapshot.allowanceAtomic,
-                  nativeGasBalanceAtomic: nativeGasBalanceResult.value,
+                  nativeGasBalanceAtomic: nativeGasBalanceResult && nativeGasBalanceResult.status === 'AVAILABLE' ? nativeGasBalanceResult.value : null,
                   gasReadiness: 'UNAVAILABLE',
                   providerReference: providerReference,
                   accountGeneration: String(state.accountGeneration),
@@ -420,7 +666,23 @@
                   providerGeneration: String(state.providerGeneration),
                   observedAt: 'observation:' + state.observationGeneration,
                 };
-                return makeUnavailableWalletObservation('gas-readiness-policy-unavailable', observation);
+                if (!nativeGasBalanceResult || nativeGasBalanceResult.status !== 'AVAILABLE') {
+                  return Object.freeze({
+                    status: 'AVAILABLE',
+                    reason: 'native-gas-balance-unavailable',
+                    walletObservation: Object.freeze(observation),
+                  });
+                }
+                return assessGasReadiness(provider, draftForGas, observation).then(function (gas) {
+                  observation.gasReadiness = gas.status;
+                  observation.nativeGasRequiredAtomic = gas.requiredAtomic || null;
+                  observation.gasReadinessReason = gas.reason || null;
+                  return Object.freeze({
+                    status: 'AVAILABLE',
+                    reason: gas.status === 'SUFFICIENT' ? null : (gas.status === 'INSUFFICIENT' ? 'native-gas-insufficient' : 'native-gas-readiness-unavailable'),
+                    walletObservation: Object.freeze(observation),
+                  });
+                });
               });
             });
         });
@@ -441,6 +703,12 @@
     if (ariaLabel != null) chip.setAttribute('aria-label', ariaLabel);
   }
 
+  function setEditEnabled(enabled) {
+    var edit = el('ccEditPayment');
+    if (!edit) return;
+    edit.disabled = !enabled;
+  }
+
   /* ----------------------------------------------------------------
    * Status pill
    * ---------------------------------------------------------------- */
@@ -450,6 +718,159 @@
     if (dot)  dot.className  = 'cc-card-status-dot cc-card-status-dot--' + type;
     if (pill) pill.className = 'cc-card-status cc-card-status--' + type;
     setText('ccStatusLabel', label);
+  }
+
+  function hasAction(actions, actionName) {
+    return !!actions && actions.allowed && actions.allowed.indexOf(actionName) !== -1;
+  }
+
+  function projectionAxes(overrides) {
+    var walletForReadiness = null;
+    var impossibleEvidenceState = false;
+    if (state.currentEvidenceState === 'REFRESHED') {
+      walletForReadiness = state.currentWalletObservation;
+      impossibleEvidenceState = !!state.reviewRecord && !walletForReadiness;
+    } else if (state.currentEvidenceState === 'INITIAL_REVIEW') {
+      walletForReadiness = state.reviewRecord && state.reviewRecord.walletSnapshot;
+      impossibleEvidenceState = !!state.currentWalletObservation && state.currentWalletObservation !== walletForReadiness;
+    } else if (state.currentEvidenceState === 'REFRESHING' || state.currentEvidenceState === 'UNAVAILABLE') {
+      walletForReadiness = null;
+    } else if (state.reviewRecord) {
+      impossibleEvidenceState = true;
+    }
+    var gasReadiness = walletForReadiness
+      ? walletForReadiness.gasReadiness
+      : null;
+    var tokenInsufficient = false;
+    if (state.reviewRecord && walletForReadiness) {
+      tokenInsufficient = BigInt(walletForReadiness.tokenBalanceAtomic) < BigInt(state.reviewRecord.reviewedPaymentTerms.totalDebitAtomic);
+    }
+    var axes = {
+      cardPresented: !!state.registryRecord,
+      draftValid: !!state.draft,
+      integrity: state.integrityManifestVerificationState,
+      lifecycle: state.resolvedLifecycleResult && state.resolvedLifecycleResult.outcome === 'LIFECYCLE_ACTIVE' ? 'ACTIVE' : 'UNAVAILABLE',
+      promotion: state.promotedPresentationResult && state.promotedPresentationResult.outcome === 'PRESENTATION_PROMOTED' ? 'PRESENTATION_PROMOTED' : 'NOT_EVALUATED',
+      evidenceResolution: impossibleEvidenceState ? 'CONFLICT' : (state.resolvedLifecycleResult ? 'CONSISTENT' : 'UNAVAILABLE'),
+      walletConnection: state.activeProvider ? 'CONNECTED' : 'NOT_CONNECTED',
+      networkCompatibility: state.draft && state.observedChainId ? (state.observedChainId === state.draft.requiredChainId ? 'MATCHED' : 'MISMATCHED') : 'UNKNOWN',
+      fundingReadiness: state.currentEvidenceState === 'REFRESHING'
+        ? 'NOT_EVALUATED'
+        : (state.currentEvidenceState === 'UNAVAILABLE' && state.reviewRecord
+          ? 'UNAVAILABLE'
+          : (walletForReadiness
+        ? (gasReadiness === 'INSUFFICIENT' ? 'INSUFFICIENT_GAS' : (gasReadiness === 'UNAVAILABLE' ? 'UNAVAILABLE' : (tokenInsufficient ? 'INSUFFICIENT_TOKEN' : (gasReadiness === 'SUFFICIENT' ? 'SUFFICIENT' : 'UNKNOWN'))))
+        : 'NOT_EVALUATED')),
+      authorization: 'NOT_REQUESTED',
+      allowanceApproval: 'NOT_REQUIRED',
+      transferExecution: 'NOT_STARTED',
+      settlement: 'NOT_SUBMITTED',
+      reviewRecord: state.reviewRecord,
+      reviewEligibilityEvaluation: state.reviewEligibility,
+      executionAttemptBinding: state.executionAttemptBinding,
+    };
+    Object.keys(overrides || {}).forEach(function (key) { axes[key] = overrides[key]; });
+    return axes;
+  }
+
+  function renderInteractionProjection(overrides, actionOptions) {
+    if (!state.reviewRuntime || typeof state.reviewRuntime.deriveInteractionProjection !== 'function') {
+      return null;
+    }
+    try {
+      var projection = state.reviewRuntime.deriveInteractionProjection(projectionAxes(overrides));
+      if (!projection || typeof projection.projection !== 'string') return null;
+      var actions = state.reviewRuntime.evaluateProjectionActions(projection.projection, actionOptions || {});
+      if (!actions || !actions.allowed) return null;
+      state.interactionProjection = projection;
+      state.interactionActions = actions;
+      return { projection: projection, actions: actions };
+    } catch (error) {
+      state.interactionProjection = null;
+      state.interactionActions = null;
+      return null;
+    }
+  }
+
+  function applyInteractionProjection(overrides, actionOptions) {
+    var result = renderInteractionProjection(overrides, actionOptions);
+    if (!result || !result.projection || !result.actions) {
+      transition('TX_FAILED');
+      setText('ccErrorStateLabel', 'Unavailable');
+      setText('ccCardError', 'This payment state cannot be shown safely.');
+      applyProjectedActions(null);
+      return null;
+    }
+    var aliases = {
+      PRESENTED: 'CONFIGURE',
+      CONFIGURING: 'CONFIGURE',
+      WALLET_REQUIRED: 'CONFIGURE',
+      WRONG_NETWORK: 'WRONG_NETWORK',
+      READY_FOR_REVIEW: 'CONFIGURE',
+      REVIEWING: 'REVIEW',
+      INSUFFICIENT_FUNDS: 'REVIEW',
+      AUTHORIZATION_IN_PROGRESS: 'AUTHORIZING',
+      TOKEN_APPROVAL_DECISION_PENDING: 'EXECUTING',
+      TOKEN_APPROVAL_PENDING: 'EXECUTING',
+      TRANSFER_DECISION_PENDING: 'EXECUTING',
+      TRANSFER_SUBMISSION_PENDING: 'EXECUTING',
+      CONFIRMATION_PENDING: 'CONFIRMATION_PENDING',
+      OUTCOME_UNKNOWN: 'OUTCOME_UNKNOWN',
+      SUCCEEDED: 'COMPLETE',
+      FAILED: 'TX_FAILED',
+      CANCELLED: 'REVIEW',
+      EVIDENCE_BLOCKED: 'TX_FAILED',
+      INTERNAL_INCONSISTENCY: 'TX_FAILED',
+    };
+    var alias = aliases[result.projection.projection];
+    if (!alias) {
+      transition('TX_FAILED');
+      setText('ccErrorStateLabel', 'Unavailable');
+      setText('ccCardError', 'This payment state cannot be shown safely.');
+      applyProjectedActions(null);
+      return null;
+    }
+    transition(alias);
+    applyProjectedActions(result);
+    if (result.projection.projection === 'INTERNAL_INCONSISTENCY') {
+      setText('ccErrorStateLabel', 'Unavailable');
+      setText('ccCardError', 'This payment state cannot be shown safely.');
+      applyProjectedActions(null);
+      return null;
+    }
+    return result;
+  }
+
+  function applyProjectedActions(result, labelOverride) {
+    if (!result || !result.actions || !result.actions.allowed) {
+      setChipState('cc-card-chip--waiting', true, labelOverride || 'Unavailable');
+      setEditEnabled(false);
+      return;
+    }
+    var allowed = result.actions;
+    var projection = result.projection && result.projection.projection;
+    setEditEnabled(hasAction(allowed, 'editDraft') || hasAction(allowed, 'exitReview'));
+    if (hasAction(allowed, 'authorize')) {
+      setChipState('cc-card-chip--ready', false, 'Authorize & pay');
+      return;
+    }
+    if (hasAction(allowed, 'enterReview')) {
+      setChipState('cc-card-chip--ready', false, 'Review payment');
+      return;
+    }
+    if (hasAction(allowed, 'connectWallet')) {
+      setChipState('cc-card-chip--ready', false, 'Review payment');
+      return;
+    }
+    if (hasAction(allowed, 'requestNetworkSwitch')) {
+      setChipState('cc-card-chip--ready', false, 'Switch network');
+      return;
+    }
+    if (hasAction(allowed, 'wait') || projection === 'INTERNAL_INCONSISTENCY') {
+      setChipState('cc-card-chip--waiting', true, labelOverride || 'Unavailable');
+      return;
+    }
+    setChipState('cc-card-chip--waiting', true, labelOverride || 'Unavailable');
   }
 
   function renderVerificationBlocked() {
@@ -560,36 +981,35 @@
   /* ----------------------------------------------------------------
    * Amount handling
    * ---------------------------------------------------------------- */
-  function applyAmount(amount, chainId) {
+  function applyAmountText(amountText, chainId) {
     var feeBps    = (state.registryRecord && state.registryRecord.feeBps != null)
                      ? state.registryRecord.feeBps : null;
-    var rawAmount = window.IX_EXECUTION.toRawUsdc(amount);
-    var feeResult = window.IX_EXECUTION.calculateFee(rawAmount, chainId, feeBps);
-    var fee       = Number(feeResult.fee)   / 1e6;
-    var total     = Number(feeResult.total) / 1e6;
-    var min       = CHAIN_MIN_USDC[chainId] || 1;
-    var max       = CHAIN_MAX_USDC[chainId] || 250;
-
-    if (amount < min || amount > max) {
+    var draft = commitDraftFromInput(amountText);
+    if (!draft) {
       clearFee();
-      transition('VERIFIED');
+      transition('CONFIGURE');
       return;
     }
 
-    state.amount   = amount;
-    state.fee      = fee;
-    state.total    = total;
-    state.rawAmount = rawAmount;
-    state.rawFee    = feeResult.fee;
-    state.rawTotal  = feeResult.total;
+    state.amountText = amountText;
+    state.amount   = atomicToDecimal(draft.recipientAmountAtomic);
+    state.fee      = atomicToDecimal(draft.platformFeeAtomic);
+    state.total    = atomicToDecimal(draft.totalDebitAtomic);
+    state.rawAmount = BigInt(draft.recipientAmountAtomic);
+    state.rawFee    = BigInt(draft.platformFeeAtomic);
+    state.rawTotal  = BigInt(draft.totalDebitAtomic);
 
     var token = (state.registryRecord && state.registryRecord.token || 'USDC').toUpperCase();
-    setText('ccFeeValue',   fee.toFixed(2)   + ' ' + token);
-    setText('ccTotalValue', total.toFixed(2) + ' ' + token);
+    setText('ccFeeValue',   atomicToFixed2(draft.platformFeeAtomic) + ' ' + token);
+    setText('ccTotalValue', atomicToFixed2(draft.totalDebitAtomic) + ' ' + token);
 
-    transition('AMOUNT_READY');
-    buildIntent();
-    emit('CC_AMOUNT_CHANGED', { amount: amount, fee: fee, total: total });
+    transition('CONFIGURE');
+    setChipState('cc-card-chip--ready', false, 'Review payment');
+    emit('CC_AMOUNT_CHANGED', {
+      amountText: amountText,
+      fee: atomicToDecimal(draft.platformFeeAtomic),
+      total: atomicToDecimal(draft.totalDebitAtomic),
+    });
   }
 
   function clearFee() {
@@ -599,38 +1019,40 @@
     state.rawAmount = null;
     state.rawFee    = null;
     state.rawTotal  = null;
+    state.draft     = null;
     state.intent    = null;
+    invalidateReview('draft-cleared');
     setText('ccFeeValue',   '\u2014');
     setText('ccTotalValue', '\u2014');
-    setChipState('cc-card-chip--waiting', true, 'Enter amount to continue');
+    setChipState('cc-card-chip--waiting', true, 'Enter amount to review');
   }
 
   /* ----------------------------------------------------------------
    * Intent construction
    * ---------------------------------------------------------------- */
   function buildIntent() {
-    if (!state.registryRecord || state.amount == null) return;
+    if (!state.registryRecord || !state.draft) return;
     var m          = state.registryRecord;
-    var chainParams = window.IX_EXECUTION ? window.IX_EXECUTION.getChainParams(m.chainId) : null;
+    var draft      = state.draft;
     state.intent = {
       cardId:                   m.cardId,
       recipient:                m.recipient,
-      amount:                   state.amount,
-      fee:                      state.fee,
-      total:                    state.total,
+      amount:                   atomicToDecimal(draft.recipientAmountAtomic),
+      fee:                      atomicToDecimal(draft.platformFeeAtomic),
+      total:                    atomicToDecimal(draft.totalDebitAtomic),
       chainId:                  m.chainId,
       token:                    m.token,
       owner:                    m.owner || null,
       /* Atomic string amounts for execution authorization. */
-      recipientAmountAtomic:    state.rawAmount != null ? String(state.rawAmount) : null,
-      platformFeeAtomic:        state.rawFee    != null ? String(state.rawFee)    : null,
-      totalDebitAtomic:         state.rawTotal  != null ? String(state.rawTotal)  : null,
+      recipientAmountAtomic:    draft.recipientAmountAtomic,
+      platformFeeAtomic:        draft.platformFeeAtomic,
+      totalDebitAtomic:         draft.totalDebitAtomic,
       /* Chain contract addresses for execution authorization. */
-      tokenAddress:             chainParams ? chainParams.usdcAddress    : null,
-      executionContractAddress: chainParams ? chainParams.contractAddress : null,
+      tokenAddress:             draft.tokenAddress,
+      executionContractAddress: draft.executionContractAddress,
     };
-    transition('TRANSFER_INTENT_READY');
-    setChipState('cc-card-chip--ready', false, 'Connect wallet to send USDC');
+    transition('CONFIGURE');
+    setChipState('cc-card-chip--ready', false, 'Review payment');
     emit('CC_INTENT_READY', { intent: state.intent });
   }
 
@@ -647,19 +1069,19 @@
       /* locked: auto-apply; hide the input field */
       var field = el('ccAmountField');
       if (field) field.style.display = 'none';
-      applyAmount(registryRecord.lockedAmount, chainId);
+      applyAmountText(String(registryRecord.lockedAmount), chainId);
     } else {
       /* sender_input / suggested: user enters amount */
       var input = el('ccAmountInput');
       if (input) {
         input.addEventListener('input', function () {
-          var raw = parseFloat(input.value);
-          if (!isFinite(raw) || raw <= 0) {
+          var text = input.value.trim();
+          if (!text) {
             clearFee();
-            transition('VERIFIED');
+            transition('CONFIGURE');
             return;
           }
-          applyAmount(raw, chainId);
+          applyAmountText(text, chainId);
         });
       }
     }
@@ -691,7 +1113,7 @@
   /* ----------------------------------------------------------------
    * Wallet connect + network switch
    * ---------------------------------------------------------------- */
-  function connectWallet() {
+  function connectWallet(afterReady) {
     if (!window.IX_EXECUTION) { renderError('Execution module unavailable'); return; }
     if (!verification || !verification.canExecuteTransfer(state.integrityManifestVerificationState)) {
       renderVerificationBlocked();
@@ -703,7 +1125,7 @@
 
     transition('CONNECTING');
     setText('ccExecLabel', 'Connecting wallet\u2026');
-    if (state.intent) setText('ccExecAmount', state.intent.amount.toFixed(2));
+    if (state.draft) setText('ccExecAmount', atomicToExactDisplay(state.draft.recipientAmountAtomic));
     setChipState('cc-card-chip--active', true, 'Connecting wallet\u2026');
     setStatus('pending', 'Connecting');
 
@@ -719,10 +1141,10 @@
         }
         if (result.status === 'wallet-rejected') {
           state.activeProvider = null;
-          transition('TRANSFER_INTENT_READY');
-          setText('ccTxLabel', 'Send USDC');
+          transition('CONFIGURE');
+          setText('ccTxLabel', 'Configure payment');
           setStatus('verified', 'Verified');
-          setChipState('cc-card-chip--ready', false, 'Connect wallet to send USDC');
+          setChipState('cc-card-chip--ready', false, 'Review payment');
           return;
         }
         if (result.status === 'failed') {
@@ -755,7 +1177,13 @@
           return;
         }
         if (result.status === 'ready-to-send') {
-          showConfirmPanel();
+          if (result.chain && result.chain.chainId) noteChain(result.chain.chainId);
+          if (afterReady === true) {
+            enterReview();
+          } else {
+            transition('CONFIGURE');
+            setChipState('cc-card-chip--ready', false, 'Review payment');
+          }
           return;
         }
         renderError('Wallet connection failed');
@@ -776,7 +1204,7 @@
 
     transition('SWITCHING_NETWORK');
     setText('ccExecLabel', 'Switching network\u2026');
-    if (state.intent) setText('ccExecAmount', state.intent.amount.toFixed(2));
+    if (state.draft) setText('ccExecAmount', atomicToExactDisplay(state.draft.recipientAmountAtomic));
     setChipState('cc-card-chip--active', true, 'Switching network\u2026');
     setStatus('pending', 'Switching');
 
@@ -787,7 +1215,7 @@
       .then(function (result) {
         if (result.status === 'ready-to-send') {
           noteProvider(state.activeProvider);
-          showConfirmPanel();
+          enterReview();
           return;
         }
         if (result.status === 'wrong-network') {
@@ -810,29 +1238,174 @@
   }
 
   /* ----------------------------------------------------------------
-   * Review panel
+   * Visible review
    * ---------------------------------------------------------------- */
-  function showConfirmPanel() {
-    if (!state.intent || !state.sender || !state.registryRecord) {
-      transition('TRANSFER_INTENT_READY');
-      setText('ccTxLabel', 'Send USDC');
+  function enterReview() {
+    if (state.operationInFlight) return;
+    if (!state.draft || !state.registryRecord) {
+      transition('CONFIGURE');
+      setText('ccTxLabel', 'Configure payment');
       setStatus('verified', 'Verified');
-      setChipState('cc-card-chip--ready', false, 'Connect wallet to send USDC');
+      setChipState('cc-card-chip--waiting', true, 'Enter amount to review');
       return;
     }
-    var intent = state.intent;
+    if (!state.activeProvider) {
+      connectWallet(true);
+      return;
+    }
+    if (!state.reviewRuntime) {
+      renderTxError(state.reviewRuntimeError || 'Review contract unavailable');
+      return;
+    }
+    if (!state.resolvedLifecycleResult || !state.promotedPresentationResult || !state.lifecycleReference) {
+      renderTxError('Card authority is not ready for review.');
+      return;
+    }
+
+    state.operationInFlight = true;
+    var sequence = ++state.reviewSequence;
+    var draft = state.draft;
+    var capture = captureContinuity();
+    transition('REVIEW_PREPARING');
+    setText('ccExecLabel', 'Preparing review\u2026');
+    setText('ccExecAmount', atomicToExactDisplay(draft.recipientAmountAtomic));
+    setChipState('cc-card-chip--active', true, 'Preparing review\u2026');
+
+    return readCompleteWalletObservation(state.activeProvider, draft)
+      .then(function (result) {
+        state.operationInFlight = false;
+        if (sequence !== state.reviewSequence || draft !== state.draft || !continuityMatches(capture)) {
+          invalidateReview('review-stale');
+          transition('CONFIGURE');
+          setText('ccTxLabel', 'Review needs current wallet information');
+          setChipState('cc-card-chip--ready', false, 'Review payment');
+          return;
+        }
+        if (!result || result.status !== 'AVAILABLE') {
+          invalidateReview(result && result.reason || 'wallet-readiness-unavailable');
+          transition('CONFIGURE');
+          setText('ccTxLabel', result && result.reason === 'native-gas-insufficient' ? 'Add network gas before review' : 'Wallet readiness unavailable');
+          setChipState('cc-card-chip--ready', false, 'Review payment');
+          return;
+        }
+        try {
+          var reviewDraft = reviewDraftIntentFromDraft(draft);
+          var reviewRecord = state.reviewRuntime.createReviewRecord({
+            reviewId: 'review:' + sequence + ':' + draft.revision,
+            createdAt: 'review-sequence:' + sequence,
+            draftIntent: reviewDraft,
+            resolvedLifecycleResult: state.resolvedLifecycleResult,
+            lifecycleReference: state.lifecycleReference,
+            walletSnapshot: result.walletObservation,
+            providerContinuity: 'ESTABLISHED',
+            evidenceResolution: 'CONSISTENT',
+          });
+          var eligibility = state.reviewRuntime.evaluateReviewEligibility({
+            evaluationId: 'review-eval:' + sequence,
+            evaluatedAt: 'review-eval-sequence:' + sequence,
+            reviewRecord: reviewRecord,
+            currentEvidence: {
+              currentDraftIntent: reviewDraft,
+              currentResolvedLifecycleResult: state.resolvedLifecycleResult,
+              evidenceResolution: 'CONSISTENT',
+              walletObservation: result.walletObservation,
+            },
+          });
+          state.reviewRecord = reviewRecord;
+          state.reviewEligibility = eligibility;
+          state.currentWalletObservation = reviewRecord.walletSnapshot;
+          state.currentEvidenceState = 'INITIAL_REVIEW';
+          renderReview(reviewRecord, eligibility);
+        } catch (error) {
+          invalidateReview(error && error.code || 'review-record-unavailable');
+          transition('CONFIGURE');
+          setText('ccTxLabel', 'Review unavailable');
+          setChipState('cc-card-chip--ready', false, 'Review payment');
+        }
+      })
+      .catch(function () {
+        state.operationInFlight = false;
+        invalidateReview('review-preparation-failed');
+        transition('CONFIGURE');
+        setText('ccTxLabel', 'Review unavailable');
+        setChipState('cc-card-chip--ready', false, 'Review payment');
+      });
+  }
+
+  function renderReview(reviewRecord, eligibility) {
+    var terms = reviewRecord.reviewedPaymentTerms;
+    var wallet = reviewRecord.walletSnapshot;
+    var currentWallet = currentReadinessWallet(reviewRecord);
     var token  = (state.registryRecord.token || 'USDC').toUpperCase();
     var bps    = state.registryRecord.feeBps != null ? state.registryRecord.feeBps : 100;
 
-    setText('ccReviewAmount',  intent.amount.toFixed(2));
-    setText('ccReviewFee',     intent.fee.toFixed(2)   + ' ' + token);
-    setText('ccReviewTotal',   intent.total.toFixed(2) + ' ' + token);
+    setText('ccReviewAmount',  atomicToExactDisplay(terms.recipientAmountAtomic));
+    setText('ccReviewFee',     atomicToExactDisplay(terms.platformFeeAtomic) + ' ' + token);
+    setText('ccReviewTotal',   atomicToExactDisplay(terms.totalDebitAtomic) + ' ' + token);
     setText('ccReviewFeePct',  'Fee ' + (bps / 100).toFixed(1) + '%');
+    setText('ccReviewRecipient', abbreviate(terms.recipientAddress));
+    setText('ccReviewRecipientAddress', abbreviate(terms.recipientAddress));
+    setText('ccReviewNetwork', CHAIN_NAMES[String(terms.requiredChainId)] || ('Chain ' + terms.requiredChainId));
+    setText('ccReviewWallet', abbreviate(wallet.senderAddress));
+    setText('ccReviewGas', state.currentEvidenceState === 'REFRESHING' ? 'Refreshing' : (currentWallet.gasReadiness === 'SUFFICIENT' ? 'Sufficient' : (currentWallet.gasReadiness === 'INSUFFICIENT' ? 'Insufficient' : 'Unavailable')));
+    setText('ccReviewBlockReason', reviewBlockReason(currentWallet, terms));
+    var recip = el('ccReviewRecipient');
+    if (recip) recip.title = terms.recipientAddress;
+    var recipAddr = el('ccReviewRecipientAddress');
+    if (recipAddr) recipAddr.title = terms.recipientAddress;
+    setText('ccTxLabel', 'Review payment');
+    var canAuthorize = state.currentEvidenceState !== 'REFRESHING' && state.currentEvidenceState !== 'UNAVAILABLE' && currentWallet.gasReadiness === 'SUFFICIENT' && eligibility && eligibility.status === 'CURRENT';
+    var projection = applyInteractionProjection({}, {
+      allowAuthorization: canAuthorize,
+      allowEdit: !state.activeExecutionAttempt && state.currentEvidenceState !== 'REFRESHING',
+    });
+    setStatus('verified', canAuthorize ? 'Review' : 'Review blocked');
+    applyProjectedActions(projection, canAuthorize ? 'Authorize & pay' : 'Review blocked');
+    emit('CC_REVIEW_READY', { sender: wallet.senderAddress, reviewId: reviewRecord.reviewId });
+  }
 
+  function currentReadinessWallet(reviewRecord) {
+    if (state.currentEvidenceState === 'INITIAL_REVIEW') return reviewRecord.walletSnapshot;
+    if (state.currentEvidenceState === 'REFRESHED' && state.currentWalletObservation) return state.currentWalletObservation;
+    return {
+      senderAddress: reviewRecord.walletSnapshot.senderAddress,
+      observedChainId: reviewRecord.walletSnapshot.observedChainId,
+      tokenBalanceAtomic: null,
+      allowanceAtomic: null,
+      nativeGasBalanceAtomic: null,
+      gasReadiness: 'UNAVAILABLE',
+      providerReference: reviewRecord.walletSnapshot.providerReference,
+      accountGeneration: reviewRecord.walletSnapshot.accountGeneration,
+      chainGeneration: reviewRecord.walletSnapshot.chainGeneration,
+      providerGeneration: reviewRecord.walletSnapshot.providerGeneration,
+      observedAt: state.currentEvidenceState === 'REFRESHING' ? 'refreshing' : 'unavailable',
+    };
+  }
+
+  function reviewBlockReason(wallet, terms) {
+    if (!wallet) return '';
+    if (state.currentEvidenceState === 'REFRESHING') return 'Refreshing wallet readiness\u2026';
+    if (state.currentEvidenceState === 'UNAVAILABLE') return 'Wallet and network-fee readiness could not be confirmed.';
+    if (terms && wallet.tokenBalanceAtomic != null && BigInt(wallet.tokenBalanceAtomic) < BigInt(terms.totalDebitAtomic)) return 'More USDC is needed for this payment.';
+    if (wallet.gasReadiness === 'INSUFFICIENT') return 'More POL is needed for network fees.';
+    if (wallet.gasReadiness === 'UNAVAILABLE') {
+      if (wallet.nativeGasBalanceAtomic === null) return 'Network-fee readiness could not be confirmed.';
+      return 'USDC approval and transfer fee readiness could not be established.';
+    }
+    return '';
+  }
+
+  function editPayment() {
+    if (state.operationInFlight) return;
+    var projection = renderInteractionProjection({}, {
+      allowAuthorization: false,
+      allowEdit: !state.activeExecutionAttempt,
+    });
+    if (!projection || (!hasAction(projection.actions, 'exitReview') && !hasAction(projection.actions, 'editDraft'))) return;
+    invalidateReview('edit-payment');
+    setText('ccTxLabel', 'Configure payment');
     setStatus('verified', 'Verified');
-    transition('READY_TO_SEND');
-    setChipState('cc-card-chip--ready', false, 'Confirm transfer in wallet');
-    emit('CC_READY_TO_SEND', { sender: state.sender, intent: intent });
+    applyInteractionProjection({}, { allowAuthorization: false, allowReview: !!state.draft, allowEdit: true });
   }
 
   /* ----------------------------------------------------------------
@@ -859,8 +1432,246 @@
     return messages[authResult.outcome] || 'Transfer not authorized';
   }
 
+  function executeBoundAttempt(attempt, token, draft) {
+    if (!state.reviewRuntime || typeof state.reviewRuntime.isExecutionAttemptBinding !== 'function') {
+      throw new Error('Review runtime unavailable');
+    }
+    if (state.reviewRuntime.isExecutionAttemptBinding(attempt) !== true) {
+      throw new Error('Execution attempt is not branded');
+    }
+    if (attempt !== state.executionAttemptBinding) {
+      throw new Error('Execution attempt is not current');
+    }
+    if (attempt === state.activeExecutionAttempt) {
+      throw new Error('Execution attempt already started');
+    }
+    if (!startedExecutionAttempts || startedExecutionAttempts.has(attempt)) {
+      throw new Error('Execution attempt already consumed');
+    }
+    if (!state.reviewRecord || !state.authorizationInputBundle) {
+      throw new Error('Execution attempt context unavailable');
+    }
+    if (attempt.authorizationInputBundle !== state.authorizationInputBundle) {
+      throw new Error('Execution attempt input bundle mismatch');
+    }
+    if (attempt.reviewBindingFingerprint !== state.reviewRecord.reviewBindingFingerprint) {
+      throw new Error('Execution attempt review mismatch');
+    }
+    if (attempt.providerReference !== state.providerReference) {
+      throw new Error('Execution attempt provider mismatch');
+    }
+    if (!window.IX_EXECUTION || typeof window.IX_EXECUTION.executeTransfer !== 'function') {
+      throw new Error('Execution service unavailable');
+    }
+    /*
+     * Gas-policy fail-closed guard.
+     *
+     * window.IX_EXECUTION_GAS_POLICY must be loaded and available before any
+     * wallet call is made. The execute-authorized path in IX_EXECUTION does not
+     * internally call loadValidatedGasPolicy(), so this card-level guard is the
+     * primary fail-closed check for policy availability on the authorized path.
+     *
+     * If the guard is absent and ix-execution-gas-policy.js fails to load, the
+     * card would call the wallet without canonical policy enforcement active.
+     * This must not happen — return a synthetic failed result without calling
+     * the wallet if the policy module is absent.
+     */
+    if (!window.IX_EXECUTION_GAS_POLICY ||
+        typeof window.IX_EXECUTION_GAS_POLICY.resolveGasPolicy !== 'function') {
+      return Promise.resolve({
+        status: 'failed',
+        sender: null,
+        chain: null,
+        receipt: null,
+        error: { code: 'GAS_POLICY_UNAVAILABLE', message: 'Gas policy unavailable.' },
+      });
+    }
+    startedExecutionAttempts.add(attempt);
+    state.activeExecutionAttempt = attempt;
+    var traceId = generateTraceId();
+
+    setText('ccExecAmount', atomicToExactDisplay(attempt.authorizationResult.recipientAmountAtomic));
+    applyInteractionProjection({
+      authorization: 'EXECUTION_AUTHORIZED',
+      allowanceApproval: attempt.executionPlan === 'APPROVE_THEN_TRANSFER' ? 'WALLET_DECISION_PENDING' : 'NOT_REQUIRED',
+      transferExecution: attempt.executionPlan === 'TRANSFER_ONLY' ? 'WALLET_DECISION_PENDING' : 'NOT_STARTED',
+    }, { allowAuthorization: false, allowEdit: false });
+    setChipState('cc-card-chip--active', true, 'Confirm in wallet\u2026');
+    setText('ccExecLabel', attempt.executionPlan === 'APPROVE_THEN_TRANSFER' ? 'Confirm USDC approval in wallet\u2026' : 'Confirm payment in wallet\u2026');
+    setStatus('pending', 'Pending');
+
+    return window.IX_EXECUTION.executeTransfer({
+      action:             'execute-authorized',
+      authorizationProof: attempt.authorizationResult,
+      gasPolicyId:        COIN_CARD_GAS_POLICY_ID,
+      provider:           state.activeProvider,
+      snapshotProvider:   state.activeProvider,
+      token:              token,
+      source:             'coincard',
+      traceId:            traceId,
+    }, {
+      onApprovalSubmitted: function (approvalHash) {
+        applyInteractionProjection({
+          authorization: 'PROOF_CONSUMED',
+          allowanceApproval: 'SUBMITTED',
+          approvalEvidence: { txHash: approvalHash || 'approval-submitted' },
+          transferExecution: 'NOT_STARTED',
+        }, { allowAuthorization: false, allowEdit: false });
+        setText('ccExecLabel', 'Approval submitted. Awaiting confirmation\u2026');
+      },
+      onTransferRequested: function () {
+        applyInteractionProjection({
+          authorization: 'PROOF_CONSUMED',
+          allowanceApproval: attempt.executionPlan === 'APPROVE_THEN_TRANSFER' ? 'CONFIRMED' : 'NOT_REQUIRED',
+          transferExecution: 'WALLET_DECISION_PENDING',
+        }, { allowAuthorization: false, allowEdit: false });
+        setChipState('cc-card-chip--active', true, 'Confirm transfer in wallet\u2026');
+        setText('ccExecLabel', 'Confirm transfer in wallet\u2026');
+      },
+      onTransferSubmitted: function (txHash) {
+        applyInteractionProjection({
+          authorization: 'PROOF_CONSUMED',
+          allowanceApproval: attempt.executionPlan === 'APPROVE_THEN_TRANSFER' ? 'CONFIRMED' : 'NOT_REQUIRED',
+          transferExecution: 'SUBMITTED',
+          settlement: 'CONFIRMATION_PENDING',
+          transactionEvidence: { txHash: txHash || 'transfer-submitted' },
+        }, { allowAuthorization: false, allowEdit: false });
+        setText('ccExecLabel', 'Transfer submitted. Awaiting on-chain confirmation\u2026');
+        setStatus('submitted', 'Confirming');
+      },
+    }).then(function (result) {
+      state.operationInFlight = false;
+      if (result.status === 'confirmed') {
+        var receipt = result.receipt;
+        setText('ccConfirmedAmount', atomicToExactDisplay(attempt.authorizationResult.recipientAmountAtomic));
+        var txHashEl = el('ccTxHash');
+        if (txHashEl && receipt) {
+          txHashEl.href        = receipt.explorerUrl || '#';
+          txHashEl.textContent = receipt.txHash.slice(0, 10) + '\u2026' + receipt.txHash.slice(-6);
+          txHashEl.title       = receipt.txHash;
+        }
+        applyInteractionProjection({
+          authorization: 'PROOF_CONSUMED',
+          transferExecution: 'SUBMITTED',
+          settlement: 'CONFIRMED',
+          transactionEvidence: receipt && receipt.txHash ? { txHash: receipt.txHash } : { txHash: 'confirmed' },
+        }, { allowAuthorization: false, allowEdit: false });
+        setStatus('confirmed', 'Confirmed');
+        emit('CC_CONFIRMED', { txHash: receipt && receipt.txHash, sender: attempt.authorizationResult.sender, intent: transferIntentFromDraft(draft), receipt: receipt });
+        return;
+      }
+      if (result.status === 'wallet-rejected') {
+        state.activeExecutionAttempt = null;
+        state.executionAttemptBinding = null;
+        state.authorizationInputBundle = null;
+        refreshReviewAfterPreBroadcastAttempt();
+        return;
+      }
+      if (result.status === 'wallet-busy') {
+        state.activeExecutionAttempt = null;
+        state.executionAttemptBinding = null;
+        state.authorizationInputBundle = null;
+        refreshReviewAfterPreBroadcastAttempt('Wallet busy \u2014 retry when ready');
+        return;
+      }
+      if (result.status === 'outcome-unknown') {
+        var explorerUrl = result.error && result.error.explorerUrl;
+        var unknownMsg  = explorerUrl
+          ? 'Transfer submitted. Check the explorer to confirm.'
+          : 'Transfer status unknown. Check the explorer before retrying.';
+        var txHashLink = el('ccTxHash');
+        if (txHashLink && explorerUrl) {
+          txHashLink.href        = explorerUrl;
+          txHashLink.textContent = 'View on explorer';
+          txHashLink.title       = result.error && result.error.txHash || '';
+        }
+        renderOutcomeUnknown(unknownMsg, explorerUrl, result.error && result.error.txHash);
+        return;
+      }
+      if (result.status === 'failed') {
+        state.activeExecutionAttempt = null;
+        state.executionAttemptBinding = null;
+        state.authorizationInputBundle = null;
+        var msg = result.error && result.error.message || 'Transfer failed';
+        refreshReviewAfterPreBroadcastAttempt(msg.length > 80 ? msg.slice(0, 80) + '\u2026' : msg);
+        return;
+      }
+      renderTxError('Unexpected execution result');
+    }).catch(function (err) {
+      state.operationInFlight = false;
+      state.activeExecutionAttempt = null;
+      state.executionAttemptBinding = null;
+      state.authorizationInputBundle = null;
+      var msg = err && err.message || 'Transfer failed';
+      renderTxError(msg.length > 80 ? msg.slice(0, 80) + '\u2026' : msg);
+    });
+  }
+
+  function refreshReviewAfterPreBroadcastAttempt(label) {
+    if (!state.reviewRecord || !state.draft || !state.reviewRuntime) {
+      applyInteractionProjection({}, { allowAuthorization: false, allowEdit: true });
+      applyProjectedActions(null, label || 'Unavailable');
+      return;
+    }
+    var reviewRecord = state.reviewRecord;
+    var draft = state.draft;
+    var capture = captureContinuity();
+    var lifecycle = state.resolvedLifecycleResult;
+    var promoted = state.promotedPresentationResult;
+    state.operationInFlight = true;
+    state.currentWalletObservation = null;
+    state.currentEvidenceState = 'REFRESHING';
+    setText('ccTxLabel', label || 'Refreshing wallet readiness\u2026');
+    renderReview(reviewRecord, state.reviewEligibility || { status: 'STALE' });
+    return readCompleteWalletObservation(state.activeProvider, draft)
+      .then(function (result) {
+        state.operationInFlight = false;
+        if (reviewRecord !== state.reviewRecord || draft !== state.draft || !continuityMatches(capture) || lifecycle !== state.resolvedLifecycleResult || promoted !== state.promotedPresentationResult) {
+          invalidateReview('recovery-stale');
+          setText('ccTxLabel', 'Payment changed. Review again.');
+          applyInteractionProjection({}, { allowAuthorization: false, allowReview: !!state.draft, allowEdit: true });
+          return;
+        }
+        if (!result || result.status !== 'AVAILABLE') {
+          state.reviewEligibility = null;
+          state.currentWalletObservation = null;
+          state.currentEvidenceState = 'UNAVAILABLE';
+          setText('ccTxLabel', 'Wallet readiness could not be refreshed.');
+          renderReview(reviewRecord, { status: 'STALE' });
+          return;
+        }
+        var evaluation = state.reviewRuntime.evaluateReviewEligibility({
+          evaluationId: 'prebroadcast-refresh:' + Date.now(),
+          evaluatedAt: 'prebroadcast-refresh:' + Date.now(),
+          reviewRecord: reviewRecord,
+          currentEvidence: {
+            currentDraftIntent: reviewDraftIntentFromDraft(draft),
+            currentResolvedLifecycleResult: state.resolvedLifecycleResult,
+            evidenceResolution: 'CONSISTENT',
+            walletObservation: result.walletObservation,
+          },
+        });
+        state.reviewEligibility = evaluation;
+        state.currentWalletObservation = result.walletObservation;
+        state.currentEvidenceState = result.walletObservation.gasReadiness === 'UNAVAILABLE' ? 'UNAVAILABLE' : 'REFRESHED';
+        var canAuthorize = evaluation.status === 'CURRENT' && result.walletObservation.gasReadiness === 'SUFFICIENT';
+        renderReview(reviewRecord, evaluation);
+        setStatus('verified', canAuthorize ? 'Review' : 'Review blocked');
+        if (!canAuthorize) setText('ccTxLabel', 'Review blocked');
+      })
+      .catch(function () {
+        state.operationInFlight = false;
+        state.reviewEligibility = null;
+        state.currentWalletObservation = null;
+        state.currentEvidenceState = 'UNAVAILABLE';
+        setText('ccTxLabel', 'Wallet readiness could not be refreshed.');
+        renderReview(reviewRecord, { status: 'STALE' });
+      });
+  }
+
   function startExecution() {
-    if (!state.intent || !state.sender || !state.registryRecord || !window.IX_EXECUTION) return;
+    if (state.operationInFlight) return;
+    if (!state.reviewRecord || !state.draft || !state.registryRecord || !window.IX_EXECUTION) return;
     if (!state.reviewRuntime) {
       renderTxError(state.reviewRuntimeError || 'Review contract unavailable');
       return;
@@ -878,133 +1689,105 @@
       return;
     }
 
-    var intent  = state.intent;
+    var reviewRecord = state.reviewRecord;
+    var draft = state.draft;
     var chainId = state.registryRecord.chainId;
     var token   = (state.registryRecord.token || 'USDC').toUpperCase();
+    var capture = captureContinuity();
 
-    /* Freeze the transfer intent snapshot at commitment time. */
-    var transferIntent = Object.freeze({
-      cardId:                   intent.cardId || null,
-      manifestId:               state.manifestId || null,
-      tokenAddress:             intent.tokenAddress || null,
-      executionContractAddress: intent.executionContractAddress || null,
-      chainId:                  chainId,
-      recipient:                intent.recipient,
-      recipientAmountAtomic:    intent.recipientAmountAtomic || null,
-      platformFeeAtomic:        intent.platformFeeAtomic || null,
-      totalDebitAtomic:         intent.totalDebitAtomic || null,
+    state.operationInFlight = true;
+    var initialProjection = renderInteractionProjection({}, {
+      allowAuthorization: reviewRecord.walletSnapshot.gasReadiness === 'SUFFICIENT' && state.reviewEligibility && state.reviewEligibility.status === 'CURRENT',
+      allowEdit: false,
     });
+    if (!initialProjection || !hasAction(initialProjection.actions, 'authorize')) {
+      state.operationInFlight = false;
+      applyInteractionProjection({}, { allowAuthorization: false, allowEdit: true });
+      setStatus('verified', 'Review blocked');
+      applyProjectedActions(null, 'Review blocked');
+      setText('ccTxLabel', reviewRecord.walletSnapshot.gasReadiness === 'INSUFFICIENT' ? 'Network gas is insufficient' : 'Wallet readiness unavailable');
+      return;
+    }
+    applyInteractionProjection({ authorization: 'EVALUATING' }, { allowAuthorization: false, allowEdit: false });
+    setChipState('cc-card-chip--active', true, 'Authorizing\u2026');
+    setText('ccExecLabel', 'Authorizing payment\u2026');
+    setText('ccExecAmount', atomicToExactDisplay(draft.recipientAmountAtomic));
 
-    /* Read live wallet state for the wallet snapshot input.
-     * Pass the resolved provider so the snapshot and execution use the same session. */
-    window.IX_EXECUTION.readWalletSnapshot(state.sender, chainId, state.activeProvider)
-      .then(function (walletSnapshot) {
-        if (!walletSnapshot) {
-          renderTxError('Wallet state unavailable for authorization');
-          return;
+    return readCompleteWalletObservation(state.activeProvider, draft)
+      .then(function (observationResult) {
+        if (!observationResult || observationResult.status !== 'AVAILABLE') {
+          state.operationInFlight = false;
+          refreshReviewAfterPreBroadcastAttempt('Wallet readiness changed');
+          setText('ccTxLabel', observationResult && observationResult.reason === 'native-gas-insufficient' ? 'Network gas is insufficient' : 'Wallet readiness changed');
+          return null;
         }
-
-        /* Request authorization — three-input gate. */
+        if (observationResult.walletObservation.gasReadiness !== 'SUFFICIENT') {
+          state.operationInFlight = false;
+          applyInteractionProjection({}, { allowAuthorization: false, allowEdit: true });
+          setStatus('verified', 'Review blocked');
+          applyProjectedActions(null, 'Review blocked');
+          setText('ccTxLabel', observationResult.walletObservation.gasReadiness === 'INSUFFICIENT' ? 'Network gas is insufficient' : 'Wallet readiness unavailable');
+          return null;
+        }
+        if (reviewRecord !== state.reviewRecord || draft !== state.draft || !continuityMatches(capture)) {
+          state.operationInFlight = false;
+          invalidateReview('authorization-input-changed');
+          setText('ccTxLabel', 'Payment changed. Review again.');
+          applyInteractionProjection({}, { allowAuthorization: false, allowReview: !!state.draft, allowEdit: true });
+          return null;
+        }
+        var reviewDraft = reviewDraftIntentFromDraft(draft);
+        var eligibility = state.reviewRuntime.evaluateReviewEligibility({
+          evaluationId: 'authorize-eval:' + Date.now(),
+          evaluatedAt: 'authorize-eval:' + Date.now(),
+          reviewRecord: reviewRecord,
+          currentEvidence: {
+            currentDraftIntent: reviewDraft,
+            currentResolvedLifecycleResult: state.resolvedLifecycleResult,
+            evidenceResolution: 'CONSISTENT',
+            walletObservation: observationResult.walletObservation,
+          },
+        });
+        if (eligibility.status !== 'CURRENT') {
+          state.operationInFlight = false;
+          invalidateReview('review-no-longer-current');
+          setText('ccTxLabel', 'Payment changed. Review again.');
+          applyInteractionProjection({}, { allowAuthorization: false, allowReview: !!state.draft, allowEdit: true });
+          return null;
+        }
+        state.currentWalletObservation = observationResult.walletObservation;
+        state.currentEvidenceState = 'REFRESHED';
+        var bundle = state.reviewRuntime.buildAuthorizationInputs(reviewRecord, eligibility);
         var authResult = authModule.authorizeExecution(
-          state.promotedPresentationResult,
-          transferIntent,
-          walletSnapshot
+          bundle.promotedPresentationResult,
+          bundle.transferIntent,
+          bundle.walletSnapshot
         );
-
         if (!authModule.isExecutionAuthorizedResult(authResult)) {
-          renderTxError(describeAuthFailure(authResult));
-          return;
+          state.operationInFlight = false;
+          refreshReviewAfterPreBroadcastAttempt(describeAuthFailure(authResult));
+          setStatus('verified', 'Review');
+          setText('ccTxLabel', describeAuthFailure(authResult));
+          return null;
         }
-
-        /* Authorization proof obtained — proceed with execution. */
-        var traceId = generateTraceId();
-
-        /* Prime exec panel with amount (name+recipient populated by renderTrust). */
-        setText('ccExecAmount', intent.amount.toFixed(2));
-        transition('APPROVE_PENDING');
-        setChipState('cc-card-chip--active', true, 'Confirm USDC approval in wallet\u2026');
-        setText('ccExecLabel', 'Confirm USDC approval in wallet\u2026');
-        setStatus('pending', 'Pending');
-
-        window.IX_EXECUTION.executeTransfer({
-          action:             'execute-authorized',
-          authorizationProof: authResult,
-          provider:           state.activeProvider,
-          snapshotProvider:   state.activeProvider,
-          token:              token,
-          source:             'coincard',
-          traceId:            traceId,
-        }, {
-          onApprovalSubmitted: function () {
-            setText('ccExecLabel', 'Approval submitted. Awaiting confirmation\u2026');
-          },
-          onTransferRequested: function () {
-            transition('EXECUTE_PENDING');
-            setChipState('cc-card-chip--active', true, 'Confirm transfer in wallet\u2026');
-            setText('ccExecLabel', 'Confirm transfer in wallet\u2026');
-          },
-          onTransferSubmitted: function () {
-            setText('ccExecLabel', 'Transfer submitted. Awaiting on-chain confirmation\u2026');
-            setStatus('submitted', 'Confirming');
-          },
-        })
-          .then(function (result) {
-            if (result.status === 'confirmed') {
-              var receipt = result.receipt;
-              setText('ccConfirmedAmount', intent.amount.toFixed(2));
-              var txHashEl = el('ccTxHash');
-              if (txHashEl && receipt) {
-                txHashEl.href        = receipt.explorerUrl || '#';
-                txHashEl.textContent = receipt.txHash.slice(0, 10) + '\u2026' + receipt.txHash.slice(-6);
-                txHashEl.title       = receipt.txHash;
-              }
-              setStatus('confirmed', 'Confirmed');
-              transition('CONFIRMED');
-              setChipState('cc-card-chip--done', true, 'Transfer confirmed');
-              emit('CC_CONFIRMED', { txHash: receipt && receipt.txHash, sender: state.sender, intent: intent, receipt: receipt });
-              return;
-            }
-            if (result.status === 'wallet-rejected') {
-              /* Proof is consumed — user must re-authorize on next attempt. */
-              transition('READY_TO_SEND');
-              setStatus('verified', 'Verified');
-              setChipState('cc-card-chip--ready', false, 'Confirm transfer in wallet');
-              return;
-            }
-            if (result.status === 'wallet-busy') {
-              transition('READY_TO_SEND');
-              setStatus('verified', 'Verified');
-              setChipState('cc-card-chip--ready', false, 'Wallet busy — retry when ready');
-              return;
-            }
-            if (result.status === 'outcome-unknown') {
-              var explorerUrl = result.error && result.error.explorerUrl;
-              var unknownMsg  = explorerUrl
-                ? 'Transfer submitted. Check the explorer to confirm.'
-                : 'Transfer status unknown. Check the explorer before retrying.';
-              var txHashLink = el('ccTxHash');
-              if (txHashLink && explorerUrl) {
-                txHashLink.href        = explorerUrl;
-                txHashLink.textContent = 'View on explorer';
-                txHashLink.title       = result.error && result.error.txHash || '';
-              }
-              renderTxError(unknownMsg);
-              return;
-            }
-            if (result.status === 'failed') {
-              var msg = result.error && result.error.message || 'Transfer failed';
-              renderTxError(msg.length > 80 ? msg.slice(0, 80) + '\u2026' : msg);
-              return;
-            }
-            renderTxError('Unexpected execution result');
-          })
-          .catch(function (err) {
-            var msg = err && err.message || 'Transfer failed';
-            renderTxError(msg.length > 80 ? msg.slice(0, 80) + '\u2026' : msg);
-          });
+        var attempt = state.reviewRuntime.bindExecutionAttempt({
+          attemptId: 'attempt:' + Date.now(),
+          authorizationInputBundle: bundle,
+          authorizationResult: authResult,
+          providerReference: bundle.providerReference,
+        });
+        state.reviewEligibility = eligibility;
+        state.authorizationInputBundle = bundle;
+        state.executionAttemptBinding = attempt;
+        return executeBoundAttempt(attempt, token, draft);
       })
       .catch(function () {
-        renderTxError('Wallet state check failed');
+        state.operationInFlight = false;
+        state.activeExecutionAttempt = null;
+        state.executionAttemptBinding = null;
+        state.authorizationInputBundle = null;
+        refreshReviewAfterPreBroadcastAttempt('Authorization failed. Review again.');
+        setText('ccTxLabel', 'Authorization failed. Review again.');
       });
   }
 
@@ -1012,10 +1795,21 @@
    * Chip click dispatcher
    * ---------------------------------------------------------------- */
   function handleChipClick() {
+    var currentProjection = renderInteractionProjection({}, {
+      allowAuthorization: state.reviewRecord && state.reviewRecord.walletSnapshot && state.reviewRecord.walletSnapshot.gasReadiness === 'SUFFICIENT' && state.reviewEligibility && state.reviewEligibility.status === 'CURRENT',
+      allowReview: !!state.draft,
+      allowEdit: !state.activeExecutionAttempt,
+    });
     switch (state.current) {
-      case 'TRANSFER_INTENT_READY': connectWallet();   break;
-      case 'WRONG_NETWORK':         switchNetwork();   break;
-      case 'READY_TO_SEND':         startExecution();  break;
+      case 'CONFIGURE':
+        if (currentProjection && (hasAction(currentProjection.actions, 'enterReview') || hasAction(currentProjection.actions, 'connectWallet'))) enterReview();
+        break;
+      case 'WRONG_NETWORK':
+        if (currentProjection && hasAction(currentProjection.actions, 'requestNetworkSwitch')) switchNetwork();
+        break;
+      case 'REVIEW':
+        if (currentProjection && hasAction(currentProjection.actions, 'authorize')) startExecution();
+        break;
       default: break;
     }
   }
@@ -1050,6 +1844,23 @@
     setStatus('failed', 'Failed');
     transition('TX_FAILED');
     emit('CC_ERROR', { message: message });
+  }
+
+  function renderOutcomeUnknown(message, explorerUrl, txHash) {
+    applyInteractionProjection({
+      settlement: 'OUTCOME_UNKNOWN',
+      transactionEvidence: txHash ? { txHash: txHash } : undefined,
+    }, { allowAuthorization: false, allowEdit: false, allowReview: false });
+    setText('ccErrorStateLabel', 'Settlement unresolved');
+    setText('ccCardError', message || 'Transfer status is unresolved. Inspect the transaction before taking further action.');
+    var txHashLink = el('ccTxHash');
+    if (txHashLink && explorerUrl) {
+      txHashLink.href = explorerUrl;
+      txHashLink.textContent = 'View on explorer';
+      txHashLink.title = txHash || '';
+    }
+    setStatus('pending', 'Unresolved');
+    setChipState('cc-card-chip--waiting', true, 'Inspect transaction');
   }
 
   function getFetchImpl() {
@@ -1098,14 +1909,14 @@
         runLifecyclePipeline(registryRecord);
 
         initAmountSurface(registryRecord);
-        transition('VERIFIED');
+        transition('CONFIGURE');
 
-        /* Load the QR rendering library after the UI state transitions to VERIFIED.
+        /* Load the QR rendering library after the UI state transitions to CONFIGURE.
          * A failed load is a controlled product state (FAILED → "QR unavailable").
          * The rejection is handled inside loadQrLibrary via .catch() on the cached
          * promise; consume it explicitly here too so no unhandled rejection fires. */
         loadQrLibrary(state.qrLibraryAttestation).catch(function () {});
-        setChipState('cc-card-chip--waiting', true, 'Enter amount to continue');
+        setChipState('cc-card-chip--waiting', true, 'Enter amount to review');
 
         emit('CC_READY', {
           recipient: registryRecord.recipient,
@@ -1393,6 +2204,9 @@
 
     var receiveBtn = el('ccReceiveBtn');
     if (receiveBtn) receiveBtn.addEventListener('click', openQrPanel);
+
+    var editBtn = el('ccEditPayment');
+    if (editBtn) editBtn.addEventListener('click', editPayment);
 
     var qrClose = el('ccQrClose');
     if (qrClose) qrClose.addEventListener('click', closeQrPanel);
