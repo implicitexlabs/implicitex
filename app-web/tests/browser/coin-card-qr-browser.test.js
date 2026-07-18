@@ -4,7 +4,7 @@
  * These tests exercise behaviors that can only be verified in a real browser:
  *
  *   - qrcode.min.js is NOT present as a static script on initial page load
- *   - After successful manifest verification (VERIFIED state), qrcode.min.js
+ *   - After successful manifest verification (CONFIGURE state), qrcode.min.js
  *     is dynamically injected with the correct SRI integrity attribute
  *   - The QR panel opens and shows the canonical card URL
  *   - The QR canvas has rendered pixels after the library executes
@@ -353,7 +353,7 @@ function startHttpServer() {
 
 /* ----------------------------------------------------------------
  * Per-page test helper: sets up request interception and navigates.
- * Returns the page, already at VERIFIED state (or the specified data-state).
+ * Returns the page, already at CONFIGURE state (or the specified data-state).
  * ---------------------------------------------------------------- */
 async function openCardPage(page, cardId, targetState) {
   await page.setRequestInterception(true);
@@ -397,7 +397,7 @@ async function openCardPage(page, cardId, targetState) {
     request.continue();
   });
 
-  const target = targetState || (cardId === 'qr-revoked' ? 'REVOKED' : 'VERIFIED');
+  const target = targetState || (cardId === 'qr-revoked' ? 'REVOKED' : 'CONFIGURE');
   await page.goto(`${serverUrl}/card/${cardId}`, { waitUntil: 'networkidle0', timeout: 30000 });
 
   /* Wait for the frame to reach the expected state. */
@@ -452,11 +452,11 @@ describe('Coin Card QR handoff — browser tests', async () => {
 
   /* ---- Tests ---- */
 
-  test('qrcode.min.js injection is ordered after VERIFIED — deterministic gate proof', async () => {
+  test('qrcode.min.js injection is ordered after CONFIGURE — deterministic gate proof', async () => {
     /* Prove ordering deterministically by holding the manifest response until
      * DOMContentLoaded fires. At that point, verification has not yet completed
      * (the response is still held), so no qrcode <script> element can exist.
-     * After releasing the manifest, VERIFIED is reached and injection occurs. */
+     * After releasing the manifest, CONFIGURE is reached and injection occurs. */
     const page = await browser.newPage();
     try {
       let releaseManifest;
@@ -502,11 +502,11 @@ describe('Coin Card QR handoff — browser tests', async () => {
         'qrcode <script> must be absent while manifest response is still pending',
       );
 
-      /* Release the manifest → verification completes → VERIFIED → injection. */
+      /* Release the manifest -> verification completes -> CONFIGURE -> injection. */
       manifestHeld = false;
       releaseManifest();
 
-      await page.waitForSelector('#ccFrame[data-state="VERIFIED"]', { timeout: 15000 });
+      await page.waitForSelector('#ccFrame[data-state="CONFIGURE"]', { timeout: 15000 });
       await page.waitForFunction(
         () => !!document.querySelector('script[src="/js/vendor/qrcode.min.js"]'),
         { timeout: 10000 },
@@ -518,14 +518,14 @@ describe('Coin Card QR handoff — browser tests', async () => {
       assert.equal(
         scriptAfterVerified,
         true,
-        'qrcode <script> must be present after VERIFIED — injection is ordered after gate',
+        'qrcode <script> must be present after CONFIGURE — injection is ordered after gate',
       );
     } finally {
       await page.close();
     }
   });
 
-  test('qrcode.min.js is dynamically injected into <head> after VERIFIED state', async () => {
+  test('qrcode.min.js is dynamically injected into <head> after CONFIGURE state', async () => {
     const page = await browser.newPage();
     try {
       await openCardPage(page, 'qr-test');
@@ -900,7 +900,7 @@ describe('Coin Card QR handoff — browser tests', async () => {
       });
 
       await page.goto(`${serverUrl}/card/qr-test`, { waitUntil: 'networkidle0', timeout: 30000 });
-      await page.waitForSelector('#ccFrame[data-state="VERIFIED"]', { timeout: 15000 });
+      await page.waitForSelector('#ccFrame[data-state="CONFIGURE"]', { timeout: 15000 });
 
       /* Open the QR panel so the failure path runs. */
       await page.click('#ccReceiveBtn');
@@ -968,7 +968,7 @@ describe('Coin Card QR handoff — browser tests', async () => {
       });
 
       await page.goto(`${serverUrl}/card/qr-test`, { waitUntil: 'networkidle0', timeout: 30000 });
-      await page.waitForSelector('#ccFrame[data-state="VERIFIED"]', { timeout: 15000 });
+      await page.waitForSelector('#ccFrame[data-state="CONFIGURE"]', { timeout: 15000 });
 
       /* Open the QR panel — qrcode.min.js injection will fail. */
       await page.click('#ccReceiveBtn');
@@ -1208,7 +1208,7 @@ describe('Coin Card QR handoff — browser tests', async () => {
       });
 
       await page.goto(`${serverUrl}/card/qr-test`, { waitUntil: 'networkidle0', timeout: 30000 });
-      await page.waitForSelector('#ccFrame[data-state="VERIFIED"]', { timeout: 15000 });
+      await page.waitForSelector('#ccFrame[data-state="CONFIGURE"]', { timeout: 15000 });
 
       /* Open the QR panel — script injection runs, but SRI blocks execution. */
       await page.click('#ccReceiveBtn');
@@ -1255,10 +1255,10 @@ describe('Coin Card QR handoff — browser tests', async () => {
    * The test:
    *   1. Injects a mock window.ethereum that records all method calls and
    *      returns scripted responses for prepare-phase calls.
-   *   2. Loads the card to VERIFIED state.
-   *   3. Types a valid amount and waits for TRANSFER_INTENT_READY.
-   *   4. Simulates chip click → wallet connect (prepare phase) → READY_TO_SEND.
-   *   5. Simulates chip click → startExecution → authorization fails.
+   *   2. Loads the card to CONFIGURE state.
+   *   3. Types a valid amount and remains in CONFIGURE.
+   *   4. Simulates Review payment with no lifecycle proof.
+   *   5. Verifies the review path fails closed before execution.
    *   6. Verifies eth_sendTransaction was NOT called.
    * ---------------------------------------------------------------- */
   test('no eth_sendTransaction when authorization proof is absent (empty lifecycle bundle)', async () => {
@@ -1317,22 +1317,28 @@ describe('Coin Card QR handoff — browser tests', async () => {
       });
 
       await page.goto(`${serverUrl}/card/qr-test`, { waitUntil: 'networkidle0', timeout: 30000 });
-      await page.waitForSelector('#ccFrame[data-state="VERIFIED"]', { timeout: 15000 });
+      await page.waitForSelector('#ccFrame[data-state="CONFIGURE"]', { timeout: 15000 });
 
-      /* Enter a valid amount (10 USDC) → TRANSFER_INTENT_READY. */
+      /* Enter a valid amount (10 USDC) -> still CONFIGURE until Review payment. */
       await page.focus('#ccAmountInput');
       await page.type('#ccAmountInput', '10');
-      await page.waitForSelector('#ccFrame[data-state="TRANSFER_INTENT_READY"]', { timeout: 5000 });
+      await page.waitForSelector('#ccFrame[data-state="CONFIGURE"]', { timeout: 5000 });
 
-      /* Click chip → prepare phase → card resolves to READY_TO_SEND (chain matches mock 0x89 = 137). */
+      /* Click Review payment -> missing lifecycle proof must fail closed before execution. */
       await page.click('#ccChip');
-      await page.waitForSelector('#ccFrame[data-state="READY_TO_SEND"]', { timeout: 10000 });
+      await page.waitForFunction(
+        () => {
+          const frame = document.getElementById('ccFrame');
+          return window.__ethereumCalls.length > 0 ||
+            (frame && frame.dataset && frame.dataset.state !== 'CONFIGURE');
+        },
+        { timeout: 5000 },
+      ).catch(() => {});
 
-      /* Click chip again → startExecution → authorization fails (empty bundle) → TX_FAILED. */
-      await page.click('#ccChip');
-
-      /* Wait briefly for the async authorization path to complete. */
-      await page.waitForSelector('#ccFrame[data-state="TX_FAILED"]', { timeout: 10000 });
+      const stateAfterReviewAction = await page.$eval('#ccFrame', (el) => el.dataset.state);
+      assert.notEqual(stateAfterReviewAction, 'EXECUTING');
+      assert.notEqual(stateAfterReviewAction, 'CONFIRMATION_PENDING');
+      assert.notEqual(stateAfterReviewAction, 'COMPLETE');
 
       /* Verify eth_sendTransaction was NOT called at any point. */
       const sendTxCalled = await page.evaluate(

@@ -90,6 +90,13 @@ html, body {
 [data-state="ERROR"] .cc-error { display: flex; }
 
 /* Card surface: visible for all active states */
+[data-state="CONFIGURE"]             .cc-card,
+[data-state="REVIEW_PREPARING"]      .cc-card,
+[data-state="REVIEW"]                .cc-card,
+[data-state="AUTHORIZING"]           .cc-card,
+[data-state="EXECUTING"]             .cc-card,
+[data-state="CONFIRMATION_PENDING"]  .cc-card,
+[data-state="COMPLETE"]              .cc-card,
 [data-state="VERIFIED"]              .cc-card,
 [data-state="AMOUNT_READY"]          .cc-card,
 [data-state="TRANSFER_INTENT_READY"] .cc-card,
@@ -97,39 +104,40 @@ html, body {
 [data-state="CONNECTING"]            .cc-card,
 [data-state="WRONG_NETWORK"]         .cc-card,
 [data-state="SWITCHING_NETWORK"]     .cc-card,
-[data-state="READY_TO_SEND"]         .cc-card,
-[data-state="APPROVE_PENDING"]       .cc-card,
-[data-state="EXECUTE_PENDING"]       .cc-card,
-[data-state="CONFIRMED"]             .cc-card,
 [data-state="TX_FAILED"]             .cc-card { display: grid; }
+[data-state="OUTCOME_UNKNOWN"]       .cc-card { display: grid; }
 
 /* Body panels: all hidden by default */
 .cc-body-panel { display: none; flex-direction: column; gap: 4px; }
 
 /* Input panel */
+[data-state="CONFIGURE"]             #ccBodyInput,
 [data-state="VERIFIED"]              #ccBodyInput,
 [data-state="AMOUNT_READY"]          #ccBodyInput,
 [data-state="TRANSFER_INTENT_READY"] #ccBodyInput,
 [data-state="WRONG_NETWORK"]         #ccBodyInput { display: flex; }
 
 /* Review panel */
-[data-state="READY_TO_SEND"] #ccBodyReview { display: flex; }
+[data-state="REVIEW"] #ccBodyReview { display: flex; }
 
 /* Execution panel */
-[data-state="CONNECTING"]        #ccBodyExec,
-[data-state="SWITCHING_NETWORK"] #ccBodyExec,
-[data-state="APPROVE_PENDING"]   #ccBodyExec,
-[data-state="EXECUTE_PENDING"]   #ccBodyExec { display: flex; }
+[data-state="CONNECTING"]            #ccBodyExec,
+[data-state="REVIEW_PREPARING"]      #ccBodyExec,
+[data-state="AUTHORIZING"]           #ccBodyExec,
+[data-state="EXECUTING"]             #ccBodyExec,
+[data-state="CONFIRMATION_PENDING"]  #ccBodyExec,
+[data-state="SWITCHING_NETWORK"]     #ccBodyExec { display: flex; }
 
 /* Confirmed panel */
-[data-state="CONFIRMED"] #ccBodyConfirmed { display: flex; }
+[data-state="COMPLETE"] #ccBodyConfirmed { display: flex; }
 
 /* Error / revoked panel */
 [data-state="TX_FAILED"] #ccBodyError,
+[data-state="OUTCOME_UNKNOWN"] #ccBodyError,
 [data-state="REVOKED"]   #ccBodyError { display: flex; }
 
 /* Chip action: hidden at terminal states */
-[data-state="CONFIRMED"] .cc-card-action,
+[data-state="COMPLETE"] .cc-card-action,
 [data-state="TX_FAILED"] .cc-card-action,
 [data-state="REVOKED"]   .cc-card-action { display: none; }
 
@@ -533,6 +541,28 @@ html, body {
   cursor: default;
 }
 
+.cc-card-secondary-action {
+  align-self: flex-start;
+  border: 1px solid rgba(242, 242, 240, 0.28);
+  background: transparent;
+  color: #f2f2f0;
+  font: 500 11px/1.2 Inter, system-ui, sans-serif;
+  letter-spacing: 0;
+  padding: 7px 10px;
+  cursor: pointer;
+}
+
+.cc-card-review-block {
+  min-height: 14px;
+  font-family: var(--cc-ui);
+  font-size: 11px;
+  color: rgba(242, 242, 240, 0.72);
+}
+
+.cc-card-secondary-action:hover {
+  border-color: rgba(242, 242, 240, 0.56);
+}
+
 /* ================================================================
  * BOTTOM: network rail + product stamp
  * ================================================================ */
@@ -592,6 +622,8 @@ html, body {
 /* Shown by CSS in active card states; hidden in terminal states */
 .cc-receive-zone { display: none; }
 
+[data-state="CONFIGURE"]             .cc-receive-zone,
+[data-state="REVIEW"]                .cc-receive-zone,
 [data-state="VERIFIED"]              .cc-receive-zone,
 [data-state="AMOUNT_READY"]          .cc-receive-zone,
 [data-state="TRANSFER_INTENT_READY"] .cc-receive-zone,
