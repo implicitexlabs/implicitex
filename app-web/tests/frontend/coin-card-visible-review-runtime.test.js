@@ -24,7 +24,11 @@ const COIN_CARD_GAS_POLICY_ID = 'COIN_CARD_POLYGON_V1';
 /* Minimal gas-policy mock that satisfies the card's fail-closed guard */
 function makeMockGasPolicy(options = {}) {
   if (options.absent) return null;
+  const policyIds = options.missingPolicyIds
+    ? undefined
+    : Object.freeze({ COIN_CARD_POLYGON_V1: options.malformedPolicyId ? '' : COIN_CARD_GAS_POLICY_ID });
   return {
+    POLICY_IDS: policyIds,
     resolveGasPolicy(id) {
       if (options.unknown || id !== COIN_CARD_GAS_POLICY_ID) return null;
       return { security: { policyId: COIN_CARD_GAS_POLICY_ID, amountPolicy: { feeBasisPoints: '100' } } };
@@ -840,10 +844,14 @@ test('gas-policy global absent: execution fails closed with zero wallet calls be
   assert.notEqual(runtime.api.state().current, 'COMPLETE', 'execution must not confirm without policy');
 });
 
-test('policy ID absent/null: execution fails closed without reaching wallet', async () => {
-  /* Verify that card.js defines COIN_CARD_GAS_POLICY_ID as a nonempty string, not null/undefined */
-  assert.match(cardSource, /COIN_CARD_GAS_POLICY_ID\s*=\s*['"]COIN_CARD_POLYGON_V1['"]/, 'card must define COIN_CARD_GAS_POLICY_ID as the canonical policy string');
-  /* Verify that executeTransfer is called with the policy ID field */
+test('policy ID absent/null: card.js contains no copied literal; exported ID reaches wallet', async () => {
+  /* card.js must not contain the copied literal — duplication is gone */
+  assert.equal(
+    cardSource.includes("'COIN_CARD_POLYGON_V1'"),
+    false,
+    'card.js must not contain the string literal \'COIN_CARD_POLYGON_V1\' — ID must come from gas-policy POLICY_IDS export'
+  );
+  /* Verify that executeTransfer is still called with a non-null gasPolicyId from the export */
   let capturedGasPolicyId;
   const runtime = loadRuntime({
     onExecuteTransfer(request) { capturedGasPolicyId = request.gasPolicyId; },
@@ -855,9 +863,48 @@ test('policy ID absent/null: execution fails closed without reaching wallet', as
   await Promise.resolve();
   assert.notEqual(capturedGasPolicyId, null, 'gasPolicyId must not be null');
   assert.notEqual(capturedGasPolicyId, undefined, 'gasPolicyId must not be undefined');
+  assert.equal(capturedGasPolicyId, COIN_CARD_GAS_POLICY_ID, 'gasPolicyId must equal the canonical Coin Card policy ID from the export');
 });
 
-test('unknown/invalid policy ID: gas-policy returns null and execution fails closed', async () => {
+test('missing POLICY_IDS export: execution fails closed with zero wallet calls', async () => {
+  let executeTransferCalls = 0;
+  const provider = makeProvider();
+  const runtime = loadRuntime({
+    gasPolicyOptions: { missingPolicyIds: true },
+    provider,
+    onExecuteTransfer() { executeTransferCalls += 1; },
+  });
+  runtime.api.inputAmount('2.00');
+  await runtime.api.enterReview();
+  await Promise.resolve();
+  await runtime.api.startExecution();
+  await flushAsync();
+  const walletWrites = provider.calls.filter((c) => c.method === 'eth_sendTransaction');
+  assert.equal(walletWrites.length, 0, 'no wallet write must occur when POLICY_IDS export is missing');
+  assert.equal(executeTransferCalls, 0, 'IX_EXECUTION.executeTransfer must not be called when POLICY_IDS is missing');
+  assert.notEqual(runtime.api.state().current, 'COMPLETE', 'execution must not confirm without policy identity export');
+});
+
+test('malformed (empty) POLICY_IDS.COIN_CARD_POLYGON_V1: execution fails closed with zero wallet calls', async () => {
+  let executeTransferCalls = 0;
+  const provider = makeProvider();
+  const runtime = loadRuntime({
+    gasPolicyOptions: { malformedPolicyId: true },
+    provider,
+    onExecuteTransfer() { executeTransferCalls += 1; },
+  });
+  runtime.api.inputAmount('2.00');
+  await runtime.api.enterReview();
+  await Promise.resolve();
+  await runtime.api.startExecution();
+  await flushAsync();
+  const walletWrites = provider.calls.filter((c) => c.method === 'eth_sendTransaction');
+  assert.equal(walletWrites.length, 0, 'no wallet write must occur when exported policy ID is malformed');
+  assert.equal(executeTransferCalls, 0, 'IX_EXECUTION.executeTransfer must not be called when policy ID is malformed');
+  assert.notEqual(runtime.api.state().current, 'COMPLETE', 'execution must not confirm with malformed policy ID');
+});
+
+test('unknown/invalid policy ID: resolveGasPolicy returns null and execution fails closed', async () => {
   let executeTransferCalls = 0;
   const provider = makeProvider();
   const runtime = loadRuntime({
@@ -865,17 +912,18 @@ test('unknown/invalid policy ID: gas-policy returns null and execution fails clo
     provider,
     onExecuteTransfer() { executeTransferCalls += 1; },
   });
-  /* Override policy to simulate unknown ID: resolveGasPolicy returns null */
-  runtime.window.IX_EXECUTION_GAS_POLICY = makeMockGasPolicy({ unknown: true });
   runtime.api.inputAmount('2.00');
   await runtime.api.enterReview();
   await Promise.resolve();
-  /* The card's fail-closed guard checks IX_EXECUTION_GAS_POLICY availability,
-   * not the resolved policy validity. An unknown policy ID would be caught by
-   * IX_EXECUTION internally if gasPolicyId is supplied. This test verifies
-   * the guard fires for absent module; valid module + bad ID is ix-execution's domain. */
+  await runtime.api.startExecution();
+  await flushAsync();
+  /* The card's fail-closed guard resolves the policy ID from POLICY_IDS and then
+   * calls resolveGasPolicy(). When resolveGasPolicy returns null (unknown policy),
+   * the guard fires and execution fails closed before any wallet call. */
   const walletWrites = provider.calls.filter((c) => c.method === 'eth_sendTransaction');
-  assert.equal(walletWrites.length, 0, 'no wallet write during review collection');
+  assert.equal(walletWrites.length, 0, 'no wallet write when policy resolution returns null');
+  assert.equal(executeTransferCalls, 0, 'IX_EXECUTION.executeTransfer must not be called when policy cannot be resolved');
+  assert.notEqual(runtime.api.state().current, 'COMPLETE', 'execution must not confirm when policy resolution fails');
 });
 
 test('valid policy present: execution reaches the authorized boundary', async () => {

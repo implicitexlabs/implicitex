@@ -63,20 +63,6 @@
   var CHAIN_MIN_USDC = { 137: 1,   80002: 1,   1: 1   };
   var CHAIN_MAX_USDC = { 137: 250, 80002: 250, 1: 250  };
 
-  /*
-   * COIN_CARD_GAS_POLICY_ID — Coin Card's authoritative policy binding.
-   *
-   * This is the Coin Card's canonical policy registration with the gas-policy
-   * registry (window.IX_EXECUTION_GAS_POLICY). The value matches the POLICY_ID
-   * constant inside ix-execution-gas-policy.js and the registry key
-   * REGISTRY['COIN_CARD_POLYGON_V1']. If the gas-policy module is absent or
-   * does not recognize this ID, execution fails closed before any wallet call.
-   *
-   * Do NOT derive this ID from a dynamic source. It is a static policy binding
-   * owned by the Coin Card and must match the policy module exactly.
-   */
-  var COIN_CARD_GAS_POLICY_ID = 'COIN_CARD_POLYGON_V1';
-
   /* ----------------------------------------------------------------
    * State machine
    * ---------------------------------------------------------------- */
@@ -1471,10 +1457,11 @@
      * internally call loadValidatedGasPolicy(), so this card-level guard is the
      * primary fail-closed check for policy availability on the authorized path.
      *
-     * If the guard is absent and ix-execution-gas-policy.js fails to load, the
-     * card would call the wallet without canonical policy enforcement active.
-     * This must not happen — return a synthetic failed result without calling
-     * the wallet if the policy module is absent.
+     * The canonical Coin Card policy ID is resolved from the gas-policy module's
+     * POLICY_IDS export rather than duplicated here. If the module is absent,
+     * the export is missing, the exported ID is empty or malformed, or the ID
+     * does not resolve to a valid policy, execution fails closed with zero wallet
+     * calls.
      */
     if (!window.IX_EXECUTION_GAS_POLICY ||
         typeof window.IX_EXECUTION_GAS_POLICY.resolveGasPolicy !== 'function') {
@@ -1484,6 +1471,35 @@
         chain: null,
         receipt: null,
         error: { code: 'GAS_POLICY_UNAVAILABLE', message: 'Gas policy unavailable.' },
+      });
+    }
+    var policyIds = window.IX_EXECUTION_GAS_POLICY.POLICY_IDS;
+    if (!policyIds || typeof policyIds !== 'object') {
+      return Promise.resolve({
+        status: 'failed',
+        sender: null,
+        chain: null,
+        receipt: null,
+        error: { code: 'GAS_POLICY_UNAVAILABLE', message: 'Gas policy identity export unavailable.' },
+      });
+    }
+    var resolvedPolicyId = policyIds.COIN_CARD_POLYGON_V1;
+    if (typeof resolvedPolicyId !== 'string' || resolvedPolicyId.length === 0) {
+      return Promise.resolve({
+        status: 'failed',
+        sender: null,
+        chain: null,
+        receipt: null,
+        error: { code: 'GAS_POLICY_UNAVAILABLE', message: 'Gas policy identity is missing or malformed.' },
+      });
+    }
+    if (!window.IX_EXECUTION_GAS_POLICY.resolveGasPolicy(resolvedPolicyId)) {
+      return Promise.resolve({
+        status: 'failed',
+        sender: null,
+        chain: null,
+        receipt: null,
+        error: { code: 'GAS_POLICY_UNAVAILABLE', message: 'Gas policy could not be resolved.' },
       });
     }
     startedExecutionAttempts.add(attempt);
@@ -1503,7 +1519,7 @@
     return window.IX_EXECUTION.executeTransfer({
       action:             'execute-authorized',
       authorizationProof: attempt.authorizationResult,
-      gasPolicyId:        COIN_CARD_GAS_POLICY_ID,
+      gasPolicyId:        resolvedPolicyId,
       provider:           state.activeProvider,
       snapshotProvider:   state.activeProvider,
       token:              token,

@@ -578,24 +578,31 @@ test('ix-execution-gas-policy.js loads before ix-execution.js in index.html', ()
   );
 });
 
-test('card.js defines COIN_CARD_GAS_POLICY_ID as the canonical policy binding constant', () => {
-  assert.match(
-    cardSource,
-    /COIN_CARD_GAS_POLICY_ID\s*=\s*['"]COIN_CARD_POLYGON_V1['"]/,
-    'card must define COIN_CARD_GAS_POLICY_ID = "COIN_CARD_POLYGON_V1"'
+test('card.js contains no copied policy ID literal: ID must come from gas-policy POLICY_IDS export', () => {
+  /* The string literal 'COIN_CARD_POLYGON_V1' must not appear in card.js source.
+   * The canonical ID is resolved at runtime from window.IX_EXECUTION_GAS_POLICY.POLICY_IDS. */
+  assert.equal(
+    cardSource.includes("'COIN_CARD_POLYGON_V1'"),
+    false,
+    'card.js must not contain the string literal \'COIN_CARD_POLYGON_V1\' — duplication removed'
   );
-  /* Must be in the constants section, not inside a function body */
-  const constantsSection = cardSource.indexOf('COIN_CARD_GAS_POLICY_ID');
-  const firstFunctionPos = cardSource.search(/^\s+function\s+/m);
-  assert(constantsSection !== -1, 'constant must be defined');
-  assert(constantsSection < firstFunctionPos, 'constant must be at module scope before function definitions');
-});
-
-test('card.js passes COIN_CARD_GAS_POLICY_ID as gasPolicyId to executeTransfer', () => {
+  /* card.js must reference the gas-policy module's POLICY_IDS export */
   assert.match(
     cardSource,
-    /gasPolicyId\s*:\s*COIN_CARD_GAS_POLICY_ID/,
-    'executeTransfer call must include gasPolicyId: COIN_CARD_GAS_POLICY_ID'
+    /IX_EXECUTION_GAS_POLICY\.POLICY_IDS/,
+    'card.js must read the policy ID from IX_EXECUTION_GAS_POLICY.POLICY_IDS'
+  );
+  /* card.js must read the COIN_CARD_POLYGON_V1 property from POLICY_IDS */
+  assert.match(
+    cardSource,
+    /COIN_CARD_POLYGON_V1/,
+    'card.js must reference COIN_CARD_POLYGON_V1 to select the Coin Card policy ID'
+  );
+  /* The resolved local variable must be used as gasPolicyId in the executeTransfer call */
+  assert.match(
+    cardSource,
+    /gasPolicyId\s*:\s*resolvedPolicyId/,
+    'executeTransfer call must include gasPolicyId: resolvedPolicyId'
   );
 });
 

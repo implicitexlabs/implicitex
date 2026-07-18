@@ -215,3 +215,27 @@ test('production global omits test hooks unless test mode is explicitly enabled'
   const policyApi = loadPolicyRuntime(false);
   assert.equal(Object.prototype.hasOwnProperty.call(policyApi, '__TEST_ONLY__'), false);
 });
+
+test('POLICY_IDS export exists, is frozen, and contains the canonical Coin Card ID', () => {
+  const policyApi = loadPolicyRuntime(false);
+  assert.ok(policyApi.POLICY_IDS, 'POLICY_IDS must be present on the gas-policy API');
+  assert.equal(typeof policyApi.POLICY_IDS, 'object', 'POLICY_IDS must be an object');
+  assert.equal(Object.isFrozen(policyApi.POLICY_IDS), true, 'POLICY_IDS must be frozen');
+  assert.equal(policyApi.POLICY_IDS.COIN_CARD_POLYGON_V1, 'COIN_CARD_POLYGON_V1', 'COIN_CARD_POLYGON_V1 entry must equal the canonical policy ID string');
+});
+
+test('POLICY_IDS export is immutable: assignment has no effect', () => {
+  const policyApi = loadPolicyRuntime(false);
+  const before = policyApi.POLICY_IDS.COIN_CARD_POLYGON_V1;
+  try { policyApi.POLICY_IDS.COIN_CARD_POLYGON_V1 = 'TAMPERED'; } catch (_) {}
+  assert.equal(policyApi.POLICY_IDS.COIN_CARD_POLYGON_V1, before, 'POLICY_IDS entries must be immutable');
+});
+
+test('POLICY_IDS.COIN_CARD_POLYGON_V1 resolves the intended policy', () => {
+  const policyApi = loadPolicyRuntime(false);
+  const exportedId = policyApi.POLICY_IDS.COIN_CARD_POLYGON_V1;
+  const policy = policyApi.resolveGasPolicy(exportedId);
+  assert.ok(policy, 'exported COIN_CARD_POLYGON_V1 ID must resolve a policy');
+  assert.equal(policy.security.policyId, exportedId, 'resolved policy policyId must match the exported ID');
+  assert.equal(exportedId, 'COIN_CARD_POLYGON_V1', 'exported ID must be the exact canonical string');
+});

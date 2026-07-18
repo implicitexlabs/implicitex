@@ -375,6 +375,7 @@
     POLICY_ID: POLICY_ID,
     POLICY_REVISION: POLICY_REVISION,
     ZEPPELINOS_IMPLEMENTATION_SLOT: ZEPPELINOS_IMPLEMENTATION_SLOT,
+    POLICY_IDS: Object.freeze({ COIN_CARD_POLYGON_V1: 'COIN_CARD_POLYGON_V1' }),
     resolveGasPolicy: resolveGasPolicy,
     validateGasPolicy: validateGasPolicy,
     getPolicySecurityPayload: getPolicySecurityPayload,
