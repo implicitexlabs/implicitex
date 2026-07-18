@@ -101,9 +101,6 @@
           <span class="cc-card-tx-row-value" id="ccReviewGas">&mdash;</span>
         </div>
         <p class="cc-card-review-block" id="ccReviewBlockReason"></p>
-        <p class="cc-card-name"      id="ccReviewName"></p>
-        <p class="cc-card-recipient" id="ccReviewRecipient" title="">&mdash;</p>
-        <button class="cc-card-secondary-action" id="ccEditPayment" type="button">Edit payment</button>
       </div>
 
       <!-- Execution — CONNECTING, REVIEW_PREPARING, AUTHORIZING, EXECUTING, CONFIRMATION_PENDING -->
@@ -134,8 +131,9 @@
 
     </div><!-- /.cc-card-body -->
 
-    <!-- Chip: in-card execution trigger -->
+    <!-- Chip: in-card execution trigger; Edit Payment shown alongside chip in REVIEW -->
     <div class="cc-card-action" id="ccCardAction">
+      <button class="cc-card-secondary-action" id="ccEditPayment" type="button">Edit payment</button>
       <button class="cc-card-chip cc-card-chip--waiting" id="ccChip"
         type="button" disabled aria-label="Enter amount to continue"></button>
     </div>
@@ -151,6 +149,19 @@
     </div>
 
   </div><!-- /.cc-card -->
+
+  <!-- COLLAPSED ACCEPTANCE MARK — 216 × 44 fixed exterior (coin-card.tokens.json v1)
+       Shown only in COLLAPSED state. Expand control occupies the full 216 × 44 hit target. -->
+  <button class="cc-collapsed-mark" id="ccCollapsedMark"
+    aria-label="Expand Coin Card" type="button">
+    <div class="cc-collapsed-identity">
+      <span class="cc-collapsed-primary" id="ccCollapsedPrimary">Coin Card</span>
+      <span class="cc-collapsed-sub"     id="ccCollapsedSub">Polygon &middot; USDC</span>
+    </div>
+    <div class="cc-collapsed-lettermark">
+      <img src="/components/images/lettermark-white.svg" alt="" aria-hidden="true">
+    </div>
+  </button>
 
   <!-- PRESENT ZONE — shown in active card states; lets card holder share card as QR -->
   <div class="cc-receive-zone" id="ccReceiveZone">

@@ -25,9 +25,12 @@
 
 /* ---- Root — all values fixed; no main.css dependency ---- */
 :root {
-  /* Card geometry */
-  --cc-card-radius: 10px;
-  --cc-card-max-w:  440px;
+  /* Card geometry — canonical fixed dimensions (coin-card.tokens.json v1) */
+  --cc-card-radius:    10px;
+  --cc-card-w:         460px;
+  --cc-card-h:         286px;
+  --cc-collapsed-w:    216px;
+  --cc-collapsed-h:     44px;
 
   /* Dark surface palette — fixed hex, independent of page theme */
   --cc-dark-bg:       #1a1a1a;
@@ -184,16 +187,28 @@ html, body {
 /* ================================================================
  * CARD SURFACE
  * Grid: top | body | action | bottom
+ * Fixed exterior: 460 × 286 (border-box). Height is state-invariant.
  * ================================================================ */
 .cc-card {
-  width: 100%;
-  max-width: var(--cc-card-max-w);
+  width: var(--cc-card-w);
+  height: var(--cc-card-h);
   background:    var(--cc-dark-bg);
   border:        1px solid var(--cc-dark-border);
   border-radius: var(--cc-card-radius);
   box-shadow:    0 8px 32px rgba(0,0,0,0.48), 0 2px 8px rgba(0,0,0,0.32);
   grid-template-rows: auto minmax(0, 1fr) auto auto;
   overflow: hidden;
+}
+
+/* ================================================================
+ * MOBILE — viewports narrower than the canonical 460 px card width
+ * Desktop canonical dimensions are not redefined.
+ * ================================================================ */
+@media (max-width: 479px) {
+  .cc-card {
+    width: 100%;
+    max-width: 100%;
+  }
 }
 
 .cc-card * { box-sizing: border-box; min-width: 0; }
@@ -476,12 +491,15 @@ html, body {
 .cc-selfsend-warn.is-active { display: block; }
 
 /* ================================================================
- * ACTION: chip trigger
+ * ACTION: chip trigger + secondary action
+ * Edit Payment lives in the action zone as a sibling of the chip.
+ * Hidden by default; shown only in REVIEW state.
  * ================================================================ */
 .cc-card-action {
   padding: 0 16px 13px;
   display: flex;
   align-items: center;
+  justify-content: space-between;
 }
 
 /* Chip — ~EMV proportions; no text; state via modifier class */
@@ -542,7 +560,8 @@ html, body {
 }
 
 .cc-card-secondary-action {
-  align-self: flex-start;
+  /* Hidden by default; shown only in REVIEW state (see state-dependent rule below) */
+  display: none;
   border: 1px solid rgba(242, 242, 240, 0.28);
   background: transparent;
   color: #f2f2f0;
@@ -550,6 +569,12 @@ html, body {
   letter-spacing: 0;
   padding: 7px 10px;
   cursor: pointer;
+  flex-shrink: 0;
+}
+
+[data-state="REVIEW"] .cc-card-secondary-action {
+  display: inline-flex;
+  align-items: center;
 }
 
 .cc-card-review-block {
@@ -663,7 +688,7 @@ html, body {
   align-items: center;
   gap: 12px;
   width: 100%;
-  max-width: var(--cc-card-max-w);
+  max-width: var(--cc-card-w);
   background: var(--cc-dark-bg);
   border: 1px solid var(--cc-dark-border);
   border-radius: var(--cc-card-radius);
@@ -720,3 +745,107 @@ html, body {
   line-height: 1.4;
   width: 100%;
 }
+
+/* ================================================================
+ * REVIEW STATE — body compaction
+ * Reduces per-item margins/gaps so the review content fits within
+ * the fixed 286 px card height without clipping essential facts.
+ * Applied only to #ccBodyReview to avoid affecting other panels.
+ * ================================================================ */
+[data-state="REVIEW"] .cc-card-body {
+  padding: 4px 16px;
+}
+
+#ccBodyReview {
+  gap: 2px;
+}
+
+#ccBodyReview .cc-card-tx-label {
+  margin-bottom: 2px;
+}
+
+#ccBodyReview .cc-card-tx-amount {
+  margin-bottom: 4px;
+}
+
+#ccBodyReview .cc-card-review-block {
+  min-height: 0;
+}
+
+/* ================================================================
+ * COLLAPSED ACCEPTANCE MARK — 216 × 44 (border-box)
+ * Shown only in COLLAPSED state. Exterior is fixed per spec.
+ * Composed of a 172 px identity area and a 44 px lettermark cell.
+ * ================================================================ */
+.cc-collapsed-mark { display: none; }
+
+[data-state="COLLAPSED"] .cc-collapsed-mark {
+  display: flex;
+  align-items: stretch;
+  width: var(--cc-collapsed-w);
+  height: var(--cc-collapsed-h);
+  background: var(--cc-dark-bg);
+  border: 1px solid var(--cc-dark-border);
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.40), 0 1px 4px rgba(0,0,0,0.28);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* Identity area: 172 px wide — primary claim + network/token */
+.cc-collapsed-identity {
+  flex: 0 0 172px;
+  width: 172px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 7px 12px;
+  min-width: 0;
+  overflow: hidden;
+  border-right: 1px solid var(--cc-dark-border);
+}
+
+.cc-collapsed-primary {
+  font-family: 'Oxanium', var(--cc-ui);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--cc-dark-fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+}
+
+.cc-collapsed-sub {
+  font-family: var(--cc-mono);
+  font-size: 8px;
+  letter-spacing: 0.08em;
+  color: var(--cc-dark-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  margin-top: 3px;
+}
+
+/* Lettermark cell: 44 × 44 */
+.cc-collapsed-lettermark {
+  flex: 0 0 44px;
+  width: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cc-collapsed-lettermark img {
+  width: 36px;
+  height: 36px;
+  display: block;
+}
+
+/* ================================================================
+ * COLLAPSED state — hide expanded card and controls
+ * ================================================================ */
+[data-state="COLLAPSED"] .cc-card,
+[data-state="COLLAPSED"] .cc-receive-zone { display: none; }
