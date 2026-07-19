@@ -80,8 +80,9 @@ const DEMO_AUTHORITY_ID = 'implicitex-registry';
 const DEMO_RECORD_KEY_ID = 'ix-lifecycle-pub-v1';
 
 /* Fixed verification time used throughout synthetic tests.
- * Must be after the real bundle's generatedAt for test 29 to pass.
- * The real bundle was generated on 2026-07-15. Keep this after generatedAt. */
+ * Synthetic fixture records use July 2026 timestamps; FIXED_NOW must be
+ * after those timestamps. Test 29 derives its own verification clock from
+ * the committed production artifacts and does not use FIXED_NOW. */
 const FIXED_NOW = '2026-07-16T00:00:00.000Z';
 
 /* ----------------------------------------------------------------
@@ -290,6 +291,83 @@ async function makeSignedRuntime(recordOverridesList = [{}], options = {}) {
   });
 
   return { runtime, keyPair, publicKey, bundle, records };
+}
+
+/* ----------------------------------------------------------------
+ * Production artifact helpers (test 29 only)
+ *
+ * These helpers read the committed production manifest and lifecycle bundle
+ * so that test 29 can derive all fixture values from the current signed
+ * artifacts rather than from manually maintained constants. Future signing
+ * ceremonies require no calendar-literal or manifest-hash edits here.
+ * ---------------------------------------------------------------- */
+
+/* Read and parse the committed production manifest. */
+function readCommittedManifest() {
+  const manifestPath = path.join(repoRoot, 'app-web/frontend/public/card/coin-card-manifest.json');
+  return JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+}
+
+/* Evaluate the committed lifecycle bundle IIFE and return the bundle object. */
+function extractProductionBundle() {
+  const bundlePath = path.join(repoRoot, 'app-web/frontend/public/card/coin-card-lifecycle-bundle.js');
+  const lcCtx = { window: {} };
+  lcCtx.window.window = lcCtx.window;
+  vm.createContext(lcCtx, { codeGeneration: { strings: false, wasm: false } });
+  vm.runInContext(fs.readFileSync(bundlePath, 'utf8'), lcCtx, { filename: bundlePath, timeout: 1000 });
+  const bundle = lcCtx.window.IX_COIN_CARD_LIFECYCLE_REGISTRY_BUNDLE;
+  if (!bundle || typeof bundle !== 'object') {
+    throw new Error('extractProductionBundle: IX_COIN_CARD_LIFECYCLE_REGISTRY_BUNDLE not found');
+  }
+  if (!Array.isArray(bundle.entries) || bundle.entries.length === 0) {
+    throw new Error('extractProductionBundle: lifecycle bundle has no entries');
+  }
+  return bundle;
+}
+
+/* Collect all publication and signature timestamps from a lifecycle bundle as ms values.
+ * Requires bundle.generatedAt and all per-entry fields; throws on any missing or malformed value. */
+function collectLifecycleTimestampsMs(bundle) {
+  const timestamps = [];
+  if (typeof bundle.generatedAt !== 'string' || !bundle.generatedAt) {
+    throw new Error('collectLifecycleTimestampsMs: bundle.generatedAt is missing or not a string');
+  }
+  const generatedAtMs = Date.parse(bundle.generatedAt);
+  if (!Number.isFinite(generatedAtMs)) {
+    throw new Error(`collectLifecycleTimestampsMs: bundle.generatedAt is not a valid ISO timestamp: ${bundle.generatedAt}`);
+  }
+  timestamps.push(generatedAtMs);
+
+  for (let i = 0; i < bundle.entries.length; i++) {
+    const entry = bundle.entries[i];
+    const sig = entry && entry.signature;
+    const fields = [
+      { field: `entries[${i}].publishedAt`, value: entry.publishedAt },
+      { field: `entries[${i}].effectiveFrom`, value: entry.effectiveFrom },
+      { field: `entries[${i}].signature.signedAt`, value: sig && sig.signedAt },
+    ];
+    for (const { field, value } of fields) {
+      if (typeof value !== 'string' || !value) {
+        throw new Error(`collectLifecycleTimestampsMs: ${field} is missing or not a string`);
+      }
+      const ms = Date.parse(value);
+      if (!Number.isFinite(ms)) {
+        throw new Error(`collectLifecycleTimestampsMs: ${field} is not a valid ISO timestamp: ${value}`);
+      }
+      timestamps.push(ms);
+    }
+  }
+  return timestamps;
+}
+
+/* Derive a verification time strictly after all lifecycle publication timestamps.
+ * Takes the maximum of all collected ms values and adds 60 seconds. The margin
+ * only needs to place the clock after the latest publication timestamp; it does
+ * not need to exceed the trusted-key clock-skew window. No Date.now() dependency. */
+const PRODUCTION_FIXTURE_CLOCK_MARGIN_MS = 60 * 1000;
+function deriveProductionVerificationTime(bundle) {
+  const timestampsMs = collectLifecycleTimestampsMs(bundle);
+  return new Date(Math.max(...timestampsMs) + PRODUCTION_FIXTURE_CLOCK_MARGIN_MS).toISOString();
 }
 
 /* Run the complete pipeline from bundle → promotedPresentation */
@@ -951,21 +1029,55 @@ test('null promoted result → authorizeExecution refuses it', async () => {
 /* ----------------------------------------------------------------
  * 23. Real production bundle file loads and promotes cc_demo_implicitex
  *
- * This test will FAIL until Commit 2 generates coin-card-lifecycle-bundle.js
- * and coin-card-trusted-keys.js. That is by design.
+ * All fixture values are derived from the committed production artifacts.
+ * Future signing ceremonies require no calendar-literal or manifest-hash
+ * edits to this test.
  * ---------------------------------------------------------------- */
 test('real production bundle file authenticates and promotes cc_demo_implicitex', async () => {
+  assert.ok(fs.existsSync(lifecycleBundlePath),
+    `coin-card-lifecycle-bundle.js must exist at ${lifecycleBundlePath}`);
+  assert.ok(fs.existsSync(trustedKeysPath),
+    `coin-card-trusted-keys.js must exist at ${trustedKeysPath}`);
+
+  /* --- Part 1: Load committed production artifacts ---- */
+  const productionManifest = readCommittedManifest();
+  const productionBundle   = extractProductionBundle();
+
+  /* Derive manifest ID from the committed manifest — not from the lifecycle bundle.
+   * This preserves the ability to detect drift between the two separately committed files. */
+  const productionManifestHash = productionManifest.manifestHash;
   assert.ok(
-    fs.existsSync(lifecycleBundlePath),
-    `coin-card-lifecycle-bundle.js must exist at ${lifecycleBundlePath}`,
-  );
-  assert.ok(
-    fs.existsSync(trustedKeysPath),
-    `coin-card-trusted-keys.js must exist at ${trustedKeysPath}`,
+    typeof productionManifestHash === 'string' && /^sha256:[0-9a-f]{64}$/.test(productionManifestHash),
+    `manifest.manifestHash must be a valid sha256: identifier; got: ${productionManifestHash}`,
   );
 
+  /* --- Part 2: Assert manifest and lifecycle bundle are not drifted --- */
+  /* At least one lifecycle entry must reference the committed manifest's hash.
+   * This catches any scenario where the manifest and lifecycle bundle were signed
+   * against different underlying states. */
+  const matchingEntry = productionBundle.entries.find((e) => e.manifestId === productionManifestHash);
+  assert.ok(
+    matchingEntry !== undefined,
+    `no lifecycle entry references committed manifest hash ${productionManifestHash}; ` +
+    `bundle contains: [${productionBundle.entries.map((e) => e.manifestId).join(', ')}]`,
+  );
+
+  /* --- Part 3: Derive verification clock from committed lifecycle timestamps --- */
+  /* Collect all lifecycle publication timestamps and assert the derived clock
+   * is strictly after every one of them. The 60-second margin places the clock
+   * after the latest publication; it does not need to exceed the clock-skew window. */
+  const lifecycleTimestampsMs   = collectLifecycleTimestampsMs(productionBundle);
+  const productionVerificationNow = deriveProductionVerificationTime(productionBundle);
+  const productionNowMs           = Date.parse(productionVerificationNow);
+  for (const ms of lifecycleTimestampsMs) {
+    assert.ok(productionNowMs > ms,
+      `production verification time (${productionVerificationNow}) must be strictly after ` +
+      `lifecycle timestamp (${new Date(ms).toISOString()})`);
+  }
+
+  /* --- Part 4: Run production bundle through the full pipeline --- */
   const lifecycleBundleSource = fs.readFileSync(lifecycleBundlePath, 'utf8');
-  const trustedKeysSource = fs.readFileSync(trustedKeysPath, 'utf8');
+  const trustedKeysSource     = fs.readFileSync(trustedKeysPath, 'utf8');
 
   const context = {
     TextEncoder, Promise,
@@ -979,8 +1091,8 @@ test('real production bundle file authenticates and promotes cc_demo_implicitex'
   context.window.btoa = nodeBtoa;
   context.window.crypto = webcrypto;
 
-  /* Use a fixed verification time that is definitely after the bundle's generatedAt */
-  const FixedDate = makeFixedDateClass(FIXED_NOW);
+  /* Verification clock derived from artifacts — no calendar literal. */
+  const FixedDate = makeFixedDateClass(productionVerificationNow);
   context.Date = FixedDate;
   context.window.Date = FixedDate;
 
@@ -1000,11 +1112,11 @@ test('real production bundle file authenticates and promotes cc_demo_implicitex'
   vm.runInNewContext(lifecycleResolutionSource, context, { filename: lifecycleResolutionPath });
   vm.runInNewContext(lifecyclePresentationSource, context, { filename: lifecyclePresentationPath });
 
-  const bundleApi      = context.window.IX_COIN_CARD_LIFECYCLE_BUNDLE_VERIFICATION;
-  const selectorApi    = context.window.IX_COIN_CARD_LIFECYCLE_RECORD_SELECTION;
-  const resolutionApi  = context.window.IX_COIN_CARD_LIFECYCLE_RESOLUTION;
+  const bundleApi       = context.window.IX_COIN_CARD_LIFECYCLE_BUNDLE_VERIFICATION;
+  const selectorApi     = context.window.IX_COIN_CARD_LIFECYCLE_RECORD_SELECTION;
+  const resolutionApi   = context.window.IX_COIN_CARD_LIFECYCLE_RESOLUTION;
   const presentationApi = context.window.IX_COIN_CARD_LIFECYCLE_PRESENTATION;
-  const bundle         = context.window.IX_COIN_CARD_LIFECYCLE_REGISTRY_BUNDLE;
+  const bundle          = context.window.IX_COIN_CARD_LIFECYCLE_REGISTRY_BUNDLE;
 
   assert.ok(bundle, 'IX_COIN_CARD_LIFECYCLE_REGISTRY_BUNDLE must be defined');
   assert.ok(Array.isArray(bundle.entries) && bundle.entries.length >= 1, 'bundle must have at least one entry');
@@ -1014,21 +1126,32 @@ test('real production bundle file authenticates and promotes cc_demo_implicitex'
     `bundle verification failed: ${proof.outcome} reason=${proof.reason || ''}`);
   assert.equal(proof.authenticated, true);
 
+  /* Select using the manifest ID derived from the committed manifest file. */
   const selected = selectorApi.selectLifecycleEvidence(proof, {
     cardId: DEMO_CARD_ID,
-    manifestId: DEMO_MANIFEST_ID,
+    manifestId: productionManifestHash,
   });
   assert.equal(selected.outcome, 'LIFECYCLE_EVIDENCE_SELECTED',
     `selection failed: ${selected.outcome} reason=${selected.reason || ''}`);
   assert.equal(selected.selected, true);
 
   const resolved = resolutionApi.resolveLifecycle(selected);
-  assert.equal(resolved.outcome, 'LIFECYCLE_ACTIVE',
-    `resolution failed: ${resolved.outcome}`);
+  assert.equal(resolved.outcome, 'LIFECYCLE_ACTIVE', `resolution failed: ${resolved.outcome}`);
 
   const promoted = presentationApi.promotePresentation(resolved);
-  assert.equal(promoted.outcome, 'PRESENTATION_PROMOTED',
-    `promotion failed: ${promoted.outcome}`);
+  assert.equal(promoted.outcome, 'PRESENTATION_PROMOTED', `promotion failed: ${promoted.outcome}`);
   assert.equal(promoted.presentationEligible, true);
   assert.equal(presentationApi.isPromotedPresentationResult(promoted), true);
+
+  /* --- Part 5: Negative path — wrong manifest ID must not match --- */
+  /* Changing the manifest hash presented to selection must find no record. */
+  const wrongManifestId   = 'sha256:' + '0'.repeat(64);
+  const wrongSelected     = selectorApi.selectLifecycleEvidence(proof, {
+    cardId: DEMO_CARD_ID,
+    manifestId: wrongManifestId,
+  });
+  assert.equal(wrongSelected.selected, false,
+    'wrong manifest ID must not match any lifecycle record');
+  assert.equal(wrongSelected.outcome, 'LIFECYCLE_EVIDENCE_MANIFEST_NOT_FOUND',
+    'wrong manifest ID must yield LIFECYCLE_EVIDENCE_MANIFEST_NOT_FOUND');
 });
