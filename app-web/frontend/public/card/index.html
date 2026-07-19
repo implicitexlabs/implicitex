@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Coin Card</title>
+  <meta name="robots" content="noindex">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="card.css">
+</head>
+<body>
+
+<div class="cc-frame" id="ccFrame" data-state="BOOT" data-ix-coin-card
+  data-ix-manifest="coin-card-manifest.json" role="region" aria-label="Coin Card transfer surface">
+
+  <!-- BOOT / MANIFEST_LOADING -->
+  <div class="cc-loading" id="ccLoading" aria-live="polite">
+    <span>Checking registry&hellip;</span>
+  </div>
+
+  <!-- ERROR: registry-record-level (not found, invalid, fetch failure) -->
+  <div class="cc-error" id="ccError" role="alert">
+    <p class="cc-error-message" id="ccErrorMessage">&mdash;</p>
+    <p class="cc-error-sub"    id="ccErrorSub"></p>
+  </div>
+
+  <!-- Card surface: VERIFIED &rarr; CONFIRMED -->
+  <div class="cc-card cc-card--dark" id="ccCard">
+
+    <!-- Top: issuer authority + verification status -->
+    <div class="cc-card-top">
+      <div class="cc-card-issuer">
+        <span class="cc-issuer-art">
+          <img class="cc-issuer-mark cc-art--on-dark"  src="/components/images/lettermark-white.svg" alt="" aria-hidden="true">
+          <img class="cc-issuer-word cc-art--on-dark"  src="/components/images/wordmark-white.svg"   alt="ImplicitEx">
+          <img class="cc-issuer-mark cc-art--on-light" src="/components/images/lettermark-black.svg" alt="" aria-hidden="true">
+          <img class="cc-issuer-word cc-art--on-light" src="/components/images/wordmark-black.svg"   alt="ImplicitEx">
+        </span>
+        <span class="cc-issuer-fallback">IMPLICITEX</span>
+      </div>
+      <span class="cc-card-status cc-card-status--verified" id="ccCardStatus">
+        <span class="cc-card-status-dot cc-card-status-dot--verified" id="ccStatusDot" aria-hidden="true"></span>
+        <span id="ccStatusLabel">Verified</span>
+      </span>
+    </div>
+
+    <!-- Body: content zone — one panel visible at a time via CSS data-state rules -->
+    <div class="cc-card-body">
+
+      <!-- Input — CONFIGURE, WRONG_NETWORK -->
+      <div class="cc-body-panel" id="ccBodyInput">
+        <p class="cc-card-tx-label" id="ccTxLabel">Configure payment</p>
+        <div class="cc-card-amount-field" id="ccAmountField">
+          <input class="cc-card-amount-input" id="ccAmountInput"
+            type="text" placeholder="0.00"
+            autocomplete="off" inputmode="decimal"
+            aria-label="Transfer amount in USDC">
+          <span class="cc-card-amount-unit-lock" id="ccAmountToken" aria-hidden="true">USDC</span>
+        </div>
+        <div class="cc-card-tx-row">
+          <span id="ccFeePctLabel">Fee 1%</span>
+          <span class="cc-card-tx-row-value" id="ccFeeValue">&mdash;</span>
+        </div>
+        <div class="cc-card-tx-row">
+          <span>Total</span>
+          <span class="cc-card-tx-row-value" id="ccTotalValue">&mdash;</span>
+        </div>
+        <p class="cc-card-name"      id="ccCardName"></p>
+        <p class="cc-card-recipient" id="ccCardRecipient" title="">&mdash;</p>
+        <p class="cc-selfsend-warn"  id="ccSelfSendWarn">You appear to be the card holder. Share this URL with a sender.</p>
+      </div>
+
+      <!-- Review — REVIEW -->
+      <div class="cc-body-panel" id="ccBodyReview">
+        <p class="cc-card-tx-label">Review payment</p>
+        <p class="cc-card-tx-amount"><span id="ccReviewAmount">&mdash;</span><span class="cc-card-tx-unit"> USDC</span></p>
+        <div class="cc-card-tx-row">
+          <span id="ccReviewFeePct">Fee 1%</span>
+          <span class="cc-card-tx-row-value" id="ccReviewFee">&mdash;</span>
+        </div>
+        <div class="cc-card-tx-row">
+          <span>Total</span>
+          <span class="cc-card-tx-row-value" id="ccReviewTotal">&mdash;</span>
+        </div>
+        <div class="cc-card-tx-row">
+          <span>Network</span>
+          <span class="cc-card-tx-row-value" id="ccReviewNetwork">&mdash;</span>
+        </div>
+        <div class="cc-card-tx-row">
+          <span>Recipient wallet</span>
+          <span class="cc-card-tx-row-value" id="ccReviewRecipientAddress">&mdash;</span>
+        </div>
+        <div class="cc-card-tx-row">
+          <span>Wallet</span>
+          <span class="cc-card-tx-row-value" id="ccReviewWallet">&mdash;</span>
+        </div>
+        <div class="cc-card-tx-row">
+          <span>Gas readiness</span>
+          <span class="cc-card-tx-row-value" id="ccReviewGas">&mdash;</span>
+        </div>
+        <p class="cc-card-review-block" id="ccReviewBlockReason"></p>
+      </div>
+
+      <!-- Execution — CONNECTING, REVIEW_PREPARING, AUTHORIZING, EXECUTING, CONFIRMATION_PENDING -->
+      <div class="cc-body-panel" id="ccBodyExec">
+        <p class="cc-card-tx-label" id="ccExecLabel">Connecting&hellip;</p>
+        <span class="cc-card-tx-spinner" aria-label="Processing"></span>
+        <p class="cc-card-tx-amount"><span id="ccExecAmount">&mdash;</span><span class="cc-card-tx-unit"> USDC</span></p>
+        <p class="cc-card-name"      id="ccExecName"></p>
+        <p class="cc-card-recipient" id="ccExecRecipient" title="">&mdash;</p>
+      </div>
+
+      <!-- Confirmed — CONFIRMED -->
+      <div class="cc-body-panel" id="ccBodyConfirmed">
+        <p class="cc-card-tx-label">Confirmed</p>
+        <p class="cc-card-tx-amount"><span id="ccConfirmedAmount">&mdash;</span><span class="cc-card-tx-unit"> USDC</span></p>
+        <a class="cc-card-tx-hash" id="ccTxHash" href="#" target="_blank" rel="noopener noreferrer">&mdash;</a>
+        <p class="cc-card-name"      id="ccConfirmedName"></p>
+        <p class="cc-card-recipient" id="ccConfirmedRecipient" title="">&mdash;</p>
+      </div>
+
+      <!-- Error / Revoked — TX_FAILED, REVOKED -->
+      <div class="cc-body-panel" id="ccBodyError">
+        <p class="cc-card-tx-label" id="ccErrorStateLabel">Error</p>
+        <p class="cc-card-tx-error" id="ccCardError">&mdash;</p>
+        <p class="cc-card-name"      id="ccErrorName"></p>
+        <p class="cc-card-recipient" id="ccErrorRecipient" title="">&mdash;</p>
+      </div>
+
+    </div><!-- /.cc-card-body -->
+
+    <!-- Chip: in-card execution trigger; Edit Payment shown alongside chip in REVIEW -->
+    <div class="cc-card-action" id="ccCardAction">
+      <button class="cc-card-secondary-action" id="ccEditPayment" type="button">Edit payment</button>
+      <button class="cc-card-chip cc-card-chip--waiting" id="ccChip"
+        type="button" disabled aria-label="Enter amount to continue"></button>
+    </div>
+
+    <!-- Bottom: network rail + product stamp -->
+    <div class="cc-card-bottom">
+      <span class="cc-card-network" id="ccCardNetwork">&mdash;</span>
+      <div class="cc-card-stamp">
+        <img src="/components/images/coincard-logo.svg" alt="Coin Card"
+             class="cc-card-logo" width="392" height="56">
+        <span class="cc-card-logo-fallback">COIN CARD</span>
+      </div>
+    </div>
+
+  </div><!-- /.cc-card -->
+
+  <!-- COLLAPSED ACCEPTANCE MARK — 216 × 44 fixed exterior (coin-card.tokens.json v1)
+       Shown only in COLLAPSED state. Expand control occupies the full 216 × 44 hit target. -->
+  <button class="cc-collapsed-mark" id="ccCollapsedMark"
+    aria-label="Expand Coin Card" type="button">
+    <div class="cc-collapsed-identity">
+      <span class="cc-collapsed-primary" id="ccCollapsedPrimary">Coin Card</span>
+      <span class="cc-collapsed-sub"     id="ccCollapsedSub">Polygon &middot; USDC</span>
+    </div>
+    <div class="cc-collapsed-lettermark">
+      <img src="/components/images/lettermark-white.svg" alt="" aria-hidden="true">
+    </div>
+  </button>
+
+  <!-- PRESENT ZONE — shown in active card states; lets card holder share card as QR -->
+  <div class="cc-receive-zone" id="ccReceiveZone">
+    <button class="cc-receive-btn" id="ccReceiveBtn" type="button">PRESENT CARD</button>
+  </div>
+
+  <!-- QR PANEL — replaces card view; encodes only the canonical card URL, no amount -->
+  <div class="cc-qr-panel" id="ccQrPanel" aria-label="Present Coin Card">
+    <div class="cc-qr-head">
+      <span class="cc-qr-title">PRESENT CARD</span>
+      <button class="cc-qr-close" id="ccQrClose" type="button" aria-label="Close QR panel">&times;</button>
+    </div>
+    <canvas class="cc-qr-canvas" id="ccQrCanvas" width="200" height="200" aria-hidden="true"></canvas>
+    <p class="cc-qr-hint">Sender scans to open your Coin Card</p>
+    <p class="cc-qr-url" id="ccQrUrl" aria-live="polite"></p>
+  </div>
+
+</div><!-- /.cc-frame -->
+
+<script src="/js/ix-execution-gas-policy.js"></script>
+<script src="/js/ix-execution.js"></script>
+<script src="coin-card-trusted-keys.js"></script>
+<script src="coin-card-trusted-key-resolution.js"></script>
+<script src="coin-card-lifecycle-bundle.js"></script>
+<script src="coin-card-lifecycle-registry.js"></script>
+<script src="coin-card-lifecycle-record-verification.js"></script>
+<script src="coin-card-lifecycle-bundle-verification.js"></script>
+<script src="coin-card-lifecycle-record-selection.js"></script>
+<script src="coin-card-lifecycle-resolution.js"></script>
+<script src="coin-card-lifecycle-presentation.js"></script>
+<script src="coin-card-execution-authorization.js"></script>
+<script src="coin-card-review-projection-contract.js"></script>
+<script src="coin-card-verification.js"></script>
+<script src="card.js"></script>
+</body>
+</html>

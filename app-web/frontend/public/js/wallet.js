@@ -69,12 +69,9 @@
       state.connecting = false;
       state.userDisconnected = true;
       stopWalletChainWatcher();
-      if (els.walletPill) els.walletPill.classList.remove('visible');
-      if (els.walletAddr) els.walletAddr.textContent = '';
+      closeWalletMenu();
+      hideWalletMenuEl();
       updateSenderDisplay();
-      if (els.disconnectBtn) els.disconnectBtn.setAttribute('hidden', '');
-      setAccountSwitchVisible(false);
-      resetConnectButton();
       setNavStatus('');
       setElementSeverity(els.navStatus, null);
       if (els.networkBadge) {
@@ -186,6 +183,7 @@
   const POLYGON_GAS_STATION_URL = 'https://gasstation.polygon.technology/v2';
   const POLYGON_MAINNET_CHAIN_ID = 137;
   const POLYGON_MAINNET_CHAIN_HEX = '0x89';
+  const WALLET_LOCAL_DISCONNECT_KEY = 'ix.wallet.localDisconnect';
   const RECIPIENT_BOOK_KEY = 'ix.recipient.book';
   const TRANSFER_STATUS = window.IX && window.IX.transferStatus;
   const IX_TRANSFER_STATES = TRANSFER_STATUS && TRANSFER_STATUS.IX_TRANSFER_STATES;
@@ -217,6 +215,7 @@
     'function paused() view returns (bool)',
     'function previewTransfer(address sender,uint256 amount) view returns (uint256 fee,uint256 totalDebit,uint256 balance,uint256 allowance,bool canTransfer)',
     'function transferWithFee(address recipient, uint256 amount)',
+    'event TransferExecuted(address indexed sender,address indexed recipient,uint256 amountSent,uint256 feeAmount,uint256 totalDebited)',
   ];
 
   // ----------------------------------------------------------------
@@ -420,6 +419,15 @@
     disconnectBtn:  document.getElementById('disconnectBtn'),
     walletPill:     document.getElementById('walletPill'),
     walletAddr:     document.getElementById('walletAddr'),
+    walletMenu:     document.getElementById('walletMenu'),
+    walletMenuTrigger: document.getElementById('walletMenuTrigger'),
+    walletMenuPanel: document.getElementById('walletMenuPanel'),
+    walletFullAddress: document.getElementById('walletFullAddress'),
+    copyAddressBtn: document.getElementById('copyAddressBtn'),
+    switchNetworkBtn: document.getElementById('switchNetworkBtn'),
+    modulesMinimize: document.getElementById('modulesMinimize'),
+    modulesClose:   document.getElementById('modulesClose'),
+    portalMinimizedTray: document.getElementById('portalMinimizedTray'),
     modules:        document.getElementById('modules'),
     portalControls: document.getElementById('portalControls'),
     howItWorks:     document.getElementById('howItWorks'),
@@ -432,9 +440,11 @@
     gasHeroVal:         document.getElementById('gasHeroVal'),
     networkBadge:       document.getElementById('networkBadge'),
     navStatus:          document.querySelector('.nav-status'),
-    networkNameDisplay: document.getElementById('networkNameDisplay'),
-    contractStatus:     document.getElementById('contractStatus'),
-    networkStatus:      document.getElementById('networkStatus'),
+    networkNameDisplay:  document.getElementById('networkNameDisplay'),
+    contractStatus:      document.getElementById('contractStatus'),
+    networkStatus:       document.getElementById('networkStatus'),
+    confirmTimeDisplay:  document.getElementById('confirmTimeDisplay'),
+    rpcLatencyDisplay:   document.getElementById('rpcLatencyDisplay'),
     senderAddressDisplay: document.getElementById('senderAddressDisplay'),
     usdcBalance:        document.getElementById('usdcBalance'),
     transferStateNote:  document.getElementById('transferStateNote'),
@@ -470,11 +480,29 @@
     gasHigh:      document.getElementById('gasHigh'),
     gasTrend:     document.getElementById('gasTrend'),
     gasSamples:   document.getElementById('gasSamples'),
+    gasChart:     document.getElementById('gasChart'),
+    gasAxisMax:   document.getElementById('gasAxisMax'),
+    gasAxisMid:   document.getElementById('gasAxisMid'),
+    gasAxisMin:   document.getElementById('gasAxisMin'),
+    gasAxisStart: document.getElementById('gasAxisStart'),
+    gasAxisNow:   document.getElementById('gasAxisNow'),
     walletChoiceOverlay:      document.getElementById('walletChoiceOverlay'),
     walletChoiceClose:        document.getElementById('walletChoiceClose'),
     walletChoiceBackdrop:     document.getElementById('walletChoiceBackdrop'),
     walletChoiceMetaMask:     document.getElementById('walletChoiceMetaMask'),
     walletChoiceWalletConnect: document.getElementById('walletChoiceWalletConnect'),
+    confirmedTransferBlock: document.getElementById('confirmedTransferBlock'),
+    verifStatus:            document.getElementById('verifStatus'),
+    verifReceiptId:         document.getElementById('verifReceiptId'),
+    verifAmount:            document.getElementById('verifAmount'),
+    verifFee:               document.getElementById('verifFee'),
+    verifTotal:             document.getElementById('verifTotal'),
+    verifRecipient:         document.getElementById('verifRecipient'),
+    verifNetwork:           document.getElementById('verifNetwork'),
+    verifTxHash:            document.getElementById('verifTxHash'),
+    verifBlock:             document.getElementById('verifBlock'),
+    verifTimestamp:         document.getElementById('verifTimestamp'),
+    verifTransferActions:   document.getElementById('verifTransferActions'),
   };
 
   // ----------------------------------------------------------------
@@ -503,6 +531,22 @@
     }
   }
 
+  function isLocalWalletDisconnectRemembered() {
+    return fullStorageRead(WALLET_LOCAL_DISCONNECT_KEY, false) === true;
+  }
+
+  function rememberLocalWalletDisconnect() {
+    fullStorageWrite(WALLET_LOCAL_DISCONNECT_KEY, true);
+  }
+
+  function clearLocalWalletDisconnect() {
+    try {
+      localStorage.removeItem(WALLET_LOCAL_DISCONNECT_KEY);
+    } catch (_) {
+      // Storage persistence is optional; visible state still updates.
+    }
+  }
+
   function normalizeAddress(value) {
     const v = String(value || '').trim();
     if (!/^0x[0-9a-fA-F]{40}$/.test(v)) return null;
@@ -510,7 +554,7 @@
       try {
         return ethers.getAddress(v);
       } catch (_) {
-        return v;
+        return null; // invalid EIP-55 checksum — treat as unresolvable
       }
     }
     return v;
@@ -539,7 +583,7 @@
 
   function setElementSeverity(el, severity) {
     if (!el) return;
-    el.classList.remove('is-error', 'is-warning', 'is-advisory', 'is-blocking', 'is-critical', 'is-pending');
+    el.classList.remove('is-error', 'is-warning', 'is-advisory', 'is-blocking', 'is-critical', 'is-pending', 'is-live');
     if (severity) el.classList.add('is-' + severity);
   }
 
@@ -596,6 +640,204 @@
     };
   }
 
+  // QA diagnostic helper: extract serializable fields from a wallet/provider error.
+  // Used to surface raw error detail on mobile where console is not accessible.
+  function serializeWalletError(err) {
+    if (!err) return { empty: true };
+    var safe = {};
+    // Allowlist: capture known provider/ethers error fields by name.
+    ['name', 'code', 'message', 'shortMessage', 'reason', 'data', 'info', 'cause', 'error', 'payload'].forEach(function (key) {
+      try { if (err[key] !== undefined) safe[key] = String(err[key]); } catch (_) {}
+    });
+    // Enumerable own keys (may be empty for native Error objects).
+    try { safe.keys = Object.keys(err); } catch (_) { safe.keys = []; }
+    // All own property names including non-enumerable (catches Error.message, .stack, etc.).
+    try {
+      var ownNames = Object.getOwnPropertyNames(err);
+      safe.ownPropertyNames = ownNames;
+      ownNames.forEach(function (key) {
+        if (safe[key] === undefined) {
+          try {
+            var val = err[key];
+            if (val !== undefined && val !== null) {
+              safe[key] = typeof val === 'object' ? JSON.stringify(val) : String(val);
+            }
+          } catch (_) {}
+        }
+      });
+    } catch (_) {}
+    // String coercions — catch toString() overrides and prototype tag.
+    try { safe.errString       = String(err); } catch (_) {}
+    try { safe.toStringTag     = Object.prototype.toString.call(err); } catch (_) {}
+    return safe;
+  }
+
+  // QA: render a fixed-position overlay with the raw wallet error.
+  // Fires on every pre-broadcast transferWithFee() failure so the error is
+  // visible regardless of panel state, scroll position, or exitReview timing.
+  // Remove by reloading the page.
+  function renderPreBroadcastDiag(err, label) {
+    var walletDiag = serializeWalletError(err);
+    var diagText = [
+      'QA WALLET ERROR — ' + (label || 'pre-broadcast'),
+      'build: 71f429d / qa-overlay: 699a081 / ' + new Date().toISOString(),
+      '',
+      JSON.stringify(walletDiag, null, 2),
+    ].join('\n');
+
+    var existing = document.getElementById('ix-qa-diag');
+    if (existing) existing.remove();
+
+    var overlay = document.createElement('div');
+    overlay.id = 'ix-qa-diag';
+    overlay.setAttribute('aria-live', 'assertive');
+    overlay.style.cssText = [
+      'position:fixed',
+      'bottom:0',
+      'left:0',
+      'right:0',
+      'max-height:55vh',
+      'overflow-y:auto',
+      'background:#1a0000',
+      'border-top:3px solid #f33',
+      'z-index:2147483647',
+      'padding:0.75rem 1rem',
+      'box-sizing:border-box',
+    ].join(';');
+
+    var pre = document.createElement('pre');
+    pre.style.cssText = 'white-space:pre-wrap;word-break:break-all;font-size:10px;line-height:1.4;color:#f77;margin:0;';
+    pre.textContent = diagText;
+    overlay.appendChild(pre);
+    document.body.appendChild(overlay);
+  }
+
+  // Query the ImplicitEx contract for a matching TransferExecuted event in the
+  // last ~10 minutes of Polygon blocks, using a fresh read-only RPC provider
+  // independent of the wallet provider (which may be in a bad state).
+  // Returns { found:true, txHash, explorerUrl, blockNumber } or { found:false }.
+  async function reconcileInterruptedTransfer(sender, recipient, rawAmount, contractAddress, chainConfig) {
+    try {
+      const rpcProvider = new ethers.JsonRpcProvider(chainConfig.rpcUrl);
+      const currentBlock = await rpcProvider.getBlockNumber();
+      const fromBlock = Math.max(0, currentBlock - 1200); // ~30 min at 1.5s/block; wider window reduces false negatives from RPC lag or delayed mobile callback
+      const contract = new ethers.Contract(contractAddress, IMPLICITEX_ABI, rpcProvider);
+      const events = await contract.queryFilter(
+        contract.filters.TransferExecuted(sender, recipient),
+        fromBlock,
+        currentBlock
+      );
+      const senderLc    = sender.toLowerCase();
+      const recipientLc = recipient.toLowerCase();
+      const rawAmountBn = BigInt(rawAmount);
+      const match = events.find(function (ev) {
+        return ev.args.sender.toLowerCase()    === senderLc    &&
+               ev.args.recipient.toLowerCase() === recipientLc &&
+               BigInt(ev.args.amountSent)      === rawAmountBn;
+      });
+      if (match) {
+        return {
+          found:       true,
+          txHash:      match.transactionHash,
+          explorerUrl: chainConfig.explorerUrl + '/tx/' + match.transactionHash,
+          blockNumber: match.blockNumber,
+        };
+      }
+      return { found: false };
+    } catch (err) {
+      return { found: false, reconError: err && err.message };
+    }
+  }
+
+  var IX_QA_BUILD = 'd34d5e2';
+  var IX_QA_LS_KEY = 'ix_qa_last_wallet_error';
+
+  // Write a diagnostic snapshot to localStorage before UI cleanup can remove it.
+  // Survives page reload and form reset — readable even if the overlay flickers away.
+  function persistWalletDiag(stage, err, extra) {
+    try {
+      var snapshot = {
+        build:            IX_QA_BUILD,
+        timestamp:        new Date().toISOString(),
+        stage:            stage,
+        account:          state && state.address,
+        chainId:          state && state.chainId,
+        timeline:         state && state.transferTimeline && JSON.parse(JSON.stringify(state.transferTimeline)),
+        err:              err ? serializeWalletError(err) : null,
+      };
+      if (extra) {
+        Object.keys(extra).forEach(function (k) { snapshot[k] = extra[k]; });
+      }
+      localStorage.setItem(IX_QA_LS_KEY, JSON.stringify(snapshot, null, 2));
+    } catch (_) { /* localStorage unavailable — silently skip */ }
+  }
+
+  // On page load: if a persisted diagnostic exists, render a fixed overlay with
+  // Copy and Clear buttons so it can be captured even after a page reload.
+  function renderPersistedWalletDiag() {
+    var raw;
+    try { raw = localStorage.getItem(IX_QA_LS_KEY); } catch (_) { return; }
+    if (!raw) return;
+
+    var existing = document.getElementById('ix-qa-diag');
+    if (existing) existing.remove();
+
+    var overlay = document.createElement('div');
+    overlay.id = 'ix-qa-diag';
+    overlay.style.cssText = [
+      'position:fixed',
+      'bottom:0',
+      'left:0',
+      'right:0',
+      'max-height:55vh',
+      'overflow-y:auto',
+      'background:#1a0000',
+      'border-top:3px solid #f33',
+      'z-index:2147483647',
+      'padding:0.75rem 1rem 1rem',
+      'box-sizing:border-box',
+    ].join(';');
+
+    var header = document.createElement('div');
+    header.style.cssText = 'display:flex;gap:0.5rem;margin-bottom:0.5rem;align-items:center;flex-wrap:wrap;';
+
+    var label = document.createElement('span');
+    label.style.cssText = 'color:#f77;font-size:11px;font-weight:bold;flex:1 1 auto;';
+    label.textContent = 'QA WALLET DIAGNOSTIC (persisted)';
+
+    var copyBtn = document.createElement('button');
+    copyBtn.textContent = 'Copy';
+    copyBtn.style.cssText = 'font-size:10px;padding:2px 8px;background:#333;color:#f77;border:1px solid #f33;border-radius:3px;cursor:pointer;flex-shrink:0;';
+    copyBtn.addEventListener('click', function () {
+      try {
+        navigator.clipboard.writeText(raw).then(function () {
+          copyBtn.textContent = 'Copied';
+          setTimeout(function () { copyBtn.textContent = 'Copy'; }, 2000);
+        });
+      } catch (_) {}
+    });
+
+    var clearBtn = document.createElement('button');
+    clearBtn.textContent = 'Clear';
+    clearBtn.style.cssText = 'font-size:10px;padding:2px 8px;background:#333;color:#aaa;border:1px solid #555;border-radius:3px;cursor:pointer;flex-shrink:0;';
+    clearBtn.addEventListener('click', function () {
+      try { localStorage.removeItem(IX_QA_LS_KEY); } catch (_) {}
+      overlay.remove();
+    });
+
+    header.appendChild(label);
+    header.appendChild(copyBtn);
+    header.appendChild(clearBtn);
+
+    var pre = document.createElement('pre');
+    pre.style.cssText = 'white-space:pre-wrap;word-break:break-all;font-size:10px;line-height:1.4;color:#f77;margin:0;';
+    pre.textContent = raw;
+
+    overlay.appendChild(header);
+    overlay.appendChild(pre);
+    document.body.appendChild(overlay);
+  }
+
   // Persistent contextual note below the button — explains the current transfer gate.
   // Empty string clears it (element is invisible when empty).
   function setTransferNote(msg) {
@@ -623,6 +865,7 @@
     const armed = acknowledged && isLiveTransferChain(state.chainId);
 
     els.txBtn.textContent = 'Execute Transfer';
+    els.txBtn.setAttribute('data-agent-action', 'submit-onchain-transfer');
     els.txBtn.disabled = !armed;
     els.txBtn.classList.toggle('tx-btn--armed', armed);
   }
@@ -793,6 +1036,7 @@
     if (els.txBtn) {
       els.txBtn.disabled = true;
       els.txBtn.textContent = currentButtonLabel();
+      els.txBtn.setAttribute('data-agent-action', 'review-transfer');
       els.txBtn.classList.remove('tx-btn--armed');
     }
     setTransferNote('');
@@ -832,6 +1076,7 @@
     if (els.txBtn) {
       els.txBtn.disabled = true;
       els.txBtn.textContent = currentButtonLabel();
+      els.txBtn.setAttribute('data-agent-action', 'review-transfer');
       els.txBtn.classList.remove('tx-btn--armed');
     }
     resetReviewAcknowledgement();
@@ -896,14 +1141,9 @@
     return `${sign}${whole.toString()}.${frac.slice(0, decimals).padEnd(decimals, '0')}`;
   }
 
-  function draftFeeBasisPoints(chainConfig) {
-    return BigInt((chainConfig && chainConfig.feeBasisPoints) || 100);
-  }
-
   function buildDraftSummary(recipient, amountStr, amountFloat, chainConfig) {
     const rawAmount = parseUsdcAmount(amountStr);
-    const fee = (rawAmount * draftFeeBasisPoints(chainConfig)) / 10000n;
-    const totalDebit = rawAmount + fee;
+    const { fee, total: totalDebit } = window.IX_EXECUTION.calculateFee(rawAmount, chainConfig && chainConfig.chainId);
     const balance = state.usdcBalanceRaw;
     return {
       recipient,
@@ -1341,6 +1581,7 @@
     const acknowledged = !!(els.txConfirmAck && els.txConfirmAck.checked);
     const armed = !disabled && acknowledged;
     els.txBtn.textContent = label;
+    els.txBtn.setAttribute('data-agent-action', 'review-transfer');
     els.txBtn.disabled = !armed;
     els.txBtn.classList.toggle('tx-btn--armed', armed);
   }
@@ -1373,16 +1614,39 @@
 
   function downloadProofPacket(receipt) {
     const packet = buildProofPacket(receipt);
-    const blob = new Blob([JSON.stringify(packet, null, 2) + '\n'], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
+    const json = JSON.stringify(packet, null, 2) + '\n';
     const hash = packet.transactionHash || receipt.id || 'local';
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `implicitex-proof-${String(hash).slice(0, 12)}.json`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 0);
+    const filename = `implicitex-proof-${String(hash).slice(0, 12)}.json`;
+
+    // Attempt blob download (desktop browsers + some mobile)
+    let downloaded = false;
+    try {
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 0);
+      downloaded = true;
+    } catch (_) {
+      downloaded = false;
+    }
+
+    if (downloaded) return;
+
+    // Fallback — copy JSON to clipboard (MetaMask in-app browser, iOS WebViews)
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(json).then(function () {
+        setStatus('Proof packet copied to clipboard.');
+      }).catch(function () {
+        setStatus('Download unavailable. Open in a browser to export the proof packet.');
+      });
+    } else {
+      setStatus('Download unavailable. Open in a browser to export the proof packet.');
+    }
   }
 
   function receiptExplorerUrl(chainConfig, txHash) {
@@ -1531,6 +1795,70 @@
     }
   }
 
+  // Derive a short user-facing receipt handle.
+  // When a confirmed tx hash exists, build from it so the ID is verifiable.
+  // Falls back to the stored receipt.id suffix (random hex portion).
+  function formatReceiptId(receipt) {
+    const txHash = receipt.transferHash || receipt.hash;
+    if (txHash) {
+      return 'IX-' + String(txHash).replace(/^0x/i, '').slice(0, 8).toUpperCase();
+    }
+    if (receipt.id) {
+      return 'IX-' + String(receipt.id).slice(-8).toUpperCase();
+    }
+    return '—';
+  }
+
+  // Plain-text receipt summary suitable for clipboard / email / invoice.
+  // Memo is intentionally excluded — it is local-only and not for sharing.
+  function formatReceiptSummaryText(receipt) {
+    const txHash = receipt.transferHash || receipt.hash;
+    const lines = [
+      'ImplicitEx Transfer Receipt',
+      'Local receipt generated from confirmed on-chain transfer.',
+      '',
+      'Receipt ID:  ' + formatReceiptId(receipt),
+      'Status:      ' + (receipt.state || '—'),
+      'Network:     ' + (receipt.network || '—'),
+      'Amount:      ' + (receipt.amount   ? receipt.amount    + ' USDC' : '—'),
+      'Fee:         ' + (receipt.fee      ? receipt.fee       + ' USDC' : '—'),
+      'Total:       ' + (receipt.totalDebit ? receipt.totalDebit + ' USDC' : '—'),
+      'Recipient:   ' + (receipt.recipient || '—'),
+      'Sender:      ' + (receipt.sender   || '—'),
+    ];
+    if (txHash)            lines.push('Transaction: ' + txHash);
+    if (receipt.blockNumber) lines.push('Block:       ' + Number(receipt.blockNumber).toLocaleString());
+    const confirmedAt = receipt.resolvedAt || receipt.updatedAt || receipt.createdAt;
+    if (confirmedAt)          lines.push('Timestamp:   ' + formatReceiptTime(confirmedAt));
+    if (receipt.purposeTag)  lines.push('Purpose:     ' + purposeLabel(receipt.purposeTag));
+    if (receipt.referenceId) lines.push('Reference:   ' + receipt.referenceId);
+    lines.push('');
+    if (receipt.explorerUrl) lines.push('Verify: ' + receipt.explorerUrl);
+    return lines.join('\n');
+  }
+
+  function copyReceiptSummary(receipt, btn) {
+    const text = formatReceiptSummaryText(receipt);
+    const originalText = btn.textContent;
+
+    function onCopied() {
+      btn.textContent = 'Copied';
+      btn.disabled = true;
+      setTimeout(function () {
+        btn.textContent = originalText;
+        btn.disabled = false;
+      }, 1500);
+    }
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(onCopied).catch(function () {
+        setStatus('Copy unavailable. Export the proof packet instead.');
+      });
+    } else {
+      setStatus('Copy unavailable. Export the proof packet instead.');
+    }
+  }
+
   function renderReceiptHistory() {
     if (!els.receiptHistory) return;
     const receipts = window.IX && window.IX.receipts
@@ -1561,6 +1889,10 @@
 
       head.append(stateLabel, time);
 
+      const idRow = document.createElement('p');
+      idRow.className = 'receipt-id-row';
+      idRow.textContent = formatReceiptId(receipt);
+
       const meta = document.createElement('p');
       meta.className = 'receipt-meta';
       const purpose = receipt.purposeTag ? ` · ${purposeLabel(receipt.purposeTag)}` : '';
@@ -1574,7 +1906,7 @@
         'Outcome not yet resolved.'
       );
 
-      item.append(head, meta, message);
+      item.append(head, idRow, meta, message);
 
       const txHash = receipt.transferHash || receipt.hash;
       const receiptActions = document.createElement('div');
@@ -1588,6 +1920,17 @@
         link.rel = 'noopener';
         link.textContent = `Verify on explorer ${shortHash(txHash)}`;
         receiptActions.append(link);
+      }
+
+      if (receipt.state === (IX_TRANSFER_STATES && IX_TRANSFER_STATES.CONFIRMED)) {
+        const copyButton = document.createElement('button');
+        copyButton.type = 'button';
+        copyButton.className = 'receipt-copy-btn';
+        copyButton.textContent = 'Copy receipt';
+        copyButton.addEventListener('click', function () {
+          copyReceiptSummary(receipt, copyButton);
+        });
+        receiptActions.append(copyButton);
       }
 
       const proofButton = document.createElement('button');
@@ -1622,6 +1965,87 @@
 
       return item;
     }));
+  }
+
+  /**
+   * Populate the 03 — Verification confirmed transfer proof block.
+   *
+   * Scans all receipts (active + archive) for the most recent CONFIRMED
+   * one. If found, surfaces it as execution proof alongside the Coin Card
+   * identity proof. Hidden until at least one confirmed receipt exists.
+   *
+   * Call on load and on ix:receipts-changed.
+   */
+  function renderConfirmedTransferBlock() {
+    if (!els.confirmedTransferBlock) return;
+    if (!window.IX || !window.IX.receipts) {
+      els.confirmedTransferBlock.hidden = true;
+      return;
+    }
+    // Filter → sort newest-first → take first. listAll() is already newest-first
+    // in practice (archive uses unshift), but the explicit sort makes the intent
+    // durable against any future change to listAll() internals.
+    const confirmedState = IX_TRANSFER_STATES && IX_TRANSFER_STATES.CONFIRMED;
+    const confirmed = window.IX.receipts.listAll()
+      .filter(r => r.state === confirmedState)
+      .sort(function (a, b) {
+        const ta = new Date(a.resolvedAt || a.updatedAt || a.createdAt).getTime();
+        const tb = new Date(b.resolvedAt || b.updatedAt || b.createdAt).getTime();
+        return tb - ta;
+      })[0] || null;
+    if (!confirmed) {
+      els.confirmedTransferBlock.hidden = true;
+      return;
+    }
+
+    const txHash = confirmed.transferHash || confirmed.hash;
+
+    if (els.verifStatus)     els.verifStatus.textContent     = 'CONFIRMED';
+    if (els.verifReceiptId)  els.verifReceiptId.textContent  = formatReceiptId(confirmed);
+    if (els.verifAmount)     els.verifAmount.textContent     = confirmed.amount    ? confirmed.amount    + ' USDC' : '—';
+    if (els.verifFee)        els.verifFee.textContent        = confirmed.fee       ? confirmed.fee       + ' USDC' : '—';
+    if (els.verifTotal)      els.verifTotal.textContent      = confirmed.totalDebit ? confirmed.totalDebit + ' USDC' : '—';
+    if (els.verifRecipient)  els.verifRecipient.textContent  = confirmed.recipient ? shortAddr(confirmed.recipient) : '—';
+    if (els.verifNetwork)    els.verifNetwork.textContent    = confirmed.network || chainLabel(confirmed.chainId) || '—';
+    if (els.verifTxHash)     els.verifTxHash.textContent     = txHash ? shortHash(txHash) : '—';
+    if (els.verifBlock)      els.verifBlock.textContent      = confirmed.blockNumber ? String(confirmed.blockNumber) : '—';
+    if (els.verifTimestamp)  els.verifTimestamp.textContent  = formatReceiptTime(confirmed.resolvedAt || confirmed.updatedAt || confirmed.createdAt);
+
+    if (els.verifTransferActions) {
+      const actions = [];
+
+      if (confirmed.explorerUrl && txHash) {
+        const link = document.createElement('a');
+        link.className = 'receipt-link';
+        link.href = confirmed.explorerUrl;
+        link.target = '_blank';
+        link.rel = 'noopener';
+        link.textContent = 'View on explorer';
+        actions.push(link);
+      }
+
+      const copyBtn = document.createElement('button');
+      copyBtn.type = 'button';
+      copyBtn.className = 'receipt-copy-btn';
+      copyBtn.textContent = 'Copy receipt';
+      copyBtn.addEventListener('click', function () {
+        copyReceiptSummary(confirmed, copyBtn);
+      });
+      actions.push(copyBtn);
+
+      const proofBtn = document.createElement('button');
+      proofBtn.type = 'button';
+      proofBtn.className = 'receipt-proof-btn';
+      proofBtn.textContent = 'Export proof packet';
+      proofBtn.addEventListener('click', function () {
+        downloadProofPacket(confirmed);
+      });
+      actions.push(proofBtn);
+
+      els.verifTransferActions.replaceChildren(...actions);
+    }
+
+    els.confirmedTransferBlock.hidden = false;
   }
 
   /**
@@ -1711,6 +2135,18 @@
     });
     setStatus('');
     setTransferNote('');
+
+    // Gate guard: preview renders so the user can see the transfer summary,
+    // but the ack checkbox and armed button are suppressed while transfers are
+    // disabled. The click-time guard in enterReview() is a second layer — this
+    // prevents the visual contradiction of an armed button alongside an amber
+    // "Transfers paused by launch gate" preflight bullet.
+    if (getNetworkState() === 'TRANSFERS_DISABLED') {
+      setReviewAcknowledgementVisible(false);
+      setDraftButton(currentButtonLabel(), true);
+      return;
+    }
+
     setReviewAcknowledgementVisible(true);
     setDraftButton('Execute Transfer', false);
   }
@@ -1734,7 +2170,7 @@
 
     els.connectBtn.hidden = false;
     els.connectBtn.disabled = false;
-    els.connectBtn.textContent = 'Connect Wallet';
+    els.connectBtn.textContent = 'Connect wallet';
     els.connectBtn.classList.remove('connected');
   }
 
@@ -1747,6 +2183,110 @@
     }
   }
 
+  // ----------------------------------------------------------------
+  // Wallet menu (connected dropdown) — open/close helpers
+  // ----------------------------------------------------------------
+  function openWalletMenu() {
+    if (!els.walletMenu || !els.walletMenuPanel || !els.walletMenuTrigger) return;
+    els.walletMenu.classList.add('is-open');
+    els.walletMenuTrigger.setAttribute('aria-expanded', 'true');
+    els.walletMenuPanel.removeAttribute('hidden');
+  }
+
+  function closeWalletMenu() {
+    if (!els.walletMenu || !els.walletMenuPanel || !els.walletMenuTrigger) return;
+    els.walletMenu.classList.remove('is-open');
+    els.walletMenuTrigger.setAttribute('aria-expanded', 'false');
+    els.walletMenuPanel.setAttribute('hidden', '');
+  }
+
+  function showWalletMenu(address) {
+    if (!els.walletMenu) return;
+    if (els.walletAddr) els.walletAddr.textContent = shortAddr(address || state.address);
+    if (els.walletFullAddress) els.walletFullAddress.textContent = address || state.address || '';
+    els.walletMenu.removeAttribute('hidden');
+    if (els.connectBtn) els.connectBtn.hidden = true;
+  }
+
+  function hideWalletMenuEl() {
+    if (!els.walletMenu) return;
+    closeWalletMenu();
+    els.walletMenu.setAttribute('hidden', '');
+    if (els.connectBtn) {
+      els.connectBtn.hidden = false;
+      els.connectBtn.disabled = false;
+      els.connectBtn.textContent = 'Connect wallet';
+      els.connectBtn.classList.remove('connected');
+    }
+  }
+
+  // Show/hide the "Switch to Polygon" recovery button inside the dropdown.
+  function setWalletMenuNetworkRecovery(show) {
+    if (els.switchNetworkBtn) {
+      if (show) {
+        els.switchNetworkBtn.removeAttribute('hidden');
+      } else {
+        els.switchNetworkBtn.setAttribute('hidden', '');
+      }
+    }
+  }
+
+  // ----------------------------------------------------------------
+  // Portal minimize/restore helpers
+  // ----------------------------------------------------------------
+  function minimizePortal() {
+    if (!els.modules) return;
+    els.modules.classList.add('is-minimized');
+    if (els.portalMinimizedTray) els.portalMinimizedTray.removeAttribute('hidden');
+    if (els.modulesMinimize) {
+      els.modulesMinimize.setAttribute('aria-expanded', 'false');
+      els.modulesMinimize.setAttribute('aria-label', 'Expand transfer portal');
+    }
+  }
+
+  function restorePortal() {
+    if (!els.modules) return;
+    // If portal was mounted minimized (default state), first expansion triggers
+    // full page activation — hero recedes, portal-active asserts.
+    // Portal is above the hero; no need to hide other sections.
+    if (!document.body.classList.contains('portal-active')) {
+      document.body.classList.add('portal-active');
+    }
+    els.modules.classList.remove('is-minimized');
+    if (els.portalMinimizedTray) els.portalMinimizedTray.setAttribute('hidden', '');
+    if (els.modulesMinimize) {
+      els.modulesMinimize.setAttribute('aria-expanded', 'true');
+      els.modulesMinimize.setAttribute('aria-label', 'Collapse transfer portal');
+    }
+  }
+
+  // Mount portal visible but collapsed — default page-load state.
+  // howItWorks stays visible; portal-active NOT set until user expands.
+  // Passive wallet reconnect does not auto-expand.
+  function mountPortalMinimized() {
+    if (!els.modules) return;
+    if (els.portalControls) els.portalControls.removeAttribute('hidden');
+    els.modules.removeAttribute('hidden');
+    // On direct portal shell, start expanded rather than collapsed.
+    if (document.body.matches('[data-portal-shell="direct"]')) {
+      restorePortal();
+    } else {
+      minimizePortal();
+    }
+  }
+
+  function closePortalWithAnimation() {
+    if (!els.modules) return;
+    restorePortal();
+    els.modules.classList.add('is-closing');
+    setTimeout(() => {
+      if (els.modules) {
+        els.modules.classList.remove('is-closing');
+        hideTransferModules();
+      }
+    }, 220);
+  }
+
   function handleConnectFailure(message, severity = null) {
     state.connected = false;
     state.address = null;
@@ -1756,20 +2296,29 @@
     walletRuntime.provider = null;
     walletRuntime.source = null;
 
-    if (els.disconnectBtn) els.disconnectBtn.setAttribute('hidden', '');
-    setAccountSwitchVisible(false);
-    resetConnectButton();
+    closeWalletMenu();
+    hideWalletMenuEl();
     setNavStatus(message);
     setElementSeverity(els.navStatus, severity);
     setElementSeverity(els.networkBadge, null);
     setStatus(message);
     dispatchWalletStateChanged();
+
+    // User-cancellation messages carry no actionable information after a few
+    // seconds. Clear them so the first-time visitor doesn't read a permanent
+    // "Wallet connection rejected." and conclude something is broken.
+    if (message === 'Wallet connection rejected.') {
+      setTimeout(function() {
+        if (els.txStatus && els.txStatus.textContent === 'Wallet connection rejected.') {
+          setStatus('');
+        }
+      }, 4000);
+    }
   }
 
   // ----------------------------------------------------------------
   // Wallet choice overlay — shown when Connect is tapped without an
   // injected provider. Presents MetaMask and WalletConnect options.
-  // IX_WC.init() is wired into the WalletConnect button in a later commit.
   // ----------------------------------------------------------------
   function showWalletChoice() {
     if (els.walletChoiceOverlay) els.walletChoiceOverlay.removeAttribute('hidden');
@@ -1881,11 +2430,12 @@
    * Keeps setTxState() and presentation functions consistent.
    */
   function currentButtonLabel() {
+    if (!state.connected) return 'Connect wallet to continue';
     const netState = getNetworkState();
     if (netState === 'WRONG_NETWORK' || netState === 'CONTRACT_UNAVAILABLE') return 'Switch to Polygon';
     if (netState === 'TRANSFERS_DISABLED') return 'Transfers disabled';
     if (state.txPhase === 'SIMULATING') return 'Checking…';
-    return 'Execute Transfer';
+    return 'Review transfer';
   }
 
   // ----------------------------------------------------------------
@@ -2054,6 +2604,10 @@
     // prompting the wallet — the preflight result is guidance, not an authority.
 
     state.txPhase = 'REVIEW_READY';
+    if (window.IX && window.IX.track) {
+      window.IX.track('amount_entered', { amount_bucket: window.IX._bucketAmount(amountFloat) });
+      window.IX.track('review_reached');
+    }
     resetTransferTimeline();
     markTransferStep('review_ready');
 
@@ -2113,9 +2667,13 @@
 
   /**
    * Primary button dispatcher.
-   * DRAFT → enterReview(); REVIEW_READY → submitTransfer().
+   * No wallet → connect(); DRAFT → enterReview(); REVIEW_READY → submitTransfer().
    */
   async function handleTxAction() {
+    if (!state.connected) {
+      connect();
+      return;
+    }
     if (state.txPhase === 'DRAFT') {
       if (!els.txConfirmAck || !els.txConfirmAck.checked) {
         setStatus('Confirm the details and check the acknowledgement before executing.');
@@ -2129,29 +2687,57 @@
 
   function showTransferModules(shouldScroll) {
     if (!els.modules) return;
+    if (window.IX && window.IX.track) window.IX.track('portal_opened');
 
-    // Hide How It Works — instrument activates in-place over the same geometry.
-    if (els.howItWorks) els.howItWorks.setAttribute('hidden', '');
-
-    // Portal controls (dismiss button) appear above the grid, outside the border.
+    // Portal is always above the hero — no geometry conflict, no need to hide other sections.
     if (els.portalControls) els.portalControls.removeAttribute('hidden');
 
     // Signal the portal-active state — hero recedes, instrument asserts.
     document.body.classList.add('portal-active');
 
     els.modules.removeAttribute('hidden');
-    if (shouldScroll) {
+    if (shouldScroll && !document.body.matches('[data-portal-shell="direct"]')) {
       setTimeout(() => {
         els.modules.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 280);
     }
   }
 
+  function openTransferPortal() {
+    showTransferModules(true);
+  }
+
+  // Nav button action: expand the already-loaded portal.
+  // If collapsed → expand. If dismissed → restore and expand. If expanded → scroll to it.
+  function focusTransferPortal() {
+    if (!els.modules) return;
+    if (els.modules.hasAttribute('hidden')) {
+      // Portal was dismissed — restore and expand fully
+      if (els.portalControls) els.portalControls.removeAttribute('hidden');
+      els.modules.removeAttribute('hidden');
+      document.body.classList.add('portal-active');
+      if (els.modulesMinimize) {
+        els.modulesMinimize.setAttribute('aria-expanded', 'true');
+        els.modulesMinimize.setAttribute('aria-label', 'Collapse transfer portal');
+      }
+    } else if (els.modules.classList.contains('is-minimized')) {
+      // Portal is collapsed — expand it
+      restorePortal();
+    }
+    // On direct portal shell the portal IS the page — no scroll needed
+    if (!document.body.matches('[data-portal-shell="direct"]')) {
+      setTimeout(() => {
+        els.modules.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 60);
+    }
+  }
+
   function hideTransferModules() {
+    // On direct portal shell (portal.implicitex.com), the portal IS the page.
+    // Never hide it — wallet state changes must not blank the page.
+    if (document.body.matches('[data-portal-shell="direct"]')) return;
     if (els.modules) els.modules.setAttribute('hidden', '');
     if (els.portalControls) els.portalControls.setAttribute('hidden', '');
-    // Restore How It Works and return to informational state.
-    if (els.howItWorks) els.howItWorks.removeAttribute('hidden');
     document.body.classList.remove('portal-active');
   }
 
@@ -2176,6 +2762,7 @@
     } else if (state.connected) {
       await switchToPolygonMainnet();
     } else {
+      showTransferModules(true);
       connect({ forcePermission: state.userDisconnected });
     }
   }
@@ -2257,6 +2844,10 @@
     state.userDisconnected = revokeProvider;
     activeFlowId = null; // invalidate any running transfer flow
 
+    if (revokeProvider) {
+      rememberLocalWalletDisconnect();
+    }
+
     // Capture source before clearActiveProvider() nulls it.
     const wasWalletConnect = walletRuntime.source === 'walletconnect';
 
@@ -2276,12 +2867,9 @@
     let stillAuthorized = false;
     if (revokeProvider && !wasWalletConnect) await revokeWalletPermission(activeProvider);
 
-    if (els.walletPill) els.walletPill.classList.remove('visible');
-    if (els.walletAddr) els.walletAddr.textContent = '';
+    closeWalletMenu();
+    hideWalletMenuEl();
     updateSenderDisplay();
-    if (els.disconnectBtn) els.disconnectBtn.setAttribute('hidden', '');
-    setAccountSwitchVisible(false);
-    resetConnectButton();
     setNavStatus('');
     setElementSeverity(els.navStatus, null);
     if (els.networkBadge) {
@@ -2319,27 +2907,23 @@
 
   function applyConnectedPresentation(options = {}) {
     const shouldScroll = options.shouldScroll === true;
+    // shouldOpen: only open the portal when the user explicitly requested it
+    // (Connect Wallet click, Transfer Portal click, #transfer hash route).
+    // Passive reconnection on page load must NOT force the portal open.
+    const shouldOpen = options.shouldOpen === true;
     const short = shortAddr(state.address);
     const chainConfig = window.IX_CHAINS && window.IX_CHAINS[state.chainId];
     const transfersEnabled = chainConfig && chainConfig.transfersEnabled;
     const eventVal = options.eventVal || `Address: ${shortAddr(state.address)}`;
 
-    if (els.walletAddr) els.walletAddr.textContent = short;
+    showWalletMenu(state.address);
+    setWalletMenuNetworkRecovery(false);
     updateSenderDisplay();
-    if (els.walletPill) els.walletPill.classList.add('visible');
-    if (els.connectBtn) {
-      els.connectBtn.hidden = false;
-      els.connectBtn.disabled = false;
-      els.connectBtn.textContent = short;
-      els.connectBtn.classList.add('connected');
-    }
-    if (els.disconnectBtn) els.disconnectBtn.removeAttribute('hidden');
-    setAccountSwitchVisible(true);
-    setNavStatus('Wallet connected');
-    setElementSeverity(els.navStatus, null);
+    setNavStatus(chainLabel(state.chainId));
+    setElementSeverity(els.navStatus, transfersEnabled ? 'live' : null);
     if (els.networkBadge) {
       els.networkBadge.textContent = chainLabel(state.chainId);
-      setElementSeverity(els.networkBadge, null);
+      setElementSeverity(els.networkBadge, transfersEnabled ? 'live' : null);
     }
     if (els.txBtn) {
       els.txBtn.disabled = true;
@@ -2348,7 +2932,7 @@
     setStatus('');
     setTransferNote(transfersEnabled ? '' : 'Preview mode — live transfers not yet enabled.');
     updateNetworkModuleRows(chainConfig);
-    showTransferModules(shouldScroll);
+    if (shouldOpen) showTransferModules(shouldScroll);
 
     companionState('WALLET_CONNECTED', {
       statusLine: transfersEnabled
@@ -2380,23 +2964,10 @@
       ? 'Contract not deployed on this network.'
       : 'Wallet connected on unsupported network.';
 
-    if (els.walletAddr) els.walletAddr.textContent = short;
+    showWalletMenu(state.address);
+    // Show "Switch to Polygon" recovery in the dropdown only when on wrong network.
+    setWalletMenuNetworkRecovery(state.chainId !== POLYGON_MAINNET_CHAIN_ID);
     updateSenderDisplay();
-    if (els.walletPill) els.walletPill.classList.add('visible');
-    if (els.connectBtn) {
-      if (state.chainId === POLYGON_MAINNET_CHAIN_ID) {
-        // Already on Polygon — "Switch to Polygon" is wrong; hide the action button.
-        // Disconnect and account-switch remain available.
-        els.connectBtn.hidden = true;
-      } else {
-        els.connectBtn.hidden = false;
-        els.connectBtn.disabled = false;
-        els.connectBtn.textContent = 'Switch to Polygon';
-        els.connectBtn.classList.add('connected');
-      }
-    }
-    if (els.disconnectBtn) els.disconnectBtn.removeAttribute('hidden');
-    setAccountSwitchVisible(true);
     setNavStatus(stateVal);
     setElementSeverity(els.navStatus, 'error');
     if (els.networkBadge) {
@@ -2623,6 +3194,10 @@
   function applyCurrentNetworkPresentation(options = {}) {
     const netState = getNetworkState();
 
+    // No wallet connected — nothing to render. Return early so focus/visibility
+    // sync events do not overwrite the correct disconnected UI with connected state.
+    if (netState === 'DISCONNECTED') return;
+
     // Wrong network or no contract — hide the transfer panel, show guidance.
     if (netState === 'WRONG_NETWORK' || netState === 'CONTRACT_UNAVAILABLE') {
       applyWrongNetworkPresentation();
@@ -2631,10 +3206,11 @@
       return;
     }
 
-    // TRANSFERS_DISABLED or READY — both show the transfer panel.
-    // applyConnectedPresentation handles the disabled-transfer copy internally.
+    // TRANSFERS_DISABLED or READY — update the connected-state UI.
+    // shouldOpen propagates only from explicit user actions (Connect Wallet click).
+    // Passive reconnection on page load must NOT force the portal open.
     const eventVal = options.eventVal;
-    applyConnectedPresentation({ shouldScroll: options.shouldScroll, eventVal });
+    applyConnectedPresentation({ shouldScroll: options.shouldScroll, shouldOpen: options.shouldOpen, eventVal });
 
     refreshUsdcBalance();
 
@@ -2737,6 +3313,7 @@
       state.address = accounts[0];
       state.provider = walletRuntime.provider;
       state.userDisconnected = false;
+      clearLocalWalletDisconnect();
 
       const chainHex = await walletRuntime.provider.request({ method: 'eth_chainId' });
       state.chainId = normalizeChainId(chainHex);
@@ -2756,16 +3333,57 @@
   }
 
   function onConnected() {
-    applyCurrentNetworkPresentation({ shouldScroll: true });
+    if (window.IX && window.IX.track) window.IX.track('wallet_connected', { chain: state.chainId });
+    // User explicitly clicked Connect Wallet — open the portal.
+    applyCurrentNetworkPresentation({ shouldScroll: true, shouldOpen: true });
 
     pollNetworkData();
+  }
+
+  async function hydrateAuthorizedInjectedWallet() {
+    if (!hasInjectedProvider()) return false;
+    if (isLocalWalletDisconnectRemembered()) {
+      state.userDisconnected = true;
+      return false;
+    }
+
+    let accounts;
+    try {
+      accounts = await window.ethereum.request({ method: 'eth_accounts' });
+    } catch (_) {
+      return false;
+    }
+
+    if (!accounts || !accounts[0]) return false;
+
+    setActiveProvider(window.ethereum, 'injected');
+    state.connected = true;
+    state.address = accounts[0];
+    state.provider = walletRuntime.provider;
+    state.userDisconnected = false;
+    clearLocalWalletDisconnect();
+
+    try {
+      const chainHex = await window.ethereum.request({ method: 'eth_chainId' });
+      state.chainId = normalizeChainId(chainHex);
+    } catch (_) {
+      state.chainId = null;
+    }
+
+    startWalletChainWatcher();
+    applyCurrentNetworkPresentation({
+      shouldScroll: false,
+      eventVal: `Authorized wallet restored: ${shortAddr(state.address)}.`,
+    });
+    pollNetworkData();
+    return true;
   }
 
   // ----------------------------------------------------------------
   // Fee calculation
   // ----------------------------------------------------------------
   function calcFee(amount) {
-    // 1% flat fee, floored to 6 decimal places for USDC display.
+    // 1% platform fee, floored to 6 decimal places for USDC display.
     return Math.floor(amount * DEMO_FEE_RATE * 1_000_000) / 1_000_000;
   }
 
@@ -2794,6 +3412,13 @@
     if (!/^0x/i.test(v))          return 'Invalid address format. Wallet addresses start with 0x.';
     if (v.length !== 42)           return 'Invalid address format. Must be 42 characters (0x + 40 hex digits).';
     if (!/^0x[0-9a-fA-F]{40}$/.test(v)) return 'Invalid address format. Check for missing characters, extra spaces, or mistaken letters.';
+    if (typeof ethers !== 'undefined' && ethers.getAddress) {
+      try {
+        ethers.getAddress(v);
+      } catch (_) {
+        return 'Invalid address checksum. Try copying the address again from its original source.';
+      }
+    }
     if (state.address && v.toLowerCase() === state.address.toLowerCase())
                                    return 'Recipient cannot be your own wallet.';
     if (isConfiguredTransferContractAddress(v)) return 'Recipient cannot be the configured ImplicitEx contract.';
@@ -2812,8 +3437,32 @@
       if (els.recipientError) els.recipientError.textContent = '';
       if (els.txRecipient) els.txRecipient.classList.remove('tx-field--error');
     } else {
-      // Invalid — show error
-      if (els.recipientError) els.recipientError.textContent = result;
+      // Checksum error: explain the mixed-case issue and offer one-tap lowercase fix.
+      if (result.indexOf('checksum') !== -1 && value && /^0x[0-9a-fA-F]{40}$/.test(value.trim())) {
+        const lowercase = value.trim().toLowerCase();
+        if (els.recipientError) {
+          els.recipientError.textContent = '';
+          const msg = document.createElement('span');
+          msg.style.cssText = 'display:block;';
+          msg.textContent = 'Invalid checksum. This address uses mixed uppercase and lowercase letters with an invalid capitalization pattern. Most wallet addresses can be safely entered in lowercase.';
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'tx-recipient-lowercase-action';
+          btn.textContent = 'Use lowercase address';
+          btn.addEventListener('click', function () {
+            if (els.txRecipient) {
+              els.txRecipient.value = lowercase;
+              els.txRecipient.dispatchEvent(new Event('input', { bubbles: true }));
+              els.txRecipient.focus();
+            }
+          });
+          els.recipientError.appendChild(msg);
+          els.recipientError.appendChild(btn);
+        }
+      } else {
+        // All other errors — plain text
+        if (els.recipientError) els.recipientError.textContent = result;
+      }
       if (els.txRecipient) els.txRecipient.classList.add('tx-field--error');
     }
     return result === '';
@@ -2853,9 +3502,14 @@
    * without floating-point rounding errors.
    */
   function parseUsdcAmount(str) {
-    const s = String(str).trim();
+    // Strip thousands-separator commas before validating (e.g. "10,000" → "10000").
+    // Commas used as decimal separators (European locales) are not normalized —
+    // the regex below will reject them, which is the safe default.
+    const s = String(str).trim().replace(/,(?=\d{3}(?:[^,]|$))/g, '');
     if (!/^(?:\d+|\d+\.\d{1,6}|\.\d{1,6})$/.test(s)) {
-      throw new Error('INVALID_USDC_DECIMALS');
+      throw new Error(s.includes('.') && s.split('.')[1].length > 6
+        ? 'INVALID_USDC_DECIMALS'
+        : 'INVALID_AMOUNT_FORMAT');
     }
     const dotIdx = s.indexOf('.');
     const whole = dotIdx === -1 ? s : s.slice(0, dotIdx);
@@ -2970,6 +3624,7 @@
     }
 
     activeTransferFlow = true;
+    if (window.IX && window.IX.track) window.IX.track('transfer_submitted');
 
     // ---- Flow identity: each invocation gets a unique token.
     // assertFlowActive() throws FLOW_INVALIDATED if the token was cleared by
@@ -3002,9 +3657,15 @@
     const { recipient, amountStr, amountFloat } = state.reviewDraft;
     const metadata = state.reviewDraft.metadata || getTransferMetadata();
 
-    // receiptId is hoisted so the outer catch can update it on FLOW_INVALIDATED.
+    // receiptId, txBroadcast, broadcastHash, and diagnosticHold are hoisted above
+    // the outer try so the inner catch and finally share the same binding.
+    // (let declarations inside try {} are not accessible in finally {}.)
     let receiptId = null;
     let transferConfirmed = false;
+    let txBroadcast = false;
+    let broadcastHash = null;
+    let broadcastUrl = null;
+    let diagnosticHold = false;
 
     try {
 
@@ -3082,12 +3743,14 @@
       return;
     }
 
-    // --- Build contracts ---
-    let signer;
+    // --- Verify signer identity matches connected account ---
+    // Writes (approve, transferWithFee) go through the Execution Service.
+    // This block confirms the wallet's reported signer matches state.address
+    // before any contract interaction begins.
     try {
-      const provider = new ethers.BrowserProvider(activeProvider);
-      signer = await provider.getSigner(state.address);
-      const signerAddress = await signer.getAddress();
+      const _provider     = new ethers.BrowserProvider(activeProvider);
+      const _signer       = await _provider.getSigner(state.address);
+      const signerAddress = await _signer.getAddress();
       if (signerAddress.toLowerCase() !== state.address.toLowerCase()) {
         clearTransferForm();
         state.address = signerAddress;
@@ -3100,17 +3763,21 @@
       return;
     }
 
-    const usdc       = new ethers.Contract(usdcAddress,     ERC20_ABI,     signer);
-    const implicitex = new ethers.Contract(contractAddress, IMPLICITEX_ABI, signer);
+    // Read-only contract instance — pre-flight queries only (minTransfer, paused, previewTransfer).
+    // Writes go through window.IX_EXECUTION.
+    const implicitex = new ethers.Contract(contractAddress, IMPLICITEX_ABI,
+      new ethers.BrowserProvider(activeProvider));
 
     // --- Amount validation ---
     let rawAmount;
     try {
       rawAmount = parseUsdcAmount(amountStr);
     } catch (err) {
-      setStatus(err && err.message === 'INVALID_USDC_DECIMALS'
-        ? 'Amount supports up to 6 decimal places for USDC.'
-        : 'Invalid amount format.');
+      if (err && err.message === 'INVALID_USDC_DECIMALS') {
+        setStatus('USDC supports up to 6 decimal places. Example: 10.00');
+      } else {
+        setStatus('Use numbers only. Example: 10.00');
+      }
       return;
     }
 
@@ -3186,7 +3853,7 @@
     state.reviewDraft = refreshedSummary;
     state.reviewDraft.metadata = metadata;
     renderTransferSummary(refreshedSummary, {
-      label: 'Review Transfer',
+      label: 'Review transfer',
       mode: 'On-chain refreshed',
       note: 'Contract preview refreshed. Recipient, network, pause state, contract, and USDC token checks passed before wallet prompt.',
     });
@@ -3210,358 +3877,265 @@
     // --- Allowance check / approve ---
     const needsApproval = allowance < totalDebit;
 
-    if (needsApproval) {
+    {
+      let executionPhase = needsApproval ? 'authorization' : 'transfer';
       const totalDebitHuman = ethers.formatUnits(totalDebit, 6);
-      markTransferStep('authorization_requested');
-      // ---- Step 1 of 2: Authorize USDC Access ----
-      // Narrate BEFORE MetaMask fires. Three rails, three distinct roles:
-      //   transferStateNote = primary action rail  (what step, what is required)
-      //   txStatus          = contextual note      (what this action does NOT do)
-      //   companionState    = state memory rail    (record for the tray)
-      setTransferNote(`Step 1 of 2 — Approve ${totalDebitHuman} USDC total debit`);
-      setStatus('Approval is permission only. Funds are not sent yet.');
-      setTxState('pending', 'Wallet authorization required.', 'Approve in MetaMask…');
-      if (els.previewNote) els.previewNote.textContent = `Wallet authorization requested for ${totalDebitHuman} USDC total debit. Funds are not sent yet.`;
-      updateReceipt(receiptId, {
-        state: IX_TRANSFER_STATES.AUTHORIZING,
-        lastKnownMessage: `USDC authorization requested for ${totalDebitHuman} USDC total debit. Funds are not sent yet.`,
-      });
-      companionState(IX_TRANSFER_STATES.AUTHORIZING, {
-        statusLine: `Approve ${totalDebitHuman} USDC total debit.`,
-        stateVal:   'Awaiting authorization',
-        fundsVal:   'Not yet — authorization only',
-        networkVal: chainConfig.name,
-        eventVal:   'USDC authorization requested',
-        actionVal:  'Approve the full total debit. Approval alone does not send funds.',
-      });
-      try {
-        const approveTx = await usdc.approve(contractAddress, totalDebit);
-        updateReceipt(receiptId, {
-          approvalHash: approveTx.hash,
-          lastKnownMessage: `USDC authorization submitted for ${totalDebitHuman} USDC total debit. Funds are not sent yet.`,
-        });
-        setStatus('Step 2 of 2 — transfer confirmation follows.');
-        setTxState('pending', 'Authorization submitted.', 'Confirming approval…');
-        setTransferNote('Step 1 of 2 — Approval submitted — awaiting chain confirmation…');
-        await approveTx.wait();
-        // Check flow after the approval wait — account or network may have changed
-        // while we were blocked on the confirmation.
-        assertFlowActive();
-        updateReceipt(receiptId, {
-          state: IX_TRANSFER_STATES.AUTHORIZED,
-          lastKnownMessage: 'USDC authorization confirmed. Transfer not submitted yet.',
-        });
-        markTransferStep('authorization_confirmed');
-        setTransferNote('Approval confirmed — transfer confirmation opening in MetaMask…');
-      } catch (err) {
-        if (err.code === 'FLOW_INVALIDATED') throw err; // bubble to outer catch
+      const amountHuman = ethers.formatUnits(rawAmount, 6);
 
-        const errCode = providerErrorCode(err);
+      const result = await window.IX_EXECUTION.executeTransfer({
+        action: 'execute',
+        chainId,
+        sender: state.address,
+        recipient,
+        amount: amountFloat,
+        fee: Number(ethers.formatUnits(fee, 6)),
+        total: Number(ethers.formatUnits(totalDebit, 6)),
+        token: 'USDC',
+        source: 'transfer-portal',
+        traceId: 'portal-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7),
+        requiresApproval: needsApproval,
+      }, {
+        onApprovalRequested: function () {
+          executionPhase = 'authorization';
+          markTransferStep('authorization_requested');
+          setTransferNote(`Step 1 of 2 — Approve ${totalDebitHuman} USDC total debit`);
+          setStatus('Approval is permission only. Funds are not sent yet.');
+          setTxState('pending', 'Wallet authorization required.', 'Approve in MetaMask…');
+          if (els.previewNote) els.previewNote.textContent = `Wallet authorization requested for ${totalDebitHuman} USDC total debit. Funds are not sent yet.`;
+          updateReceipt(receiptId, {
+            state: IX_TRANSFER_STATES.AUTHORIZING,
+            lastKnownMessage: `USDC authorization requested for ${totalDebitHuman} USDC total debit. Funds are not sent yet.`,
+          });
+          companionState(IX_TRANSFER_STATES.AUTHORIZING, {
+            statusLine: `Approve ${totalDebitHuman} USDC total debit.`,
+            stateVal:   'Awaiting authorization',
+            fundsVal:   'Not yet — authorization only',
+            networkVal: chainConfig.name,
+            eventVal:   'USDC authorization requested',
+            actionVal:  'Approve the full total debit. Approval alone does not send funds.',
+          });
+        },
+        onApprovalSubmitted: function (approvalHash) {
+          updateReceipt(receiptId, {
+            approvalHash,
+            lastKnownMessage: `USDC authorization submitted for ${totalDebitHuman} USDC total debit. Funds are not sent yet.`,
+          });
+          setStatus('Step 2 of 2 — transfer confirmation follows.');
+          setTxState('pending', 'Authorization submitted.', 'Confirming approval…');
+          setTransferNote('Step 1 of 2 — Approval submitted — awaiting chain confirmation…');
+        },
+        onApprovalConfirmed: function () {
+          updateReceipt(receiptId, {
+            state: IX_TRANSFER_STATES.AUTHORIZED,
+            lastKnownMessage: 'USDC authorization confirmed. Transfer not submitted yet.',
+          });
+          markTransferStep('authorization_confirmed');
+          setTransferNote('Approval confirmed — transfer confirmation opening in MetaMask…');
+        },
+        onTransferRequested: function () {
+          executionPhase = 'transfer';
+          const stepLabel = needsApproval ? 'Step 2 of 2 — Confirm the transfer in MetaMask' : 'Confirm the transfer in MetaMask';
+          markTransferStep('transfer_requested');
+          setTransferNote(stepLabel);
+          setStatus(`This is the funds-moving request. Recipient gets ${amountHuman} USDC; total wallet debit is ${totalDebitHuman} USDC.`);
+          setTxState('pending', 'Wallet confirmation required.', 'Confirm transfer in MetaMask…');
+          if (els.previewNote) els.previewNote.textContent = 'Transfer confirmation requested. Confirm in MetaMask only if recipient amount, platform fee, and total wallet debit match.';
+          updateReceipt(receiptId, {
+            state: IX_TRANSFER_STATES.SUBMITTING,
+            lastKnownMessage: 'Transfer confirmation requested. Funds move only after on-chain confirmation.',
+          });
+          companionState(IX_TRANSFER_STATES.SUBMITTING, {
+            statusLine: 'Confirm transfer.',
+            stateVal:   'Awaiting confirmation',
+            fundsVal:   'No — not until confirmed on-chain',
+            networkVal: chainConfig.name,
+            eventVal:   'Transfer signature requested',
+            actionVal:  `Funds move only if confirmed on-chain. Recipient gets ${amountHuman} USDC; total wallet debit is ${totalDebitHuman} USDC.`,
+          });
+        },
+        onTransferSubmitted: function (txHash) {
+          broadcastHash = txHash;
+          broadcastUrl = `${chainConfig.explorerUrl}/tx/${txHash}`;
+          updateReceipt(receiptId, {
+            state: IX_TRANSFER_STATES.SUBMITTED,
+            transferHash: txHash,
+            hash: txHash,
+            explorerUrl: broadcastUrl,
+            lastKnownMessage: 'Transfer broadcast to network. Awaiting confirmation.',
+          });
+          txBroadcast = true;
+          markTransferStep('broadcast');
+          setTransferNote('Transfer submitted — awaiting Polygon confirmation…');
+          setStatus('');
+          setTxState('pending', 'Broadcast to network. Do not retry.', 'Awaiting Polygon…');
+          companionState(IX_TRANSFER_STATES.SUBMITTED, {
+            statusLine: 'Transaction submitted. Awaiting chain confirmation.',
+            stateVal:   'Submitted',
+            fundsVal:   'No — not until confirmed',
+            networkVal: chainConfig.name,
+            eventVal:   txHash,
+            actionVal:  'Wait for confirmation. Do not retry.',
+          });
+        },
+      });
 
-        if (errCode === -32002) {
-          // MetaMask already has a pending request — not a transfer failure,
-          // not user rejection. No authorization occurred. Deterministic interruption.
-          // Set cooldown to block immediate retries while MetaMask clears the queue.
+      switch (result.status) {
+        case 'confirmed': {
+          const executionReceipt = result.receipt || {};
+          const txHash = executionReceipt.txHash;
+          const receiptUrl = executionReceipt.explorerUrl || (txHash ? `${chainConfig.explorerUrl}/tx/${txHash}` : null);
+          if (els.txStatus && receiptUrl) {
+            els.txStatus.innerHTML =
+              `Transfer confirmed. ` +
+              `<a href="${receiptUrl}" target="_blank" rel="noopener">` +
+              `View on ${chainConfig.name} explorer</a>`;
+          } else {
+            setStatus('Transfer confirmed.');
+          }
+          setTransferNote('');
+          setTxState('idle', null);
+          updateReceiptFromSource(receiptId, {
+            state: IX_TRANSFER_STATES.CONFIRMED,
+            fundsMoved: true,
+            approvalHash: executionReceipt.approvalHash || null,
+            transferHash: txHash || null,
+            hash: txHash || null,
+            explorerUrl: receiptUrl,
+            blockNumber: executionReceipt.blockNumber || null,
+            lastKnownMessage: 'Transfer confirmed. Funds moved on Polygon.',
+          }, OBSERVATION_SOURCES && OBSERVATION_SOURCES.RPC);
+          if (window.IX && window.IX.receipts) window.IX.receipts.clearActive();
+          markTransferStep('confirmed');
+          renderTransferSummary(refreshedSummary, {
+            label: 'Transfer Confirmed',
+            mode: 'Confirmed',
+            note: txHash ? `Tx ${shortHash(txHash)} confirmed on Polygon. Explorer link is visible above and in the receipt list.` : 'Transfer confirmed on Polygon.',
+          });
+          companionState(IX_TRANSFER_STATES.CONFIRMED, {
+            statusLine: 'Transfer confirmed. Funds moved on Polygon.',
+            stateVal:   'Confirmed',
+            fundsVal:   'Yes — transfer complete',
+            networkVal: chainConfig.name,
+            eventVal:   txHash || 'Transfer confirmed',
+            actionVal:  receiptUrl ? `View on ${chainConfig.name} explorer` : 'Transfer confirmed.',
+            actionHref: receiptUrl || undefined,
+            autoOpen:   true,
+          });
+          transferConfirmed = true;
+          if (window.IX && window.IX.track) window.IX.track('transfer_confirmed');
+          upsertRecipientBook(recipient, metadata);
+          clearDraftControlsAfterConfirmation();
+          refreshUsdcBalance();
+          return;
+        }
+
+        case 'outcome-unknown': {
+          const outcomeHash = result.error && result.error.txHash || broadcastHash;
+          const outcomeUrl = result.error && result.error.explorerUrl || (outcomeHash ? `${chainConfig.explorerUrl}/tx/${outcomeHash}` : null);
+          preserveReceiptForRehydration(receiptId, {
+            state: IX_TRANSFER_STATES.OUTCOME_UNKNOWN,
+            fundsMoved: null,
+            transferHash: outcomeHash,
+            hash: outcomeHash,
+            explorerUrl: outcomeUrl,
+            lastKnownMessage: 'Transaction broadcast detected. Final confirmation could not be verified locally.',
+          });
+          failTransferTimeline('broadcast', 'Outcome unknown');
+          setTransferNote('');
+          if (els.txStatus && outcomeUrl) {
+            els.txStatus.innerHTML =
+              `Outcome unknown. ` +
+              `<a href="${outcomeUrl}" target="_blank" rel="noopener">` +
+              `Check on ${chainConfig.name} explorer</a>`;
+          } else {
+            setTxState('idle', 'Outcome unknown. Check the explorer before retrying.');
+          }
+          companionState(IX_TRANSFER_STATES.OUTCOME_UNKNOWN, {
+            statusLine: 'Transaction outcome could not be verified locally.',
+            stateVal:   'Outcome unknown',
+            fundsVal:   'Unknown — check explorer',
+            networkVal: chainConfig.name,
+            eventVal:   outcomeHash || (result.error && result.error.code) || 'Outcome unknown',
+            actionVal:  'Verify on explorer before retrying.',
+            actionHref: outcomeUrl || undefined,
+            severity:   'advisory',
+            autoOpen:   true,
+          });
+          return;
+        }
+
+        case 'wallet-busy': {
           submitBlockedUntil = Date.now() + 5000;
           setTransferNote('');
           setStatus('');
           resolveReceipt(receiptId, {
             state: IX_TRANSFER_STATES.INTERRUPTED,
             fundsMoved: false,
-            lastKnownMessage: 'Wallet request already pending in MetaMask. No authorization occurred. No funds moved.',
+            lastKnownMessage: 'Wallet request already pending. No transfer was submitted. No funds moved.',
           });
-          failTransferTimeline('authorization_requested', 'Wallet request already pending');
-          setTxState('idle', 'MetaMask already has a pending request. Open MetaMask and finish or cancel it, then retry.');
+          failTransferTimeline(executionPhase === 'authorization' ? 'authorization_requested' : 'transfer_requested', 'Wallet request already pending');
+          setTxState('idle', 'Wallet already has a pending request. Open your wallet and finish or cancel it, then retry.');
           companionState(IX_TRANSFER_STATES.INTERRUPTED, {
-            statusLine: 'Wallet request already pending in MetaMask.',
+            statusLine: 'Wallet request already pending.',
             stateVal:   'Interrupted',
             fundsVal:   'No — nothing was sent',
             networkVal: chainConfig.name,
-            eventVal:   'MetaMask already has a pending request (-32002)',
-            actionVal:  'Open MetaMask, finish or cancel the pending request, then retry.',
+            eventVal:   'wallet-busy',
+            actionVal:  'Open your wallet, finish or cancel the pending request, then retry.',
             autoOpen:   true,
           });
-        } else {
-          const rejected = errCode === 4001 ||
-            (err.info && err.info.error && err.info.error.code === 4001);
-          if (rejected) {
-            setTransferNote('');
-            setStatus('');
-            resolveReceipt(receiptId, {
-              state: IX_TRANSFER_STATES.REJECTED,
-              fundsMoved: false,
-              lastKnownMessage: 'USDC authorization declined in wallet. No funds moved.',
-            });
-            failTransferTimeline('authorization_requested', 'Authorization declined');
-            setTxState('idle', 'Authorization declined. No funds moved.');
-            companionState(IX_TRANSFER_STATES.REJECTED, {
-              statusLine: 'Authorization rejected in wallet.',
-              stateVal:   'Declined',
-              fundsVal:   'No — nothing was sent',
-              networkVal: chainConfig.name,
-              eventVal:   'USDC authorization declined in wallet',
-              actionVal:  'No funds moved. Retry when ready.',
-              autoOpen:   true,
-            });
-          } else {
-            const explained = classifyTransferError(err, { phase: 'authorization', broadcastKnown: false });
-            setTransferNote('');
-            setStatus('');
-            resolveReceipt(receiptId, {
-              state: IX_TRANSFER_STATES.INTERRUPTED,
-              fundsMoved: explained.fundsMoved,
-              lastKnownMessage: `${explained.title}. ${explained.message}`,
-            });
-            failTransferTimeline('authorization_requested', explained.title);
-            setTxState('idle', `${explained.title}. ${explained.retryGuidance}`);
-            companionState(IX_TRANSFER_STATES.INTERRUPTED, {
-              statusLine: 'Authorization interrupted. Transfer cancelled.',
-              stateVal:   explained.title,
-              fundsVal:   'No — transfer did not proceed',
-              networkVal: chainConfig.name,
-              eventVal:   explained.code,
-              actionVal:  explained.retryGuidance,
-              autoOpen:   true,
-            });
-          }
+          return;
         }
-        return;
-      }
-    } else {
-      updateReceipt(receiptId, {
-        state: IX_TRANSFER_STATES.AUTHORIZING,
-        lastKnownMessage: 'Existing USDC allowance is being checked. Transfer not submitted yet.',
-      });
-      updateReceipt(receiptId, {
-        state: IX_TRANSFER_STATES.AUTHORIZED,
-        lastKnownMessage: 'Existing USDC allowance is sufficient. Transfer not submitted yet.',
-      });
-    }
 
-    // ---- Step 2 of 2 (or sole step when allowance already sufficient): Execute transfer ----
-    // Check flow before the transfer step — the user may have changed account or network
-    // during the approval confirmation wait.
-    assertFlowActive();
-
-    // Narrate BEFORE MetaMask fires.
-    //   transferStateNote = primary action rail
-    //   txStatus          = point-of-no-return signal
-    //   companionState    = state memory
-    const stepLabel = needsApproval ? 'Step 2 of 2 — Confirm the transfer in MetaMask' : 'Confirm the transfer in MetaMask';
-    markTransferStep('transfer_requested');
-    setTransferNote(stepLabel);
-    setStatus(`This is the funds-moving request. Recipient gets ${ethers.formatUnits(rawAmount, 6)} USDC; total wallet debit is ${ethers.formatUnits(totalDebit, 6)} USDC.`);
-    setTxState('pending', 'Wallet confirmation required.', 'Confirm transfer in MetaMask…');
-    if (els.previewNote) els.previewNote.textContent = 'Transfer confirmation requested. Confirm in MetaMask only if recipient amount, platform fee, and total wallet debit match.';
-    updateReceipt(receiptId, {
-      state: IX_TRANSFER_STATES.SUBMITTING,
-      lastKnownMessage: 'Transfer confirmation requested. Funds move only after on-chain confirmation.',
-    });
-    companionState(IX_TRANSFER_STATES.SUBMITTING, {
-      statusLine: 'Confirm transfer.',
-      stateVal:   'Awaiting confirmation',
-      fundsVal:   'No — not until confirmed on-chain',
-      networkVal: chainConfig.name,
-      eventVal:   'Transfer signature requested',
-      actionVal:  `Funds move only if confirmed on-chain. Recipient gets ${ethers.formatUnits(rawAmount, 6)} USDC; total wallet debit is ${ethers.formatUnits(totalDebit, 6)} USDC.`,
-    });
-
-    // txBroadcast: set true only after SUBMITTED is persisted to localStorage.
-    // Any error in the catch with txBroadcast=true routes to OUTCOME_UNKNOWN —
-    // do not set this flag until the hash is durably written.
-    let txBroadcast = false;
-    let broadcastHash = null;
-    let broadcastUrl = null;
-    try {
-      const tx = await implicitex.transferWithFee(recipient, rawAmount);
-      broadcastHash = tx.hash;
-      broadcastUrl = `${chainConfig.explorerUrl}/tx/${broadcastHash}`;
-
-      // Persist SUBMITTED + hash atomically before any UI update or flag change.
-      // This is the durable broadcast checkpoint: if the page closes after this
-      // write, rehydrate.js will find a SUBMITTED receipt with a hash and attempt
-      // chain reconciliation on next load.
-      updateReceipt(receiptId, {
-        state: IX_TRANSFER_STATES.SUBMITTED,
-        transferHash: broadcastHash,
-        hash: broadcastHash,
-        explorerUrl: broadcastUrl,
-        lastKnownMessage: 'Transfer broadcast to network. Awaiting confirmation.',
-      });
-
-      // Flag set after persistence: catch block uses this to distinguish
-      // post-broadcast errors (OUTCOME_UNKNOWN) from pre-broadcast errors (FAILED).
-      txBroadcast = true;
-
-      markTransferStep('broadcast');
-      setTransferNote('Transfer submitted — awaiting Polygon confirmation…');
-      setStatus('');
-      setTxState('pending', 'Broadcast to network. Do not retry.', 'Awaiting Polygon…');
-      companionState(IX_TRANSFER_STATES.SUBMITTED, {
-        statusLine: 'Transaction submitted. Awaiting chain confirmation.',
-        stateVal:   'Submitted',
-        fundsVal:   'No — not until confirmed',
-        networkVal: chainConfig.name,
-        eventVal:   'Broadcast to network',
-        actionVal:  'Wait for confirmation. Do not retry.',
-      });
-      const txReceipt = await tx.wait();
-
-      const txHash     = txReceipt.hash;
-      const receiptUrl = `${chainConfig.explorerUrl}/tx/${txHash}`;
-      if (els.txStatus) {
-        // explorerUrl is from our own config; txHash is a 0x-prefixed hex from the chain — safe.
-        els.txStatus.innerHTML =
-          `Transfer confirmed. ` +
-          `<a href="${receiptUrl}" target="_blank" rel="noopener">` +
-          `View on ${chainConfig.name} explorer</a>`;
-      }
-      setTransferNote('');
-      setTxState('idle', null); // status already set above via innerHTML
-      updateReceiptFromSource(receiptId, {
-        state: IX_TRANSFER_STATES.CONFIRMED,
-        fundsMoved: true,
-        transferHash: txHash,
-        hash: txHash,
-        explorerUrl: receiptUrl,
-        blockNumber: txReceipt.blockNumber || null,
-        lastKnownMessage: 'Transfer confirmed. Funds moved on Polygon.',
-      }, OBSERVATION_SOURCES && OBSERVATION_SOURCES.RPC);
-      if (window.IX && window.IX.receipts) window.IX.receipts.clearActive();
-      markTransferStep('confirmed');
-      renderTransferSummary(refreshedSummary, {
-        label: 'Transfer Confirmed',
-        mode: 'Confirmed',
-        note: `Tx ${shortHash(txHash)} confirmed on Polygon. Explorer link is visible above and in the receipt list.`,
-      });
-      companionState(IX_TRANSFER_STATES.CONFIRMED, {
-        statusLine: 'Transfer confirmed. Funds moved on Polygon.',
-        stateVal:   'Confirmed',
-        fundsVal:   'Yes — transfer complete',
-        networkVal: chainConfig.name,
-        eventVal:   txHash,
-        actionVal:  `View on ${chainConfig.name} explorer`,
-        actionHref: receiptUrl,
-        autoOpen:   true,
-      });
-
-      transferConfirmed = true;
-      upsertRecipientBook(recipient, metadata);
-      clearDraftControlsAfterConfirmation();
-      refreshUsdcBalance();
-    } catch (err) {
-      if (err.code === 'FLOW_INVALIDATED') throw err; // bubble to outer catch
-
-      if (txBroadcast) {
-        // Transaction was broadcast before the error. Outcome is unknown —
-        // we cannot assert fundsMoved either way. Surface the hash and direct
-        // the user to the explorer rather than claiming funds were not moved.
-        const explained = classifyTransferError(err, { phase: 'confirmation', broadcastKnown: true });
-        setTransferNote('');
-        const outcomeHash = err.receipt && err.receipt.hash
-          ? err.receipt.hash
-          : err.transactionHash || broadcastHash;
-        const outcomeUrl = outcomeHash ? `${chainConfig.explorerUrl}/tx/${outcomeHash}` : broadcastUrl;
-        preserveReceiptForRehydration(receiptId, {
-          state: explained.state,
-          fundsMoved: explained.fundsMoved,
-          transferHash: outcomeHash,
-          hash: outcomeHash,
-          explorerUrl: outcomeUrl,
-          lastKnownMessage: 'Transaction broadcast detected. Final confirmation could not be verified locally.',
-        });
-        failTransferTimeline('broadcast', 'Outcome unknown');
-        if (els.txStatus && outcomeUrl) {
-          els.txStatus.innerHTML =
-            `Outcome unknown. ` +
-            `<a href="${outcomeUrl}" target="_blank" rel="noopener">` +
-            `Check on ${chainConfig.name} explorer</a>`;
-        } else {
-          setTxState('idle', 'Outcome unknown. Check the explorer before retrying.');
-        }
-        companionState(IX_TRANSFER_STATES.OUTCOME_UNKNOWN, {
-          statusLine: 'Transaction outcome could not be verified locally.',
-          stateVal:   'Outcome unknown',
-          fundsVal:   'Unknown — check explorer',
-          networkVal: chainConfig.name,
-          eventVal:   explained.code,
-          actionVal:  explained.retryGuidance,
-          severity:   'advisory',
-          autoOpen:   true,
-        });
-      } else {
-        // Error before broadcast: wallet busy, user rejected, or pre-broadcast failure.
-        const errCode = providerErrorCode(err);
-
-        if (errCode === -32002) {
-          // MetaMask already has a pending request — deterministic interruption.
-          // No broadcast occurred. No funds moved.
-          // Set cooldown to block immediate retries while MetaMask clears the queue.
-          submitBlockedUntil = Date.now() + 5000;
+        case 'wallet-rejected': {
+          const rejectedState = executionPhase === 'authorization' ? 'Authorization declined' : 'Transfer declined';
           setTransferNote('');
           setStatus('');
           resolveReceipt(receiptId, {
-            state: IX_TRANSFER_STATES.INTERRUPTED,
+            state: IX_TRANSFER_STATES.REJECTED,
             fundsMoved: false,
-            lastKnownMessage: 'Wallet request already pending in MetaMask. No transfer was submitted. No funds moved.',
+            lastKnownMessage: rejectedState + '. No transfer was broadcast.',
           });
-          failTransferTimeline('transfer_requested', 'Wallet request already pending');
-          setTxState('idle', 'MetaMask already has a pending request. Open MetaMask and finish or cancel it, then retry.');
-          companionState(IX_TRANSFER_STATES.INTERRUPTED, {
-            statusLine: 'Wallet request already pending in MetaMask.',
-            stateVal:   'Interrupted',
+          failTransferTimeline(executionPhase === 'authorization' ? 'authorization_requested' : 'transfer_requested', rejectedState);
+          setTxState('idle', rejectedState + '. No funds moved.');
+          companionState(IX_TRANSFER_STATES.REJECTED, {
+            statusLine: rejectedState + ' in wallet.',
+            stateVal:   'Rejected',
             fundsVal:   'No — nothing was sent',
             networkVal: chainConfig.name,
-            eventVal:   'MetaMask already has a pending request (-32002)',
-            actionVal:  'Open MetaMask, finish or cancel the pending request, then retry.',
+            eventVal:   result.status,
+            actionVal:  'No transfer was broadcast. Retry when ready.',
             autoOpen:   true,
           });
-        } else {
-          const rejected = errCode === 4001 ||
-            (err.info && err.info.error && err.info.error.code === 4001);
-          if (rejected) {
-            setTransferNote('');
-            setStatus('');
-            resolveReceipt(receiptId, {
-              state: IX_TRANSFER_STATES.REJECTED,
-              fundsMoved: false,
-              lastKnownMessage: 'Transfer rejected in wallet. No transfer was broadcast.',
-            });
-            failTransferTimeline('transfer_requested', 'Transfer declined');
-            setTxState('idle', 'Transfer declined. No funds moved.');
-            companionState(IX_TRANSFER_STATES.REJECTED, {
-              statusLine: 'Transfer rejected in wallet.',
-              stateVal:   'Rejected',
-              fundsVal:   'No — nothing was sent',
-              networkVal: chainConfig.name,
-              eventVal:   'Transfer rejected in wallet',
-              actionVal:  'No transfer was broadcast. Retry when ready.',
-              autoOpen:   true,
-            });
-          } else {
-            const explained = classifyTransferError(err, { phase: 'transfer', broadcastKnown: false });
-            setTransferNote('');
-            setStatus('');
-            resolveReceipt(receiptId, {
-              state: IX_TRANSFER_STATES.INTERRUPTED,
-              fundsMoved: explained.fundsMoved,
-              lastKnownMessage: `${explained.title}. ${explained.message}`,
-            });
-            failTransferTimeline('transfer_requested', explained.title);
-            setTxState('idle', `${explained.title}. ${explained.retryGuidance}`);
-            companionState(IX_TRANSFER_STATES.INTERRUPTED, {
-              statusLine: 'Transfer interrupted before broadcast.',
-              stateVal:   explained.title,
-              fundsVal:   'No — transfer did not reach the network',
-              networkVal: chainConfig.name,
-              eventVal:   explained.code,
-              actionVal:  explained.retryGuidance,
-              autoOpen:   true,
-            });
-          }
+          return;
+        }
+
+        case 'failed':
+        default: {
+          const message = result.error && result.error.message || 'Execution failed';
+          setTransferNote('');
+          setStatus(message);
+          resolveReceipt(receiptId, {
+            state: IX_TRANSFER_STATES.FAILED,
+            fundsMoved: false,
+            lastKnownMessage: message,
+          });
+          failTransferTimeline(executionPhase === 'authorization' ? 'authorization_requested' : 'transfer_requested', message);
+          setTxState('idle', message);
+          companionState(IX_TRANSFER_STATES.FAILED, {
+            statusLine: message,
+            stateVal:   'Failed',
+            fundsVal:   'No — transfer did not complete',
+            networkVal: chainConfig.name,
+            eventVal:   result.error && result.error.code || 'failed',
+            actionVal:  'Review details, then retry if appropriate.',
+            autoOpen:   true,
+          });
+          return;
         }
       }
     }
+
 
     } catch (err) {
       // ---- Flow invalidation handler ----
@@ -3580,10 +4154,20 @@
       }
       // Other unexpected errors: let finally clean up without rethrowing.
     } finally {
-      // Always release the flow lock and exit review.
-      // Terminal states preserve the status message; errors unlock the form for editing.
+      // Always release the flow lock.
       activeTransferFlow = false;
-      if (!transferConfirmed) {
+      // If the flow exited without broadcast and without a diagnostic already
+      // written, persist a breadcrumb so unexpected exit paths are capturable.
+      if (!transferConfirmed && !txBroadcast && !diagnosticHold) {
+        persistWalletDiag('finally_no_broadcast', null, {
+          broadcastHash: broadcastHash,
+          txBroadcast:   txBroadcast,
+        });
+      }
+      // diagnosticHold: a QA diagnostic block is rendered in-page after an
+      // unclassified pre-broadcast failure. Leave the review panel open so the
+      // user can screenshot the raw error. exitReview collapses the panel.
+      if (!transferConfirmed && !diagnosticHold) {
         const preserveTimeline = !!(state.transferTimeline && state.transferTimeline.terminal);
         exitReview({ clearStatus: false, preserveTimeline });
       }
@@ -3650,26 +4234,58 @@
       // premium over fast until a dedicated rapid oracle is wired.
       rapid: Number.isFinite(fast) ? fast + Math.max(1, spread * 0.5) : NaN,
       blockNumber: Number(data && data.blockNumber),
+      blockTime:   Number(data && data.blockTime),
     };
+  }
+
+  // Probe the chain RPC directly — separate from Gas Station health.
+  // Gas Station could be healthy while polygon-rpc.com is degraded; this
+  // indicator targets the RPC path that wallet/contract reads actually use.
+  async function probeRpcLatency(rpcUrl) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    const t0 = Date.now();
+    try {
+      const res = await fetch(rpcUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jsonrpc: '2.0', method: 'eth_blockNumber', params: [], id: 1 }),
+        signal: controller.signal,
+        cache: 'no-store',
+      });
+      clearTimeout(timeoutId);
+      if (!res.ok) throw new Error(`RPC ${res.status}`);
+      await res.json(); // consume body so timing reflects full round-trip
+      return Date.now() - t0;
+    } catch (err) {
+      clearTimeout(timeoutId);
+      throw err;
+    }
   }
 
   // ----------------------------------------------------------------
   // Gas sample accumulator — session-local only, no persistence.
   // Feeds the expandable Gas price detail row.
   // ----------------------------------------------------------------
-  const GAS_SAMPLE_MAX = 20;
-  const gasSampleBuffer = []; // { standard: number, ts: number }
+  const GAS_SAMPLE_MAX      = 240;              // 2 hours at 30s polling — buffer ceiling
+  const GAS_CHART_WINDOW_MS = 5 * 60 * 1000;   // 5-minute visible window for the chart
+  const gasSampleBuffer     = [];               // { t: number, v: number }
 
   function pushGasSample(standard) {
     if (!Number.isFinite(standard)) return;
-    gasSampleBuffer.push({ standard, ts: Date.now() });
+    gasSampleBuffer.push({ t: Date.now(), v: Number(standard) });
     if (gasSampleBuffer.length > GAS_SAMPLE_MAX) gasSampleBuffer.shift();
   }
 
-  function calcGasTrend() {
-    if (gasSampleBuffer.length < 2) return 'Collecting';
-    const first = gasSampleBuffer[0].standard;
-    const last  = gasSampleBuffer[gasSampleBuffer.length - 1].standard;
+  // Single source of truth for the visible window — used by chart, detail, and trend.
+  function getVisibleGasSamples(now = Date.now()) {
+    return gasSampleBuffer.filter(s => now - s.t <= GAS_CHART_WINDOW_MS);
+  }
+
+  function calcGasTrend(visible) {
+    if (!visible || visible.length < 2) return 'Collecting';
+    const first = visible[0].v;
+    const last  = visible[visible.length - 1].v;
     const threshold = 5; // Gwei — below this delta is noise, not trend
     if (last > first + threshold) return 'Rising';
     if (last < first - threshold) return 'Falling';
@@ -3677,8 +4293,19 @@
   }
 
   function renderGasDetail() {
-    if (!gasSampleBuffer.length) return;
-    const vals = gasSampleBuffer.map(s => s.standard);
+    const visible = getVisibleGasSamples();
+
+    if (!visible.length) {
+      if (els.gasLow)     els.gasLow.textContent     = '—';
+      if (els.gasAvg)     els.gasAvg.textContent     = '—';
+      if (els.gasHigh)    els.gasHigh.textContent    = '—';
+      if (els.gasTrend)   els.gasTrend.textContent   = 'Collecting';
+      if (els.gasSamples) els.gasSamples.textContent = '0 visible';
+      renderGasChart();
+      return;
+    }
+
+    const vals = visible.map(s => s.v);
     const low  = Math.min(...vals);
     const high = Math.max(...vals);
     const avg  = vals.reduce((a, b) => a + b, 0) / vals.length;
@@ -3686,14 +4313,75 @@
     if (els.gasLow)     els.gasLow.textContent     = formatGwei(low)  + ' Gwei';
     if (els.gasAvg)     els.gasAvg.textContent     = formatGwei(avg)  + ' Gwei';
     if (els.gasHigh)    els.gasHigh.textContent    = formatGwei(high) + ' Gwei';
-    if (els.gasTrend)   els.gasTrend.textContent   = calcGasTrend();
-    if (els.gasSamples) els.gasSamples.textContent = gasSampleBuffer.length + ' / ' + GAS_SAMPLE_MAX;
+    if (els.gasTrend)   els.gasTrend.textContent   = calcGasTrend(visible);
+    if (els.gasSamples) els.gasSamples.textContent = visible.length + ' visible';
+  }
+
+  function renderGasChart() {
+    if (!els.gasChart) return;
+
+    const now     = Date.now();
+    const visible = getVisibleGasSamples(now);
+    const hasData = visible.length >= 2;
+
+    // Always update Y-axis labels — frame stays populated in all states
+    const maxVisible = hasData ? Math.max(...visible.map(s => s.v), 0) : 0;
+    const scaleMax   = maxVisible > 0 ? maxVisible : 1; // defensive denominator
+    if (els.gasAxisMax) els.gasAxisMax.textContent = hasData ? formatGwei(maxVisible)        : '—';
+    if (els.gasAxisMid) els.gasAxisMid.textContent = hasData ? formatGwei(maxVisible / 2)    : '—';
+    // gasAxisMin is always '0' — set in HTML
+
+    els.gasChart.classList.toggle('is-pending', !hasData);
+
+    if (!hasData) {
+      els.gasChart.innerHTML = '<div class="gas-chart-pending">DATA COLLECTION…</div>';
+      return;
+    }
+
+    // Plot dimensions — fixed viewBox, bars positioned by real timestamp
+    const PLOT_W = 300, PLOT_H = 64, BAR_W = 3;
+
+    const bars = visible.map(s => {
+      const age   = now - s.t;
+      const xNorm = 1 - (age / GAS_CHART_WINDOW_MS);       // 0 = oldest, 1 = now
+      const x     = Math.round(xNorm * (PLOT_W - BAR_W));
+      const barH  = s.v > 0
+        ? Math.max(1, Math.round((s.v / scaleMax) * PLOT_H))
+        : 0;
+      const y = PLOT_H - barH;
+      return `<rect x="${x}" y="${y}" width="${BAR_W}" height="${barH}" fill="currentColor"/>`;
+    }).join('');
+
+    els.gasChart.innerHTML =
+      `<svg viewBox="0 0 ${PLOT_W} ${PLOT_H}" width="100%" height="100%" ` +
+      `preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">` +
+      bars + `</svg>`;
   }
 
   function pollNetworkData() {
     if (state.networkPollTimer) return;
 
     async function update() {
+      // Reset rpcLatencyDisplay at the start of every cycle so a stale reading
+      // from a previous poll is never left visible while the new probe is in-flight.
+      if (els.rpcLatencyDisplay) {
+        els.rpcLatencyDisplay.textContent = '—';
+        els.rpcLatencyDisplay.className = 'data-v';
+      }
+
+      // Probe chain RPC independently — parallel to Gas Station fetch.
+      // Fires without awaiting so Gas Station latency does not inflate the reading.
+      const chainCfg = window.IX_CHAINS && window.IX_CHAINS[POLYGON_MAINNET_CHAIN_ID];
+      if (chainCfg && chainCfg.rpcUrl && els.rpcLatencyDisplay) {
+        probeRpcLatency(chainCfg.rpcUrl).then(ms => {
+          els.rpcLatencyDisplay.textContent = ms + ' ms';
+          els.rpcLatencyDisplay.className = 'data-v';
+        }).catch(() => {
+          els.rpcLatencyDisplay.textContent = 'Unavailable';
+          els.rpcLatencyDisplay.className = 'data-v is-error';
+        });
+      }
+
       try {
         const tiers = await fetchGasData();
         renderHeroGas(tiers);
@@ -3705,13 +4393,18 @@
         if (els.blockDisplay) {
           els.blockDisplay.textContent = tiers.blockNumber ? tiers.blockNumber.toLocaleString() : 'Pending';
         }
+        if (els.confirmTimeDisplay && Number.isFinite(tiers.blockTime)) {
+          els.confirmTimeDisplay.textContent = '~' + (tiers.blockTime * 2).toFixed(1) + ' sec';
+        }
 
         pushGasSample(tiers.standard);
         renderGasDetail();
+        renderGasChart();
       } catch (err) {
         renderHeroGas({ standard: NaN, fast: NaN, rapid: NaN });
-        if (els.gweiDisplay) els.gweiDisplay.textContent = 'Unavailable';
-        if (els.blockDisplay) els.blockDisplay.textContent = 'Pending';
+        if (els.gweiDisplay)        els.gweiDisplay.textContent        = 'Unavailable';
+        if (els.blockDisplay)       els.blockDisplay.textContent       = 'Pending';
+        if (els.confirmTimeDisplay) els.confirmTimeDisplay.textContent = '—';
       }
     }
 
@@ -3804,10 +4497,17 @@
   pollNetworkData();
   resetBalanceDisplay('Not connected');
   renderReceiptHistory();
+  renderConfirmedTransferBlock();
   renderRecipientIntel();
   renderPreflight();
+  if (window.location.hash === '#transfer') {
+    setTimeout(openTransferPortal, 60);
+  } else {
+    mountPortalMinimized();
+  }
   window.addEventListener('ix:receipts-changed', function () {
     renderReceiptHistory();
+    renderConfirmedTransferBlock();
     renderRecipientIntel();
     renderPreflight();
   });
@@ -3821,6 +4521,8 @@
     connect,
     disconnect,
     requestAccountSelection,
+    openTransferPortal,
+    focusTransferPortal,
     openOrConnect,
     handleTxAction,
     submitTransfer,
@@ -3831,18 +4533,95 @@
     getState: () => ({ ...state }),
   });
 
-  // Wire dismiss and wallet-session buttons
-  const dismissBtn = document.getElementById('modulesDismiss');
-  if (dismissBtn) dismissBtn.addEventListener('click', dismissModules);
+  // Portal controls — Minimize and Close
+  if (els.modulesMinimize) {
+    els.modulesMinimize.addEventListener('click', function () {
+      if (els.modules && els.modules.classList.contains('is-minimized')) {
+        restorePortal();
+      } else {
+        minimizePortal();
+      }
+    });
+  }
+  if (els.modulesClose) {
+    els.modulesClose.addEventListener('click', function () {
+      closePortalWithAnimation();
+      // Portal is above the hero — dismiss in place, no forced scroll.
+    });
+  }
+  if (els.portalMinimizedTray) {
+    els.portalMinimizedTray.addEventListener('click', restorePortal);
+  }
 
+  // Wallet menu — toggle open/close
+  if (els.walletMenuTrigger) {
+    els.walletMenuTrigger.addEventListener('click', function () {
+      if (els.walletMenu && els.walletMenu.classList.contains('is-open')) {
+        closeWalletMenu();
+      } else {
+        openWalletMenu();
+      }
+    });
+  }
+
+  // Wallet menu — close on outside click
+  document.addEventListener('click', function (e) {
+    if (!els.walletMenu || !els.walletMenu.classList.contains('is-open')) return;
+    if (!els.walletMenu.contains(e.target)) {
+      closeWalletMenu();
+    }
+  });
+
+  // Wallet menu — keyboard close on Escape
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && els.walletMenu && els.walletMenu.classList.contains('is-open')) {
+      closeWalletMenu();
+      if (els.walletMenuTrigger) els.walletMenuTrigger.focus();
+    }
+  });
+
+  // Copy address button
+  if (els.copyAddressBtn) {
+    els.copyAddressBtn.addEventListener('click', function () {
+      if (!state.address) return;
+      navigator.clipboard.writeText(state.address).then(function () {
+        const original = els.copyAddressBtn.textContent;
+        els.copyAddressBtn.textContent = 'Copied';
+        setTimeout(function () {
+          if (els.copyAddressBtn) els.copyAddressBtn.textContent = original;
+        }, 1400);
+      }).catch(function () {
+        // Clipboard unavailable — silently no-op.
+      });
+    });
+  }
+
+  // Switch to Polygon recovery button (inside wallet menu, shown on wrong network)
+  if (els.switchNetworkBtn) {
+    els.switchNetworkBtn.addEventListener('click', function () {
+      closeWalletMenu();
+      switchToPolygonMainnet();
+    });
+  }
+
+  // Wallet menu action buttons — wire disconnect and switch account
   if (els.disconnectBtn) {
     els.disconnectBtn.addEventListener('click', () => {
+      closeWalletMenu();
       disconnect({ revokeProvider: true });
     });
   }
-  if (els.switchAccountBtn) els.switchAccountBtn.addEventListener('click', requestAccountSelection);
+  if (els.switchAccountBtn) {
+    els.switchAccountBtn.addEventListener('click', function () {
+      closeWalletMenu();
+      requestAccountSelection();
+    });
+  }
   if (els.txCancelReview)  els.txCancelReview.addEventListener('click', () => exitReview());
   if (els.txConfirmAck)    els.txConfirmAck.addEventListener('change', updatePreview);
+
+  hydrateAuthorizedInjectedWallet();
+  renderPersistedWalletDiag(); // show any diagnostic from a previous failed transfer
 
   // Gas price row — expand / collapse toggle
   if (els.gasRowToggle) {
@@ -3897,6 +4676,7 @@
         state.address = accounts[0];
         state.provider = walletRuntime.provider;
         state.userDisconnected = false;
+        clearLocalWalletDisconnect();
 
         const chainHex = await walletRuntime.provider.request({ method: 'eth_chainId' });
         state.chainId = normalizeChainId(chainHex);

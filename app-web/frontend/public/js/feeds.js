@@ -22,7 +22,7 @@
     },
     {
       source: 'ImplicitEx',
-      text:   'Live transfers enabled. 1% flat fee routed to treasury on execution. $250 soft launch cap.',
+      text:   'Live transfers enabled. 1% platform fee routed to treasury on execution. $250 soft launch cap.',
     },
   ];
 

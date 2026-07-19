@@ -1,0 +1,23 @@
+{
+  "schema": "implicitex.coincard.v1",
+  "cardId": "antoine",
+  "status": "active",
+  "owner": {
+    "name": "ImplicitEx",
+    "domain": "implicitex.com"
+  },
+  "displayName": "Antoine Dennison",
+  "displayCredential": "CC AD-001",
+  "recipient": "0x2489587C9da6EaB970a5479BA70273BA37961221",
+  "chainId": 137,
+  "chainName": "Polygon",
+  "token": "USDC",
+  "tokenDecimals": 6,
+  "amountMode": "sender_input",
+  "feeBps": 100,
+  "allowedParentOrigins": ["*"],
+  "sourceDomain": "implicitex.com",
+  "createdAt": "2026-07-06T00:00:00Z",
+  "updatedAt": "2026-07-06T00:00:00Z",
+  "revokedAt": null
+}

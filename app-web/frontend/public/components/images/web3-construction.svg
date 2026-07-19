@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ImplicitEx WEB3 — Primary Mark
+     Block type: 8×8 units, gap=2 (B/4 for logo legibility at display sizes)
+     Grid: 24 cols × 5 rows  |  ViewBox: 238 × 48
+     Use at 32px height or above. Each block is a discrete visual unit.
+     Rendering: shape-rendering="crispEdges" required.
+     Generated from canonical grid: docs/brand/block-type-system.md
+-->
+<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 238 48"
+     shape-rendering="crispEdges"
+     role="img"
+     aria-label="WEB3">
+  <!-- W -->
+  <path fill="currentColor" d="
+    M 0,0 H 8 V 8 H 0 Z M 20,0 H 28 V 8 H 20 Z M 40,0 H 48 V 8 H 40 Z M 0,10 H 8 V 18 H 0 Z M 20,10 H 28 V 18 H 20 Z M 40,10 H 48 V 18 H 40 Z M 0,20 H 8 V 28 H 0 Z M 20,20 H 28 V 28 H 20 Z M 40,20 H 48 V 28 H 40 Z M 0,30 H 8 V 38 H 0 Z M 20,30 H 28 V 38 H 20 Z M 40,30 H 48 V 38 H 40 Z M 0,40 H 8 V 48 H 0 Z M 10,40 H 18 V 48 H 10 Z M 20,40 H 28 V 48 H 20 Z M 30,40 H 38 V 48 H 30 Z M 40,40 H 48 V 48 H 40 Z
+  "/>
+  <!-- E -->
+  <path fill="currentColor" d="
+    M 60,0 H 68 V 8 H 60 Z M 70,0 H 78 V 8 H 70 Z M 80,0 H 88 V 8 H 80 Z M 90,0 H 98 V 8 H 90 Z M 100,0 H 108 V 8 H 100 Z M 60,10 H 68 V 18 H 60 Z M 60,20 H 68 V 28 H 60 Z M 70,20 H 78 V 28 H 70 Z M 80,20 H 88 V 28 H 80 Z M 90,20 H 98 V 28 H 90 Z M 100,20 H 108 V 28 H 100 Z M 60,30 H 68 V 38 H 60 Z M 60,40 H 68 V 48 H 60 Z M 70,40 H 78 V 48 H 70 Z M 80,40 H 88 V 48 H 80 Z M 90,40 H 98 V 48 H 90 Z M 100,40 H 108 V 48 H 100 Z
+  "/>
+  <!-- B -->
+  <path fill="currentColor" d="
+    M 120,0 H 128 V 8 H 120 Z M 130,0 H 138 V 8 H 130 Z M 140,0 H 148 V 8 H 140 Z M 150,0 H 158 V 8 H 150 Z M 160,0 H 168 V 8 H 160 Z M 120,10 H 128 V 18 H 120 Z M 170,10 H 178 V 18 H 170 Z M 120,20 H 128 V 28 H 120 Z M 130,20 H 138 V 28 H 130 Z M 140,20 H 148 V 28 H 140 Z M 150,20 H 158 V 28 H 150 Z M 160,20 H 168 V 28 H 160 Z M 120,30 H 128 V 38 H 120 Z M 170,30 H 178 V 38 H 170 Z M 120,40 H 128 V 48 H 120 Z M 130,40 H 138 V 48 H 130 Z M 140,40 H 148 V 48 H 140 Z M 150,40 H 158 V 48 H 150 Z M 160,40 H 168 V 48 H 160 Z
+  "/>
+  <!-- 3 -->
+  <path fill="currentColor" d="
+    M 190,0 H 198 V 8 H 190 Z M 200,0 H 208 V 8 H 200 Z M 210,0 H 218 V 8 H 210 Z M 220,0 H 228 V 8 H 220 Z M 230,0 H 238 V 8 H 230 Z M 230,10 H 238 V 18 H 230 Z M 200,20 H 208 V 28 H 200 Z M 210,20 H 218 V 28 H 210 Z M 220,20 H 228 V 28 H 220 Z M 230,20 H 238 V 28 H 230 Z M 230,30 H 238 V 38 H 230 Z M 190,40 H 198 V 48 H 190 Z M 200,40 H 208 V 48 H 200 Z M 210,40 H 218 V 48 H 210 Z M 220,40 H 228 V 48 H 220 Z M 230,40 H 238 V 48 H 230 Z
+  "/>
+</svg>

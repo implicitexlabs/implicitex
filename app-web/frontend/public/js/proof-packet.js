@@ -28,6 +28,7 @@
       chainId: source.chainId || null,
       token: 'USDC',
       transferContract: source.contractAddress || null,
+      coinCard: source.coinCard || null,
       sender: source.sender || null,
       recipient: source.recipient || null,
       amount: source.amount || null,
@@ -47,11 +48,66 @@
       createdAt: source.createdAt || source.timestamp || null,
       resolvedAt: source.resolvedAt || null,
       lastKnownMessage: source.lastKnownMessage || '',
+      evidenceSections: buildReceiptEvidenceSections(source),
     };
+  }
+
+  function field(value) {
+    return value === undefined || value === null || value === '' ? null : value;
+  }
+
+  function buildReceiptEvidenceSections(receipt) {
+    const source = schemaApi ? schemaApi.migrateReceipt(receipt) : (receipt || {});
+    const coinCard = source.coinCard || {};
+    return [
+      {
+        title: 'Settlement Truth',
+        owner: 'Blockchain',
+        facts: {
+          transactionHash: field(source.transferHash || source.hash),
+          blockNumber: field(source.blockNumber),
+          sender: field(source.sender),
+          recipient: field(source.recipient),
+          amount: field(source.amount),
+          fee: field(source.fee),
+          totalDebit: field(source.totalDebit),
+          network: field(source.network),
+          chainId: field(source.chainId),
+          explorerUrl: field(source.explorerUrl),
+        },
+      },
+      {
+        title: 'Recorded Coin Card Evidence',
+        owner: 'ImplicitEx',
+        facts: {
+          schema: field(coinCard.schema),
+          version: field(coinCard.version),
+          manifestUrl: field(coinCard.manifestUrl),
+          manifestHash: field(coinCard.manifestHash),
+          manifestCreated: field(coinCard.manifestCreated),
+          manifestUpdated: field(coinCard.manifestUpdated),
+          routeValidation: field(coinCard.routeValidation),
+          recipientSource: field(coinCard.recipientSource),
+          contractAddress: field(source.contractAddress),
+        },
+      },
+      {
+        title: 'Host-Published Manifest Data',
+        owner: 'Publisher',
+        facts: {
+          name: field(coinCard.name),
+          recipientAddress: field(source.recipient),
+          network: field(source.network),
+          token: 'USDC',
+          status: field(coinCard.status),
+        },
+      },
+    ];
   }
 
   return Object.freeze({
     PROOF_PACKET_SCHEMA_VERSION,
     buildProofPacket,
+    buildReceiptEvidenceSections,
   });
 });

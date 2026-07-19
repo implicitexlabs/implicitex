@@ -1,0 +1,14 @@
+<svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"
+     shape-rendering="crispEdges" aria-label="Chain link" role="img">
+  <mask id="chain-link-inverse-mask">
+    <rect x="0" y="0" width="16" height="16" fill="#fff"/>
+    <path fill="#000" fill-rule="evenodd" d="
+      M 2,5 H 9 V 11 H 2 Z
+      M 4,7 H 9 V 9 H 4 Z
+
+      M 7,5 H 14 V 11 H 7 Z
+      M 7,7 H 12 V 9 H 7 Z
+    "/>
+  </mask>
+  <rect x="0" y="0" width="16" height="16" fill="currentColor" mask="url(#chain-link-inverse-mask)"/>
+</svg>

@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ImplicitEx — Devlog</title>
+  <meta name="description" content="A dated record of platform changes, fixes, and operational decisions. Commit hashes are independently verifiable.">
+  <meta property="og:url" content="https://implicitex.com/log.html">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="ImplicitEx — Devlog">
+  <meta property="og:description" content="A dated record of platform changes, fixes, and operational decisions. Commit hashes are independently verifiable.">
+  <meta property="og:image" content="https://implicitex.com/components/images/og-primary.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="628">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@implicitex">
+  <meta name="twitter:title" content="ImplicitEx — Devlog">
+  <meta name="twitter:description" content="A dated record of platform changes, fixes, and operational decisions. Commit hashes are independently verifiable.">
+  <meta name="twitter:image" content="https://implicitex.com/components/images/og-primary.png">
+  <link rel="canonical" href="https://implicitex.com/log.html">
+  <script>(function(){try{var t=localStorage.getItem('implicitex-theme');if(t==='light'||t==='dark'){document.documentElement.dataset.theme=t;}else{var h=new Date().getHours();document.documentElement.dataset.theme=(h>=7&&h<19)?'light':'dark';}}catch(e){}})();</script>
+  <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+  <nav id="nav">
+    <a href="/" class="logo" aria-label="ImplicitEx home">
+      <svg class="brandmark" width="25" height="25" viewBox="0 0 25 25" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+        <path d="M18.4,21.48L2.64,5.73l.43-.43,15.76,15.76s1.3,1.3,2.79-.19.21-2.77.21-2.77L6.05,2.32l.43-.43,4.07,4.07,1.38,1.38,1.28-1.28,4.28-4.28.43.43-5.56,5.56,2.98,2.98,5.56-5.56.43.43-5.56,5.56,1.28,1.28,5.56-5.56s1.28-1.28-.21-2.77-2.79-.19-2.79-.19l-4.26,4.26-.43-.43,4.26-4.26s1.3-1.3-.19-2.79-2.77-.21-2.77-.21l-4.28,4.28L7.75.62s-1.28-1.28-2.77.21-.19,2.79-.19,2.79l15.76,15.76-.43.43L4.37,4.05s-1.3-1.3-2.79.19-.11,2.87-.11,2.87l15.68,15.68-.43.43-5.56-5.56-5.54,5.54-.43-.43,5.54-5.54-2.98-2.98-5.54,5.54-.43-.43,5.54-5.54-1.28-1.28L.51,18.08s-1.28,1.28.21,2.77,2.79.19,2.79.19l4.23-4.23.43.43-4.23,4.23s-1.3,1.3.19,2.79,2.77.21,2.77.21l4.26-4.26,4.28,4.28s1.28,1.28,2.77-.21.19-2.79.19-2.79Z" fill="#f2f2f0"/>
+      </svg>
+      <img class="wordmark" src="/components/images/wordmark-white.svg" alt="" aria-hidden="true">
+    </a>
+    <div class="nav-right">
+      <button class="clock-toggle" id="clockToggle" type="button" aria-label="Set theme by time of day">
+        <svg class="clock-icon" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+          <circle cx="7" cy="7" r="6" fill="none" stroke="currentColor" stroke-width="1.2"/>
+          <line id="clockHourHand" x1="7" y1="7" x2="7" y2="4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <line id="clockMinuteHand" x1="7" y1="7" x2="7" y2="2.5" stroke="currentColor" stroke-width="1" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch to light theme" aria-pressed="false">
+        <svg class="theme-icon" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+          <path d="M7 1 A6 6 0 0 0 7 13 Z" fill="var(--white)"/>
+          <path d="M7 1 A6 6 0 0 1 7 13 Z" fill="var(--bg)"/>
+          <circle cx="7" cy="7" r="6" fill="none" stroke="currentColor" stroke-width="1.2"/>
+        </svg>
+      </button>
+      <span class="nav-status">Polygon · Live</span>
+      <a class="send-usdc-link" href="/#transfer">Transfer Portal</a>
+      <button class="connect-btn" id="connectBtn" onclick="IX.connect()">
+        Connect Wallet
+      </button>
+      <div class="wallet-menu" id="walletMenu" hidden>
+        <button class="wallet-menu-trigger" id="walletMenuTrigger" type="button" aria-expanded="false" aria-controls="walletMenuPanel" aria-label="Wallet account menu">
+          <span class="wallet-dot" aria-hidden="true"></span>
+          <span class="wallet-addr" id="walletAddr"></span>
+          <span class="wallet-chevron" aria-hidden="true"></span>
+        </button>
+        <div class="wallet-menu-panel" id="walletMenuPanel" hidden>
+          <p class="wallet-menu-title">Wallet account</p>
+          <p class="wallet-menu-address" id="walletFullAddress"></p>
+          <button class="wallet-menu-action" id="copyAddressBtn" type="button">Copy address</button>
+          <button class="wallet-menu-action" id="switchNetworkBtn" type="button" hidden>Switch to Polygon</button>
+          <button class="wallet-menu-action" id="switchAccountBtn" type="button">Switch account</button>
+          <button class="wallet-menu-action wallet-menu-action--danger" id="disconnectBtn" type="button">Disconnect</button>
+        </div>
+      </div>
+      <!-- Hamburger — mobile only, hidden on desktop via CSS -->
+      <button class="hamburger-btn" id="hamburgerBtn" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
+        <svg width="18" height="14" viewBox="0 0 18 14" aria-hidden="true">
+          <rect y="0"  width="18" height="1.8" fill="currentColor"/>
+          <rect y="6"  width="18" height="1.8" fill="currentColor"/>
+          <rect y="12" width="18" height="1.8" fill="currentColor"/>
+        </svg>
+      </button>
+    </div>
+  </nav>
+
+  <!-- MOBILE MENU OVERLAY -->
+  <div class="mobile-menu" id="mobileMenu" role="dialog" aria-modal="true" aria-label="Site menu" hidden>
+    <div class="mobile-menu-inner">
+      <div class="mobile-menu-head">
+        <span class="mobile-menu-title">Menu</span>
+        <button class="mobile-menu-close" id="mobileMenuClose" type="button" aria-label="Close menu">
+          <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+            <line x1="1" y1="1" x2="13" y2="13" stroke="currentColor" stroke-width="1.6"/>
+            <line x1="13" y1="1" x2="1" y2="13" stroke="currentColor" stroke-width="1.6"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Wallet section -->
+      <section class="mobile-menu-section" aria-label="Wallet">
+        <p class="mobile-menu-label">Wallet</p>
+        <p class="mobile-menu-status" id="menuWalletStatus">No wallet connected.</p>
+        <p class="mobile-menu-sender" id="menuSenderDisplay" hidden></p>
+        <p class="mobile-menu-network" id="menuNetworkDisplay" hidden></p>
+        <div class="mobile-menu-actions">
+          <button class="mobile-menu-btn mobile-menu-btn--primary" id="menuConnectBtn" type="button">
+            Connect Wallet
+          </button>
+          <button class="mobile-menu-btn" id="menuSwitchBtn" type="button" hidden>
+            Switch Account
+          </button>
+          <button class="mobile-menu-btn mobile-menu-btn--danger" id="menuDisconnectBtn" type="button" hidden>
+            Disconnect
+          </button>
+        </div>
+      </section>
+
+      <!-- Transaction section -->
+      <section class="mobile-menu-section" aria-label="Transaction">
+        <p class="mobile-menu-label">Transaction</p>
+        <button class="mobile-menu-btn mobile-menu-btn--primary" id="menuOpenPortalBtn" type="button">
+          Transfer Portal
+        </button>
+        <p class="mobile-menu-portal-note">Open the USDC transfer interface.</p>
+      </section>
+
+      <!-- Navigation links -->
+      <section class="mobile-menu-section" aria-label="Navigation">
+        <p class="mobile-menu-label">Site</p>
+        <nav class="mobile-menu-links">
+          <a href="/start.html">Start</a>
+          <a href="/about.html">About</a>
+          <a href="/faq.html">FAQ</a>
+          <a href="/learn.html">Learn</a>
+          <a href="/verify.html">Verify</a>
+          <a href="/log.html">Devlog</a>
+          <a href="/terms.html">Terms</a>
+          <a href="/privacy.html">Privacy</a>
+          <a href="/legal.html">Legal</a>
+          <a href="/jurisdictions.html">Access</a>
+          <a href="/news.html">News</a>
+          <a href="/contact.html">Contact</a>
+        </nav>
+      </section>
+
+      <!-- Social links — separated from site navigation -->
+      <section class="mobile-menu-section" aria-label="Social">
+        <p class="mobile-menu-label">Social</p>
+        <nav class="mobile-menu-links">
+          <a href="https://x.com/implicitex" target="_blank" rel="noopener">X</a>
+          <a href="https://github.com/implicitexlabs" target="_blank" rel="noopener">GitHub</a>
+        </nav>
+      </section>
+    </div>
+    <!-- Backdrop — tap to close -->
+    <div class="mobile-menu-backdrop" id="mobileMenuBackdiv" aria-hidden="true"></div>
+  </div>
+
+  <main class="policy-shell log-shell">
+    <div class="about-hero-mark about-hero-mark--stacked" aria-hidden="true">
+      <img class="about-brandmark" src="/components/images/lettermark-white.svg" alt="" aria-hidden="true">
+      <img class="about-wordmark" src="/components/images/wordmark-white.svg" alt="" aria-hidden="true">
+    </div>
+
+    <h1>Devlog</h1>
+
+    <p class="log-intro">
+      A dated record of platform changes, fixes, and operational decisions.
+      Commit hashes can be verified independently via
+      <a href="https://github.com/implicitexlabs/implicitex" target="_blank" rel="noopener">GitHub</a>.
+      See <a href="/verify.html">Verification</a> for the current state of the platform.
+    </p>
+
+    <table class="log-table" aria-label="Platform engineering log">
+      <thead>
+        <tr>
+          <th scope="col">Date</th>
+          <th scope="col">Change</th>
+          <th scope="col">Status</th>
+          <th scope="col">Commit</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <tr>
+          <td class="log-date">2026-07-06</td>
+          <td class="log-change">
+            <span class="log-change-title">First real Coin Card issued — card/antoine</span>
+            <span class="log-change-desc">Antoine Dennison, CC AD-001. Polygon · USDC. Recipient address 0x2489…1221. The first Coin Card with a real identity, a real address, and a real URL: implicitex.com/card/antoine.</span>
+          </td>
+          <td class="log-status log-status--deployed">Deployed</td>
+          <td class="log-commit">ee18582</td>
+        </tr>
+
+        <tr>
+          <td class="log-date">2026-07-06</td>
+          <td class="log-change">
+            <span class="log-change-title">Coin Card: recipient-first gift view</span>
+            <span class="log-change-desc">Added CARD HOLDER trust row populated from manifest displayName. Gift section shows identity and context before transaction surface. Amount input and send button deferred until sender explicitly engages. Cold state now answers "who is this for?" before "how do I send?"</span>
+          </td>
+          <td class="log-status log-status--deployed">Deployed</td>
+          <td class="log-commit">15311f0</td>
+        </tr>
+
+        <tr>
+          <td class="log-date">2026-07-06</td>
+          <td class="log-change">
+            <span class="log-change-title">Typography simplified to three typefaces</span>
+            <span class="log-change-desc">Removed Oxanium from the main site font stack. UI chrome now inherits Inter. Final roles: Orbitron (identity/display), Inter (UI and body), IBM Plex Mono (technical data). Coin Card retains its own scoped type system.</span>
+          </td>
+          <td class="log-status log-status--deployed">Deployed</td>
+          <td class="log-commit">1c17683</td>
+        </tr>
+
+        <tr>
+          <td class="log-date">2026-07-06</td>
+          <td class="log-change">
+            <span class="log-change-title">Jurisdictions: compliance citation framework</span>
+            <span class="log-change-desc">Added a Policy Basis section to the jurisdictions page citing five authoritative sources: OFAC sanctions programs, OFAC cryptocurrency guidance, SDN list, FinCEN FIN-2013-G001 virtual currency guidance, and FATF call-for-action list. Numbered references link to official government and intergovernmental publications.</span>
+          </td>
+          <td class="log-status log-status--deployed">Deployed</td>
+          <td class="log-commit">3b0cb97</td>
+        </tr>
+
+        <tr>
+          <td class="log-date">2026-06-23</td>
+          <td class="log-change">
+            <span class="log-change-title">Transfers re-enabled — operating under observation</span>
+            <span class="log-change-desc">Transfers re-enabled on Polygon mainnet. Blockaid review remains in progress but does not block platform operation. The contract and fee routing are independently verifiable. See the <a href="/verify.html">Verify page</a> for verification resources and current review status.</span>
+          </td>
+          <td class="log-status log-status--deployed">Deployed</td>
+          <td class="log-commit">e756bf5</td>
+        </tr>
+
+        <tr>
+          <td class="log-date">2026-06-23</td>
+          <td class="log-change">
+            <span class="log-change-title">Transfers paused — Blockaid false-positive reported</span>
+            <span class="log-change-desc">MetaMask displayed a false-positive security warning on the USDC approval step during Gate 5 first-user walkthrough (2026-06-18). Transfers disabled as a precaution. False-positive reports submitted to Blockaid for both implicitex.com and staging domain. No contract defect; fee routing and on-chain behavior confirmed correct by controlled mainnet transaction (Gate 4, 2026-06-15).</span>
+          </td>
+          <td class="log-status log-status--pending">Under Review</td>
+          <td class="log-commit">9bf6922</td>
+        </tr>
+
+        <tr>
+          <td class="log-date">2026-06-23</td>
+          <td class="log-change">
+            <span class="log-change-title">Analytics abstraction layer</span>
+            <span class="log-change-desc">Added IX.track() with consent-denied default and pluggable backend slot. Seven event hooks wired across the transfer flow. No backend active — architecture is vendor-independent. 24-test suite added; a consent-overwrite defect was discovered and fixed during verification.</span>
+          </td>
+          <td class="log-status log-status--deployed">Deployed</td>
+          <td class="log-commit">4c78669</td>
+        </tr>
+
+        <tr>
+          <td class="log-date">2026-06-23</td>
+          <td class="log-change">
+            <span class="log-change-title">SEO and discovery infrastructure</span>
+            <span class="log-change-desc">Canonical tag, expanded sitemap (15 URLs), and JSON-LD structured data (Organization, WebSite, SoftwareApplication) deployed to index.html. Google Search Console property verified. Sitemap submitted and priority URLs requested for indexing. Pre-verification crawl observed from 2026-06-05.</span>
+          </td>
+          <td class="log-status log-status--deployed">Deployed</td>
+          <td class="log-commit">4c78669</td>
+        </tr>
+
+        <tr>
+          <td class="log-date">2026-06-23</td>
+          <td class="log-change">
+            <span class="log-change-title">URL rename: /get-started → /start</span>
+            <span class="log-change-desc">get-started.html renamed to start.html. All internal links and sitemap updated. 301 redirect added in Firebase hosting config to preserve crawl history.</span>
+          </td>
+          <td class="log-status log-status--deployed">Deployed</td>
+          <td class="log-commit">a8fc74a</td>
+        </tr>
+
+        <tr>
+          <td class="log-date">2026-06-22</td>
+          <td class="log-change">
+            <span class="log-change-title">Hero copy rewrite</span>
+            <span class="log-change-desc">Replaced argumentative framing with declarative product description. Three-slide rotation: identity, utility, verification.</span>
+          </td>
+          <td class="log-status log-status--deployed">Deployed</td>
+          <td class="log-commit">c8db8f0</td>
+        </tr>
+
+        <tr>
+          <td class="log-date">2026-06-22</td>
+          <td class="log-change">
+            <span class="log-change-title">Recipient address checksum validation</span>
+            <span class="log-change-desc">Non-checksummed Ethereum addresses now trigger a recovery prompt. Address is validated against EIP-55 and corrected before the transfer is prepared.</span>
+          </td>
+          <td class="log-status log-status--deployed">Deployed</td>
+          <td class="log-commit">0a85417</td>
+        </tr>
+
+        <tr>
+          <td class="log-date">2026-06-22</td>
+          <td class="log-change">
+            <span class="log-change-title">Transfer portal visible before wallet connection</span>
+            <span class="log-change-desc">Portal is now shown on page load. Visitors can review recipient and fee fields before connecting a wallet.</span>
+          </td>
+          <td class="log-status log-status--deployed">Deployed</td>
+          <td class="log-commit">c7ad329</td>
+        </tr>
+
+        <tr>
+          <td class="log-date">2026-06-22</td>
+          <td class="log-change">
+            <span class="log-change-title">Wallet-state button labels</span>
+            <span class="log-change-desc">Transfer button reflects connection state: "Connect Wallet to Continue" when disconnected, "Review Transfer" when ready.</span>
+          </td>
+          <td class="log-status log-status--deployed">Deployed</td>
+          <td class="log-commit">2708489</td>
+        </tr>
+
+        <tr>
+          <td class="log-date">2026-06-22</td>
+          <td class="log-change">
+            <span class="log-change-title">Verification page (renamed from Proof)</span>
+            <span class="log-change-desc">Page renamed across all site navigation. Name now matches the page's function: independently verifiable on-chain data.</span>
+          </td>
+          <td class="log-status log-status--deployed">Deployed</td>
+          <td class="log-commit">54e63fc</td>
+        </tr>
+
+        <tr>
+          <td class="log-date">2026-06-22</td>
+          <td class="log-change">
+            <span class="log-change-title">Start guide</span>
+            <span class="log-change-desc">Dedicated first-time setup guide covering MetaMask installation, Polygon network configuration, and USDC acquisition.</span>
+          </td>
+          <td class="log-status log-status--deployed">Deployed</td>
+          <td class="log-commit">5171ae6</td>
+        </tr>
+
+        <tr>
+          <td class="log-date">2026-06-20</td>
+          <td class="log-change">
+            <span class="log-change-title">Chain reconciliation for interrupted transfers</span>
+            <span class="log-change-desc">Added recovery handling for transfers interrupted by mid-flow network switches. Session state persists across wallet reconnects.</span>
+          </td>
+          <td class="log-status log-status--deployed">Deployed</td>
+          <td class="log-commit">977ad16</td>
+        </tr>
+
+        <tr>
+          <td class="log-date">2026-06-20</td>
+          <td class="log-change">
+            <span class="log-change-title">Mobile transfer diagnostics</span>
+            <span class="log-change-desc">Signer errors on mobile MetaMask now surface as visible diagnostic output rather than silent failures.</span>
+          </td>
+          <td class="log-status log-status--deployed">Deployed</td>
+          <td class="log-commit">c823314</td>
+        </tr>
+
+        <tr>
+          <td class="log-date">2026-06-19</td>
+          <td class="log-change">
+            <span class="log-change-title">Typography system rebuild</span>
+            <span class="log-change-desc">Full CSS type pass across all pages. Font roles separated: Orbitron (display), Oxanium (UI), Inter (body), IBM Plex Mono (technical data only).</span>
+          </td>
+          <td class="log-status log-status--deployed">Deployed</td>
+          <td class="log-commit">f956fdb</td>
+        </tr>
+
+        <tr>
+          <td class="log-date">2026-06-18</td>
+          <td class="log-change">
+            <span class="log-change-title">MetaMask Blockaid false positive on approval step</span>
+            <span class="log-change-desc">MetaMask flagged the USDC approval prompt as "deceptive" during Gate 5 first-user walkthrough. Approval amount was exact, not unlimited. Transfers disabled pending Blockaid review resolution. Reports submitted 2026-06-18.</span>
+          </td>
+          <td class="log-status log-status--monitoring">Monitoring</td>
+          <td class="log-commit">9bf6922</td>
+        </tr>
+
+        <tr>
+          <td class="log-date">2026-06-15</td>
+          <td class="log-change">
+            <span class="log-change-title">Gate 4: first mainnet USDC transfer</span>
+            <span class="log-change-desc">First controlled live transfer on Polygon mainnet. 1.01 USDC sent, 1.00 USDC received, 0.01 USDC fee routed to treasury. Contract held zero balance post-transfer. Block 88565097.</span>
+          </td>
+          <td class="log-status log-status--deployed">Deployed</td>
+          <td class="log-commit">c16c571</td>
+        </tr>
+
+        <tr>
+          <td class="log-date">2026-06-14</td>
+          <td class="log-change">
+            <span class="log-change-title">Negative-path testing complete</span>
+            <span class="log-change-desc">All six failure scenarios verified on mainnet: approval rejection, transfer rejection, wallet busy, insufficient balance, wrong network mid-flow, session bleed prevention. All paths handled without data loss or UI contradiction.</span>
+          </td>
+          <td class="log-status log-status--deployed">Deployed</td>
+          <td class="log-commit">—</td>
+        </tr>
+
+        <tr>
+          <td class="log-date">2026-06-01</td>
+          <td class="log-change">
+            <span class="log-change-title">Gate 2: first live transfer smoke</span>
+            <span class="log-change-desc">First controlled live transfer smoke on Polygon mainnet. On-chain settlement confirmed. Fee routing to treasury verified. Contract held zero balance post-transfer.</span>
+          </td>
+          <td class="log-status log-status--deployed">Deployed</td>
+          <td class="log-commit">—</td>
+        </tr>
+
+        <tr>
+          <td class="log-date">2026-05-04</td>
+          <td class="log-change">
+            <span class="log-change-title">Initial deployment</span>
+            <span class="log-change-desc">ImplicitEx contract deployed on Polygon mainnet. Chain configuration, wallet runtime, and public frontend shell established.</span>
+          </td>
+          <td class="log-status log-status--deployed">Deployed</td>
+          <td class="log-commit">8581de3</td>
+        </tr>
+
+      </tbody>
+    </table>
+
+  </main>
+
+  <footer>
+    <div class="f-inner">
+      <div class="f-brand">
+        <div class="f-brand-lockup">
+          <img src="/components/images/lettermark-white.svg" alt="" aria-hidden="true" class="f-brand-mark">
+          <img src="/components/images/wordmark-white.svg" alt="ImplicitEx" class="f-brand-word">
+        </div>
+        <span class="f-tagline">Wallet-to-wallet USDC transfers.</span>
+      </div>
+      <nav class="f-links" aria-label="Footer links">
+        <div class="f-group">
+          <span class="f-group-label">Product</span>
+          <a href="/start.html">Start</a>
+          <a href="/faq.html">FAQ</a>
+          <a href="/learn.html">Learn</a>
+          <a href="/verify.html">Verify</a>
+          <a href="/log.html">Devlog</a>
+        </div>
+        <div class="f-group">
+          <span class="f-group-label">Legal</span>
+          <a href="/terms.html">Terms</a>
+          <a href="/privacy.html">Privacy</a>
+          <a href="/legal.html">Legal</a>
+        </div>
+        <div class="f-group">
+          <span class="f-group-label">Support</span>
+          <a href="/contact.html">Contact</a>
+          <a href="/jurisdictions.html">Access</a>
+        </div>
+        <div class="f-group">
+          <span class="f-group-label">Company</span>
+          <a href="/about.html">About</a>
+          <a href="/media.html">Media</a>
+          <a href="/brand.html">Brand</a>
+          <a href="/news.html">News</a>
+        </div>
+        <div class="f-group">
+          <span class="f-group-label">Social</span>
+          <a href="https://x.com/implicitex" target="_blank" rel="noopener">X</a>
+          <a href="https://www.linkedin.com/in/implicitex/" target="_blank" rel="noopener">LinkedIn</a>
+          <a href="https://github.com/implicitexlabs" target="_blank" rel="noopener">GitHub</a>
+        </div>
+      </nav>
+      <div class="f-bottom">
+        <span class="f-net is-live" id="networkBadge">Polygon live</span>
+        <span class="f-copy">&#169; <a href="https://adenmediagroup.com" target="_blank" rel="noopener noreferrer">Aden Media Group, LLC</a></span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="config/chains.js"></script>
+  <script src="js/analytics.js"></script>
+  <script src="js/consent.js"></script>
+  <script src="js/wallet.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/mobile-menu.js"></script>
+</body>
+</html>

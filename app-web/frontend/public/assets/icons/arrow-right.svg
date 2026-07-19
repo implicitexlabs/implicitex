@@ -1,0 +1,13 @@
+<svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"
+     shape-rendering="crispEdges" aria-label="Send" role="img">
+  <path fill="currentColor" d="
+    M 10,4 H 11 V 5 H 10 Z
+    M 10,5 H 12 V 6 H 10 Z
+    M 10,6 H 13 V 7 H 10 Z
+    M 2,7 H 14 V 8 H 2 Z
+    M 2,8 H 14 V 9 H 2 Z
+    M 10,9 H 13 V 10 H 10 Z
+    M 10,10 H 12 V 11 H 10 Z
+    M 10,11 H 11 V 12 H 10 Z
+  "/>
+</svg>

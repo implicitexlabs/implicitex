@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ImplicitEx - Coin Card Publisher MVP</title>
+  <meta name="description" content="Create a Coin Card publisher MVP proof artifact for a signed payment identity credential.">
+  <meta property="og:url" content="https://implicitex.com/coincard/publisher-mvp.html">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="ImplicitEx - Coin Card Publisher MVP">
+  <meta property="og:description" content="Create a signed Coin Card manifest, registry draft, verification output, and evidence archive.">
+  <meta property="og:image" content="https://implicitex.com/components/images/og-proof.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="628">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@implicitex">
+  <meta name="twitter:title" content="ImplicitEx - Coin Card Publisher MVP">
+  <meta name="twitter:description" content="Create a signed Coin Card manifest, registry draft, verification output, and evidence archive.">
+  <meta name="twitter:image" content="https://implicitex.com/components/images/og-proof.png">
+  <script>(function(){try{var t=localStorage.getItem('implicitex-theme');if(t==='light'||t==='dark'){document.documentElement.dataset.theme=t;}else{var h=new Date().getHours();document.documentElement.dataset.theme=(h>=7&&h<19)?'light':'dark';}}catch(e){}})();</script>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
+  <link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+  <nav id="nav">
+    <a href="/" class="logo" aria-label="ImplicitEx home">
+      <svg class="brandmark" width="25" height="25" viewBox="0 0 25 25" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+        <path d="M18.4,21.48L2.64,5.73l.43-.43,15.76,15.76s1.3,1.3,2.79-.19.21-2.77.21-2.77L6.05,2.32l.43-.43,4.07,4.07,1.38,1.38,1.28-1.28,4.28-4.28.43.43-5.56,5.56,2.98,2.98,5.56-5.56.43.43-5.56,5.56,1.28,1.28,5.56-5.56s1.28-1.28-.21-2.77-2.79-.19-2.79-.19l-4.26,4.26-.43-.43,4.26-4.26s1.3-1.3-.19-2.79-2.77-.21-2.77-.21l-4.28,4.28L7.75.62s-1.28-1.28-2.77.21-.19,2.79-.19,2.79l15.76,15.76-.43.43L4.37,4.05s-1.3-1.3-2.79.19-.11,2.87-.11,2.87l15.68,15.68-.43.43-5.56-5.56-5.54,5.54-.43-.43,5.54-5.54-2.98-2.98-5.54,5.54-.43-.43,5.54-5.54-1.28-1.28L.51,18.08s-1.28,1.28.21,2.77,2.79.19,2.79.19l4.23-4.23.43.43-4.23,4.23s-1.3,1.3.19,2.79,2.77.21,2.77.21l4.26-4.26,4.28,4.28s1.28,1.28,2.77-.21.19-2.79.19-2.79Z" fill="#f2f2f0"/>
+      </svg>
+      <img class="wordmark" src="/components/images/wordmark-white.svg" alt="" aria-hidden="true">
+    </a>
+    <div class="nav-right">
+      <button class="clock-toggle" id="clockToggle" type="button" aria-label="Set theme by time of day">
+        <svg class="clock-icon" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+          <circle cx="7" cy="7" r="6" fill="none" stroke="currentColor" stroke-width="1.2"/>
+          <line id="clockHourHand" x1="7" y1="7" x2="7" y2="4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <line id="clockMinuteHand" x1="7" y1="7" x2="7" y2="2.5" stroke="currentColor" stroke-width="1" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch to light theme" aria-pressed="false">
+        <svg class="theme-icon" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+          <path d="M7 1 A6 6 0 0 0 7 13 Z" fill="var(--white)"/>
+          <path d="M7 1 A6 6 0 0 1 7 13 Z" fill="var(--bg)"/>
+          <circle cx="7" cy="7" r="6" fill="none" stroke="currentColor" stroke-width="1.2"/>
+        </svg>
+      </button>
+      <span class="nav-status">Polygon &middot; Live</span>
+      <a class="send-usdc-link" href="/#transfer">Transfer Portal</a>
+      <button class="connect-btn" id="connectBtn" onclick="IX.connect()">Connect Wallet</button>
+      <div class="wallet-menu" id="walletMenu" hidden>
+        <button class="wallet-menu-trigger" id="walletMenuTrigger" type="button" aria-expanded="false" aria-controls="walletMenuPanel" aria-label="Wallet account menu">
+          <span class="wallet-dot" aria-hidden="true"></span>
+          <span class="wallet-addr" id="walletAddr"></span>
+          <span class="wallet-chevron" aria-hidden="true"></span>
+        </button>
+        <div class="wallet-menu-panel" id="walletMenuPanel" hidden>
+          <p class="wallet-menu-title">Wallet account</p>
+          <p class="wallet-menu-address" id="walletFullAddress"></p>
+          <button class="wallet-menu-action" id="copyAddressBtn" type="button">Copy address</button>
+          <button class="wallet-menu-action" id="switchNetworkBtn" type="button" hidden>Switch to Polygon</button>
+          <button class="wallet-menu-action" id="switchAccountBtn" type="button">Switch account</button>
+          <button class="wallet-menu-action wallet-menu-action--danger" id="disconnectBtn" type="button">Disconnect</button>
+        </div>
+      </div>
+      <button class="hamburger-btn" id="hamburgerBtn" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
+        <svg width="18" height="14" viewBox="0 0 18 14" aria-hidden="true">
+          <rect y="0" width="18" height="1.8" fill="currentColor"/>
+          <rect y="6" width="18" height="1.8" fill="currentColor"/>
+          <rect y="12" width="18" height="1.8" fill="currentColor"/>
+        </svg>
+      </button>
+    </div>
+  </nav>
+
+  <div class="mobile-menu" id="mobileMenu" role="dialog" aria-modal="true" aria-label="Site menu" hidden>
+    <div class="mobile-menu-inner">
+      <div class="mobile-menu-head">
+        <span class="mobile-menu-title">Menu</span>
+        <button class="mobile-menu-close" id="mobileMenuClose" type="button" aria-label="Close menu">
+          <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+            <line x1="1" y1="1" x2="13" y2="13" stroke="currentColor" stroke-width="1.6"/>
+            <line x1="13" y1="1" x2="1" y2="13" stroke="currentColor" stroke-width="1.6"/>
+          </svg>
+        </button>
+      </div>
+      <section class="mobile-menu-section" aria-label="Wallet">
+        <p class="mobile-menu-label">Wallet</p>
+        <p class="mobile-menu-status" id="menuWalletStatus">No wallet connected.</p>
+        <p class="mobile-menu-sender" id="menuSenderDisplay" hidden></p>
+        <p class="mobile-menu-network" id="menuNetworkDisplay" hidden></p>
+        <div class="mobile-menu-actions">
+          <button class="mobile-menu-btn mobile-menu-btn--primary" id="menuConnectBtn" type="button">Connect Wallet</button>
+          <button class="mobile-menu-btn" id="menuSwitchBtn" type="button" hidden>Switch Account</button>
+          <button class="mobile-menu-btn mobile-menu-btn--danger" id="menuDisconnectBtn" type="button" hidden>Disconnect</button>
+        </div>
+      </section>
+      <section class="mobile-menu-section" aria-label="Transaction">
+        <p class="mobile-menu-label">Transaction</p>
+        <button class="mobile-menu-btn mobile-menu-btn--primary" id="menuOpenPortalBtn" type="button">Transfer Portal</button>
+        <p class="mobile-menu-portal-note">Open the USDC transfer interface.</p>
+      </section>
+      <section class="mobile-menu-section" aria-label="Navigation">
+        <p class="mobile-menu-label">Site</p>
+        <nav class="mobile-menu-links">
+          <a href="/start.html">Start</a>
+          <a href="/about.html">About</a>
+          <a href="/faq.html">FAQ</a>
+          <a href="/learn.html">Learn</a>
+          <a href="/verify.html">Verify</a>
+          <a href="/log.html">Devlog</a>
+          <a href="/terms.html">Terms</a>
+          <a href="/privacy.html">Privacy</a>
+          <a href="/legal.html">Legal</a>
+          <a href="/jurisdictions.html">Access</a>
+          <a href="/news.html">News</a>
+          <a href="/contact.html">Contact</a>
+        </nav>
+      </section>
+      <section class="mobile-menu-section" aria-label="Social">
+        <p class="mobile-menu-label">Social</p>
+        <nav class="mobile-menu-links">
+          <a href="https://x.com/implicitex" target="_blank" rel="noopener">X</a>
+          <a href="https://github.com/implicitexlabs" target="_blank" rel="noopener">GitHub</a>
+        </nav>
+      </section>
+    </div>
+    <div class="mobile-menu-backdrop" id="mobileMenuBackdrop" aria-hidden="true"></div>
+  </div>
+
+  <main class="ccp-shell">
+    <header class="ccp-head">
+      <p class="ccp-eyebrow">Coin Card Publisher MVP</p>
+      <h1>Create one evidence-backed payment identity.</h1>
+      <p class="ccp-lede">Generate a canonical manifest, sign the payload, draft a registry record, produce verification output, and archive the evidence. This page does not execute transfers or write to the production registry.</p>
+    </header>
+
+    <section class="ccp-grid" aria-label="Publisher MVP">
+      <form class="ccp-panel ccp-form" id="ccpPublisherForm">
+        <div class="ccp-panel-head">
+          <h2>Input</h2>
+          <p>Identity and destination become the signed meaning layer.</p>
+        </div>
+        <label class="ccp-field">
+          <span>Subject type</span>
+          <select id="ccpSubjectType">
+            <option value="creator" selected>creator</option>
+            <option value="person">person</option>
+            <option value="organization">organization</option>
+            <option value="project">project</option>
+            <option value="merchant">merchant</option>
+          </select>
+        </label>
+        <label class="ccp-field">
+          <span>Subject name</span>
+          <input id="ccpSubjectName" type="text" autocomplete="off" placeholder="Brandon Lehman">
+        </label>
+        <label class="ccp-field">
+          <span>Display name</span>
+          <input id="ccpDisplayName" type="text" autocomplete="off" placeholder="Brandon Lehman">
+        </label>
+        <label class="ccp-field">
+          <span>Description</span>
+          <input id="ccpDescription" type="text" autocomplete="off" placeholder="Creator payment identity">
+        </label>
+        <label class="ccp-field">
+          <span>Recipient address</span>
+          <input id="ccpRecipientAddress" type="text" inputmode="text" autocomplete="off" placeholder="0x...">
+        </label>
+        <label class="ccp-field">
+          <span>Issuer wallet</span>
+          <div class="ccp-inline-field">
+            <input id="ccpIssuerAddress" type="text" inputmode="text" autocomplete="off" placeholder="0x...">
+            <button class="ccp-secondary-btn" id="ccpConnectIssuer" type="button">Use wallet</button>
+          </div>
+        </label>
+        <label class="ccp-field">
+          <span>Reference URI</span>
+          <input id="ccpReferenceUri" type="url" autocomplete="off">
+        </label>
+        <div class="ccp-two">
+          <label class="ccp-field">
+            <span>Created at</span>
+            <input id="ccpCreatedAt" type="text" autocomplete="off">
+          </label>
+          <label class="ccp-field">
+            <span>Expires at</span>
+            <input id="ccpExpiresAt" type="text" autocomplete="off" placeholder="optional">
+          </label>
+        </div>
+        <div class="ccp-checks">
+          <label><input id="ccpConfirmBinding" type="checkbox"> I reviewed the identity-to-destination binding.</label>
+          <label><input id="ccpConfirmBoundaries" type="checkbox"> I understand this is not a transfer, guarantee, or endorsement.</label>
+          <label><input id="ccpConfirmUncertainty" type="checkbox"> I reviewed unresolved evidence and uncertainty before publishing.</label>
+        </div>
+        <div class="ccp-actions">
+          <button class="ccp-primary-btn" id="ccpGenerateManifest" type="button">Generate manifest</button>
+          <button class="ccp-primary-btn" id="ccpSignManifest" type="button">Sign payload</button>
+          <button class="ccp-primary-btn" id="ccpCreateRegistry" type="button">Create registry draft</button>
+          <button class="ccp-primary-btn" id="ccpVerifyDraft" type="button">Verify draft</button>
+          <button class="ccp-primary-btn" id="ccpCreateArchive" type="button">Archive evidence</button>
+        </div>
+        <p class="ccp-notice" id="ccpNotice" hidden></p>
+      </form>
+
+      <section class="ccp-panel" aria-label="Evidence state">
+        <div class="ccp-panel-head">
+          <h2>Evidence</h2>
+          <p>Completion follows observed artifacts, not page appearance.</p>
+        </div>
+        <ol class="ccp-steps">
+          <li id="ccpStep1" data-status="pending"><span>Manifest</span><strong class="ccp-step-status">pending</strong><em class="ccp-step-detail">No canonical payload yet.</em></li>
+          <li id="ccpStep2" data-status="pending"><span>Signature</span><strong class="ccp-step-status">pending</strong><em class="ccp-step-detail">Creator wallet has not signed.</em></li>
+          <li id="ccpStep3" data-status="pending"><span>Registry</span><strong class="ccp-step-status">pending</strong><em class="ccp-step-detail">No registry draft yet.</em></li>
+          <li id="ccpStep4" data-status="pending"><span>Verification</span><strong class="ccp-step-status">pending</strong><em class="ccp-step-detail">No verification output yet.</em></li>
+          <li id="ccpStep5" data-status="pending"><span>Archive</span><strong class="ccp-step-status">pending</strong><em class="ccp-step-detail">No evidence archive yet.</em></li>
+        </ol>
+        <dl class="ccp-evidence-list">
+          <div><dt>Card ID</dt><dd id="ccpEvidenceCardId">Pending</dd></div>
+          <div><dt>Issuer</dt><dd id="ccpEvidenceIssuer">Pending</dd></div>
+          <div><dt>Recipient</dt><dd id="ccpEvidenceRecipient">Pending</dd></div>
+          <div><dt>Payload hash</dt><dd id="ccpEvidencePayloadHash">Pending</dd></div>
+          <div><dt>Manifest hash</dt><dd id="ccpEvidenceManifestHash">Pending</dd></div>
+          <div><dt>Verification state</dt><dd id="ccpEvidenceVerificationState">Pending</dd></div>
+          <div><dt>Uncertainty</dt><dd id="ccpEvidenceUncertainty">Pending</dd></div>
+        </dl>
+      </section>
+    </section>
+
+    <section class="ccp-output-grid" aria-label="Generated artifacts">
+      <section class="ccp-output">
+        <div class="ccp-output-head"><h2>Canonical payload</h2></div>
+        <textarea id="ccpCanonicalPayload" readonly spellcheck="false"></textarea>
+      </section>
+      <section class="ccp-output">
+        <div class="ccp-output-head"><h2>Manifest</h2><button type="button" data-copy-output="ccpManifestJson">Copy</button></div>
+        <textarea id="ccpManifestJson" readonly spellcheck="false"></textarea>
+      </section>
+      <section class="ccp-output">
+        <div class="ccp-output-head"><h2>Registry draft</h2><button type="button" data-copy-output="ccpRegistryJson">Copy</button></div>
+        <textarea id="ccpRegistryJson" readonly spellcheck="false"></textarea>
+      </section>
+      <section class="ccp-output">
+        <div class="ccp-output-head"><h2>Verification output</h2><button type="button" data-copy-output="ccpVerificationJson">Copy</button></div>
+        <textarea id="ccpVerificationJson" readonly spellcheck="false"></textarea>
+      </section>
+      <section class="ccp-output ccp-output--wide">
+        <div class="ccp-output-head"><h2>Evidence archive</h2><button type="button" data-copy-output="ccpArchiveJson">Copy</button></div>
+        <textarea id="ccpArchiveJson" readonly spellcheck="false"></textarea>
+      </section>
+    </section>
+  </main>
+
+  <footer>
+    <div class="f-inner">
+      <div class="f-brand">
+        <div class="f-brand-lockup">
+          <img src="/components/images/lettermark-white.svg" alt="" aria-hidden="true" class="f-brand-mark">
+          <img src="/components/images/wordmark-white.svg" alt="ImplicitEx" class="f-brand-word">
+        </div>
+        <span class="f-tagline">Wallet-to-wallet USDC transfers.</span>
+      </div>
+      <nav class="f-links" aria-label="Footer links">
+        <div class="f-group">
+          <span class="f-group-label">Product</span>
+          <a href="/start.html">Start</a>
+          <a href="/faq.html">FAQ</a>
+          <a href="/learn.html">Learn</a>
+          <a href="/verify.html">Verify</a>
+          <a href="/log.html">Devlog</a>
+        </div>
+        <div class="f-group">
+          <span class="f-group-label">Legal</span>
+          <a href="/terms.html">Terms</a>
+          <a href="/privacy.html">Privacy</a>
+          <a href="/legal.html">Legal</a>
+        </div>
+        <div class="f-group">
+          <span class="f-group-label">Support</span>
+          <a href="/contact.html">Contact</a>
+          <a href="/jurisdictions.html">Access</a>
+        </div>
+        <div class="f-group">
+          <span class="f-group-label">Company</span>
+          <a href="/about.html">About</a>
+          <a href="/media.html">Media</a>
+          <a href="/brand.html">Brand</a>
+          <a href="/news.html">News</a>
+        </div>
+        <div class="f-group">
+          <span class="f-group-label">Social</span>
+          <a href="https://x.com/implicitex" target="_blank" rel="noopener">X</a>
+          <a href="https://www.linkedin.com/in/implicitex/" target="_blank" rel="noopener">LinkedIn</a>
+          <a href="https://github.com/implicitexlabs" target="_blank" rel="noopener">GitHub</a>
+        </div>
+      </nav>
+      <div class="f-bottom">
+        <span class="f-net is-live" id="networkBadge">Polygon live</span>
+        <span class="f-copy">&#169; <a href="https://adenmediagroup.com" target="_blank" rel="noopener noreferrer">Aden Media Group, LLC</a></span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/config/chains.js"></script>
+  <script src="/js/analytics.js"></script>
+  <script src="/js/consent.js"></script>
+  <script src="/js/wallet.js"></script>
+  <script src="/js/app.js"></script>
+  <script src="/js/mobile-menu.js"></script>
+  <script src="/js/coincard-publisher-core.js"></script>
+  <script src="/js/coincard-publisher-mvp.js"></script>
+</body>
+</html>

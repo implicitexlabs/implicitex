@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" width="1200" height="675" shape-rendering="crispEdges">
+
+  <title>WEB3 Protocol Mark — ImplicitEx</title>
+  <desc>Canonical WEB3 Protocol Mark for ImplicitEx. Block Type System canonical asset. https://implicitex.com</desc>
+
+  <!-- Background: transparent -->
+
+  <!-- WEB3 Canonical Mark — 600×125, centered: x=300 y=275, scale=3.125 -->
+  <g transform="translate(300, 275) scale(3.125)">
+
+    <!-- W -->
+    <path fill="#0c0c0c" d="M 0,0 H 8 V 8 H 0 Z M 16,0 H 24 V 8 H 16 Z M 32,0 H 40 V 8 H 32 Z
+                            M 0,8 H 8 V 16 H 0 Z M 16,8 H 24 V 16 H 16 Z M 32,8 H 40 V 16 H 32 Z
+                            M 0,16 H 8 V 24 H 0 Z M 16,16 H 24 V 24 H 16 Z M 32,16 H 40 V 24 H 32 Z
+                            M 0,24 H 8 V 32 H 0 Z M 16,24 H 24 V 32 H 16 Z M 32,24 H 40 V 32 H 32 Z
+                            M 0,32 H 40 V 40 H 0 Z"/>
+
+    <!-- E -->
+    <path fill="#0c0c0c" d="M 48,0 H 88 V 8 H 48 Z
+                            M 48,8 H 56 V 16 H 48 Z
+                            M 48,16 H 88 V 24 H 48 Z
+                            M 48,24 H 56 V 32 H 48 Z
+                            M 48,32 H 88 V 40 H 48 Z"/>
+
+    <!-- B -->
+    <path fill="#0c0c0c" d="M 96,0 H 136 V 8 H 96 Z
+                            M 96,8 H 104 V 16 H 96 Z M 136,8 H 144 V 16 H 136 Z
+                            M 96,16 H 136 V 24 H 96 Z
+                            M 96,24 H 104 V 32 H 96 Z M 136,24 H 144 V 32 H 136 Z
+                            M 96,32 H 136 V 40 H 96 Z"/>
+
+    <!-- 3 -->
+    <path fill="#0c0c0c" d="M 152,0 H 192 V 8 H 152 Z
+                            M 184,8 H 192 V 16 H 184 Z
+                            M 160,16 H 192 V 24 H 160 Z
+                            M 184,24 H 192 V 32 H 184 Z
+                            M 152,32 H 192 V 40 H 152 Z"/>
+
+  </g>
+
+</svg>

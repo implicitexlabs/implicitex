@@ -44,6 +44,7 @@
     chainId: null,
     network: null,
     contractAddress: null,
+    coinCard: null,
     approvalHash: null,
     transferHash: null,
     hash: null,
@@ -70,6 +71,7 @@
     'chainId',
     'network',
     'contractAddress',
+    'coinCard',
     'approvalHash',
     'transferHash',
     'hash',
@@ -226,6 +228,7 @@
       'chainId',
       'network',
       'contractAddress',
+      'coinCard',
       'explorerUrl',
       // On-chain hashes — set when tx is broadcast, must survive later state updates
       'approvalHash',
@@ -234,6 +237,22 @@
       'blockNumber',
     ].forEach(function (key) {
       preserveKnown(current, next, key);
+    });
+
+    // Transaction-time evidence is historical context. A later observation must
+    // not rewrite what was recorded for the receipt.
+    [
+      'sender',
+      'recipient',
+      'amount',
+      'fee',
+      'totalDebit',
+      'chainId',
+      'network',
+      'contractAddress',
+      'coinCard',
+    ].forEach(function (key) {
+      if (hasKnownValue(current[key])) next[key] = current[key];
     });
 
     const txHash = txHashOf(next);

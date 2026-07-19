@@ -1,0 +1,106 @@
+{
+  "schemaVersion": "implicitex-polygon-fork-acceptance-checkpoint.v1",
+  "status": "POLYGON_FORK_ACCEPTED",
+  "runDate": "2026-07-19",
+  "testedCommit": "627586a",
+  "acceptanceSuiteCommit": "715a685",
+  "canonicalPolicyId": "COIN_CARD_POLYGON_V1",
+  "fork": {
+    "sourceHead": {
+      "number": "90359708",
+      "blockHash": "0xd77aa1e133fc5e1b21b2f7a73e161ccaec2487c550449edf93802ca345bcc7be",
+      "timestamp": "1784244557",
+      "timestampIsoUtc": "2026-07-16T23:29:17Z"
+    },
+    "pinnedBlock": {
+      "number": "90357660",
+      "blockHash": "0x58957b1e043b07b47b2c6a2ff141ed2678e8c6555b6ccd5be914b319b41633d9",
+      "timestamp": "1784241485",
+      "timestampIsoUtc": "2026-07-16T22:38:05Z"
+    },
+    "pinOffsetBlocks": "2048"
+  },
+  "identityVerification": {
+    "usdcProxy": {
+      "address": "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359",
+      "runtimeHash": "0x7dbf0ee7d6d69b563891ceb7056cf0ff0fa09d21a48e5f812d89981c2ef95944",
+      "canonicalIdentifier": "TOKEN_PROXY_RUNTIME_KECCAK256"
+    },
+    "usdcImplementation": {
+      "address": "0x235AE97b28466Db30469b89A9fe4cFf0659f82Cb",
+      "implementationRuntimeHash": "0x39ec98a4509fb2d4380a9cd4623e7b20cf651cb58edb8d8332bfad9c3d698143",
+      "canonicalIdentifier": "TOKEN_IMPLEMENTATION_RUNTIME_KECCAK256"
+    },
+    "executionContract": {
+      "address": "0x5015841D6E665e63Ea174aD6b8FeF854026dE0C0",
+      "executionRuntimeHash": "0xa94dad9f7f1da1e65b082d49b8e47c5d8b214534e73446809e1728073d6d9e06",
+      "canonicalIdentifier": "EXECUTION_RUNTIME_KECCAK256"
+    }
+  },
+  "suiteResults": {
+    "smoke": {
+      "file": "polygon-approval-transfer-smoke.test.js",
+      "scenarios": 1,
+      "pass": 1,
+      "fail": 0
+    },
+    "matrix": {
+      "file": "polygon-gas-evidence-matrix.test.js",
+      "scenarios": 12,
+      "sourceBlockRuns": 2,
+      "repetitions": 24,
+      "allIdentical": true,
+      "pass": 1,
+      "fail": 0
+    },
+    "authorityInvariants": {
+      "file": "coin-card-fork-policy-authority.test.js",
+      "tests": 11,
+      "pass": 11,
+      "fail": 0
+    }
+  },
+  "gasContainment": {
+    "approval": {
+      "observedMaxActualGasUsed": "55449",
+      "observedMaxEstimate": "55882",
+      "policyLimit": "75000",
+      "withinPolicyLimit": true,
+      "headroomPercent": "26"
+    },
+    "transferWithFee": {
+      "observedMaxActualGasUsed": "100439",
+      "observedMaxEstimate": "106099",
+      "policyLimit": "135000",
+      "withinPolicyLimit": true,
+      "headroomPercent": "26"
+    },
+    "historicalDriftApproval": "0",
+    "historicalDriftTransfer": "0"
+  },
+  "expectedContractRejections": {
+    "invalidTransferPrecision": {
+      "count": 4,
+      "classification": "correct contract enforcement — sub-precision amounts rejected as specified"
+    }
+  },
+  "rawArtifact": {
+    "path": "app-web/tests/fork/polygon-fork-gas-evidence.json",
+    "gitTracked": false,
+    "gitIgnored": true,
+    "byteLength": "72079",
+    "sha256Base64": "AlvxAfloKTVjGC1VrUpe/D3xedXk7H1B5GE1jThozwc="
+  },
+  "noLiveTransactionBroadcast": true,
+  "providerSeparation": {
+    "upstreamMethodsAllowed": ["eth_chainId", "eth_getBlockByNumber"],
+    "sendMethodRejectedBeforeTransport": true,
+    "allMutationsLocalOnly": true
+  },
+  "contentSafety": {
+    "rpcEndpointIncluded": false,
+    "providerCredentialIncluded": false,
+    "privateKeyIncluded": false,
+    "shellEnvironmentIncluded": false
+  }
+}

@@ -35,3 +35,6 @@ implicitex_local_quarantine_*
 
 # Firebase local cache
 .firebase/
+
+# Generated fork test evidence (re-created on each run; contains hook-triggering hashes)
+app-web/tests/fork/polygon-fork-gas-evidence.json

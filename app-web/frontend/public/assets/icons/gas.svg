@@ -1,0 +1,13 @@
+<svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"
+     shape-rendering="crispEdges" aria-label="Gas" role="img">
+  <path fill="currentColor" fill-rule="evenodd" d="
+    M 3,3 H 10 V 14 H 3 Z
+    M 5,5 H 8 V 7 H 5 Z
+    M 5,9 H 8 V 12 H 5 Z
+
+    M 10,3 H 13 V 4 H 10 Z
+    M 12,4 H 14 V 6 H 12 Z
+    M 13,6 H 14 V 10 H 13 Z
+    M 11,9 H 14 V 11 H 11 Z
+  "/>
+</svg>

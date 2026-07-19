@@ -20,6 +20,13 @@
 - Focus on secure hardware-signing flows inside the established ImplicitEx environment.
 - Keep integration sequencing strict to avoid parallel platform complexity.
 
+## Strategic Expansion: Agent Financial Infrastructure
+- Treat the current transfer engine as a possible settlement primitive for autonomous agents.
+- Explore agent budgets, permissions, identity, audit trails, delegated approval thresholds, and reputation as future platform layers.
+- Keep this expansion out of the immediate MVP until the non-custodial transfer platform is validated.
+- Use `docs/product/agent-financial-infrastructure-initiative.md` as the primary thesis document.
+
 ## Security Companion: AuditWalk
 - Use AuditWalk as a complementary security tool for ImplicitEx.
 - Apply AuditWalk outputs to improve validation, risk visibility, and trust signaling.
+- Explore AuditWalk as a verification and provenance layer for agent-initiated financial actions.

@@ -1,0 +1,1667 @@
+{
+  "schema": "implicitex.coin-card.fixtures.v1",
+  "status": "draft-fixtures",
+  "date": "2026-07-07",
+  "stateContract": "docs/product/coin-card/coin-card.state.v1.json",
+  "fixtures": [
+    {
+      "id": "collapsed-acceptance-mark",
+      "expectLegal": true,
+      "state": {
+        "view": "COLLAPSED",
+        "routeAvailability": "AVAILABLE",
+        "routeValidity": "VALID",
+        "routeMutability": "LOCKED",
+        "networkSupport": "SUPPORTED",
+        "tokenSupport": "SUPPORTED",
+        "amountText": "EMPTY",
+        "amountValidity": "UNKNOWN",
+        "funding": "UNKNOWN",
+        "wallet": "DISCONNECTED",
+        "execution": "IDLE",
+        "receipt": "NONE",
+        "error": "NONE",
+        "activeIntentId": null,
+        "activeAttemptId": "attempt-precision-mismatch-001",
+        "allowance": "UNKNOWN",
+        "receiptOutcome": "NONE",
+        "retryability": "UNKNOWN"
+      },
+      "assert": [
+        "outer=216x44",
+        "expand-only",
+        "no-wallet-action"
+      ],
+      "values": {}
+    },
+    {
+      "id": "expanded-empty-amount",
+      "expectLegal": true,
+      "state": {
+        "view": "EXPANDED",
+        "routeAvailability": "AVAILABLE",
+        "routeValidity": "VALID",
+        "routeMutability": "LOCKED",
+        "networkSupport": "SUPPORTED",
+        "tokenSupport": "SUPPORTED",
+        "amountText": "EMPTY",
+        "amountValidity": "UNKNOWN",
+        "funding": "UNKNOWN",
+        "wallet": "DISCONNECTED",
+        "execution": "IDLE",
+        "receipt": "NONE",
+        "error": "NONE",
+        "activeIntentId": null,
+        "allowance": "UNKNOWN",
+        "receiptOutcome": "NONE",
+        "retryability": "UNKNOWN"
+      },
+      "assert": [
+        "outer=460x286",
+        "fee=em-dash",
+        "total=em-dash"
+      ],
+      "values": {}
+    },
+    {
+      "id": "preview-ready-disconnected",
+      "expectLegal": true,
+      "state": {
+        "view": "EXPANDED",
+        "routeAvailability": "AVAILABLE",
+        "routeValidity": "VALID",
+        "routeMutability": "LOCKED",
+        "networkSupport": "SUPPORTED",
+        "tokenSupport": "SUPPORTED",
+        "amountText": "SYNTACTICALLY_COMPLETE",
+        "amountValidity": "VALID",
+        "funding": "UNKNOWN",
+        "wallet": "DISCONNECTED",
+        "execution": "PREVIEW_READY",
+        "receipt": "LOCAL_READY",
+        "error": "NONE",
+        "activeIntentId": null,
+        "allowance": "UNKNOWN",
+        "receiptOutcome": "NONE",
+        "retryability": "UNKNOWN"
+      },
+      "values": {
+        "amountUnits": "1000000",
+        "feeUnits": "10000",
+        "totalUnits": "1010000"
+      },
+      "assert": [
+        "connect-cta",
+        "no-approval",
+        "amount=1.00 USDC",
+        "fee=0.01 USDC",
+        "total=1.01 USDC"
+      ]
+    },
+    {
+      "id": "execution-ready-connected",
+      "expectLegal": true,
+      "state": {
+        "view": "EXPANDED",
+        "routeAvailability": "AVAILABLE",
+        "routeValidity": "VALID",
+        "routeMutability": "LOCKED",
+        "networkSupport": "SUPPORTED",
+        "tokenSupport": "SUPPORTED",
+        "amountText": "SYNTACTICALLY_COMPLETE",
+        "amountValidity": "VALID",
+        "funding": "SUFFICIENT",
+        "wallet": "CONNECTED_READY",
+        "execution": "EXECUTION_READY",
+        "receipt": "LOCAL_READY",
+        "error": "NONE",
+        "activeIntentId": "intent-ready-001",
+        "allowance": "ALLOWANCE_SUFFICIENT",
+        "receiptOutcome": "NONE",
+        "retryability": "UNKNOWN"
+      },
+      "values": {
+        "amountUnits": "1000000",
+        "feeUnits": "10000",
+        "totalUnits": "1010000",
+        "sender": "0x1111111111111111111111111111111111111111"
+      },
+      "assert": [
+        "approval-or-transfer-cta",
+        "outer=460x286"
+      ]
+    },
+    {
+      "id": "route-unavailable-validity-unknown",
+      "expectLegal": true,
+      "state": {
+        "view": "EXPANDED",
+        "routeAvailability": "UNAVAILABLE",
+        "routeValidity": "UNKNOWN",
+        "routeMutability": "LOCKED",
+        "networkSupport": "UNKNOWN",
+        "tokenSupport": "UNKNOWN",
+        "amountText": "EMPTY",
+        "amountValidity": "UNKNOWN",
+        "funding": "UNKNOWN",
+        "wallet": "DISCONNECTED",
+        "execution": "IDLE",
+        "receipt": "NONE",
+        "error": "ROUTE_ERROR",
+        "activeIntentId": null,
+        "allowance": "UNKNOWN",
+        "receiptOutcome": "NONE",
+        "retryability": "UNKNOWN"
+      },
+      "assert": [
+        "route-unavailable-status"
+      ],
+      "values": {}
+    },
+    {
+      "id": "collapsed-execution-ready-allowance-required",
+      "expectLegal": true,
+      "state": {
+        "view": "COLLAPSED",
+        "routeAvailability": "AVAILABLE",
+        "routeValidity": "VALID",
+        "routeMutability": "LOCKED",
+        "networkSupport": "SUPPORTED",
+        "tokenSupport": "SUPPORTED",
+        "amountText": "SYNTACTICALLY_COMPLETE",
+        "amountValidity": "VALID",
+        "allowance": "ALLOWANCE_SUFFICIENT",
+        "retryability": "UNKNOWN",
+        "funding": "SUFFICIENT",
+        "wallet": "CONNECTED_READY",
+        "execution": "EXECUTION_READY",
+        "receipt": "LOCAL_READY",
+        "receiptOutcome": "NONE",
+        "error": "NONE",
+        "activeIntentId": "intent-collapsed-ready-001"
+      },
+      "values": {
+        "amountUnits": "1000000",
+        "feeUnits": "10000",
+        "totalUnits": "1010000",
+        "sender": "0x1111111111111111111111111111111111111111"
+      },
+      "assert": [
+        "outer=216x44",
+        "expand-only"
+      ]
+    },
+    {
+      "id": "execution-ready-approval-required",
+      "expectLegal": true,
+      "state": {
+        "view": "EXPANDED",
+        "routeAvailability": "AVAILABLE",
+        "routeValidity": "VALID",
+        "routeMutability": "LOCKED",
+        "networkSupport": "SUPPORTED",
+        "tokenSupport": "SUPPORTED",
+        "amountText": "SYNTACTICALLY_COMPLETE",
+        "amountValidity": "VALID",
+        "funding": "SUFFICIENT",
+        "wallet": "CONNECTED_READY",
+        "execution": "EXECUTION_READY",
+        "receipt": "LOCAL_READY",
+        "error": "NONE",
+        "activeIntentId": "intent-approval-ready-001",
+        "allowance": "APPROVAL_REQUIRED",
+        "receiptOutcome": "NONE",
+        "retryability": "UNKNOWN"
+      },
+      "values": {
+        "amountUnits": "1000000",
+        "feeUnits": "10000",
+        "totalUnits": "1010000",
+        "sender": "0x1111111111111111111111111111111111111111"
+      },
+      "assert": [
+        "approve-cta",
+        "outer=460x286"
+      ]
+    },
+    {
+      "id": "route-invalid-loaded",
+      "expectLegal": true,
+      "state": {
+        "view": "EXPANDED",
+        "routeAvailability": "AVAILABLE",
+        "routeValidity": "INVALID",
+        "routeMutability": "LOCKED",
+        "networkSupport": "SUPPORTED",
+        "tokenSupport": "SUPPORTED",
+        "amountText": "SYNTACTICALLY_COMPLETE",
+        "amountValidity": "VALID",
+        "funding": "UNKNOWN",
+        "wallet": "DISCONNECTED",
+        "execution": "IDLE",
+        "receipt": "NONE",
+        "error": "ROUTE_ERROR",
+        "activeIntentId": null,
+        "allowance": "UNKNOWN",
+        "receiptOutcome": "NONE",
+        "retryability": "UNKNOWN"
+      },
+      "assert": [
+        "route-invalid-status"
+      ],
+      "values": {}
+    },
+    {
+      "id": "amount-temporary-dot",
+      "expectLegal": true,
+      "state": {
+        "view": "EXPANDED",
+        "routeAvailability": "AVAILABLE",
+        "routeValidity": "VALID",
+        "routeMutability": "LOCKED",
+        "networkSupport": "SUPPORTED",
+        "tokenSupport": "SUPPORTED",
+        "amountText": "TEMPORARY_INCOMPLETE",
+        "amountValidity": "UNKNOWN",
+        "funding": "UNKNOWN",
+        "wallet": "DISCONNECTED",
+        "execution": "IDLE",
+        "receipt": "NONE",
+        "error": "NONE",
+        "activeIntentId": null,
+        "allowance": "UNKNOWN",
+        "receiptOutcome": "NONE",
+        "retryability": "UNKNOWN"
+      },
+      "values": {
+        "amountInput": "."
+      },
+      "assert": [
+        "fix-amount-cta"
+      ]
+    },
+    {
+      "id": "amount-temporary-trailing-dot",
+      "expectLegal": true,
+      "state": {
+        "view": "EXPANDED",
+        "routeAvailability": "AVAILABLE",
+        "routeValidity": "VALID",
+        "routeMutability": "LOCKED",
+        "networkSupport": "SUPPORTED",
+        "tokenSupport": "SUPPORTED",
+        "amountText": "TEMPORARY_INCOMPLETE",
+        "amountValidity": "UNKNOWN",
+        "funding": "UNKNOWN",
+        "wallet": "DISCONNECTED",
+        "execution": "IDLE",
+        "receipt": "NONE",
+        "error": "NONE",
+        "activeIntentId": null,
+        "allowance": "UNKNOWN",
+        "receiptOutcome": "NONE",
+        "retryability": "UNKNOWN"
+      },
+      "values": {
+        "amountInput": "1."
+      },
+      "assert": [
+        "fix-amount-cta"
+      ]
+    },
+    {
+      "id": "amount-excess-precision",
+      "expectLegal": true,
+      "state": {
+        "view": "EXPANDED",
+        "routeAvailability": "AVAILABLE",
+        "routeValidity": "VALID",
+        "routeMutability": "LOCKED",
+        "networkSupport": "SUPPORTED",
+        "tokenSupport": "SUPPORTED",
+        "amountText": "SYNTAX_INVALID",
+        "amountValidity": "EXCESS_PRECISION",
+        "funding": "UNKNOWN",
+        "wallet": "DISCONNECTED",
+        "execution": "IDLE",
+        "receipt": "NONE",
+        "error": "FORM_ERROR",
+        "activeIntentId": null,
+        "activeAttemptId": "attempt-precision-mismatch-001",
+        "allowance": "UNKNOWN",
+        "receiptOutcome": "NONE",
+        "retryability": "UNKNOWN"
+      },
+      "values": {
+        "amountInput": "1.0000001"
+      },
+      "assert": [
+        "fix-amount-cta"
+      ]
+    },
+    {
+      "id": "amount-invalid-character",
+      "expectLegal": true,
+      "state": {
+        "view": "EXPANDED",
+        "routeAvailability": "AVAILABLE",
+        "routeValidity": "VALID",
+        "routeMutability": "EDITABLE",
+        "networkSupport": "SUPPORTED",
+        "tokenSupport": "SUPPORTED",
+        "amountText": "SYNTAX_INVALID",
+        "amountValidity": "INVALID_CHARACTER",
+        "funding": "UNKNOWN",
+        "wallet": "DISCONNECTED",
+        "execution": "IDLE",
+        "receipt": "NONE",
+        "error": "FORM_ERROR",
+        "activeIntentId": null,
+        "activeAttemptId": "attempt-precision-mismatch-001",
+        "allowance": "UNKNOWN",
+        "receiptOutcome": "NONE",
+        "retryability": "UNKNOWN"
+      },
+      "values": {
+        "amountInput": "1,000"
+      },
+      "assert": [
+        "fix-amount-cta"
+      ]
+    },
+    {
+      "id": "amount-below-minimum",
+      "expectLegal": true,
+      "state": {
+        "view": "EXPANDED",
+        "routeAvailability": "AVAILABLE",
+        "routeValidity": "VALID",
+        "routeMutability": "EDITABLE",
+        "networkSupport": "SUPPORTED",
+        "tokenSupport": "SUPPORTED",
+        "amountText": "SYNTACTICALLY_COMPLETE",
+        "amountValidity": "BELOW_MINIMUM",
+        "funding": "UNKNOWN",
+        "wallet": "DISCONNECTED",
+        "execution": "IDLE",
+        "receipt": "NONE",
+        "error": "FORM_ERROR",
+        "activeIntentId": null,
+        "activeAttemptId": "attempt-precision-mismatch-001",
+        "allowance": "UNKNOWN",
+        "receiptOutcome": "NONE",
+        "retryability": "UNKNOWN"
+      },
+      "values": {
+        "amountInput": "0"
+      },
+      "assert": [
+        "fix-amount-cta"
+      ]
+    },
+    {
+      "id": "amount-precision-mismatch",
+      "expectLegal": true,
+      "state": {
+        "view": "EXPANDED",
+        "routeAvailability": "AVAILABLE",
+        "routeValidity": "VALID",
+        "routeMutability": "LOCKED",
+        "networkSupport": "SUPPORTED",
+        "tokenSupport": "SUPPORTED",
+        "amountText": "SYNTACTICALLY_COMPLETE",
+        "amountValidity": "PRECISION_MISMATCH",
+        "funding": "UNKNOWN",
+        "wallet": "DISCONNECTED",
+        "execution": "IDLE",
+        "receipt": "NONE",
+        "error": "FORM_ERROR",
+        "activeIntentId": null,
+        "activeAttemptId": "attempt-precision-mismatch-001",
+        "allowance": "UNKNOWN",
+        "receiptOutcome": "NONE",
+        "retryability": "UNKNOWN"
+      },
+      "values": {
+        "amountInput": "1.5"
+      },
+      "assert": [
+        "fix-amount-cta"
+      ]
+    },
+    {
+      "id": "confirmed-stale-precision-mismatch",
+      "expectLegal": true,
+      "state": {
+        "view": "EXPANDED",
+        "routeAvailability": "AVAILABLE",
+        "routeValidity": "VALID",
+        "routeMutability": "LOCKED",
+        "networkSupport": "SUPPORTED",
+        "tokenSupport": "SUPPORTED",
+        "amountText": "SYNTACTICALLY_COMPLETE",
+        "amountValidity": "PRECISION_MISMATCH",
+        "funding": "UNKNOWN",
+        "wallet": "CONNECTED_READY",
+        "execution": "CONFIRMED",
+        "receipt": "FINAL",
+        "error": "NONE",
+        "activeIntentId": "intent-confirmed-stale-precision-001",
+        "allowance": "ALLOWANCE_SUFFICIENT",
+        "receiptOutcome": "success",
+        "retryability": "UNKNOWN"
+      },
+      "values": {
+        "amountInput": "1.5",
+        "amountUnits": "1500000",
+        "feeUnits": "15000",
+        "totalUnits": "1515000",
+        "transferHash": "0xabababababababababababababababababababababababababababababababab"
+      },
+      "assert": [
+        "confirmed-precedence"
+      ]
+    },
+    {
+      "id": "transfer-pending-route-unavailable",
+      "expectLegal": true,
+      "state": {
+        "view": "EXPANDED",
+        "routeAvailability": "UNAVAILABLE",
+        "routeValidity": "UNKNOWN",
+        "routeMutability": "LOCKED",
+        "networkSupport": "SUPPORTED",
+        "tokenSupport": "SUPPORTED",
+        "amountText": "SYNTACTICALLY_COMPLETE",
+        "amountValidity": "VALID",
+        "funding": "UNKNOWN",
+        "wallet": "DISCONNECTED",
+        "execution": "TRANSFER_PENDING",
+        "receipt": "SUBMITTED",
+        "error": "NONE",
+        "activeIntentId": "intent-transfer-route-unavailable-001",
+        "allowance": "ALLOWANCE_SUFFICIENT",
+        "receiptOutcome": "NONE",
+        "retryability": "UNKNOWN"
+      },
+      "values": {
+        "transferHash": "0xbabababababababababababababababababababababababababababababababa"
+      },
+      "assert": [
+        "pending-precedence"
+      ]
+    },
+    {
+      "id": "approval-pending-wallet-disconnected",
+      "expectLegal": true,
+      "state": {
+        "view": "EXPANDED",
+        "routeAvailability": "AVAILABLE",
+        "routeValidity": "VALID",
+        "routeMutability": "LOCKED",
+        "networkSupport": "SUPPORTED",
+        "tokenSupport": "SUPPORTED",
+        "amountText": "SYNTACTICALLY_COMPLETE",
+        "amountValidity": "VALID",
+        "funding": "UNKNOWN",
+        "wallet": "DISCONNECTED",
+        "execution": "APPROVAL_PENDING",
+        "receipt": "SUBMITTED",
+        "error": "NONE",
+        "activeIntentId": "intent-approval-wallet-disconnected-001",
+        "allowance": "APPROVAL_REQUIRED",
+        "receiptOutcome": "NONE",
+        "retryability": "UNKNOWN"
+      },
+      "values": {
+        "approvalHash": "0xcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+      },
+      "assert": [
+        "approval-pending-status"
+      ]
+    },
+    {
+      "id": "failed-invalid-amount",
+      "expectLegal": true,
+      "state": {
+        "view": "EXPANDED",
+        "routeAvailability": "AVAILABLE",
+        "routeValidity": "VALID",
+        "routeMutability": "LOCKED",
+        "networkSupport": "SUPPORTED",
+        "tokenSupport": "SUPPORTED",
+        "amountText": "SYNTAX_INVALID",
+        "amountValidity": "INVALID_CHARACTER",
+        "funding": "UNKNOWN",
+        "wallet": "DISCONNECTED",
+        "execution": "FAILED",
+        "receipt": "FINAL",
+        "error": "EXECUTION_ERROR",
+        "activeIntentId": "intent-failed-invalid-amount-001",
+        "allowance": "UNKNOWN",
+        "receiptOutcome": "reverted",
+        "retryability": "NON_RETRYABLE"
+      },
+      "values": {
+        "amountInput": "1 0",
+        "errorCode": "INVALID_AMOUNT"
+      },
+      "assert": [
+        "failed-retry-cta"
+      ]
+    },
+    {
+      "id": "funding-insufficient-usdc",
+      "expectLegal": true,
+      "state": {
+        "view": "EXPANDED",
+        "routeAvailability": "AVAILABLE",
+        "routeValidity": "VALID",
+        "routeMutability": "LOCKED",
+        "networkSupport": "SUPPORTED",
+        "tokenSupport": "SUPPORTED",
+        "amountText": "SYNTACTICALLY_COMPLETE",
+        "amountValidity": "VALID",
+        "funding": "INSUFFICIENT_USDC",
+        "wallet": "CONNECTED_READY",
+        "execution": "PREVIEW_READY",
+        "receipt": "LOCAL_READY",
+        "error": "FUNDING_ERROR",
+        "activeIntentId": "intent-funding-usdc-001",
+        "allowance": "UNKNOWN",
+        "receiptOutcome": "NONE",
+        "retryability": "UNKNOWN"
+      },
+      "values": {
+        "amountUnits": "100000000",
+        "feeUnits": "1000000",
+        "totalUnits": "101000000"
+      },
+      "assert": [
+        "insufficient-usdc-status"
+      ]
+    },
+    {
+      "id": "funding-insufficient-gas",
+      "expectLegal": true,
+      "state": {
+        "view": "EXPANDED",
+        "routeAvailability": "AVAILABLE",
+        "routeValidity": "VALID",
+        "routeMutability": "LOCKED",
+        "networkSupport": "SUPPORTED",
+        "tokenSupport": "SUPPORTED",
+        "amountText": "SYNTACTICALLY_COMPLETE",
+        "amountValidity": "VALID",
+        "funding": "INSUFFICIENT_GAS",
+        "wallet": "CONNECTED_READY",
+        "execution": "PREVIEW_READY",
+        "receipt": "LOCAL_READY",
+        "error": "FUNDING_ERROR",
+        "activeIntentId": "intent-funding-gas-001",
+        "allowance": "UNKNOWN",
+        "receiptOutcome": "NONE",
+        "retryability": "UNKNOWN"
+      },
+      "values": {
+        "amountUnits": "1000000",
+        "feeUnits": "10000",
+        "totalUnits": "1010000"
+      },
+      "assert": [
+        "insufficient-gas-status"
+      ]
+    },
+    {
+      "id": "approval-requested",
+      "expectLegal": true,
+      "state": {
+        "view": "EXPANDED",
+        "routeAvailability": "AVAILABLE",
+        "routeValidity": "VALID",
+        "routeMutability": "LOCKED",
+        "networkSupport": "SUPPORTED",
+        "tokenSupport": "SUPPORTED",
+        "amountText": "SYNTACTICALLY_COMPLETE",
+        "amountValidity": "VALID",
+        "funding": "SUFFICIENT",
+        "wallet": "CONNECTED_READY",
+        "execution": "APPROVAL_REQUESTED",
+        "receipt": "LOCAL_READY",
+        "error": "NONE",
+        "activeIntentId": "intent-approval-requested-001",
+        "allowance": "APPROVAL_REQUIRED",
+        "receiptOutcome": "NONE",
+        "retryability": "UNKNOWN"
+      },
+      "assert": [
+        "outer=460x286"
+      ],
+      "values": {}
+    },
+    {
+      "id": "approval-pending",
+      "expectLegal": true,
+      "state": {
+        "view": "EXPANDED",
+        "routeAvailability": "AVAILABLE",
+        "routeValidity": "VALID",
+        "routeMutability": "LOCKED",
+        "networkSupport": "SUPPORTED",
+        "tokenSupport": "SUPPORTED",
+        "amountText": "SYNTACTICALLY_COMPLETE",
+        "amountValidity": "VALID",
+        "funding": "SUFFICIENT",
+        "wallet": "CONNECTED_READY",
+        "execution": "APPROVAL_PENDING",
+        "receipt": "SUBMITTED",
+        "error": "NONE",
+        "activeIntentId": "intent-approval-pending-001",
+        "allowance": "APPROVAL_REQUIRED",
+        "receiptOutcome": "NONE",
+        "retryability": "UNKNOWN"
+      },
+      "values": {
+        "approvalHash": "0xcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+      },
+      "assert": [
+        "approval-pending-status"
+      ]
+    },
+    {
+      "id": "collapsed-approval-pending",
+      "expectLegal": true,
+      "state": {
+        "view": "COLLAPSED",
+        "routeAvailability": "AVAILABLE",
+        "routeValidity": "VALID",
+        "routeMutability": "LOCKED",
+        "networkSupport": "SUPPORTED",
+        "tokenSupport": "SUPPORTED",
+        "amountText": "SYNTACTICALLY_COMPLETE",
+        "amountValidity": "VALID",
+        "funding": "UNKNOWN",
+        "wallet": "DISCONNECTED",
+        "execution": "APPROVAL_PENDING",
+        "receipt": "SUBMITTED",
+        "error": "NONE",
+        "activeIntentId": "intent-collapsed-approval-001",
+        "allowance": "APPROVAL_REQUIRED",
+        "receiptOutcome": "NONE",
+        "retryability": "UNKNOWN"
+      },
+      "values": {
+        "approvalHash": "0xcacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacaca"
+      },
+      "assert": [
+        "collapsed-pending-legal",
+        "outer=216x44"
+      ]
+    },
+    {
+      "id": "approval-confirmed",
+      "expectLegal": true,
+      "state": {
+        "view": "EXPANDED",
+        "routeAvailability": "AVAILABLE",
+        "routeValidity": "VALID",
+        "routeMutability": "LOCKED",
+        "networkSupport": "SUPPORTED",
+        "tokenSupport": "SUPPORTED",
+        "amountText": "SYNTACTICALLY_COMPLETE",
+        "amountValidity": "VALID",
+        "funding": "SUFFICIENT",
+        "wallet": "CONNECTED_READY",
+        "execution": "APPROVAL_CONFIRMED",
+        "receipt": "SUBMITTED",
+        "error": "NONE",
+        "activeIntentId": "intent-approval-confirmed-001",
+        "allowance": "APPROVAL_REQUIRED",
+        "receiptOutcome": "NONE",
+        "retryability": "UNKNOWN"
+      },
+      "values": {
+        "approvalHash": "0xdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "approvalReceiptStatus": "success"
+      },
+      "assert": [
+        "approval-confirmed-status"
+      ]
+    },
+    {
+      "id": "transfer-requested",
+      "expectLegal": true,
+      "state": {
+        "view": "EXPANDED",
+        "routeAvailability": "AVAILABLE",
+        "routeValidity": "VALID",
+        "routeMutability": "LOCKED",
+        "networkSupport": "SUPPORTED",
+        "tokenSupport": "SUPPORTED",
+        "amountText": "SYNTACTICALLY_COMPLETE",
+        "amountValidity": "VALID",
+        "funding": "SUFFICIENT",
+        "wallet": "CONNECTED_READY",
+        "execution": "TRANSFER_REQUESTED",
+        "receipt": "LOCAL_READY",
+        "error": "NONE",
+        "activeIntentId": "intent-transfer-requested-001",
+        "allowance": "ALLOWANCE_SUFFICIENT",
+        "receiptOutcome": "NONE",
+        "retryability": "UNKNOWN"
+      },
+      "assert": [
+        "transfer-requested-status"
+      ],
+      "values": {}
+    },
+    {
+      "id": "transfer-pending-long-hash",
+      "expectLegal": true,
+      "state": {
+        "view": "EXPANDED",
+        "routeAvailability": "AVAILABLE",
+        "routeValidity": "VALID",
+        "routeMutability": "LOCKED",
+        "networkSupport": "SUPPORTED",
+        "tokenSupport": "SUPPORTED",
+        "amountText": "SYNTACTICALLY_COMPLETE",
+        "amountValidity": "VALID",
+        "funding": "SUFFICIENT",
+        "wallet": "CONNECTED_READY",
+        "execution": "TRANSFER_PENDING",
+        "receipt": "SUBMITTED",
+        "error": "NONE",
+        "activeIntentId": "intent-transfer-001",
+        "allowance": "ALLOWANCE_SUFFICIENT",
+        "receiptOutcome": "NONE",
+        "retryability": "UNKNOWN"
+      },
+      "values": {
+        "recipient": "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd",
+        "transferHash": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "assert": [
+        "hash-middle-truncated",
+        "pending-precedence"
+      ]
+    },
+    {
+      "id": "collapsed-transfer-pending",
+      "expectLegal": true,
+      "state": {
+        "view": "COLLAPSED",
+        "routeAvailability": "AVAILABLE",
+        "routeValidity": "VALID",
+        "routeMutability": "LOCKED",
+        "networkSupport": "SUPPORTED",
+        "tokenSupport": "SUPPORTED",
+        "amountText": "SYNTACTICALLY_COMPLETE",
+        "amountValidity": "VALID",
+        "funding": "UNKNOWN",
+        "wallet": "DISCONNECTED",
+        "execution": "TRANSFER_PENDING",
+        "receipt": "SUBMITTED",
+        "error": "NONE",
+        "activeIntentId": "intent-collapsed-transfer-001",
+        "allowance": "ALLOWANCE_SUFFICIENT",
+        "receiptOutcome": "NONE",
+        "retryability": "UNKNOWN"
+      },
+      "values": {
+        "transferHash": "0xfafafafafafafafafafafafafafafafafafafafafafafafafafafafafafafafa"
+      },
+      "assert": [
+        "collapsed-pending-legal",
+        "outer=216x44"
+      ]
+    },
+    {
+      "id": "transfer-pending-wallet-disconnected",
+      "expectLegal": true,
+      "state": {
+        "view": "EXPANDED",
+        "routeAvailability": "AVAILABLE",
+        "routeValidity": "VALID",
+        "routeMutability": "LOCKED",
+        "networkSupport": "SUPPORTED",
+        "tokenSupport": "SUPPORTED",
+        "amountText": "SYNTACTICALLY_COMPLETE",
+        "amountValidity": "VALID",
+        "funding": "UNKNOWN",
+        "wallet": "DISCONNECTED",
+        "execution": "TRANSFER_PENDING",
+        "receipt": "SUBMITTED",
+        "error": "NONE",
+        "activeIntentId": "intent-transfer-disconnected-001",
+        "allowance": "ALLOWANCE_SUFFICIENT",
+        "receiptOutcome": "NONE",
+        "retryability": "UNKNOWN"
+      },
+      "values": {
+        "transferHash": "0xfefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefe"
+      },
+      "assert": [
+        "post-broadcast-disconnect-legal",
+        "pending-precedence"
+      ]
+    },
+    {
+      "id": "failed-retryable",
+      "expectLegal": true,
+      "state": {
+        "view": "EXPANDED",
+        "routeAvailability": "AVAILABLE",
+        "routeValidity": "VALID",
+        "routeMutability": "LOCKED",
+        "networkSupport": "SUPPORTED",
+        "tokenSupport": "SUPPORTED",
+        "amountText": "SYNTACTICALLY_COMPLETE",
+        "amountValidity": "VALID",
+        "funding": "UNKNOWN",
+        "wallet": "DISCONNECTED",
+        "execution": "FAILED",
+        "receipt": "NONE",
+        "error": "EXECUTION_ERROR",
+        "activeIntentId": "intent-failed-001",
+        "activeAttemptId": "attempt-failed-001",
+        "allowance": "UNKNOWN",
+        "receiptOutcome": "NONE",
+        "retryability": "RETRYABLE"
+      },
+      "values": {
+        "recipient": "0xa7cE4232811021d2Dd01f4f0f264Df2427ab3919",
+        "route": "Route valid",
+        "destination": "Polygon USDC",
+        "amountUnits": "1000000",
+        "feeUnits": "10000",
+        "totalUnits": "1010000",
+        "approvalHash": "0xcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd",
+        "retryable": true,
+        "errorCode": "USER_REJECTED"
+      },
+      "assert": [
+        "failed-retry-cta"
+      ]
+    },
+    {
+      "id": "interrupted-retryable",
+      "expectLegal": true,
+      "state": {
+        "view": "EXPANDED",
+        "routeAvailability": "AVAILABLE",
+        "routeValidity": "VALID",
+        "routeMutability": "LOCKED",
+        "networkSupport": "SUPPORTED",
+        "tokenSupport": "SUPPORTED",
+        "amountText": "SYNTACTICALLY_COMPLETE",
+        "amountValidity": "VALID",
+        "funding": "UNKNOWN",
+        "wallet": "DISCONNECTED",
+        "execution": "INTERRUPTED",
+        "receipt": "NONE",
+        "error": "EXECUTION_ERROR",
+        "activeIntentId": "intent-interrupted-001",
+        "activeAttemptId": "attempt-interrupted-001",
+        "allowance": "UNKNOWN",
+        "receiptOutcome": "NONE",
+        "retryability": "RETRYABLE"
+      },
+      "values": {
+        "retryable": true,
+        "errorCode": "NETWORK_INTERRUPTED"
+      },
+      "assert": [
+        "interrupted-retry-cta"
+      ]
+    },
+    {
+      "id": "reconciling",
+      "expectLegal": true,
+      "state": {
+        "view": "EXPANDED",
+        "routeAvailability": "AVAILABLE",
+        "routeValidity": "VALID",
+        "routeMutability": "LOCKED",
+        "networkSupport": "SUPPORTED",
+        "tokenSupport": "SUPPORTED",
+        "amountText": "SYNTACTICALLY_COMPLETE",
+        "amountValidity": "VALID",
+        "funding": "UNKNOWN",
+        "wallet": "DISCONNECTED",
+        "execution": "RECONCILING",
+        "receipt": "SUBMITTED",
+        "error": "RECONCILIATION_ERROR",
+        "activeIntentId": "intent-reconciling-001",
+        "allowance": "UNKNOWN",
+        "receiptOutcome": "unknown",
+        "retryability": "UNKNOWN"
+      },
+      "values": {
+        "transferHash": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+      },
+      "assert": [
+        "reconciling-precedence"
+      ]
+    },
+    {
+      "id": "failed-final-evidence",
+      "expectLegal": true,
+      "state": {
+        "view": "EXPANDED",
+        "routeAvailability": "AVAILABLE",
+        "routeValidity": "VALID",
+        "routeMutability": "LOCKED",
+        "networkSupport": "SUPPORTED",
+        "tokenSupport": "SUPPORTED",
+        "amountText": "SYNTACTICALLY_COMPLETE",
+        "amountValidity": "VALID",
+        "funding": "UNKNOWN",
+        "wallet": "DISCONNECTED",
+        "execution": "FAILED",
+        "receipt": "FINAL",
+        "error": "EXECUTION_ERROR",
+        "activeIntentId": "intent-failed-final-001",
+        "allowance": "UNKNOWN",
+        "receiptOutcome": "reverted",
+        "retryability": "NON_RETRYABLE"
+      },
+      "values": {
+        "transferHash": "0xefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefef"
+      },
+      "assert": [
+        "failed-retry-cta"
+      ]
+    },
+    {
+      "id": "interrupted-final-not-broadcast",
+      "expectLegal": true,
+      "state": {
+        "view": "EXPANDED",
+        "routeAvailability": "AVAILABLE",
+        "routeValidity": "VALID",
+        "routeMutability": "LOCKED",
+        "networkSupport": "SUPPORTED",
+        "tokenSupport": "SUPPORTED",
+        "amountText": "SYNTACTICALLY_COMPLETE",
+        "amountValidity": "VALID",
+        "funding": "UNKNOWN",
+        "wallet": "DISCONNECTED",
+        "execution": "INTERRUPTED",
+        "receipt": "FINAL",
+        "error": "EXECUTION_ERROR",
+        "activeIntentId": "intent-interrupted-final-001",
+        "allowance": "UNKNOWN",
+        "receiptOutcome": "not_broadcast",
+        "retryability": "NON_RETRYABLE"
+      },
+      "values": {},
+      "assert": [
+        "interrupted-retry-cta"
+      ]
+    },
+    {
+      "id": "interrupted-final-no-execution-found",
+      "expectLegal": true,
+      "state": {
+        "view": "EXPANDED",
+        "routeAvailability": "AVAILABLE",
+        "routeValidity": "VALID",
+        "routeMutability": "LOCKED",
+        "networkSupport": "SUPPORTED",
+        "tokenSupport": "SUPPORTED",
+        "amountText": "SYNTACTICALLY_COMPLETE",
+        "amountValidity": "VALID",
+        "funding": "UNKNOWN",
+        "wallet": "DISCONNECTED",
+        "execution": "INTERRUPTED",
+        "receipt": "FINAL",
+        "error": "RECONCILIATION_ERROR",
+        "activeIntentId": "intent-no-execution-found-001",
+        "activeAttemptId": "attempt-no-execution-found-001",
+        "allowance": "UNKNOWN",
+        "receiptOutcome": "no_execution_found",
+        "retryability": "NON_RETRYABLE"
+      },
+      "values": {},
+      "assert": [
+        "interrupted-retry-cta"
+      ]
+    },
+    {
+      "id": "receipt-none-none",
+      "expectLegal": true,
+      "state": {
+        "view": "EXPANDED",
+        "routeAvailability": "AVAILABLE",
+        "routeValidity": "VALID",
+        "routeMutability": "LOCKED",
+        "networkSupport": "SUPPORTED",
+        "tokenSupport": "SUPPORTED",
+        "amountText": "SYNTACTICALLY_COMPLETE",
+        "amountValidity": "VALID",
+        "funding": "UNKNOWN",
+        "wallet": "DISCONNECTED",
+        "execution": "IDLE",
+        "receipt": "NONE",
+        "error": "NONE",
+        "activeIntentId": null,
+        "allowance": "UNKNOWN",
+        "receiptOutcome": "NONE",
+        "retryability": "UNKNOWN"
+      },
+      "values": {
+        "amountUnits": "1000000",
+        "feeUnits": "10000",
+        "totalUnits": "1010000"
+      },
+      "assert": [
+        "outer=460x286"
+      ]
+    },
+    {
+      "id": "receipt-local-ready-none",
+      "expectLegal": true,
+      "state": {
+        "view": "EXPANDED",
+        "routeAvailability": "AVAILABLE",
+        "routeValidity": "VALID",
+        "routeMutability": "LOCKED",
+        "networkSupport": "SUPPORTED",
+        "tokenSupport": "SUPPORTED",
+        "amountText": "SYNTACTICALLY_COMPLETE",
+        "amountValidity": "VALID",
+        "funding": "UNKNOWN",
+        "wallet": "DISCONNECTED",
+        "execution": "PREVIEW_READY",
+        "receipt": "LOCAL_READY",
+        "error": "NONE",
+        "activeIntentId": null,
+        "allowance": "UNKNOWN",
+        "receiptOutcome": "NONE",
+        "retryability": "UNKNOWN"
+      },
+      "values": {
+        "amountUnits": "1000000",
+        "feeUnits": "10000",
+        "totalUnits": "1010000"
+      },
+      "assert": [
+        "outer=460x286"
+      ]
+    },
+    {
+      "id": "receipt-submitted-unknown",
+      "expectLegal": true,
+      "state": {
+        "view": "EXPANDED",
+        "routeAvailability": "AVAILABLE",
+        "routeValidity": "VALID",
+        "routeMutability": "LOCKED",
+        "networkSupport": "SUPPORTED",
+        "tokenSupport": "SUPPORTED",
+        "amountText": "SYNTACTICALLY_COMPLETE",
+        "amountValidity": "VALID",
+        "funding": "UNKNOWN",
+        "wallet": "DISCONNECTED",
+        "execution": "RECONCILING",
+        "receipt": "SUBMITTED",
+        "error": "RECONCILIATION_ERROR",
+        "activeIntentId": "intent-receipt-submitted-001",
+        "allowance": "UNKNOWN",
+        "receiptOutcome": "unknown",
+        "retryability": "UNKNOWN"
+      },
+      "values": {
+        "transferHash": "0xabababababababababababababababababababababababababababababababab"
+      },
+      "assert": [
+        "reconciling-precedence"
+      ]
+    },
+    {
+      "id": "receipt-none-success-illegal",
+      "expectLegal": false,
+      "state": {
+        "view": "EXPANDED",
+        "routeAvailability": "AVAILABLE",
+        "routeValidity": "VALID",
+        "routeMutability": "LOCKED",
+        "networkSupport": "SUPPORTED",
+        "tokenSupport": "SUPPORTED",
+        "amountText": "SYNTACTICALLY_COMPLETE",
+        "amountValidity": "VALID",
+        "funding": "UNKNOWN",
+        "wallet": "DISCONNECTED",
+        "execution": "IDLE",
+        "receipt": "NONE",
+        "error": "NONE",
+        "activeIntentId": null,
+        "allowance": "UNKNOWN",
+        "receiptOutcome": "success",
+        "retryability": "UNKNOWN"
+      },
+      "assert": [
+        "reject-illegal-vector"
+      ],
+      "values": {}
+    },
+    {
+      "id": "receipt-local-ready-reverted-illegal",
+      "expectLegal": false,
+      "state": {
+        "view": "EXPANDED",
+        "routeAvailability": "AVAILABLE",
+        "routeValidity": "VALID",
+        "routeMutability": "LOCKED",
+        "networkSupport": "SUPPORTED",
+        "tokenSupport": "SUPPORTED",
+        "amountText": "SYNTACTICALLY_COMPLETE",
+        "amountValidity": "VALID",
+        "funding": "UNKNOWN",
+        "wallet": "DISCONNECTED",
+        "execution": "PREVIEW_READY",
+        "receipt": "LOCAL_READY",
+        "error": "NONE",
+        "activeIntentId": null,
+        "allowance": "UNKNOWN",
+        "receiptOutcome": "reverted",
+        "retryability": "UNKNOWN"
+      },
+      "assert": [
+        "reject-illegal-vector"
+      ],
+      "values": {}
+    },
+    {
+      "id": "receipt-submitted-success-illegal",
+      "expectLegal": false,
+      "state": {
+        "view": "EXPANDED",
+        "routeAvailability": "AVAILABLE",
+        "routeValidity": "VALID",
+        "routeMutability": "LOCKED",
+        "networkSupport": "SUPPORTED",
+        "tokenSupport": "SUPPORTED",
+        "amountText": "SYNTACTICALLY_COMPLETE",
+        "amountValidity": "VALID",
+        "funding": "UNKNOWN",
+        "wallet": "DISCONNECTED",
+        "execution": "RECONCILING",
+        "receipt": "SUBMITTED",
+        "error": "RECONCILIATION_ERROR",
+        "activeIntentId": "intent-submitted-success-illegal",
+        "allowance": "UNKNOWN",
+        "receiptOutcome": "success",
+        "retryability": "UNKNOWN"
+      },
+      "assert": [
+        "reject-illegal-vector"
+      ],
+      "values": {}
+    },
+    {
+      "id": "receipt-final-unknown-illegal",
+      "expectLegal": false,
+      "state": {
+        "view": "EXPANDED",
+        "routeAvailability": "AVAILABLE",
+        "routeValidity": "VALID",
+        "routeMutability": "LOCKED",
+        "networkSupport": "SUPPORTED",
+        "tokenSupport": "SUPPORTED",
+        "amountText": "SYNTACTICALLY_COMPLETE",
+        "amountValidity": "VALID",
+        "funding": "UNKNOWN",
+        "wallet": "DISCONNECTED",
+        "execution": "IDLE",
+        "receipt": "FINAL",
+        "error": "NONE",
+        "activeIntentId": null,
+        "allowance": "UNKNOWN",
+        "receiptOutcome": "unknown",
+        "retryability": "UNKNOWN"
+      },
+      "assert": [
+        "reject-illegal-vector"
+      ],
+      "values": {}
+    },
+    {
+      "id": "failed-not-broadcast-illegal",
+      "expectLegal": false,
+      "state": {
+        "view": "EXPANDED",
+        "routeAvailability": "AVAILABLE",
+        "routeValidity": "VALID",
+        "routeMutability": "LOCKED",
+        "networkSupport": "SUPPORTED",
+        "tokenSupport": "SUPPORTED",
+        "amountText": "SYNTACTICALLY_COMPLETE",
+        "amountValidity": "VALID",
+        "funding": "UNKNOWN",
+        "wallet": "DISCONNECTED",
+        "execution": "FAILED",
+        "receipt": "FINAL",
+        "error": "EXECUTION_ERROR",
+        "activeIntentId": "intent-failed-not-broadcast-001",
+        "allowance": "UNKNOWN",
+        "receiptOutcome": "not_broadcast",
+        "retryability": "NON_RETRYABLE"
+      },
+      "assert": [
+        "reject-illegal-vector"
+      ],
+      "values": {}
+    },
+    {
+      "id": "interrupted-reverted-illegal",
+      "expectLegal": false,
+      "state": {
+        "view": "EXPANDED",
+        "routeAvailability": "AVAILABLE",
+        "routeValidity": "VALID",
+        "routeMutability": "LOCKED",
+        "networkSupport": "SUPPORTED",
+        "tokenSupport": "SUPPORTED",
+        "amountText": "SYNTACTICALLY_COMPLETE",
+        "amountValidity": "VALID",
+        "funding": "UNKNOWN",
+        "wallet": "DISCONNECTED",
+        "execution": "INTERRUPTED",
+        "receipt": "FINAL",
+        "error": "EXECUTION_ERROR",
+        "activeIntentId": "intent-interrupted-reverted-001",
+        "allowance": "UNKNOWN",
+        "receiptOutcome": "reverted",
+        "retryability": "NON_RETRYABLE"
+      },
+      "assert": [
+        "reject-illegal-vector"
+      ],
+      "values": {}
+    },
+    {
+      "id": "reconciling-success-illegal",
+      "expectLegal": false,
+      "state": {
+        "view": "EXPANDED",
+        "routeAvailability": "AVAILABLE",
+        "routeValidity": "VALID",
+        "routeMutability": "LOCKED",
+        "networkSupport": "SUPPORTED",
+        "tokenSupport": "SUPPORTED",
+        "amountText": "SYNTACTICALLY_COMPLETE",
+        "amountValidity": "VALID",
+        "funding": "UNKNOWN",
+        "wallet": "DISCONNECTED",
+        "execution": "RECONCILING",
+        "receipt": "FINAL",
+        "error": "RECONCILIATION_ERROR",
+        "activeIntentId": "intent-reconciling-success-001",
+        "allowance": "UNKNOWN",
+        "receiptOutcome": "success",
+        "retryability": "UNKNOWN"
+      },
+      "assert": [
+        "reject-illegal-vector"
+      ],
+      "values": {}
+    },
+    {
+      "id": "unsupported-network",
+      "expectLegal": true,
+      "state": {
+        "view": "EXPANDED",
+        "routeAvailability": "AVAILABLE",
+        "routeValidity": "VALID",
+        "routeMutability": "LOCKED",
+        "networkSupport": "UNSUPPORTED",
+        "tokenSupport": "SUPPORTED",
+        "amountText": "SYNTACTICALLY_COMPLETE",
+        "amountValidity": "VALID",
+        "funding": "UNKNOWN",
+        "wallet": "CONNECTED_WRONG_NETWORK",
+        "execution": "IDLE",
+        "receipt": "NONE",
+        "error": "WALLET_ERROR",
+        "activeIntentId": null,
+        "allowance": "UNKNOWN",
+        "receiptOutcome": "NONE",
+        "retryability": "UNKNOWN"
+      },
+      "assert": [
+        "unsupported-network-status"
+      ],
+      "values": {}
+    },
+    {
+      "id": "wallet-connecting",
+      "expectLegal": true,
+      "state": {
+        "view": "EXPANDED",
+        "routeAvailability": "AVAILABLE",
+        "routeValidity": "VALID",
+        "routeMutability": "LOCKED",
+        "networkSupport": "SUPPORTED",
+        "tokenSupport": "SUPPORTED",
+        "amountText": "SYNTACTICALLY_COMPLETE",
+        "amountValidity": "VALID",
+        "funding": "UNKNOWN",
+        "wallet": "CONNECTING",
+        "execution": "PREVIEW_READY",
+        "receipt": "LOCAL_READY",
+        "error": "NONE",
+        "activeIntentId": null,
+        "allowance": "UNKNOWN",
+        "receiptOutcome": "NONE",
+        "retryability": "UNKNOWN"
+      },
+      "assert": [
+        "outer=460x286"
+      ],
+      "values": {}
+    },
+    {
+      "id": "unsupported-token",
+      "expectLegal": true,
+      "state": {
+        "view": "EXPANDED",
+        "routeAvailability": "AVAILABLE",
+        "routeValidity": "VALID",
+        "routeMutability": "LOCKED",
+        "networkSupport": "SUPPORTED",
+        "tokenSupport": "UNSUPPORTED",
+        "amountText": "SYNTACTICALLY_COMPLETE",
+        "amountValidity": "VALID",
+        "funding": "UNKNOWN",
+        "wallet": "CONNECTED_READY",
+        "execution": "IDLE",
+        "receipt": "NONE",
+        "error": "WALLET_ERROR",
+        "activeIntentId": null,
+        "allowance": "UNKNOWN",
+        "receiptOutcome": "NONE",
+        "retryability": "UNKNOWN"
+      },
+      "assert": [
+        "unsupported-token-status"
+      ],
+      "values": {}
+    },
+    {
+      "id": "connection-failed",
+      "expectLegal": true,
+      "state": {
+        "view": "EXPANDED",
+        "routeAvailability": "AVAILABLE",
+        "routeValidity": "VALID",
+        "routeMutability": "LOCKED",
+        "networkSupport": "SUPPORTED",
+        "tokenSupport": "SUPPORTED",
+        "amountText": "SYNTACTICALLY_COMPLETE",
+        "amountValidity": "VALID",
+        "funding": "UNKNOWN",
+        "wallet": "CONNECTION_FAILED",
+        "execution": "PREVIEW_READY",
+        "receipt": "LOCAL_READY",
+        "error": "WALLET_ERROR",
+        "activeIntentId": null,
+        "allowance": "UNKNOWN",
+        "receiptOutcome": "NONE",
+        "retryability": "UNKNOWN"
+      },
+      "assert": [
+        "connection-failed-status"
+      ],
+      "values": {}
+    },
+    {
+      "id": "confirmed-final",
+      "expectLegal": true,
+      "state": {
+        "view": "EXPANDED",
+        "routeAvailability": "AVAILABLE",
+        "routeValidity": "VALID",
+        "routeMutability": "LOCKED",
+        "networkSupport": "SUPPORTED",
+        "tokenSupport": "SUPPORTED",
+        "amountText": "SYNTACTICALLY_COMPLETE",
+        "amountValidity": "VALID",
+        "funding": "UNKNOWN",
+        "wallet": "DISCONNECTED",
+        "execution": "CONFIRMED",
+        "receipt": "FINAL",
+        "error": "NONE",
+        "activeIntentId": "intent-final-001",
+        "allowance": "ALLOWANCE_SUFFICIENT",
+        "receiptOutcome": "success",
+        "retryability": "UNKNOWN"
+      },
+      "values": {
+        "transferHash": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      },
+      "assert": [
+        "confirmed-precedence",
+        "no-fund-moving-cta"
+      ]
+    },
+    {
+      "id": "collapsed-execution-ready",
+      "expectLegal": true,
+      "state": {
+        "view": "COLLAPSED",
+        "routeAvailability": "AVAILABLE",
+        "routeValidity": "VALID",
+        "routeMutability": "LOCKED",
+        "networkSupport": "SUPPORTED",
+        "tokenSupport": "SUPPORTED",
+        "amountText": "SYNTACTICALLY_COMPLETE",
+        "amountValidity": "VALID",
+        "funding": "SUFFICIENT",
+        "wallet": "CONNECTED_READY",
+        "execution": "EXECUTION_READY",
+        "receipt": "LOCAL_READY",
+        "error": "NONE",
+        "activeIntentId": "intent-illegal-001",
+        "allowance": "APPROVAL_REQUIRED",
+        "receiptOutcome": "NONE",
+        "retryability": "UNKNOWN"
+      },
+      "assert": [
+        "collapsed-pending-legal",
+        "outer=216x44"
+      ],
+      "values": {}
+    },
+    {
+      "id": "illegal-enum-value",
+      "expectLegal": false,
+      "state": {
+        "view": "EXPANDED",
+        "routeAvailability": "MISSING",
+        "routeValidity": "VALID",
+        "routeMutability": "LOCKED",
+        "networkSupport": "SUPPORTED",
+        "tokenSupport": "SUPPORTED",
+        "amountText": "SYNTACTICALLY_COMPLETE",
+        "amountValidity": "VALID",
+        "funding": "UNKNOWN",
+        "wallet": "DISCONNECTED",
+        "execution": "PREVIEW_READY",
+        "receipt": "LOCAL_READY",
+        "error": "NONE",
+        "activeIntentId": null,
+        "allowance": "UNKNOWN",
+        "receiptOutcome": "NONE",
+        "retryability": "UNKNOWN"
+      },
+      "assert": [
+        "reject-invalid-enum"
+      ],
+      "values": {}
+    },
+    {
+      "id": "illegal-missing-required-transfer-hash",
+      "expectLegal": false,
+      "state": {
+        "view": "EXPANDED",
+        "routeAvailability": "AVAILABLE",
+        "routeValidity": "VALID",
+        "routeMutability": "LOCKED",
+        "networkSupport": "SUPPORTED",
+        "tokenSupport": "SUPPORTED",
+        "amountText": "SYNTACTICALLY_COMPLETE",
+        "amountValidity": "VALID",
+        "funding": "SUFFICIENT",
+        "wallet": "CONNECTED_READY",
+        "execution": "TRANSFER_PENDING",
+        "receipt": "SUBMITTED",
+        "error": "NONE",
+        "activeIntentId": "intent-missing-transfer-hash-001",
+        "allowance": "ALLOWANCE_SUFFICIENT",
+        "receiptOutcome": "NONE",
+        "retryability": "UNKNOWN"
+      },
+      "assert": [
+        "reject-missing-required"
+      ],
+      "values": {}
+    },
+    {
+      "id": "stale-intent-event",
+      "expectRejected": true,
+      "event": {
+        "type": "TRANSFER_RECEIPT_CONFIRMED",
+        "intentId": "intent-old",
+        "attemptId": "attempt-old-001",
+        "activeIntentId": "intent-new",
+        "activeAttemptId": "attempt-new-001"
+      },
+      "assert": [
+        "reject-active-mutation",
+        "archive-reconcile-only-if-matching-receipt",
+        "new-intent-required"
+      ]
+    },
+    {
+      "id": "current-intent-event",
+      "expectAccepted": true,
+      "event": {
+        "type": "TRANSFER_RECEIPT_CONFIRMED",
+        "intentId": "intent-current",
+        "attemptId": "attempt-current-001",
+        "activeIntentId": "intent-current",
+        "activeAttemptId": "attempt-current-001"
+      },
+      "assert": [
+        "accepted-current-intent"
+      ]
+    },
+    {
+      "id": "current-intent-stale-attempt-event",
+      "expectRejected": true,
+      "event": {
+        "type": "TRANSFER_RECEIPT_CONFIRMED",
+        "intentId": "intent-current",
+        "attemptId": "attempt-stale-001",
+        "activeIntentId": "intent-current",
+        "activeAttemptId": "attempt-current-001"
+      },
+      "assert": [
+        "reject-stale-attempt"
+      ]
+    },
+    {
+      "id": "stale-archive-match",
+      "expectAccepted": true,
+      "event": {
+        "type": "TRANSFER_RECEIPT_CONFIRMED",
+        "intentId": "intent-archived",
+        "attemptId": "attempt-archived-001",
+        "activeIntentId": "intent-current",
+        "activeAttemptId": "attempt-current-001",
+        "archiveReceiptIntentId": "intent-archived",
+        "archiveReceiptAttemptId": "attempt-archived-001"
+      },
+      "assert": [
+        "archive-match"
+      ]
+    },
+    {
+      "id": "stale-archive-miss",
+      "expectRejected": true,
+      "event": {
+        "type": "TRANSFER_RECEIPT_CONFIRMED",
+        "intentId": "intent-lost",
+        "attemptId": "attempt-lost-001",
+        "activeIntentId": "intent-current",
+        "activeAttemptId": "attempt-current-001",
+        "archiveReceiptIntentId": "intent-archived",
+        "archiveReceiptAttemptId": "attempt-archived-001"
+      },
+      "assert": [
+        "archive-miss"
+      ]
+    },
+    {
+      "id": "archived-attempt-mismatch",
+      "expectRejected": true,
+      "event": {
+        "type": "TRANSFER_RECEIPT_CONFIRMED",
+        "intentId": "intent-archived",
+        "attemptId": "attempt-wrong-001",
+        "activeIntentId": "intent-current",
+        "activeAttemptId": "attempt-current-001",
+        "archiveReceiptIntentId": "intent-archived",
+        "archiveReceiptAttemptId": "attempt-archived-001"
+      },
+      "assert": [
+        "archive-attempt-mismatch"
+      ]
+    },
+    {
+      "id": "delayed-old-approval-after-retry",
+      "expectRejected": true,
+      "event": {
+        "type": "APPROVAL_CONFIRMED",
+        "intentId": "intent-retry-001",
+        "attemptId": "attempt-retry-old",
+        "activeIntentId": "intent-retry-001",
+        "activeAttemptId": "attempt-retry-new"
+      },
+      "assert": [
+        "reject-stale-attempt"
+      ]
+    },
+    {
+      "id": "delayed-old-transfer-after-retry",
+      "expectRejected": true,
+      "event": {
+        "type": "TRANSFER_RECEIPT_CONFIRMED",
+        "intentId": "intent-retry-001",
+        "attemptId": "attempt-retry-old",
+        "activeIntentId": "intent-retry-001",
+        "activeAttemptId": "attempt-retry-new"
+      },
+      "assert": [
+        "reject-stale-attempt"
+      ]
+    },
+    {
+      "id": "reset-new-intent",
+      "expectRejected": true,
+      "event": {
+        "type": "RESET_STALE_RECEIPT",
+        "intentId": "intent-before-reset",
+        "attemptId": "attempt-before-reset",
+        "activeIntentId": "intent-after-reset",
+        "activeAttemptId": "attempt-after-reset"
+      },
+      "assert": [
+        "new-intent-required"
+      ]
+    }
+  ],
+  "requiredFutureFixtures": []
+}

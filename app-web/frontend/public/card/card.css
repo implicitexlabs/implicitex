@@ -1,0 +1,851 @@
+/* card.css — Coin Card live surface
+ *
+ * Self-contained. No dependency on main.css or the host page.
+ * All values explicit. Distributed alongside card.js and index.html.
+ *
+ * Structure: cc-frame > (cc-loading | cc-error | cc-card)
+ * cc-card:  cc-card-top | cc-card-body | cc-card-action | cc-card-bottom
+ *
+ * Body panels (inside cc-card-body, shown one at a time via data-state):
+ *   #ccBodyInput     — amount entry (VERIFIED … WRONG_NETWORK)
+ *   #ccBodyReview    — confirm review (READY_TO_SEND)
+ *   #ccBodyExec      — in-progress (CONNECTING … EXECUTE_PENDING)
+ *   #ccBodyConfirmed — settled (CONFIRMED)
+ *   #ccBodyError     — failure / revoked (TX_FAILED, REVOKED)
+ *
+ * Chip states (class on #ccChip):
+ *   cc-card-chip--waiting  not actionable; slow pulse
+ *   cc-card-chip--ready    actionable; solid border; cursor pointer
+ *   cc-card-chip--active   wallet prompt open / confirming on-chain
+ *   cc-card-chip--done     terminal; chip recedes
+ */
+
+/* ---- Reset ---- */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ---- Root — all values fixed; no main.css dependency ---- */
+:root {
+  /* Card geometry — canonical fixed dimensions (coin-card.tokens.json v1) */
+  --cc-card-radius:    10px;
+  --cc-card-w:         460px;
+  --cc-card-h:         286px;
+  --cc-collapsed-w:    216px;
+  --cc-collapsed-h:     44px;
+
+  /* Dark surface palette — fixed hex, independent of page theme */
+  --cc-dark-bg:       #1a1a1a;
+  --cc-dark-fg:       #f2f2f0;
+  --cc-dark-dim:      rgba(242, 242, 240, 0.58);
+  --cc-dark-muted:    rgba(242, 242, 240, 0.30);
+  --cc-dark-border:   rgba(255, 255, 255, 0.18);
+  --cc-dark-verified: #f2f2f0;
+
+  /* Semantic */
+  --cc-amber: #b87a1e;
+  --cc-red:   #c0392b;
+
+  /* Typography */
+  --cc-mono: 'IBM Plex Mono', monospace;
+  --cc-ui:   'Inter', system-ui, -apple-system, sans-serif;
+
+  /* Art proportions */
+  --cc-mark-h:    18px;
+  --cc-word-h:    11px;
+  --cc-logo-h:    14px;
+  --cc-issuer-gap: 7px;
+}
+
+html, body {
+  height: 100%;
+  background: #0c0c0a;
+  color: var(--cc-dark-fg);
+  font-family: var(--cc-ui);
+  font-size: 13px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---- Frame ---- */
+.cc-frame {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 24px 16px 40px;
+  min-height: 100%;
+}
+
+/* ================================================================
+ * STATE VISIBILITY
+ * ================================================================ */
+
+/* Default: hide all surface types */
+.cc-loading,
+.cc-error,
+.cc-card { display: none; }
+
+/* BOOT: blank */
+
+/* MANIFEST_LOADING */
+[data-state="MANIFEST_LOADING"] .cc-loading { display: flex; }
+
+/* Manifest-level error (not found, invalid, fetch failure) */
+[data-state="ERROR"] .cc-error { display: flex; }
+
+/* Card surface: visible for all active states */
+[data-state="CONFIGURE"]             .cc-card,
+[data-state="REVIEW_PREPARING"]      .cc-card,
+[data-state="REVIEW"]                .cc-card,
+[data-state="AUTHORIZING"]           .cc-card,
+[data-state="EXECUTING"]             .cc-card,
+[data-state="CONFIRMATION_PENDING"]  .cc-card,
+[data-state="COMPLETE"]              .cc-card,
+[data-state="VERIFIED"]              .cc-card,
+[data-state="AMOUNT_READY"]          .cc-card,
+[data-state="TRANSFER_INTENT_READY"] .cc-card,
+[data-state="REVOKED"]               .cc-card,
+[data-state="CONNECTING"]            .cc-card,
+[data-state="WRONG_NETWORK"]         .cc-card,
+[data-state="SWITCHING_NETWORK"]     .cc-card,
+[data-state="TX_FAILED"]             .cc-card { display: grid; }
+[data-state="OUTCOME_UNKNOWN"]       .cc-card { display: grid; }
+
+/* Body panels: all hidden by default */
+.cc-body-panel { display: none; flex-direction: column; gap: 4px; }
+
+/* Input panel */
+[data-state="CONFIGURE"]             #ccBodyInput,
+[data-state="VERIFIED"]              #ccBodyInput,
+[data-state="AMOUNT_READY"]          #ccBodyInput,
+[data-state="TRANSFER_INTENT_READY"] #ccBodyInput,
+[data-state="WRONG_NETWORK"]         #ccBodyInput { display: flex; }
+
+/* Review panel */
+[data-state="REVIEW"] #ccBodyReview { display: flex; }
+
+/* Execution panel */
+[data-state="CONNECTING"]            #ccBodyExec,
+[data-state="REVIEW_PREPARING"]      #ccBodyExec,
+[data-state="AUTHORIZING"]           #ccBodyExec,
+[data-state="EXECUTING"]             #ccBodyExec,
+[data-state="CONFIRMATION_PENDING"]  #ccBodyExec,
+[data-state="SWITCHING_NETWORK"]     #ccBodyExec { display: flex; }
+
+/* Confirmed panel */
+[data-state="COMPLETE"] #ccBodyConfirmed { display: flex; }
+
+/* Error / revoked panel */
+[data-state="TX_FAILED"] #ccBodyError,
+[data-state="OUTCOME_UNKNOWN"] #ccBodyError,
+[data-state="REVOKED"]   #ccBodyError { display: flex; }
+
+/* Chip action: hidden at terminal states */
+[data-state="COMPLETE"] .cc-card-action,
+[data-state="TX_FAILED"] .cc-card-action,
+[data-state="REVOKED"]   .cc-card-action { display: none; }
+
+/* ================================================================
+ * LOADING (MANIFEST_LOADING)
+ * ================================================================ */
+.cc-loading {
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  font-family: var(--cc-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(242, 242, 240, 0.28);
+}
+
+/* ================================================================
+ * MANIFEST-LEVEL ERROR
+ * ================================================================ */
+.cc-error {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  gap: 0.5rem;
+  text-align: center;
+}
+.cc-error-message {
+  font-family: var(--cc-ui);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--cc-red);
+}
+.cc-error-sub {
+  font-family: var(--cc-mono);
+  font-size: 9px;
+  letter-spacing: 0.10em;
+  color: rgba(242, 242, 240, 0.28);
+}
+
+/* ================================================================
+ * CARD SURFACE
+ * Grid: top | body | action | bottom
+ * Fixed exterior: 460 × 286 (border-box). Height is state-invariant.
+ * ================================================================ */
+.cc-card {
+  width: var(--cc-card-w);
+  height: var(--cc-card-h);
+  background:    var(--cc-dark-bg);
+  border:        1px solid var(--cc-dark-border);
+  border-radius: var(--cc-card-radius);
+  box-shadow:    0 8px 32px rgba(0,0,0,0.48), 0 2px 8px rgba(0,0,0,0.32);
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  overflow: hidden;
+}
+
+/* ================================================================
+ * MOBILE — viewports narrower than the canonical 460 px card width
+ * Desktop canonical dimensions are not redefined.
+ * ================================================================ */
+@media (max-width: 479px) {
+  .cc-card {
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
+.cc-card * { box-sizing: border-box; min-width: 0; }
+
+/* ================================================================
+ * TOP: issuer + status
+ * ================================================================ */
+.cc-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.cc-card-issuer {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.cc-issuer-art {
+  display: flex;
+  align-items: center;
+  gap: var(--cc-issuer-gap);
+  min-width: 0;
+  overflow: hidden;
+}
+
+.cc-issuer-art[data-failed="1"] { display: none; }
+
+.cc-issuer-fallback {
+  display: none;
+  font-family: var(--cc-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--cc-dark-dim);
+}
+.cc-issuer-art[data-failed="1"] + .cc-issuer-fallback { display: inline-block; }
+
+.cc-issuer-mark {
+  height: var(--cc-mark-h);
+  width: auto;
+  display: block;
+  flex-shrink: 0;
+}
+
+.cc-issuer-word {
+  height: var(--cc-word-h);
+  width: auto;
+  display: block;
+  flex-shrink: 0;
+  opacity: 0.8;
+}
+
+/* Dual-art gates — dark card hides light art, light card hides dark art */
+.cc-card--dark  .cc-art--on-light { display: none; }
+.cc-card--light .cc-art--on-dark  { display: none; }
+
+/* Status pill */
+.cc-card-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--cc-ui);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--cc-dark-dim);
+  flex-shrink: 0;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.cc-card-status--verified  { color: var(--cc-dark-fg); }
+.cc-card-status--pending   { color: var(--cc-amber); }
+.cc-card-status--submitted { color: var(--cc-amber); }
+.cc-card-status--confirmed { color: var(--cc-dark-fg); }
+.cc-card-status--failed    { color: var(--cc-red); }
+.cc-card-status--revoked   { color: var(--cc-red); }
+
+.cc-card-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--cc-dark-muted);
+  flex-shrink: 0;
+}
+
+.cc-card-status-dot--verified  { background: var(--cc-dark-verified); }
+.cc-card-status-dot--pending   { background: var(--cc-amber); }
+.cc-card-status-dot--submitted { background: var(--cc-amber); }
+.cc-card-status-dot--confirmed { background: var(--cc-dark-verified); }
+.cc-card-status-dot--failed    { background: var(--cc-red); }
+.cc-card-status-dot--revoked   { background: var(--cc-red); }
+
+/* ================================================================
+ * BODY: transaction content zone
+ * ================================================================ */
+.cc-card-body {
+  padding: 8px 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* ---- Recipient identity text ---- */
+.cc-card-name {
+  font-family: var(--cc-ui);
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--cc-dark-dim);
+  line-height: 1.15;
+  margin: 6px 0 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cc-card-recipient {
+  font-family: var(--cc-mono);
+  font-size: 11px;
+  color: var(--cc-dark-muted);
+  letter-spacing: 0.04em;
+  margin: 2px 0 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: default;
+}
+
+/* ---- Transaction content ---- */
+
+/* Mode label above amount field */
+.cc-card-tx-label {
+  font-family: var(--cc-ui);
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--cc-dark-muted);
+  margin: 0 0 6px;
+}
+
+/* Protected amount field */
+.cc-card-amount-field {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  border: 1px solid var(--cc-dark-border);
+  border-radius: 2px;
+  padding: 5px 8px;
+  margin: 0 0 8px;
+  transition: border-color 0.18s ease;
+}
+.cc-card-amount-field:focus-within { border-color: rgba(242, 242, 240, 0.42); }
+
+.cc-card-amount-input {
+  font-family: var(--cc-mono);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--cc-dark-fg);
+  background: transparent;
+  border: none;
+  outline: none;
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  line-height: 1;
+  -moz-appearance: textfield;
+}
+.cc-card-amount-input::-webkit-outer-spin-button,
+.cc-card-amount-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+.cc-card-amount-input::placeholder { color: var(--cc-dark-fg); opacity: 0.28; }
+
+.cc-card-amount-unit-lock {
+  font-family: var(--cc-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--cc-dark-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+  align-self: flex-end;
+  padding-bottom: 1px;
+}
+
+/* Large amount display (review / confirmed / exec) */
+.cc-card-tx-amount {
+  font-family: var(--cc-mono);
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--cc-dark-fg);
+  margin: 0 0 8px;
+  line-height: 1;
+}
+
+.cc-card-tx-unit {
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  opacity: 0.5;
+  margin-left: 3px;
+}
+
+/* Fee and total rows */
+.cc-card-tx-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-family: var(--cc-mono);
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  color: var(--cc-dark-muted);
+  margin: 2px 0;
+}
+
+.cc-card-tx-row-value { color: var(--cc-dark-dim); }
+
+/* Transaction hash link */
+.cc-card-tx-hash {
+  display: block;
+  font-family: var(--cc-mono);
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  color: var(--cc-dark-muted);
+  margin: 6px 0 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-decoration: none;
+}
+.cc-card-tx-hash:hover { color: var(--cc-dark-dim); }
+
+/* Error / failure message */
+.cc-card-tx-error {
+  font-family: var(--cc-ui);
+  font-size: 9px;
+  letter-spacing: 0.02em;
+  color: var(--cc-red);
+  margin: 4px 0 0;
+  line-height: 1.5;
+}
+
+/* Spinner */
+.cc-card-tx-spinner {
+  display: block;
+  width: 12px;
+  height: 12px;
+  border: 1.5px solid var(--cc-dark-muted);
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: cc-spin 0.9s linear infinite;
+  margin: 4px 0 8px;
+}
+
+@keyframes cc-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Self-send warning */
+.cc-selfsend-warn {
+  display: none;
+  font-family: var(--cc-ui);
+  font-size: 10px;
+  color: var(--cc-amber);
+  margin: 8px 0 0;
+  line-height: 1.5;
+}
+.cc-selfsend-warn.is-active { display: block; }
+
+/* ================================================================
+ * ACTION: chip trigger + secondary action
+ * Edit Payment lives in the action zone as a sibling of the chip.
+ * Hidden by default; shown only in REVIEW state.
+ * ================================================================ */
+.cc-card-action {
+  padding: 0 16px 13px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Chip — ~EMV proportions; no text; state via modifier class */
+.cc-card-chip {
+  width: 34px;
+  height: 26px;
+  border-radius: 3px;
+  border: 1px solid var(--cc-dark-border);
+  color: var(--cc-dark-fg);
+  background: transparent;
+  padding: 0;
+  display: block;
+  flex-shrink: 0;
+  position: relative;
+  transition: border-color 0.2s, opacity 0.2s;
+}
+
+/* Subtle mid-line — chip contact geometry without faking the chip */
+.cc-card-chip::before {
+  content: "";
+  position: absolute;
+  left: 5px; right: 5px;
+  top: 50%;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.18;
+  transform: translateY(-50%);
+}
+
+@keyframes cc-chip-pulse {
+  0%, 100% { opacity: 0.28; }
+  50%       { opacity: 0.58; }
+}
+
+/* Waiting: no valid amount yet */
+.cc-card-chip--waiting {
+  animation: cc-chip-pulse 2.6s ease-in-out infinite;
+  cursor: default;
+}
+
+/* Ready: actionable */
+.cc-card-chip--ready {
+  border-color: rgba(242, 242, 240, 0.48);
+  cursor: pointer;
+}
+.cc-card-chip--ready:hover { border-color: rgba(242, 242, 240, 0.75); }
+
+/* Active: wallet prompt open / on-chain */
+.cc-card-chip--active {
+  opacity: 0.42;
+  cursor: default;
+}
+
+/* Done: terminal */
+.cc-card-chip--done {
+  opacity: 0.16;
+  cursor: default;
+}
+
+.cc-card-secondary-action {
+  /* Hidden by default; shown only in REVIEW state (see state-dependent rule below) */
+  display: none;
+  border: 1px solid rgba(242, 242, 240, 0.28);
+  background: transparent;
+  color: #f2f2f0;
+  font: 500 11px/1.2 Inter, system-ui, sans-serif;
+  letter-spacing: 0;
+  padding: 7px 10px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+[data-state="REVIEW"] .cc-card-secondary-action {
+  display: inline-flex;
+  align-items: center;
+}
+
+.cc-card-review-block {
+  min-height: 14px;
+  font-family: var(--cc-ui);
+  font-size: 11px;
+  color: rgba(242, 242, 240, 0.72);
+}
+
+.cc-card-secondary-action:hover {
+  border-color: rgba(242, 242, 240, 0.56);
+}
+
+/* ================================================================
+ * BOTTOM: network rail + product stamp
+ * ================================================================ */
+.cc-card-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px 12px;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.cc-card-network {
+  font-family: var(--cc-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--cc-dark-muted);
+  text-transform: uppercase;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cc-card-stamp {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* coincard-logo.svg uses fill="currentColor" via <img>; currentColor reads as black.
+   filter:invert(1) makes it white on the dark surface. */
+.cc-card-logo {
+  height: var(--cc-logo-h);
+  width: auto;
+  display: block;
+  flex-shrink: 0;
+  filter: invert(1);
+  opacity: 0.65;
+}
+.cc-card-logo[data-failed="1"] { display: none; }
+
+.cc-card-logo-fallback {
+  display: none;
+  font-family: var(--cc-ui);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--cc-dark-muted);
+}
+.cc-card-logo[data-failed="1"] + .cc-card-logo-fallback { display: block; }
+
+/* ================================================================
+ * RECEIVE ZONE — card holder presents card
+ * ================================================================ */
+
+/* Shown by CSS in active card states; hidden in terminal states */
+.cc-receive-zone { display: none; }
+
+[data-state="CONFIGURE"]             .cc-receive-zone,
+[data-state="REVIEW"]                .cc-receive-zone,
+[data-state="VERIFIED"]              .cc-receive-zone,
+[data-state="AMOUNT_READY"]          .cc-receive-zone,
+[data-state="TRANSFER_INTENT_READY"] .cc-receive-zone,
+[data-state="WRONG_NETWORK"]         .cc-receive-zone { display: flex; justify-content: center; margin-top: 14px; }
+
+.cc-receive-btn {
+  font-family: var(--cc-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--cc-dark-dim);
+  background: transparent;
+  border: 1px solid var(--cc-dark-border);
+  border-radius: 3px;
+  padding: 7px 20px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.cc-receive-btn:hover {
+  color: var(--cc-dark-fg);
+  border-color: rgba(242, 242, 240, 0.48);
+}
+
+/* ================================================================
+ * QR PANEL — overlays card view when RECEIVE is active
+ * ================================================================ */
+
+/* Hidden by default; shown when .cc-qr-active is on cc-frame */
+.cc-qr-panel { display: none; }
+
+/* Active: hide card + receive zone; show QR panel */
+.cc-frame.cc-qr-active .cc-card         { display: none !important; }
+.cc-frame.cc-qr-active .cc-receive-zone { display: none; }
+.cc-frame.cc-qr-active .cc-qr-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: var(--cc-card-w);
+  background: var(--cc-dark-bg);
+  border: 1px solid var(--cc-dark-border);
+  border-radius: var(--cc-card-radius);
+  padding: 16px;
+}
+
+.cc-qr-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.cc-qr-title {
+  font-family: var(--cc-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--cc-dark-dim);
+}
+
+.cc-qr-close {
+  background: none;
+  border: none;
+  color: var(--cc-dark-dim);
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  padding: 2px 6px;
+  transition: color 0.15s;
+}
+.cc-qr-close:hover { color: var(--cc-dark-fg); }
+
+/* Canvas — white background for reliable scanning */
+.cc-qr-canvas {
+  border-radius: 4px;
+  display: block;
+}
+
+.cc-qr-hint {
+  font-family: var(--cc-ui);
+  font-size: 10px;
+  color: var(--cc-dark-dim);
+  text-align: center;
+  letter-spacing: 0.04em;
+}
+
+.cc-qr-url {
+  font-family: var(--cc-mono);
+  font-size: 9px;
+  color: var(--cc-dark-muted);
+  text-align: center;
+  word-break: break-all;
+  line-height: 1.4;
+  width: 100%;
+}
+
+/* ================================================================
+ * REVIEW STATE — body compaction
+ * Reduces per-item margins/gaps so the review content fits within
+ * the fixed 286 px card height without clipping essential facts.
+ * Applied only to #ccBodyReview to avoid affecting other panels.
+ * ================================================================ */
+[data-state="REVIEW"] .cc-card-body {
+  padding: 4px 16px;
+}
+
+#ccBodyReview {
+  gap: 2px;
+}
+
+#ccBodyReview .cc-card-tx-label {
+  margin-bottom: 2px;
+}
+
+#ccBodyReview .cc-card-tx-amount {
+  margin-bottom: 4px;
+}
+
+#ccBodyReview .cc-card-review-block {
+  min-height: 0;
+}
+
+/* ================================================================
+ * COLLAPSED ACCEPTANCE MARK — 216 × 44 (border-box)
+ * Shown only in COLLAPSED state. Exterior is fixed per spec.
+ * Composed of a 172 px identity area and a 44 px lettermark cell.
+ * ================================================================ */
+.cc-collapsed-mark { display: none; }
+
+[data-state="COLLAPSED"] .cc-collapsed-mark {
+  display: flex;
+  align-items: stretch;
+  width: var(--cc-collapsed-w);
+  height: var(--cc-collapsed-h);
+  background: var(--cc-dark-bg);
+  border: 1px solid var(--cc-dark-border);
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.40), 0 1px 4px rgba(0,0,0,0.28);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* Identity area: 172 px wide — primary claim + network/token */
+.cc-collapsed-identity {
+  flex: 0 0 172px;
+  width: 172px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 7px 12px;
+  min-width: 0;
+  overflow: hidden;
+  border-right: 1px solid var(--cc-dark-border);
+}
+
+.cc-collapsed-primary {
+  font-family: 'Oxanium', var(--cc-ui);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--cc-dark-fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+}
+
+.cc-collapsed-sub {
+  font-family: var(--cc-mono);
+  font-size: 8px;
+  letter-spacing: 0.08em;
+  color: var(--cc-dark-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  margin-top: 3px;
+}
+
+/* Lettermark cell: 44 × 44 */
+.cc-collapsed-lettermark {
+  flex: 0 0 44px;
+  width: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cc-collapsed-lettermark img {
+  width: 36px;
+  height: 36px;
+  display: block;
+}
+
+/* ================================================================
+ * COLLAPSED state — hide expanded card and controls
+ * ================================================================ */
+[data-state="COLLAPSED"] .cc-card,
+[data-state="COLLAPSED"] .cc-receive-zone { display: none; }

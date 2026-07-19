@@ -2,6 +2,8 @@
 
 Non-custodial USDC transfer platform. Sender wallet → recipient wallet. 1% platform fee. No custody. Polygon mainnet.
 
+Strategic direction: ImplicitEx may evolve into financial infrastructure for autonomous agents, using the current transfer engine as a foundation for future agent treasury, permissions, identity, settlement, audit, and trust layers.
+
 Operated by Aden Media Group LLC.
 
 ---
@@ -23,6 +25,9 @@ implicitex/
 │
 ├── docs/
 │   ├── product/mvp-roadmap.md        Launch gate sequence and board
+│   ├── product/portal/               Portal documentation (contract + inventory + projection + composition + global + visibility)
+│   ├── product/agent-financial-infrastructure-initiative.md
+│   │                                  Agent infrastructure thesis
 │   ├── attorney-review/              Attorney review package (Gate 3)
 │   ├── operations/evidence/          Live smoke test evidence
 │   ├── decisions/                    ADRs and decision log
@@ -48,6 +53,12 @@ Gate 5: Public soft launch
 ```
 
 Full roadmap: `docs/product/mvp-roadmap.md`
+Portal contract: `docs/product/portal/PORTAL_INFORMATION_ARCHITECTURE_CONTRACT_V1.md`
+Portal inventory: `docs/product/portal/PORTAL_FACT_AND_AUTHORITY_INVENTORY_V1.md`
+Portal projection: `docs/product/portal/PORTAL_INTENT_BASED_PRESENTATION_PROJECTION_V1.md`
+Portal composition: `docs/product/portal/PORTAL_DESTINATION_COMPOSITION_CONTRACT_V1.md`
+Portal global surface: `docs/product/portal/PORTAL_GLOBAL_SURFACE_REGISTRATION_CONTRACT_V1.md`
+Portal visibility controller: `docs/product/portal/PORTAL_VISIBILITY_CONTROLLER_ACTIVATION_CONTRACT_V1.md`
 
 ---
 

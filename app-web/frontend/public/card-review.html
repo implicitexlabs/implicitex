@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ImplicitEx — Coin Card Variant Review</title>
+  <meta name="robots" content="noindex, nofollow">
+  <script>(function(){try{var t=localStorage.getItem('implicitex-theme');if(t==='light'||t==='dark'){document.documentElement.dataset.theme=t;}else{var h=new Date().getHours();document.documentElement.dataset.theme=(h>=7&&h<19)?'light':'dark';}}catch(e){}})();</script>
+  <link rel="stylesheet" href="css/main.css">
+  <style>
+    /* ---- Review page layout ---- */
+    .review-shell {
+      width: 100%;
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 40px 24px 80px;
+      box-sizing: border-box;
+    }
+
+    .review-heading {
+      font-family: var(--font-ui);
+      font-size: var(--size-sm);
+      font-weight: var(--weight-semibold);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0 0 4px;
+    }
+
+    .review-subheading {
+      font-family: var(--font-body);
+      font-size: var(--size-xs);
+      color: var(--dim);
+      margin: 0 0 48px;
+    }
+
+    .review-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 56px 40px;
+      align-items: start;
+    }
+
+    @media (max-width: 720px) {
+      .review-grid { grid-template-columns: 1fr; }
+    }
+
+    .review-cell {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .review-label {
+      font-family: var(--font-ui);
+      font-size: 10px;
+      font-weight: var(--weight-semibold);
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    /* Portrait cells: center the narrower card */
+    .review-cell--portrait {
+      align-items: center;
+    }
+
+    /* Section separator for multiple review grids */
+    .review-section {
+      margin-top: 72px;
+    }
+
+    /* Sub-format groupings within a section */
+    .review-subsection {
+      margin-top: 52px;
+    }
+
+    /* Full-width grid row — single card spanning both columns */
+    .review-grid--full {
+      grid-template-columns: 1fr;
+    }
+
+    /* ---- Review-only: suppress the cc-card full-width stretch ---- */
+    /* Landscape cards take 100% of their cell naturally */
+    /* Portrait cards are constrained by --cc-card-portrait-max */
+  </style>
+</head>
+<body class="card-review-page">
+  <nav id="nav">
+    <a href="/" class="logo" aria-label="ImplicitEx home">
+      <svg class="brandmark" width="25" height="25" viewBox="0 0 25 25" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+        <path d="M18.4,21.48L2.64,5.73l.43-.43,15.76,15.76s1.3,1.3,2.79-.19.21-2.77.21-2.77L6.05,2.32l.43-.43,4.07,4.07,1.38,1.38,1.28-1.28,4.28-4.28.43.43-5.56,5.56,2.98,2.98,5.56-5.56.43.43-5.56,5.56,1.28,1.28,5.56-5.56s1.28-1.28-.21-2.77-2.79-.19-2.79-.19l-4.26,4.26-.43-.43,4.26-4.26s1.3-1.3-.19-2.79-2.77-.21-2.77-.21l-4.28,4.28L7.75.62s-1.28-1.28-2.77.21-.19,2.79-.19,2.79l15.76,15.76-.43.43L4.37,4.05s-1.3-1.3-2.79.19-.11,2.87-.11,2.87l15.68,15.68-.43.43-5.56-5.56-5.54,5.54-.43-.43,5.54-5.54-2.98-2.98-5.54,5.54-.43-.43,5.54-5.54-1.28-1.28L.51,18.08s-1.28,1.28.21,2.77,2.79.19,2.79.19l4.23-4.23.43.43-4.23,4.23s-1.3,1.3.19,2.79,2.77.21,2.77.21l4.26-4.26,4.28,4.28s1.28,1.28,2.77-.21.19-2.79.19-2.79Z" fill="#f2f2f0"/>
+      </svg>
+      <img class="wordmark" src="/components/images/wordmark-white.svg" alt="" aria-hidden="true">
+    </a>
+    <div class="nav-right">
+      <button class="clock-toggle" id="clockToggle" type="button" aria-label="Set theme by time of day">
+        <svg class="clock-icon" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+          <circle cx="7" cy="7" r="6" fill="none" stroke="currentColor" stroke-width="1.2"/>
+          <line id="clockHourHand" x1="7" y1="7" x2="7" y2="4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <line id="clockMinuteHand" x1="7" y1="7" x2="7" y2="2.5" stroke="currentColor" stroke-width="1" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch to light theme" aria-pressed="false">
+        <svg class="theme-icon" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+          <path d="M7 1 A6 6 0 0 0 7 13 Z" fill="var(--white)"/>
+          <path d="M7 1 A6 6 0 0 1 7 13 Z" fill="var(--bg)"/>
+          <circle cx="7" cy="7" r="6" fill="none" stroke="currentColor" stroke-width="1.2"/>
+        </svg>
+      </button>
+      <span class="nav-status">Design Review</span>
+      <a class="send-usdc-link" href="/card.html">Card &rarr;</a>
+    </div>
+  </nav>
+
+  <main class="review-shell">
+
+    <p class="review-heading">Coin Card — Variant Review</p>
+    <p class="review-subheading">Design review only &mdash; not a public page. Four variants: light/dark &times; landscape/portrait.</p>
+
+    <div class="review-grid">
+
+      <!-- ① Light / Landscape -->
+      <div class="review-cell">
+        <span class="review-label">Light &middot; Landscape</span>
+        <div class="cc-card cc-card--light" role="region" aria-label="Light landscape Coin Card">
+          <div class="cc-card-top">
+            <div class="cc-card-issuer" aria-label="ImplicitEx">
+              <span class="cc-issuer-art">
+                <img class="cc-issuer-mark cc-card-art-img cc-art--on-dark"  src="/components/images/lettermark-white.svg" alt="" aria-hidden="true">
+                <img class="cc-issuer-word cc-card-art-img cc-art--on-dark"  src="/components/images/wordmark-white.svg"  alt="ImplicitEx">
+                <img class="cc-issuer-mark cc-card-art-img cc-art--on-light" src="/components/images/lettermark-black.svg" alt="" aria-hidden="true">
+                <img class="cc-issuer-word cc-card-art-img cc-art--on-light" src="/components/images/wordmark-black.svg"  alt="ImplicitEx">
+              </span>
+              <span class="cc-issuer-fallback">IMPLICITEX</span>
+            </div>
+            <span class="cc-card-status cc-card-status--verified">
+              <span class="cc-card-status-dot cc-card-status-dot--verified" aria-hidden="true"></span>
+              <span>Verified</span>
+            </span>
+          </div>
+          <div class="cc-card-body">
+            <p class="cc-card-cred">CC IMPLICITEX DEMO AB3919</p>
+            <p class="cc-card-name">ImplicitEx Demo Treasury</p>
+            <p class="cc-card-recipient" title="0xa7cE4232811021d2Dd01f4f0f264Df2427ab3919">0xa7cE&hellip;3919</p>
+          </div>
+          <div class="cc-card-bottom">
+            <span class="cc-card-network">POLYGON &middot; USDC</span>
+            <div class="cc-card-stamp">
+              <img src="/components/images/coincard-logo.svg" alt="Coin Card" class="cc-card-logo" width="392" height="56">
+              <span class="cc-card-logo-fallback">COIN CARD</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ② Dark / Landscape -->
+      <div class="review-cell">
+        <span class="review-label">Dark &middot; Landscape</span>
+        <div class="cc-card cc-card--dark" role="region" aria-label="Dark landscape Coin Card">
+          <div class="cc-card-top">
+            <div class="cc-card-issuer" aria-label="ImplicitEx">
+              <span class="cc-issuer-art">
+                <img class="cc-issuer-mark cc-card-art-img cc-art--on-dark"  src="/components/images/lettermark-white.svg" alt="" aria-hidden="true">
+                <img class="cc-issuer-word cc-card-art-img cc-art--on-dark"  src="/components/images/wordmark-white.svg"  alt="ImplicitEx">
+                <img class="cc-issuer-mark cc-card-art-img cc-art--on-light" src="/components/images/lettermark-black.svg" alt="" aria-hidden="true">
+                <img class="cc-issuer-word cc-card-art-img cc-art--on-light" src="/components/images/wordmark-black.svg"  alt="ImplicitEx">
+              </span>
+              <span class="cc-issuer-fallback">IMPLICITEX</span>
+            </div>
+            <span class="cc-card-status cc-card-status--verified">
+              <span class="cc-card-status-dot cc-card-status-dot--verified" aria-hidden="true"></span>
+              <span>Verified</span>
+            </span>
+          </div>
+          <div class="cc-card-body">
+            <p class="cc-card-cred">CC IMPLICITEX DEMO AB3919</p>
+            <p class="cc-card-name">ImplicitEx Demo Treasury</p>
+            <p class="cc-card-recipient" title="0xa7cE4232811021d2Dd01f4f0f264Df2427ab3919">0xa7cE&hellip;3919</p>
+          </div>
+          <div class="cc-card-bottom">
+            <span class="cc-card-network">POLYGON &middot; USDC</span>
+            <div class="cc-card-stamp">
+              <img src="/components/images/coincard-logo.svg" alt="Coin Card" class="cc-card-logo" width="392" height="56">
+              <span class="cc-card-logo-fallback">COIN CARD</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ③ Light / Portrait -->
+      <div class="review-cell review-cell--portrait">
+        <span class="review-label">Light &middot; Portrait</span>
+        <div class="cc-card cc-card--light cc-card--portrait" role="region" aria-label="Light portrait Coin Card">
+          <div class="cc-card-top">
+            <div class="cc-card-issuer" aria-label="ImplicitEx">
+              <span class="cc-issuer-art">
+                <img class="cc-issuer-mark cc-card-art-img cc-art--on-dark"  src="/components/images/lettermark-white.svg" alt="" aria-hidden="true">
+                <img class="cc-issuer-word cc-card-art-img cc-art--on-dark"  src="/components/images/wordmark-white.svg"  alt="ImplicitEx">
+                <img class="cc-issuer-mark cc-card-art-img cc-art--on-light" src="/components/images/lettermark-black.svg" alt="" aria-hidden="true">
+                <img class="cc-issuer-word cc-card-art-img cc-art--on-light" src="/components/images/wordmark-black.svg"  alt="ImplicitEx">
+              </span>
+              <span class="cc-issuer-fallback">IMPLICITEX</span>
+            </div>
+            <span class="cc-card-status cc-card-status--verified">
+              <span class="cc-card-status-dot cc-card-status-dot--verified" aria-hidden="true"></span>
+              <span>Verified</span>
+            </span>
+          </div>
+          <div class="cc-card-body">
+            <p class="cc-card-cred">CC IMPLICITEX DEMO AB3919</p>
+            <p class="cc-card-name">ImplicitEx Demo Treasury</p>
+            <p class="cc-card-recipient" title="0xa7cE4232811021d2Dd01f4f0f264Df2427ab3919">0xa7cE&hellip;3919</p>
+          </div>
+          <div class="cc-card-bottom">
+            <span class="cc-card-network">POLYGON &middot; USDC</span>
+            <div class="cc-card-stamp">
+              <img src="/components/images/coincard-logo.svg" alt="Coin Card" class="cc-card-logo" width="392" height="56">
+              <span class="cc-card-logo-fallback">COIN CARD</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ④ Dark / Portrait -->
+      <div class="review-cell review-cell--portrait">
+        <span class="review-label">Dark &middot; Portrait</span>
+        <div class="cc-card cc-card--dark cc-card--portrait" role="region" aria-label="Dark portrait Coin Card">
+          <div class="cc-card-top">
+            <div class="cc-card-issuer" aria-label="ImplicitEx">
+              <span class="cc-issuer-art">
+                <img class="cc-issuer-mark cc-card-art-img cc-art--on-dark"  src="/components/images/lettermark-white.svg" alt="" aria-hidden="true">
+                <img class="cc-issuer-word cc-card-art-img cc-art--on-dark"  src="/components/images/wordmark-white.svg"  alt="ImplicitEx">
+                <img class="cc-issuer-mark cc-card-art-img cc-art--on-light" src="/components/images/lettermark-black.svg" alt="" aria-hidden="true">
+                <img class="cc-issuer-word cc-card-art-img cc-art--on-light" src="/components/images/wordmark-black.svg"  alt="ImplicitEx">
+              </span>
+              <span class="cc-issuer-fallback">IMPLICITEX</span>
+            </div>
+            <span class="cc-card-status cc-card-status--verified">
+              <span class="cc-card-status-dot cc-card-status-dot--verified" aria-hidden="true"></span>
+              <span>Verified</span>
+            </span>
+          </div>
+          <div class="cc-card-body">
+            <p class="cc-card-cred">CC IMPLICITEX DEMO AB3919</p>
+            <p class="cc-card-name">ImplicitEx Demo Treasury</p>
+            <p class="cc-card-recipient" title="0xa7cE4232811021d2Dd01f4f0f264Df2427ab3919">0xa7cE&hellip;3919</p>
+          </div>
+          <div class="cc-card-bottom">
+            <span class="cc-card-network">POLYGON &middot; USDC</span>
+            <div class="cc-card-stamp">
+              <img src="/components/images/coincard-logo.svg" alt="Coin Card" class="cc-card-logo" width="392" height="56">
+              <span class="cc-card-logo-fallback">COIN CARD</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /.review-grid -->
+
+    <!-- ================================================================
+         Transaction State Machine — visual mock, no wallet wiring
+         All states on dark landscape. Six states: input / review /
+         execution (awaiting + submitted) / result (confirmed + failed)
+         ================================================================ -->
+    <div class="review-section">
+      <p class="review-heading">Coin Card — Transaction States</p>
+      <p class="review-subheading">Visual mock only &mdash; no wallet logic. Six states: input &rarr; review &rarr; execution &rarr; result.</p>
+
+      <div class="review-grid">
+
+        <!-- ① Input -->
+        <div class="review-cell">
+          <span class="review-label">Input &middot; Send USDC</span>
+          <div class="cc-card cc-card--dark" role="region" aria-label="Input state">
+            <div class="cc-card-top">
+              <div class="cc-card-issuer" aria-label="ImplicitEx">
+                <span class="cc-issuer-art">
+                  <img class="cc-issuer-mark cc-card-art-img cc-art--on-dark"  src="/components/images/lettermark-white.svg" alt="" aria-hidden="true">
+                  <img class="cc-issuer-word cc-card-art-img cc-art--on-dark"  src="/components/images/wordmark-white.svg"  alt="ImplicitEx">
+                  <img class="cc-issuer-mark cc-card-art-img cc-art--on-light" src="/components/images/lettermark-black.svg" alt="" aria-hidden="true">
+                  <img class="cc-issuer-word cc-card-art-img cc-art--on-light" src="/components/images/wordmark-black.svg"  alt="ImplicitEx">
+                </span>
+                <span class="cc-issuer-fallback">IMPLICITEX</span>
+              </div>
+              <span class="cc-card-status cc-card-status--verified">
+                <span class="cc-card-status-dot cc-card-status-dot--verified" aria-hidden="true"></span>
+                <span>Verified</span>
+              </span>
+            </div>
+            <div class="cc-card-body">
+              <p class="cc-card-tx-label">Send USDC</p>
+              <div class="cc-card-amount-field">
+                <input class="cc-card-amount-input" type="number" placeholder="0.00" min="0" step="0.01" aria-label="Amount in USDC" inputmode="decimal">
+                <span class="cc-card-amount-unit-lock" aria-hidden="true">USDC</span>
+              </div>
+              <div class="cc-card-tx-row">
+                <span>Fee 2.0%</span>
+                <span class="cc-card-tx-row-value">&mdash;</span>
+              </div>
+              <div class="cc-card-tx-row">
+                <span>Total</span>
+                <span class="cc-card-tx-row-value">&mdash;</span>
+              </div>
+              <p class="cc-card-name">ImplicitEx Demo Treasury</p>
+              <p class="cc-card-recipient" title="0xa7cE4232811021d2Dd01f4f0f264Df2427ab3919">0xa7cE&hellip;3919</p>
+            </div>
+            <!-- Chip: waiting — slow pulse until amount is entered -->
+            <div class="cc-card-action">
+              <button class="cc-card-chip cc-card-chip--waiting" aria-label="Enter amount to continue" disabled></button>
+            </div>
+            <div class="cc-card-bottom">
+              <span class="cc-card-network">POLYGON &middot; USDC</span>
+              <div class="cc-card-stamp">
+                <img src="/components/images/coincard-logo.svg" alt="Coin Card" class="cc-card-logo" width="392" height="56">
+                <span class="cc-card-logo-fallback">COIN CARD</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ② Review -->
+        <div class="review-cell">
+          <span class="review-label">Review &middot; Confirm Transfer</span>
+          <div class="cc-card cc-card--dark" role="region" aria-label="Review state">
+            <div class="cc-card-top">
+              <div class="cc-card-issuer" aria-label="ImplicitEx">
+                <span class="cc-issuer-art">
+                  <img class="cc-issuer-mark cc-card-art-img cc-art--on-dark"  src="/components/images/lettermark-white.svg" alt="" aria-hidden="true">
+                  <img class="cc-issuer-word cc-card-art-img cc-art--on-dark"  src="/components/images/wordmark-white.svg"  alt="ImplicitEx">
+                  <img class="cc-issuer-mark cc-card-art-img cc-art--on-light" src="/components/images/lettermark-black.svg" alt="" aria-hidden="true">
+                  <img class="cc-issuer-word cc-card-art-img cc-art--on-light" src="/components/images/wordmark-black.svg"  alt="ImplicitEx">
+                </span>
+                <span class="cc-issuer-fallback">IMPLICITEX</span>
+              </div>
+              <span class="cc-card-status cc-card-status--verified">
+                <span class="cc-card-status-dot cc-card-status-dot--verified" aria-hidden="true"></span>
+                <span>Verified</span>
+              </span>
+            </div>
+            <div class="cc-card-body">
+              <p class="cc-card-tx-label">Review Transfer</p>
+              <p class="cc-card-tx-amount">100.00<span class="cc-card-tx-unit">USDC</span></p>
+              <div class="cc-card-tx-row">
+                <span>Fee 2.0%</span>
+                <span class="cc-card-tx-row-value">2.00 USDC</span>
+              </div>
+              <div class="cc-card-tx-row">
+                <span>Total</span>
+                <span class="cc-card-tx-row-value">102.00 USDC</span>
+              </div>
+              <p class="cc-card-name">ImplicitEx Demo Treasury</p>
+              <p class="cc-card-recipient" title="0xa7cE4232811021d2Dd01f4f0f264Df2427ab3919">0xa7cE&hellip;3919</p>
+            </div>
+            <!-- Chip: ready — amount confirmed, tap to invoke wallet -->
+            <div class="cc-card-action">
+              <button class="cc-card-chip cc-card-chip--ready" aria-label="Confirm in wallet"></button>
+            </div>
+            <div class="cc-card-bottom">
+              <span class="cc-card-network">POLYGON &middot; USDC</span>
+              <div class="cc-card-stamp">
+                <img src="/components/images/coincard-logo.svg" alt="Coin Card" class="cc-card-logo" width="392" height="56">
+                <span class="cc-card-logo-fallback">COIN CARD</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ③ Execution — Awaiting Signature -->
+        <div class="review-cell">
+          <span class="review-label">Execution &middot; Awaiting Signature</span>
+          <div class="cc-card cc-card--dark" role="region" aria-label="Awaiting signature state">
+            <div class="cc-card-top">
+              <div class="cc-card-issuer" aria-label="ImplicitEx">
+                <span class="cc-issuer-art">
+                  <img class="cc-issuer-mark cc-card-art-img cc-art--on-dark"  src="/components/images/lettermark-white.svg" alt="" aria-hidden="true">
+                  <img class="cc-issuer-word cc-card-art-img cc-art--on-dark"  src="/components/images/wordmark-white.svg"  alt="ImplicitEx">
+                  <img class="cc-issuer-mark cc-card-art-img cc-art--on-light" src="/components/images/lettermark-black.svg" alt="" aria-hidden="true">
+                  <img class="cc-issuer-word cc-card-art-img cc-art--on-light" src="/components/images/wordmark-black.svg"  alt="ImplicitEx">
+                </span>
+                <span class="cc-issuer-fallback">IMPLICITEX</span>
+              </div>
+              <span class="cc-card-status cc-card-status--pending">
+                <span class="cc-card-status-dot cc-card-status-dot--pending" aria-hidden="true"></span>
+                <span>Pending</span>
+              </span>
+            </div>
+            <div class="cc-card-body">
+              <p class="cc-card-tx-label">Awaiting Signature</p>
+              <span class="cc-card-tx-spinner" aria-label="Waiting for wallet"></span>
+              <p class="cc-card-tx-amount">100.00<span class="cc-card-tx-unit">USDC</span></p>
+              <p class="cc-card-name">ImplicitEx Demo Treasury</p>
+              <p class="cc-card-recipient" title="0xa7cE4232811021d2Dd01f4f0f264Df2427ab3919">0xa7cE&hellip;3919</p>
+            </div>
+            <!-- Chip: active — wallet prompt open, chip held -->
+            <div class="cc-card-action">
+              <button class="cc-card-chip cc-card-chip--active" aria-label="Waiting for wallet signature" disabled></button>
+            </div>
+            <div class="cc-card-bottom">
+              <span class="cc-card-network">POLYGON &middot; USDC</span>
+              <div class="cc-card-stamp">
+                <img src="/components/images/coincard-logo.svg" alt="Coin Card" class="cc-card-logo" width="392" height="56">
+                <span class="cc-card-logo-fallback">COIN CARD</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ④ Execution — Submitted -->
+        <div class="review-cell">
+          <span class="review-label">Execution &middot; Submitted</span>
+          <div class="cc-card cc-card--dark" role="region" aria-label="Submitted state">
+            <div class="cc-card-top">
+              <div class="cc-card-issuer" aria-label="ImplicitEx">
+                <span class="cc-issuer-art">
+                  <img class="cc-issuer-mark cc-card-art-img cc-art--on-dark"  src="/components/images/lettermark-white.svg" alt="" aria-hidden="true">
+                  <img class="cc-issuer-word cc-card-art-img cc-art--on-dark"  src="/components/images/wordmark-white.svg"  alt="ImplicitEx">
+                  <img class="cc-issuer-mark cc-card-art-img cc-art--on-light" src="/components/images/lettermark-black.svg" alt="" aria-hidden="true">
+                  <img class="cc-issuer-word cc-card-art-img cc-art--on-light" src="/components/images/wordmark-black.svg"  alt="ImplicitEx">
+                </span>
+                <span class="cc-issuer-fallback">IMPLICITEX</span>
+              </div>
+              <span class="cc-card-status cc-card-status--submitted">
+                <span class="cc-card-status-dot cc-card-status-dot--submitted" aria-hidden="true"></span>
+                <span>Confirming</span>
+              </span>
+            </div>
+            <div class="cc-card-body">
+              <p class="cc-card-tx-label">Submitted</p>
+              <span class="cc-card-tx-spinner" aria-label="Awaiting confirmation"></span>
+              <p class="cc-card-tx-amount">100.00<span class="cc-card-tx-unit">USDC</span></p>
+              <p class="cc-card-tx-hash" title="0x8f3a7b2e4c19d6f3a9b2c1e4d7f6a2b3c8d9e1f2">0x8f3a&hellip;e1f2</p>
+            </div>
+            <!-- Chip: active — submitted, confirming on-chain -->
+            <div class="cc-card-action">
+              <button class="cc-card-chip cc-card-chip--active" aria-label="Confirming on-chain" disabled></button>
+            </div>
+            <div class="cc-card-bottom">
+              <span class="cc-card-network">POLYGON &middot; USDC</span>
+              <div class="cc-card-stamp">
+                <img src="/components/images/coincard-logo.svg" alt="Coin Card" class="cc-card-logo" width="392" height="56">
+                <span class="cc-card-logo-fallback">COIN CARD</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ⑤ Result — Confirmed -->
+        <div class="review-cell">
+          <span class="review-label">Result &middot; Confirmed</span>
+          <div class="cc-card cc-card--dark" role="region" aria-label="Confirmed state">
+            <div class="cc-card-top">
+              <div class="cc-card-issuer" aria-label="ImplicitEx">
+                <span class="cc-issuer-art">
+                  <img class="cc-issuer-mark cc-card-art-img cc-art--on-dark"  src="/components/images/lettermark-white.svg" alt="" aria-hidden="true">
+                  <img class="cc-issuer-word cc-card-art-img cc-art--on-dark"  src="/components/images/wordmark-white.svg"  alt="ImplicitEx">
+                  <img class="cc-issuer-mark cc-card-art-img cc-art--on-light" src="/components/images/lettermark-black.svg" alt="" aria-hidden="true">
+                  <img class="cc-issuer-word cc-card-art-img cc-art--on-light" src="/components/images/wordmark-black.svg"  alt="ImplicitEx">
+                </span>
+                <span class="cc-issuer-fallback">IMPLICITEX</span>
+              </div>
+              <span class="cc-card-status cc-card-status--confirmed">
+                <span class="cc-card-status-dot cc-card-status-dot--confirmed" aria-hidden="true"></span>
+                <span>Confirmed</span>
+              </span>
+            </div>
+            <div class="cc-card-body">
+              <p class="cc-card-tx-label">Confirmed</p>
+              <p class="cc-card-tx-amount">100.00<span class="cc-card-tx-unit">USDC</span></p>
+              <p class="cc-card-tx-hash" title="0x8f3a7b2e4c19d6f3a9b2c1e4d7f6a2b3c8d9e1f2">0x8f3a7b2e&hellip;e1f2</p>
+              <p class="cc-card-name">ImplicitEx Demo Treasury</p>
+              <p class="cc-card-recipient" title="0xa7cE4232811021d2Dd01f4f0f264Df2427ab3919">0xa7cE&hellip;3919</p>
+            </div>
+            <!-- Chip: done — transaction complete, chip recedes -->
+            <div class="cc-card-action">
+              <button class="cc-card-chip cc-card-chip--done" aria-label="Transfer confirmed" disabled></button>
+            </div>
+            <div class="cc-card-bottom">
+              <span class="cc-card-network">POLYGON &middot; USDC</span>
+              <div class="cc-card-stamp">
+                <img src="/components/images/coincard-logo.svg" alt="Coin Card" class="cc-card-logo" width="392" height="56">
+                <span class="cc-card-logo-fallback">COIN CARD</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ⑥ Result — Failed -->
+        <div class="review-cell">
+          <span class="review-label">Result &middot; Failed</span>
+          <div class="cc-card cc-card--dark" role="region" aria-label="Failed state">
+            <div class="cc-card-top">
+              <div class="cc-card-issuer" aria-label="ImplicitEx">
+                <span class="cc-issuer-art">
+                  <img class="cc-issuer-mark cc-card-art-img cc-art--on-dark"  src="/components/images/lettermark-white.svg" alt="" aria-hidden="true">
+                  <img class="cc-issuer-word cc-card-art-img cc-art--on-dark"  src="/components/images/wordmark-white.svg"  alt="ImplicitEx">
+                  <img class="cc-issuer-mark cc-card-art-img cc-art--on-light" src="/components/images/lettermark-black.svg" alt="" aria-hidden="true">
+                  <img class="cc-issuer-word cc-card-art-img cc-art--on-light" src="/components/images/wordmark-black.svg"  alt="ImplicitEx">
+                </span>
+                <span class="cc-issuer-fallback">IMPLICITEX</span>
+              </div>
+              <span class="cc-card-status cc-card-status--failed">
+                <span class="cc-card-status-dot cc-card-status-dot--failed" aria-hidden="true"></span>
+                <span>Failed</span>
+              </span>
+            </div>
+            <div class="cc-card-body">
+              <p class="cc-card-tx-label">Transfer Failed</p>
+              <p class="cc-card-tx-amount">100.00<span class="cc-card-tx-unit">USDC</span></p>
+              <p class="cc-card-tx-error">Execution reverted.</p>
+              <p class="cc-card-name">ImplicitEx Demo Treasury</p>
+              <p class="cc-card-recipient" title="0xa7cE4232811021d2Dd01f4f0f264Df2427ab3919">0xa7cE&hellip;3919</p>
+            </div>
+            <!-- Chip: ready again — failure recovery, chip re-activates for retry -->
+            <div class="cc-card-action">
+              <button class="cc-card-chip cc-card-chip--ready" aria-label="Try again"></button>
+            </div>
+            <div class="cc-card-bottom">
+              <span class="cc-card-network">POLYGON &middot; USDC</span>
+              <div class="cc-card-stamp">
+                <img src="/components/images/coincard-logo.svg" alt="Coin Card" class="cc-card-logo" width="392" height="56">
+                <span class="cc-card-logo-fallback">COIN CARD</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /.review-grid (transaction states) -->
+    </div><!-- /.review-section -->
+
+    <!-- ================================================================
+         Variable Parity — same transaction facts across form factors
+         Amount: 100.00 USDC · Fee: 2% · Total: 102.00 USDC
+         Recipient: ImplicitEx Demo Treasury · 0xa7cE…3919
+         Test: which formats can carry full payment intent?
+         ================================================================ -->
+    <div class="review-section">
+      <p class="review-heading">Coin Card — Variable Parity</p>
+      <p class="review-subheading">Same transaction facts across form factors. Testing which can carry full payment intent inline vs. teaser-only.</p>
+
+      <!-- Portrait — natural vertical flow, full tx capable -->
+      <div class="review-subsection">
+        <p class="review-heading">Portrait &mdash; full transaction</p>
+        <p class="review-subheading">Taller body zone. Variables stack naturally.</p>
+        <div class="review-grid">
+
+          <div class="review-cell review-cell--portrait">
+            <span class="review-label">Portrait &middot; Input</span>
+            <div class="cc-card cc-card--dark cc-card--portrait" role="region" aria-label="Portrait input state">
+              <div class="cc-card-top">
+                <div class="cc-card-issuer" aria-label="ImplicitEx">
+                  <span class="cc-issuer-art">
+                    <img class="cc-issuer-mark cc-card-art-img cc-art--on-dark"  src="/components/images/lettermark-white.svg" alt="" aria-hidden="true">
+                    <img class="cc-issuer-word cc-card-art-img cc-art--on-dark"  src="/components/images/wordmark-white.svg"  alt="ImplicitEx">
+                    <img class="cc-issuer-mark cc-card-art-img cc-art--on-light" src="/components/images/lettermark-black.svg" alt="" aria-hidden="true">
+                    <img class="cc-issuer-word cc-card-art-img cc-art--on-light" src="/components/images/wordmark-black.svg"  alt="ImplicitEx">
+                  </span>
+                  <span class="cc-issuer-fallback">IMPLICITEX</span>
+                </div>
+                <span class="cc-card-status cc-card-status--verified">
+                  <span class="cc-card-status-dot cc-card-status-dot--verified" aria-hidden="true"></span>
+                  <span>Verified</span>
+                </span>
+              </div>
+              <div class="cc-card-body">
+                <p class="cc-card-tx-label">Send USDC</p>
+                <div class="cc-card-amount-field">
+                  <input class="cc-card-amount-input" type="number" placeholder="0.00" min="0" step="0.01" aria-label="Amount in USDC" inputmode="decimal">
+                  <span class="cc-card-amount-unit-lock" aria-hidden="true">USDC</span>
+                </div>
+                <div class="cc-card-tx-row">
+                  <span>Fee 2.0%</span>
+                  <span class="cc-card-tx-row-value">&mdash;</span>
+                </div>
+                <div class="cc-card-tx-row">
+                  <span>Total</span>
+                  <span class="cc-card-tx-row-value">&mdash;</span>
+                </div>
+                <p class="cc-card-name">ImplicitEx Demo Treasury</p>
+                <p class="cc-card-recipient" title="0xa7cE4232811021d2Dd01f4f0f264Df2427ab3919">0xa7cE&hellip;3919</p>
+              </div>
+              <div class="cc-card-action">
+                <button class="cc-card-chip cc-card-chip--waiting" aria-label="Enter amount to continue" disabled></button>
+              </div>
+              <div class="cc-card-bottom">
+                <span class="cc-card-network">POLYGON &middot; USDC</span>
+                <div class="cc-card-stamp">
+                  <img src="/components/images/coincard-logo.svg" alt="Coin Card" class="cc-card-logo" width="392" height="56">
+                  <span class="cc-card-logo-fallback">COIN CARD</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="review-cell review-cell--portrait">
+            <span class="review-label">Portrait &middot; Review</span>
+            <div class="cc-card cc-card--dark cc-card--portrait" role="region" aria-label="Portrait review state">
+              <div class="cc-card-top">
+                <div class="cc-card-issuer" aria-label="ImplicitEx">
+                  <span class="cc-issuer-art">
+                    <img class="cc-issuer-mark cc-card-art-img cc-art--on-dark"  src="/components/images/lettermark-white.svg" alt="" aria-hidden="true">
+                    <img class="cc-issuer-word cc-card-art-img cc-art--on-dark"  src="/components/images/wordmark-white.svg"  alt="ImplicitEx">
+                    <img class="cc-issuer-mark cc-card-art-img cc-art--on-light" src="/components/images/lettermark-black.svg" alt="" aria-hidden="true">
+                    <img class="cc-issuer-word cc-card-art-img cc-art--on-light" src="/components/images/wordmark-black.svg"  alt="ImplicitEx">
+                  </span>
+                  <span class="cc-issuer-fallback">IMPLICITEX</span>
+                </div>
+                <span class="cc-card-status cc-card-status--verified">
+                  <span class="cc-card-status-dot cc-card-status-dot--verified" aria-hidden="true"></span>
+                  <span>Verified</span>
+                </span>
+              </div>
+              <div class="cc-card-body">
+                <p class="cc-card-tx-label">Review Transfer</p>
+                <p class="cc-card-tx-amount">100.00<span class="cc-card-tx-unit">USDC</span></p>
+                <div class="cc-card-tx-row">
+                  <span>Fee 2.0%</span>
+                  <span class="cc-card-tx-row-value">2.00 USDC</span>
+                </div>
+                <div class="cc-card-tx-row">
+                  <span>Total</span>
+                  <span class="cc-card-tx-row-value">102.00 USDC</span>
+                </div>
+                <p class="cc-card-name">ImplicitEx Demo Treasury</p>
+                <p class="cc-card-recipient" title="0xa7cE4232811021d2Dd01f4f0f264Df2427ab3919">0xa7cE&hellip;3919</p>
+              </div>
+              <div class="cc-card-action">
+                <button class="cc-card-chip cc-card-chip--ready" aria-label="Confirm in wallet"></button>
+              </div>
+              <div class="cc-card-bottom">
+                <span class="cc-card-network">POLYGON &middot; USDC</span>
+                <div class="cc-card-stamp">
+                  <img src="/components/images/coincard-logo.svg" alt="Coin Card" class="cc-card-logo" width="392" height="56">
+                  <span class="cc-card-logo-fallback">COIN CARD</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div><!-- /portrait -->
+
+      <!-- Square compact — 280×280; body ~170px; full tx capable -->
+      <div class="review-subsection">
+        <p class="review-heading">Square &mdash; testing compression</p>
+        <p class="review-subheading">1:1 aspect ratio. Body zone ~170px. All variables present &mdash; checking if layout holds.</p>
+        <div class="review-grid">
+
+          <div class="review-cell">
+            <span class="review-label">Square &middot; Input</span>
+            <div class="cc-card cc-card--dark cc-card--square" role="region" aria-label="Square input state">
+              <div class="cc-card-top">
+                <div class="cc-card-issuer" aria-label="ImplicitEx">
+                  <span class="cc-issuer-art">
+                    <img class="cc-issuer-mark cc-card-art-img cc-art--on-dark"  src="/components/images/lettermark-white.svg" alt="" aria-hidden="true">
+                    <img class="cc-issuer-word cc-card-art-img cc-art--on-dark"  src="/components/images/wordmark-white.svg"  alt="ImplicitEx">
+                    <img class="cc-issuer-mark cc-card-art-img cc-art--on-light" src="/components/images/lettermark-black.svg" alt="" aria-hidden="true">
+                    <img class="cc-issuer-word cc-card-art-img cc-art--on-light" src="/components/images/wordmark-black.svg"  alt="ImplicitEx">
+                  </span>
+                  <span class="cc-issuer-fallback">IMPLICITEX</span>
+                </div>
+                <span class="cc-card-status cc-card-status--verified">
+                  <span class="cc-card-status-dot cc-card-status-dot--verified" aria-hidden="true"></span>
+                  <span>Verified</span>
+                </span>
+              </div>
+              <div class="cc-card-body">
+                <p class="cc-card-tx-label">Send USDC</p>
+                <div class="cc-card-amount-field">
+                  <input class="cc-card-amount-input" type="number" placeholder="0.00" min="0" step="0.01" aria-label="Amount in USDC" inputmode="decimal">
+                  <span class="cc-card-amount-unit-lock" aria-hidden="true">USDC</span>
+                </div>
+                <div class="cc-card-tx-row">
+                  <span>Fee 2.0%</span>
+                  <span class="cc-card-tx-row-value">&mdash;</span>
+                </div>
+                <div class="cc-card-tx-row">
+                  <span>Total</span>
+                  <span class="cc-card-tx-row-value">&mdash;</span>
+                </div>
+                <p class="cc-card-name">ImplicitEx Demo Treasury</p>
+                <p class="cc-card-recipient" title="0xa7cE4232811021d2Dd01f4f0f264Df2427ab3919">0xa7cE&hellip;3919</p>
+              </div>
+              <div class="cc-card-action">
+                <button class="cc-card-chip cc-card-chip--waiting" aria-label="Enter amount to continue" disabled></button>
+              </div>
+              <div class="cc-card-bottom">
+                <span class="cc-card-network">POLYGON &middot; USDC</span>
+                <div class="cc-card-stamp">
+                  <img src="/components/images/coincard-logo.svg" alt="Coin Card" class="cc-card-logo" width="392" height="56">
+                  <span class="cc-card-logo-fallback">COIN CARD</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="review-cell">
+            <span class="review-label">Square &middot; Review</span>
+            <div class="cc-card cc-card--dark cc-card--square" role="region" aria-label="Square review state">
+              <div class="cc-card-top">
+                <div class="cc-card-issuer" aria-label="ImplicitEx">
+                  <span class="cc-issuer-art">
+                    <img class="cc-issuer-mark cc-card-art-img cc-art--on-dark"  src="/components/images/lettermark-white.svg" alt="" aria-hidden="true">
+                    <img class="cc-issuer-word cc-card-art-img cc-art--on-dark"  src="/components/images/wordmark-white.svg"  alt="ImplicitEx">
+                    <img class="cc-issuer-mark cc-card-art-img cc-art--on-light" src="/components/images/lettermark-black.svg" alt="" aria-hidden="true">
+                    <img class="cc-issuer-word cc-card-art-img cc-art--on-light" src="/components/images/wordmark-black.svg"  alt="ImplicitEx">
+                  </span>
+                  <span class="cc-issuer-fallback">IMPLICITEX</span>
+                </div>
+                <span class="cc-card-status cc-card-status--verified">
+                  <span class="cc-card-status-dot cc-card-status-dot--verified" aria-hidden="true"></span>
+                  <span>Verified</span>
+                </span>
+              </div>
+              <div class="cc-card-body">
+                <p class="cc-card-tx-label">Review Transfer</p>
+                <p class="cc-card-tx-amount">100.00<span class="cc-card-tx-unit">USDC</span></p>
+                <div class="cc-card-tx-row">
+                  <span>Fee 2.0%</span>
+                  <span class="cc-card-tx-row-value">2.00 USDC</span>
+                </div>
+                <div class="cc-card-tx-row">
+                  <span>Total</span>
+                  <span class="cc-card-tx-row-value">102.00 USDC</span>
+                </div>
+                <p class="cc-card-name">ImplicitEx Demo Treasury</p>
+                <p class="cc-card-recipient" title="0xa7cE4232811021d2Dd01f4f0f264Df2427ab3919">0xa7cE&hellip;3919</p>
+              </div>
+              <div class="cc-card-action">
+                <button class="cc-card-chip cc-card-chip--ready" aria-label="Confirm in wallet"></button>
+              </div>
+              <div class="cc-card-bottom">
+                <span class="cc-card-network">POLYGON &middot; USDC</span>
+                <div class="cc-card-stamp">
+                  <img src="/components/images/coincard-logo.svg" alt="Coin Card" class="cc-card-logo" width="392" height="56">
+                  <span class="cc-card-logo-fallback">COIN CARD</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div><!-- /square -->
+
+      <!-- Medium rectangle — 380×200; body ~90px; constrained -->
+      <div class="review-subsection">
+        <p class="review-heading">Medium rectangle &mdash; constrained</p>
+        <p class="review-subheading">380&times;200. Body zone ~90px. All variables present &mdash; expect overflow to reveal what gets cut.</p>
+        <div class="review-grid">
+
+          <div class="review-cell">
+            <span class="review-label">Medium &middot; Input</span>
+            <div class="cc-card cc-card--dark cc-card--medium" role="region" aria-label="Medium input state">
+              <div class="cc-card-top">
+                <div class="cc-card-issuer" aria-label="ImplicitEx">
+                  <span class="cc-issuer-art">
+                    <img class="cc-issuer-mark cc-card-art-img cc-art--on-dark"  src="/components/images/lettermark-white.svg" alt="" aria-hidden="true">
+                    <img class="cc-issuer-word cc-card-art-img cc-art--on-dark"  src="/components/images/wordmark-white.svg"  alt="ImplicitEx">
+                    <img class="cc-issuer-mark cc-card-art-img cc-art--on-light" src="/components/images/lettermark-black.svg" alt="" aria-hidden="true">
+                    <img class="cc-issuer-word cc-card-art-img cc-art--on-light" src="/components/images/wordmark-black.svg"  alt="ImplicitEx">
+                  </span>
+                  <span class="cc-issuer-fallback">IMPLICITEX</span>
+                </div>
+                <span class="cc-card-status cc-card-status--verified">
+                  <span class="cc-card-status-dot cc-card-status-dot--verified" aria-hidden="true"></span>
+                  <span>Verified</span>
+                </span>
+              </div>
+              <div class="cc-card-body">
+                <p class="cc-card-tx-label">Send USDC</p>
+                <div class="cc-card-amount-field">
+                  <input class="cc-card-amount-input" type="number" placeholder="0.00" min="0" step="0.01" aria-label="Amount in USDC" inputmode="decimal">
+                  <span class="cc-card-amount-unit-lock" aria-hidden="true">USDC</span>
+                </div>
+                <div class="cc-card-tx-row">
+                  <span>Fee 2.0%</span>
+                  <span class="cc-card-tx-row-value">&mdash;</span>
+                </div>
+                <div class="cc-card-tx-row">
+                  <span>Total</span>
+                  <span class="cc-card-tx-row-value">&mdash;</span>
+                </div>
+                <p class="cc-card-name">ImplicitEx Demo Treasury</p>
+                <p class="cc-card-recipient" title="0xa7cE4232811021d2Dd01f4f0f264Df2427ab3919">0xa7cE&hellip;3919</p>
+              </div>
+              <div class="cc-card-action">
+                <button class="cc-card-chip cc-card-chip--waiting" aria-label="Enter amount to continue" disabled></button>
+              </div>
+              <div class="cc-card-bottom">
+                <span class="cc-card-network">POLYGON &middot; USDC</span>
+                <div class="cc-card-stamp">
+                  <img src="/components/images/coincard-logo.svg" alt="Coin Card" class="cc-card-logo" width="392" height="56">
+                  <span class="cc-card-logo-fallback">COIN CARD</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="review-cell">
+            <span class="review-label">Medium &middot; Review</span>
+            <div class="cc-card cc-card--dark cc-card--medium" role="region" aria-label="Medium review state">
+              <div class="cc-card-top">
+                <div class="cc-card-issuer" aria-label="ImplicitEx">
+                  <span class="cc-issuer-art">
+                    <img class="cc-issuer-mark cc-card-art-img cc-art--on-dark"  src="/components/images/lettermark-white.svg" alt="" aria-hidden="true">
+                    <img class="cc-issuer-word cc-card-art-img cc-art--on-dark"  src="/components/images/wordmark-white.svg"  alt="ImplicitEx">
+                    <img class="cc-issuer-mark cc-card-art-img cc-art--on-light" src="/components/images/lettermark-black.svg" alt="" aria-hidden="true">
+                    <img class="cc-issuer-word cc-card-art-img cc-art--on-light" src="/components/images/wordmark-black.svg"  alt="ImplicitEx">
+                  </span>
+                  <span class="cc-issuer-fallback">IMPLICITEX</span>
+                </div>
+                <span class="cc-card-status cc-card-status--verified">
+                  <span class="cc-card-status-dot cc-card-status-dot--verified" aria-hidden="true"></span>
+                  <span>Verified</span>
+                </span>
+              </div>
+              <div class="cc-card-body">
+                <p class="cc-card-tx-label">Review Transfer</p>
+                <p class="cc-card-tx-amount">100.00<span class="cc-card-tx-unit">USDC</span></p>
+                <div class="cc-card-tx-row">
+                  <span>Fee 2.0%</span>
+                  <span class="cc-card-tx-row-value">2.00 USDC</span>
+                </div>
+                <div class="cc-card-tx-row">
+                  <span>Total</span>
+                  <span class="cc-card-tx-row-value">102.00 USDC</span>
+                </div>
+                <p class="cc-card-name">ImplicitEx Demo Treasury</p>
+                <p class="cc-card-recipient" title="0xa7cE4232811021d2Dd01f4f0f264Df2427ab3919">0xa7cE&hellip;3919</p>
+              </div>
+              <div class="cc-card-action">
+                <button class="cc-card-chip cc-card-chip--ready" aria-label="Confirm in wallet"></button>
+              </div>
+              <div class="cc-card-bottom">
+                <span class="cc-card-network">POLYGON &middot; USDC</span>
+                <div class="cc-card-stamp">
+                  <img src="/components/images/coincard-logo.svg" alt="Coin Card" class="cc-card-logo" width="392" height="56">
+                  <span class="cc-card-logo-fallback">COIN CARD</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div><!-- /medium -->
+
+      <!-- Banner — teaser only; horizontal single row; body/action hidden -->
+      <div class="review-subsection">
+        <p class="review-heading">Banner &mdash; teaser only</p>
+        <p class="review-subheading">Horizontal strip. Cannot carry amount, fee, or chip inline. Shows identity and rail only. Must open expanded state to transact.</p>
+        <div class="review-grid review-grid--full">
+
+          <div class="review-cell">
+            <span class="review-label">Banner &middot; Verified identity teaser</span>
+            <div class="cc-card cc-card--dark cc-card--banner" role="region" aria-label="Banner teaser state">
+              <div class="cc-card-top">
+                <div class="cc-card-issuer" aria-label="ImplicitEx">
+                  <span class="cc-issuer-art">
+                    <img class="cc-issuer-mark cc-card-art-img cc-art--on-dark"  src="/components/images/lettermark-white.svg" alt="" aria-hidden="true">
+                    <img class="cc-issuer-word cc-card-art-img cc-art--on-dark"  src="/components/images/wordmark-white.svg"  alt="ImplicitEx">
+                    <img class="cc-issuer-mark cc-card-art-img cc-art--on-light" src="/components/images/lettermark-black.svg" alt="" aria-hidden="true">
+                    <img class="cc-issuer-word cc-card-art-img cc-art--on-light" src="/components/images/wordmark-black.svg"  alt="ImplicitEx">
+                  </span>
+                  <span class="cc-issuer-fallback">IMPLICITEX</span>
+                </div>
+                <span class="cc-card-status cc-card-status--verified">
+                  <span class="cc-card-status-dot cc-card-status-dot--verified" aria-hidden="true"></span>
+                  <span>Verified</span>
+                </span>
+              </div>
+              <div class="cc-card-bottom">
+                <span class="cc-card-network">POLYGON &middot; USDC</span>
+                <div class="cc-card-stamp">
+                  <img src="/components/images/coincard-logo.svg" alt="Coin Card" class="cc-card-logo" width="392" height="56">
+                  <span class="cc-card-logo-fallback">COIN CARD</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div><!-- /banner -->
+
+    </div><!-- /.review-section (variable parity) -->
+
+  </main>
+
+  <script src="config/chains.js"></script>
+  <script src="js/analytics.js"></script>
+  <script src="js/consent.js"></script>
+  <script src="js/wallet.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/mobile-menu.js"></script>
+</body>
+</html>

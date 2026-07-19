@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ImplicitEx — Verify</title>
+  <meta name="description" content="Contract address, treasury, fee model, verification steps, and wallet warning context for ImplicitEx on Polygon.">
+  <meta property="og:url" content="https://implicitex.com/verify.html">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="ImplicitEx — Verify">
+  <meta property="og:description" content="Contract address, treasury, fee model, verification steps, and wallet warning context for ImplicitEx on Polygon.">
+  <meta property="og:image" content="https://implicitex.com/components/images/og-proof.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="628">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@implicitex">
+  <meta name="twitter:title" content="ImplicitEx — Verify">
+  <meta name="twitter:description" content="Contract address, treasury, fee model, verification steps, and wallet warning context for ImplicitEx on Polygon.">
+  <meta name="twitter:image" content="https://implicitex.com/components/images/og-proof.png">
+  <link rel="canonical" href="https://implicitex.com/verify.html">
+  <script>(function(){try{var t=localStorage.getItem('implicitex-theme');if(t==='light'||t==='dark'){document.documentElement.dataset.theme=t;}else{var h=new Date().getHours();document.documentElement.dataset.theme=(h>=7&&h<19)?'light':'dark';}}catch(e){}})();</script>
+  <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+  <nav id="nav">
+    <a href="/" class="logo" aria-label="ImplicitEx home">
+      <svg class="brandmark" width="25" height="25" viewBox="0 0 25 25" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+        <path d="M18.4,21.48L2.64,5.73l.43-.43,15.76,15.76s1.3,1.3,2.79-.19.21-2.77.21-2.77L6.05,2.32l.43-.43,4.07,4.07,1.38,1.38,1.28-1.28,4.28-4.28.43.43-5.56,5.56,2.98,2.98,5.56-5.56.43.43-5.56,5.56,1.28,1.28,5.56-5.56s1.28-1.28-.21-2.77-2.79-.19-2.79-.19l-4.26,4.26-.43-.43,4.26-4.26s1.3-1.3-.19-2.79-2.77-.21-2.77-.21l-4.28,4.28L7.75.62s-1.28-1.28-2.77.21-.19,2.79-.19,2.79l15.76,15.76-.43.43L4.37,4.05s-1.3-1.3-2.79.19-.11,2.87-.11,2.87l15.68,15.68-.43.43-5.56-5.56-5.54,5.54-.43-.43,5.54-5.54-2.98-2.98-5.54,5.54-.43-.43,5.54-5.54-1.28-1.28L.51,18.08s-1.28,1.28.21,2.77,2.79.19,2.79.19l4.23-4.23.43.43-4.23,4.23s-1.3,1.3.19,2.79,2.77.21,2.77.21l4.26-4.26,4.28,4.28s1.28,1.28,2.77-.21.19-2.79.19-2.79Z" fill="#f2f2f0"/>
+      </svg>
+      <img class="wordmark" src="/components/images/wordmark-white.svg" alt="" aria-hidden="true">
+    </a>
+    <div class="nav-right">
+
+      <button class="clock-toggle" id="clockToggle" type="button" aria-label="Set theme by time of day">
+        <svg class="clock-icon" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+          <circle cx="7" cy="7" r="6" fill="none" stroke="currentColor" stroke-width="1.2"/>
+          <line id="clockHourHand" x1="7" y1="7" x2="7" y2="4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <line id="clockMinuteHand" x1="7" y1="7" x2="7" y2="2.5" stroke="currentColor" stroke-width="1" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch to light theme" aria-pressed="false">
+        <svg class="theme-icon" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+          <path d="M7 1 A6 6 0 0 0 7 13 Z" fill="var(--white)"/>
+          <path d="M7 1 A6 6 0 0 1 7 13 Z" fill="var(--bg)"/>
+          <circle cx="7" cy="7" r="6" fill="none" stroke="currentColor" stroke-width="1.2"/>
+        </svg>
+      </button>
+      <span class="nav-status">Polygon · Live</span>
+      <a class="send-usdc-link" href="/#transfer">Transfer Portal</a>
+      <button class="connect-btn" id="connectBtn" onclick="IX.connect()">
+        Connect Wallet
+      </button>
+      <div class="wallet-menu" id="walletMenu" hidden>
+        <button class="wallet-menu-trigger" id="walletMenuTrigger" type="button" aria-expanded="false" aria-controls="walletMenuPanel" aria-label="Wallet account menu">
+          <span class="wallet-dot" aria-hidden="true"></span>
+          <span class="wallet-addr" id="walletAddr"></span>
+          <span class="wallet-chevron" aria-hidden="true"></span>
+        </button>
+        <div class="wallet-menu-panel" id="walletMenuPanel" hidden>
+          <p class="wallet-menu-title">Wallet account</p>
+          <p class="wallet-menu-address" id="walletFullAddress"></p>
+          <button class="wallet-menu-action" id="copyAddressBtn" type="button">Copy address</button>
+          <button class="wallet-menu-action" id="switchNetworkBtn" type="button" hidden>Switch to Polygon</button>
+          <button class="wallet-menu-action" id="switchAccountBtn" type="button">Switch account</button>
+          <button class="wallet-menu-action wallet-menu-action--danger" id="disconnectBtn" type="button">Disconnect</button>
+        </div>
+      </div>
+      <!-- Hamburger — mobile only, hidden on desktop via CSS -->
+      <button class="hamburger-btn" id="hamburgerBtn" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
+        <svg width="18" height="14" viewBox="0 0 18 14" aria-hidden="true">
+          <rect y="0"  width="18" height="1.8" fill="currentColor"/>
+          <rect y="6"  width="18" height="1.8" fill="currentColor"/>
+          <rect y="12" width="18" height="1.8" fill="currentColor"/>
+        </svg>
+      </button>
+    </div>
+  </nav>
+
+  <!-- MOBILE MENU OVERLAY -->
+  <div class="mobile-menu" id="mobileMenu" role="dialog" aria-modal="true" aria-label="Site menu" hidden>
+    <div class="mobile-menu-inner">
+      <div class="mobile-menu-head">
+        <span class="mobile-menu-title">Menu</span>
+        <button class="mobile-menu-close" id="mobileMenuClose" type="button" aria-label="Close menu">
+          <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+            <line x1="1" y1="1" x2="13" y2="13" stroke="currentColor" stroke-width="1.6"/>
+            <line x1="13" y1="1" x2="1" y2="13" stroke="currentColor" stroke-width="1.6"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Wallet section -->
+      <section class="mobile-menu-section" aria-label="Wallet">
+        <p class="mobile-menu-label">Wallet</p>
+        <p class="mobile-menu-status" id="menuWalletStatus">No wallet connected.</p>
+        <p class="mobile-menu-sender" id="menuSenderDisplay" hidden></p>
+        <p class="mobile-menu-network" id="menuNetworkDisplay" hidden></p>
+        <div class="mobile-menu-actions">
+          <button class="mobile-menu-btn mobile-menu-btn--primary" id="menuConnectBtn" type="button">
+            Connect Wallet
+          </button>
+          <button class="mobile-menu-btn" id="menuSwitchBtn" type="button" hidden>
+            Switch Account
+          </button>
+          <button class="mobile-menu-btn mobile-menu-btn--danger" id="menuDisconnectBtn" type="button" hidden>
+            Disconnect
+          </button>
+        </div>
+      </section>
+
+      <!-- Transaction section -->
+      <section class="mobile-menu-section" aria-label="Transaction">
+        <p class="mobile-menu-label">Transaction</p>
+        <button class="mobile-menu-btn mobile-menu-btn--primary" id="menuOpenPortalBtn" type="button">
+          Transfer Portal
+        </button>
+        <p class="mobile-menu-portal-note">Open the USDC transfer interface.</p>
+      </section>
+
+      <!-- Navigation links -->
+      <section class="mobile-menu-section" aria-label="Navigation">
+        <p class="mobile-menu-label">Site</p>
+        <nav class="mobile-menu-links">
+          <a href="/start.html">Start</a>
+          <a href="/about.html">About</a>
+          <a href="/faq.html">FAQ</a>
+          <a href="/learn.html">Learn</a>
+          <a href="/verify.html">Verify</a>
+          <a href="/log.html">Devlog</a>
+          <a href="/terms.html">Terms</a>
+          <a href="/privacy.html">Privacy</a>
+          <a href="/legal.html">Legal</a>
+          <a href="/jurisdictions.html">Access</a>
+          <a href="/news.html">News</a>
+          <a href="/contact.html">Contact</a>
+        </nav>
+      </section>
+
+      <!-- Social links — separated from site navigation -->
+      <section class="mobile-menu-section" aria-label="Social">
+        <p class="mobile-menu-label">Social</p>
+        <nav class="mobile-menu-links">
+          <a href="https://x.com/implicitex" target="_blank" rel="noopener">X</a>
+          <a href="https://github.com/implicitexlabs" target="_blank" rel="noopener">GitHub</a>
+        </nav>
+      </section>
+    </div>
+    <!-- Backdrop — tap to close -->
+    <div class="mobile-menu-backdrop" id="mobileMenuBackdrop" aria-hidden="true"></div>
+  </div>
+
+  <main class="policy-shell proof-shell">
+    <div class="about-hero-mark about-hero-mark--stacked" aria-hidden="true">
+      <img class="about-brandmark" src="/components/images/lettermark-white.svg" alt="" aria-hidden="true">
+      <img class="about-wordmark" src="/components/images/wordmark-white.svg" alt="" aria-hidden="true">
+    </div>
+
+    <h1>Verify</h1>
+
+    <p class="verify-lede">
+      VERIFY EVERYTHING is not a slogan. It is an instruction. This page provides
+      the contract address, treasury address, fee model, verified transaction record,
+      and step-by-step verification instructions that allow anyone to independently
+      confirm how ImplicitEx operates — before and after a transfer. No account
+      required. No login required. Core contract, fee, treasury, and transaction
+      claims can be independently checked on-chain or against public sources.
+    </p>
+
+    <!-- ── 1. Platform Status ─────────────────────────────────── -->
+    <h2>Platform Status</h2>
+
+    <dl class="v-facts">
+      <div class="v-fact">
+        <dt>Settlement network</dt>
+        <dd><span data-contract-network>network loading</span> (<span data-contract-chain>chain loading</span>)</dd>
+      </div>
+      <div class="v-fact">
+        <dt>Transfer cap</dt>
+        <dd>250 USDC per transfer during soft launch</dd>
+      </div>
+      <div class="v-fact v-fact-wide">
+        <dt>Blockaid review</dt>
+        <dd>In progress — false-positive report submitted 2026-06-18; pending response. Review does not affect platform operation. See <a href="#wallet-warnings">Wallet Security Warnings</a> below.</dd>
+      </div>
+    </dl>
+
+    <!-- ── Primary Contract Evidence ──────────────────────────── -->
+    <section class="contract-evidence" aria-labelledby="contract-evidence-title" data-contract-evidence data-chain-id="137">
+      <div class="contract-evidence-head">
+        <p class="contract-evidence-kicker">Primary evidence</p>
+        <h2 id="contract-evidence-title">ImplicitEx Transfer Contract</h2>
+        <p>
+          Compare the complete contract address before approving a wallet request.
+          If a wallet warning shows a different contract address, do not proceed.
+        </p>
+      </div>
+
+      <div class="contract-evidence-body">
+        <div class="contract-evidence-meta" aria-label="Contract network and status">
+          <span data-contract-network>Network loading</span>
+          <span data-contract-chain>Chain ID loading</span>
+          <span data-contract-asset>Asset loading</span>
+          <span data-contract-fee>Fee loading</span>
+          <span data-contract-status>Contract status loading</span>
+        </div>
+
+        <p class="contract-address-value" id="implicitexContractAddress" data-contract-address-value>
+          Contract address loading from application configuration.
+        </p>
+
+        <div class="contract-evidence-actions">
+          <button
+            class="contract-evidence-action"
+            type="button"
+            data-copy-contract
+            aria-describedby="contractCopyStatus"
+            disabled
+          >Copy Address</button>
+          <a
+            class="contract-evidence-action"
+            data-contract-explorer-link
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-disabled="true"
+            hidden
+          >View on Polygonscan</a>
+        </div>
+        <p class="contract-copy-status" id="contractCopyStatus" aria-live="polite"></p>
+      </div>
+    </section>
+
+    <!-- ── 2. What You Should Always Verify ──────────────────── -->
+    <h2>What You Should Always Verify</h2>
+
+    <p class="verify-section-intro">
+      ImplicitEx will never ask you to skip verification. Before confirming any
+      wallet prompt:
+    </p>
+
+    <div class="verify-checklist" aria-label="Pre-signing verification checklist">
+      <div class="verify-check">
+        <span class="verify-check-num" aria-hidden="true">01</span>
+        <div>
+          <h3>Recipient address</h3>
+          <p>Verify the full recipient address before approving anything. Transfers confirmed on-chain cannot be reversed.</p>
+        </div>
+      </div>
+      <div class="verify-check">
+        <span class="verify-check-num" aria-hidden="true">02</span>
+        <div>
+          <h3>Transfer amount and fee</h3>
+          <p>Confirm the transfer amount, 1% platform fee, and total debit match the preview before signing.</p>
+        </div>
+      </div>
+      <div class="verify-check">
+        <span class="verify-check-num" aria-hidden="true">03</span>
+        <div>
+          <h3>Contract address</h3>
+          <p>Confirm that any wallet warning matches the verified ImplicitEx Transfer Contract shown above.</p>
+        </div>
+      </div>
+      <div class="verify-check">
+        <span class="verify-check-num" aria-hidden="true">04</span>
+        <div>
+          <h3>Network</h3>
+          <p>Your wallet should be connected to <span data-contract-network>the configured network</span>, <span data-contract-chain>the configured chain</span>. ImplicitEx displays an error before requesting approval if the network is wrong.</p>
+        </div>
+      </div>
+    </div>
+
+    <p class="verify-warning-note">
+      Completed blockchain transfers are irreversible. If the recipient address,
+      contract address, amount, fee, or network does not match what you intend,
+      stop before signing.
+    </p>
+
+    <!-- ── Coin Card Verification ───────────────────────────────── -->
+    <section class="coincard-verify" id="coincardVerify" aria-label="Coin Card verification">
+      <h2>Coin Card Verification</h2>
+      <p>Check the registry record for a Coin Card before using it to start a transfer.</p>
+
+      <!-- Lookup form — shown when no ?cc= param -->
+      <div id="coincardLookup">
+        <form class="coincard-lookup-form" id="coincardLookupForm" action="/verify.html" method="GET">
+          <input class="coincard-lookup-input" type="text" name="cc" id="coincardLookupInput"
+                 placeholder="Card ID  (e.g. cc_demo_implicitex)"
+                 autocomplete="off" spellcheck="false" aria-label="Coin Card ID">
+          <button class="coincard-lookup-btn" type="submit">Verify</button>
+        </form>
+      </div>
+
+      <!-- Result panel — shown after fetch -->
+      <div id="coincardResult" hidden>
+        <dl class="v-facts">
+          <div class="v-fact v-fact-wide">
+            <dt>Status</dt>
+            <dd><span id="ccvStatus">—</span></dd>
+          </div>
+          <div class="v-fact v-fact-wide" id="ccvCardIdFact" hidden>
+            <dt>Card ID</dt>
+            <dd id="ccvCardId">—</dd>
+          </div>
+          <div class="v-fact v-fact-wide" id="ccvNameFact" hidden>
+            <dt>Name</dt>
+            <dd id="ccvName">—</dd>
+          </div>
+          <div class="v-fact v-fact-wide" id="ccvRecipientFact" hidden>
+            <dt>Recipient</dt>
+            <dd id="ccvRecipient">—</dd>
+          </div>
+          <div class="v-fact v-fact-wide" id="ccvChainFact" hidden>
+            <dt>Chain</dt>
+            <dd id="ccvChain">—</dd>
+          </div>
+          <div class="v-fact v-fact-wide" id="ccvTokenFact" hidden>
+            <dt>Token</dt>
+            <dd id="ccvToken">—</dd>
+          </div>
+          <div class="v-fact v-fact-wide" id="ccvDomainFact" hidden>
+            <dt>Source domain</dt>
+            <dd id="ccvDomain">—</dd>
+          </div>
+          <div class="v-fact v-fact-wide" id="ccvRegistryFact" hidden>
+            <dt>Registry</dt>
+            <dd id="ccvRegistry">—</dd>
+          </div>
+          <div class="v-fact v-fact-wide" id="ccvUpdatedFact" hidden>
+            <dt>Updated</dt>
+            <dd id="ccvUpdated">—</dd>
+          </div>
+        </dl>
+        <div class="coincard-trust-note" id="coincardTrustNote" hidden>
+          <p>The registry confirms the canonical recipient for this Coin Card. Wallet confirmation is still required before any transfer. Verification does not prove a payment occurred.</p>
+        </div>
+        <div class="coincard-portal-link" id="coincardPortalLink" hidden>
+          <a class="send-usdc-link" href="/" id="coincardPortalHref">Open Transfer Portal →</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── 3. Smart Contract ───────────────────────────────────── -->
+    <h2>Smart Contract</h2>
+
+    <section class="proof-panel" aria-labelledby="contract-title">
+      <div class="proof-panel-head">
+        <h3 id="contract-title">Contract &amp; Network</h3>
+        <p>
+          The following addresses can be confirmed directly on Polygon's public
+          blockchain without any account, login, or third-party service.
+        </p>
+      </div>
+
+      <dl class="v-facts">
+        <div class="v-fact v-fact-wide">
+          <dt>Contract</dt>
+          <dd>
+            <a class="evidence-address-inline"
+               data-contract-address-link
+               aria-disabled="true"
+               target="_blank" rel="noopener noreferrer">
+              Contract address loading
+            </a>
+          </dd>
+        </div>
+
+        <div class="v-fact v-fact-wide">
+          <dt>Treasury</dt>
+          <dd>
+            <a class="evidence-address-inline" href="https://polygonscan.com/address/0xa7cE4232811021d2Dd01f4f0f264Df2427ab3919"
+               target="_blank" rel="noopener noreferrer">
+              0xa7cE4232811021d2Dd01f4f0f264Df2427ab3919
+            </a>
+          </dd>
+        </div>
+
+        <div class="v-fact">
+          <dt>Network</dt>
+          <dd><span data-contract-network>Network loading</span> (<span data-contract-chain>Chain loading</span>)</dd>
+        </div>
+
+        <div class="v-fact">
+          <dt>Asset</dt>
+          <dd>
+            USDC, Circle native<br>
+            <a class="evidence-address-inline"
+               data-usdc-address-link
+               aria-disabled="true"
+               target="_blank" rel="noopener noreferrer">USDC address loading</a>
+          </dd>
+        </div>
+
+        <div class="v-fact">
+          <dt>Source Code</dt>
+          <dd>
+            <a data-contract-source-link
+               aria-disabled="true"
+               target="_blank" rel="noopener noreferrer">
+              Source link loading
+            </a>
+          </dd>
+        </div>
+      </dl>
+    </section>
+
+    <!-- ── 4. Treasury & Fee Model ────────────────────────────── -->
+    <h2>Treasury &amp; Fee Model</h2>
+
+    <!-- proof-pair: explanation | data cards -->
+    <div class="proof-pair">
+      <div class="proof-col">
+        <p>
+          The platform fee is 1% of the transfer amount, added on top of the amount
+          entered. The sender pays the transfer amount plus 1%. The recipient receives
+          the exact amount entered. The 1% fee is routed to the treasury address in
+          the same on-chain transaction as the transfer — there is no separate fee
+          collection step. The contract is designed to route the recipient amount
+          and fee in the same execution path and should not retain USDC after
+          standard transfer execution.
+        </p>
+      </div>
+      <div class="proof-col">
+        <dl class="v-facts">
+          <div class="v-fact">
+            <dt>Fee</dt>
+            <dd>1% additive — displayed before any wallet confirmation</dd>
+          </div>
+          <div class="v-fact">
+            <dt>Fee recipient</dt>
+            <dd>Treasury address above — not the contract</dd>
+          </div>
+          <div class="v-fact">
+            <dt>Contract balance</dt>
+            <dd>Designed not to retain USDC after standard transfer execution</dd>
+          </div>
+          <div class="v-fact">
+            <dt>Transfer cap</dt>
+            <dd>250 USDC per transfer during soft launch</dd>
+          </div>
+        </dl>
+      </div>
+    </div>
+
+    <!-- ── 5. How To Verify a Transfer ───────────────────────── -->
+    <h2>How To Verify a Transfer</h2>
+
+    <!-- proof-pair: context + conclusion | numbered steps -->
+    <div class="proof-pair">
+      <div class="proof-col">
+        <p>
+          Every transfer produces a transaction hash. Look it up on Polygonscan
+          to confirm the fee path and transfer amounts directly on-chain.
+        </p>
+        <p>
+          If the Polygonscan record shows the two outputs described and the contract
+          held zero USDC afterward, the transfer executed exactly as designed.
+        </p>
+      </div>
+      <div class="proof-col">
+        <ol>
+          <li>Open <a href="https://polygonscan.com" target="_blank" rel="noopener noreferrer">polygonscan.com</a> and enter the transaction hash in the search field.</li>
+          <li>Find the token transfers section. A correctly executed transfer shows two USDC token movements: one to the recipient address, one to the treasury address.</li>
+          <li>Confirm the treasury address in the token transfer matches the treasury address shown in Contract &amp; Network.</li>
+          <li>Confirm the recipient address matches the address you entered.</li>
+          <li>Confirm the contract address in the transaction matches the verified ImplicitEx Transfer Contract shown above.</li>
+          <li>Confirm that no USDC balance is held by the contract after the transaction.</li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- ── 6. Verified Transaction Record ────────────────────── -->
+    <h2>Verified Transaction Record</h2>
+
+    <p>
+      The following is a controlled mainnet transaction executed on June 15, 2026
+      to validate the complete transfer and fee-routing path before opening the
+      platform to public use.
+    </p>
+
+    <div class="v-record" aria-label="Verified mainnet transaction record">
+      <p class="v-record-head">Controlled Mainnet Validation — 2026-06-15</p>
+      <div class="v-record-grid">
+        <div class="v-record-row">
+          <span>Network</span>
+          <strong>Polygon mainnet</strong>
+        </div>
+        <div class="v-record-row">
+          <span>Asset</span>
+          <strong>USDC</strong>
+        </div>
+        <div class="v-record-row">
+          <span>Block</span>
+          <strong>88565097</strong>
+        </div>
+        <div class="v-record-row">
+          <span>Sender debit</span>
+          <strong>1.01 USDC</strong>
+        </div>
+        <div class="v-record-row">
+          <span>Recipient received</span>
+          <strong>1.00 USDC</strong>
+        </div>
+        <div class="v-record-row">
+          <span>Treasury received</span>
+          <strong>0.01 USDC</strong>
+        </div>
+        <div class="v-record-row">
+          <span>Contract retained</span>
+          <strong>0.00 USDC</strong>
+        </div>
+        <div class="v-record-row">
+          <span>Status</span>
+          <strong>Confirmed on-chain</strong>
+        </div>
+      </div>
+      <div class="v-record-tx">
+        <span>Tx</span>
+        <a class="v-record-hash" href="https://polygonscan.com/tx/0x37fd733a7f1854740bf702aa5bf59794f4ebab0f39d2a84fb2c231c29df622d9" target="_blank" rel="noopener noreferrer">0x37fd733a7f1854740bf702aa5bf59794f4ebab0f39d2a84fb2c231c29df622d9</a>
+      </div>
+    </div>
+
+    <!-- ── 7. Wallet Security Warnings ───────────────────────── -->
+    <!-- Single-column narrative: educational content, not comparative data.
+         No proof-pair — columns would create an empty rectangle on one side. -->
+    <h2 id="wallet-warnings">Wallet Security Warnings</h2>
+
+    <h3>What Blockaid is</h3>
+
+    <p>
+      Blockaid is an automated security screening service integrated into MetaMask
+      and other wallets. It analyzes contract interactions and assigns a trust
+      classification based on factors including transaction history, contract age,
+      and known malicious patterns. Blockaid classifications are automated — they
+      are not manual audits.
+    </p>
+
+    <h3>Why warnings appear</h3>
+
+    <p>
+      A warning that a contract is "untrusted" or that a request is "potentially
+      deceptive" means the contract has not yet accumulated enough on-chain
+      history to receive a trusted classification — not that malicious behavior
+      has been detected. New contracts, even correctly functioning ones, typically
+      trigger this classification.
+    </p>
+
+    <p>
+      During Gate 5 first-user testing on June 18, 2026, MetaMask displayed a
+      false-positive warning on the USDC approval step. The approval amount shown
+      was exact — the transfer amount plus the platform fee — not unlimited.
+      ImplicitEx submitted false-positive reports to Blockaid on June 18, 2026
+      for both implicitex.com and the staging domain.
+    </p>
+
+    <h3>How to verify the contract yourself</h3>
+
+    <p class="verify-section-intro">
+      If your wallet displays a warning, verify the contract address shown in
+      the warning against the ImplicitEx Transfer Contract shown above.
+    </p>
+
+    <div class="v-record v-record--cols-3" aria-label="Contract address for comparison">
+      <div class="v-record-grid">
+        <div class="v-record-row">
+          <span>Contract</span>
+          <strong class="v-record-address">See verified address above</strong>
+        </div>
+        <div class="v-record-row">
+          <span>Network</span>
+          <strong><span data-contract-network>Network loading</span> · <span data-contract-chain>Chain loading</span></strong>
+        </div>
+        <div class="v-record-row">
+          <span>Source code</span>
+          <strong><a data-contract-source-link aria-disabled="true" target="_blank" rel="noopener noreferrer">Source link loading</a></strong>
+        </div>
+      </div>
+    </div>
+
+    <p>
+      If the address in your wallet warning matches the contract address above,
+      you are interacting with the same contract documented in the verified
+      transaction record on this page. The source code is public. The transaction
+      history is public. The fee routing is auditable on every transfer.
+    </p>
+
+    <h3>Current review status</h3>
+
+    <p>
+      The Blockaid false-positive review is in progress as of June 2026.
+      The platform remains operational while the review is pending.
+      Status updates are recorded in the <a href="/log.html">Devlog</a>.
+    </p>
+
+    <!-- ── 8. Source Code & Documentation ────────────────────── -->
+    <h2>Source Code &amp; Documentation</h2>
+
+    <dl class="v-facts">
+      <div class="v-fact">
+        <dt>Contract source</dt>
+        <dd>
+          <a data-contract-source-link
+             aria-disabled="true"
+             target="_blank" rel="noopener noreferrer">
+            Source link loading
+          </a>
+        </dd>
+      </div>
+      <div class="v-fact">
+        <dt>GitHub</dt>
+        <dd>
+          <a href="https://github.com/implicitexlabs" target="_blank" rel="noopener noreferrer">
+            github.com/implicitexlabs
+          </a>
+        </dd>
+      </div>
+      <div class="v-fact">
+        <dt>Devlog</dt>
+        <dd><a href="/log.html">implicitex.com/log.html</a> — dated record of platform changes with commit hashes</dd>
+      </div>
+      <div class="v-fact">
+        <dt>FAQ</dt>
+        <dd><a href="/faq.html">implicitex.com/faq.html</a> — common questions including wallet warnings and fee model</dd>
+      </div>
+    </dl>
+
+    <a class="back" href="/">Return to ImplicitEx</a>
+  </main>
+
+  <footer>
+    <div class="f-inner">
+      <div class="f-brand">
+        <div class="f-brand-lockup">
+          <img src="/components/images/lettermark-white.svg" alt="" aria-hidden="true" class="f-brand-mark">
+          <img src="/components/images/wordmark-white.svg" alt="ImplicitEx" class="f-brand-word">
+        </div>
+        <span class="f-tagline">Wallet-to-wallet USDC transfers.</span>
+      </div>
+      <nav class="f-links" aria-label="Footer links">
+        <div class="f-group">
+          <span class="f-group-label">Product</span>
+          <a href="/start.html">Start</a>
+          <a href="/faq.html">FAQ</a>
+          <a href="/learn.html">Learn</a>
+          <a href="/verify.html">Verify</a>
+          <a href="/log.html">Devlog</a>
+        </div>
+        <div class="f-group">
+          <span class="f-group-label">Legal</span>
+          <a href="/terms.html">Terms</a>
+          <a href="/privacy.html">Privacy</a>
+          <a href="/legal.html">Legal</a>
+        </div>
+        <div class="f-group">
+          <span class="f-group-label">Support</span>
+          <a href="/contact.html">Contact</a>
+          <a href="/jurisdictions.html">Access</a>
+        </div>
+        <div class="f-group">
+          <span class="f-group-label">Company</span>
+          <a href="/about.html">About</a>
+          <a href="/media.html">Media</a>
+          <a href="/brand.html">Brand</a>
+          <a href="/news.html">News</a>
+        </div>
+        <div class="f-group">
+          <span class="f-group-label">Social</span>
+          <a href="https://x.com/implicitex" target="_blank" rel="noopener">X</a>
+          <a href="https://www.linkedin.com/in/implicitex/" target="_blank" rel="noopener">LinkedIn</a>
+          <a href="https://github.com/implicitexlabs" target="_blank" rel="noopener">GitHub</a>
+        </div>
+      </nav>
+      <div class="f-bottom">
+        <span class="f-net is-live" id="networkBadge">Polygon live</span>
+        <span class="f-copy">&#169; <a href="https://adenmediagroup.com" target="_blank" rel="noopener noreferrer">Aden Media Group, LLC</a></span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="config/chains.js"></script>
+  <script src="js/analytics.js"></script>
+  <script src="js/consent.js"></script>
+  <script src="js/wallet.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/mobile-menu.js"></script>
+  <script src="js/verify.js"></script>
+</body>
+</html>

@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="description" content="ImplicitEx Transfer Portal — installable, direct wallet-to-wallet USDC transfers on Polygon.">
+  <meta name="robots" content="noindex">
+  <link rel="canonical" href="https://portal.implicitex.com/">
+  <meta name="application-name" content="ImplicitEx Transfer Portal">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="ImplicitEx">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#080808">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "ImplicitEx Transfer Portal",
+    "url": "https://portal.implicitex.com",
+    "description": "Direct wallet-to-wallet USDC transfer interface on Polygon. Connect a Web3 wallet, enter a recipient address and amount, review network and recipient verification state, then confirm through your wallet. No custody. No account required.",
+    "applicationCategory": "FinanceApplication",
+    "operatingSystem": "Web",
+    "isAccessibleForFree": true,
+    "featureList": [
+      "Direct wallet-to-wallet USDC transfers on Polygon",
+      "Real-time gas price and RPC latency monitoring",
+      "Coin Card recipient verification",
+      "Transfer receipt and proof-of-execution logging",
+      "1% platform fee with full disclosure before wallet confirmation"
+    ],
+    "offers": {
+      "@type": "Offer",
+      "description": "1% platform fee on all transfers. No subscription or account required."
+    },
+    "provider": {
+      "@type": "Organization",
+      "name": "ImplicitEx",
+      "url": "https://implicitex.com"
+    },
+    "audience": {
+      "@type": "Audience",
+      "audienceType": "Web3 wallet holders sending USDC on Polygon"
+    },
+    "sameAs": ["https://implicitex.com"]
+  }
+  </script>
+  <title>ImplicitEx — Transfer Portal</title>
+  <link rel="icon" href="/assets/icons/favicon.ico" sizes="any">
+  <link rel="icon" href="/assets/icons/favicon-32x32.png" type="image/png" sizes="32x32">
+  <link rel="icon" href="/assets/icons/favicon-16x16.png" type="image/png" sizes="16x16">
+  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon-v2.png">
+  <script>(function(){try{var t=localStorage.getItem('implicitex-theme');if(t==='light'||t==='dark'){document.documentElement.dataset.theme=t;}else{var h=new Date().getHours();document.documentElement.dataset.theme=(h>=7&&h<19)?'light':'dark';}}catch(e){}})();</script>
+  <script defer src="js/portal-install.js"></script>
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="components/companion/companion.css">
+  <link rel="stylesheet" href="components/telemetry/telemetry.css">
+  <link rel="manifest" href="/portal.webmanifest">
+  <style>
+    /* ---- Portal shell overrides (portal-index.html only) ---- */
+    body[data-portal-shell="direct"] {
+      --portal-safe-top: env(safe-area-inset-top, 0px);
+      --portal-safe-right: env(safe-area-inset-right, 0px);
+      --portal-safe-bottom: env(safe-area-inset-bottom, 0px);
+      --portal-safe-left: env(safe-area-inset-left, 0px);
+      overscroll-behavior-x: none;
+    }
+
+    /* Brand integrated into portal header — left side of the header bar */
+    [data-portal-shell="direct"] .portal-header-brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 14px;
+      text-decoration: none;
+      color: var(--white);
+      flex-shrink: 0;
+    }
+    [data-portal-shell="direct"] .portal-header-brand .wordmark {
+      height: 16px;
+      width: auto;
+    }
+    /* Wordmark theme handled by main.css: [data-theme="light"] img.wordmark { filter: invert(1) } */
+
+    /* Right group: title + controls — pushed to far right as a unit */
+    [data-portal-shell="direct"] .portal-header-right {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      margin-left: auto;
+    }
+    /* Reset controls auto-margin — the right group carries the push */
+    [data-portal-shell="direct"] .portal-header-controls {
+      margin-left: 0;
+    }
+    /* Even padding either side of the title/controls divider */
+    [data-portal-shell="direct"] .portal-header-title {
+      padding-right: 0.875rem;
+    }
+    [data-portal-shell="direct"] .portal-zone {
+      padding-inline: calc(0px + var(--portal-safe-left)) calc(0px + var(--portal-safe-right));
+    }
+    [data-portal-shell="direct"] .portal-zone::before {
+      right: calc(-14px + var(--portal-safe-right));
+    }
+    [data-portal-shell="direct"] .portal-zone::after {
+      left: calc(-14px + var(--portal-safe-left));
+    }
+    [data-portal-shell="direct"] .portal-header {
+      padding-top: calc(0.875rem + var(--portal-safe-top));
+    }
+    [data-portal-shell="direct"] .portal-footer {
+      padding-inline: calc(0.75rem + var(--portal-safe-left)) calc(0.75rem + var(--portal-safe-right));
+    }
+    [data-portal-shell="direct"] .portal-footer-row {
+      padding-bottom: calc(1rem + var(--portal-safe-bottom));
+    }
+
+    /* Inline wallet row inside Transfer module */
+    .portal-wallet-inline {
+      display: flex;
+      align-items: center;
+      position: relative;
+    }
+
+    /* CONNECT WALLET — full-width form element, flush above recipient input */
+    .portal-connect-inline {
+      color: var(--dim);
+      background: transparent;
+      border: 1px solid var(--border-2);
+      border-bottom: none;
+      cursor: pointer;
+      padding: 0 12px;
+      height: 44px;
+      display: inline-flex;
+      align-items: center;
+      transition: color 0.12s, border-color 0.12s, background 0.12s;
+    }
+    .portal-connect-inline:hover {
+      color: var(--white);
+      border-color: var(--white);
+      background: var(--surface-2);
+    }
+    .portal-connect-inline[hidden] { display: none; }
+
+    /* Wallet menu panel — anchors to .portal-wallet-inline (position:relative) */
+    .portal-wallet-inline .wallet-menu-panel {
+      left: 0;
+      right: auto;
+      top: calc(100% + 4px);
+    }
+
+    /* Assistant guidance note */
+    .agent-guidance-note {
+      color: var(--dim);
+      border-left: 2px solid var(--border-2);
+      padding: 0.5rem 0.75rem;
+      margin: 0.75rem 0 0;
+    }
+
+    /* Portal footer */
+    .portal-footer {
+      max-width: var(--ix-interface-max);
+      margin: 0 auto 0;
+      padding: 0 0.75rem;
+    }
+    .portal-footer-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 1rem 1.25rem;
+      border: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .portal-footer-statement {
+      color: var(--dim);
+      text-align: left;
+    }
+    .portal-footer-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      flex-shrink: 0;
+    }
+    .portal-footer-more {
+      display: block;
+    }
+    .portal-footer-more > summary {
+      list-style: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 24px;
+      padding: 0 10px;
+      color: var(--dim);
+      border: 1px solid var(--border-2);
+      cursor: pointer;
+      user-select: none;
+    }
+    .portal-footer-more > summary::-webkit-details-marker {
+      display: none;
+    }
+    .portal-footer-more[open] > summary {
+      color: var(--white);
+      border-color: var(--white);
+    }
+    .portal-footer-more-panel {
+      margin-top: 0.75rem;
+      padding: 0.9rem 1rem 1rem;
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+    }
+    .portal-footer-install-note {
+      color: var(--dim);
+      margin-bottom: 0.9rem;
+    }
+    .portal-footer-nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem 2rem;
+    }
+    .portal-footer-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+      min-width: 9rem;
+    }
+    .portal-footer-label {
+      color: var(--dim);
+      opacity: 0.55;
+      margin-bottom: 0.2rem;
+    }
+    .portal-footer-group a {
+      color: var(--dim);
+      text-decoration: none;
+      transition: color 0.12s;
+    }
+    .portal-footer-group a:hover {
+      color: var(--white);
+    }
+    @media (max-width: 600px) {
+      .portal-footer-row {
+        flex-direction: column;
+      }
+      .portal-footer-group {
+        min-width: 8.5rem;
+      }
+    }
+
+    /* ---- Mobile: direct portal header stacks at 760px ---- */
+    @media (max-width: 760px) {
+      /* Allow brand and right group to break onto separate rows */
+      [data-portal-shell="direct"] .portal-header {
+        flex-wrap: wrap;
+        padding: calc(0.75rem + var(--portal-safe-top)) 1rem 0.75rem;
+        row-gap: var(--sp-2);
+      }
+
+      /* Brand stays on row 1 at its natural width */
+      [data-portal-shell="direct"] .portal-header-brand {
+        flex-shrink: 0;
+        min-width: 0;
+        max-width: 100%;
+      }
+
+      /* Right group (title + controls) always breaks to row 2, full width */
+      [data-portal-shell="direct"] .portal-header-right {
+        margin-left: 0;
+        flex-basis: 100%;
+        border-top: 1px solid var(--border);
+        padding-top: var(--sp-2);
+      }
+
+      /* Controls: drop left separator, allow wrapping */
+      [data-portal-shell="direct"] .portal-header-controls {
+        border-left: none;
+        padding-left: 0;
+        flex-wrap: wrap;
+      }
+
+      /* Title: tighten right padding */
+      [data-portal-shell="direct"] .portal-header-title {
+        padding-right: var(--sp-2);
+      }
+    }
+
+    /* ---- Compact: hide TRANSFER PORTAL title at 680px and below ----
+       Brand + controls carry the header. Subcopy row establishes
+       portal context. Title re-appears above 680px. */
+    @media (max-width: 680px) {
+      [data-portal-shell="direct"] .portal-header-title {
+        display: none;
+      }
+
+      [data-portal-shell="direct"] .portal-zone {
+        margin: 0.5rem 0;
+      }
+
+      [data-portal-shell="direct"] .portal-zone::before,
+      [data-portal-shell="direct"] .portal-zone::after,
+      [data-portal-shell="direct"] .transfer-portal::before,
+      [data-portal-shell="direct"] .transfer-portal::after {
+        display: none;
+      }
+
+      .portal-footer {
+        margin-bottom: 0;
+        padding-inline: 0.5rem;
+      }
+      [data-portal-shell="direct"] .portal-footer {
+        padding-inline: calc(0.5rem + var(--portal-safe-left)) calc(0.5rem + var(--portal-safe-right));
+      }
+
+      [data-portal-shell="direct"] .portal-footer-row {
+        padding-bottom: calc(1rem + var(--portal-safe-bottom));
+      }
+
+      .portal-footer-nav {
+        gap: 0.9rem 1.25rem;
+      }
+    }
+
+    @media (max-width: 900px) and (max-height: 500px) {
+      [data-portal-shell="direct"] .portal-zone::before,
+      [data-portal-shell="direct"] .portal-zone::after,
+      [data-portal-shell="direct"] .transfer-portal::before,
+      [data-portal-shell="direct"] .transfer-portal::after {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body data-portal-shell="direct">
+
+  <!-- WALLET CHOICE OVERLAY -->
+  <div class="wallet-choice" id="walletChoiceOverlay" role="dialog" aria-modal="true" aria-label="Choose wallet" hidden>
+    <div class="wallet-choice-backdrop" id="walletChoiceBackdrop" aria-hidden="true"></div>
+    <div class="wallet-choice-inner">
+      <div class="wallet-choice-head">
+        <span class="wallet-choice-title">Connect wallet</span>
+        <button class="wallet-choice-close" id="walletChoiceClose" type="button" aria-label="Close">
+          <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
+            <line x1="1" y1="1" x2="11" y2="11" stroke="currentColor" stroke-width="1.6"/>
+            <line x1="11" y1="1" x2="1" y2="11" stroke="currentColor" stroke-width="1.6"/>
+          </svg>
+        </button>
+      </div>
+      <div class="wallet-choice-actions">
+        <a class="wallet-choice-btn wallet-choice-btn--primary" id="walletChoiceMetaMask"
+           href="https://metamask.app.link/dapp/implicitex.com" target="_blank" rel="noopener">
+          Open MetaMask
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- DIRECT PORTAL SURFACE — no hero, no marketing, portal open immediately -->
+  <main class="landing-main">
+
+  <div class="transfer-anchor" id="transfer" aria-hidden="true"></div>
+
+  <div class="portal-zone">
+
+  <section class="modules transfer-portal" id="modules" aria-label="Transfer Portal" data-transaction-window>
+    <nav id="portalPrimaryNav" class="portal-primary-nav" aria-label="Portal destinations" hidden>
+      <button id="portalNavTransfer" class="portal-primary-nav-button" type="button" data-portal-navigation-destination="TRANSFER" aria-current="page">Transfer</button>
+      <button id="portalNavRecipients" class="portal-primary-nav-button" type="button" data-portal-navigation-destination="RECIPIENTS">Recipients</button>
+      <button id="portalNavActivity" class="portal-primary-nav-button" type="button" data-portal-navigation-destination="ACTIVITY">Activity</button>
+    </nav>
+    <p id="portalPrimaryNavStatus" class="portal-primary-nav-status" role="status" aria-live="polite" hidden></p>
+    <div class="portal-header">
+      <!-- Left: brand identity — trust anchor at first glance -->
+      <a href="https://implicitex.com" class="portal-header-brand" aria-label="ImplicitEx">
+        <svg class="brandmark" width="22" height="22" viewBox="0 0 25 25" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+          <path d="M18.4,21.48L2.64,5.73l.43-.43,15.76,15.76s1.3,1.3,2.79-.19.21-2.77.21-2.77L6.05,2.32l.43-.43,4.07,4.07,1.38,1.38,1.28-1.28,4.28-4.28.43.43-5.56,5.56,2.98,2.98,5.56-5.56.43.43-5.56,5.56,1.28,1.28,5.56-5.56s1.28-1.28-.21-2.77-2.79-.19-2.79-.19l-4.26,4.26-.43-.43,4.26-4.26s1.3-1.3-.19-2.79-2.77-.21-2.77-.21l-4.28,4.28L7.75.62s-1.28-1.28-2.77.21-.19,2.79-.19,2.79l15.76,15.76-.43.43L4.37,4.05s-1.3-1.3-2.79.19-.11,2.87-.11,2.87l15.68,15.68-.43.43-5.56-5.56-5.54,5.54-.43-.43,5.54-5.54-2.98-2.98-5.54,5.54-.43-.43,5.54-5.54-1.28-1.28L.51,18.08s-1.28,1.28.21,2.77,2.79.19,2.79.19l4.23-4.23.43.43-4.23,4.23s-1.3,1.3.19,2.79,2.77.21,2.77.21l4.26-4.26,4.28,4.28s1.28,1.28,2.77-.21.19-2.79.19-2.79Z" fill="currentColor"/>
+        </svg>
+        <img class="wordmark" src="/components/images/wordmark-white.svg" alt="" aria-hidden="true">
+      </a>
+      <!-- Right: portal identity + controls (future functions dropdown slots here) -->
+      <div class="portal-header-right">
+      <span class="portal-header-title">Transfer Portal</span>
+      <div class="portal-header-controls">
+        <!-- Clock toggle — time-based theme; viewBox keeps 14×14 for app.js hand rotation (rotate pivot at 7,7) -->
+        <button class="portal-ctrl-btn" id="clockToggle" type="button" aria-label="Set theme by time of day">
+          <svg class="portal-ctrl-icon" width="12" height="12" viewBox="0 0 14 14" aria-hidden="true" focusable="false">
+            <circle cx="7" cy="7" r="6" fill="none" stroke="currentColor" stroke-width="1.5"/>
+            <line id="clockHourHand" x1="7" y1="7" x2="7" y2="4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            <line id="clockMinuteHand" x1="7" y1="7" x2="7" y2="2.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <!-- Theme toggle — manual light/dark -->
+        <button class="portal-ctrl-btn" id="themeToggle" type="button" aria-label="Switch to light theme" aria-pressed="false">
+          <svg class="portal-ctrl-icon" width="12" height="12" viewBox="0 0 14 14" aria-hidden="true" focusable="false">
+            <path d="M7 1 A6 6 0 0 0 7 13 Z" fill="var(--white)"/>
+            <path d="M7 1 A6 6 0 0 1 7 13 Z" fill="var(--bg)"/>
+            <circle cx="7" cy="7" r="6" fill="none" stroke="currentColor" stroke-width="1.5"/>
+          </svg>
+        </button>
+        <button class="portal-ctrl-btn" id="layoutToggle" type="button" data-layout="columns" aria-label="Switch to stacked layout">
+          <!-- columns icon — two 2px vertical bars; visible when layout = columns -->
+          <svg class="portal-ctrl-icon portal-layout-icon portal-layout-icon--columns" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" focusable="false">
+            <rect x="2" y="1" width="2" height="10" fill="currentColor"/>
+            <rect x="8" y="1" width="2" height="10" fill="currentColor"/>
+          </svg>
+          <!-- stacked icon — three 2px horizontal bars; visible when layout = stacked -->
+          <svg class="portal-ctrl-icon portal-layout-icon portal-layout-icon--stacked" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" focusable="false">
+            <rect x="0" y="1" width="12" height="2" fill="currentColor"/>
+            <rect x="0" y="5" width="12" height="2" fill="currentColor"/>
+            <rect x="0" y="9" width="12" height="2" fill="currentColor"/>
+          </svg>
+        </button>
+        <button class="portal-ctrl-btn portal-fullscreen-ctrl" id="portalFullscreenAction" type="button" aria-pressed="false" aria-label="Enter fullscreen" title="Enter fullscreen" data-fullscreen-active="false">
+          <svg class="portal-ctrl-icon portal-fullscreen-icon" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false">
+            <g class="portal-fullscreen-glyph portal-fullscreen-glyph--enter">
+              <path d="M2.5 5V2.5H5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M9 2.5h2.5V5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M2.5 9V11.5H5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M9 11.5h2.5V9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            </g>
+            <g class="portal-fullscreen-glyph portal-fullscreen-glyph--exit">
+              <path d="M5 2.5V5H2.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M9 2.5V5h2.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M2.5 9H5v2.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M11.5 9H9v2.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            </g>
+          </svg>
+        </button>
+        <div class="portal-display-menu" id="portalDisplayMenu">
+          <button class="portal-ctrl-btn portal-display-ctrl" id="portalDisplayMenuToggle" type="button" aria-expanded="false" aria-controls="portalDisplayPanel" aria-label="Display settings" title="Display settings">
+            <svg class="portal-ctrl-icon" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false">
+              <rect x="1.5" y="2" width="11" height="7.5" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.4"/>
+              <path d="M5.25 11.25h3.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+              <path d="M7 9.5v1.75" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+            </svg>
+          </button>
+          <div class="portal-display-panel" id="portalDisplayPanel" hidden>
+            <label class="portal-display-switch" for="portalWakeLockToggle">
+              <span class="portal-display-switch-copy">Keep screen awake</span>
+              <span class="portal-display-switch-state" id="portalWakeLockState">Off</span>
+              <input id="portalWakeLockToggle" type="checkbox">
+            </label>
+            <p class="portal-display-note">Prevent this screen from sleeping during the current portal session.</p>
+            <p class="portal-display-status" id="portalWakeLockStatus" role="status" aria-live="polite"></p>
+          </div>
+        </div>
+        <button class="portal-ctrl-btn portal-install-ctrl" id="portalInstallAction" type="button" aria-label="Install ImplicitEx" title="Install ImplicitEx">
+          <svg class="portal-ctrl-icon" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false">
+            <path d="M7 2.25v6.25" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+            <path d="M4.1 6.7 7 9.6l2.9-2.9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M2.25 11.5h9.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <button class="portal-ctrl-btn" id="modulesMinimize" type="button" aria-expanded="true" aria-label="Minimize transfer portal">
+          <svg class="portal-ctrl-icon portal-ctrl-chevron" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" focusable="false">
+            <polyline points="2,4.5 6,8.5 10,4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+      </div><!-- /.portal-header-right -->
+    </div>
+    <!-- Coin Card intake banner — shown when opened via Coin Card handoff -->
+    <div class="cc-intake" id="ccIntake" hidden aria-live="polite" aria-label="Coin Card handoff status" data-portal-primary-surface="TRANSFER">
+      <div class="cc-intake-inner">
+        <span class="cc-intake-badge" aria-hidden="true">COIN CARD</span>
+        <p class="cc-intake-label" id="ccIntakeLabel">—</p>
+        <span class="cc-intake-status" id="ccIntakeStatus" data-verify-state="pending">CHECKING REGISTRY</span>
+      </div>
+    </div>
+
+    <!-- Transfer -->
+    <div class="mod" id="transferMod" data-portal-primary-surface="TRANSFER"
+      data-agent-step="1"
+      data-agent-purpose="Collect transfer details: wallet connection, recipient address, USDC amount, and optional purpose tag."
+      data-agent-requires-wallet="true">
+      <span class="mod-tag">Transfer</span>
+      <p class="mod-title">Send USDC</p>
+      <div class="tx-form">
+        <div class="fee-row" aria-live="polite">
+          <span class="fee-label">Connected sender</span>
+          <span class="fee-val" id="senderAddressDisplay">—</span>
+        </div>
+        <!-- Inline wallet connect — portal.implicitex.com self-contained experience -->
+        <div class="portal-wallet-inline">
+          <button class="portal-connect-inline" id="connectBtn" type="button" onclick="IX.connect()">Connect wallet</button>
+          <div class="wallet-menu" id="walletMenu" hidden>
+            <button class="wallet-menu-trigger" id="walletMenuTrigger" type="button" aria-expanded="false" aria-controls="walletMenuPanel" aria-label="Wallet account menu">
+              <span class="wallet-dot" aria-hidden="true"></span>
+              <span class="wallet-addr" id="walletAddr"></span>
+              <span class="wallet-chevron" aria-hidden="true"></span>
+            </button>
+            <div class="wallet-menu-panel" id="walletMenuPanel" hidden>
+              <p class="wallet-menu-title">Wallet account</p>
+              <p class="wallet-menu-address" id="walletFullAddress"></p>
+              <button class="wallet-menu-action" id="copyAddressBtn" type="button">Copy address</button>
+              <button class="wallet-menu-action" id="switchNetworkBtn" type="button" hidden>Switch to Polygon</button>
+              <button class="wallet-menu-action" id="switchAccountBtn" type="button">Switch account</button>
+              <button class="wallet-menu-action wallet-menu-action--danger" id="disconnectBtn" type="button">Disconnect</button>
+            </div>
+          </div>
+        </div>
+        <div class="tx-field-group">
+          <label class="tx-field-label" for="txRecipient">Recipient</label>
+          <input
+            class="tx-field tx-field--primary"
+            type="text"
+            id="txRecipient"
+            placeholder="Wallet address or ENS name"
+            autocomplete="off"
+            spellcheck="false"
+            aria-label="Recipient wallet address"
+            aria-describedby="recipientError"
+          >
+          <p class="tx-recipient-error" id="recipientError" aria-live="assertive"></p>
+          <div class="intel-panel" id="recipientIntel" aria-live="polite" hidden>
+            <p class="intel-label">Recipient</p>
+            <ul class="intel-list" id="recipientIntelList"></ul>
+          </div>
+        </div>
+        <div class="tx-field-group">
+          <label class="tx-field-label" for="txAmount">Amount</label>
+          <input
+            class="tx-field tx-field--primary"
+            type="number"
+            id="txAmount"
+            placeholder="Enter amount in USDC"
+            inputmode="decimal"
+            min="1"
+            step="0.000001"
+            aria-label="Amount recipient gets in USDC"
+          >
+        </div>
+        <div class="tx-meta-grid" aria-label="Transfer metadata">
+          <div class="tx-field-group">
+            <label class="tx-field-label" for="txPurposeTag">Purpose</label>
+            <select class="tx-field tx-field--select" id="txPurposeTag" aria-label="Transfer purpose tag">
+              <option value="">Purpose tag</option>
+              <option value="invoice">Invoice</option>
+              <option value="contractor">Contractor</option>
+              <option value="refund">Refund</option>
+              <option value="family">Family</option>
+              <option value="donation">Donation</option>
+              <option value="purchase">Purchase</option>
+              <option value="subscription">Subscription</option>
+              <option value="test">Test</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="tx-field-group">
+            <label class="tx-field-label" for="txReference">Reference</label>
+            <input
+              class="tx-field"
+              type="text"
+              id="txReference"
+              placeholder="Invoice / reference"
+              maxlength="80"
+              autocomplete="off"
+              aria-label="Invoice or internal reference"
+            >
+          </div>
+        </div>
+        <div class="tx-field-group">
+          <label class="tx-field-label" for="txMemo">Memo</label>
+          <input
+            class="tx-field"
+            type="text"
+            id="txMemo"
+            placeholder="Memo (local receipt only)"
+            maxlength="140"
+            autocomplete="off"
+            aria-label="Transfer memo"
+          >
+        </div>
+        <div class="fee-row" aria-live="polite">
+          <span class="fee-label">Your USDC balance</span>
+          <span class="fee-val" id="usdcBalance">0.00 USDC</span>
+        </div>
+        <div class="fee-row" aria-live="polite">
+          <span class="fee-label">Platform fee (1%)</span>
+          <span class="fee-val" id="feeDisplay">0.00 USDC</span>
+        </div>
+        <label class="tx-confirm" id="txConfirmWrap" hidden>
+          <input type="checkbox" id="txConfirmAck">
+          <span>I confirm the recipient, amount, fee, and total debit. Transfers confirmed on-chain cannot be reversed.</span>
+        </label>
+        <button class="tx-btn" id="txBtn" onclick="IX.handleTxAction()"
+          data-agent-action="review-transfer"
+          data-agent-requires-user-confirmation="true">Review transfer</button>
+        <button class="tx-btn tx-btn--cancel" id="txCancelReview" type="button" aria-label="Return to editing transfer details" hidden>
+          Edit details
+        </button>
+        <p class="tx-state-note" id="transferStateNote"></p>
+        <p class="tx-status" id="txStatus" aria-live="assertive"></p>
+      </div>
+
+      <div class="preflight-panel" id="preflightPanel" aria-live="polite">
+        <p class="intel-label">Preflight</p>
+        <ul class="preflight-list" id="preflightList"></ul>
+      </div>
+
+      <div id="txPreview" class="tx-preview" hidden aria-live="polite" aria-label="Transfer preview">
+        <p class="tx-preview-label" id="txPreviewLabel">Transfer Preview</p>
+        <div class="data-row">
+          <span class="data-k">Recipient</span>
+          <span class="data-v" id="previewRecipient">—</span>
+        </div>
+        <div class="data-row">
+          <span class="data-k">Recipient gets</span>
+          <span class="data-v" id="previewAmount">—</span>
+        </div>
+        <div class="data-row">
+          <span class="data-k">Platform fee</span>
+          <span class="data-v" id="previewFee">—</span>
+        </div>
+        <div class="data-row">
+          <span class="data-k">Total from wallet</span>
+          <span class="data-v" id="previewTotal">—</span>
+        </div>
+        <div class="data-row">
+          <span class="data-k">Network</span>
+          <span class="data-v" id="previewNetwork">—</span>
+        </div>
+        <div class="data-row">
+          <span class="data-k">Contract</span>
+          <span class="data-v" id="previewContract">—</span>
+        </div>
+        <div class="data-row">
+          <span class="data-k">Mode</span>
+          <span class="data-v" id="previewMode">—</span>
+        </div>
+        <div class="data-row">
+          <span class="data-k">Purpose</span>
+          <span class="data-v" id="previewPurpose">—</span>
+        </div>
+        <p class="tx-preview-note" id="previewNote">Preview only — no funds will move.</p>
+        <div class="tx-timeline" id="txTimeline" hidden></div>
+      </div>
+
+      <details class="fee-explanation">
+        <summary class="fee-explanation-label">Fee &amp; Routing</summary>
+        <p class="fee-explanation-body">
+          The recipient amount and total wallet debit are different. The total debit is
+          recipient amount plus platform fee. Approval, when needed, must cover the full
+          total debit. Approval alone does not send funds.
+        </p>
+      </details>
+
+      <details class="fee-explanation">
+        <summary class="fee-explanation-label">Preview Discipline</summary>
+        <p class="fee-explanation-body">
+          Preview data is refreshed from the contract before any wallet prompt. Recipient,
+          network, pause state, contract address, and USDC token checks remain separate
+          execution gates.
+        </p>
+      </details>
+
+      <details class="fee-explanation">
+        <summary class="fee-explanation-label">Network Note</summary>
+        <p class="fee-explanation-body">
+          This transfer uses USDC on Polygon. Do not use this form to send Bitcoin,
+          Ethereum mainnet USDC, bank USD, or unsupported assets. A valid-looking
+          address does not prove the recipient controls it.
+        </p>
+      </details>
+
+      <details class="fee-explanation">
+        <summary class="fee-explanation-label">Direct Send Warning</summary>
+        <p class="fee-explanation-body">
+          Do not send USDC directly to the ImplicitEx contract address. Direct transfers
+          may be unrecoverable. See <a href="/legal.html">Legal</a> for current notices.
+        </p>
+      </details>
+
+      <p class="agent-guidance-note" aria-label="Assistant guidance">
+        Using an AI assistant? Ask it to help verify the recipient address, fee, network state, and contract before you confirm. Assistants may explain state and guide review — final confirmation must happen in your wallet.
+      </p>
+
+    </div>
+
+    <div class="mod" id="recipientsMod" data-portal-primary-surface="RECIPIENTS" aria-labelledby="recipientsHeading">
+      <span class="mod-tag">Recipients</span>
+      <p class="mod-title" id="recipientsHeading">Recipients</p>
+      <div class="data-table" aria-label="Recipients destination">
+        <div class="data-row">
+          <span class="data-k">Status</span>
+          <span class="data-v">No saved recipients yet.</span>
+        </div>
+        <div class="data-row">
+          <span class="data-k">Tools</span>
+          <span class="data-v">Recipient tools are not enabled in this version.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="mod" id="activityMod" data-portal-primary-surface="ACTIVITY" aria-labelledby="activityHeading">
+      <span class="mod-tag">Activity</span>
+      <p class="mod-title" id="activityHeading">Activity</p>
+      <div class="receipt-history" aria-label="Recent transaction attempts">
+        <p class="receipt-history-label">Receipts</p>
+        <div id="receiptHistory" class="receipt-history-list">
+          <p class="receipt-empty">No local receipts yet.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right column: Network + Verification -->
+    <div class="mod-col">
+
+    <div class="mod" id="networkMod" data-portal-global-surface="NETWORK"
+      data-agent-step="2"
+      data-agent-purpose="Expose network, gas price, RPC latency, contract address, and chain status before execution.">
+      <span class="mod-tag">Network</span>
+      <p class="mod-title">Gas &amp; Chain Data</p>
+      <div class="data-table">
+        <div class="data-row">
+          <span class="data-k">Network</span>
+          <span class="data-v" id="networkNameDisplay">Polygon mainnet</span>
+        </div>
+        <div class="data-row data-row--expandable" id="gasRow">
+          <button class="data-row-toggle" id="gasRowToggle" type="button"
+                  aria-expanded="false" aria-controls="gasRowDetail">
+            <span class="data-k">Gas price</span>
+            <span class="data-v" id="gweiDisplay">Fetching…</span>
+            <span class="data-toggle-icon" aria-hidden="true"></span>
+          </button>
+          <div class="data-row-detail" id="gasRowDetail" hidden>
+            <p class="gas-chart-title">GAS TREND · GWEI · LAST 5 MIN</p>
+            <div class="gas-chart-frame" aria-label="Gas trend over time">
+              <div class="gas-chart-yaxis">
+                <span id="gasAxisMax">—</span>
+                <span id="gasAxisMid">—</span>
+                <span id="gasAxisMin">0</span>
+              </div>
+              <div class="gas-chart-plot" id="gasChart">
+                <div class="gas-chart-pending">DATA COLLECTION…</div>
+              </div>
+              <div class="gas-chart-xaxis">
+                <span id="gasAxisStart">−5m</span>
+                <span id="gasAxisNow">NOW</span>
+              </div>
+            </div>
+            <div class="gas-detail-row">
+              <span class="gas-detail-k">Low</span>
+              <span class="gas-detail-v" id="gasLow">—</span>
+            </div>
+            <div class="gas-detail-row">
+              <span class="gas-detail-k">Avg</span>
+              <span class="gas-detail-v" id="gasAvg">—</span>
+            </div>
+            <div class="gas-detail-row">
+              <span class="gas-detail-k">High</span>
+              <span class="gas-detail-v" id="gasHigh">—</span>
+            </div>
+            <div class="gas-detail-row">
+              <span class="gas-detail-k">Trend</span>
+              <span class="gas-detail-v" id="gasTrend">Collecting</span>
+            </div>
+            <div class="gas-detail-row gas-detail-row--meta">
+              <span class="gas-detail-k">Samples</span>
+              <span class="gas-detail-v" id="gasSamples">0</span>
+            </div>
+          </div>
+        </div>
+        <div class="data-row">
+          <span class="data-k">Block</span>
+          <span class="data-v" id="blockDisplay">—</span>
+        </div>
+        <div class="data-row">
+          <span class="data-k">Confirmation</span>
+          <span class="data-v" id="confirmTimeDisplay">—</span>
+        </div>
+        <div class="data-row">
+          <span class="data-k">USDC / USD</span>
+          <span class="data-v">$1.00</span>
+        </div>
+        <div class="data-row">
+          <span class="data-k">Contract</span>
+          <span class="data-v" id="contractStatus">0x5015841D…</span>
+        </div>
+        <div class="data-row">
+          <span class="data-k">RPC latency</span>
+          <span class="data-v" id="rpcLatencyDisplay">—</span>
+        </div>
+        <div class="data-row">
+          <span class="data-k">Status</span>
+          <span class="data-v status-ok" id="networkStatus">Operational</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="mod" id="verificationMod" data-portal-contextual-surface="VERIFICATION"
+      data-agent-step="3"
+      data-agent-purpose="Expose Coin Card registry status and recipient verification signals. Independent verification link available.">
+      <span class="mod-tag">Verification</span>
+      <p class="mod-title">Coin Card Verification</p>
+      <div class="data-table">
+        <div class="data-row">
+          <span class="data-k">Status</span>
+          <span class="data-v" id="cardStatus">No card</span>
+        </div>
+        <div class="data-row" id="cardIdRow" hidden>
+          <span class="data-k">Card ID</span>
+          <span class="data-v" id="cardIdDisplay">—</span>
+        </div>
+        <div class="data-row" id="cardOwnerRow" hidden>
+          <span class="data-k">Issued by</span>
+          <span class="data-v" id="cardOwnerDisplay">—</span>
+        </div>
+        <div class="data-row" id="cardRecipientRow" hidden>
+          <span class="data-k">Recipient</span>
+          <span class="data-v" id="cardRecipientDisplay">—</span>
+        </div>
+        <div class="data-row" id="cardChainRow" hidden>
+          <span class="data-k">Chain</span>
+          <span class="data-v" id="cardChainDisplay">—</span>
+        </div>
+        <div class="data-row" id="cardTokenRow" hidden>
+          <span class="data-k">Token</span>
+          <span class="data-v" id="cardTokenDisplay">—</span>
+        </div>
+        <div class="data-row" id="cardDomainRow" hidden>
+          <span class="data-k">Source</span>
+          <span class="data-v" id="cardDomainDisplay">—</span>
+        </div>
+        <div class="data-row" id="cardRegistryRow" hidden>
+          <span class="data-k">Registry</span>
+          <span class="data-v" id="cardRegistryDisplay">—</span>
+        </div>
+      </div>
+      <div class="card-verify-footer" id="cardVerifyFooter" hidden>
+        <a class="card-verify-link" href="/verify.html" id="cardVerifyLink">Verify independently →</a>
+      </div>
+
+      <!-- CONFIRMED TRANSFER — execution proof, shown only when a confirmed receipt exists -->
+      <div class="verif-transfer-block" id="confirmedTransferBlock" hidden>
+        <div class="verif-transfer-divider"></div>
+        <p class="verif-transfer-heading">CONFIRMED TRANSFER</p>
+        <p class="verif-transfer-sub">Local receipt — verify via transaction hash.</p>
+        <div class="data-table">
+          <div class="data-row">
+            <span class="data-k">Status</span>
+            <span class="data-v status-ok" id="verifStatus">CONFIRMED</span>
+          </div>
+          <div class="data-row">
+            <span class="data-k">Receipt</span>
+            <span class="data-v" id="verifReceiptId">—</span>
+          </div>
+          <div class="data-row">
+            <span class="data-k">Amount</span>
+            <span class="data-v" id="verifAmount">—</span>
+          </div>
+          <div class="data-row">
+            <span class="data-k">Fee</span>
+            <span class="data-v" id="verifFee">—</span>
+          </div>
+          <div class="data-row">
+            <span class="data-k">Total</span>
+            <span class="data-v" id="verifTotal">—</span>
+          </div>
+          <div class="data-row">
+            <span class="data-k">Recipient</span>
+            <span class="data-v" id="verifRecipient">—</span>
+          </div>
+          <div class="data-row">
+            <span class="data-k">Network</span>
+            <span class="data-v" id="verifNetwork">—</span>
+          </div>
+          <div class="data-row">
+            <span class="data-k">Tx hash</span>
+            <span class="data-v" id="verifTxHash">—</span>
+          </div>
+          <div class="data-row">
+            <span class="data-k">Block</span>
+            <span class="data-v" id="verifBlock">—</span>
+          </div>
+          <div class="data-row">
+            <span class="data-k">Confirmed</span>
+            <span class="data-v" id="verifTimestamp">—</span>
+          </div>
+        </div>
+        <div class="verif-transfer-actions" id="verifTransferActions"></div>
+      </div>
+    </div>
+
+    </div><!-- /.mod-col -->
+
+    <!-- Transaction Companion Tray -->
+    <div id="companion" class="companion" role="complementary" aria-label="Transaction status" data-portal-primary-surface="TRANSFER">
+      <div class="companion-bar" id="companionBar" role="button" tabindex="0"
+           aria-expanded="false" aria-controls="companionDetail"
+           aria-label="Transaction status — click to expand">
+        <span class="companion-indicator" aria-hidden="true"></span>
+        <span class="companion-status" id="companionStatus">Ready · No active transaction</span>
+        <span class="companion-toggle" aria-hidden="true"></span>
+      </div>
+      <div class="companion-detail" id="companionDetail" aria-hidden="true">
+        <div class="companion-body">
+          <div class="companion-row">
+            <span class="companion-k">Status</span>
+            <span class="companion-v" id="companionStateVal">Ready</span>
+          </div>
+          <div class="companion-row">
+            <span class="companion-k">Funds Moved</span>
+            <span class="companion-v" id="companionFundsVal">No active transaction</span>
+          </div>
+          <div class="companion-row">
+            <span class="companion-k">Network</span>
+            <span class="companion-v" id="companionNetworkVal">—</span>
+          </div>
+          <div class="companion-row">
+            <span class="companion-k">Last Event</span>
+            <span class="companion-v" id="companionEventVal">—</span>
+          </div>
+          <div class="companion-row">
+            <span class="companion-k">Next Step</span>
+            <span class="companion-v companion-action" id="companionActionVal">Connect wallet to begin.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Telemetry -->
+    <section class="telemetry" id="telemetry" aria-label="System telemetry" data-portal-contextual-surface="SYSTEM">
+      <div class="telemetry-bar" id="telemetryBar"
+           role="button" tabindex="0"
+           aria-expanded="false" aria-controls="telemetryPanel"
+           aria-label="Telemetry — click to expand">
+        <span class="telemetry-dot" id="telemetryDot" aria-hidden="true"></span>
+        <span class="telemetry-label">Telemetry</span>
+        <span class="telemetry-summary" id="telemetrySummary">Nominal</span>
+        <span class="telemetry-chevron" aria-hidden="true"></span>
+      </div>
+      <div class="telemetry-panel" id="telemetryPanel" hidden aria-hidden="true">
+        <div class="telemetry-body">
+          <div class="telemetry-section" id="telemetrySectionStatus">
+            <div class="telemetry-section-label">Status</div>
+            <div class="telemetry-rows" id="telemetryStatusRows"></div>
+          </div>
+          <div class="telemetry-section" id="telemetrySectionDetails">
+            <div class="telemetry-section-label">Details</div>
+            <div class="telemetry-rows" id="telemetryDetailsRows"></div>
+          </div>
+          <div class="telemetry-section" id="telemetrySectionGuidance">
+            <div class="telemetry-section-label">Guidance</div>
+            <div class="telemetry-rows" id="telemetryGuidanceRows"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </section>
+
+  </div><!-- /portal-zone -->
+
+  </main>
+
+  <!-- Portal footer -->
+  <footer class="portal-footer" id="portalFooter" aria-label="Portal information" data-portal-contextual-surface="SYSTEM">
+    <div class="portal-footer-row">
+      <p class="portal-footer-statement">ImplicitEx is non-custodial. The portal opens directly from the web or as an installed shortcut. Transfers are confirmed by the sender's wallet and cannot be reversed once confirmed on-chain.</p>
+      <div class="portal-footer-actions">
+        <a class="portal-footer-install-link" id="portalFooterInstallLink" href="/install.html">Add ImplicitEx to a device</a>
+        <details class="portal-footer-more" id="portalFooterMore">
+          <summary>More</summary>
+          <div class="portal-footer-more-panel">
+            <nav class="portal-footer-nav" aria-label="Footer links">
+              <div class="portal-footer-group">
+                <span class="portal-footer-label">Legal</span>
+                <a href="/terms.html">Terms</a>
+                <a href="/privacy.html">Privacy</a>
+                <a href="/legal.html">Legal</a>
+                <a href="/risk-disclosure.html">Risk Disclosure</a>
+                <a href="/fee-disclosure.html">Fee &amp; Network</a>
+                <a href="/acceptable-use.html">Acceptable Use</a>
+              </div>
+              <div class="portal-footer-group">
+                <span class="portal-footer-label">Trust</span>
+                <a href="/contract-addresses.html">Contract Addresses</a>
+                <a href="/security.html">Security</a>
+                <a href="/status.html">Status</a>
+                <a href="/verify.html">Coin Card Verification</a>
+              </div>
+              <div class="portal-footer-group">
+                <span class="portal-footer-label">Agent / Index</span>
+                <a href="/llms.txt">llms.txt</a>
+                <a href="/robots.txt">robots.txt</a>
+                <a href="/sitemap.xml">sitemap.xml</a>
+                <a href="/metadata.html">Metadata</a>
+              </div>
+              <div class="portal-footer-group">
+                <span class="portal-footer-label">Contact</span>
+                <a href="/contact.html">Support</a>
+                <a href="mailto:connect@implicitex.com">Legal Contact</a>
+                <a href="/security.html">Report a Security Issue</a>
+              </div>
+            </nav>
+          </div>
+        </details>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts — same as index.html minus canvas.js, feeds.js, news-data.js -->
+  <script
+    src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"
+    integrity="sha384-6Zl0Pc8zjSz8KvmNeXRvUQgY4ryFb+BwDvKCmLYcBME0joAaru491tQgi9B7zsMM"
+    crossorigin="anonymous"
+  ></script>
+  <script src="config/chains.js"></script>
+  <script src="js/walletconnect-provider.js"></script>
+  <script src="js/transfer-status.js"></script>
+  <script src="js/error-classifier.js"></script>
+  <script src="js/receipt-schema.js"></script>
+  <script src="js/receipt-integrity.js"></script>
+  <script src="js/proof-packet.js"></script>
+  <script src="js/receipt-store.js"></script>
+  <script src="js/analytics.js"></script>
+  <script src="js/consent.js"></script>
+  <script src="js/portal-view-state.js"></script>
+  <script src="js/portal-view-projection.js"></script>
+  <script src="js/portal-surface-registry.js"></script>
+  <script src="js/portal-visibility-controller.js"></script>
+  <script src="js/portal-navigation-coordinator.js"></script>
+  <script src="js/wallet.js"></script>
+  <script src="js/portal-display.js"></script>
+  <script src="js/coincard.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/mobile-menu.js"></script>
+  <script src="components/companion/companion.js"></script>
+  <script src="js/telemetry.js"></script>
+  <script src="js/rehydrate.js"></script>
+  <script src="js/coincard-handoff.js"></script>
+
+  <!-- Auto-expand: portal-index.html is the primary surface — start expanded, not minimized -->
+  <script>
+  (function () {
+    if (window.IX && typeof IX.focusTransferPortal === 'function') {
+      IX.focusTransferPortal();
+    }
+  }());
+  </script>
+
+  <!-- Portal layout toggle — persists across sessions -->
+  <script>
+  (function () {
+    var STORAGE_KEY = 'ix-portal-layout';
+    var modules = document.getElementById('modules');
+    var btn     = document.getElementById('layoutToggle');
+
+    function applyLayout(mode) {
+      if (modules) modules.setAttribute('data-portal-layout', mode);
+      if (btn) {
+        btn.setAttribute('data-layout', mode);
+        btn.setAttribute('aria-label',
+          mode === 'columns' ? 'Switch to stacked layout' : 'Switch to columns layout');
+      }
+      try { localStorage.setItem(STORAGE_KEY, mode); } catch (e) {}
+    }
+
+    try {
+      var saved = localStorage.getItem(STORAGE_KEY);
+      applyLayout((saved === 'stacked' || saved === 'columns') ? saved : 'columns');
+    } catch (e) { applyLayout('columns'); }
+
+    if (btn) {
+      btn.addEventListener('click', function () {
+        var next = (btn.getAttribute('data-layout') === 'columns') ? 'stacked' : 'columns';
+        applyLayout(next);
+      });
+    }
+  }());
+  </script>
+
+</body>
+</html>

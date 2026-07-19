@@ -5,13 +5,39 @@
   "scripts": {
     "compile": "hardhat compile",
     "check:static": "node scripts/check_static_public.js",
+    "build:coincard-tokens": "node scripts/generate_coin_card_tokens_css.js",
+    "check:coincard-tokens": "node scripts/generate_coin_card_tokens_css.js --check",
+    "build:coincard-review": "node scripts/generate_coin_card_review_contract.js",
+    "check:coincard-review": "node scripts/generate_coin_card_review_contract.js --check",
+    "validate:architecture": "node scripts/validate_coin_card_architecture.js",
+    "test:coincard-presentation-input": "node tests/frontend/coin-card-presentation-input.test.js",
+    "test:coincard-display": "node tests/frontend/coin-card-display.test.js",
+    "test:coincard": "npm run test:coincard-presentation-input && npm run test:coincard-display && node tests/frontend/coin-card-tokens.test.js",
+    "test:coincard-review": "node tests/frontend/coin-card-state-review.test.js",
+    "test:coin-card-integrity": "node scripts/test_coin_card_integrity.js",
+    "test:coin-card-verification": "node tests/frontend/coin-card-trusted-key-resolution.test.js && node tests/frontend/coin-card-lifecycle-record-verification.test.js && node tests/frontend/coin-card-lifecycle-bundle-verification.test.js && node tests/frontend/coin-card-lifecycle-record-selection.test.js && node tests/frontend/coin-card-lifecycle-resolution.test.js && node tests/frontend/coin-card-lifecycle-presentation.test.js && node tests/frontend/coin-card-execution-authorization.test.js && node tests/frontend/coin-card-verification.test.js && node tests/frontend/coin-card-runtime-trust-conjunction.test.js && node tests/frontend/coin-card-lifecycle-registry.test.js",
+    "test:portal": "node tests/frontend/portal-installability.test.js",
+    "test:coin-card-qr-handoff": "node tests/frontend/coin-card-qr-handoff.test.js",
+    "test:coin-card-qr-browser": "node tests/browser/coin-card-qr-browser.test.js",
+    "build:qrcode-vendor": "esbuild node_modules/qrcode/lib/browser.js --bundle --minify --global-name=QRCode --format=iife --outfile=frontend/public/js/vendor/qrcode.min.js",
+    "check:qrcode-vendor": "node scripts/check_qrcode_vendor.js",
+    "test:ix-execution": "node tests/frontend/ix-execution.test.js",
+    "test:ix-execution-authorized": "node tests/frontend/ix-execution-authorized-path.test.js",
     "test:observability": "node tests/frontend/observability.test.js",
+    "test:analytics": "node tests/frontend/analytics.test.js",
+    "test:consent": "node tests/frontend/consent.test.js",
     "test": "hardhat test"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
     "dotenv": "^17.4.2",
-    "hardhat": "^2.22.0"
+    "esbuild": "0.25.5",
+    "hardhat": "^2.22.0",
+    "jsqr": "^1.4.0",
+    "png-to-ico": "^3.0.1",
+    "puppeteer": "^25.1.0",
+    "qrcode": "1.5.4",
+    "sharp": "^0.35.1"
   },
   "dependencies": {
     "@openzeppelin/contracts": "^5.6.1"

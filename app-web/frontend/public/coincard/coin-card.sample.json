@@ -1,0 +1,11 @@
+{
+  "schema": "implicitex.coincard.free.v1",
+  "version": 1,
+  "created": "2026-07-04T18:00:00Z",
+  "updated": "2026-07-04T18:00:00Z",
+  "name": "Aden Media Group",
+  "recipientAddress": "0x0000000000000000000000000000000000000000",
+  "network": "polygon",
+  "token": "USDC",
+  "status": "active"
+}

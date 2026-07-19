@@ -1,0 +1,15 @@
+{
+  "schema": "implicitex.coincard.registry.v1",
+  "updatedAt": "2026-06-25T00:00:00Z",
+  "cards": [
+    {
+      "cardId": "cc_demo_implicitex",
+      "status": "active",
+      "displayName": "ImplicitEx Demo Treasury",
+      "href": "/registry/coincards/cc_demo_implicitex.json",
+      "chainId": 137,
+      "token": "USDC",
+      "updatedAt": "2026-06-25T00:00:00Z"
+    }
+  ]
+}

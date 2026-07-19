@@ -1,0 +1,570 @@
+{
+  "schema": "implicitex.coin-card.artifact.v1",
+  "name": "Coin Card Artifact Contract",
+  "status": "constitutional-contract",
+  "date": "2026-07-07",
+  "purpose": "Define the ownership graph Coin Card implementations must satisfy, independent of DOM, class names, layout implementation, or visual checkpoint.",
+  "checkpoint": {
+    "semanticCommit": "6bb6d34",
+    "rebuiltCardCommit": "b1bc58e",
+    "tag": "coincard-instrument-checkpoint-2026-07-06",
+    "checkpointDocument": "app-web/docs/product/coin-card/CURRENT_STATE_2026-07-06.md",
+    "structureContract": "docs/product/coin-card/coin-card.structure/v1.json",
+    "visualReference": "docs/operations/evidence/coincard/2026-07-06-card-execution-shell.png"
+  },
+  "authority": {
+    "sourceOrder": [
+      "gitTag",
+      "artifactGraph",
+      "structureContract",
+      "checkpointDocument",
+      "architectureValidator",
+      "smokeChecklist",
+      "screenshot"
+    ],
+    "notes": [
+      "The artifact graph defines ownership and dependency direction.",
+      "The structure contract defines how a specific implementation version maps onto the graph.",
+      "The screenshot is visual evidence only. It does not define structure, ownership, or product boundaries."
+    ]
+  },
+  "graph": {
+    "nodes": [
+      {
+        "id": "coinCard",
+        "type": "surface",
+        "role": "primary-payment-instrument"
+      },
+      {
+        "id": "identity",
+        "type": "responsibility",
+        "role": "structural-region"
+      },
+      {
+        "id": "transaction",
+        "type": "responsibility",
+        "role": "stateful-workflow-region"
+      },
+      {
+        "id": "verifiedTransferIntent",
+        "type": "responsibility",
+        "role": "coin-card-execution-request"
+      },
+      {
+        "id": "executionFulfillment",
+        "type": "responsibility",
+        "role": "execution-service-workflow"
+      },
+      {
+        "id": "receipt",
+        "type": "responsibility",
+        "role": "terminal-evidence-region"
+      },
+      {
+        "id": "transferPortal",
+        "type": "surface",
+        "role": "optional-inspection-console"
+      },
+      {
+        "id": "lifecycleBundle",
+        "type": "responsibility",
+        "role": "atomic-record-collection-authentication"
+      },
+      {
+        "id": "lifecycleRecordSelection",
+        "type": "responsibility",
+        "role": "authenticated-evidence-selection"
+      },
+      {
+        "id": "lifecycleRegistry",
+        "type": "responsibility",
+        "role": "registry-canonicalization-and-empty-bundle-validation"
+      },
+      {
+        "id": "lifecycleRecordVerification",
+        "type": "responsibility",
+        "role": "individual-lifecycle-record-authentication"
+      },
+      {
+        "id": "manifestVerification",
+        "type": "responsibility",
+        "role": "signed-manifest-authentication"
+      },
+      {
+        "id": "lifecycleResolution",
+        "type": "responsibility",
+        "role": "operational-lifecycle-resolution"
+      },
+      {
+        "id": "lifecyclePresentationPromotion",
+        "type": "responsibility",
+        "role": "presentation-promotion-policy"
+      },
+      {
+        "id": "executionAuthorization",
+        "type": "responsibility",
+        "role": "execution-authorization-policy"
+      },
+      {
+        "id": "presentation",
+        "type": "responsibility",
+        "role": "presentation-projection"
+      },
+      {
+        "id": "ixExecute",
+        "type": "service",
+        "role": "execution-engine",
+        "symbol": "window.IX_EXECUTION"
+      },
+      {
+        "id": "wallet",
+        "type": "responsibility",
+        "role": "execution-workflow"
+      },
+      {
+        "id": "approval",
+        "type": "responsibility",
+        "role": "execution-workflow"
+      },
+      {
+        "id": "transfer",
+        "type": "responsibility",
+        "role": "execution-workflow"
+      },
+      {
+        "id": "receiptPolling",
+        "type": "responsibility",
+        "role": "execution-workflow"
+      },
+      {
+        "id": "feeMath",
+        "type": "responsibility",
+        "role": "single-authority"
+      }
+    ],
+    "edges": [
+      {
+        "from": "coinCard",
+        "to": "identity",
+        "relationship": "owns"
+      },
+      {
+        "from": "coinCard",
+        "to": "transaction",
+        "relationship": "owns"
+      },
+      {
+        "from": "coinCard",
+        "to": "verifiedTransferIntent",
+        "relationship": "owns"
+      },
+      {
+        "from": "coinCard",
+        "to": "receipt",
+        "relationship": "owns"
+      },
+      {
+        "from": "coinCard",
+        "to": "lifecycleBundle",
+        "relationship": "owns"
+      },
+      {
+        "from": "lifecycleBundle",
+        "to": "lifecycleRegistry",
+        "relationship": "consumes"
+      },
+      {
+        "from": "lifecycleBundle",
+        "to": "lifecycleRecordVerification",
+        "relationship": "consumes"
+      },
+      {
+        "from": "lifecycleRecordSelection",
+        "to": "lifecycleBundle",
+        "relationship": "consumes"
+      },
+      {
+        "from": "lifecycleRecordSelection",
+        "to": "lifecycleRegistry",
+        "relationship": "consumes"
+      },
+      {
+        "from": "lifecycleResolution",
+        "to": "lifecycleRecordSelection",
+        "relationship": "consumes"
+      },
+      {
+        "from": "lifecyclePresentationPromotion",
+        "to": "lifecycleResolution",
+        "relationship": "consumes"
+      },
+      {
+        "from": "executionAuthorization",
+        "to": "lifecyclePresentationPromotion",
+        "relationship": "consumes"
+      },
+      {
+        "from": "coinCard",
+        "to": "ixExecute",
+        "relationship": "consumes"
+      },
+      {
+        "from": "transferPortal",
+        "to": "ixExecute",
+        "relationship": "consumes"
+      },
+      {
+        "from": "transferPortal",
+        "to": "coinCard",
+        "relationship": "augments"
+      },
+      {
+        "from": "ixExecute",
+        "to": "wallet",
+        "relationship": "owns"
+      },
+      {
+        "from": "ixExecute",
+        "to": "executionFulfillment",
+        "relationship": "owns"
+      },
+      {
+        "from": "ixExecute",
+        "to": "approval",
+        "relationship": "owns"
+      },
+      {
+        "from": "ixExecute",
+        "to": "transfer",
+        "relationship": "owns"
+      },
+      {
+        "from": "ixExecute",
+        "to": "receiptPolling",
+        "relationship": "owns"
+      },
+      {
+        "from": "ixExecute",
+        "to": "feeMath",
+        "relationship": "owns"
+      }
+    ],
+    "forbiddenEdges": [
+      {
+        "from": "coinCard",
+        "to": "transferPortal",
+        "relationship": "depends-on",
+        "reason": "Coin Card payments must complete without the Transfer Portal."
+      },
+      {
+        "from": "coinCard",
+        "to": "transferPortal",
+        "relationship": "routes-payment-through",
+        "reason": "The Portal may inspect or augment; it must never become the payment path."
+      },
+      {
+        "from": "transferPortal",
+        "to": "coinCard",
+        "relationship": "routes-payment-through",
+        "reason": "Both surfaces consume IX_EXECUTION independently."
+      },
+      {
+        "from": "lifecycleBundle",
+        "to": "manifestVerification",
+        "relationship": "depends-on",
+        "reason": "Lifecycle bundle verification must not depend on manifest verification."
+      },
+      {
+        "from": "lifecycleBundle",
+        "to": "presentation",
+        "relationship": "depends-on",
+        "reason": "Lifecycle bundle verification must not depend on presentation."
+      },
+      {
+        "from": "lifecycleBundle",
+        "to": "wallet",
+        "relationship": "depends-on",
+        "reason": "Lifecycle bundle verification must not depend on wallet state."
+      },
+      {
+        "from": "lifecycleBundle",
+        "to": "ixExecute",
+        "relationship": "depends-on",
+        "reason": "Lifecycle bundle verification must not depend on IX execution."
+      },
+      {
+        "from": "lifecycleBundle",
+        "to": "lifecycleResolution",
+        "relationship": "depends-on",
+        "reason": "Lifecycle bundle verification must not depend on lifecycle resolution."
+      },
+      {
+        "from": "lifecycleRecordSelection",
+        "to": "manifestVerification",
+        "relationship": "depends-on",
+        "reason": "Lifecycle record selection must not depend on manifest verification."
+      },
+      {
+        "from": "lifecycleRecordSelection",
+        "to": "presentation",
+        "relationship": "depends-on",
+        "reason": "Lifecycle record selection must not depend on presentation."
+      },
+      {
+        "from": "lifecycleRecordSelection",
+        "to": "wallet",
+        "relationship": "depends-on",
+        "reason": "Lifecycle record selection must not depend on wallet state."
+      },
+      {
+        "from": "lifecycleRecordSelection",
+        "to": "ixExecute",
+        "relationship": "depends-on",
+        "reason": "Lifecycle record selection must not depend on IX execution."
+      },
+      {
+        "from": "lifecycleRecordSelection",
+        "to": "lifecycleResolution",
+        "relationship": "depends-on",
+        "reason": "Lifecycle record selection must not depend on lifecycle resolution."
+      },
+      {
+        "from": "lifecycleResolution",
+        "to": "lifecycleRecordVerification",
+        "relationship": "depends-on",
+        "reason": "Lifecycle resolution must not depend on lifecycle record verification."
+      },
+      {
+        "from": "lifecycleResolution",
+        "to": "lifecycleBundle",
+        "relationship": "depends-on",
+        "reason": "Lifecycle resolution must not depend on lifecycle bundle validation."
+      },
+      {
+        "from": "lifecycleResolution",
+        "to": "lifecyclePresentationPromotion",
+        "relationship": "depends-on",
+        "reason": "Lifecycle resolution must not depend on presentation-promotion policy."
+      },
+      {
+        "from": "lifecyclePresentationPromotion",
+        "to": "lifecycleRecordSelection",
+        "relationship": "depends-on",
+        "reason": "Presentation-promotion policy must not depend on record selection."
+      },
+      {
+        "from": "lifecyclePresentationPromotion",
+        "to": "lifecycleBundle",
+        "relationship": "depends-on",
+        "reason": "Presentation-promotion policy must not depend on bundle verification."
+      },
+      {
+        "from": "lifecyclePresentationPromotion",
+        "to": "lifecycleRecordVerification",
+        "relationship": "depends-on",
+        "reason": "Presentation-promotion policy must not depend on record verification."
+      },
+      {
+        "from": "lifecyclePresentationPromotion",
+        "to": "lifecycleRegistry",
+        "relationship": "depends-on",
+        "reason": "Presentation-promotion policy must not depend on the registry layer."
+      },
+      {
+        "from": "lifecyclePresentationPromotion",
+        "to": "wallet",
+        "relationship": "depends-on",
+        "reason": "Presentation-promotion policy must not depend on wallet state."
+      },
+      {
+        "from": "lifecyclePresentationPromotion",
+        "to": "ixExecute",
+        "relationship": "depends-on",
+        "reason": "Presentation-promotion policy must not depend on IX execution."
+      },
+      {
+        "from": "lifecycleResolution",
+        "to": "manifestVerification",
+        "relationship": "depends-on",
+        "reason": "Lifecycle resolution must not depend on manifest verification."
+      },
+      {
+        "from": "lifecycleResolution",
+        "to": "presentation",
+        "relationship": "depends-on",
+        "reason": "Lifecycle resolution must not depend on presentation."
+      },
+      {
+        "from": "lifecycleResolution",
+        "to": "wallet",
+        "relationship": "depends-on",
+        "reason": "Lifecycle resolution must not depend on wallet state."
+      },
+      {
+        "from": "lifecycleResolution",
+        "to": "ixExecute",
+        "relationship": "depends-on",
+        "reason": "Lifecycle resolution must not depend on IX execution."
+      },
+      {
+        "from": "executionAuthorization",
+        "to": "lifecycleResolution",
+        "relationship": "depends-on",
+        "reason": "Execution authorization must not bypass the presentation-promotion layer."
+      },
+      {
+        "from": "executionAuthorization",
+        "to": "lifecycleRecordSelection",
+        "relationship": "depends-on",
+        "reason": "Execution authorization must not access raw lifecycle evidence."
+      },
+      {
+        "from": "executionAuthorization",
+        "to": "lifecycleBundle",
+        "relationship": "depends-on",
+        "reason": "Execution authorization must not access raw lifecycle bundles."
+      },
+      {
+        "from": "executionAuthorization",
+        "to": "lifecycleRecordVerification",
+        "relationship": "depends-on",
+        "reason": "Execution authorization must not access raw lifecycle records."
+      },
+      {
+        "from": "executionAuthorization",
+        "to": "lifecycleRegistry",
+        "relationship": "depends-on",
+        "reason": "Execution authorization must not access the registry layer."
+      },
+      {
+        "from": "executionAuthorization",
+        "to": "ixExecute",
+        "relationship": "depends-on",
+        "reason": "Execution authorization must not call IX_EXECUTION; it authorizes a result that IX_EXECUTION validates."
+      }
+    ]
+  },
+  "regionModel": {
+    "identity": {
+      "role": "structural",
+      "stateControlled": false,
+      "mustPersistAcrossWorkflowStates": true,
+      "examples": [
+        "issuer",
+        "verification status",
+        "recipient identity",
+        "network and token rail",
+        "product or issuer branding"
+      ]
+    },
+    "transaction": {
+      "role": "stateful",
+      "stateControlled": true,
+      "mayChangeAcrossWorkflowStates": true,
+      "examples": [
+        "amount entry",
+        "wallet connection",
+        "network switch",
+        "approval",
+        "transfer execution",
+        "error recovery"
+      ]
+    },
+    "receipt": {
+      "role": "terminal-evidence",
+      "stateControlled": true,
+      "mustTerminateConfirmedTransfer": true,
+      "examples": [
+        "transaction hash",
+        "confirmed amount",
+        "confirmed fee",
+        "explorer link",
+        "receipt or proof packet"
+      ]
+    }
+  },
+  "invariants": [
+    {
+      "id": "complete-payment-instrument",
+      "rule": "Every payment must be completable without leaving the Coin Card."
+    },
+    {
+      "id": "portal-optional",
+      "rule": "The Transfer Portal is optional and must never become a required payment step."
+    },
+    {
+      "id": "direct-execution-engine",
+      "rule": "Coin Card and Transfer Portal consume IX_EXECUTION independently; neither routes through the other."
+    },
+    {
+      "id": "execution-request-boundary",
+      "rule": "Coin Card creates a verified transfer intent. IX_EXECUTION fulfills it through a product-level execution request."
+    },
+    {
+      "id": "single-execution-owner",
+      "rule": "IX_EXECUTION owns wallet access, approval, transfer, receipt polling, and fee math."
+    },
+    {
+      "id": "single-fee-authority",
+      "rule": "IX_EXECUTION.calculateFee() is the single fee authority for Coin Card and Transfer Portal."
+    },
+    {
+      "id": "identity-regions-are-structural",
+      "rule": "Identity regions are structural. Workflow regions are stateful. Structural regions never disappear. Workflow regions may change."
+    },
+    {
+      "id": "receipt-stays-in-instrument",
+      "rule": "A confirmed transfer must terminate in a Coin Card receipt or confirmation state."
+    }
+  ],
+  "expectedLifecycle": [
+    {
+      "id": "identity-loaded",
+      "ownedBy": "identity",
+      "question": "Who can I pay here?",
+      "fundMovingWriteAllowed": false
+    },
+    {
+      "id": "amount-ready",
+      "ownedBy": "transaction",
+      "question": "What amount am I preparing to send?",
+      "fundMovingWriteAllowed": false
+    },
+    {
+      "id": "transfer-intent-ready",
+      "ownedBy": "transaction",
+      "question": "What exactly am I committing to?",
+      "fundMovingWriteAllowed": false
+    },
+    {
+      "id": "execution-pending",
+      "ownedBy": "transaction",
+      "question": "What execution step is currently in progress?",
+      "fundMovingWriteAllowed": true
+    },
+    {
+      "id": "confirmed",
+      "ownedBy": "receipt",
+      "question": "What evidence exists that this happened?",
+      "fundMovingWriteAllowed": false
+    },
+    {
+      "id": "recovery",
+      "ownedBy": "transaction",
+      "question": "What prevented completion, and what can the sender do next?",
+      "fundMovingWriteAllowed": false
+    }
+  ],
+  "testableAssertions": [
+    "Every ownership edge points to one natural owner.",
+    "No forbidden dependency edge is present in the implementation mapping.",
+    "Coin Card owns identity, transaction, and receipt.",
+    "Coin Card owns verified transfer intent but not execution fulfillment.",
+    "Transfer Portal augments Coin Card but does not route Coin Card payments.",
+    "IX_EXECUTION owns execution fulfillment, wallet, approval, transfer, receipt polling, and fee math.",
+    "Identity regions are structural and persist across workflow states.",
+    "Workflow regions may change across workflow states.",
+    "A confirmed transfer terminates inside the Coin Card.",
+    "Screenshots are never treated as structural authority."
+  ]
+}
