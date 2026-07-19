@@ -1,0 +1,160 @@
+{
+  "schemaVersion": "implicitex-coin-card-final-signing-checkpoint.v1",
+  "status": "FINAL_SIGNING_ACCEPTED",
+  "signingDate": "2026-07-19",
+  "signingTimestampUtc": "2026-07-19T08:22:48.679Z",
+  "sourceHead": "4c8931e",
+  "testedRuntimeCommit": "627586a",
+  "forkSuiteCommit": "715a685",
+  "forkCheckpointCommit": "ee0ee09",
+  "forkProvenanceCommit": "2d74bf7",
+  "liveApplicabilityCommit": "4c8931e",
+  "buildVersion": "coin-card-visible-review-runtime-v3-20260719",
+  "canonicalPolicyId": "COIN_CARD_POLYGON_V1",
+  "manifestSchema": "coin-card-manifest.v1",
+  "lifecycleSchema": "coin-card-lifecycle-registry-bundle.v1",
+  "lifecycleRecordSchema": "coin-card-lifecycle-registry-record.v1",
+  "manifestKeyId": "ix-coin-card-manifest-v2",
+  "lifecycleKeyId": "ix-lifecycle-pub-v2",
+  "signerFingerprints": {
+    "manifestKey": "JSDPJ1Uswec6WebK4SUmqqOIVsatE_ScgosFAk5xy5I",
+    "lifecycleKey": "j7VW9paMH3fu_bZ-a3WMVcg4a54W3bXitLjE6Eoqy84"
+  },
+  "signatureAlgorithm": "ECDSA_P256_SHA256",
+  "protectedAssetCount": 15,
+  "selectedGeneration": "A",
+  "selectionRule": "first fully accepted generation",
+  "semanticDoubleGenerationResult": "SEMANTIC_DOUBLE_GENERATION_PASSED",
+  "invariantComparison": {
+    "allSchemaVersionsIdentical": true,
+    "buildVersionIdentical": true,
+    "keyIdsIdentical": true,
+    "signatureAlgorithmsIdentical": true,
+    "assetPathSetIdentical": true,
+    "allAssetSriHashesIdentical": true,
+    "trustedKeyCountIdentical": true,
+    "lifecycleStatusesIdentical": true,
+    "allNonTemporalProductMetadataIdentical": true
+  },
+  "nondeterministicFields": [
+    "manifest.signedAt",
+    "manifest.signature.signedAt",
+    "manifest.signature.value",
+    "manifest.manifestHash",
+    "lifecycle.entries[0].publishedAt",
+    "lifecycle.entries[0].effectiveFrom",
+    "lifecycle.entries[0].signature.signedAt",
+    "lifecycle.entries[0].signature.value",
+    "lifecycle.entries[0].manifestId"
+  ],
+  "nondeterminismExplanation": "Timestamps enter the signed payload; WebCrypto ECDSA uses randomized nonces. Byte-identical reproduction is architecturally impossible. Semantic equivalence verified across both generations.",
+  "selectedPair": {
+    "signedAt": "2026-07-19T08:22:48.679Z",
+    "manifestHash": "sha256:d62fab4d1d6ac07c4ba04f0b2e3eca21665a2fd797e517350e7a75fa4c20ea79",
+    "manifestDigestBase64": "fE4De5vCObDmZgXu5cRt4H+ttO9450/EB5SSFDt/ewM=",
+    "lifecycleDigestBase64": "YLjFTwVOADRRzkE2EV+eCewt1F7WaQMXyg5Gh1rW0SI="
+  },
+  "protectedArtifacts": {
+    "coinCardManifest": {
+      "path": "app-web/frontend/public/card/coin-card-manifest.json",
+      "digestBefore": "+/fa4+Gk3Dz9po0twLShpLVqb1ui61wRixtGcPEQ1Q8=",
+      "digestAfter": "fE4De5vCObDmZgXu5cRt4H+ttO9450/EB5SSFDt/ewM=",
+      "changed": true
+    },
+    "coinCardLifecycleBundle": {
+      "path": "app-web/frontend/public/card/coin-card-lifecycle-bundle.js",
+      "digestBefore": "zi51kLSCJiFt4tnTrWtiebG/YXfHnzTjc9GWNhURHPI=",
+      "digestAfter": "YLjFTwVOADRRzkE2EV+eCewt1F7WaQMXyg5Gh1rW0SI=",
+      "changed": true
+    },
+    "coinCardTrustedKeys": {
+      "path": "app-web/frontend/public/card/coin-card-trusted-keys.js",
+      "digestBefore": "rCC6zgEt33JO2m1Tx3WkTv1LuGXYRf3xNRuRRuJLlrc=",
+      "digestAfter": "rCC6zgEt33JO2m1Tx3WkTv1LuGXYRf3xNRuRRuJLlrc=",
+      "changed": false,
+      "note": "Generation A trusted-keys output is byte-identical to the committed file; not modified"
+    },
+    "trustConjunctionTest": {
+      "path": "app-web/tests/frontend/coin-card-runtime-trust-conjunction.test.js",
+      "digestAfter": "YfRSe3oJxVuJMQT90PqhGwUEKhcqn4ZEhs6Rv1qeup4=",
+      "changed": true,
+      "note": "Verification clock hardened: default test clock derived deterministically from committed artifact timestamps — manifest.signedAt, manifest.signature.signedAt, bundle.generatedAt, and publishedAt/effectiveFrom/signature.signedAt from every lifecycle entry. Pure helper _maxTimestampPlusMargin() takes the maximum across all collected timestamps and adds a fixed 60-second margin (FIXTURE_CLOCK_MARGIN_MS). Margin does not need to exceed the 5-minute clock-skew window; it only needs to place the clock strictly after the latest publication timestamp. Clock-skew rejection independently tested via explicit options.now override set 10 minutes before signing, yielding TRUSTED_KEY_RECORD_INVALID / VERIFICATION_UNAVAILABLE. Regression test exercises all-entry max-selection with synthetic inputs. No calendar literal; clock self-advances with every future manifest regeneration. Required for 10/10 trust-conjunction transition; 11/11 with regression test included."
+    }
+  },
+  "canonicalCliOptions": {
+    "manifestKeyFile": "--manifest-key-file",
+    "lifecycleKeyFile": "--lifecycle-key-file",
+    "manifestKeyId": "--manifest-key-id",
+    "lifecycleKeyId": "--lifecycle-key-id",
+    "buildVersion": "--build-version",
+    "manifestOut": "--manifest-out",
+    "trustedKeysOut": "--trusted-keys-out",
+    "lifecycleBundleOut": "--lifecycle-bundle-out",
+    "preserveTrustedKeysFrom": "--preserve-trusted-keys-from"
+  },
+  "preSignTrustConjunctionResults": {
+    "pass": 3,
+    "fail": 7,
+    "classification": "stale-integrity failures; manifest not yet regenerated"
+  },
+  "postSignTrustConjunctionResults": {
+    "pass": 11,
+    "fail": 0,
+    "transition": "7 stale-integrity failures resolved to 0; 1 new regression test added (artifact-derived clock across all lifecycle entries + synthetic max-selection proof + clock-skew rejection via explicit override)",
+    "fixtureClockDerivation": {
+      "method": "max of 6 artifact timestamps plus fixed margin",
+      "sourceFields": [
+        "manifest.signedAt",
+        "manifest.signature.signedAt",
+        "bundle.generatedAt",
+        "entries[i].publishedAt (all lifecycle entries)",
+        "entries[i].effectiveFrom (all lifecycle entries)",
+        "entries[i].signature.signedAt (all lifecycle entries)"
+      ],
+      "fixedMarginMs": 60000,
+      "overrideAvailable": "options.now passed to makeContext() overrides DEFAULT_VERIFICATION_NOW"
+    }
+  },
+  "priorManifestBuildVersion": "coin-card-review-runtime-v2-20260716",
+  "suiteResults": {
+    "ix-execution-gas-policy.test.js": "pass",
+    "ix-execution-policy-applicability.test.js": "pass",
+    "coin-card-fork-policy-authority.test.js": "11/11 pass",
+    "ix-execution.test.js": "15/15 pass",
+    "ix-execution-authorized-path.test.js": "20/20 pass",
+    "coin-card-visible-review-runtime.test.js": "pass",
+    "coin-card-qr-browser.test.js": "19/19 pass",
+    "coin-card-geometry-browser.test.js": "10/10 pass",
+    "coin-card-runtime-trust-conjunction.test.js": "11/11 pass (post-sign; includes artifact-derived clock regression test)",
+    "test_coin_card_integrity.js": "pass",
+    "git diff --check": "exit 0"
+  },
+  "signerContinuityResult": "EXISTING_SIGNERS_RECOVERED",
+  "buildVersionValidation": {
+    "status": "ACCEPTED",
+    "pattern": "coin-card-<descriptor>-v<N>-<YYYYMMDD>",
+    "previousVersion": "coin-card-review-runtime-v2-20260716",
+    "selectedVersion": "coin-card-visible-review-runtime-v3-20260719",
+    "notPresentInHistory": true,
+    "notPresentInCommittedArtifacts": true
+  },
+  "operationalDeclarations": {
+    "noDeploymentOccurred": true,
+    "noRpcCallsPerformed": true,
+    "noTransactionBroadcast": true,
+    "noWalletActionTaken": true,
+    "noKeyRotationPerformed": true,
+    "noSharedHookModified": true,
+    "noPrivateKeyMaterialDisclosed": true,
+    "noAutoCommitPerformed": true,
+    "sourceDiffConfirmed": "only coin-card-manifest.json, coin-card-lifecycle-bundle.js, coin-card-runtime-trust-conjunction.test.js, and this checkpoint file changed"
+  },
+  "contentSafety": {
+    "rpcEndpointIncluded": false,
+    "providerCredentialIncluded": false,
+    "privateKeyIncluded": false,
+    "privateKeyPathIncluded": false,
+    "shellEnvironmentIncluded": false,
+    "hostnameIncluded": false
+  }
+}

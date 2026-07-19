@@ -83,8 +83,81 @@ function makeFixedDateClass(isoString) {
   };
 }
 
+// Deterministic margin added after the latest publication/signature timestamp.
+// The margin only needs to place the default verification clock strictly after
+// the latest committed publication/signature timestamp. It does not need to exceed
+// the trusted-key clock-skew window (5 minutes); that window is independently tested
+// via an explicit options.now override set ten minutes before signing.
+const FIXTURE_CLOCK_MARGIN_MS = 60 * 1000; // 60 seconds
+
+// Pure helper: given an array of millisecond timestamps, returns the latest
+// one plus FIXTURE_CLOCK_MARGIN_MS as an ISO string. Factored out so the
+// regression test can exercise the max-selection logic with synthetic inputs
+// without mutating committed signed artifacts.
+function _maxTimestampPlusMargin(timestampsMs) {
+  return new Date(Math.max(...timestampsMs) + FIXTURE_CLOCK_MARGIN_MS).toISOString();
+}
+
+// Derive the default test verification clock from the committed signed artifacts.
+// Reads the committed manifest and lifecycle bundle, collects all publication and
+// signature timestamps from every lifecycle entry (not just the first), and returns
+// _maxTimestampPlusMargin(all collected ms values). Fails immediately and loudly if
+// any required timestamp is missing or malformed, so a corrupt or unsigned artifact
+// surfaces as a test-setup error rather than a silent false-positive. Never calls
+// Date.now(); never references a calendar literal.
+function derivePublicationVerificationTime() {
+  const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+
+  // Evaluate the lifecycle bundle IIFE to extract the bundle object.
+  const lcCtx = { window: {} };
+  lcCtx.window.window = lcCtx.window;
+  vm.createContext(lcCtx, { codeGeneration: { strings: false, wasm: false } });
+  vm.runInContext(lifecycleBundleSource, lcCtx, { filename: lifecycleBundlePath, timeout: 1000 });
+  const bundle = lcCtx.window.IX_COIN_CARD_LIFECYCLE_REGISTRY_BUNDLE;
+
+  if (!bundle || typeof bundle !== 'object') {
+    throw new Error('derivePublicationVerificationTime: IX_COIN_CARD_LIFECYCLE_REGISTRY_BUNDLE not found');
+  }
+  if (!Array.isArray(bundle.entries) || bundle.entries.length === 0) {
+    throw new Error('derivePublicationVerificationTime: lifecycle bundle has no entries');
+  }
+
+  const candidates = [
+    { field: 'manifest.signedAt', value: manifest.signedAt },
+    { field: 'manifest.signature.signedAt', value: manifest.signature && manifest.signature.signedAt },
+    { field: 'bundle.generatedAt', value: bundle.generatedAt },
+  ];
+
+  for (let i = 0; i < bundle.entries.length; i++) {
+    const entry = bundle.entries[i];
+    const sig = entry && entry.signature;
+    candidates.push(
+      { field: `entries[${i}].publishedAt`, value: entry.publishedAt },
+      { field: `entries[${i}].effectiveFrom`, value: entry.effectiveFrom },
+      { field: `entries[${i}].signature.signedAt`, value: sig && sig.signedAt },
+    );
+  }
+
+  const timestampsMs = [];
+  for (const { field, value } of candidates) {
+    if (typeof value !== 'string' || !value) {
+      throw new Error(`derivePublicationVerificationTime: ${field} is missing or not a string`);
+    }
+    const ms = Date.parse(value);
+    if (!Number.isFinite(ms)) {
+      throw new Error(`derivePublicationVerificationTime: ${field} is not a valid ISO timestamp: ${value}`);
+    }
+    timestampsMs.push(ms);
+  }
+
+  return _maxTimestampPlusMargin(timestampsMs);
+}
+
+// Computed once at module load time from the committed artifacts. No wall-clock dependency.
+const DEFAULT_VERIFICATION_NOW = derivePublicationVerificationTime();
+
 function makeContext(options = {}) {
-  const FixedDate = makeFixedDateClass(options.now || '2026-07-16T23:59:00.000Z');
+  const FixedDate = makeFixedDateClass(options.now || DEFAULT_VERIFICATION_NOW);
   const context = {
     Buffer,
     Date: FixedDate,
@@ -211,6 +284,65 @@ function mutateLifecycleBundle(context, mutateRecord) {
   mutateRecord(bundle.entries[0]);
   return deepFreeze(bundle);
 }
+
+test('default test clock is derived from committed artifact timestamps and exceeds them by a fixed margin', async () => {
+  // Part 1: Verify DEFAULT_VERIFICATION_NOW is consistent with committed artifact timestamps
+  // collected from every lifecycle entry (not just entries[0]).
+  const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+  const lcCtx = { window: {} };
+  lcCtx.window.window = lcCtx.window;
+  vm.createContext(lcCtx, { codeGeneration: { strings: false, wasm: false } });
+  vm.runInContext(lifecycleBundleSource, lcCtx, { filename: lifecycleBundlePath, timeout: 1000 });
+  const bundle = lcCtx.window.IX_COIN_CARD_LIFECYCLE_REGISTRY_BUNDLE;
+
+  const publicationTimestampsMs = [
+    Date.parse(manifest.signedAt),
+    Date.parse(manifest.signature.signedAt),
+    Date.parse(bundle.generatedAt),
+  ];
+  for (const entry of bundle.entries) {
+    publicationTimestampsMs.push(
+      Date.parse(entry.publishedAt),
+      Date.parse(entry.effectiveFrom),
+      Date.parse(entry.signature.signedAt),
+    );
+  }
+
+  const expectedNow = _maxTimestampPlusMargin(publicationTimestampsMs);
+
+  // The default verification time is derived from artifact timestamps, not a calendar literal.
+  assert.equal(DEFAULT_VERIFICATION_NOW, expectedNow,
+    'DEFAULT_VERIFICATION_NOW must equal latest publication timestamp plus FIXTURE_CLOCK_MARGIN_MS');
+
+  // The default verification time is strictly later than every publication/signature timestamp.
+  const defaultNowMs = Date.parse(DEFAULT_VERIFICATION_NOW);
+  for (const ms of publicationTimestampsMs) {
+    assert.ok(defaultNowMs > ms,
+      `DEFAULT_VERIFICATION_NOW (${DEFAULT_VERIFICATION_NOW}) must be after publication timestamp (${new Date(ms).toISOString()})`);
+  }
+
+  // Part 2: Prove _maxTimestampPlusMargin selects the global maximum across all inputs,
+  // simulating a lifecycle bundle whose later second entry would dominate the derivation.
+  const anchorMs = Date.parse(manifest.signedAt);
+  const syntheticLaterMs = anchorMs + 2 * 24 * 60 * 60 * 1000; // 2 days after signing
+  const syntheticEarlierMs = anchorMs - 1000;
+  const syntheticResult = _maxTimestampPlusMargin([syntheticEarlierMs, anchorMs, syntheticLaterMs]);
+  assert.equal(
+    syntheticResult,
+    new Date(syntheticLaterMs + FIXTURE_CLOCK_MARGIN_MS).toISOString(),
+    '_maxTimestampPlusMargin must select the maximum timestamp across all inputs, not just the first',
+  );
+
+  // Part 3: Clock-skew rejection is independently enforced via explicit options.now override.
+  // Use ten minutes before signing to exceed the five-minute clock-skew window.
+  const pastNow = new Date(anchorMs - 10 * 60 * 1000).toISOString();
+  const contextWithPastClock = makeContext({ now: pastNow });
+  const rejectionResult = await runVerification(contextWithPastClock, readManifest());
+  assert.equal(rejectionResult.state, 'VERIFICATION_UNAVAILABLE',
+    'a verification time more than the clock-skew window before signing must cause rejection');
+  assert.equal(rejectionResult.trustedKeyOutcome, 'TRUSTED_KEY_RECORD_INVALID',
+    'clock-skew rejection must report TRUSTED_KEY_RECORD_INVALID');
+});
 
 test('actual committed manifest verifies, lifecycle promotes, and authorization reaches EXECUTION_AUTHORIZED', async () => {
   const context = makeContext();
