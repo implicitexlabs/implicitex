@@ -3,6 +3,7 @@
   "status": "POLYGON_FORK_ACCEPTED",
   "runDate": "2026-07-19",
   "testedCommit": "627586a",
+  "acceptanceSuiteCommit": "715a685",
   "canonicalPolicyId": "COIN_CARD_POLYGON_V1",
   "fork": {
     "sourceHead": {
