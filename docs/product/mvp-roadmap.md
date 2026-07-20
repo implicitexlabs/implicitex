@@ -1,6 +1,6 @@
 # ImplicitEx MVP Roadmap
 
-Last updated: 2026-07-04
+Last updated: 2026-07-19
 Branch: gate3-production-frontend-qa
 
 ---
@@ -11,7 +11,7 @@ The MVP is a Polygon USDC transfer tool.
 
 ```
 Sender wallet → recipient wallet
-1% ImplicitEx fee
+1% ImplicitEx fee, max 10 USDC
 No custody
 No escrow
 No recovery claim
@@ -391,7 +391,7 @@ Longer-term mitigations (no single fix):
 
 | Area | Status |
 |------|--------|
-| Core contract | Deployed, hardened, 59/59 tests passing |
+| Core contract | Deployed, hardened, 66/66 tests passing; fee-cap revision DRAFTED, deployment DEFERRED |
 | MetaMask wallet | Complete |
 | WalletConnect / Reown | Complete — Gate 1 closed |
 | Transfer safety gates | Complete — Gate 4 mainnet smoke passed 2026-06-15 |
@@ -400,6 +400,9 @@ Longer-term mitigations (no single fix):
 | Signal / disclosure system | Complete — canonical vocabulary locked |
 | Mobile UX | PASS — responsive + real MetaMask mobile browser smoke 2026-06-14 |
 | Legal / disclosure | Research complete; attorney review pending |
+| Fee policy | LOCKED: 1%, max 10 USDC; portal label updated; contract revision drafted + tested; deployment deferred pending model review |
+| Product constitution | COMPLETE 2026-07-19: implicitex-constitution.md + fee-constitution.md |
+| Identity evidence architecture | PLANNED: schema at docs/product/identity-evidence-schema.md (DRAFT); feeds Coin Card V2, Commitment Review, Transfer Intelligence |
 | Public launch prep | Not started; correctly deferred |
 
 ---
