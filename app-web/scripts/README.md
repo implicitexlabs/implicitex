@@ -79,3 +79,48 @@ SMOKE_AMOUNT_USDC=1.000000
 
 The recipient must be explicit and must not be the sender, treasury, transfer
 contract, or configured USDC token contract.
+
+---
+
+## provision-coin-card.js
+
+Provisions a new Coin Card for a cardholder. Creates the registry JSON file and
+updates the registry index. This is the MVP tool for going from "new user" to
+"live card" in one command.
+
+```
+cd app-web
+node scripts/provision-coin-card.js \
+  --id joesmith \
+  --name "Joe Smith" \
+  --wallet 0x... \
+  [--domain joesmith.com] \
+  [--expires 2027-07-20] \
+  [--dry-run]
+```
+
+| Flag | Required | Description |
+|------|----------|-------------|
+| `--id` | Yes | Card slug. Letters, digits, underscore, hyphen. 3–80 chars. Becomes the URL: `implicitex.com/card/{id}` |
+| `--name` | Yes | Display name shown to senders |
+| `--wallet` | Yes | Cardholder's EVM wallet address (Polygon USDC recipient) |
+| `--domain` | No | Cardholder's own domain (informational). Defaults to `implicitex.com` |
+| `--expires` | No | Registration expiry date YYYY-MM-DD. Defaults to +1 year from today |
+| `--dry-run` | No | Print what would be written without touching files |
+
+### After provisioning
+
+1. Deploy the updated registry: `firebase deploy --only hosting --project production`
+2. Verify the card loads: `curl -I https://implicitex.com/card/{cardId}`
+3. Send the URL and optional embed code to the cardholder.
+
+### Files written
+
+- `frontend/public/registry/coincards/{cardId}.json` — registry record
+- `frontend/public/registry/coincards/index.json` — updated registry index
+
+### Revocation
+
+To revoke a card, set `status` to `"revoked"` and set `revokedAt` to the current
+ISO timestamp in the registry JSON, then redeploy. The card renderer will block
+transfers automatically.
