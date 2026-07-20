@@ -416,6 +416,7 @@ Longer-term mitigations (no single fix):
 | Social / email login | Post-MVP |
 | Smart accounts | Post-MVP |
 | Gas sponsorship | Post-MVP |
+| Transfer ceiling above 1,000 USDC | **HARD GATE** — blocked until fee-cap contract deployed and bound in chains.js; portal previews 10 USDC cap but deployed contract charges uncapped 1%; raising ceiling above 1,000 USDC before migration would make portal preview diverge from contract execution |
 | totalSent in recipient history | Float safety; v2 will use integer base units |
 | Recipient memory UX | Only if subtle; not before live smoke |
 | Sparkline on gas row | Post-gas-row polish |

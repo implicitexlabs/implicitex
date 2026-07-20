@@ -3,6 +3,23 @@
  *
  * Hardened pre-public contract smoke-verified 2026-05-11.
  * All four balance deltas confirmed on-chain before this gate was opened.
+ *
+ * ── FEE CAP GATE ─────────────────────────────────────────────────────────────
+ * Platform fee policy: 1%, maximum 10 USDC (activates at 1,000 USDC transfers).
+ *
+ * The deployed contract (0x5015841D6E665e63Ea174aD6b8FeF854026dE0C0) does NOT
+ * yet enforce the 10 USDC cap. The frontend mirrors the approved policy, but the
+ * contract remains the authority at execution time.
+ *
+ * DO NOT raise maxTransferUsdc above 1,000 on any chain until:
+ *   1. The independently reviewed fee-cap contract revision is deployed.
+ *   2. contractAddress below is updated to the new contract address.
+ *   3. The fee cap review brief has been completed (docs/product/fee-constitution.md).
+ *
+ * At the current 250 USDC ceiling, the cap cannot activate (max fee = 2.50 USDC).
+ * A ceiling above 1,000 USDC with the old contract would allow the contract to
+ * charge more than the portal previews — a violation of the evidence architecture.
+ * ─────────────────────────────────────────────────────────────────────────────
  */
 
 window.IX_CONFIG = {
