@@ -11,6 +11,9 @@
  * yet enforce the 10 USDC cap. The frontend mirrors the approved policy, but the
  * contract remains the authority at execution time.
  *
+ * At exactly 1,000 USDC both formulas produce 10 USDC — they are equivalent.
+ * Divergence begins strictly above 1,000 USDC. The gate is precise, not conservative.
+ *
  * DO NOT raise maxTransferUsdc above 1,000 on any chain until:
  *   1. The independently reviewed fee-cap contract revision is deployed.
  *   2. contractAddress below is updated to the new contract address.
