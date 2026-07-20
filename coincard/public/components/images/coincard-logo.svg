@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ImplicitEx COIN CARD — Block Logotype
+  System: 8×8 unit blocks, gap=0 (adjacent blocks merge)
+  Same canonical grid as WEB3 mark.
+  Glyph width: 40px (5 cols × 8px)
+  Letter body height: 40px (5 rows × 8px), sitting y=8–48
+  First glyph (¢-C): 7 rows (y=0–56), cent stubs at y=0–8 and y=48–56
+  ViewBox: 384 × 56
+  Inter-glyph gap: 8px  Word gap: 16px
+  Layout: ¢C(0) O(48) I(96) N(144) [gap 184–199] C(200) A(248) R(296) D(344)
+  shape-rendering="crispEdges" required.
+
+  First glyph matrix (7 rows):       Other glyphs (5 rows, y=8–48):
+  ¢C: ..#..   O: #####   I: .###.   N: #...#   A: .###.   R: ####.   D: ####.
+      .####      #...#      ..#..      ##..#      #...#      #...#      #...#
+      #....      #...#      ..#..      #.#.#      #####      ####.      #...#
+      #....      #...#      ..#..      #..##      #...#      #..#.      #...#
+      #....      #####      .###.      #...#      #...#      #...#      ####.
+      .####
+      ..#..
+-->
+<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 392 56"
+     shape-rendering="crispEdges"
+     role="img"
+     aria-label="COIN CARD">
+
+  <title>COIN CARD — ImplicitEx</title>
+  <desc>COIN CARD logotype. Block type system. Uppercase. First glyph has cent-stroke accent above and below. Same construction as WEB3 canonical mark.</desc>
+
+  <!-- ¢-C (x=0) — 7-row cent variant, stubs outside the 40px letter body
+       ..#..   y=0–8
+       .####   y=8–16
+       #....   y=16–24
+       #....   y=24–32
+       #....   y=32–40
+       .####   y=40–48
+       ..#..   y=48–56 -->
+  <path fill="currentColor" d="
+    M 16,0 H 24 V 8 H 16 Z
+    M 8,8 H 40 V 16 H 8 Z
+    M 0,16 H 8 V 40 H 0 Z
+    M 8,40 H 40 V 48 H 8 Z
+    M 16,48 H 24 V 56 H 16 Z
+  "/>
+
+  <!-- O (x=48) — letter body y=8–48
+       #####
+       #...#
+       #...#
+       #...#
+       ##### -->
+  <path fill="currentColor" d="
+    M 48,8 H 88 V 16 H 48 Z
+    M 48,16 H 56 V 40 H 48 Z
+    M 80,16 H 88 V 40 H 80 Z
+    M 48,40 H 88 V 48 H 48 Z
+  "/>
+
+  <!-- I (x=96) — letter body y=8–48
+       .###.
+       ..#..
+       ..#..
+       ..#..
+       .###. -->
+  <path fill="currentColor" d="
+    M 104,8 H 128 V 16 H 104 Z
+    M 112,16 H 120 V 40 H 112 Z
+    M 104,40 H 128 V 48 H 104 Z
+  "/>
+
+  <!-- N (x=144) — letter body y=8–48
+       #...#
+       ##..#
+       #.#.#
+       #..##
+       #...# -->
+  <path fill="currentColor" d="
+    M 144,8 H 152 V 48 H 144 Z
+    M 176,8 H 184 V 48 H 176 Z
+    M 152,16 H 160 V 24 H 152 Z
+    M 160,24 H 168 V 32 H 160 Z
+    M 168,32 H 176 V 40 H 168 Z
+  "/>
+
+  <!-- word gap: 184–207 (24px = 3 blocks) -->
+
+  <!-- C (x=208) — clean, no cent accent, letter body y=8–48
+       .####
+       #....
+       #....
+       #....
+       .#### -->
+  <path fill="currentColor" d="
+    M 216,8 H 248 V 16 H 216 Z
+    M 208,16 H 216 V 40 H 208 Z
+    M 216,40 H 248 V 48 H 216 Z
+  "/>
+
+  <!-- A (x=256) — letter body y=8–48
+       .###.
+       #...#
+       #####
+       #...#
+       #...# -->
+  <path fill="currentColor" d="
+    M 264,8 H 288 V 16 H 264 Z
+    M 256,16 H 264 V 24 H 256 Z
+    M 288,16 H 296 V 24 H 288 Z
+    M 256,24 H 296 V 32 H 256 Z
+    M 256,32 H 264 V 48 H 256 Z
+    M 288,32 H 296 V 48 H 288 Z
+  "/>
+
+  <!-- R (x=304) — letter body y=8–48
+       ####.
+       #...#
+       ####.
+       #..#.
+       #...# -->
+  <path fill="currentColor" d="
+    M 304,8 H 312 V 48 H 304 Z
+    M 312,8 H 336 V 16 H 312 Z
+    M 336,16 H 344 V 24 H 336 Z
+    M 312,24 H 336 V 32 H 312 Z
+    M 328,32 H 336 V 40 H 328 Z
+    M 336,40 H 344 V 48 H 336 Z
+  "/>
+
+  <!-- D (x=352) — letter body y=8–48
+       ####.
+       #...#
+       #...#
+       #...#
+       ####. -->
+  <path fill="currentColor" d="
+    M 352,8 H 384 V 16 H 352 Z
+    M 352,16 H 360 V 40 H 352 Z
+    M 384,16 H 392 V 40 H 384 Z
+    M 352,40 H 384 V 48 H 352 Z
+  "/>
+
+</svg>

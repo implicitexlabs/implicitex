@@ -6,14 +6,16 @@
   "targets": {
     "implicitex-236f2": {
       "hosting": {
-        "main":   ["implicitex-236f2"],
-        "portal": ["implicitex-236f2"]
+        "main":     ["implicitex-236f2"],
+        "portal":   ["implicitex-236f2"],
+        "coincard": ["implicitex-236f2"]
       }
     },
     "implicitex": {
       "hosting": {
-        "main":   ["implicitex"],
-        "portal": ["implicitex-portal"]
+        "main":     ["implicitex"],
+        "portal":   ["implicitex-portal"],
+        "coincard": ["implicitex-coincard"]
       }
     }
   }
