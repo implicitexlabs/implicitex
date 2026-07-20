@@ -1,6 +1,6 @@
 # Wallet-Control Authority Matrix
 
-## Status: DRAFT — freeze before projection engine is implemented
+## Status: ADVERSARIAL REVIEW COMPLETE — ready to freeze
 
 This document defines the authority policy for all wallet-control event types.
 It must be frozen before storage syntax is chosen or projection code is written.
@@ -181,10 +181,176 @@ These questions are deferred until product scope requires them:
 
 ---
 
-## Next Step
+---
 
-Freeze this matrix or record explicit disagreements.
+## Adversarial Review
 
-Once frozen, the projection engine may be implemented with authority validation
-as a first-class gate — not an afterthought added when a governance violation
-is discovered in production.
+Six governance questions evaluated before freeze. Each must be answered by the
+matrix without inventing new rules. If any question requires a new rule, the
+matrix is incomplete.
+
+---
+
+### Q1: Two valid supersession events arrive nearly simultaneously
+
+**Scenario:** Subject signs a supersession, and a second supersession request is
+also submitted before the first is accepted.
+
+**Resolution:** The canonical acceptance coordinate (`acceptedAt` + `sequence`)
+is monotonic — no two events share the same sequence number. The first accepted
+event wins. The second is rejected because its precondition "old item is
+`current`" is violated: the old item was already `superseded` by the first event.
+
+**Governance answer:** No new rule required. Canonical sequence is sufficient.
+The log design must guarantee sequence monotonicity. That is a storage
+requirement, not a governance requirement.
+
+---
+
+### Q2: Verifier key compromised after 10,000 verification events
+
+**Scenario:** A verifier signing key is compromised. All events attested by that
+key are now untrustworthy.
+
+**Resolution:** ImplicitEx emits `wallet_control_reliance_suspended` events for
+all Items whose authority chain includes the compromised key. Items become
+`suspended`, not `revoked` — this is ImplicitEx's reliance decision, not a
+subject's revocation. The 10,000 historical events remain in the log; the
+platform has decided not to rely on them.
+
+**Consequence:** The projection engine must be able to query "which Items were
+attested by verifier key X?" This is a storage indexing requirement. The
+governance rule is already present: platform reliance decisions use `suspended`,
+not `revoked`.
+
+**Governance answer:** No new rule required. Verifier-key rotation and
+compromise handling are explicitly in the "not yet covered" section; the
+event type (`wallet_control_reliance_suspended`) and state (`suspended`) are
+already defined.
+
+---
+
+### Q3: Subject revokes while supersession is in flight
+
+**Scenario:** A supersession is partially complete — old wallet has signed the
+request, but the new wallet's verification event has not been accepted yet.
+Before the supersession completes, a revocation arrives for the old wallet.
+
+**Resolution:** Whichever event has a lower sequence number is accepted first.
+
+- If revocation is accepted first: old item becomes `revoked`. The supersession
+  fails because its precondition "old item is `current`" is violated. The new
+  wallet's verification event is still accepted independently — it creates a
+  valid `current` Item without superseding anything. The subject ends up with
+  one `revoked` Item (old wallet) and one `current` Item (new wallet, if the
+  verification event was accepted). No wallet-control gap exists.
+
+- If supersession completes first: old item becomes `superseded`, new item
+  becomes `current`. A subsequent revocation would apply to the new item.
+
+**Governance answer:** No new rule required. Canonical sequence resolves
+ordering. Verification events are independent of supersession events — a new
+wallet's verification event remains valid even if the supersession it was
+intended for fails.
+
+---
+
+### Q4: An event references another event that is later suspended
+
+**Scenario:** A supersession event references an old Item. Later, the old
+Item's verification event is suspended due to verifier-key compromise. Does
+the supersession itself become invalid?
+
+**Resolution:** The supersession's authority chain is: the old wallet's
+signature on the supersession request, plus the new wallet's verification event.
+The old verification event's suspension affects the *claim* (wallet control is
+now suspended for that wallet) — it does not retroactively invalidate the
+supersession, which was authenticated by the wallet's own signature, not by the
+old verification event's attestor key.
+
+The supersession records a fact: the subject, as proven by control of the old
+wallet, chose to retire that wallet's association. That fact remains true
+regardless of whether the verifier key that attested the original verification
+is later suspended.
+
+**Governance answer:** No new rule required. Event authority chains are evaluated
+at acceptance time. Later suspension of a referenced event affects the Item's
+current state, not the authority of events that referenced it historically.
+
+---
+
+### Q5: Can a projection depend on a suspended event?
+
+**Scenario:** An Item's `currentAuthorityEventId` points to an event that has
+since been suspended. Can the projection engine still use that event to derive
+`current` state?
+
+**Resolution:** No. Suspended events must not be used to support `current` Item
+state. When ImplicitEx emits a suspension, the Item transitions to `suspended`.
+The event is preserved in the log — the historical fact is not erased — but it
+no longer supports an active claim.
+
+**Rule addition:** The projection engine applies `wallet_control_reliance_suspended`
+events with higher precedence than `currentAuthorityEventId`. A `suspended` Item
+state overrides any Item state that would otherwise be derived from the suspended
+event.
+
+**Governance answer:** One explicit rule added: suspension overrides derived Item
+state. This is the expected behavior given the definition of `suspended`, but it
+must be stated explicitly for the projection engine.
+
+---
+
+### Q6: Can a suspended Item be reinstated, or must a new attestation event exist?
+
+**Scenario:** ImplicitEx suspended an Item due to verifier-key compromise. The
+key compromise is resolved and a new verifier key is established. Can the
+suspended Item be reinstated, or must the subject re-verify?
+
+**Resolution:** A new verification event is required. Reinstatement-by-policy
+would require a `wallet_control_reliance_reinstated` event type, which would
+mean the projection engine must handle a state transition from `suspended` back
+to `current` without a new cryptographic proof.
+
+That is weaker evidence than re-verification. The suspension existed because the
+platform could not rely on the prior cryptographic proof. Reinstating reliance on
+the same underlying proof because the platform decides to trust it again does not
+strengthen the evidence — it merely reverses the platform's reliance decision
+without additional subject input.
+
+**Rule addition:** `suspended` Items are not reinstated. Reinstatement requires
+a new `wallet_control_verification_completed` event, which creates a new Item
+state. The old Item remains `suspended` in the log permanently.
+
+**Governance answer:** One explicit rule added: no reinstatement event type.
+Re-verification is the only path from `suspended` to `current`. This is the
+more conservative and auditable position.
+
+---
+
+## Rules Added by Adversarial Review
+
+Two rules added to existing conflict resolution:
+
+**Rule 8: Suspension overrides derived Item state.**
+When a `wallet_control_reliance_suspended` event is accepted, the affected Item
+transitions to `suspended` regardless of its current derived state. The
+projection engine applies this before other state derivation.
+
+**Rule 9: No reinstatement. Re-verification is the only path.**
+Suspended Items cannot be reinstated by platform policy reversal. A new
+`wallet_control_verification_completed` event creating a new Item is required.
+The suspended Item remains suspended in the log permanently.
+
+---
+
+## Matrix Freeze Criteria
+
+The matrix is ready to freeze when:
+- [x] All six adversarial questions answered without requiring undefined behavior
+- [x] Rules 8 and 9 added and consistent with existing rules 1–7
+- [ ] Reviewed by at least one additional reader
+- [ ] Explicit disagreements recorded and resolved
+
+After freeze: storage syntax may be designed. The projection engine must
+implement authority validation as a first-class gate, not an afterthought.
