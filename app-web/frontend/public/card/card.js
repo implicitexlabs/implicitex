@@ -96,7 +96,18 @@
      * Cleared if the card transitions back to TRANSFER_INTENT_READY.
      */
     activeProvider:      null,
+    providerReference:   null,
+    providerGeneration:  0,
+    accountGeneration:   0,
+    chainGeneration:     0,
+    observedAccount:     null,
+    observedChainId:     null,
+    observationGeneration: 0,
     manifestId:          null,   /* manifestHash from verification result, used as lifecycle manifestId */
+    reviewRuntime:       null,
+    reviewRuntimeError:  null,
+    resolvedLifecycleResult: null, /* genuine branded resolver result retained for future ReviewRecord construction */
+    lifecycleReference:  null,   /* plain diagnostic/binding reference derived from resolvedLifecycleResult */
     promotedPresentationResult: null, /* result of lifecycle pipeline; set async after VERIFIED */
     integrityManifestVerificationState: 'VERIFICATION_UNAVAILABLE',
     qrLibraryState:       QR_LIBRARY_STATE.NOT_REQUESTED,
@@ -109,6 +120,10 @@
 
   var frame = document.getElementById('ccFrame');
   var verification = window.IX_COIN_CARD_VERIFICATION || null;
+  var providerReferences = typeof WeakMap === 'function' ? new WeakMap() : null;
+  var providerListeners = typeof WeakSet === 'function' ? new WeakSet() : null;
+  var providerReferenceSeq = 0;
+  var USDC_ATOMIC_SCALE = 1000000n;
 
   var SHELL_ACTIVE_STATES = {
     VERIFIED: true, AMOUNT_READY: true, TRANSFER_INTENT_READY: true,
@@ -164,6 +179,255 @@
    * ---------------------------------------------------------------- */
   function generateTraceId() {
     return 'cc-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7);
+  }
+
+  function normalizeAddress(value) {
+    return (typeof value === 'string') ? value.toLowerCase() : null;
+  }
+
+  function normalizeChainId(value) {
+    var max = BigInt(Number.MAX_SAFE_INTEGER);
+    var parsed = null;
+    if (typeof value === 'number') {
+      if (!Number.isSafeInteger(value) || value <= 0) return null;
+      return value;
+    }
+    if (typeof value === 'string' && /^0x[0-9a-fA-F]+$/.test(value)) parsed = BigInt(value);
+    else if (typeof value === 'string' && /^[1-9][0-9]*$/.test(value)) parsed = BigInt(value);
+    else return null;
+    if (parsed <= 0n || parsed > max) return null;
+    return Number(parsed);
+  }
+
+  function getProviderReference(provider) {
+    if (!provider || typeof provider.request !== 'function') return null;
+    if (!providerReferences) return null;
+    if (!providerReferences.has(provider)) {
+      providerReferenceSeq += 1;
+      providerReferences.set(provider, 'provider:session:' + providerReferenceSeq);
+    }
+    return providerReferences.get(provider);
+  }
+
+  function noteProvider(provider) {
+    var ref = getProviderReference(provider);
+    if (!ref) return null;
+    if (state.providerReference !== ref) {
+      state.providerReference = ref;
+      state.providerGeneration += 1;
+    }
+    attachProviderListeners(provider);
+    return ref;
+  }
+
+  function noteAccount(account) {
+    var normalized = normalizeAddress(account);
+    if (!normalized) return null;
+    if (state.observedAccount !== normalized) {
+      state.observedAccount = normalized;
+      state.accountGeneration += 1;
+    }
+    return normalized;
+  }
+
+  function noteChain(chainId) {
+    var normalized = normalizeChainId(chainId);
+    if (!normalized) return null;
+    if (state.observedChainId !== normalized) {
+      state.observedChainId = normalized;
+      state.chainGeneration += 1;
+    }
+    return normalized;
+  }
+
+  function attachProviderListeners(provider) {
+    if (!provider || typeof provider.on !== 'function' || !providerListeners) return;
+    if (providerListeners.has(provider)) return;
+    providerListeners.add(provider);
+    provider.on('accountsChanged', function (accounts) {
+      if (provider !== state.activeProvider) return;
+      var account = accounts && accounts.length ? accounts[0] : null;
+      if (account) noteAccount(account);
+      else {
+        state.observedAccount = null;
+        state.accountGeneration += 1;
+      }
+    });
+    provider.on('chainChanged', function (chainId) {
+      if (provider !== state.activeProvider) return;
+      var normalized = normalizeChainId(chainId);
+      if (normalized) noteChain(normalized);
+      else {
+        state.observedChainId = null;
+        state.chainGeneration += 1;
+      }
+    });
+  }
+
+  function initializeReviewRuntime() {
+    if (state.reviewRuntime || state.reviewRuntimeError) return state.reviewRuntime;
+    var reviewContract = window.IX_COIN_CARD_REVIEW_PROJECTION_CONTRACT;
+    try {
+      if (!reviewContract || typeof reviewContract.createReviewProjectionRuntime !== 'function') {
+        throw new Error('Review projection contract unavailable');
+      }
+      state.reviewRuntime = reviewContract.createReviewProjectionRuntime({
+        presentationApi: window.IX_COIN_CARD_LIFECYCLE_PRESENTATION,
+        lifecycleResolutionApi: window.IX_COIN_CARD_LIFECYCLE_RESOLUTION,
+        authorizationApi: window.IX_COIN_CARD_EXECUTION_AUTHORIZATION,
+      });
+      state.reviewRuntimeError = null;
+      return state.reviewRuntime;
+    } catch (error) {
+      state.reviewRuntime = null;
+      state.reviewRuntimeError = error && error.message || 'Review runtime unavailable';
+      return null;
+    }
+  }
+
+  function parseUsdcAtomicString(input) {
+    var text = typeof input === 'string' ? input.trim() : '';
+    if (!/^(0|[1-9][0-9]*)(\.[0-9]{1,6})?$/.test(text)) {
+      throw new Error('Invalid USDC decimal amount');
+    }
+    var parts = text.split('.');
+    var whole = BigInt(parts[0]);
+    var fractional = parts[1] || '';
+    while (fractional.length < 6) fractional += '0';
+    var atomic = whole * USDC_ATOMIC_SCALE + BigInt(fractional || '0');
+    return atomic.toString(10);
+  }
+
+  function limitAtomic(units) {
+    return BigInt(units) * USDC_ATOMIC_SCALE;
+  }
+
+  function prepareContractDraftAmounts(amountText, chainId, feeBps) {
+    var normalizedChainId = normalizeChainId(chainId);
+    if (
+      !normalizedChainId ||
+      !Object.prototype.hasOwnProperty.call(CHAIN_MIN_USDC, normalizedChainId) ||
+      !Object.prototype.hasOwnProperty.call(CHAIN_MAX_USDC, normalizedChainId)
+    ) {
+      throw new Error('Unsupported chain policy');
+    }
+    var recipientAmountAtomic = parseUsdcAtomicString(amountText);
+    var min = CHAIN_MIN_USDC[normalizedChainId];
+    var max = CHAIN_MAX_USDC[normalizedChainId];
+    var raw = BigInt(recipientAmountAtomic);
+    if (raw < limitAtomic(min) || raw > limitAtomic(max)) {
+      throw new Error('Amount outside supported range');
+    }
+    if (!window.IX_EXECUTION || typeof window.IX_EXECUTION.calculateFee !== 'function') {
+      throw new Error('Execution fee policy unavailable');
+    }
+    var feeResult = window.IX_EXECUTION.calculateFee(raw, normalizedChainId, feeBps);
+    var platformFeeAtomic = String(feeResult.fee);
+    var totalDebitAtomic = String(feeResult.total);
+    if (raw + BigInt(platformFeeAtomic) !== BigInt(totalDebitAtomic)) {
+      throw new Error('Amount/fee/total invariant failed');
+    }
+    return Object.freeze({
+      recipientAmountAtomic: recipientAmountAtomic,
+      platformFeeAtomic: platformFeeAtomic,
+      totalDebitAtomic: totalDebitAtomic,
+    });
+  }
+
+  function buildLifecycleReference(resolved) {
+    if (!resolved || typeof resolved !== 'object') return null;
+    return Object.freeze({
+      status: resolved.outcome === 'LIFECYCLE_ACTIVE' ? 'ACTIVE' : resolved.outcome || null,
+      cardId: resolved.cardId || null,
+      manifestId: resolved.resolvedManifestId || null,
+      revision: resolved.resolvedRevision || null,
+      recordId: resolved.resolvedRecordId || null,
+      registryId: resolved.registryId || null,
+      registryVersion: resolved.registryVersion || null,
+    });
+  }
+
+  function readNativeGasBalance(provider, account) {
+    if (!provider || typeof provider.request !== 'function' || !account) {
+      return Promise.resolve({ status: 'UNAVAILABLE' });
+    }
+    return provider.request({
+      method: 'eth_getBalance',
+      params: [account, 'latest'],
+    }).then(function (hex) {
+      return {
+        status: 'AVAILABLE',
+        value: (hex && hex !== '0x') ? BigInt(hex).toString(10) : '0',
+      };
+    }).catch(function () {
+      return { status: 'UNAVAILABLE' };
+    });
+  }
+
+  function makeUnavailableWalletObservation(reason, partial) {
+    return Object.freeze({
+      status: 'UNAVAILABLE',
+      reason: reason,
+      walletObservation: partial ? Object.freeze(partial) : null,
+    });
+  }
+
+  function readCompleteWalletObservation(provider) {
+    if (provider && provider !== state.activeProvider) {
+      return Promise.resolve(makeUnavailableWalletObservation('provider-mismatch'));
+    }
+    provider = state.activeProvider;
+    if (!provider || typeof provider.request !== 'function') {
+      return Promise.resolve(makeUnavailableWalletObservation('provider-unavailable'));
+    }
+    if (!window.IX_EXECUTION || typeof window.IX_EXECUTION.readWalletSnapshot !== 'function') {
+      return Promise.resolve(makeUnavailableWalletObservation('execution-wallet-snapshot-unavailable'));
+    }
+
+    var providerReference = state.providerReference;
+    if (!providerReference) {
+      return Promise.resolve(makeUnavailableWalletObservation('provider-reference-unavailable'));
+    }
+
+    return provider.request({ method: 'eth_accounts' })
+      .then(function (accounts) {
+        var sender = accounts && accounts.length ? accounts[0] : null;
+        if (!sender) throw new Error('account-unavailable');
+        noteAccount(sender);
+        return provider.request({ method: 'eth_chainId' }).then(function (chainHex) {
+          var observedChainId = noteChain(chainHex);
+          if (!observedChainId) throw new Error('chain-unavailable');
+          return window.IX_EXECUTION.readWalletSnapshot(sender, observedChainId, provider)
+            .then(function (snapshot) {
+              if (!snapshot) throw new Error('token-evidence-unavailable');
+              if (typeof snapshot.balanceAtomic !== 'string') throw new Error('token-balance-unavailable');
+              if (typeof snapshot.allowanceAtomic !== 'string') throw new Error('allowance-unavailable');
+              return readNativeGasBalance(provider, sender).then(function (nativeGasBalanceResult) {
+                if (!nativeGasBalanceResult || nativeGasBalanceResult.status !== 'AVAILABLE') {
+                  return makeUnavailableWalletObservation('native-gas-balance-unavailable');
+                }
+                state.observationGeneration += 1;
+                var observation = {
+                  senderAddress: sender,
+                  observedChainId: observedChainId,
+                  tokenBalanceAtomic: snapshot.balanceAtomic,
+                  allowanceAtomic: snapshot.allowanceAtomic,
+                  nativeGasBalanceAtomic: nativeGasBalanceResult.value,
+                  gasReadiness: 'UNAVAILABLE',
+                  providerReference: providerReference,
+                  accountGeneration: String(state.accountGeneration),
+                  chainGeneration: String(state.chainGeneration),
+                  providerGeneration: String(state.providerGeneration),
+                  observedAt: 'observation:' + state.observationGeneration,
+                };
+                return makeUnavailableWalletObservation('gas-readiness-policy-unavailable', observation);
+              });
+            });
+        });
+      })
+      .catch(function (error) {
+        return makeUnavailableWalletObservation(error && error.message || 'wallet-observation-unavailable');
+      });
   }
 
   /* ----------------------------------------------------------------
@@ -229,9 +493,13 @@
         };
         var selected = selector.selectLifecycleEvidence(bundleResult, selectionRequest);
         var resolved = resolver.resolveLifecycle(selected);
+        state.resolvedLifecycleResult = resolved;
+        state.lifecycleReference = buildLifecycleReference(resolved);
         state.promotedPresentationResult = presenter.promotePresentation(resolved);
       })
       .catch(function () {
+        state.resolvedLifecycleResult = null;
+        state.lifecycleReference = null;
         state.promotedPresentationResult = null;
       });
   }
@@ -465,9 +733,11 @@
 
         /* Provider is confirmed active — store for snapshot and execution. */
         state.activeProvider = resolvedProvider;
+        noteProvider(resolvedProvider);
 
         if (result.sender) {
           state.sender = result.sender;
+          noteAccount(result.sender);
           /* Self-send detection */
           var warn = el('ccSelfSendWarn');
           if (warn && state.registryRecord) {
@@ -516,6 +786,7 @@
     })
       .then(function (result) {
         if (result.status === 'ready-to-send') {
+          noteProvider(state.activeProvider);
           showConfirmPanel();
           return;
         }
@@ -590,6 +861,10 @@
 
   function startExecution() {
     if (!state.intent || !state.sender || !state.registryRecord || !window.IX_EXECUTION) return;
+    if (!state.reviewRuntime) {
+      renderTxError(state.reviewRuntimeError || 'Review contract unavailable');
+      return;
+    }
 
     /* Existing verification gate — remains until authorization integration is proven. */
     if (!verification || !verification.canExecuteTransfer(state.integrityManifestVerificationState)) {
@@ -1084,7 +1359,35 @@
     if (receiveBtn && typeof receiveBtn.focus === 'function') receiveBtn.focus();
   }
 
+  Object.defineProperty(window, 'IX_COIN_CARD_RUNTIME_PREREQUISITES', {
+    value: Object.freeze({
+      parseUsdcAtomicString: parseUsdcAtomicString,
+      prepareContractDraftAmounts: prepareContractDraftAmounts,
+      initializeReviewRuntime: initializeReviewRuntime,
+      getStateSnapshot: function () {
+        return Object.freeze({
+          reviewRuntimeReady: !!state.reviewRuntime,
+          reviewRuntimeError: state.reviewRuntimeError,
+          resolvedLifecycleReady: !!state.resolvedLifecycleResult,
+          lifecycleReference: state.lifecycleReference,
+          promotedPresentationReady: !!state.promotedPresentationResult,
+          providerReference: state.providerReference,
+          providerGeneration: state.providerGeneration,
+          accountGeneration: state.accountGeneration,
+          chainGeneration: state.chainGeneration,
+          observedAccount: state.observedAccount,
+          observedChainId: state.observedChainId,
+        });
+      },
+    }),
+    writable: false,
+    enumerable: true,
+    configurable: false,
+  });
+
   function init() {
+    initializeReviewRuntime();
+
     var chip = el('ccChip');
     if (chip) chip.addEventListener('click', handleChipClick);
 
