@@ -1,6 +1,11 @@
 # Wallet-Control Authority Matrix
 
-## Status: ADVERSARIAL REVIEW COMPLETE — ready to freeze
+## Status: ADVERSARIAL REVIEW COMPLETE — Freeze Candidate
+
+Freeze requires:
+- [x] Adversarial review (six questions answered, rules 1–9 complete)
+- [ ] Independent review (at least one additional reader)
+- [ ] Disagreements recorded and resolved
 
 This document defines the authority policy for all wallet-control event types.
 It must be frozen before storage syntax is chosen or projection code is written.
