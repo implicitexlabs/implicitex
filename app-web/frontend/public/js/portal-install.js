@@ -17,6 +17,8 @@
   var browserLabel = document.getElementById('portalInstallBrowser');
   var actions = document.getElementById('portalInstallActions');
   var footerInstallLink = document.getElementById('portalFooterInstallLink');
+  var installStrip = document.getElementById('portalInstallStrip');
+  var stripBtn = document.getElementById('portalInstallStripBtn');
   var deferredPrompt = null;
   var installedThisSession = false;
   var hasGuide = !!instructions;
@@ -625,6 +627,7 @@
     }
     setHidden(promotion, true);
     setHidden(footerInstallLink, true);
+    setHidden(installStrip, true);
     hideInstructions();
     if (status) {
       status.textContent = '';
@@ -632,6 +635,48 @@
     }
     syncPromotion();
   });
+
+  /* ---- Installation strip (portal-index.html dedicated surface) ---- */
+  /* Hide the strip immediately if already running as installed PWA.     */
+  if (installStrip && isStandalone()) {
+    installStrip.hidden = true;
+  }
+
+  if (stripBtn) {
+    stripBtn.addEventListener('click', function () {
+      /* Already installed — hide strip, nothing more to do. */
+      if (isStandalone() || installedThisSession) {
+        setHidden(installStrip, true);
+        return;
+      }
+
+      /* Native install prompt available — invoke it directly. */
+      if (deferredPrompt) {
+        try {
+          deferredPrompt.prompt();
+        } catch (error) {
+          window.location.assign('/install.html');
+        }
+        Promise.resolve(deferredPrompt.userChoice)
+          .then(function (choiceResult) {
+            deferredPrompt = null;
+            if (choiceResult && choiceResult.outcome === 'accepted') {
+              installedThisSession = true;
+              setHidden(installStrip, true);
+            }
+            syncPromotion();
+          })
+          .catch(function () {
+            deferredPrompt = null;
+            syncPromotion();
+          });
+        return;
+      }
+
+      /* No native prompt — send to install instructions page. */
+      window.location.assign('/install.html');
+    });
+  }
 
   document.addEventListener('DOMContentLoaded', function () {
     syncPromotion();

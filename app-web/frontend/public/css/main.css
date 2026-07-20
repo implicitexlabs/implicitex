@@ -143,16 +143,16 @@
 }
 
 [data-theme="light"] {
-  --bg:         #f2f2f0;
-  --surface:    #ffffff;
-  --surface-2:  #ececea;
-  --surface-3:  #dededb;
+  --bg:         #c8d4e0;   /* cool slate page field — unmistakably blue-gray */
+  --surface:    #dce7f0;   /* raised surface — lighter, still cool-tinted */
+  --surface-2:  #b8c8d8;   /* secondary surface — darker than page field */
+  --surface-3:  #a8b8cc;   /* tertiary — deepest surface level */
   --white:      #080808;
   --dim:        rgba(8, 8, 8, 0.58);
   --muted:      rgba(8, 8, 8, 0.34);
-  --border:     rgba(0, 0, 0, 0.10);
-  --border-2:   rgba(0, 0, 0, 0.24);
-  --nav-bg:     rgba(242, 242, 240, 0.92);
+  --border:     rgba(0, 0, 0, 0.16);
+  --border-2:   rgba(0, 0, 0, 0.30);
+  --nav-bg:     rgba(200, 212, 224, 0.94);
   --button-hover: #222222;
   --status-ok:  rgba(8, 8, 8, 0.7);
   --warn:       #b03020;
@@ -161,11 +161,34 @@
   --telemetry-amber:     #a06818;
   --telemetry-amber-dim: rgba(160, 104, 24, 0.82);
   --telemetry-amber-border: rgba(160, 104, 24, 0.28);
-  /* Accent — slightly darker on light bg for contrast */
+  /* Accent — signal only (verified/operational states); not a theme color */
   --accent:        #A87E10;
   --accent-dim:    rgba(168, 126, 16, 0.80);
   --accent-border: rgba(168, 126, 16, 0.30);
   --logo-pixel: rgba(8, 8, 8, 1);
+}
+
+/* ---- Light-theme input overrides ----
+   In dark mode --surface-3 (darker) reads as "inset/carved" — correct.
+   In light mode the same value is darker than the page field, which reads
+   as filled or disabled. Override to near-white so inputs float clearly
+   above the slate background as interactive form fields.             ---- */
+[data-theme="light"] .tx-field,
+[data-theme="light"] .tx-field--primary {
+  background: #f0f6fb;
+  border-color: rgba(0, 0, 0, 0.22);
+}
+
+[data-theme="light"] .tx-field--primary:disabled {
+  background: var(--surface-2);   /* clearly distinct from enabled #f0f6fb */
+  border-color: var(--border);
+  color: var(--dim);
+}
+
+[data-theme="light"] .tx-field:focus,
+[data-theme="light"] .tx-field--primary:focus {
+  border-color: var(--white);     /* var(--white) = #080808 in light mode */
+  box-shadow: 0 0 0 1px var(--control-focus);
 }
 
 /* ---- Base ---- */
@@ -1092,41 +1115,6 @@ body.portal-active #nav {
   margin: clamp(2rem, 4.5vh, 3.5rem) auto;
 }
 
-/* Top-right tick */
-.portal-zone::before {
-  content: "";
-  position: absolute;
-  top: -14px;
-  right: -14px;
-  width: 18px;
-  height: 18px;
-  opacity: 0.72;
-  pointer-events: none;
-  z-index: 3;
-  border-color: var(--dim);
-  border-style: solid;
-  border-width: 0;
-  border-top-width: 2px;
-  border-right-width: 2px;
-}
-
-/* Bottom-left tick */
-.portal-zone::after {
-  content: "";
-  position: absolute;
-  bottom: -14px;
-  left: -14px;
-  width: 18px;
-  height: 18px;
-  opacity: 0.72;
-  pointer-events: none;
-  z-index: 3;
-  border-color: var(--dim);
-  border-style: solid;
-  border-width: 0;
-  border-bottom-width: 2px;
-  border-left-width: 2px;
-}
 
 /* ---- Portal controls — square tabs anchored to upper-right of portal border ---- */
 .portal-controls {
@@ -2136,10 +2124,10 @@ body.portal-active #nav {
 .transfer-portal:fullscreen::after,
 .transfer-portal:-webkit-full-screen::before,
 .transfer-portal:-webkit-full-screen::after,
-.transfer-portal:fullscreen .portal-zone::before,
-.transfer-portal:fullscreen .portal-zone::after,
-.transfer-portal:-webkit-full-screen .portal-zone::before,
-.transfer-portal:-webkit-full-screen .portal-zone::after {
+.transfer-portal:fullscreen .portal-frame-brackets::before,
+.transfer-portal:fullscreen .portal-frame-brackets::after,
+.transfer-portal:-webkit-full-screen .portal-frame-brackets::before,
+.transfer-portal:-webkit-full-screen .portal-frame-brackets::after {
   left: auto;
   right: auto;
   top: auto;
@@ -2158,24 +2146,27 @@ body.portal-active #nav {
   bottom: 0;
 }
 
-.transfer-portal:fullscreen .portal-zone::before,
-.transfer-portal:-webkit-full-screen .portal-zone::before {
+.transfer-portal:fullscreen .portal-frame-brackets::before,
+.transfer-portal:-webkit-full-screen .portal-frame-brackets::before {
   top: 0;
   right: 0;
 }
 
-.transfer-portal:fullscreen .portal-zone::after,
-.transfer-portal:-webkit-full-screen .portal-zone::after {
+.transfer-portal:fullscreen .portal-frame-brackets::after,
+.transfer-portal:-webkit-full-screen .portal-frame-brackets::after {
   bottom: 0;
   left: 0;
 }
 
-/* Corner instrument ticks — perimeter markers around the portal's protected zone.
-   Kept inside the frame so they preserve the bracket look without widening the layout.
-   Diagonal pair (top-left / bottom-right) in both collapsed and expanded states.
-   var(--dim) adapts to page theme; no separate light/dark rule needed. */
+/* ---- Portal frame brackets — all four corners from one coordinate system ----
+   .transfer-portal carries top-left and bottom-right via ::before/::after.
+   .portal-frame-brackets (first child, position:absolute inset:0) carries
+   top-right and bottom-left via its own ::before/::after.
+   All four share identical size, stroke, offset, and color. */
 .transfer-portal::before,
-.transfer-portal::after {
+.transfer-portal::after,
+.portal-frame-brackets::before,
+.portal-frame-brackets::after {
   content: "";
   position: absolute;
   width: 18px;
@@ -2187,17 +2178,39 @@ body.portal-active #nav {
   border-style: solid;
   border-width: 0;
 }
+/* top-left */
 .transfer-portal::before {
   top: 0;
   left: 0;
   border-top-width: 2px;
   border-left-width: 2px;
 }
+/* bottom-right */
 .transfer-portal::after {
   bottom: 0;
   right: 0;
   border-bottom-width: 2px;
   border-right-width: 2px;
+}
+/* top-right */
+.portal-frame-brackets::before {
+  top: 0;
+  right: 0;
+  border-top-width: 2px;
+  border-right-width: 2px;
+}
+/* bottom-left */
+.portal-frame-brackets::after {
+  bottom: 0;
+  left: 0;
+  border-bottom-width: 2px;
+  border-left-width: 2px;
+}
+.portal-frame-brackets {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
 }
 
 /* Collapsed portal inverts against page theme — functions as a featured instrument */
@@ -5495,8 +5508,8 @@ h1 + .gs-section-head {
   /* Ticks scale back on mobile while staying inside the frame */
   .transfer-portal::before,
   .transfer-portal::after,
-  .portal-zone::before,
-  .portal-zone::after {
+  .portal-frame-brackets::before,
+  .portal-frame-brackets::after {
     width: 14px;
     height: 14px;
     opacity: 0.65;
@@ -5509,13 +5522,13 @@ h1 + .gs-section-head {
     bottom: 0;
     right: 0;
   }
-  .portal-zone::before {
-    top: -10px;
-    right: -10px;
+  .portal-frame-brackets::before {
+    top: 0;
+    right: 0;
   }
-  .portal-zone::after {
-    bottom: -10px;
-    left: -10px;
+  .portal-frame-brackets::after {
+    bottom: 0;
+    left: 0;
   }
 
   .tx-meta-grid {
