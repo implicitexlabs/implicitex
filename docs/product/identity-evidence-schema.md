@@ -87,40 +87,37 @@ this directly.
 
 ---
 
-## Next Unresolved Boundary: Authority Policy
+## Authority Policy
 
-The worked example exposed that not every lifecycle event has equal authority.
+**See: `docs/product/wallet-control-authority-matrix.md`**
 
-A cryptographic signature can demonstrate wallet control. A revocation might be
-issued by:
-- the subject (authenticated instruction)
-- ImplicitEx (platform policy)
-- an automatic expiration policy
-- an administrator acting under support procedures
-- future: registry authority, legal process
+Authority policy is defined separately from schema semantics. Key findings:
 
-The presence of an event is not by itself sufficient. The projector must ask:
+**Three-part authority model** — `issuer` is insufficient. Every event must carry:
+- Actor (who acted)
+- Authenticator (what proves their authority)
+- Attestor (who certifies the event satisfied policy)
 
-> Was this issuer authorized to produce this kind of transition?
+**ImplicitEx does not share the subject's revocation authority.** Subject
+revocation produces `revoked`. Platform reliance decisions produce `suspended`
+via a separate event type (`wallet_control_reliance_suspended`). These must not
+be collapsed.
 
-Without an explicit authority policy, anyone capable of submitting an event could
-revoke another subject's evidence.
+**Expanded lifecycle states:** current / superseded / revoked / expired / failed
+/ suspended / revocation_pending
 
-**The next semantic question to resolve:**
+**Canonical acceptance coordinate required.** Client `occurredAt` timestamps
+cannot determine projection order. Events carry `acceptedAt` + `sequence` +
+`logDigest` for deterministic ordering.
 
-> For every wallet-control event type, which authorities may issue it, and what
-> evidence authenticates that authority?
+**Supersession requires the old wallet's own signature** plus a valid
+verification event for the replacement. A web session alone cannot rewrite
+payment identity evidence.
 
-This must be answered before the projection engine is implemented. Authority
-validation belongs in the projector, not in the renderer.
-
-**Candidate authority policy (wallet-control, initial):**
-
-| Event type                              | Authorized issuers             |
-| --------------------------------------- | ------------------------------ |
-| `wallet_control_verification_completed` | implicitex (verifier service)  |
-| `wallet_control_association_superseded` | subject (authenticated)        |
-| `wallet_control_association_revoked`    | subject, implicitex (platform) |
+**Recovery revocation** (when wallet is unavailable or compromised) produces
+`revocation_pending`, not `revoked`, until a defined recovery procedure
+completes. A support agent must not emit a final revocation from a password
+reset alone.
 
 ---
 
@@ -338,9 +335,9 @@ Semantics are now frozen. Proceed in order:
 1. ~~Freeze semantics~~ — **DONE**
 2. ~~Worked wallet-control example~~ — **DONE** (2026-07-19)
 3. ~~Walk two lifecycle transitions~~ — **DONE** (supersession + revocation)
-4. **Resolve authority policy** — which issuers may produce which event types
+4. **Freeze authority matrix** — `docs/product/wallet-control-authority-matrix.md` (DRAFT)
 5. **Choose storage syntax** — JSON manifest, database tables, or both
-6. **Implement projection engine** — events → items → blocks, with authority validation
+6. **Implement projection engine** — events → items → blocks, with authority validation as first-class gate
 7. **First card renderer** — Coin Card as first consumer of the projection output
 8. **Commitment Review integration** — second consumer, reads same projection output
 
