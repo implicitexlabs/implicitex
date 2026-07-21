@@ -1,0 +1,34 @@
+
+=== Portal Nesting Integrity — Geometry Report (desktop light, 1365px) ===
+
+CONTAINMENT
+  #modules contains transferMod     : true
+  #modules contains networkMod      : true
+  #modules contains verificationMod : true
+  #modules contains telemetry       : true
+  #modules contains statusSurface   : true
+
+GRID
+  gridTemplateColumns  : 637.5px 637.5px
+  column count         : 2
+  transfer ≠ network x : true
+
+SHELL BOUNDS (px)
+  .transfer-portal     : top=51.5 left=42.5 right=1322.5 bottom=2411.6
+
+MODULE RECTS (px)
+  transferMod          : top=117.5 bottom=1454.0 left=44.5 right=682.0
+  networkMod           : top=1455.0 bottom=1895.5 left=683.0 right=1320.5
+  verificationMod      : top=1896.5 bottom=2340.6 left=683.0 right=1320.5
+
+INSTALL STRIP
+  strip top            : 2472.1
+  portal shell bottom  : 2411.6
+  strip below portal   : true
+
+MODULE WITHIN SHELL
+  transferMod          : true
+  networkMod           : true
+  verificationMod      : true
+
+=== END REPORT ===
