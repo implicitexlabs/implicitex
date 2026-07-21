@@ -290,7 +290,9 @@
 
     /* ---- Compact: two-line product identity at 680px and below ----
        Brand stacks above TRANSFER PORTAL — identity cluster stays visible.
-       Title shrinks and wraps below the wordmark rather than disappearing. */
+       Title shrinks below the wordmark rather than disappearing.
+       At 11px the dim color (58% opacity) becomes illegible; override to
+       var(--white) for full-contrast visibility at this size. */
     @media (max-width: 680px) {
       [data-portal-shell="direct"] .portal-header-identity {
         flex-direction: column;
@@ -298,9 +300,9 @@
         gap: 3px;
       }
       [data-portal-shell="direct"] .portal-header-title {
-        font-size: 10px;
+        font-size: 11px;
         letter-spacing: 0.18em;
-        /* color: var(--dim) already set above */
+        color: var(--white);   /* dim is invisible at this size — full contrast needed */
       }
 
       [data-portal-shell="direct"] .portal-zone {

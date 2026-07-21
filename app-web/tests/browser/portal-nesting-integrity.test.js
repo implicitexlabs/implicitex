@@ -197,6 +197,19 @@ async function collectContainment(page, width) {
       return r.top >= shellRect.top - 2 && r.bottom <= shellRect.bottom + 2;
     }
 
+    // Header title legibility: display:none is insufficient — the title can
+    // be present but invisible if font-size is tiny or color opacity is near 0.
+    // Assert font-size >= 11px and opacity >= 0.9 at mobile widths.
+    const headerTitle = document.querySelector('.portal-header-title');
+    const headerTitleComputed = headerTitle ? getComputedStyle(headerTitle) : null;
+    const headerTitleFontPx = headerTitleComputed
+      ? parseFloat(headerTitleComputed.fontSize) : 0;
+    // Extract alpha channel from computed color (rgba or rgb)
+    const headerTitleColorStr = headerTitleComputed ? headerTitleComputed.color : '';
+    const rgbaMatch = headerTitleColorStr.match(/rgba\([^,]+,[^,]+,[^,]+,\s*([\d.]+)\)/);
+    const headerTitleOpacity = rgbaMatch ? parseFloat(rgbaMatch[1]) : 1.0; // rgb() = fully opaque
+    const headerTitleLegible = headerTitleFontPx >= 11 && headerTitleOpacity >= 0.9;
+
     return {
       // Containment (structural — the primary regression guard)
       containsTransfer,
@@ -225,6 +238,11 @@ async function collectContainment(page, width) {
       transferWithinShell: withinShellHorizontally(transferRect) && withinShellVertically(transferRect),
       networkWithinShell:  withinShellHorizontally(networkRect)  && withinShellVertically(networkRect),
       verificationWithinShell: withinShellHorizontally(verificationRect) && withinShellVertically(verificationRect),
+
+      // Header title legibility
+      headerTitleFontPx,
+      headerTitleOpacity,
+      headerTitleLegible,
     };
   }, width);
 }
@@ -300,6 +318,11 @@ test('portal modules are DOM descendants of #modules (containment regression gua
     assert.equal(mobileLight.containsTransfer,     true,  'mobile light: transferMod must be a descendant of #modules');
     assert.equal(mobileLight.containsNetwork,      true,  'mobile light: networkMod must be a descendant of #modules');
     assert.equal(mobileLight.containsVerification, true,  'mobile light: verificationMod must be a descendant of #modules');
+    // Header title legibility: display:!none is necessary but not sufficient.
+    // 10px Orbitron at rgba(8,8,8,0.58) is invisible at mobile scale even when
+    // the element is technically rendered. Assert minimum font size and opacity.
+    assert.equal(mobileLight.headerTitleLegible, true,
+      `mobile light: header title must be legible (got ${mobileLight.headerTitleFontPx}px opacity=${mobileLight.headerTitleOpacity})`);
 
     await page.screenshot({
       path: path.join(screenshotRoot, 'mobile-light-full.png'),
@@ -313,6 +336,8 @@ test('portal modules are DOM descendants of #modules (containment regression gua
     assert.equal(mobileDark.containsTransfer,     true,  'mobile dark: transferMod must be a descendant of #modules');
     assert.equal(mobileDark.containsNetwork,      true,  'mobile dark: networkMod must be a descendant of #modules');
     assert.equal(mobileDark.containsVerification, true,  'mobile dark: verificationMod must be a descendant of #modules');
+    assert.equal(mobileDark.headerTitleLegible, true,
+      `mobile dark: header title must be legible (got ${mobileDark.headerTitleFontPx}px opacity=${mobileDark.headerTitleOpacity})`);
 
     await page.screenshot({
       path: path.join(screenshotRoot, 'mobile-dark-full.png'),
