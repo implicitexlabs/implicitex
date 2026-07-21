@@ -166,6 +166,12 @@
   --accent-dim:    rgba(168, 126, 16, 0.80);
   --accent-border: rgba(168, 126, 16, 0.30);
   --logo-pixel: rgba(8, 8, 8, 1);
+
+  /* Coin Card surface tokens — light-mode overrides.
+     Warm neutral (pre-palette value) appropriate for Coin Card's
+     welcoming personality; independent from Portal slate palette. */
+  --cc-card-bg:     #dde3ea;
+  --cc-card-border: rgba(0, 0, 0, 0.24);
 }
 
 /* ---- Light-theme input overrides ----
@@ -6723,6 +6729,11 @@ input[type="number"] {
   --cc-card-landscape-max:   440px;
   --cc-card-portrait-max:    277px;
   --cc-card-radius:          10px;
+
+  /* Coin Card surface tokens — independent from Portal --surface-2/--border-2.
+     Changes to the Portal palette must not silently alter card.html appearance. */
+  --cc-card-bg:     #1a1a1a;
+  --cc-card-border: rgba(255, 255, 255, 0.18);
 }
 
 /* Coin Card typographic tokens
@@ -6754,8 +6765,8 @@ input[type="number"] {
   width: 100%;
   max-width: var(--cc-card-landscape-max);
   aspect-ratio: var(--cc-card-ratio-landscape);
-  background: var(--surface-2);
-  border: 1px solid var(--border-2);
+  background: var(--cc-card-bg);
+  border: 1px solid var(--cc-card-border);
   border-radius: var(--cc-card-radius);
   box-shadow: 0 8px 32px rgba(0,0,0,0.48), 0 2px 8px rgba(0,0,0,0.32);
   display: grid;
