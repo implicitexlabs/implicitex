@@ -90,7 +90,7 @@
     }
     /* Product title: comparable scale to wordmark, lower visual weight */
     [data-portal-shell="direct"] .portal-header-title {
-      font-size: 13px;
+      font-size: 16px;
       font-weight: 500;
       letter-spacing: 0.18em;
       color: var(--dim);
@@ -186,33 +186,24 @@
       background: var(--surface);
       border: 1px solid var(--border);
       border-bottom: none;
+      width: 100%;
+      cursor: pointer;
+      color: var(--dim);
+      font-family: inherit;
+      text-align: left;
+      transition: background 0.12s;
+    }
+    .portal-install-strip-inner:hover {
+      background: var(--surface-2);
     }
     .portal-install-strip-heading {
       font-size: var(--size-sm);
       font-weight: 600;
       color: var(--white);
-      margin-bottom: 0.15rem;
     }
-    .portal-install-strip-desc {
-      font-size: var(--size-xs);
-      color: var(--dim);
-      line-height: 1.4;
-    }
-    .portal-install-strip-btn {
+    .portal-install-strip-icon {
       flex-shrink: 0;
-      padding: 0.35rem 0.9rem;
-      border: 1px solid var(--border-2);
-      background: transparent;
-      color: var(--dim);
-      font-family: var(--font-ui);
-      font-size: var(--size-sm);
-      cursor: pointer;
-      transition: color 0.12s, border-color 0.12s;
-      white-space: nowrap;
-    }
-    .portal-install-strip-btn:hover {
-      color: var(--white);
-      border-color: var(--white);
+      color: inherit;
     }
     /* Standard footer — always visible, no disclosure */
     .portal-footer-row {
@@ -252,11 +243,6 @@
       .portal-footer-row {
         flex-direction: column;
         gap: 1.25rem;
-      }
-      .portal-install-strip-inner {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.75rem;
       }
       .portal-footer-group {
         min-width: 8.5rem;
@@ -300,7 +286,7 @@
         gap: 3px;
       }
       [data-portal-shell="direct"] .portal-header-title {
-        font-size: 11px;
+        font-size: 13px;
         letter-spacing: 0.18em;
         color: var(--white);   /* dim is invisible at this size — full contrast needed */
       }
@@ -454,13 +440,6 @@
             <p class="portal-display-status" id="portalWakeLockStatus" role="status" aria-live="polite"></p>
           </div>
         </div>
-        <button class="portal-ctrl-btn portal-install-ctrl" id="portalInstallAction" type="button" aria-label="Install ImplicitEx" title="Install ImplicitEx">
-          <svg class="portal-ctrl-icon" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false">
-            <path d="M7 2.25v6.25" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
-            <path d="M4.1 6.7 7 9.6l2.9-2.9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M2.25 11.5h9.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
-          </svg>
-        </button>
         <button class="portal-ctrl-btn" id="modulesMinimize" type="button" aria-expanded="true" aria-label="Minimize transfer portal">
           <svg class="portal-ctrl-icon portal-ctrl-chevron" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" focusable="false">
             <polyline points="2,4.5 6,8.5 10,4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -966,13 +945,14 @@
 
   <!-- Installation strip — below portal surface, above legal footer -->
   <div class="portal-install-strip" id="portalInstallStrip">
-    <div class="portal-install-strip-inner">
-      <div>
-        <p class="portal-install-strip-heading">Add ImplicitEx to this device</p>
-        <p class="portal-install-strip-desc">Open the Transfer Portal directly from your home screen or desktop.</p>
-      </div>
-      <button class="portal-install-strip-btn" id="portalInstallStripBtn" type="button">Add to device</button>
-    </div>
+    <button class="portal-install-strip-inner" id="portalInstallStripBtn" type="button" aria-label="Add ImplicitEx to this device">
+      <span class="portal-install-strip-heading">Add ImplicitEx to this device</span>
+      <svg class="portal-install-strip-icon" width="22" height="22" viewBox="0 0 14 14" aria-hidden="true" focusable="false">
+        <path d="M7 2.25v6.25" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+        <path d="M4.1 6.7 7 9.6l2.9-2.9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M2.25 11.5h9.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+      </svg>
+    </button>
   </div>
 
   <!-- Portal footer — standard links, always visible -->
