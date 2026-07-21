@@ -143,16 +143,16 @@
 }
 
 [data-theme="light"] {
-  --bg:         #c8d4e0;   /* cool slate page field — unmistakably blue-gray */
-  --surface:    #dce7f0;   /* raised surface — lighter, still cool-tinted */
-  --surface-2:  #b8c8d8;   /* secondary surface — darker than page field */
-  --surface-3:  #a8b8cc;   /* tertiary — deepest surface level */
+  --bg:         #edf3f7;   /* near-white blue-gray page field */
+  --surface:    #fbfcfd;   /* raised surface — almost white */
+  --surface-2:  #f3f7fa;   /* secondary surface */
+  --surface-3:  #e4ecf2;   /* tertiary — lightest visible distinction */
   --white:      #080808;
   --dim:        rgba(8, 8, 8, 0.58);
   --muted:      rgba(8, 8, 8, 0.34);
-  --border:     rgba(0, 0, 0, 0.16);
-  --border-2:   rgba(0, 0, 0, 0.30);
-  --nav-bg:     rgba(200, 212, 224, 0.94);
+  --border:     rgba(30, 45, 60, 0.14);
+  --border-2:   rgba(30, 45, 60, 0.24);
+  --nav-bg:     rgba(248, 251, 253, 0.96);
   --button-hover: #222222;
   --status-ok:  rgba(8, 8, 8, 0.7);
   --warn:       #b03020;
@@ -172,11 +172,11 @@
    In dark mode --surface-3 (darker) reads as "inset/carved" — correct.
    In light mode the same value is darker than the page field, which reads
    as filled or disabled. Override to near-white so inputs float clearly
-   above the slate background as interactive form fields.             ---- */
+   above the light background as interactive form fields.             ---- */
 [data-theme="light"] .tx-field,
 [data-theme="light"] .tx-field--primary {
-  background: #f0f6fb;
-  border-color: rgba(0, 0, 0, 0.22);
+  background: #f8fbfd;
+  border-color: rgba(30, 45, 60, 0.22);
 }
 
 [data-theme="light"] .tx-field--primary:disabled {
