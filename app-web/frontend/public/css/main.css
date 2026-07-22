@@ -39,29 +39,31 @@
 
 /* ---- Tokens ---- */
 :root {
-  --bg:         #080808;
-  --surface:    #111111;
-  --surface-2:  #1a1a1a;
-  --surface-3:  #222222;
-  --white:      #f2f2f0;
-  --dim:        rgba(242, 242, 240, 0.58);
-  --muted:      rgba(242, 242, 240, 0.30);
-  --border:     rgba(255, 255, 255, 0.09);
-  --border-2:   rgba(255, 255, 255, 0.18);
-  --nav-bg:     rgba(8, 8, 8, 0.92);
-  --button-hover: #d8d8d6;
-  --status-ok:  rgba(242, 242, 240, 0.7);
-  --warn:       #c0392b;
-  --warn-border: rgba(192, 57, 43, 0.7);
-  --control-focus: rgba(242, 242, 240, 0.84);
-  --telemetry-amber:     #b87a1e;
-  --telemetry-amber-dim: rgba(184, 122, 30, 0.82);
-  --telemetry-amber-border: rgba(184, 122, 30, 0.28);
-  /* Accent — active/live/verified/selected states. Not for decoration. */
-  --accent:        #D4A017;
-  --accent-dim:    rgba(212, 160, 23, 0.80);
-  --accent-border: rgba(212, 160, 23, 0.30);
-  --logo-pixel: rgba(242, 242, 240, 1);
+  --bg:         #202323;   /* ix-canvas — deep carbon with mineral undertone   */
+  --surface:    #292d2c;   /* ix-surface — primary panels                      */
+  --surface-2:  #333837;   /* ix-surface-raised — cards, elevated sections     */
+  --surface-3:  #3d4342;   /* ix-surface-elevated — modals, active modules     */
+  --white:      #f4f6f5;   /* ix-text-primary — headlines, values, primary copy */
+  --dim:        #c6cdcb;   /* ix-text-secondary — supporting copy              */
+  --muted:      #929a98;   /* ix-text-muted — metadata and quiet labels        */
+  --border:     #444b4a;   /* ix-border-subtle — standard boundaries           */
+  --border-2:   #687270;   /* ix-border-strong — active, focused               */
+  --nav-bg:     rgba(32, 35, 35, 0.95);
+  --button-hover: #b2c2bf; /* ix-brand-hover                                   */
+  --status-ok:  rgba(244, 246, 245, 0.7);
+  --warn:       #f06e68;   /* ix-danger                                        */
+  --warn-border: rgba(240, 110, 104, 0.7);
+  --control-focus: rgba(244, 246, 245, 0.84);
+  --telemetry-amber:     #f0b44d;   /* ix-warning                              */
+  --telemetry-amber-dim: rgba(240, 180, 77, 0.82);
+  --telemetry-amber-border: rgba(240, 180, 77, 0.28);
+  /* Accent — active/live/verified/selected/focus states.
+     Mineral teal per Alloy discipline. Not for decoration.
+     Amber signaling lives in --telemetry-amber / --warn only. */
+  --accent:        #7ab5b1;
+  --accent-dim:    rgba(122, 181, 177, 0.80);
+  --accent-border: rgba(122, 181, 177, 0.30);
+  --logo-pixel: #f4f6f5;
 
   /* ---- Typefaces ---- */
   --font-body:    'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -143,35 +145,35 @@
 }
 
 [data-theme="light"] {
-  --bg:         #edf3f7;   /* near-white blue-gray page field */
-  --surface:    #fbfcfd;   /* raised surface — almost white */
-  --surface-2:  #f3f7fa;   /* secondary surface */
-  --surface-3:  #e4ecf2;   /* tertiary — lightest visible distinction */
-  --white:      #080808;
-  --dim:        rgba(8, 8, 8, 0.58);
-  --muted:      rgba(8, 8, 8, 0.34);
-  --border:     rgba(30, 45, 60, 0.14);
-  --border-2:   rgba(30, 45, 60, 0.24);
-  --nav-bg:     rgba(248, 251, 253, 0.96);
-  --button-hover: #222222;
-  --status-ok:  rgba(8, 8, 8, 0.7);
-  --warn:       #b03020;
-  --warn-border: rgba(176, 48, 32, 0.7);
-  --control-focus: rgba(8, 8, 8, 0.72);
-  --telemetry-amber:     #a06818;
-  --telemetry-amber-dim: rgba(160, 104, 24, 0.82);
-  --telemetry-amber-border: rgba(160, 104, 24, 0.28);
-  /* Accent — signal only (verified/operational states); not a theme color */
-  --accent:        #A87E10;
-  --accent-dim:    rgba(168, 126, 16, 0.80);
-  --accent-border: rgba(168, 126, 16, 0.30);
-  --logo-pixel: rgba(8, 8, 8, 1);
+  --bg:         #d9dddc;   /* ix-canvas — machined pale metal                  */
+  --surface:    #e9eceb;   /* ix-surface — standard panels                     */
+  --surface-2:  #f5f6f5;   /* ix-surface-raised — cards, important modules     */
+  --surface-3:  #c8cecc;   /* ix-surface-inset — inputs, recessed areas        */
+  --white:      #232625;   /* ix-text-primary — headlines, values              */
+  --dim:        #4f5755;   /* ix-text-secondary — labels and explanatory text  */
+  --muted:      #717a78;   /* ix-text-muted — metadata, timestamps             */
+  --border:     #bcc3c1;   /* ix-border-subtle                                 */
+  --border-2:   #7d8785;   /* ix-border-strong                                 */
+  --nav-bg:     rgba(217, 221, 220, 0.96);
+  --button-hover: #344c4b; /* ix-brand-hover                                   */
+  --status-ok:  #232625;
+  --warn:       #b83f3a;   /* ix-danger light                                  */
+  --warn-border: rgba(184, 63, 58, 0.7);
+  --control-focus: #232625;
+  --telemetry-amber:     #7a4e00;   /* ix-warning light                        */
+  --telemetry-amber-dim: rgba(122, 78, 0, 0.82);
+  --telemetry-amber-border: rgba(122, 78, 0, 0.28);
+  /* Accent — active/live/verified/selected/focus states.
+     Mineral teal per Alloy discipline. Not for decoration. */
+  --accent:        #2d5c58;
+  --accent-dim:    rgba(45, 92, 88, 0.75);
+  --accent-border: rgba(45, 92, 88, 0.30);
+  --logo-pixel: #232625;
 
   /* Coin Card surface tokens — light-mode overrides.
-     Warm neutral (pre-palette value) appropriate for Coin Card's
-     welcoming personality; independent from Portal slate palette. */
-  --cc-card-bg:     #dde3ea;
-  --cc-card-border: rgba(0, 0, 0, 0.24);
+     Alloy mineral neutral; independent from Portal slate palette. */
+  --cc-card-bg:     #d0d8d5;
+  --cc-card-border: rgba(35, 38, 37, 0.20);
 }
 
 /* ---- Light-theme input overrides ----
@@ -181,7 +183,7 @@
    above the light background as interactive form fields.             ---- */
 [data-theme="light"] .tx-field,
 [data-theme="light"] .tx-field--primary {
-  background: #f8fbfd;
+  background: #f5f6f5;   /* ix-surface-raised — floats above #d9dddc canvas */
   border-color: rgba(30, 45, 60, 0.22);
 }
 
@@ -308,7 +310,7 @@ code, kbd, pre,
 [data-theme="light"] .wordmark path,
 [data-theme="light"] .wordmark polygon,
 [data-theme="light"] .wordmark rect {
-  fill: #080808;
+  fill: #232625;
 }
 
 [data-theme="light"] img.wordmark,
@@ -6213,29 +6215,29 @@ input[type="number"] {
 }
 
 [data-theme="light"] .consent-banner {
-  background: #f0f0ee;
-  border-top-color: rgba(0, 0, 0, 0.12);
+  background: var(--surface-2);
+  border-top-color: var(--border);
 }
 
 [data-theme="light"] .consent-btn--decline {
-  color: rgba(0, 0, 0, 0.55);
-  border-color: rgba(0, 0, 0, 0.18);
+  color: var(--dim);
+  border-color: var(--border-2);
 }
 
 [data-theme="light"] .consent-btn--decline:hover {
-  background: rgba(0, 0, 0, 0.06);
-  color: #080808;
+  background: var(--surface-3);
+  color: var(--white);
 }
 
 [data-theme="light"] .consent-btn--accept {
-  background: #080808;
-  color: #f2f2f0;
-  border-color: #080808;
+  background: #232625;
+  color: #f4f6f5;
+  border-color: #232625;
 }
 
 [data-theme="light"] .consent-btn--accept:hover {
-  background: #222;
-  border-color: #222;
+  background: #344c4b;
+  border-color: #344c4b;
 }
 
 @media (max-width: 640px) {
