@@ -107,6 +107,13 @@
         "integrationStatus": "standalone-unwired"
       },
       {
+        "id": "transactionEvidenceContentVerification",
+        "type": "responsibility",
+        "role": "transaction-evidence-envelope-validation-and-authority-hashing",
+        "source": "app-web/frontend/public/card/coin-card-transaction-evidence-content-verification.js",
+        "integrationStatus": "standalone-unwired"
+      },
+      {
         "id": "lifecycleRecordVerification",
         "type": "responsibility",
         "role": "individual-lifecycle-record-authentication"
@@ -229,6 +236,12 @@
         "type": "implementation-test",
         "role": "v2-record-runtime-validation-and-hash-verification",
         "source": "app-web/tests/frontend/coin-card-executable-registry-record-verification.test.js"
+      },
+      {
+        "id": "transactionEvidenceContentVerificationTest",
+        "type": "implementation-test",
+        "role": "transaction-evidence-runtime-content-and-hash-verification",
+        "source": "app-web/tests/frontend/coin-card-transaction-evidence-content-verification.test.js"
       }
     ],
     "edges": [
@@ -260,6 +273,11 @@
       {
         "from": "coinCard",
         "to": "executableRegistryRecordVerification",
+        "relationship": "owns"
+      },
+      {
+        "from": "coinCard",
+        "to": "transactionEvidenceContentVerification",
         "relationship": "owns"
       },
       {
@@ -315,6 +333,16 @@
       {
         "from": "executableRegistryRecordVerification",
         "to": "lifecycleExecutableRegistryIdentityContract",
+        "relationship": "partially-conforms-to"
+      },
+      {
+        "from": "transactionEvidenceContentVerification",
+        "to": "lifecycleRegistry",
+        "relationship": "consumes"
+      },
+      {
+        "from": "transactionEvidenceContentVerification",
+        "to": "transactionEvidenceAuthorityContract",
         "relationship": "partially-conforms-to"
       },
       {
@@ -380,6 +408,16 @@
       {
         "from": "executableRegistryRecordVerificationTest",
         "to": "lifecycleExecutableRegistryIdentityFixture",
+        "relationship": "consumes"
+      },
+      {
+        "from": "transactionEvidenceContentVerificationTest",
+        "to": "transactionEvidenceContentVerification",
+        "relationship": "verifies"
+      },
+      {
+        "from": "transactionEvidenceContentVerificationTest",
+        "to": "transactionEvidenceFixture",
         "relationship": "consumes"
       },
       {

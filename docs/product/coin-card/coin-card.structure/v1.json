@@ -37,6 +37,11 @@
       "implementation": "app-web/frontend/public/card/coin-card-executable-registry-record-verification.js",
       "symbol": "window.IX_COIN_CARD_EXECUTABLE_REGISTRY_RECORD_VERIFICATION",
       "integrationStatus": "standalone-unwired"
+    },
+    "transactionEvidenceContentVerification": {
+      "implementation": "app-web/frontend/public/card/coin-card-transaction-evidence-content-verification.js",
+      "symbol": "window.IX_COIN_CARD_TRANSACTION_EVIDENCE_CONTENT_VERIFICATION",
+      "integrationStatus": "standalone-unwired"
     }
   },
   "implementedEdges": [
@@ -103,6 +108,21 @@
     {
       "from": "executableRegistryRecordVerification",
       "to": "lifecycleExecutableRegistryIdentityContract",
+      "relationship": "partially-conforms-to"
+    },
+    {
+      "from": "coinCard",
+      "to": "transactionEvidenceContentVerification",
+      "relationship": "owns"
+    },
+    {
+      "from": "transactionEvidenceContentVerification",
+      "to": "lifecycleRegistry",
+      "relationship": "consumes"
+    },
+    {
+      "from": "transactionEvidenceContentVerification",
+      "to": "transactionEvidenceAuthorityContract",
       "relationship": "partially-conforms-to"
     }
   ],
