@@ -10,8 +10,12 @@ try {
   const unit = result.artifact.promotionUnits.find(
     (candidate) => candidate.id === 'coinCardEvidenceAuthorityV1'
   );
+  const signatureUnit = result.artifact.promotionUnits.find(
+    (candidate) => candidate.id === 'coinCardEvidenceSignatureAuthorityV2'
+  );
 
   assert.equal(unit.status, 'sealed');
+  assert.equal(signatureUnit.status, 'sealed');
   const partiallyPromoted = clone(result.artifact);
   partiallyPromoted.graph.nodes.find(
     (node) => node.id === unit.normativeContracts[0]
@@ -28,6 +32,28 @@ try {
   }
   assert.throws(
     () => validateArtifactContract(graphOnlyDemotion, { repoRoot }),
+    /promotion contract Markdown status must match unit proposed/
+  );
+
+  const partiallyDemotedSignatureUnit = clone(result.artifact);
+  partiallyDemotedSignatureUnit.graph.nodes.find(
+    (node) => node.id === signatureUnit.normativeContracts[0]
+  ).status = 'proposed';
+  assert.throws(
+    () => validateArtifactContract(partiallyDemotedSignatureUnit, { repoRoot }),
+    /promotion contract status must match unit sealed/
+  );
+
+  const graphOnlySignatureDemotion = clone(result.artifact);
+  const sealedSignatureUnit = graphOnlySignatureDemotion.promotionUnits.find(
+    (candidate) => candidate.id === 'coinCardEvidenceSignatureAuthorityV2'
+  );
+  sealedSignatureUnit.status = 'proposed';
+  for (const nodeId of sealedSignatureUnit.normativeContracts) {
+    graphOnlySignatureDemotion.graph.nodes.find((node) => node.id === nodeId).status = 'proposed';
+  }
+  assert.throws(
+    () => validateArtifactContract(graphOnlySignatureDemotion, { repoRoot }),
     /promotion contract Markdown status must match unit proposed/
   );
 

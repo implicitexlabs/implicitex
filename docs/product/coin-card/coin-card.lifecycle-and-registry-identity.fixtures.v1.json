@@ -135,7 +135,7 @@
     },
     "paymentRouteTransition": {
       "previousAuthority": {
-        "authorityHash": "sha256:e4384127b21da341c8ac23b21422387a89587adc1ff9122534ad4f2cd793868a",
+        "authorityHash": "sha256:65e47e9cc14e644af68fc7a92f3e33600f834140fa22c3715d1dafe223151919",
         "cardId": "cc_merchant_001",
         "runtimeManifestId": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
         "lifecycleRecordId": "implicitex-production-r19-cc_merchant_001",
@@ -160,7 +160,7 @@
       },
       "previousHead": {
         "headSequence": "12",
-        "transactionEvidenceAuthorityHash": "sha256:e4384127b21da341c8ac23b21422387a89587adc1ff9122534ad4f2cd793868a",
+        "transactionEvidenceAuthorityHash": "sha256:65e47e9cc14e644af68fc7a92f3e33600f834140fa22c3715d1dafe223151919",
         "coinCardRegistryRecordRevision": "7",
         "coinCardRegistryRecordHash": "sha256:0b4b3d4d0fc036c96c404287b1e6953e4a79b8cf9627edcf4afc171b6fb617e9",
         "lifecycleRecordHash": "sha256:85baa0e74eccbe70b41061335483164255163b026f419e4b8f3574fe62ce88ab"
@@ -202,7 +202,7 @@
         "coinCardRegistryRecordId": "ccr2-cc_merchant_001-r7",
         "coinCardRegistryRecordRevision": "7",
         "coinCardRegistryRecordHash": "sha256:0b4b3d4d0fc036c96c404287b1e6953e4a79b8cf9627edcf4afc171b6fb617e9",
-        "transactionEvidenceAuthorityHash": "sha256:e4384127b21da341c8ac23b21422387a89587adc1ff9122534ad4f2cd793868a",
+        "transactionEvidenceAuthorityHash": "sha256:65e47e9cc14e644af68fc7a92f3e33600f834140fa22c3715d1dafe223151919",
         "issuedAt": "2026-07-20T12:05:00.000Z",
         "expiresAt": "2026-07-21T12:05:00.000Z",
         "authorityId": "implicitex-executable-registry",
@@ -211,26 +211,26 @@
           "algorithm": "ECDSA_P256_SHA256",
           "signatureEncoding": "ieee-p1363",
           "signatureValueEncoding": "base64url-unpadded",
-          "keyId": "fixture-phase-1c-head-key",
+          "keyId": "fixture-signing-time-reconciliation-head-key",
           "keyUsage": "coin-card-executable-registry-head",
           "authorityId": "implicitex-executable-registry",
           "signedAt": "2026-07-20T12:05:00.000Z",
-          "value": "PYBp3TZMnAJeir2fSuo2NItT554Oo-RYo45_Xwk0H18sve1dRXTcS5n7TV88Be_rai6WhoDtsTUhbtrEyHGMQA"
+          "value": "BvHYQIVypnVriBRslzb-7kd7NRdumwagZx5wLLF1OXyfdNGDYR-Wfew85cuyOunJycJAIFpTVrowQDbbbEfzLA"
         }
       },
       "publicKeyJwk": {
         "kty": "EC",
-        "x": "YE_u77ocgSJ80wF6MkCc6PufA_WrviZg9pCB0X09Wuw",
-        "y": "0hr1JMrUJllExwSE20X9tJn81h0V3FyYolNOCm9qpL4",
+        "x": "zMf1YVnnG1JWkKvAHeT-fXJXGOFH1SG5vubLdnTujMM",
+        "y": "jVjJ2Kg39vTOIfsV57DNgGBMG4WxGEcF5qBE1Ei2Y2c",
         "crv": "P-256"
       },
-      "expectedSignedPayloadCanonicalJson": "{\"authorityId\":\"implicitex-executable-registry\",\"cardId\":\"cc_merchant_001\",\"coinCardRegistryRecordHash\":\"sha256:0b4b3d4d0fc036c96c404287b1e6953e4a79b8cf9627edcf4afc171b6fb617e9\",\"coinCardRegistryRecordId\":\"ccr2-cc_merchant_001-r7\",\"coinCardRegistryRecordRevision\":\"7\",\"environment\":\"production\",\"expiresAt\":\"2026-07-21T12:05:00.000Z\",\"headSchemaVersion\":\"executable-registry-head.v1\",\"headSequence\":\"12\",\"issuedAt\":\"2026-07-20T12:05:00.000Z\",\"lifecycleRecordHash\":\"sha256:85baa0e74eccbe70b41061335483164255163b026f419e4b8f3574fe62ce88ab\",\"registryId\":\"implicitex-executable-production\",\"signature\":{\"algorithm\":\"ECDSA_P256_SHA256\",\"authorityId\":\"implicitex-executable-registry\",\"keyId\":\"fixture-phase-1c-head-key\",\"keyUsage\":\"coin-card-executable-registry-head\",\"mode\":\"signed-p256-v1\",\"signatureEncoding\":\"ieee-p1363\",\"signatureValueEncoding\":\"base64url-unpadded\",\"signedAt\":\"2026-07-20T12:05:00.000Z\"},\"transactionEvidenceAuthorityHash\":\"sha256:e4384127b21da341c8ac23b21422387a89587adc1ff9122534ad4f2cd793868a\"}",
-      "expectedHeadCanonicalJson": "{\"authorityId\":\"implicitex-executable-registry\",\"cardId\":\"cc_merchant_001\",\"coinCardRegistryRecordHash\":\"sha256:0b4b3d4d0fc036c96c404287b1e6953e4a79b8cf9627edcf4afc171b6fb617e9\",\"coinCardRegistryRecordId\":\"ccr2-cc_merchant_001-r7\",\"coinCardRegistryRecordRevision\":\"7\",\"environment\":\"production\",\"expiresAt\":\"2026-07-21T12:05:00.000Z\",\"headSchemaVersion\":\"executable-registry-head.v1\",\"headSequence\":\"12\",\"issuedAt\":\"2026-07-20T12:05:00.000Z\",\"lifecycleRecordHash\":\"sha256:85baa0e74eccbe70b41061335483164255163b026f419e4b8f3574fe62ce88ab\",\"registryId\":\"implicitex-executable-production\",\"signature\":{\"algorithm\":\"ECDSA_P256_SHA256\",\"authorityId\":\"implicitex-executable-registry\",\"keyId\":\"fixture-phase-1c-head-key\",\"keyUsage\":\"coin-card-executable-registry-head\",\"mode\":\"signed-p256-v1\",\"signatureEncoding\":\"ieee-p1363\",\"signatureValueEncoding\":\"base64url-unpadded\",\"signedAt\":\"2026-07-20T12:05:00.000Z\",\"value\":\"PYBp3TZMnAJeir2fSuo2NItT554Oo-RYo45_Xwk0H18sve1dRXTcS5n7TV88Be_rai6WhoDtsTUhbtrEyHGMQA\"},\"transactionEvidenceAuthorityHash\":\"sha256:e4384127b21da341c8ac23b21422387a89587adc1ff9122534ad4f2cd793868a\"}",
-      "expectedHeadHash": "sha256:310080a053d74d1de921bf615d26110d1d9ce831f9106a3ca00771f3e2684bf9",
+      "expectedSignedPayloadCanonicalJson": "{\"authorityId\":\"implicitex-executable-registry\",\"cardId\":\"cc_merchant_001\",\"coinCardRegistryRecordHash\":\"sha256:0b4b3d4d0fc036c96c404287b1e6953e4a79b8cf9627edcf4afc171b6fb617e9\",\"coinCardRegistryRecordId\":\"ccr2-cc_merchant_001-r7\",\"coinCardRegistryRecordRevision\":\"7\",\"environment\":\"production\",\"expiresAt\":\"2026-07-21T12:05:00.000Z\",\"headSchemaVersion\":\"executable-registry-head.v1\",\"headSequence\":\"12\",\"issuedAt\":\"2026-07-20T12:05:00.000Z\",\"lifecycleRecordHash\":\"sha256:85baa0e74eccbe70b41061335483164255163b026f419e4b8f3574fe62ce88ab\",\"registryId\":\"implicitex-executable-production\",\"signature\":{\"algorithm\":\"ECDSA_P256_SHA256\",\"authorityId\":\"implicitex-executable-registry\",\"keyId\":\"fixture-signing-time-reconciliation-head-key\",\"keyUsage\":\"coin-card-executable-registry-head\",\"mode\":\"signed-p256-v1\",\"signatureEncoding\":\"ieee-p1363\",\"signatureValueEncoding\":\"base64url-unpadded\",\"signedAt\":\"2026-07-20T12:05:00.000Z\"},\"transactionEvidenceAuthorityHash\":\"sha256:65e47e9cc14e644af68fc7a92f3e33600f834140fa22c3715d1dafe223151919\"}",
+      "expectedHeadCanonicalJson": "{\"authorityId\":\"implicitex-executable-registry\",\"cardId\":\"cc_merchant_001\",\"coinCardRegistryRecordHash\":\"sha256:0b4b3d4d0fc036c96c404287b1e6953e4a79b8cf9627edcf4afc171b6fb617e9\",\"coinCardRegistryRecordId\":\"ccr2-cc_merchant_001-r7\",\"coinCardRegistryRecordRevision\":\"7\",\"environment\":\"production\",\"expiresAt\":\"2026-07-21T12:05:00.000Z\",\"headSchemaVersion\":\"executable-registry-head.v1\",\"headSequence\":\"12\",\"issuedAt\":\"2026-07-20T12:05:00.000Z\",\"lifecycleRecordHash\":\"sha256:85baa0e74eccbe70b41061335483164255163b026f419e4b8f3574fe62ce88ab\",\"registryId\":\"implicitex-executable-production\",\"signature\":{\"algorithm\":\"ECDSA_P256_SHA256\",\"authorityId\":\"implicitex-executable-registry\",\"keyId\":\"fixture-signing-time-reconciliation-head-key\",\"keyUsage\":\"coin-card-executable-registry-head\",\"mode\":\"signed-p256-v1\",\"signatureEncoding\":\"ieee-p1363\",\"signatureValueEncoding\":\"base64url-unpadded\",\"signedAt\":\"2026-07-20T12:05:00.000Z\",\"value\":\"BvHYQIVypnVriBRslzb-7kd7NRdumwagZx5wLLF1OXyfdNGDYR-Wfew85cuyOunJycJAIFpTVrowQDbbbEfzLA\"},\"transactionEvidenceAuthorityHash\":\"sha256:65e47e9cc14e644af68fc7a92f3e33600f834140fa22c3715d1dafe223151919\"}",
+      "expectedHeadHash": "sha256:97b2c30299fac526fab9c3ba81584adf893881288093718d552ca5fbd0e0d33e",
       "currentSource": {
         "authenticated": true,
         "mechanism": "NONCE_BOUND_TRUSTED_FRESHNESS_RESPONSE",
-        "boundHeadHash": "sha256:310080a053d74d1de921bf615d26110d1d9ce831f9106a3ca00771f3e2684bf9",
+        "boundHeadHash": "sha256:97b2c30299fac526fab9c3ba81584adf893881288093718d552ca5fbd0e0d33e",
         "highestSeenSequence": "11",
         "highestSeenHeadHash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
       }
@@ -253,7 +253,7 @@
       { "id": "head-signature-algorithm", "path": "signature.algorithm", "replacement": "ECDSA_P384_SHA384" },
       { "id": "head-signature-encoding", "path": "signature.signatureEncoding", "replacement": "der" },
       { "id": "head-value-encoding", "path": "signature.signatureValueEncoding", "replacement": "base64-padded" },
-      { "id": "head-key-id", "path": "signature.keyId", "replacement": "fixture-phase-1c-head-key-other" },
+      { "id": "head-key-id", "path": "signature.keyId", "replacement": "fixture-signing-time-reconciliation-head-key-other" },
       { "id": "head-key-usage", "path": "signature.keyUsage", "replacement": "coin-card-transaction-evidence" },
       { "id": "head-signature-authority", "path": "signature.authorityId", "replacement": "implicitex-executable-registry-other" },
       { "id": "head-signed-at", "path": "signature.signedAt", "replacement": "2026-07-20T12:05:00.001Z" }
@@ -264,7 +264,7 @@
       { "id": "head-record-revision-leading-zero", "path": "coinCardRegistryRecordRevision", "replacement": "07" },
       { "id": "head-hash-malformed", "path": "coinCardRegistryRecordHash", "replacement": "0x00" },
       { "id": "head-timestamp-noncanonical", "path": "issuedAt", "replacement": "2026-07-20T12:05:00Z" },
-      { "id": "head-signature-padded", "path": "signature.value", "replacement": "PYBp3TZMnAJeir2fSuo2NItT554Oo-RYo45_Xwk0H18sve1dRXTcS5n7TV88Be_rai6WhoDtsTUhbtrEyHGMQA=" }
+      { "id": "head-signature-padded", "path": "signature.value", "replacement": "BvHYQIVypnVriBRslzb-7kd7NRdumwagZx5wLLF1OXyfdNGDYR-Wfew85cuyOunJycJAIFpTVrowQDbbbEfzLA=" }
     ],
     "headTimeVectors": [
       { "id": "issued-too-far-in-future", "now": "2026-07-20T11:59:59.999Z", "expectedCode": "EXECUTABLE_REGISTRY_HEAD_TIME_INVALID" },

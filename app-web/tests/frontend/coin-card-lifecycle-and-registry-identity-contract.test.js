@@ -18,6 +18,10 @@ const transactionEvidenceFixturePath = path.join(
   repoRoot,
   'docs/product/coin-card/coin-card.transaction-evidence.fixtures.v1.json',
 );
+const transactionEvidenceV2FixturePath = path.join(
+  repoRoot,
+  'docs/product/coin-card/coin-card.transaction-evidence-signature.fixtures.v2.json',
+);
 const transactionEvidenceContractPath = path.join(
   repoRoot,
   'docs/product/coin-card/COIN_CARD_TRANSACTION_EVIDENCE_CONTRACT_V1.md',
@@ -32,6 +36,9 @@ const transactionEvidenceContractSource = fs.readFileSync(transactionEvidenceCon
 const lifecycleSelectorSource = fs.readFileSync(lifecycleSelectorPath, 'utf8');
 const transactionEvidenceFixture = JSON.parse(
   fs.readFileSync(transactionEvidenceFixturePath, 'utf8'),
+);
+const transactionEvidenceV2Fixture = JSON.parse(
+  fs.readFileSync(transactionEvidenceV2FixturePath, 'utf8'),
 );
 
 const REGISTRY_KEYS = [
@@ -780,10 +787,10 @@ test('positive executable-registry head pins closed canonical bytes, P-256 signa
   assert.equal(
     validateHeadConjunction(
       head,
-      transactionEvidenceFixture.positive.authority,
+      transactionEvidenceV2Fixture.positive.authority,
       fixture.positive.executableRegistryRecord,
       fixture.currentness.positiveSelection,
-      transactionEvidenceFixture.positive.expectedAuthorityHash,
+      transactionEvidenceV2Fixture.positive.expectedAuthorityHash,
     ),
     null,
   );
@@ -935,10 +942,10 @@ test('every head identity field must equal lifecycle, Registry V2, and Transacti
     assert.equal(
       validateHeadConjunction(
         mutated,
-        transactionEvidenceFixture.positive.authority,
+        transactionEvidenceV2Fixture.positive.authority,
         fixture.positive.executableRegistryRecord,
         fixture.currentness.positiveSelection,
-        transactionEvidenceFixture.positive.expectedAuthorityHash,
+        transactionEvidenceV2Fixture.positive.expectedAuthorityHash,
       ),
       'EXECUTABLE_REGISTRY_HEAD_MISMATCH',
       vector.id,

@@ -45,6 +45,18 @@
         "executionInterfaceDescriptorConformanceTest",
         "lifecycleExecutableRegistryIdentityConformanceTest"
       ]
+    },
+    {
+      "id": "coinCardEvidenceSignatureAuthorityV2",
+      "status": "sealed",
+      "normativeContracts": [
+        "transactionEvidenceAuthorityContractV2",
+        "trustedPublicKeyRecordContractV2"
+      ],
+      "supportingArtifacts": [
+        "transactionEvidenceSignatureFixtureV2",
+        "transactionEvidenceSignatureConformanceTestV2"
+      ]
     }
   ],
   "graph": {
@@ -182,6 +194,20 @@
         "source": "docs/product/coin-card/COIN_CARD_TRANSACTION_EVIDENCE_CONTRACT_V1.md"
       },
       {
+        "id": "transactionEvidenceAuthorityContractV2",
+        "type": "normative-contract",
+        "role": "payment-authority-with-authenticated-signing-time",
+        "status": "sealed",
+        "source": "docs/product/coin-card/COIN_CARD_TRANSACTION_EVIDENCE_CONTRACT_V2.md"
+      },
+      {
+        "id": "trustedPublicKeyRecordContractV2",
+        "type": "normative-contract",
+        "role": "transaction-evidence-signing-key-authority",
+        "status": "sealed",
+        "source": "docs/product/coin-card/COIN_CARD_TRUSTED_PUBLIC_KEY_RECORD_CONTRACT_V2.md"
+      },
+      {
         "id": "executionInterfaceDescriptorContract",
         "type": "normative-contract",
         "role": "executor-interface-authority",
@@ -202,6 +228,12 @@
         "source": "docs/product/coin-card/coin-card.transaction-evidence.fixtures.v1.json"
       },
       {
+        "id": "transactionEvidenceSignatureFixtureV2",
+        "type": "deterministic-fixture",
+        "role": "signing-time-and-key-policy-conformance-evidence",
+        "source": "docs/product/coin-card/coin-card.transaction-evidence-signature.fixtures.v2.json"
+      },
+      {
         "id": "executionInterfaceDescriptorFixture",
         "type": "deterministic-fixture",
         "role": "descriptor-conformance-evidence",
@@ -218,6 +250,12 @@
         "type": "conformance-test",
         "role": "transaction-evidence-reference-predicates",
         "source": "app-web/tests/frontend/coin-card-transaction-evidence-contract.test.js"
+      },
+      {
+        "id": "transactionEvidenceSignatureConformanceTestV2",
+        "type": "conformance-test",
+        "role": "signing-time-and-trusted-key-reference-predicates",
+        "source": "app-web/tests/frontend/coin-card-transaction-evidence-signature-contract.test.js"
       },
       {
         "id": "executionInterfaceDescriptorConformanceTest",
@@ -321,6 +359,26 @@
         "relationship": "depends-on"
       },
       {
+        "from": "transactionEvidenceAuthorityContractV2",
+        "to": "transactionEvidenceAuthorityContract",
+        "relationship": "version-successor-of"
+      },
+      {
+        "from": "transactionEvidenceAuthorityContractV2",
+        "to": "executionInterfaceDescriptorContract",
+        "relationship": "depends-on"
+      },
+      {
+        "from": "transactionEvidenceAuthorityContractV2",
+        "to": "lifecycleExecutableRegistryIdentityContract",
+        "relationship": "depends-on"
+      },
+      {
+        "from": "transactionEvidenceAuthorityContractV2",
+        "to": "trustedPublicKeyRecordContractV2",
+        "relationship": "depends-on"
+      },
+      {
         "from": "transactionEvidenceAuthorityContract",
         "to": "lifecycleExecutableRegistryIdentityContract",
         "relationship": "depends-on"
@@ -351,6 +409,21 @@
         "relationship": "substantiates"
       },
       {
+        "from": "transactionEvidenceSignatureFixtureV2",
+        "to": "transactionEvidenceAuthorityContractV2",
+        "relationship": "substantiates"
+      },
+      {
+        "from": "transactionEvidenceSignatureFixtureV2",
+        "to": "trustedPublicKeyRecordContractV2",
+        "relationship": "substantiates"
+      },
+      {
+        "from": "transactionEvidenceSignatureFixtureV2",
+        "to": "lifecycleExecutableRegistryIdentityFixture",
+        "relationship": "repins-current-head"
+      },
+      {
         "from": "executionInterfaceDescriptorFixture",
         "to": "executionInterfaceDescriptorContract",
         "relationship": "substantiates"
@@ -366,6 +439,16 @@
         "relationship": "verifies"
       },
       {
+        "from": "transactionEvidenceSignatureConformanceTestV2",
+        "to": "transactionEvidenceAuthorityContractV2",
+        "relationship": "verifies"
+      },
+      {
+        "from": "transactionEvidenceSignatureConformanceTestV2",
+        "to": "trustedPublicKeyRecordContractV2",
+        "relationship": "verifies"
+      },
+      {
         "from": "executionInterfaceDescriptorConformanceTest",
         "to": "executionInterfaceDescriptorContract",
         "relationship": "verifies"
@@ -378,6 +461,26 @@
       {
         "from": "transactionEvidenceConformanceTest",
         "to": "transactionEvidenceFixture",
+        "relationship": "consumes"
+      },
+      {
+        "from": "transactionEvidenceSignatureConformanceTestV2",
+        "to": "transactionEvidenceSignatureFixtureV2",
+        "relationship": "consumes"
+      },
+      {
+        "from": "transactionEvidenceSignatureConformanceTestV2",
+        "to": "transactionEvidenceFixture",
+        "relationship": "consumes"
+      },
+      {
+        "from": "transactionEvidenceSignatureConformanceTestV2",
+        "to": "lifecycleExecutableRegistryIdentityFixture",
+        "relationship": "consumes"
+      },
+      {
+        "from": "lifecycleExecutableRegistryIdentityConformanceTest",
+        "to": "transactionEvidenceSignatureFixtureV2",
         "relationship": "consumes"
       },
       {
