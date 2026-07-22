@@ -1,0 +1,484 @@
+{
+  "schemaVersion": "coin-card-lifecycle-and-registry-identity-fixtures.v1",
+  "domains": {
+    "lifecycleSignature": "ImplicitEx Coin Card Lifecycle Registry Record v1",
+    "lifecycleRecordHash": "ImplicitEx.CoinCard.AuthenticatedLifecycleRecord.v1",
+    "executableRegistryRecordHash": "ImplicitEx.CoinCard.ExecutableRegistryRecord.v2",
+    "executableRegistryHeadSignature": "ImplicitEx.CoinCard.ExecutableRegistryHead.v1",
+    "executableRegistryHeadArtifactHash": "ImplicitEx.CoinCard.ExecutableRegistryHeadArtifact.v1"
+  },
+  "positive": {
+    "lifecycleRecord": {
+      "registrySchemaVersion": "coin-card-lifecycle-registry-record.v1",
+      "registryId": "implicitex-production",
+      "environment": "production",
+      "registryVersion": 19,
+      "recordId": "implicitex-production-r19-cc_merchant_001",
+      "publishedAt": "2026-07-20T12:00:00.000Z",
+      "cardId": "cc_merchant_001",
+      "manifestId": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "revision": 7,
+      "previousManifestId": null,
+      "cardStatus": "CARD_ACTIVE",
+      "manifestStatus": "MANIFEST_CURRENT",
+      "effectiveFrom": "2026-07-20T12:00:00.000Z",
+      "effectiveUntil": null,
+      "supersededByManifestId": null,
+      "reasonCode": null,
+      "authorityId": "implicitex-registry",
+      "administrationEvidenceHash": null,
+      "signature": {
+        "mode": "signed-p256-v1",
+        "algorithm": "ECDSA_P256_SHA256",
+        "signatureEncoding": "ieee-p1363",
+        "signatureLengthBytes": 64,
+        "signatureValueEncoding": "base64url-unpadded",
+        "keyId": "fixture-phase-1c-lifecycle-key",
+        "authorityId": "implicitex-registry",
+        "signedAt": "2026-07-20T12:00:00.000Z",
+        "value": "H3aIYLNfFPS49omEL8QeRwi0HCYhowQsZLumkO6mq2JWVQcpsxgNt_gLRfSJjS2p-wv0FtSN34vM1OW7pXwR6w"
+      }
+    },
+    "lifecyclePublicKeyJwk": {
+      "kty": "EC",
+      "x": "H_SEU_iGL0WzrRHEdlyyCba3dnCuBCd5Sc1TrT6tuTg",
+      "y": "LZNHuYArAEJvuU90kNGfr1jSplFBRGlFLQ8f1E2B_hs",
+      "crv": "P-256"
+    },
+    "expectedLifecycleCanonicalJson": "{\"administrationEvidenceHash\":null,\"authorityId\":\"implicitex-registry\",\"cardId\":\"cc_merchant_001\",\"cardStatus\":\"CARD_ACTIVE\",\"effectiveFrom\":\"2026-07-20T12:00:00.000Z\",\"effectiveUntil\":null,\"environment\":\"production\",\"manifestId\":\"sha256:1111111111111111111111111111111111111111111111111111111111111111\",\"manifestStatus\":\"MANIFEST_CURRENT\",\"previousManifestId\":null,\"publishedAt\":\"2026-07-20T12:00:00.000Z\",\"reasonCode\":null,\"recordId\":\"implicitex-production-r19-cc_merchant_001\",\"registryId\":\"implicitex-production\",\"registrySchemaVersion\":\"coin-card-lifecycle-registry-record.v1\",\"registryVersion\":19,\"revision\":7,\"signature\":{\"algorithm\":\"ECDSA_P256_SHA256\",\"authorityId\":\"implicitex-registry\",\"keyId\":\"fixture-phase-1c-lifecycle-key\",\"mode\":\"signed-p256-v1\",\"signatureEncoding\":\"ieee-p1363\",\"signatureLengthBytes\":64,\"signatureValueEncoding\":\"base64url-unpadded\",\"signedAt\":\"2026-07-20T12:00:00.000Z\",\"value\":\"H3aIYLNfFPS49omEL8QeRwi0HCYhowQsZLumkO6mq2JWVQcpsxgNt_gLRfSJjS2p-wv0FtSN34vM1OW7pXwR6w\"},\"supersededByManifestId\":null}",
+    "expectedLifecycleRecordHash": "sha256:85baa0e74eccbe70b41061335483164255163b026f419e4b8f3574fe62ce88ab",
+    "executableRegistryRecord": {
+      "registrySchemaVersion": "coin-card-registry-record.v2",
+      "registryId": "implicitex-executable-production",
+      "environment": "production",
+      "recordId": "ccr2-cc_merchant_001-r7",
+      "revision": "7",
+      "cardId": "cc_merchant_001",
+      "recipientAddress": "0x1111111111111111111111111111111111111111",
+      "chainId": "137",
+      "tokenContractAddress": "0x2222222222222222222222222222222222222222",
+      "executionContractAddress": "0x3333333333333333333333333333333333333333",
+      "executionContractInterfaceId": "implicitex-evidence-bound-transfer.v1",
+      "executionInterfaceDescriptorHash": "sha256:37715c194362030bc4a2e34e2663e8f2bac03b5274d3fd4bacbb767c6664e7af",
+      "feePolicy": {
+        "policyVersion": "implicitex-fee-policy.v2",
+        "feeBasisPoints": "100",
+        "feeCapAtomic": "10000000",
+        "minimumTransferAtomic": "1000000",
+        "maximumTransferAtomic": "250000000",
+        "transferPrecisionAtomic": "10000",
+        "roundingRule": "FLOOR_BPS_THEN_CAP",
+        "feeRecipientAddress": "0x4444444444444444444444444444444444444444"
+      }
+    },
+    "expectedExecutableRegistryCanonicalJson": "{\"cardId\":\"cc_merchant_001\",\"chainId\":\"137\",\"environment\":\"production\",\"executionContractAddress\":\"0x3333333333333333333333333333333333333333\",\"executionContractInterfaceId\":\"implicitex-evidence-bound-transfer.v1\",\"executionInterfaceDescriptorHash\":\"sha256:37715c194362030bc4a2e34e2663e8f2bac03b5274d3fd4bacbb767c6664e7af\",\"feePolicy\":{\"feeBasisPoints\":\"100\",\"feeCapAtomic\":\"10000000\",\"feeRecipientAddress\":\"0x4444444444444444444444444444444444444444\",\"maximumTransferAtomic\":\"250000000\",\"minimumTransferAtomic\":\"1000000\",\"policyVersion\":\"implicitex-fee-policy.v2\",\"roundingRule\":\"FLOOR_BPS_THEN_CAP\",\"transferPrecisionAtomic\":\"10000\"},\"recipientAddress\":\"0x1111111111111111111111111111111111111111\",\"recordId\":\"ccr2-cc_merchant_001-r7\",\"registryId\":\"implicitex-executable-production\",\"registrySchemaVersion\":\"coin-card-registry-record.v2\",\"revision\":\"7\",\"tokenContractAddress\":\"0x2222222222222222222222222222222222222222\"}",
+    "expectedExecutableRegistryRecordHash": "sha256:0b4b3d4d0fc036c96c404287b1e6953e4a79b8cf9627edcf4afc171b6fb617e9",
+    "authorityIdentity": {
+      "environment": "production",
+      "cardId": "cc_merchant_001",
+      "runtimeManifestId": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "lifecycleRegistryId": "implicitex-production",
+      "lifecycleRegistrySchemaVersion": "coin-card-lifecycle-registry-record.v1",
+      "lifecycleRecordId": "implicitex-production-r19-cc_merchant_001",
+      "lifecycleRecordRevision": "7",
+      "lifecycleRecordHash": "sha256:85baa0e74eccbe70b41061335483164255163b026f419e4b8f3574fe62ce88ab",
+      "coinCardRegistryId": "implicitex-executable-production",
+      "coinCardRegistrySchemaVersion": "coin-card-registry-record.v2",
+      "coinCardRegistryRecordId": "ccr2-cc_merchant_001-r7",
+      "coinCardRegistryRecordRevision": "7",
+      "coinCardRegistryRecordHash": "sha256:0b4b3d4d0fc036c96c404287b1e6953e4a79b8cf9627edcf4afc171b6fb617e9"
+    }
+  },
+  "currentness": {
+    "lifecycleModelCapabilities": {
+      "sameManifestSuccessorSupported": false,
+      "reason": "MANIFEST_IDENTITY_IS_UNIQUE_IN_LINEAGE",
+      "paymentRouteEpochMechanism": "EXECUTABLE_REGISTRY_HEAD"
+    },
+    "positiveSelection": {
+      "sourceCurrentnessAuthenticated": false,
+      "sourceCurrentnessMode": "ROLLBACK_UNPROTECTED_STATIC_BUNDLE",
+      "selectionRequest": {
+        "cardId": "cc_merchant_001",
+        "manifestId": null
+      },
+      "authenticated": true,
+      "selectedCurrent": true,
+      "operationalOutcome": "LIFECYCLE_ACTIVE",
+      "cardStatus": "CARD_ACTIVE",
+      "manifestStatus": "MANIFEST_CURRENT",
+      "superseded": false,
+      "environment": "production",
+      "cardId": "cc_merchant_001",
+      "manifestId": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "lifecycleRegistryId": "implicitex-production",
+      "lifecycleRegistrySchemaVersion": "coin-card-lifecycle-registry-record.v1",
+      "lifecycleRecordId": "implicitex-production-r19-cc_merchant_001",
+      "lifecycleRecordRevision": "7",
+      "lifecycleRecordHash": "sha256:85baa0e74eccbe70b41061335483164255163b026f419e4b8f3574fe62ce88ab"
+    },
+    "staleAuthority": {
+      "path": "lifecycleRecordHash",
+      "replacement": "sha256:85baa0e74eccbe70b41061335483164255163b026f419e4b8f3574fe62ce88aa",
+      "expectedCode": "LIFECYCLE_AUTHORIZATION_EPOCH_MISMATCH"
+    },
+    "currentnessUnavailable": {
+      "head": null,
+      "expectedCode": "LIFECYCLE_CURRENTNESS_UNAVAILABLE"
+    },
+    "supersededSelection": {
+      "selectedCurrent": false,
+      "operationalOutcome": "LIFECYCLE_MANIFEST_SUPERSEDED",
+      "manifestStatus": "MANIFEST_SUPERSEDED",
+      "superseded": true,
+      "expectedCode": "LIFECYCLE_OUTCOME_NOT_EXECUTABLE"
+    },
+    "paymentRouteTransition": {
+      "previousAuthority": {
+        "authorityHash": "sha256:e4384127b21da341c8ac23b21422387a89587adc1ff9122534ad4f2cd793868a",
+        "cardId": "cc_merchant_001",
+        "runtimeManifestId": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "lifecycleRecordId": "implicitex-production-r19-cc_merchant_001",
+        "lifecycleRecordHash": "sha256:85baa0e74eccbe70b41061335483164255163b026f419e4b8f3574fe62ce88ab",
+        "lifecycleRecordRevision": "7",
+        "coinCardRegistryRecordId": "ccr2-cc_merchant_001-r7",
+        "coinCardRegistryRecordRevision": "7",
+        "coinCardRegistryRecordHash": "sha256:0b4b3d4d0fc036c96c404287b1e6953e4a79b8cf9627edcf4afc171b6fb617e9",
+        "recipientAddress": "0x1111111111111111111111111111111111111111"
+      },
+      "nextAuthority": {
+        "authorityHash": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "cardId": "cc_merchant_001",
+        "runtimeManifestId": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "lifecycleRecordId": "implicitex-production-r19-cc_merchant_001",
+        "lifecycleRecordHash": "sha256:85baa0e74eccbe70b41061335483164255163b026f419e4b8f3574fe62ce88ab",
+        "lifecycleRecordRevision": "7",
+        "coinCardRegistryRecordId": "ccr2-cc_merchant_001-r10",
+        "coinCardRegistryRecordRevision": "10",
+        "coinCardRegistryRecordHash": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "recipientAddress": "0x1111111111111111111111111111111111111110"
+      },
+      "previousHead": {
+        "headSequence": "12",
+        "transactionEvidenceAuthorityHash": "sha256:e4384127b21da341c8ac23b21422387a89587adc1ff9122534ad4f2cd793868a",
+        "coinCardRegistryRecordRevision": "7",
+        "coinCardRegistryRecordHash": "sha256:0b4b3d4d0fc036c96c404287b1e6953e4a79b8cf9627edcf4afc171b6fb617e9",
+        "lifecycleRecordHash": "sha256:85baa0e74eccbe70b41061335483164255163b026f419e4b8f3574fe62ce88ab"
+      },
+      "nextHead": {
+        "headSequence": "13",
+        "transactionEvidenceAuthorityHash": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "coinCardRegistryRecordRevision": "10",
+        "coinCardRegistryRecordHash": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "lifecycleRecordHash": "sha256:85baa0e74eccbe70b41061335483164255163b026f419e4b8f3574fe62ce88ab"
+      },
+      "expectedSameManifestAllowed": true,
+      "expectedRevisionGapAllowed": true,
+      "missingHeadAdvanceCode": "PAYMENT_AUTHORIZATION_EPOCH_REUSE",
+      "nonIncreasingRevisionVectors": [
+        {
+          "id": "equal-registry-revision",
+          "revision": "7",
+          "expectedCode": "PAYMENT_AUTHORIZATION_EPOCH_REUSE"
+        },
+        {
+          "id": "lower-registry-revision",
+          "revision": "6",
+          "expectedCode": "PAYMENT_AUTHORIZATION_EPOCH_REUSE"
+        }
+      ]
+    },
+    "executableRegistryHead": {
+      "allowedClockSkewSeconds": "300",
+      "maximumLifetimeSeconds": "86400",
+      "fixedNow": "2026-07-20T12:10:00.000Z",
+      "head": {
+        "headSchemaVersion": "executable-registry-head.v1",
+        "registryId": "implicitex-executable-production",
+        "environment": "production",
+        "cardId": "cc_merchant_001",
+        "headSequence": "12",
+        "lifecycleRecordHash": "sha256:85baa0e74eccbe70b41061335483164255163b026f419e4b8f3574fe62ce88ab",
+        "coinCardRegistryRecordId": "ccr2-cc_merchant_001-r7",
+        "coinCardRegistryRecordRevision": "7",
+        "coinCardRegistryRecordHash": "sha256:0b4b3d4d0fc036c96c404287b1e6953e4a79b8cf9627edcf4afc171b6fb617e9",
+        "transactionEvidenceAuthorityHash": "sha256:e4384127b21da341c8ac23b21422387a89587adc1ff9122534ad4f2cd793868a",
+        "issuedAt": "2026-07-20T12:05:00.000Z",
+        "expiresAt": "2026-07-21T12:05:00.000Z",
+        "authorityId": "implicitex-executable-registry",
+        "signature": {
+          "mode": "signed-p256-v1",
+          "algorithm": "ECDSA_P256_SHA256",
+          "signatureEncoding": "ieee-p1363",
+          "signatureValueEncoding": "base64url-unpadded",
+          "keyId": "fixture-phase-1c-head-key",
+          "keyUsage": "coin-card-executable-registry-head",
+          "authorityId": "implicitex-executable-registry",
+          "signedAt": "2026-07-20T12:05:00.000Z",
+          "value": "PYBp3TZMnAJeir2fSuo2NItT554Oo-RYo45_Xwk0H18sve1dRXTcS5n7TV88Be_rai6WhoDtsTUhbtrEyHGMQA"
+        }
+      },
+      "publicKeyJwk": {
+        "kty": "EC",
+        "x": "YE_u77ocgSJ80wF6MkCc6PufA_WrviZg9pCB0X09Wuw",
+        "y": "0hr1JMrUJllExwSE20X9tJn81h0V3FyYolNOCm9qpL4",
+        "crv": "P-256"
+      },
+      "expectedSignedPayloadCanonicalJson": "{\"authorityId\":\"implicitex-executable-registry\",\"cardId\":\"cc_merchant_001\",\"coinCardRegistryRecordHash\":\"sha256:0b4b3d4d0fc036c96c404287b1e6953e4a79b8cf9627edcf4afc171b6fb617e9\",\"coinCardRegistryRecordId\":\"ccr2-cc_merchant_001-r7\",\"coinCardRegistryRecordRevision\":\"7\",\"environment\":\"production\",\"expiresAt\":\"2026-07-21T12:05:00.000Z\",\"headSchemaVersion\":\"executable-registry-head.v1\",\"headSequence\":\"12\",\"issuedAt\":\"2026-07-20T12:05:00.000Z\",\"lifecycleRecordHash\":\"sha256:85baa0e74eccbe70b41061335483164255163b026f419e4b8f3574fe62ce88ab\",\"registryId\":\"implicitex-executable-production\",\"signature\":{\"algorithm\":\"ECDSA_P256_SHA256\",\"authorityId\":\"implicitex-executable-registry\",\"keyId\":\"fixture-phase-1c-head-key\",\"keyUsage\":\"coin-card-executable-registry-head\",\"mode\":\"signed-p256-v1\",\"signatureEncoding\":\"ieee-p1363\",\"signatureValueEncoding\":\"base64url-unpadded\",\"signedAt\":\"2026-07-20T12:05:00.000Z\"},\"transactionEvidenceAuthorityHash\":\"sha256:e4384127b21da341c8ac23b21422387a89587adc1ff9122534ad4f2cd793868a\"}",
+      "expectedHeadCanonicalJson": "{\"authorityId\":\"implicitex-executable-registry\",\"cardId\":\"cc_merchant_001\",\"coinCardRegistryRecordHash\":\"sha256:0b4b3d4d0fc036c96c404287b1e6953e4a79b8cf9627edcf4afc171b6fb617e9\",\"coinCardRegistryRecordId\":\"ccr2-cc_merchant_001-r7\",\"coinCardRegistryRecordRevision\":\"7\",\"environment\":\"production\",\"expiresAt\":\"2026-07-21T12:05:00.000Z\",\"headSchemaVersion\":\"executable-registry-head.v1\",\"headSequence\":\"12\",\"issuedAt\":\"2026-07-20T12:05:00.000Z\",\"lifecycleRecordHash\":\"sha256:85baa0e74eccbe70b41061335483164255163b026f419e4b8f3574fe62ce88ab\",\"registryId\":\"implicitex-executable-production\",\"signature\":{\"algorithm\":\"ECDSA_P256_SHA256\",\"authorityId\":\"implicitex-executable-registry\",\"keyId\":\"fixture-phase-1c-head-key\",\"keyUsage\":\"coin-card-executable-registry-head\",\"mode\":\"signed-p256-v1\",\"signatureEncoding\":\"ieee-p1363\",\"signatureValueEncoding\":\"base64url-unpadded\",\"signedAt\":\"2026-07-20T12:05:00.000Z\",\"value\":\"PYBp3TZMnAJeir2fSuo2NItT554Oo-RYo45_Xwk0H18sve1dRXTcS5n7TV88Be_rai6WhoDtsTUhbtrEyHGMQA\"},\"transactionEvidenceAuthorityHash\":\"sha256:e4384127b21da341c8ac23b21422387a89587adc1ff9122534ad4f2cd793868a\"}",
+      "expectedHeadHash": "sha256:310080a053d74d1de921bf615d26110d1d9ce831f9106a3ca00771f3e2684bf9",
+      "currentSource": {
+        "authenticated": true,
+        "mechanism": "NONCE_BOUND_TRUSTED_FRESHNESS_RESPONSE",
+        "boundHeadHash": "sha256:310080a053d74d1de921bf615d26110d1d9ce831f9106a3ca00771f3e2684bf9",
+        "highestSeenSequence": "11",
+        "highestSeenHeadHash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      }
+    },
+    "headSignedFieldMutations": [
+      { "id": "head-schema", "path": "headSchemaVersion", "replacement": "executable-registry-head.v2" },
+      { "id": "head-registry", "path": "registryId", "replacement": "implicitex-executable-staging" },
+      { "id": "head-environment", "path": "environment", "replacement": "staging" },
+      { "id": "head-card", "path": "cardId", "replacement": "cc_merchant_000" },
+      { "id": "head-sequence", "path": "headSequence", "replacement": "13" },
+      { "id": "head-lifecycle", "path": "lifecycleRecordHash", "replacement": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" },
+      { "id": "head-record-id", "path": "coinCardRegistryRecordId", "replacement": "ccr2-cc_merchant_001-r8" },
+      { "id": "head-record-revision", "path": "coinCardRegistryRecordRevision", "replacement": "8" },
+      { "id": "head-record-hash", "path": "coinCardRegistryRecordHash", "replacement": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc" },
+      { "id": "head-authority-hash", "path": "transactionEvidenceAuthorityHash", "replacement": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd" },
+      { "id": "head-issued-at", "path": "issuedAt", "replacement": "2026-07-20T12:05:00.001Z" },
+      { "id": "head-expires-at", "path": "expiresAt", "replacement": "2026-07-21T12:04:59.999Z" },
+      { "id": "head-authority-id", "path": "authorityId", "replacement": "implicitex-executable-registry-other" },
+      { "id": "head-signature-mode", "path": "signature.mode", "replacement": "signed-p256-v2" },
+      { "id": "head-signature-algorithm", "path": "signature.algorithm", "replacement": "ECDSA_P384_SHA384" },
+      { "id": "head-signature-encoding", "path": "signature.signatureEncoding", "replacement": "der" },
+      { "id": "head-value-encoding", "path": "signature.signatureValueEncoding", "replacement": "base64-padded" },
+      { "id": "head-key-id", "path": "signature.keyId", "replacement": "fixture-phase-1c-head-key-other" },
+      { "id": "head-key-usage", "path": "signature.keyUsage", "replacement": "coin-card-transaction-evidence" },
+      { "id": "head-signature-authority", "path": "signature.authorityId", "replacement": "implicitex-executable-registry-other" },
+      { "id": "head-signed-at", "path": "signature.signedAt", "replacement": "2026-07-20T12:05:00.001Z" }
+    ],
+    "headShapeMutations": [
+      { "id": "head-sequence-native-number", "path": "headSequence", "replacement": 12 },
+      { "id": "head-sequence-zero", "path": "headSequence", "replacement": "0" },
+      { "id": "head-record-revision-leading-zero", "path": "coinCardRegistryRecordRevision", "replacement": "07" },
+      { "id": "head-hash-malformed", "path": "coinCardRegistryRecordHash", "replacement": "0x00" },
+      { "id": "head-timestamp-noncanonical", "path": "issuedAt", "replacement": "2026-07-20T12:05:00Z" },
+      { "id": "head-signature-padded", "path": "signature.value", "replacement": "PYBp3TZMnAJeir2fSuo2NItT554Oo-RYo45_Xwk0H18sve1dRXTcS5n7TV88Be_rai6WhoDtsTUhbtrEyHGMQA=" }
+    ],
+    "headTimeVectors": [
+      { "id": "issued-too-far-in-future", "now": "2026-07-20T11:59:59.999Z", "expectedCode": "EXECUTABLE_REGISTRY_HEAD_TIME_INVALID" },
+      { "id": "expired-beyond-skew", "now": "2026-07-21T12:10:00.000Z", "expectedCode": "EXECUTABLE_REGISTRY_HEAD_TIME_INVALID" }
+    ],
+    "headSourceVectors": [
+      { "id": "source-unauthenticated", "path": "authenticated", "replacement": false, "expectedCode": "EXECUTABLE_REGISTRY_HEAD_SOURCE_CURRENTNESS_UNAVAILABLE" },
+      { "id": "source-wrong-head", "path": "boundHeadHash", "replacement": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "expectedCode": "EXECUTABLE_REGISTRY_HEAD_SOURCE_CURRENTNESS_UNAVAILABLE" },
+      { "id": "sequence-rollback", "path": "highestSeenSequence", "replacement": "13", "expectedCode": "EXECUTABLE_REGISTRY_HEAD_SEQUENCE_ROLLBACK" },
+      { "id": "same-sequence-equivocation", "path": "highestSeenSequence", "replacement": "12", "secondaryPath": "highestSeenHeadHash", "secondaryReplacement": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "expectedCode": "EXECUTABLE_REGISTRY_HEAD_SEQUENCE_EQUIVOCATION" }
+    ],
+    "headEqualityMutations": [
+      { "id": "head-registry-mismatch", "path": "registryId", "replacement": "implicitex-executable-staging" },
+      { "id": "head-environment-mismatch", "path": "environment", "replacement": "staging" },
+      { "id": "head-card-mismatch", "path": "cardId", "replacement": "cc_merchant_000" },
+      { "id": "head-lifecycle-mismatch", "path": "lifecycleRecordHash", "replacement": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" },
+      { "id": "head-record-id-mismatch", "path": "coinCardRegistryRecordId", "replacement": "ccr2-cc_merchant_001-r8" },
+      { "id": "head-record-revision-mismatch", "path": "coinCardRegistryRecordRevision", "replacement": "8" },
+      { "id": "head-record-hash-mismatch", "path": "coinCardRegistryRecordHash", "replacement": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc" },
+      { "id": "head-authority-mismatch", "path": "transactionEvidenceAuthorityHash", "replacement": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd" }
+    ]
+  },
+  "executableRegistryRecordIdSemantics": {
+    "meaning": "REVISION_SPECIFIC_PUBLICATION_ARTIFACT",
+    "recordId": "ccr2-cc_merchant_001-r7",
+    "revision": "7",
+    "successorRecordId": "ccr2-cc_merchant_001-r10",
+    "successorRevision": "10"
+  },
+  "lifecycleIdentityMutations": [
+    {
+      "id": "lifecycle-registry-id",
+      "path": "lifecycleRegistryId",
+      "replacement": "implicitex-staging",
+      "expectedCode": "LIFECYCLE_REGISTRY_ID_MISMATCH"
+    },
+    {
+      "id": "lifecycle-schema",
+      "path": "lifecycleRegistrySchemaVersion",
+      "replacement": "coin-card-lifecycle-registry-record.v2",
+      "expectedCode": "LIFECYCLE_SCHEMA_MISMATCH"
+    },
+    {
+      "id": "lifecycle-record-id",
+      "path": "lifecycleRecordId",
+      "replacement": "implicitex-production-r18-cc_merchant_001",
+      "expectedCode": "LIFECYCLE_RECORD_ID_MISMATCH"
+    },
+    {
+      "id": "lifecycle-record-revision",
+      "path": "lifecycleRecordRevision",
+      "replacement": "19",
+      "expectedCode": "LIFECYCLE_RECORD_REVISION_MISMATCH"
+    },
+    {
+      "id": "lifecycle-record-hash",
+      "path": "lifecycleRecordHash",
+      "replacement": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "expectedCode": "LIFECYCLE_RECORD_HASH_MISMATCH"
+    }
+  ],
+  "lifecycleSemanticMutations": [
+    {
+      "id": "lifecycle-environment",
+      "path": "environment",
+      "replacement": "staging",
+      "expectedCode": "ENVIRONMENT_MISMATCH"
+    },
+    {
+      "id": "lifecycle-card-id",
+      "path": "cardId",
+      "replacement": "cc_merchant_000",
+      "expectedCode": "CARD_ID_MISMATCH"
+    },
+    {
+      "id": "lifecycle-runtime-manifest",
+      "path": "runtimeManifestId",
+      "replacement": "sha256:1111111111111111111111111111111111111111111111111111111111111110",
+      "expectedCode": "RUNTIME_MANIFEST_MISMATCH"
+    }
+  ],
+  "lifecycleRecordMutations": [
+    {
+      "id": "signed-lifecycle-registry-id",
+      "path": "registryId",
+      "replacement": "implicitex-staging"
+    },
+    {
+      "id": "signed-lifecycle-schema",
+      "path": "registrySchemaVersion",
+      "replacement": "coin-card-lifecycle-registry-record.v2"
+    },
+    {
+      "id": "signed-lifecycle-registry-version",
+      "path": "registryVersion",
+      "replacement": 20
+    },
+    {
+      "id": "signed-lifecycle-record-id",
+      "path": "recordId",
+      "replacement": "implicitex-production-r20-cc_merchant_001"
+    },
+    {
+      "id": "signed-lifecycle-revision",
+      "path": "revision",
+      "replacement": 8
+    },
+    {
+      "id": "signed-lifecycle-card-id",
+      "path": "cardId",
+      "replacement": "cc_merchant_000"
+    },
+    {
+      "id": "signed-lifecycle-manifest-id",
+      "path": "manifestId",
+      "replacement": "sha256:1111111111111111111111111111111111111111111111111111111111111110"
+    }
+  ],
+  "executableRegistryIdentityMutations": [
+    {
+      "id": "executable-registry-id",
+      "path": "coinCardRegistryId",
+      "replacement": "implicitex-executable-staging",
+      "expectedCode": "COIN_CARD_REGISTRY_ID_MISMATCH"
+    },
+    {
+      "id": "executable-registry-schema",
+      "path": "coinCardRegistrySchemaVersion",
+      "replacement": "coin-card-registry-record.v1",
+      "expectedCode": "COIN_CARD_REGISTRY_SCHEMA_UNSUPPORTED"
+    },
+    {
+      "id": "executable-registry-record-id",
+      "path": "coinCardRegistryRecordId",
+      "replacement": "ccr2-cc_merchant_001-r6",
+      "expectedCode": "COIN_CARD_REGISTRY_RECORD_ID_MISMATCH"
+    },
+    {
+      "id": "executable-registry-revision",
+      "path": "coinCardRegistryRecordRevision",
+      "replacement": "6",
+      "expectedCode": "COIN_CARD_REGISTRY_REVISION_MISMATCH"
+    },
+    {
+      "id": "executable-registry-hash",
+      "path": "coinCardRegistryRecordHash",
+      "replacement": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "expectedCode": "COIN_CARD_REGISTRY_RECORD_HASH_MISMATCH"
+    }
+  ],
+  "executionFieldMutations": [
+    "environment",
+    "cardId",
+    "recipientAddress",
+    "chainId",
+    "tokenContractAddress",
+    "executionContractAddress",
+    "executionContractInterfaceId",
+    "executionInterfaceDescriptorHash",
+    "feePolicy.policyVersion",
+    "feePolicy.feeBasisPoints",
+    "feePolicy.feeCapAtomic",
+    "feePolicy.minimumTransferAtomic",
+    "feePolicy.maximumTransferAtomic",
+    "feePolicy.transferPrecisionAtomic",
+    "feePolicy.roundingRule",
+    "feePolicy.feeRecipientAddress"
+  ],
+  "legacyRecords": [
+    {
+      "id": "presentation-implicitex-v1",
+      "record": {
+        "schema": "implicitex.coincard.v1",
+        "cardId": "cc_merchant_001",
+        "status": "active",
+        "recipient": "0x1111111111111111111111111111111111111111",
+        "chainId": 137,
+        "token": "USDC",
+        "feeBps": 100
+      },
+      "expectedCode": "LEGACY_REGISTRY_NOT_EXECUTABLE"
+    },
+    {
+      "id": "phase-1b-scaffold-v1",
+      "record": {
+        "registrySchemaVersion": "coin-card-registry-record.v1",
+        "cardId": "cc_merchant_001",
+        "revision": "7",
+        "recipientAddress": "0x1111111111111111111111111111111111111111",
+        "chainId": "137"
+      },
+      "expectedCode": "LEGACY_REGISTRY_NOT_EXECUTABLE"
+    }
+  ],
+  "migrationRequiredFacts": [
+    "registrySchemaVersion",
+    "registryId",
+    "environment",
+    "recordId",
+    "revision",
+    "cardId",
+    "recipientAddress",
+    "chainId",
+    "tokenContractAddress",
+    "executionContractAddress",
+    "executionContractInterfaceId",
+    "executionInterfaceDescriptorHash",
+    "feePolicy.policyVersion",
+    "feePolicy.feeBasisPoints",
+    "feePolicy.feeCapAtomic",
+    "feePolicy.minimumTransferAtomic",
+    "feePolicy.maximumTransferAtomic",
+    "feePolicy.transferPrecisionAtomic",
+    "feePolicy.roundingRule",
+    "feePolicy.feeRecipientAddress"
+  ]
+}

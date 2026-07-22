@@ -28,6 +28,25 @@
       "The screenshot is visual evidence only. It does not define structure, ownership, or product boundaries."
     ]
   },
+  "promotionUnits": [
+    {
+      "id": "coinCardEvidenceAuthorityV1",
+      "status": "proposed",
+      "normativeContracts": [
+        "transactionEvidenceAuthorityContract",
+        "executionInterfaceDescriptorContract",
+        "lifecycleExecutableRegistryIdentityContract"
+      ],
+      "supportingArtifacts": [
+        "transactionEvidenceFixture",
+        "executionInterfaceDescriptorFixture",
+        "lifecycleExecutableRegistryIdentityFixture",
+        "transactionEvidenceConformanceTest",
+        "executionInterfaceDescriptorConformanceTest",
+        "lifecycleExecutableRegistryIdentityConformanceTest"
+      ]
+    }
+  ],
   "graph": {
     "nodes": [
       {
@@ -140,6 +159,63 @@
         "id": "feeMath",
         "type": "responsibility",
         "role": "single-authority"
+      },
+      {
+        "id": "transactionEvidenceAuthorityContract",
+        "type": "normative-contract",
+        "role": "proposed-payment-authority",
+        "status": "proposed",
+        "source": "docs/product/coin-card/COIN_CARD_TRANSACTION_EVIDENCE_CONTRACT_V1.md"
+      },
+      {
+        "id": "executionInterfaceDescriptorContract",
+        "type": "normative-contract",
+        "role": "proposed-executor-interface-authority",
+        "status": "proposed",
+        "source": "docs/product/coin-card/COIN_CARD_EXECUTION_INTERFACE_DESCRIPTOR_CONTRACT_V1.md"
+      },
+      {
+        "id": "lifecycleExecutableRegistryIdentityContract",
+        "type": "normative-contract",
+        "role": "proposed-identity-currentness-authority",
+        "status": "proposed",
+        "source": "docs/product/coin-card/COIN_CARD_LIFECYCLE_AND_EXECUTABLE_REGISTRY_IDENTITY_CONTRACT_V1.md"
+      },
+      {
+        "id": "transactionEvidenceFixture",
+        "type": "deterministic-fixture",
+        "role": "transaction-evidence-conformance-evidence",
+        "source": "docs/product/coin-card/coin-card.transaction-evidence.fixtures.v1.json"
+      },
+      {
+        "id": "executionInterfaceDescriptorFixture",
+        "type": "deterministic-fixture",
+        "role": "descriptor-conformance-evidence",
+        "source": "docs/product/coin-card/coin-card.execution-interface-descriptor.fixtures.v1.json"
+      },
+      {
+        "id": "lifecycleExecutableRegistryIdentityFixture",
+        "type": "deterministic-fixture",
+        "role": "identity-currentness-conformance-evidence",
+        "source": "docs/product/coin-card/coin-card.lifecycle-and-registry-identity.fixtures.v1.json"
+      },
+      {
+        "id": "transactionEvidenceConformanceTest",
+        "type": "conformance-test",
+        "role": "transaction-evidence-reference-predicates",
+        "source": "app-web/tests/frontend/coin-card-transaction-evidence-contract.test.js"
+      },
+      {
+        "id": "executionInterfaceDescriptorConformanceTest",
+        "type": "conformance-test",
+        "role": "descriptor-reference-predicates",
+        "source": "app-web/tests/frontend/coin-card-execution-interface-descriptor-contract.test.js"
+      },
+      {
+        "id": "lifecycleExecutableRegistryIdentityConformanceTest",
+        "type": "conformance-test",
+        "role": "identity-currentness-reference-predicates",
+        "source": "app-web/tests/frontend/coin-card-lifecycle-and-registry-identity-contract.test.js"
       }
     ],
     "edges": [
@@ -201,6 +277,71 @@
       {
         "from": "executionAuthorization",
         "to": "lifecyclePresentationPromotion",
+        "relationship": "consumes"
+      },
+      {
+        "from": "transactionEvidenceAuthorityContract",
+        "to": "executionInterfaceDescriptorContract",
+        "relationship": "depends-on"
+      },
+      {
+        "from": "transactionEvidenceAuthorityContract",
+        "to": "lifecycleExecutableRegistryIdentityContract",
+        "relationship": "depends-on"
+      },
+      {
+        "from": "transactionEvidenceFixture",
+        "to": "transactionEvidenceAuthorityContract",
+        "relationship": "substantiates"
+      },
+      {
+        "from": "executionInterfaceDescriptorFixture",
+        "to": "executionInterfaceDescriptorContract",
+        "relationship": "substantiates"
+      },
+      {
+        "from": "lifecycleExecutableRegistryIdentityFixture",
+        "to": "lifecycleExecutableRegistryIdentityContract",
+        "relationship": "substantiates"
+      },
+      {
+        "from": "transactionEvidenceConformanceTest",
+        "to": "transactionEvidenceAuthorityContract",
+        "relationship": "verifies"
+      },
+      {
+        "from": "executionInterfaceDescriptorConformanceTest",
+        "to": "executionInterfaceDescriptorContract",
+        "relationship": "verifies"
+      },
+      {
+        "from": "lifecycleExecutableRegistryIdentityConformanceTest",
+        "to": "lifecycleExecutableRegistryIdentityContract",
+        "relationship": "verifies"
+      },
+      {
+        "from": "transactionEvidenceConformanceTest",
+        "to": "transactionEvidenceFixture",
+        "relationship": "consumes"
+      },
+      {
+        "from": "transactionEvidenceConformanceTest",
+        "to": "executionInterfaceDescriptorFixture",
+        "relationship": "consumes"
+      },
+      {
+        "from": "executionInterfaceDescriptorConformanceTest",
+        "to": "executionInterfaceDescriptorFixture",
+        "relationship": "consumes"
+      },
+      {
+        "from": "lifecycleExecutableRegistryIdentityConformanceTest",
+        "to": "lifecycleExecutableRegistryIdentityFixture",
+        "relationship": "consumes"
+      },
+      {
+        "from": "lifecycleExecutableRegistryIdentityConformanceTest",
+        "to": "transactionEvidenceFixture",
         "relationship": "consumes"
       },
       {

@@ -31,7 +31,7 @@ function assertFileExists(repoRoot, relativePath, label) {
   return filePath;
 }
 
-function validateArtifactContract(artifact) {
+function validateArtifactContract(artifact, options) {
   assertCondition(typeof artifact.schema === 'string', 'artifact schema must be a string');
   assertCondition(artifact.graph && typeof artifact.graph === 'object', 'artifact must define graph');
   assertCondition(Array.isArray(artifact.graph.nodes), 'artifact graph.nodes must be an array');
@@ -39,11 +39,64 @@ function validateArtifactContract(artifact) {
   assertCondition(Array.isArray(artifact.graph.forbiddenEdges), 'artifact graph.forbiddenEdges must be an array');
 
   const nodeIds = uniqueIds(artifact.graph.nodes, 'artifact graph.nodes');
+  const nodesById = new Map(artifact.graph.nodes.map((node) => [node.id, node]));
+  const governedSourceTypes = new Set([
+    'normative-contract',
+    'deterministic-fixture',
+    'conformance-test',
+  ]);
+
+  for (const node of artifact.graph.nodes) {
+    if (!governedSourceTypes.has(node.type)) continue;
+    assertCondition(
+      typeof node.source === 'string' && node.source.length > 0,
+      `governed artifact node missing source: ${node.id}`
+    );
+    assertFileExists(options.repoRoot, node.source, `governed source for ${node.id}`);
+  }
 
   for (const edge of [...artifact.graph.edges, ...artifact.graph.forbiddenEdges]) {
     assertCondition(nodeIds.has(edge.from), `edge from unknown node: ${edge.from}`);
     assertCondition(nodeIds.has(edge.to), `edge to unknown node: ${edge.to}`);
     assertCondition(Boolean(edge.relationship), `edge missing relationship: ${JSON.stringify(edge)}`);
+  }
+
+  if (artifact.promotionUnits !== undefined) {
+    assertCondition(Array.isArray(artifact.promotionUnits), 'artifact promotionUnits must be an array');
+    uniqueIds(artifact.promotionUnits, 'artifact promotionUnits');
+    for (const unit of artifact.promotionUnits) {
+      assertCondition(unit.status === 'proposed', `promotion unit must remain proposed: ${unit.id}`);
+      assertCondition(
+        Array.isArray(unit.normativeContracts) && unit.normativeContracts.length > 0,
+        `promotion unit missing normative contracts: ${unit.id}`
+      );
+      assertCondition(
+        Array.isArray(unit.supportingArtifacts) && unit.supportingArtifacts.length > 0,
+        `promotion unit missing supporting artifacts: ${unit.id}`
+      );
+      for (const nodeId of unit.normativeContracts) {
+        const node = nodesById.get(nodeId);
+        assertCondition(node && node.type === 'normative-contract', `invalid promotion contract: ${nodeId}`);
+        assertCondition(node.status === 'proposed', `promotion contract must remain proposed: ${nodeId}`);
+        assertCondition(
+          artifact.graph.edges.some(
+            (edge) => edge.to === nodeId && edge.relationship === 'substantiates'
+          ),
+          `promotion contract missing fixture evidence: ${nodeId}`
+        );
+        assertCondition(
+          artifact.graph.edges.some((edge) => edge.to === nodeId && edge.relationship === 'verifies'),
+          `promotion contract missing conformance test: ${nodeId}`
+        );
+      }
+      for (const nodeId of unit.supportingArtifacts) {
+        const node = nodesById.get(nodeId);
+        assertCondition(
+          node && (node.type === 'deterministic-fixture' || node.type === 'conformance-test'),
+          `invalid promotion support artifact: ${nodeId}`
+        );
+      }
+    }
   }
 
   const owners = new Map();
@@ -261,7 +314,7 @@ function validateArchitecture(options) {
   const artifact = readJson(path.join(options.repoRoot, options.artifactPath));
   const structure = readJson(path.join(options.repoRoot, options.structurePath));
 
-  validateArtifactContract(artifact);
+  validateArtifactContract(artifact, options);
   validateStructureContract(artifact, structure, options);
   const migrationDebt = validateMigrationDebt(structure, options);
 
@@ -270,6 +323,7 @@ function validateArchitecture(options) {
     console.log('ok - structure contract maps to artifact graph');
     console.log('ok - forbidden dependency edges are absent from structure');
     console.log('ok - declared implementation authorities exist');
+    console.log('ok - governed authority contracts and conformance sources exist');
     for (const debt of migrationDebt) {
       console.log(
         `debt - ${debt.id}: ${debt.runtimeFile} still has ${debt.presentDispatches.join(', ') || 'no declared runtime dispatches present'}; target ${debt.targetDispatch}`

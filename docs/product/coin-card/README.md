@@ -40,6 +40,12 @@ Implementation-local checkpoint notes may exist under `app-web/docs/product/coin
 - `COIN_CARD_LIFECYCLE_RESOLUTION_CONTRACT_V1.md` — selected evidence interpretation, temporal resolution, and non-operational lifecycle facts.
 - `COIN_CARD_LIFECYCLE_PRESENTATION_PROMOTION_CONTRACT_V1.md` — presentation-promotion policy: exclusive promotion rule, blocked outcome classification, private proof predicate, and scope boundary.
 - `COIN_CARD_EXECUTION_AUTHORIZATION_CONTRACT_V1.md` — Coin Card-specific execution authorization: three-input gate, exclusive authorization rule, execution plan, pinned transaction facts, one-shot consumption doctrine, and TOCTOU guard.
+- `COIN_CARD_TRANSACTION_EVIDENCE_CONTRACT_V1.md` — canonical relationship among authenticated card authority, frozen user intent, observed execution facts, strict live-policy reconciliation, settlement evidence, and deterministic rejection rules.
+- `coin-card.transaction-evidence.fixtures.v1.json` — deterministic Transaction Evidence authority, intent, observation, settlement, and compatibility vectors.
+- `COIN_CARD_EXECUTION_INTERFACE_DESCRIPTOR_CONTRACT_V1.md` — content-addressed evidence-bound EVM interface, deployed-code identity, atomic policy commitment, calldata, revert, and event-decoding contract.
+- `coin-card.execution-interface-descriptor.fixtures.v1.json` — deterministic descriptor, policy-commitment, calldata, replay-binding, and event-decoding vectors.
+- `COIN_CARD_LIFECYCLE_AND_EXECUTABLE_REGISTRY_IDENTITY_CONTRACT_V1.md` — Phase 1C lifecycle-record identity, executable Registry V2 schema, extraction equality, and legacy migration boundary.
+- `coin-card.lifecycle-and-registry-identity.fixtures.v1.json` — deterministic authenticated lifecycle, executable Registry V2, identity mutation, and migration vectors.
 - `COIN_CARD_LIFECYCLE_REGISTRY_CONTRACT_V1.md` — lifecycle registry authority, publication evidence, card status, manifest status, supersession, and rollback rules.
 - `COIN_CARD_VERIFICATION_STATE_COPY_V1.md` — user-facing copy contract for manifest verification states.
 - `../../../tools/coin-card-integrity/README.md` — proof tooling usage for generating, verifying, and tamper-checking Coin Card manifests.
@@ -68,8 +74,28 @@ The manifest integrity docs are intentionally split by responsibility:
 - Lifecycle resolution: `COIN_CARD_LIFECYCLE_RESOLUTION_CONTRACT_V1.md`
 - Presentation-promotion policy: `COIN_CARD_LIFECYCLE_PRESENTATION_PROMOTION_CONTRACT_V1.md`
 - Execution authorization: `COIN_CARD_EXECUTION_AUTHORIZATION_CONTRACT_V1.md`
+- Transaction evidence binding: `COIN_CARD_TRANSACTION_EVIDENCE_CONTRACT_V1.md`
+- Execution interface descriptor: `COIN_CARD_EXECUTION_INTERFACE_DESCRIPTOR_CONTRACT_V1.md`
 - Verification state copy: `COIN_CARD_VERIFICATION_STATE_COPY_V1.md`
 - Proof tooling: `../../../tools/coin-card-integrity/README.md`
+
+## Proposed Evidence-Authority Promotion Unit
+
+These three normative contracts form one future promotion unit and remain Proposed:
+
+1. `COIN_CARD_TRANSACTION_EVIDENCE_CONTRACT_V1.md`
+2. `COIN_CARD_EXECUTION_INTERFACE_DESCRIPTOR_CONTRACT_V1.md`
+3. `COIN_CARD_LIFECYCLE_AND_EXECUTABLE_REGISTRY_IDENTITY_CONTRACT_V1.md`
+
+Their supporting conformance evidence is:
+
+| Contract | Deterministic fixture | Focused test |
+|---|---|---|
+| Transaction Evidence | `coin-card.transaction-evidence.fixtures.v1.json` | `../../../app-web/tests/frontend/coin-card-transaction-evidence-contract.test.js` |
+| Execution descriptor | `coin-card.execution-interface-descriptor.fixtures.v1.json` | `../../../app-web/tests/frontend/coin-card-execution-interface-descriptor-contract.test.js` |
+| Lifecycle/Registry identity | `coin-card.lifecycle-and-registry-identity.fixtures.v1.json` | `../../../app-web/tests/frontend/coin-card-lifecycle-and-registry-identity-contract.test.js` |
+
+Fixtures and tests substantiate conformance but are not normative authorities. Promotion requires all three contracts to advance together under a separate approval.
 
 The boundary is:
 
