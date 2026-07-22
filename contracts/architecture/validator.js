@@ -44,6 +44,7 @@ function validateArtifactContract(artifact, options) {
     'normative-contract',
     'deterministic-fixture',
     'conformance-test',
+    'implementation-test',
   ]);
 
   for (const node of artifact.graph.nodes) {

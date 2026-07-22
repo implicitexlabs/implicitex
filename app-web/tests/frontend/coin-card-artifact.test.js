@@ -31,7 +31,16 @@ try {
     /promotion contract Markdown status must match unit proposed/
   );
 
-  console.log('ok - Coin Card architecture validator passes and rejects partial promotion');
+  const missingImplementationTest = clone(result.artifact);
+  missingImplementationTest.graph.nodes.find(
+    (node) => node.id === 'executableRegistryRecordVerificationTest'
+  ).source = 'app-web/tests/frontend/missing-executable-registry-runtime-test.js';
+  assert.throws(
+    () => validateArtifactContract(missingImplementationTest, { repoRoot }),
+    /governed source for executableRegistryRecordVerificationTest does not exist/
+  );
+
+  console.log('ok - Coin Card architecture validator governs promotion and implementation tests');
 } catch (err) {
   console.error(`not ok - ${err.message}`);
   throw err;

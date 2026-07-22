@@ -32,6 +32,11 @@
     "executionAuthorization": {
       "implementation": "app-web/frontend/public/card/coin-card-execution-authorization.js",
       "symbol": "window.IX_COIN_CARD_EXECUTION_AUTHORIZATION"
+    },
+    "executableRegistryRecordVerification": {
+      "implementation": "app-web/frontend/public/card/coin-card-executable-registry-record-verification.js",
+      "symbol": "window.IX_COIN_CARD_EXECUTABLE_REGISTRY_RECORD_VERIFICATION",
+      "integrationStatus": "standalone-unwired"
     }
   },
   "implementedEdges": [
@@ -84,6 +89,21 @@
       "from": "executionAuthorization",
       "to": "lifecyclePresentationPromotion",
       "relationship": "consumes"
+    },
+    {
+      "from": "coinCard",
+      "to": "executableRegistryRecordVerification",
+      "relationship": "owns"
+    },
+    {
+      "from": "executableRegistryRecordVerification",
+      "to": "lifecycleRegistry",
+      "relationship": "consumes"
+    },
+    {
+      "from": "executableRegistryRecordVerification",
+      "to": "lifecycleExecutableRegistryIdentityContract",
+      "relationship": "partially-conforms-to"
     }
   ],
   "regions": [
