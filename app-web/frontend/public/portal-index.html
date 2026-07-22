@@ -180,13 +180,12 @@
     .portal-install-strip-inner {
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: flex-start;
       gap: 1.5rem;
       padding: 0.85rem 1.25rem;
       background: var(--surface);
       border: 1px solid var(--border);
       border-bottom: none;
-      width: 100%;
       cursor: pointer;
       color: var(--dim);
       font-family: inherit;
@@ -945,8 +944,8 @@
 
   <!-- Installation strip — below portal surface, above legal footer -->
   <div class="portal-install-strip" id="portalInstallStrip">
-    <button class="portal-install-strip-inner" id="portalInstallStripBtn" type="button" aria-label="Add ImplicitEx to this device">
-      <span class="portal-install-strip-heading">Add ImplicitEx to this device</span>
+    <button class="portal-install-strip-inner" id="portalInstallStripBtn" type="button" aria-label="Install ImplicitEx">
+      <span class="portal-install-strip-heading">Install ImplicitEx</span>
       <svg class="portal-install-strip-icon" width="22" height="22" viewBox="0 0 14 14" aria-hidden="true" focusable="false">
         <path d="M7 2.25v6.25" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
         <path d="M4.1 6.7 7 9.6l2.9-2.9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>

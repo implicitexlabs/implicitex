@@ -7874,6 +7874,10 @@ input[type="number"] {
     padding: var(--sp-4);
   }
 
+  .portal-entry-actions {
+    flex-direction: column;
+  }
+
   .portal-entry-preview-row {
     grid-template-columns: auto minmax(0, 1fr);
   }
