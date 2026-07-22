@@ -2,11 +2,11 @@
 
 ## Status
 
-**Proposed — member of the three-contract evidence-authority promotion unit; not yet sealed.**
+**Sealed — normative transaction-evidence authority in the three-contract evidence-authority unit.**
 
-This document proposes the v1 specification for binding an authenticated Coin Card to a later user-approved transfer and to the execution facts observed from the selected wallet provider and the confirmed chain event. Phase 1A defines its authority hierarchy and legacy-manifest compatibility, Phase 1B binds the content-addressed execution-interface descriptor, Phase 1C defines lifecycle/registry identity and authenticated currentness, and Phase 1D closes the specification-level conformance matrix. Promotion to authoritative status still requires explicit review and approval; passing specification fixtures does not implement this contract or prove production eligibility.
+This document defines the v1 normative contract for binding an authenticated Coin Card to a later user-approved transfer and to the execution facts observed from the selected wallet provider and the confirmed chain event. Phase 1A defines its authority hierarchy and legacy-manifest compatibility, Phase 1B binds the content-addressed execution-interface descriptor, Phase 1C defines lifecycle/registry identity and authenticated currentness, and Phase 1D closes the specification-level conformance matrix. Sealed specification status does not implement this contract or prove production eligibility.
 
-This contract, `COIN_CARD_EXECUTION_INTERFACE_DESCRIPTOR_CONTRACT_V1.md`, and `COIN_CARD_LIFECYCLE_AND_EXECUTABLE_REGISTRY_IDENTITY_CONTRACT_V1.md` form one inseparable future promotion unit. None may be promoted while another remains Proposed. Their fixtures and focused tests substantiate conformance but are not normative authorities.
+This contract, `COIN_CARD_EXECUTION_INTERFACE_DESCRIPTOR_CONTRACT_V1.md`, and `COIN_CARD_LIFECYCLE_AND_EXECUTABLE_REGISTRY_IDENTITY_CONTRACT_V1.md` form one inseparable sealed authority unit. A later status or version change that affects their shared trust boundary MUST update all affected members and governance metadata atomically. Their fixtures and focused tests substantiate conformance but are not normative authorities.
 
 This increment defines data, canonicalization, validation, and rejection behavior only. It does not wire the contract into the runtime, regenerate a manifest, sign an artifact, or change a deployment.
 
@@ -753,7 +753,7 @@ The Phase 1D matrix is a specification-level closure gate, not a runtime certifi
 
 The fixture's `phase1DConformance.matrix` MUST reference exactly those executable vectors rather than merely listing prose labels. Each referenced vector MUST also run in its owning focused suite. Phase 1D conformance is green only when the Transaction Evidence, execution-interface descriptor, Phase 1C identity/currentness, lifecycle/canonicalization, execution-authorization, and provider-continuity focused suites all retain their established results, and every red test is classified as introduced, pre-existing expected, or unrelated.
 
-This closure does not promote either Proposed specification automatically. Promotion requires a separate approval after review of the conformance results. Runtime implementation later MUST independently reproduce every predicate and ordering rule without importing these test-local reference helpers or treating fixture values as production trust.
+Phase 1D closure did not itself promote the specifications; the later atomic three-contract promotion sealed this authority unit only after reconciliation and review. Runtime implementation MUST independently reproduce every predicate and ordering rule without importing these test-local reference helpers or treating fixture values as production trust.
 
 ## 14. Phase 1 non-goals
 

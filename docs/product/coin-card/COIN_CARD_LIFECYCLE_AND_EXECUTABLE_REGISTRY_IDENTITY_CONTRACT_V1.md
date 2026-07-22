@@ -2,11 +2,11 @@
 
 ## Status
 
-**Proposed — member of the three-contract evidence-authority promotion unit; not yet sealed.**
+**Sealed — normative identity and currentness authority in the three-contract evidence-authority unit.**
 
 This document defines the exact lifecycle-record identity and executable Coin Card Registry identity bound by `transaction-evidence.v1`. It resolves overloaded registry and version names without changing the existing lifecycle runtime, lifecycle record schema, Solidity, manifests, deployment, or production wiring.
 
-This contract, `COIN_CARD_TRANSACTION_EVIDENCE_CONTRACT_V1.md`, and `COIN_CARD_EXECUTION_INTERFACE_DESCRIPTOR_CONTRACT_V1.md` form one inseparable future promotion unit. None may be promoted as authority while either dependency remains Proposed. Their deterministic fixtures and focused tests are supporting conformance evidence, not normative authority.
+This contract, `COIN_CARD_TRANSACTION_EVIDENCE_CONTRACT_V1.md`, and `COIN_CARD_EXECUTION_INTERFACE_DESCRIPTOR_CONTRACT_V1.md` form one inseparable sealed authority unit. A later status or version change that affects their shared trust boundary MUST update all affected members and governance metadata atomically. Their deterministic fixtures and focused tests are supporting conformance evidence, not normative authority.
 
 The key words **MUST**, **MUST NOT**, **REQUIRED**, **SHOULD**, and **MAY** are normative.
 
@@ -435,4 +435,4 @@ This contract does not:
 - implement registry resolution in the Coin Card runtime;
 - alter Solidity, manifests, deployment, or production wiring;
 - implement the closed Phase 1D execution predicates in runtime code; or
-- promote any member of the three-contract evidence-authority unit from `Proposed` status.
+- independently demote, supersede, or revise one member of the sealed three-contract evidence-authority unit.

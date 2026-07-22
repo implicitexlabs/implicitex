@@ -79,9 +79,9 @@ The manifest integrity docs are intentionally split by responsibility:
 - Verification state copy: `COIN_CARD_VERIFICATION_STATE_COPY_V1.md`
 - Proof tooling: `../../../tools/coin-card-integrity/README.md`
 
-## Proposed Evidence-Authority Promotion Unit
+## Sealed Evidence-Authority Unit
 
-These three normative contracts form one future promotion unit and remain Proposed:
+These three normative contracts form one sealed authority unit:
 
 1. `COIN_CARD_TRANSACTION_EVIDENCE_CONTRACT_V1.md`
 2. `COIN_CARD_EXECUTION_INTERFACE_DESCRIPTOR_CONTRACT_V1.md`
@@ -95,7 +95,7 @@ Their supporting conformance evidence is:
 | Execution descriptor | `coin-card.execution-interface-descriptor.fixtures.v1.json` | `../../../app-web/tests/frontend/coin-card-execution-interface-descriptor-contract.test.js` |
 | Lifecycle/Registry identity | `coin-card.lifecycle-and-registry-identity.fixtures.v1.json` | `../../../app-web/tests/frontend/coin-card-lifecycle-and-registry-identity-contract.test.js` |
 
-Fixtures and tests substantiate conformance but are not normative authorities. Promotion requires all three contracts to advance together under a separate approval.
+Fixtures and tests substantiate conformance but are not normative authorities. A later status or version change affecting the shared trust boundary must update the contracts and governance metadata atomically.
 
 The boundary is:
 

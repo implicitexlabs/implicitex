@@ -2,11 +2,11 @@
 
 ## Status
 
-**Proposed — member of the three-contract evidence-authority promotion unit; not yet sealed or implemented.**
+**Sealed — normative execution-interface authority in the three-contract evidence-authority unit; not implemented.**
 
 This document defines `execution-interface-descriptor.v1`, the content-addressed contract between Transaction Evidence and a future evidence-bound EVM executor. It specifies interface identity, deployed runtime-code identity, transfer calldata, atomic policy commitment, required state reads, revert behavior, event decoding, and settlement reconciliation.
 
-This contract, `COIN_CARD_TRANSACTION_EVIDENCE_CONTRACT_V1.md`, and `COIN_CARD_LIFECYCLE_AND_EXECUTABLE_REGISTRY_IDENTITY_CONTRACT_V1.md` form one inseparable future promotion unit. None may be promoted while another remains Proposed. Their fixtures and focused tests substantiate conformance but are not normative authorities.
+This contract, `COIN_CARD_TRANSACTION_EVIDENCE_CONTRACT_V1.md`, and `COIN_CARD_LIFECYCLE_AND_EXECUTABLE_REGISTRY_IDENTITY_CONTRACT_V1.md` form one inseparable sealed authority unit. A later status or version change that affects their shared trust boundary MUST update all affected members and governance metadata atomically. Their fixtures and focused tests substantiate conformance but are not normative authorities.
 
 This increment does not implement or deploy `ImplicitExEvidenceBoundTransferV2`. It does not modify the Coin Card runtime, Solidity, manifests, lifecycle records, registry schemas, or production wiring. The deterministic code hash and addresses in the fixture are specification vectors, not claims about a live deployment.
 

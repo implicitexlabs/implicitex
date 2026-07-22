@@ -31,7 +31,7 @@
   "promotionUnits": [
     {
       "id": "coinCardEvidenceAuthorityV1",
-      "status": "proposed",
+      "status": "sealed",
       "normativeContracts": [
         "transactionEvidenceAuthorityContract",
         "executionInterfaceDescriptorContract",
@@ -163,22 +163,22 @@
       {
         "id": "transactionEvidenceAuthorityContract",
         "type": "normative-contract",
-        "role": "proposed-payment-authority",
-        "status": "proposed",
+        "role": "payment-authority",
+        "status": "sealed",
         "source": "docs/product/coin-card/COIN_CARD_TRANSACTION_EVIDENCE_CONTRACT_V1.md"
       },
       {
         "id": "executionInterfaceDescriptorContract",
         "type": "normative-contract",
-        "role": "proposed-executor-interface-authority",
-        "status": "proposed",
+        "role": "executor-interface-authority",
+        "status": "sealed",
         "source": "docs/product/coin-card/COIN_CARD_EXECUTION_INTERFACE_DESCRIPTOR_CONTRACT_V1.md"
       },
       {
         "id": "lifecycleExecutableRegistryIdentityContract",
         "type": "normative-contract",
-        "role": "proposed-identity-currentness-authority",
-        "status": "proposed",
+        "role": "identity-currentness-authority",
+        "status": "sealed",
         "source": "docs/product/coin-card/COIN_CARD_LIFECYCLE_AND_EXECUTABLE_REGISTRY_IDENTITY_CONTRACT_V1.md"
       },
       {

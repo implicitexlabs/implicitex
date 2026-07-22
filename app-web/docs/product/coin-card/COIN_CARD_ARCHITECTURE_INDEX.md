@@ -282,9 +282,9 @@ refine mechanics but must not reopen or weaken trust boundaries.
 | `COIN_CARD_SIGNED_MANIFEST_ENVELOPE_CONTRACT_V1.md` | Signed manifest envelope format, payment facts, revision chaining |
 | `COIN_CARD_MANIFEST_RUNTIME_CONTRACT_V1.md` | Runtime manifest placement; only `VERIFIED` state may call `IX_EXECUTION` |
 
-**Evidence-bound payment authority — Proposed promotion unit:**
+**Evidence-bound payment authority — sealed authority unit:**
 
-These three contracts are one inseparable future promotion unit. They remain Proposed; fixtures and tests are supporting conformance evidence rather than normative authority.
+These three contracts are one inseparable sealed authority unit. Fixtures and tests are supporting conformance evidence rather than normative authority.
 
 | Repository document | Owns |
 |---|---|
@@ -397,7 +397,7 @@ COIN_CARD_TRUST_MODEL.md (V1 frozen) ──────────────�
     ├──► Signing contracts (signature policy, verifier design, key contracts)      │
     ├──► Lifecycle contracts (registry, bundle, record selection/resolution)       │ governs
     ├──► Execution contract                                                        │ verification
-    ├──► Proposed evidence-authority promotion unit                                │
+    ├──► Sealed evidence-authority unit                                            │
     │      ├──► Transaction Evidence ──depends-on──► Execution Descriptor          │
     │      └──► Transaction Evidence ──depends-on──► Lifecycle/Registry Identity   │
     ├──► Manifest contracts (schema, runtime contract, envelope)                   │
@@ -432,9 +432,9 @@ KMS_COMPATIBILITY_EVIDENCE.md ────────────────�
 | What KMS key type and format? | `COIN_CARD_BACKEND_ARCHITECTURE_V1.md` § KMS gate + `KMS_COMPATIBILITY_EVIDENCE.md` |
 | How does the verifier authenticate a record? | `coin-card-lifecycle-record-verification.js` |
 | What does the verifier accept as trusted keys? | `coin-card-trusted-keys.js` |
-| What authenticates a Coin Card payment route and policy? | `docs/product/coin-card/COIN_CARD_TRANSACTION_EVIDENCE_CONTRACT_V1.md` — Proposed |
-| What fixes executor ABI, code, guard, and event semantics? | `docs/product/coin-card/COIN_CARD_EXECUTION_INTERFACE_DESCRIPTOR_CONTRACT_V1.md` — Proposed |
-| What establishes Registry V2 identity and payment currentness? | `docs/product/coin-card/COIN_CARD_LIFECYCLE_AND_EXECUTABLE_REGISTRY_IDENTITY_CONTRACT_V1.md` — Proposed |
+| What authenticates a Coin Card payment route and policy? | `docs/product/coin-card/COIN_CARD_TRANSACTION_EVIDENCE_CONTRACT_V1.md` — Sealed |
+| What fixes executor ABI, code, guard, and event semantics? | `docs/product/coin-card/COIN_CARD_EXECUTION_INTERFACE_DESCRIPTOR_CONTRACT_V1.md` — Sealed |
+| What establishes Registry V2 identity and payment currentness? | `docs/product/coin-card/COIN_CARD_LIFECYCLE_AND_EXECUTABLE_REGISTRY_IDENTITY_CONTRACT_V1.md` — Sealed |
 | What rule governs engineering implementation? | `COIN_CARD_ENGINEERING_IMPLEMENTATION_RULES_V1.md` |
 | What is the implementation build order? | `COIN_CARD_BACKEND_ARCHITECTURE_V1.md` § Implementation Sequence |
 | Is the KMS signing format proven? | `KMS_COMPATIBILITY_EVIDENCE.md` — yes, 2026-07-21 |

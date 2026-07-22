@@ -65,7 +65,10 @@ function validateArtifactContract(artifact, options) {
     assertCondition(Array.isArray(artifact.promotionUnits), 'artifact promotionUnits must be an array');
     uniqueIds(artifact.promotionUnits, 'artifact promotionUnits');
     for (const unit of artifact.promotionUnits) {
-      assertCondition(unit.status === 'proposed', `promotion unit must remain proposed: ${unit.id}`);
+      assertCondition(
+        unit.status === 'proposed' || unit.status === 'sealed',
+        `promotion unit has unsupported authority status: ${unit.id}`
+      );
       assertCondition(
         Array.isArray(unit.normativeContracts) && unit.normativeContracts.length > 0,
         `promotion unit missing normative contracts: ${unit.id}`
@@ -77,7 +80,16 @@ function validateArtifactContract(artifact, options) {
       for (const nodeId of unit.normativeContracts) {
         const node = nodesById.get(nodeId);
         assertCondition(node && node.type === 'normative-contract', `invalid promotion contract: ${nodeId}`);
-        assertCondition(node.status === 'proposed', `promotion contract must remain proposed: ${nodeId}`);
+        assertCondition(
+          node.status === unit.status,
+          `promotion contract status must match unit ${unit.status}: ${nodeId}`
+        );
+        const contractSource = fs.readFileSync(path.join(options.repoRoot, node.source), 'utf8');
+        const expectedStatusMarker = unit.status === 'sealed' ? '**Sealed' : '**Proposed';
+        assertCondition(
+          contractSource.includes(expectedStatusMarker),
+          `promotion contract Markdown status must match unit ${unit.status}: ${nodeId}`
+        );
         assertCondition(
           artifact.graph.edges.some(
             (edge) => edge.to === nodeId && edge.relationship === 'substantiates'
@@ -362,5 +374,6 @@ if (require.main === module) {
 }
 
 module.exports = {
+  validateArtifactContract,
   validateArchitecture,
 };
