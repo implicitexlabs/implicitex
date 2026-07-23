@@ -18,6 +18,8 @@
  *   4. The install strip begins below the complete portal shell.
  *   5. All four bracket coordinates correspond to the complete shell.
  *   6. Full-page screenshots are captured for the acceptance record.
+ *   7. Required transfer runtime scripts load before wallet.js.
+ *   8. The rewritten root route is explicitly non-cacheable.
  */
 
 const assert = require('node:assert/strict');
@@ -29,6 +31,8 @@ const puppeteer = require('puppeteer');
 
 const appRoot = path.resolve(__dirname, '../..');
 const publicRoot = path.join(appRoot, 'frontend/public');
+const portalIndexPath = path.join(publicRoot, 'portal-index.html');
+const firebaseConfigPath = path.resolve(appRoot, '../firebase.json');
 const screenshotRoot = path.join('/tmp', 'implicitex-portal-nesting-integrity');
 
 function ensureDir(dir) {
@@ -127,6 +131,45 @@ async function openPortal(page, baseUrl, width, height, theme) {
   // Wait for the modules section to be in the DOM — proves the page rendered.
   await page.waitForSelector('#modules', { timeout: 15000 });
 }
+
+test('portal entrypoint preserves transfer dependency order and root cache policy', () => {
+  const html = fs.readFileSync(portalIndexPath, 'utf8');
+  const scriptSources = Array.from(
+    html.matchAll(/<script[^>]+src="([^"]+)"/g),
+    (match) => match[1]
+  );
+  const chainsIndex = scriptSources.indexOf('config/chains.js');
+  const executionIndex = scriptSources.indexOf('js/ix-execution.js');
+  const walletIndex = scriptSources.indexOf('js/wallet.js');
+
+  assert.notEqual(walletIndex, -1, 'portal-index.html must load js/wallet.js');
+  assert.notEqual(
+    executionIndex,
+    -1,
+    'portal-index.html must not load wallet.js without js/ix-execution.js'
+  );
+  assert.notEqual(chainsIndex, -1, 'portal-index.html must load config/chains.js');
+  assert.ok(
+    chainsIndex < executionIndex && executionIndex < walletIndex,
+    'portal scripts must load in order: config/chains.js, js/ix-execution.js, js/wallet.js'
+  );
+
+  const firebaseConfig = JSON.parse(fs.readFileSync(firebaseConfigPath, 'utf8'));
+  const portalHosting = firebaseConfig.hosting.find((entry) => entry.target === 'portal');
+  assert.ok(portalHosting, 'firebase.json must define the portal hosting target');
+
+  const rootHeaders = portalHosting.headers.find((entry) => entry.source === '/');
+  assert.ok(rootHeaders, 'portal root route must declare explicit response headers');
+
+  const cacheControl = rootHeaders.headers.find((entry) => (
+    entry.key.toLowerCase() === 'cache-control'
+  ));
+  assert.equal(
+    cacheControl && cacheControl.value,
+    'no-cache, must-revalidate',
+    'portal root route must revalidate rewritten HTML'
+  );
+});
 
 /**
  * collectContainment — the core regression assertion.
@@ -269,7 +312,16 @@ test('portal modules are DOM descendants of #modules (containment regression gua
 
     // ---- Desktop light: full acceptance smoke ----
     await openPortal(page, baseUrl, 1365, 1800, 'light');
+    const runtimeState = await page.evaluate(() => ({
+      executionReady: !!(
+        window.IX_EXECUTION &&
+        typeof window.IX_EXECUTION.calculateFee === 'function' &&
+        typeof window.IX_EXECUTION.executeTransfer === 'function'
+      ),
+    }));
     const desktopLight = await collectContainment(page, 1365);
+
+    assert.equal(runtimeState.executionReady, true, 'transfer execution runtime must initialize');
 
     // Core containment assertions
     assert.equal(desktopLight.containsTransfer,     true,  'transferMod must be a descendant of #modules');
