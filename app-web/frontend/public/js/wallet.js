@@ -57,7 +57,7 @@
     const el = document.getElementById('fatalErrorMessage');
     const wrap = document.getElementById('fatalError');
     if (el)   el.textContent = msg.replace(/\n/g, ' — ');
-    if (wrap) wrap.hidden = false;
+    if (wrap) wrap.style.display = 'flex';
 
     throw new Error(msg);
   }());
