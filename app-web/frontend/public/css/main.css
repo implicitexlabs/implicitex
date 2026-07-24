@@ -1248,11 +1248,6 @@ body.portal-active #nav {
 
 .modules[hidden] { display: none; }
 
-.portal-primary-nav,
-.portal-primary-nav-status {
-  grid-column: 1 / -1;
-}
-
 .portal-primary-nav {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1320,20 +1315,10 @@ body.portal-active #nav {
   display: none;
 }
 
-@media (max-width: 1024px) {
-  .portal-primary-nav {
-    position: sticky;
-    top: 0;
-    z-index: 140;
-    background: var(--surface);
-    border-bottom: 1px solid var(--border-2);
-  }
-}
-
+/* Nav sticky behaviour is now handled by the sticky portal-header at ≤1024px.
+   The nav itself remains static inside the header. */
 @media (max-width: 1024px) and (display-mode: standalone) {
-  .portal-primary-nav {
-    padding-top: calc(env(safe-area-inset-top, 0px) + 0.35rem);
-  }
+  /* Safe-area top padding — applies to the sticky header, not the nav directly */
 }
 
 .portal-install-strip {

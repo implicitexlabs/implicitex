@@ -683,4 +683,54 @@
   });
 
   syncPromotion();
+
+  /* ---- ?install=1 intent handling ---- */
+  /*
+   * When the portal is opened via ?install=1 (e.g. from the main-site
+   * "Install app" footer link), we:
+   *   1. Ensure the strip is visible (it may be hidden in standalone mode —
+   *      in that case the strip is irrelevant and we do nothing).
+   *   2. Scroll the strip into view and focus the install control.
+   *   3. Mark the control with data-install-intent so CSS can emphasise it.
+   *   4. On platforms where beforeinstallprompt is unavailable (iOS), append
+   *      the platform-specific instruction text to the strip so the user has
+   *      actionable guidance without needing to tap first.
+   *
+   * We do NOT invoke the browser install prompt automatically.
+   */
+  (function () {
+    try {
+      var hasIntent = window.location.search.indexOf('install=1') !== -1;
+      if (!hasIntent) return;
+      if (!installStrip || !stripBtn) return;
+
+      // Strip hidden means the app is already installed — nothing to do.
+      if (installStrip.hidden) return;
+
+      // Emphasise the control.
+      stripBtn.setAttribute('data-install-intent', '');
+
+      // Scroll and focus after a brief paint delay so layout is settled.
+      setTimeout(function () {
+        stripBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        stripBtn.focus({ preventScroll: true });
+      }, 60);
+
+      // On platforms without a native install prompt (principally iOS Safari),
+      // show the instruction text inline so the user can act immediately.
+      if (!isStandalone() && isIOS()) {
+        var note = document.getElementById('portalInstallStripNote');
+        if (!note) {
+          var mode = getMode();
+          note = document.createElement('p');
+          note.className = 'portal-install-strip-note';
+          note.id = 'portalInstallStripNote';
+          note.textContent = statusCopy(mode);
+          installStrip.appendChild(note);
+        }
+      }
+    } catch (intentError) {
+      // Never let intent handling break the page.
+    }
+  }());
 })();

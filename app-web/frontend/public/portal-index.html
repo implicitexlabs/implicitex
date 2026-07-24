@@ -66,7 +66,12 @@
       overscroll-behavior-x: none;
     }
 
-    /* Brand integrated into portal header — left side of the header bar */
+    /* ── Header shell — four zones: identity / nav / workspace / wallet ── */
+
+    /* Identity zone: lettermark + stacked wordmark group */
+    [data-portal-shell="direct"] .portal-header-identity {
+      flex-shrink: 0;
+    }
     [data-portal-shell="direct"] .portal-header-brand {
       display: inline-flex;
       align-items: center;
@@ -75,37 +80,147 @@
       color: var(--white);
       flex-shrink: 0;
     }
+    /* Wordmark + subtitle stacked vertically, left-aligned to same edge */
+    [data-portal-shell="direct"] .portal-header-wordmark-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      align-items: flex-start;
+    }
     [data-portal-shell="direct"] .portal-header-brand .wordmark {
       height: 16px;
       width: auto;
     }
     /* Wordmark theme handled by main.css: [data-theme="light"] img.wordmark { filter: invert(1) } */
 
-    /* Left identity cluster: wordmark + product title */
-    [data-portal-shell="direct"] .portal-header-identity {
-      display: flex;
-      align-items: center;
-      gap: 32px;
-      flex-shrink: 0;
-    }
-    /* Product title: cap-height matches wordmark height (SVG=16px; 16/0.72≈22px) */
+    /* Product subtitle — aligns under wordmark, not lettermark */
     [data-portal-shell="direct"] .portal-header-title {
-      font-size: 22px;
+      font-size: 11px;
       font-weight: 500;
-      letter-spacing: 0.18em;
+      letter-spacing: 0.2em;
       color: var(--dim);
       line-height: 1;
-      padding-right: 0;
+      text-transform: uppercase;
     }
-    /* Controls pushed to far right */
-    [data-portal-shell="direct"] .portal-header-controls {
-      margin-left: auto;
+
+    /* Nav zone: grows to fill center space on desktop */
+    [data-portal-shell="direct"] .portal-header .portal-primary-nav {
+      flex: 1 1 auto;
+      min-width: 0;
+      /* Remove inherited border-bottom to avoid double border inside header */
+      border-bottom: none;
+      background: transparent;
     }
+    [data-portal-shell="direct"] .portal-header .portal-primary-nav-button {
+      min-height: 40px;
+      padding: var(--sp-2) var(--sp-2);
+    }
+
+    /* Workspace zone: theme / layout / keep-awake / minimize */
+    [data-portal-shell="direct"] .portal-header-workspace {
+      display: flex;
+      align-items: center;
+      gap: var(--sp-2);
+      flex-shrink: 0;
+    }
+    [data-portal-shell="direct"] .portal-workspace-label {
+      font-size: 9px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+      flex-shrink: 0;
+      user-select: none;
+      padding-right: 2px;
+    }
+
+    /* Wallet zone: rightmost, global account state */
+    [data-portal-shell="direct"] .portal-header-wallet {
+      display: flex;
+      align-items: center;
+      position: relative;
+      flex-shrink: 0;
+    }
+    /* Connect button in header */
+    .portal-connect-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.35rem 0.9rem;
+      background: var(--white);
+      color: var(--bg);
+      border: none;
+      font-family: var(--font-ui);
+      font-size: var(--size-sm);
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+      transition: opacity 0.12s;
+      white-space: nowrap;
+    }
+    .portal-connect-btn:hover { opacity: 0.88; }
+    .portal-connect-btn[hidden] { display: none; }
+    /* Wallet menu panel anchors to header wallet zone */
+    .portal-header-wallet .wallet-menu-panel {
+      right: 0;
+      left: auto;
+      top: calc(100% + 8px);
+    }
+    /* Display panel anchors right within workspace zone */
+    .portal-header-workspace .portal-display-panel {
+      right: 0;
+      left: auto;
+    }
+    /* ── Shell structure: sticky-bar / account-bar / workspace controls ── */
+
+    /* Sticky bar: inline flex on desktop (fills header row after identity);
+       gains position:sticky on tablet/phone so identity can scroll away */
+    [data-portal-shell="direct"] .portal-sticky-bar {
+      display: flex;
+      align-items: center;
+      flex: 1;
+      min-width: 0;
+      gap: 1.25rem;
+    }
+    /* Account bar: wallet + workspace side-by-side */
+    [data-portal-shell="direct"] .portal-account-bar {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-shrink: 0;
+    }
+    /* Workspace control row: all icon buttons; visible on desktop/tablet */
+    [data-portal-shell="direct"] .portal-workspace-controls {
+      display: flex;
+      align-items: center;
+      gap: var(--sp-2);
+    }
+    /* Mobile workspace toggle button: hidden on desktop/tablet */
+    [data-portal-shell="direct"] .portal-workspace-mobile-btn {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      width: 44px;
+      height: 44px;
+      background: transparent;
+      border: none;
+      color: var(--dim);
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: color 0.12s;
+    }
+    [data-portal-shell="direct"] .portal-workspace-mobile-btn:hover {
+      color: var(--white);
+    }
+    /* Workspace controls dropdown on phone — position: relative on sticky-bar is the anchor */
+    /* (no panel element; the controls div itself becomes the dropdown via data-ws-open) */
+
     [data-portal-shell="direct"] .portal-zone {
       padding-inline: calc(0px + var(--portal-safe-left)) calc(0px + var(--portal-safe-right));
     }
     [data-portal-shell="direct"] .portal-header {
       padding-top: calc(0.875rem + var(--portal-safe-top));
+      gap: 1.25rem;
+      flex-wrap: nowrap;
     }
     [data-portal-shell="direct"] .portal-footer {
       padding-inline: calc(0.75rem + var(--portal-safe-left)) calc(0.75rem + var(--portal-safe-right));
@@ -114,44 +229,6 @@
       padding-bottom: calc(1rem + var(--portal-safe-bottom));
     }
 
-    /* Inline wallet row inside Transfer module */
-    .portal-wallet-inline {
-      display: flex;
-      flex-direction: column;
-      align-items: stretch;
-      position: relative;
-    }
-
-    /* CONNECT WALLET — primary action in disconnected state */
-    .portal-connect-inline {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 100%;
-      min-height: 48px;
-      padding: 0 16px;
-      background: var(--white);
-      color: var(--bg);
-      border: none;
-      font-family: var(--font-ui);
-      font-size: var(--size-md);
-      font-weight: 600;
-      letter-spacing: 0.01em;
-      cursor: pointer;
-      transition: opacity 0.12s;
-      margin-bottom: 12px;
-    }
-    .portal-connect-inline:hover {
-      opacity: 0.88;
-    }
-    .portal-connect-inline[hidden] { display: none; }
-
-    /* Wallet menu panel — anchors to .portal-wallet-inline (position:relative) */
-    .portal-wallet-inline .wallet-menu-panel {
-      left: 0;
-      right: auto;
-      top: calc(100% + 4px);
-    }
 
     /* Assistant guidance note */
     .agent-guidance-note {
@@ -204,6 +281,18 @@
       flex-shrink: 0;
       color: inherit;
     }
+    /* ?install=1 intent: note shown when native prompt is unavailable */
+    .portal-install-strip-note {
+      font-size: var(--size-sm);
+      color: var(--dim);
+      margin: 0.25rem 0 0.5rem;
+      padding: 0 0.25rem;
+    }
+    /* ?install=1 intent: visual emphasis on the control */
+    #portalInstallStripBtn[data-install-intent] {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
     /* Standard footer — always visible, no disclosure */
     .portal-footer-row {
       display: flex;
@@ -230,13 +319,25 @@
       opacity: 0.55;
       margin-bottom: 0.2rem;
     }
-    .portal-footer-group a {
+    .portal-footer-group a,
+    .portal-footer-install-link {
       color: var(--dim);
       text-decoration: none;
       transition: color 0.12s;
     }
-    .portal-footer-group a:hover {
+    .portal-footer-group a:hover,
+    .portal-footer-install-link:hover {
       color: var(--white);
+    }
+    /* Install link styled as footer link — no button chrome */
+    .portal-footer-install-link {
+      background: none;
+      border: none;
+      padding: 0;
+      font-family: inherit;
+      font-size: inherit;
+      cursor: pointer;
+      text-align: left;
     }
     @media (max-width: 600px) {
       .portal-footer-row {
@@ -248,46 +349,148 @@
       }
     }
 
-    /* ---- Mobile: direct portal header stacks at 760px ---- */
-    @media (max-width: 760px) {
-      [data-portal-shell="direct"] .portal-header {
-        flex-wrap: wrap;
-        padding: calc(0.75rem + var(--portal-safe-top)) 1rem 0.75rem;
-        row-gap: var(--sp-2);
-      }
-
-      [data-portal-shell="direct"] .portal-header-identity {
-        flex-shrink: 0;
-        min-width: 0;
-        max-width: 100%;
-      }
-
-      [data-portal-shell="direct"] .portal-header-controls {
-        margin-left: 0;
-        flex-basis: 100%;
-        border-top: 1px solid var(--border);
-        border-left: none;
-        padding-top: var(--sp-2);
-        padding-left: 0;
-        flex-wrap: wrap;
+    /* ── Sticky nav strip on tablet/phone — identity scrolls, nav+wallet stay ── */
+    @media (max-width: 900px) {
+      [data-portal-shell="direct"] .portal-sticky-bar {
+        position: sticky;
+        top: 0;
+        z-index: 140;
+        background: var(--surface-2);
+        border-bottom: 1px solid var(--border);
       }
     }
 
-    /* ---- Compact: two-line product identity at 680px and below ----
-       Brand stacks above TRANSFER PORTAL — identity cluster stays visible.
-       Title shrinks below the wordmark rather than disappearing.
-       At 11px the dim color (58% opacity) becomes illegible; override to
-       var(--white) for full-contrast visibility at this size. */
-    @media (max-width: 680px) {
-      [data-portal-shell="direct"] .portal-header-identity {
+    /* ── Prevent nav button text from wrapping vertically when columns are tight ── */
+    [data-portal-shell="direct"] .portal-header .portal-primary-nav-button {
+      white-space: nowrap;
+    }
+
+    /* ── Tablet (600–900px): column header — identity scrolls, sticky bar below ── */
+    @media (max-width: 900px) {
+      /* Header stacks vertically: identity on top (scrollable), sticky-bar below */
+      [data-portal-shell="direct"] .portal-header {
         flex-direction: column;
-        align-items: flex-start;
-        gap: 3px;
+        align-items: stretch;
+        padding: calc(0.75rem + var(--portal-safe-top)) 1rem 0;
+        gap: 0;
       }
-      [data-portal-shell="direct"] .portal-header-title {
-        font-size: 13px;
-        letter-spacing: 0.18em;
-        color: var(--white);   /* dim is invisible at this size — full contrast needed */
+      /* Identity: padding to separate from sticky-bar below it */
+      [data-portal-shell="direct"] .portal-header-identity {
+        padding-bottom: 0.75rem;
+      }
+      /* Sticky bar: single horizontal row — nav grows, account-bar compact on right */
+      [data-portal-shell="direct"] .portal-sticky-bar {
+        flex-direction: row;
+        align-items: stretch;
+        gap: 0;
+      }
+      /* Account bar: sits right of nav, vertically centred, with left separator */
+      [data-portal-shell="direct"] .portal-account-bar {
+        padding: 0 0.75rem;
+        gap: 0.5rem;
+        border-left: 1px solid var(--border);
+      }
+      /* Hide workspace label — saves width, keeps workspace+wallet compact */
+      [data-portal-shell="direct"] .portal-workspace-label {
+        display: none;
+      }
+    }
+
+    /* ── Phone portrait (≤600px) and landscape (≤900px, h≤500px) ──
+       Sticky bar column: nav row / account row [wallet | ⚙ toggle] */
+    @media (max-width: 600px),
+           (max-width: 900px) and (max-height: 500px) {
+      /* Sticky bar becomes a column: nav strip on top, account bar below */
+      [data-portal-shell="direct"] .portal-sticky-bar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      /* Nav: full width, top border */
+      [data-portal-shell="direct"] .portal-sticky-bar .portal-primary-nav {
+        flex: none;
+        width: 100%;
+        border-top: 1px solid var(--border);
+      }
+      /* Account bar: full-width row — wallet grows, workspace-btn compact on right */
+      [data-portal-shell="direct"] .portal-account-bar {
+        width: 100%;
+        padding: 0;
+        border-left: none;
+        border-top: 1px solid var(--border);
+        gap: 0;
+      }
+      /* Wallet fills the account row */
+      [data-portal-shell="direct"] .portal-header-wallet {
+        flex: 1;
+      }
+      /* Connect button: full height, left-aligned text, transparent bg */
+      [data-portal-shell="direct"] .portal-connect-btn {
+        width: 100%;
+        min-height: 44px;
+        background: transparent;
+        color: var(--white);
+        font-size: var(--size-sm);
+        padding: 0.6rem 1rem;
+        justify-content: flex-start;
+      }
+      [data-portal-shell="direct"] .portal-connect-btn:hover {
+        background: var(--surface);
+        opacity: 1;
+      }
+      [data-portal-shell="direct"] .portal-header-wallet .wallet-menu {
+        width: 100%;
+      }
+      [data-portal-shell="direct"] .portal-header-wallet .wallet-menu-trigger {
+        width: 100%;
+        min-height: 44px;
+        padding: 0.6rem 1rem;
+      }
+      [data-portal-shell="direct"] .portal-header-wallet .wallet-menu-panel {
+        right: 0;
+        left: 0;
+        top: 100%;
+      }
+      /* Workspace: collapse to single icon button — hide control strip inline */
+      [data-portal-shell="direct"] .portal-header-workspace {
+        flex-shrink: 0;
+        border-left: 1px solid var(--border);
+        gap: 0;
+      }
+      [data-portal-shell="direct"] .portal-workspace-controls {
+        display: none;
+      }
+      [data-portal-shell="direct"] .portal-workspace-label {
+        display: none;
+      }
+      [data-portal-shell="direct"] .portal-workspace-mobile-btn {
+        display: flex;
+      }
+      /* Workspace dropdown: same controls, repositioned below sticky bar when open */
+      [data-portal-shell="direct"] .portal-workspace-controls[data-ws-open] {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        align-items: center;
+        padding: 0.6rem 1rem;
+        position: absolute;
+        top: 100%;   /* bottom of sticky-bar (sticky-bar is the containing block) */
+        right: 0;
+        left: 0;
+        z-index: 139;
+        background: var(--surface-2);
+        border-bottom: 1px solid var(--border);
+      }
+      [data-portal-shell="direct"] .portal-workspace-controls[data-ws-open] .portal-ctrl-btn {
+        height: 32px;
+        padding: 0 0.75rem;
+      }
+    }
+
+    /* ── Phone: hide desktop-only controls ── */
+    @media (max-width: 600px) {
+      #layoutToggle,
+      #portalFullscreenAction {
+        display: none;
       }
 
       [data-portal-shell="direct"] .portal-zone {
@@ -494,94 +697,135 @@
   <div class="portal-zone">
 
   <section class="modules transfer-portal" id="modules" aria-label="Transfer Portal" data-transaction-window>
-    <nav id="portalPrimaryNav" class="portal-primary-nav" aria-label="Portal destinations" hidden>
-      <button id="portalNavTransfer" class="portal-primary-nav-button" type="button" data-portal-navigation-destination="TRANSFER" aria-current="page">Transfer</button>
-      <button id="portalNavRecipients" class="portal-primary-nav-button" type="button" data-portal-navigation-destination="RECIPIENTS">Recipients</button>
-      <button id="portalNavActivity" class="portal-primary-nav-button" type="button" data-portal-navigation-destination="ACTIVITY">Activity</button>
-    </nav>
-    <p id="portalPrimaryNavStatus" class="portal-primary-nav-status" role="status" aria-live="polite" hidden></p>
     <div class="portal-header">
-      <!-- Left identity cluster: brand + product title -->
+      <!-- Zone 1: Brand identity — lettermark stands alone; wordmark + subtitle share a vertical column -->
       <div class="portal-header-identity">
         <a href="https://implicitex.com" class="portal-header-brand" aria-label="ImplicitEx">
           <svg class="brandmark" width="22" height="22" viewBox="0 0 25 25" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
             <path d="M18.4,21.48L2.64,5.73l.43-.43,15.76,15.76s1.3,1.3,2.79-.19.21-2.77.21-2.77L6.05,2.32l.43-.43,4.07,4.07,1.38,1.38,1.28-1.28,4.28-4.28.43.43-5.56,5.56,2.98,2.98,5.56-5.56.43.43-5.56,5.56,1.28,1.28,5.56-5.56s1.28-1.28-.21-2.77-2.79-.19-2.79-.19l-4.26,4.26-.43-.43,4.26-4.26s1.3-1.3-.19-2.79-2.77-.21-2.77-.21l-4.28,4.28L7.75.62s-1.28-1.28-2.77.21-.19,2.79-.19,2.79l15.76,15.76-.43.43L4.37,4.05s-1.3-1.3-2.79.19-.11,2.87-.11,2.87l15.68,15.68-.43.43-5.56-5.56-5.54,5.54-.43-.43,5.54-5.54-2.98-2.98-5.54,5.54-.43-.43,5.54-5.54-1.28-1.28L.51,18.08s-1.28,1.28.21,2.77,2.79.19,2.79.19l4.23-4.23.43.43-4.23,4.23s-1.3,1.3.19,2.79,2.77.21,2.77.21l4.26-4.26,4.28,4.28s1.28,1.28,2.77-.21.19-2.79.19-2.79Z" fill="currentColor"/>
           </svg>
-          <img class="wordmark" src="/components/images/wordmark-white.svg" alt="" aria-hidden="true">
-        </a>
-        <span class="portal-header-title">Transfer Portal</span>
-      </div>
-      <div class="portal-header-controls">
-        <!-- Clock toggle — time-based theme; viewBox keeps 14×14 for app.js hand rotation (rotate pivot at 7,7) -->
-        <button class="portal-ctrl-btn" id="clockToggle" type="button" aria-label="Set theme by time of day">
-          <svg class="portal-ctrl-icon" width="12" height="12" viewBox="0 0 14 14" aria-hidden="true" focusable="false">
-            <circle cx="7" cy="7" r="6" fill="none" stroke="currentColor" stroke-width="1.5"/>
-            <line id="clockHourHand" x1="7" y1="7" x2="7" y2="4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-            <line id="clockMinuteHand" x1="7" y1="7" x2="7" y2="2.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-          </svg>
-        </button>
-        <!-- Theme toggle — manual light/dark -->
-        <button class="portal-ctrl-btn" id="themeToggle" type="button" aria-label="Switch to light theme" aria-pressed="false">
-          <svg class="portal-ctrl-icon" width="12" height="12" viewBox="0 0 14 14" aria-hidden="true" focusable="false">
-            <path d="M7 1 A6 6 0 0 0 7 13 Z" fill="var(--white)"/>
-            <path d="M7 1 A6 6 0 0 1 7 13 Z" fill="var(--bg)"/>
-            <circle cx="7" cy="7" r="6" fill="none" stroke="currentColor" stroke-width="1.5"/>
-          </svg>
-        </button>
-        <button class="portal-ctrl-btn" id="layoutToggle" type="button" data-layout="columns" aria-label="Switch to stacked layout">
-          <!-- columns icon — two 2px vertical bars; visible when layout = columns -->
-          <svg class="portal-ctrl-icon portal-layout-icon portal-layout-icon--columns" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" focusable="false">
-            <rect x="2" y="1" width="2" height="10" fill="currentColor"/>
-            <rect x="8" y="1" width="2" height="10" fill="currentColor"/>
-          </svg>
-          <!-- stacked icon — three 2px horizontal bars; visible when layout = stacked -->
-          <svg class="portal-ctrl-icon portal-layout-icon portal-layout-icon--stacked" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" focusable="false">
-            <rect x="0" y="1" width="12" height="2" fill="currentColor"/>
-            <rect x="0" y="5" width="12" height="2" fill="currentColor"/>
-            <rect x="0" y="9" width="12" height="2" fill="currentColor"/>
-          </svg>
-        </button>
-        <button class="portal-ctrl-btn portal-fullscreen-ctrl" id="portalFullscreenAction" type="button" aria-pressed="false" aria-label="Enter fullscreen" title="Enter fullscreen" data-fullscreen-active="false">
-          <svg class="portal-ctrl-icon portal-fullscreen-icon" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false">
-            <g class="portal-fullscreen-glyph portal-fullscreen-glyph--enter">
-              <path d="M2.5 5V2.5H5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M9 2.5h2.5V5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M2.5 9V11.5H5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M9 11.5h2.5V9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-            </g>
-            <g class="portal-fullscreen-glyph portal-fullscreen-glyph--exit">
-              <path d="M5 2.5V5H2.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M9 2.5V5h2.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M2.5 9H5v2.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M11.5 9H9v2.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-            </g>
-          </svg>
-        </button>
-        <div class="portal-display-menu" id="portalDisplayMenu">
-          <button class="portal-ctrl-btn portal-display-ctrl" id="portalDisplayMenuToggle" type="button" aria-expanded="false" aria-controls="portalDisplayPanel" aria-label="Display settings" title="Display settings">
-            <svg class="portal-ctrl-icon" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false">
-              <rect x="1.5" y="2" width="11" height="7.5" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.4"/>
-              <path d="M5.25 11.25h3.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-              <path d="M7 9.5v1.75" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-            </svg>
-          </button>
-          <div class="portal-display-panel" id="portalDisplayPanel" hidden>
-            <label class="portal-display-switch" for="portalWakeLockToggle">
-              <span class="portal-display-switch-copy">Keep screen awake</span>
-              <span class="portal-display-switch-state" id="portalWakeLockState">Off</span>
-              <input id="portalWakeLockToggle" type="checkbox">
-            </label>
-            <p class="portal-display-note">Prevent this screen from sleeping during the current portal session.</p>
-            <p class="portal-display-status" id="portalWakeLockStatus" role="status" aria-live="polite"></p>
+          <div class="portal-header-wordmark-group">
+            <img class="wordmark" src="/components/images/wordmark-white.svg" alt="" aria-hidden="true">
+            <span class="portal-header-title">Transfer Portal</span>
           </div>
-        </div>
-        <button class="portal-ctrl-btn" id="modulesMinimize" type="button" aria-expanded="true" aria-label="Minimize transfer portal">
-          <svg class="portal-ctrl-icon portal-ctrl-chevron" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" focusable="false">
-            <polyline points="2,4.5 6,8.5 10,4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </button>
-      </div><!-- /.portal-header-controls -->
-    </div>
+        </a>
+      </div>
+      <!-- Sticky bar: nav + account state (pins on mobile/tablet; identity scrolls away) -->
+      <div class="portal-sticky-bar">
+        <!-- Navigation tabs — hidden until coordinator initialises -->
+        <nav id="portalPrimaryNav" class="portal-primary-nav" aria-label="Portal destinations" hidden>
+          <button id="portalNavTransfer" class="portal-primary-nav-button" type="button" data-portal-navigation-destination="TRANSFER" aria-current="page">Transfer</button>
+          <button id="portalNavRecipients" class="portal-primary-nav-button" type="button" data-portal-navigation-destination="RECIPIENTS">Recipients</button>
+          <button id="portalNavActivity" class="portal-primary-nav-button" type="button" data-portal-navigation-destination="ACTIVITY">Activity</button>
+        </nav>
+        <p id="portalPrimaryNavStatus" class="portal-primary-nav-status" role="status" aria-live="polite" hidden></p>
+        <!-- Account bar: wallet (prominent) + workspace (subordinate) — share a row on mobile -->
+        <div class="portal-account-bar">
+          <!-- Wallet zone — global account state; rightmost on desktop, full-width on mobile -->
+          <div class="portal-header-wallet">
+            <button class="portal-connect-btn" id="connectBtn" type="button" onclick="IX.connect()">Connect wallet</button>
+            <div class="wallet-menu" id="walletMenu" hidden>
+              <button class="wallet-menu-trigger" id="walletMenuTrigger" type="button" aria-expanded="false" aria-controls="walletMenuPanel" aria-label="Wallet account menu">
+                <span class="wallet-dot" aria-hidden="true"></span>
+                <span class="wallet-addr" id="walletAddr"></span>
+                <span class="wallet-chevron" aria-hidden="true"></span>
+              </button>
+              <div class="wallet-menu-panel" id="walletMenuPanel" hidden>
+                <p class="wallet-menu-title">Wallet account</p>
+                <p class="wallet-menu-address" id="walletFullAddress"></p>
+                <button class="wallet-menu-action" id="copyAddressBtn" type="button">Copy address</button>
+                <button class="wallet-menu-action" id="switchNetworkBtn" type="button" hidden>Switch to Polygon</button>
+                <button class="wallet-menu-action" id="switchAccountBtn" type="button">Switch account</button>
+                <button class="wallet-menu-action wallet-menu-action--danger" id="disconnectBtn" type="button">Disconnect</button>
+              </div>
+            </div>
+          </div><!-- /.portal-header-wallet -->
+          <!-- Workspace zone — exposed icons on desktop/tablet; single toggle on mobile -->
+          <div class="portal-header-workspace" id="portalWorkspace">
+            <span class="portal-workspace-label">Workspace</span>
+            <!-- Controls: inline on desktop/tablet; repositioned as dropdown panel on phone (single element, no duplicates) -->
+            <div class="portal-workspace-controls" id="portalWorkspaceControls">
+              <!-- Clock toggle — time-based theme -->
+              <button class="portal-ctrl-btn" id="clockToggle" type="button" aria-label="Set theme by time of day">
+                <svg class="portal-ctrl-icon" width="12" height="12" viewBox="0 0 14 14" aria-hidden="true" focusable="false">
+                  <circle cx="7" cy="7" r="6" fill="none" stroke="currentColor" stroke-width="1.5"/>
+                  <line id="clockHourHand" x1="7" y1="7" x2="7" y2="4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                  <line id="clockMinuteHand" x1="7" y1="7" x2="7" y2="2.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+              </button>
+              <!-- Theme toggle — manual light/dark -->
+              <button class="portal-ctrl-btn" id="themeToggle" type="button" aria-label="Switch to light theme" aria-pressed="false">
+                <svg class="portal-ctrl-icon" width="12" height="12" viewBox="0 0 14 14" aria-hidden="true" focusable="false">
+                  <path d="M7 1 A6 6 0 0 0 7 13 Z" fill="var(--white)"/>
+                  <path d="M7 1 A6 6 0 0 1 7 13 Z" fill="var(--bg)"/>
+                  <circle cx="7" cy="7" r="6" fill="none" stroke="currentColor" stroke-width="1.5"/>
+                </svg>
+              </button>
+              <button class="portal-ctrl-btn" id="layoutToggle" type="button" data-layout="columns" aria-label="Switch to stacked layout">
+                <svg class="portal-ctrl-icon portal-layout-icon portal-layout-icon--columns" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" focusable="false">
+                  <rect x="2" y="1" width="2" height="10" fill="currentColor"/>
+                  <rect x="8" y="1" width="2" height="10" fill="currentColor"/>
+                </svg>
+                <svg class="portal-ctrl-icon portal-layout-icon portal-layout-icon--stacked" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" focusable="false">
+                  <rect x="0" y="1" width="12" height="2" fill="currentColor"/>
+                  <rect x="0" y="5" width="12" height="2" fill="currentColor"/>
+                  <rect x="0" y="9" width="12" height="2" fill="currentColor"/>
+                </svg>
+              </button>
+              <button class="portal-ctrl-btn portal-fullscreen-ctrl" id="portalFullscreenAction" type="button" aria-pressed="false" aria-label="Enter fullscreen" title="Enter fullscreen" data-fullscreen-active="false">
+                <svg class="portal-ctrl-icon portal-fullscreen-icon" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false">
+                  <g class="portal-fullscreen-glyph portal-fullscreen-glyph--enter">
+                    <path d="M2.5 5V2.5H5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M9 2.5h2.5V5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M2.5 9V11.5H5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M9 11.5h2.5V9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                  </g>
+                  <g class="portal-fullscreen-glyph portal-fullscreen-glyph--exit">
+                    <path d="M5 2.5V5H2.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M9 2.5V5h2.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M2.5 9H5v2.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M11.5 9H9v2.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                  </g>
+                </svg>
+              </button>
+              <div class="portal-display-menu" id="portalDisplayMenu">
+                <button class="portal-ctrl-btn portal-display-ctrl" id="portalDisplayMenuToggle" type="button" aria-expanded="false" aria-controls="portalDisplayPanel" aria-label="Display settings" title="Display settings">
+                  <svg class="portal-ctrl-icon" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false">
+                    <rect x="1.5" y="2" width="11" height="7.5" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.4"/>
+                    <path d="M5.25 11.25h3.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                    <path d="M7 9.5v1.75" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                  </svg>
+                </button>
+                <div class="portal-display-panel" id="portalDisplayPanel" hidden>
+                  <label class="portal-display-switch" for="portalWakeLockToggle">
+                    <span class="portal-display-switch-copy">Keep screen awake</span>
+                    <span class="portal-display-switch-state" id="portalWakeLockState">Off</span>
+                    <input id="portalWakeLockToggle" type="checkbox">
+                  </label>
+                  <p class="portal-display-note">Prevent this screen from sleeping during the current portal session.</p>
+                  <p class="portal-display-status" id="portalWakeLockStatus" role="status" aria-live="polite"></p>
+                </div>
+              </div>
+              <button class="portal-ctrl-btn" id="modulesMinimize" type="button" aria-expanded="true" aria-label="Minimize transfer portal">
+                <svg class="portal-ctrl-icon portal-ctrl-chevron" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" focusable="false">
+                  <polyline points="2,4.5 6,8.5 10,4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+            </div><!-- /.portal-workspace-controls -->
+            <!-- Mobile-only: single sliders button that opens workspace controls as a dropdown -->
+            <button class="portal-workspace-mobile-btn" id="mobileWorkspaceToggle" type="button"
+                    aria-label="Workspace settings" aria-expanded="false" aria-controls="portalWorkspaceControls">
+              <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false">
+                <line x1="1" y1="4" x2="13" y2="4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                <line x1="1" y1="10" x2="13" y2="10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                <circle cx="4" cy="4" r="1.6" fill="var(--bg)" stroke="currentColor" stroke-width="1.4"/>
+                <circle cx="10" cy="10" r="1.6" fill="var(--bg)" stroke="currentColor" stroke-width="1.4"/>
+              </svg>
+            </button>
+          </div><!-- /.portal-header-workspace -->
+        </div><!-- /.portal-account-bar -->
+      </div><!-- /.portal-sticky-bar -->
+    </div><!-- /.portal-header -->
     <span class="portal-frame-brackets" aria-hidden="true"></span>
     <!-- Coin Card intake banner — shown when opened via Coin Card handoff -->
     <div class="cc-intake" id="ccIntake" hidden aria-live="polite" aria-label="Coin Card handoff status" data-portal-primary-surface="TRANSFER">
@@ -603,25 +847,6 @@
         <div class="fee-row" aria-live="polite">
           <span class="fee-label">Connected sender</span>
           <span class="fee-val" id="senderAddressDisplay">—</span>
-        </div>
-        <!-- Inline wallet connect — portal.implicitex.com self-contained experience -->
-        <div class="portal-wallet-inline">
-          <button class="portal-connect-inline" id="connectBtn" type="button" onclick="IX.connect()">Connect wallet</button>
-          <div class="wallet-menu" id="walletMenu" hidden>
-            <button class="wallet-menu-trigger" id="walletMenuTrigger" type="button" aria-expanded="false" aria-controls="walletMenuPanel" aria-label="Wallet account menu">
-              <span class="wallet-dot" aria-hidden="true"></span>
-              <span class="wallet-addr" id="walletAddr"></span>
-              <span class="wallet-chevron" aria-hidden="true"></span>
-            </button>
-            <div class="wallet-menu-panel" id="walletMenuPanel" hidden>
-              <p class="wallet-menu-title">Wallet account</p>
-              <p class="wallet-menu-address" id="walletFullAddress"></p>
-              <button class="wallet-menu-action" id="copyAddressBtn" type="button">Copy address</button>
-              <button class="wallet-menu-action" id="switchNetworkBtn" type="button" hidden>Switch to Polygon</button>
-              <button class="wallet-menu-action" id="switchAccountBtn" type="button">Switch account</button>
-              <button class="wallet-menu-action wallet-menu-action--danger" id="disconnectBtn" type="button">Disconnect</button>
-            </div>
-          </div>
         </div>
         <div class="tx-field-group">
           <label class="tx-field-label" for="txRecipient">Recipient</label>
@@ -1095,33 +1320,56 @@
     <div class="portal-footer-row">
       <nav class="portal-footer-nav" aria-label="Footer links">
         <div class="portal-footer-group">
+          <span class="portal-footer-label">Product</span>
+          <a href="/start.html" data-footer-entry="start">Start</a>
+          <a href="/faq.html" data-footer-entry="faq">FAQ</a>
+          <a href="/learn.html" data-footer-entry="learn">Learn</a>
+          <a href="/verify.html" data-footer-entry="verify">Verify</a>
+          <a href="/log.html" data-footer-entry="devlog">Devlog</a>
+          <button class="portal-footer-install-link" type="button" id="portalFooterInstallBtn" data-footer-entry="install-app">Install app</button>
+        </div>
+        <div class="portal-footer-group">
           <span class="portal-footer-label">Legal</span>
-          <a href="/terms.html">Terms</a>
-          <a href="/privacy.html">Privacy</a>
-          <a href="/legal.html">Legal</a>
-          <a href="/risk-disclosure.html">Risk Disclosure</a>
-          <a href="/fee-disclosure.html">Fee &amp; Network</a>
-          <a href="/acceptable-use.html">Acceptable Use</a>
+          <a href="/terms.html" data-footer-entry="terms">Terms</a>
+          <a href="/privacy.html" data-footer-entry="privacy">Privacy</a>
+          <a href="/legal.html" data-footer-entry="legal">Legal</a>
+          <a href="/risk-disclosure.html" data-footer-entry="risk-disclosure">Risk Disclosure</a>
+          <a href="/fee-disclosure.html" data-footer-entry="fee-network">Fee &amp; Network</a>
+          <a href="/acceptable-use.html" data-footer-entry="acceptable-use">Acceptable Use</a>
         </div>
         <div class="portal-footer-group">
           <span class="portal-footer-label">Trust</span>
-          <a href="/contract-addresses.html">Contract Addresses</a>
-          <a href="/security.html">Security</a>
-          <a href="/status.html">Status</a>
-          <a href="/verify.html">Coin Card Verification</a>
+          <a href="/contract-addresses.html" data-footer-entry="contract-addresses">Contract Addresses</a>
+          <a href="/security.html" data-footer-entry="security">Security</a>
+          <a href="/status.html" data-footer-entry="status">Status</a>
+          <a href="/verify.html" data-footer-entry="verification">Verification</a>
         </div>
         <div class="portal-footer-group">
-          <span class="portal-footer-label">Agent / Index</span>
-          <a href="/llms.txt">llms.txt</a>
-          <a href="/robots.txt">robots.txt</a>
-          <a href="/sitemap.xml">sitemap.xml</a>
-          <a href="/metadata.html">Metadata</a>
+          <span class="portal-footer-label">Developers</span>
+          <a href="/metadata.html" data-footer-entry="metadata">Metadata</a>
+          <a href="/llms.txt" data-footer-entry="llms-txt">llms.txt</a>
+          <a href="/robots.txt" data-footer-entry="robots-txt">robots.txt</a>
+          <a href="/sitemap.xml" data-footer-entry="sitemap-xml">sitemap.xml</a>
         </div>
         <div class="portal-footer-group">
-          <span class="portal-footer-label">Contact</span>
-          <a href="/contact.html">Support</a>
-          <a href="mailto:connect@implicitex.com">Legal Contact</a>
-          <a href="/security.html">Report a Security Issue</a>
+          <span class="portal-footer-label">Support</span>
+          <a href="/contact.html" data-footer-entry="contact">Contact</a>
+          <a href="/jurisdictions.html" data-footer-entry="access">Access</a>
+          <a href="mailto:connect@implicitex.com" data-footer-entry="legal-contact">Legal Contact</a>
+          <a href="/security.html" data-footer-entry="report-security">Report Security Issue</a>
+        </div>
+        <div class="portal-footer-group">
+          <span class="portal-footer-label">Company</span>
+          <a href="/about.html" data-footer-entry="about">About</a>
+          <a href="/media.html" data-footer-entry="media">Media</a>
+          <a href="/brand.html" data-footer-entry="brand">Brand</a>
+          <a href="/news.html" data-footer-entry="news">News</a>
+        </div>
+        <div class="portal-footer-group">
+          <span class="portal-footer-label">Social</span>
+          <a href="https://x.com/implicitex" target="_blank" rel="noopener" data-footer-entry="social-x">X</a>
+          <a href="https://www.linkedin.com/in/implicitex/" target="_blank" rel="noopener" data-footer-entry="social-linkedin">LinkedIn</a>
+          <a href="https://github.com/implicitexlabs" target="_blank" rel="noopener" data-footer-entry="social-github">GitHub</a>
         </div>
       </nav>
       <p class="portal-footer-statement">ImplicitEx is non-custodial. The portal opens directly from the web or as an installed shortcut. Transfers are confirmed by the sender's wallet and cannot be reversed once confirmed on-chain.</p>
@@ -1160,12 +1408,48 @@
   <script src="js/rehydrate.js"></script>
   <script src="js/coincard-handoff.js"></script>
 
+  <!-- Footer install button → delegates to install strip (single PWA prompt trigger) -->
+  <script>
+  (function () {
+    var footerBtn = document.getElementById('portalFooterInstallBtn');
+    var stripBtn  = document.getElementById('portalInstallStripBtn');
+    if (footerBtn && stripBtn) {
+      footerBtn.addEventListener('click', function () { stripBtn.click(); });
+    }
+  }());
+  </script>
+
   <!-- Auto-expand: portal-index.html is the primary surface — start expanded, not minimized -->
   <script>
   (function () {
     if (window.IX && typeof IX.focusTransferPortal === 'function') {
       IX.focusTransferPortal();
     }
+  }());
+  </script>
+
+  <!-- Mobile workspace toggle — reveals the same controls div as a dropdown; no duplicate elements -->
+  <script>
+  (function () {
+    var toggleBtn = document.getElementById('mobileWorkspaceToggle');
+    var controls  = document.getElementById('portalWorkspaceControls');
+    if (!toggleBtn || !controls) return;
+
+    function open()  { controls.setAttribute('data-ws-open', ''); toggleBtn.setAttribute('aria-expanded', 'true'); }
+    function close() { controls.removeAttribute('data-ws-open'); toggleBtn.setAttribute('aria-expanded', 'false'); }
+
+    toggleBtn.addEventListener('click', function () {
+      controls.hasAttribute('data-ws-open') ? close() : open();
+    });
+
+    // Close when clicking outside the controls or the toggle button
+    document.addEventListener('click', function (e) {
+      if (controls.hasAttribute('data-ws-open') &&
+          !controls.contains(e.target) &&
+          !toggleBtn.contains(e.target)) {
+        close();
+      }
+    });
   }());
   </script>
 
