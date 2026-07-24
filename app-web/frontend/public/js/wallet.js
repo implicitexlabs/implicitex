@@ -2729,6 +2729,11 @@
       connect();
       return;
     }
+    const netState = getNetworkState();
+    if (netState === 'WRONG_NETWORK' || netState === 'CONTRACT_UNAVAILABLE') {
+      await switchToPolygonMainnet();
+      return;
+    }
     if (state.txPhase === 'DRAFT') {
       if (!els.txConfirmAck || !els.txConfirmAck.checked) {
         setStatus('Confirm the details and check the acknowledgement before executing.');
@@ -3060,11 +3065,17 @@
       return;
     }
 
+    // Show switching state on the main action button so the user has feedback.
+    if (els.txBtn) {
+      els.txBtn.disabled = true;
+      els.txBtn.textContent = 'Switching to Polygon…';
+      els.txBtn.classList.remove('tx-btn--armed');
+    }
     if (els.connectBtn) {
       els.connectBtn.disabled = true;
-      els.connectBtn.textContent = 'Switching...';
+      els.connectBtn.textContent = 'Switching…';
     }
-    setStatus('Requesting Polygon Mainnet in MetaMask...');
+    setStatus('Requesting Polygon Mainnet in your wallet…');
 
     try {
       await provider.request({
@@ -3075,34 +3086,31 @@
       const errorCode = err && (err.code || (err.data && err.data.originalError && err.data.originalError.code));
 
       if (errorCode === 4902) {
+        // Polygon Mainnet is not configured in this wallet — request to add it.
         try {
           await provider.request({
             method: 'wallet_addEthereumChain',
             params: [{
               chainId: POLYGON_MAINNET_CHAIN_HEX,
               chainName: 'Polygon Mainnet',
-              nativeCurrency: {
-                name: 'POL',
-                symbol: 'POL',
-                decimals: 18,
-              },
-              rpcUrls: ['https://polygon-rpc.com'],
+              nativeCurrency: { name: 'POL', symbol: 'POL', decimals: 18 },
+              rpcUrls: ['https://polygon-bor-rpc.publicnode.com'],
               blockExplorerUrls: ['https://polygonscan.com'],
             }],
           });
         } catch (addErr) {
           const rejectedAdd = addErr && addErr.code === 4001;
           setStatus(rejectedAdd
-            ? 'Polygon network add request rejected. Switch MetaMask to Polygon Mainnet before sending USDC.'
-            : 'Could not add Polygon Mainnet in MetaMask.');
+            ? 'Network add cancelled. Open your wallet and add Polygon Mainnet, then return here.'
+            : 'Polygon Mainnet could not be added automatically. Add it in your wallet, then return here.');
           applyWrongNetworkPresentation();
           return;
         }
       } else {
         const rejectedSwitch = err && err.code === 4001;
         setStatus(rejectedSwitch
-          ? 'Network switch rejected. Switch MetaMask to Polygon Mainnet before sending USDC.'
-          : 'Could not switch MetaMask to Polygon Mainnet.');
+          ? 'Network switch cancelled. Open your wallet, select Polygon Mainnet, then return here.'
+          : 'Could not switch to Polygon Mainnet. Switch in your wallet, then return here.');
         applyWrongNetworkPresentation();
         return;
       }
@@ -3110,7 +3118,7 @@
 
     await syncProviderState({ force: true });
     if (state.chainId !== POLYGON_MAINNET_CHAIN_ID) {
-      setStatus('MetaMask has not reported Polygon Mainnet to this site yet.');
+      setStatus('Wallet has not confirmed Polygon Mainnet yet. Switch manually if this persists.');
       applyWrongNetworkPresentation();
     }
   }
@@ -3581,7 +3589,11 @@
   function setTxState(txState, message, buttonLabel) {
     const isPending = txState === 'pending';
     if (els.txBtn) {
-      const isUnavailable = getNetworkState() !== 'READY';
+      const netState = getNetworkState();
+      // WRONG_NETWORK and CONTRACT_UNAVAILABLE are actionable — button must be
+      // enabled so the user can click "Switch to Polygon" to fix the state.
+      // Only TRANSFERS_DISABLED (policy gate) and disconnected block the button.
+      const isUnavailable = !state.connected || netState === 'TRANSFERS_DISABLED';
       els.txBtn.disabled = isPending || isUnavailable;
       if (isPending) {
         els.txBtn.textContent = buttonLabel || 'Processing…';
@@ -3590,7 +3602,9 @@
         els.txBtn.textContent = currentButtonLabel();
         els.txBtn.classList.remove('tx-btn--pending');
       }
-      if (isPending || isUnavailable) els.txBtn.classList.remove('tx-btn--armed');
+      if (isPending || isUnavailable || netState !== 'READY') {
+        els.txBtn.classList.remove('tx-btn--armed');
+      }
     }
     // Disable Edit Details while a wallet prompt is open — clicking it during
     // an active MetaMask request would leave the prompt orphaned.

@@ -7,12 +7,11 @@
  * surface correctly without automatically invoking the browser prompt.
  *
  * Assertions:
- *   1. The install strip (#portalInstallStrip) is visible.
- *   2. The install control (#portalInstallStripBtn) is focused or carries
- *      the data-install-intent attribute (confirming the JS reached it).
- *   3. The browser install prompt was NOT automatically invoked.
- *   4. On an iOS user-agent (no beforeinstallprompt), the strip shows a
- *      platform-specific instruction note (#portalInstallStripNote).
+ *   1. The footer install button (#portalFooterInstallBtn) carries the
+ *      data-install-intent attribute (confirming the JS reached it).
+ *   2. The browser install prompt was NOT automatically invoked.
+ *   3. On an iOS user-agent (no beforeinstallprompt), a platform-specific
+ *      instruction note (#portalFooterInstallNote) appears next to the button.
  */
 
 const assert    = require('node:assert/strict');
@@ -94,7 +93,7 @@ function startServer() {
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
-test('?install=1 — install strip visible, control emphasised, no auto-prompt (desktop)', async () => {
+test('?install=1 — footer install button emphasised, no auto-prompt (desktop)', async () => {
   const { server, baseUrl } = await startServer();
   const browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'] });
 
@@ -139,22 +138,19 @@ test('?install=1 — install strip visible, control emphasised, no auto-prompt (
     await new Promise((r) => setTimeout(r, 300));
 
     const result = await page.evaluate(() => {
-      const strip   = document.getElementById('portalInstallStrip');
-      const stripBtn = document.getElementById('portalInstallStripBtn');
+      const footerBtn = document.getElementById('portalFooterInstallBtn');
 
       return {
-        stripVisible:         strip && !strip.hidden,
-        btnHasIntent:         stripBtn && stripBtn.hasAttribute('data-install-intent'),
-        btnFocused:           stripBtn && document.activeElement === stripBtn,
-        autoPromptInvoked:    window.__installPromptInvoked === true,
+        btnHasIntent:      footerBtn && footerBtn.hasAttribute('data-install-intent'),
+        btnFocused:        footerBtn && document.activeElement === footerBtn,
+        autoPromptInvoked: window.__installPromptInvoked === true,
       };
     });
 
-    assert.ok(result.stripVisible,   'install strip must be visible on ?install=1');
-    assert.ok(result.btnHasIntent,   'install control must carry data-install-intent attribute');
+    assert.ok(result.btnHasIntent, 'footer install button must carry data-install-intent attribute on ?install=1');
     assert.ok(
       result.btnHasIntent || result.btnFocused,
-      'install control must be emphasised (data-install-intent) or focused'
+      'footer install button must be emphasised (data-install-intent) or focused'
     );
     assert.equal(result.autoPromptInvoked, false, 'browser install prompt must NOT be invoked automatically');
   } finally {
@@ -191,23 +187,20 @@ test('?install=1 — iOS user-agent shows instruction note without auto-prompt',
     await new Promise((r) => setTimeout(r, 300));
 
     const result = await page.evaluate(() => {
-      const strip    = document.getElementById('portalInstallStrip');
-      const stripBtn = document.getElementById('portalInstallStripBtn');
-      const note     = document.getElementById('portalInstallStripNote');
+      const footerBtn = document.getElementById('portalFooterInstallBtn');
+      const note      = document.getElementById('portalFooterInstallNote');
 
       return {
-        stripVisible:      strip && !strip.hidden,
-        btnHasIntent:      stripBtn && stripBtn.hasAttribute('data-install-intent'),
+        btnHasIntent:      footerBtn && footerBtn.hasAttribute('data-install-intent'),
         notePresent:       note !== null,
         noteText:          note ? note.textContent.trim() : '',
         autoPromptInvoked: window.__installPromptInvoked === true,
       };
     });
 
-    assert.ok(result.stripVisible,   'install strip must be visible on iOS ?install=1');
-    assert.ok(result.btnHasIntent,   'install control must carry data-install-intent on iOS');
-    assert.ok(result.notePresent,    'platform instruction note (#portalInstallStripNote) must appear on iOS');
-    assert.ok(result.noteText.length > 0, 'instruction note must have non-empty text');
+    assert.ok(result.btnHasIntent,           'footer install button must carry data-install-intent on iOS ?install=1');
+    assert.ok(result.notePresent,            'platform instruction note (#portalFooterInstallNote) must appear on iOS');
+    assert.ok(result.noteText.length > 0,    'instruction note must have non-empty text');
     assert.equal(result.autoPromptInvoked, false, 'browser install prompt must NOT be invoked on iOS');
   } finally {
     await browser.close();
@@ -235,10 +228,10 @@ test('?install=1 absent — install control has no data-install-intent (no false
     await new Promise((r) => setTimeout(r, 200));
 
     const result = await page.evaluate(() => {
-      const stripBtn = document.getElementById('portalInstallStripBtn');
-      const note     = document.getElementById('portalInstallStripNote');
+      const footerBtn = document.getElementById('portalFooterInstallBtn');
+      const note      = document.getElementById('portalFooterInstallNote');
       return {
-        btnHasIntent: stripBtn && stripBtn.hasAttribute('data-install-intent'),
+        btnHasIntent: footerBtn ? footerBtn.hasAttribute('data-install-intent') : false,
         notePresent:  note !== null,
       };
     });

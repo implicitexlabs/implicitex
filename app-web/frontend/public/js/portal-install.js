@@ -17,8 +17,7 @@
   var browserLabel = document.getElementById('portalInstallBrowser');
   var actions = document.getElementById('portalInstallActions');
   var footerInstallLink = document.getElementById('portalFooterInstallLink');
-  var installStrip = document.getElementById('portalInstallStrip');
-  var stripBtn = document.getElementById('portalInstallStripBtn');
+  var footerBtn = document.getElementById('portalFooterInstallBtn');
   var deferredPrompt = null;
   var installedThisSession = false;
   var hasGuide = !!instructions;
@@ -627,7 +626,6 @@
     }
     setHidden(promotion, true);
     setHidden(footerInstallLink, true);
-    setHidden(installStrip, true);
     hideInstructions();
     if (status) {
       status.textContent = '';
@@ -636,17 +634,12 @@
     syncPromotion();
   });
 
-  /* ---- Installation strip (portal-index.html dedicated surface) ---- */
-  /* Hide the strip immediately if already running as installed PWA.     */
-  if (installStrip && isStandalone()) {
-    installStrip.hidden = true;
-  }
+  /* ---- Footer install button (portal-index.html sole install surface) ---- */
 
-  if (stripBtn) {
-    stripBtn.addEventListener('click', function () {
-      /* Already installed — hide strip, nothing more to do. */
+  if (footerBtn) {
+    footerBtn.addEventListener('click', function () {
+      /* Already installed — nothing more to do. */
       if (isStandalone() || installedThisSession) {
-        setHidden(installStrip, true);
         return;
       }
 
@@ -662,7 +655,6 @@
             deferredPrompt = null;
             if (choiceResult && choiceResult.outcome === 'accepted') {
               installedThisSession = true;
-              setHidden(installStrip, true);
             }
             syncPromotion();
           })
@@ -688,12 +680,11 @@
   /*
    * When the portal is opened via ?install=1 (e.g. from the main-site
    * "Install app" footer link), we:
-   *   1. Ensure the strip is visible (it may be hidden in standalone mode —
-   *      in that case the strip is irrelevant and we do nothing).
-   *   2. Scroll the strip into view and focus the install control.
-   *   3. Mark the control with data-install-intent so CSS can emphasise it.
+   *   1. Skip if already running as installed PWA.
+   *   2. Scroll the footer install button into view and focus it.
+   *   3. Mark it with data-install-intent so CSS can emphasise it.
    *   4. On platforms where beforeinstallprompt is unavailable (iOS), append
-   *      the platform-specific instruction text to the strip so the user has
+   *      the platform-specific instruction text near the button so the user has
    *      actionable guidance without needing to tap first.
    *
    * We do NOT invoke the browser install prompt automatically.
@@ -702,31 +693,31 @@
     try {
       var hasIntent = window.location.search.indexOf('install=1') !== -1;
       if (!hasIntent) return;
-      if (!installStrip || !stripBtn) return;
+      if (!footerBtn) return;
 
-      // Strip hidden means the app is already installed — nothing to do.
-      if (installStrip.hidden) return;
+      // Already installed — nothing to highlight.
+      if (isStandalone()) return;
 
       // Emphasise the control.
-      stripBtn.setAttribute('data-install-intent', '');
+      footerBtn.setAttribute('data-install-intent', '');
 
       // Scroll and focus after a brief paint delay so layout is settled.
       setTimeout(function () {
-        stripBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        stripBtn.focus({ preventScroll: true });
+        footerBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        footerBtn.focus({ preventScroll: true });
       }, 60);
 
       // On platforms without a native install prompt (principally iOS Safari),
       // show the instruction text inline so the user can act immediately.
       if (!isStandalone() && isIOS()) {
-        var note = document.getElementById('portalInstallStripNote');
+        var note = document.getElementById('portalFooterInstallNote');
         if (!note) {
           var mode = getMode();
           note = document.createElement('p');
-          note.className = 'portal-install-strip-note';
-          note.id = 'portalInstallStripNote';
+          note.className = 'portal-footer-install-note';
+          note.id = 'portalFooterInstallNote';
           note.textContent = statusCopy(mode);
-          installStrip.appendChild(note);
+          footerBtn.parentNode.insertBefore(note, footerBtn.nextSibling);
         }
       }
     } catch (intentError) {

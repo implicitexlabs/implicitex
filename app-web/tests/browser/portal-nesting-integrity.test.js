@@ -15,11 +15,10 @@
  *   1. transferMod, networkMod, verificationMod are descendants of #modules.
  *   2. The telemetry and status surfaces are descendants of #modules.
  *   3. The desktop grid computes two columns.
- *   4. The install strip begins below the complete portal shell.
- *   5. All four bracket coordinates correspond to the complete shell.
- *   6. Full-page screenshots are captured for the acceptance record.
- *   7. Required transfer runtime scripts load before wallet.js.
- *   8. The rewritten root route is explicitly non-cacheable.
+ *   4. All four bracket coordinates correspond to the complete shell.
+ *   5. Full-page screenshots are captured for the acceptance record.
+ *   6. Required transfer runtime scripts load before wallet.js.
+ *   7. The rewritten root route is explicitly non-cacheable.
  */
 
 const assert = require('node:assert/strict');
@@ -184,8 +183,6 @@ async function collectContainment(page, width) {
     const verificationMod = document.getElementById('verificationMod');
     const telemetry    = document.querySelector('.telemetry');
     const statusSurface = document.getElementById('portalPrimaryNavStatus');
-    const installStrip = document.getElementById('portalInstallStrip');
-
     function rect(el) {
       if (!el) return null;
       const r = el.getBoundingClientRect();
@@ -204,7 +201,6 @@ async function collectContainment(page, width) {
     const transferRect     = rect(transferMod);
     const networkRect      = rect(networkMod);
     const verificationRect = rect(verificationMod);
-    const installStripRect = rect(installStrip);
 
     // Grid column count — "repeat(2, 1fr)" resolves to gridTemplateColumns
     // containing two track sizes separated by a space.
@@ -216,12 +212,6 @@ async function collectContainment(page, width) {
     let columnsAreSeparate = false;
     if (transferRect && networkRect && viewportWidth >= 800) {
       columnsAreSeparate = Math.abs(transferRect.left - networkRect.left) > 10;
-    }
-
-    // Install strip bottom edge should be below the portal shell bottom edge.
-    let stripBelowPortal = false;
-    if (modulesRect && installStripRect) {
-      stripBelowPortal = installStripRect.top >= modulesRect.bottom - 2; // 2px tolerance
     }
 
     // Bracket pseudo-elements: check via ::before/::after of .transfer-portal
@@ -272,10 +262,6 @@ async function collectContainment(page, width) {
       transferRect,
       networkRect,
       verificationRect,
-      installStripRect,
-
-      // Strip position
-      stripBelowPortal,
 
       // Module containment within shell bounds
       transferWithinShell: withinShellHorizontally(transferRect) && withinShellVertically(transferRect),
@@ -333,9 +319,6 @@ test('portal modules are DOM descendants of #modules (containment regression gua
     // Desktop two-column grid
     assert.equal(desktopLight.columnCount, 2, `desktop grid must have 2 columns, got "${desktopLight.gridColumns}"`);
     assert.equal(desktopLight.columnsAreSeparate, true, 'transferMod and networkMod must be in separate horizontal positions');
-
-    // Install strip position
-    assert.equal(desktopLight.stripBelowPortal, true, 'install strip top must be at or below portal shell bottom');
 
     // Module rects within shell bounds
     assert.equal(desktopLight.transferWithinShell,      true, 'transferMod must be within portal shell bounds');
@@ -421,11 +404,6 @@ test('portal modules are DOM descendants of #modules (containment regression gua
       `  transferMod          : top=${d.transferRect?.top?.toFixed(1)} bottom=${d.transferRect?.bottom?.toFixed(1)} left=${d.transferRect?.left?.toFixed(1)} right=${d.transferRect?.right?.toFixed(1)}`,
       `  networkMod           : top=${d.networkRect?.top?.toFixed(1)} bottom=${d.networkRect?.bottom?.toFixed(1)} left=${d.networkRect?.left?.toFixed(1)} right=${d.networkRect?.right?.toFixed(1)}`,
       `  verificationMod      : top=${d.verificationRect?.top?.toFixed(1)} bottom=${d.verificationRect?.bottom?.toFixed(1)} left=${d.verificationRect?.left?.toFixed(1)} right=${d.verificationRect?.right?.toFixed(1)}`,
-      '',
-      'INSTALL STRIP',
-      `  strip top            : ${d.installStripRect?.top?.toFixed(1)}`,
-      `  portal shell bottom  : ${d.shellRect?.bottom?.toFixed(1)}`,
-      `  strip below portal   : ${d.stripBelowPortal}`,
       '',
       'MODULE WITHIN SHELL',
       `  transferMod          : ${d.transferWithinShell}`,
