@@ -3940,10 +3940,23 @@
           setStatus(`This is the funds-moving request. Recipient gets ${amountHuman} USDC; total wallet debit is ${totalDebitHuman} USDC.`);
           setTxState('pending', 'Wallet confirmation required.', 'Confirm transfer in MetaMask…');
           if (els.previewNote) els.previewNote.textContent = 'Transfer confirmation requested. Confirm in MetaMask only if recipient amount, platform fee, and total wallet debit match.';
-          updateReceipt(receiptId, {
+          const submittingOk = updateReceipt(receiptId, {
             state: IX_TRANSFER_STATES.SUBMITTING,
             lastKnownMessage: 'Transfer confirmation requested. Funds move only after on-chain confirmation.',
           });
+          if (!submittingOk) {
+            // Receipt state machine rejected the READY → SUBMITTING transition.
+            // This must not silently continue — an invalid transition means the receipt
+            // will not track the hash or fundsMoved, producing an orphaned READY archive.
+            persistWalletDiag('receipt_transition_rejected', null, {
+              fromHint: 'READY',
+              toHint: 'SUBMITTING',
+              receiptId,
+            });
+            const transitionErr = new Error('Receipt state transition READY → SUBMITTING rejected by the state machine.');
+            transitionErr.code = 'RECEIPT_STATE_TRANSITION_FAILED';
+            throw transitionErr;
+          }
           companionState(IX_TRANSFER_STATES.SUBMITTING, {
             statusLine: 'Confirm transfer.',
             stateVal:   'Awaiting confirmation',
@@ -4004,7 +4017,18 @@
             blockNumber: executionReceipt.blockNumber || null,
             lastKnownMessage: 'Transfer confirmed. Funds moved on Polygon.',
           }, OBSERVATION_SOURCES && OBSERVATION_SOURCES.RPC);
-          if (window.IX && window.IX.receipts) window.IX.receipts.clearActive();
+          // Guard: only archive the receipt once it is in a terminal state.
+          // If the CONFIRMED update was rejected by the state machine the receipt
+          // will not be terminal — clearActive() must not archive a non-terminal record.
+          {
+            const confirmedActive = window.IX && window.IX.receipts && window.IX.receipts.getActive();
+            const confirmedIsTerminal = confirmedActive &&
+              TRANSFER_STATUS && typeof TRANSFER_STATUS.isTerminalState === 'function' &&
+              TRANSFER_STATUS.isTerminalState(confirmedActive.state);
+            if (confirmedIsTerminal) {
+              window.IX.receipts.clearActive();
+            }
+          }
           markTransferStep('confirmed');
           renderTransferSummary(refreshedSummary, {
             label: 'Transfer Confirmed',
