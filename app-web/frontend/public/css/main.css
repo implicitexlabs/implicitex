@@ -402,6 +402,17 @@ code, kbd, pre,
   color: var(--white);
 }
 
+.wallet-account-label {
+  color: var(--dim);
+  font-family: var(--font-ui);
+  font-size: var(--size-xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.1em;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
 .wallet-chevron {
   width: 0;
   height: 0;
@@ -1249,22 +1260,26 @@ body.portal-active #nav {
 .modules[hidden] { display: none; }
 
 .portal-primary-nav {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 1px;
-  background: var(--border);
-  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 0.35rem;
+  width: max-content;
+  max-width: 100%;
+  background: transparent;
+  border: 0;
 }
 
 .portal-primary-nav-button {
-  min-width: 0;
-  min-height: 48px;
+  flex: 0 0 auto;
+  min-width: max-content;
+  min-height: 38px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: var(--sp-2);
-  padding: var(--sp-3) var(--sp-2);
-  border: 0;
+  padding: 0 16px;
+  border: 1px solid transparent;
   background: var(--surface);
   color: var(--white);
   font-family: var(--font-ui);
@@ -1275,9 +1290,8 @@ body.portal-active #nav {
   text-transform: uppercase;
   text-align: center;
   cursor: pointer;
-  white-space: normal;
-  overflow-wrap: anywhere;
-  transition: background 0.12s, color 0.12s, box-shadow 0.12s;
+  white-space: nowrap;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
 }
 
 .portal-primary-nav-button:hover,
@@ -1293,7 +1307,8 @@ body.portal-active #nav {
 
 .portal-primary-nav-button[aria-current="page"] {
   background: var(--surface-2);
-  box-shadow: inset 0 -2px 0 var(--white);
+  border-color: var(--border-2);
+  color: var(--white);
 }
 
 .portal-primary-nav-status {
@@ -1724,15 +1739,6 @@ body.portal-active #nav {
   font-weight: var(--weight-medium);
   letter-spacing: normal;
   line-height: 1.5;
-}
-
-[data-portal-shell="direct"] .portal-footer-statement {
-  font-family: var(--font-sans);
-  font-size: var(--text-body);
-  font-weight: 400;
-  letter-spacing: 0.01em;
-  line-height: 1.55;
-  max-width: var(--measure-footer);
 }
 
 [data-portal-shell="direct"] .portal-footer-label {
@@ -5484,13 +5490,9 @@ h1 + .gs-section-head {
     grid-template-columns: 1fr;
   }
 
-  .portal-primary-nav {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
   .portal-primary-nav-button {
-    min-height: 44px;
-    padding-inline: var(--sp-1);
+    min-height: 38px;
+    padding-inline: 10px;
   }
 
   /* Portal zone owns the side clearance so tick markers clear the viewport edge */
