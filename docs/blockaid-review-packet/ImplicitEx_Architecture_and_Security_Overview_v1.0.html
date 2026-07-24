@@ -1206,6 +1206,11 @@ Polygonscan:    https://polygonscan.com/tx/0x37fd733a7f1854740bf702aa5bf59794f4e
   <li>Confirm Gate 4 transaction (TX-01) resolves on Polygonscan</li>
   <li>Review the final rendered document in a browser: check page breaks, address wrapping, screenshot legibility, and print output on a monochrome printer</li>
 </ul>
+
+<h3>11.5 Post-release follow-up (not a submission blocker)</h3>
+<ul>
+  <li><strong>Receipt-display parity gap:</strong> The portal's human-readable Activity receipt for the PP-02 certification run (IX-48C07F80) displays <code>purposeTag</code> and <code>referenceId</code> but omits the <code>memo</code> field and the <code>approvalHash</code>, even though both are present and correct in the exported JSON proof packet. The JSON is authoritative; the display omission does not affect artifact fidelity. Fix: surface <code>memo</code> and <code>approvalHash</code> in the receipt UI to eliminate the parity gap between what the portal shows and what the proof packet records.</li>
+</ul>
 </section>
 
 </section>

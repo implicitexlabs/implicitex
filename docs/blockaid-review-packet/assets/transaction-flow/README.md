@@ -106,9 +106,15 @@ Key fields:
 
 Original download: `implicitex-proof-0x48c07f8039.json` (2491 bytes)
 SHA-256: `ae91d64b50d20b28df8c9bcd8bd2ecfac595f872b7c65cfbd1bb98bd2ffdbf7a`
+Modified: 2026-07-24T08:21:02 (browser export timestamp)
+Repository copy: byte-for-byte identical (`cmp` verified)
+
+Setup evidence (not the portal approval):
+- Allowance-reset tx: `0x85b7f6c6557c225e562ac5e0b0ceb9a3af8db0ded7e638d61e348abdc99f31c8`
+  Block 90,783,869 — reduced allowance from 2.020000 USDC to 0 before certification run
 
 Independent chain verification (2026-07-24):
-- Approval tx (`0x115647...`): targets USDC contract, selector `0x095ea7b3`, spender = ImplicitEx contract, amount = 1.010000 USDC, status = success
+- Approval tx (`0x115647...`): targets USDC contract, selector `0x095ea7b3`, spender = ImplicitEx contract, amount = 1.010000 USDC, status = success; Blockaid warning reproduced
 - Transfer tx (`0x48c07f...`): targets ImplicitEx contract, status = success, block 90,784,121, 4 logs
 - Post-transfer allowance: 0.000000 USDC — full 1.01 USDC consumed
 
