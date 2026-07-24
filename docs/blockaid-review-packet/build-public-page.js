@@ -36,7 +36,7 @@ const path = require('path');
 // ── Paths ────────────────────────────────────────────────────────────────────
 
 const ROOT      = path.resolve(__dirname, '../..');
-const CANONICAL = path.join(__dirname, 'ImplicitEx_Architecture_and_Security_Overview_v1.1.html');
+const CANONICAL = path.join(__dirname, 'ImplicitEx_Architecture_and_Security_Overview_v1.1.1.html');
 const OUTPUT    = path.join(ROOT, 'app-web/frontend/public/architecture-and-security.html');
 const EVIDENCE_SOURCE = path.join(__dirname, 'assets/transaction-flow');
 const EVIDENCE_OUTPUT = path.join(ROOT, 'app-web/frontend/public/assets/transaction-flow');
@@ -214,7 +214,7 @@ const output = `<!DOCTYPE html>
 
   <!-- Document provenance -->
   <meta name="implicitex-document-source"
-        content="docs/blockaid-review-packet/ImplicitEx_Architecture_and_Security_Overview_v1.1.html">
+        content="docs/blockaid-review-packet/ImplicitEx_Architecture_and_Security_Overview_v1.1.1.html">
 
   <style>${canonicalStyle}${publicCSS}  </style>
 </head>
