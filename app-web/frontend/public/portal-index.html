@@ -324,9 +324,129 @@
         display: none;
       }
     }
+
+    /* ── Launch screen ─────────────────────────────────────────────── */
+    #ix-launch {
+      position: fixed;
+      inset: 0;
+      z-index: 9000;
+      background: #080808;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+
+    @keyframes ix-mark-emerge {
+      from { opacity: 0; transform: scale(0.04); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+
+    @keyframes ix-mark-breathe {
+      0%, 100% { opacity: 1;    transform: scale(1); }
+      50%       { opacity: 0.75; transform: scale(0.94); }
+    }
+
+    @keyframes ix-mark-collapse {
+      from { opacity: 1; transform: scale(1); }
+      to   { opacity: 0; transform: scale(0.04); }
+    }
+
+    @keyframes ix-launch-fade {
+      from { opacity: 1; }
+      to   { opacity: 0; }
+    }
+
+    @keyframes ix-portal-enter {
+      from { opacity: 0; transform: translateY(4px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .ix-launch-mark {
+      width: 25px;
+      height: 25px;
+      color: #f4f6f5;
+      animation:
+        ix-mark-emerge  600ms cubic-bezier(0.22, 1, 0.36, 1) both,
+        ix-mark-breathe 1600ms ease-in-out 700ms infinite;
+    }
+
+    #ix-launch.ix-launch-exit .ix-launch-mark {
+      animation: ix-mark-collapse 350ms cubic-bezier(0.55, 0, 1, 0.45) both;
+    }
+
+    #ix-launch.ix-launch-exit {
+      animation: ix-launch-fade 350ms ease-out 200ms both;
+    }
+
+    main.landing-main {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+
+    html[data-portal-loaded] main.landing-main {
+      animation: ix-portal-enter 350ms ease-out both;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .ix-launch-mark,
+      #ix-launch.ix-launch-exit .ix-launch-mark,
+      #ix-launch.ix-launch-exit,
+      html[data-portal-loaded] main.landing-main {
+        animation-duration: 1ms;
+        animation-delay: 0ms;
+      }
+    }
   </style>
 </head>
 <body data-portal-shell="direct">
+
+  <!-- LAUNCH SCREEN — covers the portal during JS parse and execution.
+       Dismissed by rehydrate.js once all scripts are loaded and
+       a minimum display time of 650 ms has elapsed. -->
+  <div id="ix-launch" aria-hidden="true">
+    <svg class="ix-launch-mark" viewBox="0 0 25 25" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M18.4,21.48L2.64,5.73l.43-.43,15.76,15.76s1.3,1.3,2.79-.19.21-2.77.21-2.77L6.05,2.32l.43-.43,4.07,4.07,1.38,1.38,1.28-1.28,4.28-4.28.43.43-5.56,5.56,2.98,2.98,5.56-5.56.43.43-5.56,5.56,1.28,1.28,5.56-5.56s1.28-1.28-.21-2.77-2.79-.19-2.79-.19l-4.26,4.26-.43-.43,4.26-4.26s1.3-1.3-.19-2.79-2.77-.21-2.77-.21l-4.28,4.28L7.75.62s-1.28-1.28-2.77.21-.19,2.79-.19,2.79l15.76,15.76-.43.43L4.37,4.05s-1.3-1.3-2.79.19-.11,2.87-.11,2.87l15.68,15.68-.43.43-5.56-5.56-5.54,5.54-.43-.43,5.54-5.54-2.98-2.98-5.54,5.54-.43-.43,5.54-5.54-1.28-1.28L.51,18.08s-1.28,1.28.21,2.77,2.79.19,2.79.19l4.23-4.23.43.43-4.23,4.23s-1.3,1.3.19,2.79,2.77.21,2.77.21l4.26-4.26,4.28,4.28s1.28,1.28,2.77-.21.19-2.79.19-2.79Z" fill="currentColor"/>
+    </svg>
+  </div>
+  <script>
+  (function () {
+    var MIN_MS  = 650;
+    var MAX_MS  = 5000;
+    var el      = document.getElementById('ix-launch');
+    var start   = Date.now();
+    var done    = false;
+    var failsafe;
+
+    function dismiss() {
+      if (done || !el) return;
+      done = true;
+      clearTimeout(failsafe);
+      // Start portal entrance behind the exiting launch screen.
+      document.documentElement.setAttribute('data-portal-loaded', '');
+      // Then collapse and fade the launch screen over the rising portal.
+      el.classList.add('ix-launch-exit');
+      // 350ms collapse + 200ms delay + 350ms overlay fade = 550ms; 600ms with buffer
+      setTimeout(function () {
+        if (el && el.parentNode) el.parentNode.removeChild(el);
+      }, 600);
+    }
+
+    // Hard failsafe — always dismiss after MAX_MS regardless of JS state
+    failsafe = setTimeout(dismiss, MAX_MS);
+
+    // Called by rehydrate.js via requestAnimationFrame when all scripts are done
+    window.IX_completeLaunch = function () {
+      var elapsed = Date.now() - start;
+      var remain  = MIN_MS - elapsed;
+      if (remain > 0) {
+        setTimeout(dismiss, remain);
+      } else {
+        dismiss();
+      }
+    };
+  }());
+  </script>
 
   <!-- Fatal initialization error — shown only when a required script failed to load.
        wallet.js throws and reveals this element rather than leaving the UI in a

@@ -294,4 +294,11 @@
   // ----------------------------------------------------------------
   rehydrate();
 
+  // Signal launch screen to dismiss. requestAnimationFrame defers one
+  // paint cycle so the portal shell is visually committed before the
+  // overlay begins its exit animation.
+  requestAnimationFrame(function () {
+    if (typeof window.IX_completeLaunch === 'function') window.IX_completeLaunch();
+  });
+
 })();
