@@ -8,6 +8,61 @@
   'use strict';
 
   // ----------------------------------------------------------------
+  // Dependency guard — fail loudly if required modules are missing.
+  //
+  // Silent exceptions inside wallet.js disable the UI with no visible
+  // error, making script-ordering omissions very hard to diagnose.
+  // Throwing here produces a stack trace pointing to the init site and
+  // reveals the fatalError element so the user sees a clear message
+  // instead of a disabled button with no explanation.
+  //
+  // Hard dependencies (called without null guards):
+  //   IX_EXECUTION — js/ix-execution.js, must precede wallet.js
+  //   IX_CHAINS    — config/chains.js, must precede wallet.js
+  //   IX_CONFIG    — config/chains.js (same file as IX_CHAINS)
+  //
+  // Soft dependencies (all call sites have null guards):
+  //   ethers        — ethers.js CDN, degrades gracefully without checksum validation
+  //   IX_PROVIDER   — walletconnect-provider.js, lazy-initialized at connect time
+  // ----------------------------------------------------------------
+  (function checkDependencies() {
+    const missing = [];
+
+    // IX_EXECUTION: both methods are called without null guards
+    if (!window.IX_EXECUTION ||
+        typeof window.IX_EXECUTION.calculateFee    !== 'function' ||
+        typeof window.IX_EXECUTION.executeTransfer !== 'function') {
+      missing.push('window.IX_EXECUTION.calculateFee / executeTransfer (js/ix-execution.js)');
+    }
+
+    // IX_CHAINS: consumed as an object keyed by chain ID
+    if (!window.IX_CHAINS || typeof window.IX_CHAINS !== 'object') {
+      missing.push('window.IX_CHAINS (config/chains.js)');
+    }
+
+    // IX_CONFIG: transfersEnabled is compared with === true / !== true, so the
+    // type must be boolean — a string "true" or null would pass existence checks
+    // but behave incorrectly in getNetworkState() and isLiveTransferChain().
+    if (!window.IX_CONFIG || typeof window.IX_CONFIG.transfersEnabled !== 'boolean') {
+      missing.push('window.IX_CONFIG.transfersEnabled boolean (config/chains.js)');
+    }
+
+    if (missing.length === 0) return;
+
+    const msg =
+      'Transfer Portal failed to initialize. Missing required module' +
+      (missing.length > 1 ? 's' : '') + ':\n' + missing.join('\n') + '\n\n' +
+      'Check that these scripts are included in the page before wallet.js.';
+
+    const el = document.getElementById('fatalErrorMessage');
+    const wrap = document.getElementById('fatalError');
+    if (el)   el.textContent = msg.replace(/\n/g, ' — ');
+    if (wrap) wrap.hidden = false;
+
+    throw new Error(msg);
+  }());
+
+  // ----------------------------------------------------------------
   // Provider runtime — source of truth for the active wallet provider.
   //
   // walletRuntime.provider is null until the user connects. Pre-connect
