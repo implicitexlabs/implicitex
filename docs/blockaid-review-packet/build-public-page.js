@@ -57,6 +57,16 @@ let body = bodyMatch[1];
 
 // ── Transformations ──────────────────────────────────────────────────────────
 
+// Keep internal working notes in the canonical packet without publishing them.
+// The public artifact must never retain an internal-only marker.
+body = body.replace(
+  /\s*<section class="internal-only">[\s\S]*?<\/section>\s*/g,
+  '\n'
+);
+if (body.includes('internal-only')) {
+  throw new Error('build-public-page: internal-only content was not fully removed');
+}
+
 // Make bare Polygonscan URLs inside <pre> blocks into clickable links.
 // Leaves the display text unchanged; wraps it in an <a>.
 body = body.replace(/<pre>([\s\S]*?)<\/pre>/g, (_match, preContent) => {

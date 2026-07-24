@@ -334,6 +334,8 @@
 
 <p>ImplicitEx is a non-custodial USDC transfer interface operating on Polygon (chain ID 137). It allows a sender to transfer USDC to a recipient address they specify. A platform fee of 1% is charged on each transfer. The production portal currently limits transfers to 250.00 USDC, making the highest fee reachable through the supported interface 2.50 USDC. The application does not hold, route through, or control user funds beyond what the user explicitly authorizes through their own wallet.</p>
 
+<p>This document was prepared in response to Blockaid tickets #1290666 and #1290665 concerning the classification of the ImplicitEx USDC approval request as deceptive. The sections below document the complete transaction lifecycle, deployed security controls, fee mechanics, and independently verifiable on-chain evidence available for review.</p>
+
 <h3>Why the wallet requests an approval</h3>
 
 <p>USDC is an ERC-20 token. ERC-20 tokens cannot be spent by a smart contract without the token holder first granting a spending allowance to that contract. The <code>approve()</code> call is the standard ERC-20 mechanism for establishing this permission. The allowance requested equals exactly the amount the user has already reviewed on-screen: the recipient amount plus the platform fee. No additional buffer is requested.</p>
@@ -439,11 +441,11 @@ MetaMask or WalletConnect-compatible wallet
 
 <p>The following describes a 1.00 USDC transfer. The same sequence applies at all amounts within the configured limits.</p>
 
-<h3>Step 1 — User input</h3>
+<h3>3.1 User input</h3>
 
 <p>The user enters a recipient Ethereum address and a transfer amount. No wallet connection is required at this stage.</p>
 
-<h3>Step 2 — Pre-flight validation (no wallet prompt)</h3>
+<h3>3.2 Pre-flight validation (no wallet prompt)</h3>
 
 <p>The portal calls <code>previewTransfer(sender, amount)</code> on the contract. This is a read-only view call. It returns the calculated fee, total debit, sender USDC balance, current allowance, and a boolean indicating whether the transfer can proceed.</p>
 
@@ -456,7 +458,7 @@ MetaMask or WalletConnect-compatible wallet
 
 <p>No wallet action is initiated during this phase.</p>
 
-<h3>Step 3 — Review screen</h3>
+<h3>3.3 Review screen</h3>
 
 <p>Before any wallet prompt is triggered, the portal presents a summary of the pending transaction:</p>
 
@@ -468,7 +470,7 @@ Network:        Polygon</pre>
 
 <p>The user must explicitly confirm past this screen to proceed. No wallet prompt has been issued at this point.</p>
 
-<h3>Step 4 — USDC spending approval (wallet prompt 1 of 2)</h3>
+<h3>3.4 USDC spending approval (wallet prompt 1 of 2)</h3>
 
 <p>The portal calls <code>approve(contractAddress, totalDebit)</code> on the Circle USDC token contract (<code>0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359</code>).</p>
 
@@ -476,11 +478,11 @@ Network:        Polygon</pre>
 
 <p>The approval amount is not unlimited. It is not padded with a buffer. It matches the review screen figure precisely.</p>
 
-<h3>Step 5 — Transfer execution (wallet prompt 2 of 2)</h3>
+<h3>3.5 Transfer execution (wallet prompt 2 of 2)</h3>
 
 <p>After the approval transaction is confirmed on-chain, the portal calls <code>transferWithFee(recipientAddress, 1000000)</code> on the ImplicitExTransfer contract. MetaMask surfaces this as a separate contract interaction confirmation. The user must approve this second step independently.</p>
 
-<h3>Step 6 — On-chain execution</h3>
+<h3>3.6 On-chain execution</h3>
 
 <p>The contract executes atomically:</p>
 
@@ -489,11 +491,11 @@ USDC.safeTransferFrom(sender, treasury, 10000)      // 0.010000 USDC → treasur
 
 <p>If either call reverts, the entire transaction reverts. The contract retains nothing.</p>
 
-<h3>Step 7 — Confirmation</h3>
+<h3>3.7 Confirmation</h3>
 
 <p>The portal polls for block confirmation. It displays a pending state until the transaction is confirmed on-chain, then transitions to a confirmed state. It does not report success at submission time.</p>
 
-<h3>3.1 Economic summary — 1.00 USDC example</h3>
+<h3>3.8 Economic summary — 1.00 USDC example</h3>
 
 <table>
   <thead>
@@ -723,8 +725,8 @@ Blockchain  →  executes only if user signature is valid and allowance is suffi
       <td>Portal-enforced</td>
     </tr>
     <tr>
-      <td>Per-chain transfer gate</td>
-      <td><code>transfersEnabled</code> flag per chain — currently <code>true</code> for Polygon mainnet (chain 137); <code>false</code> for Amoy testnet. Contract-level <code>paused()</code> is a separate, independent control.</td>
+      <td>Global and per-chain transfer gates</td>
+      <td>As of 2026-07-22, the global <code>transfersEnabled</code> flag is <code>true</code>; Polygon mainnet (chain 137) is <code>true</code>; and Amoy testnet is <code>false</code>. These are frontend operating controls, not immutable contract limits. Contract-level <code>paused()</code> is separate and can be verified using the read-only query in Section 10.3.</td>
       <td>Portal-enforced</td>
     </tr>
     <tr>
@@ -1018,10 +1020,6 @@ Polygonscan:    https://polygonscan.com/tx/0x37fd733a7f1854740bf702aa5bf59794f4e
       <td>Contract ownership</td>
       <td>Single-key <code>Ownable2Step</code>. Multi-signature governance is on the planning roadmap but is not deployed.</td>
     </tr>
-    <tr>
-      <td>Portal transfer gate — current state</td>
-      <td>As of 2026-07-22, the production portal has <code>transfersEnabled: true</code> at both the global level and the Polygon-specific level. Users can initiate transfers. The contract-level <code>paused()</code> state is a separate control and should be confirmed via the Polygonscan read listed in Section 10.3.</td>
-    </tr>
   </tbody>
 </table>
 
@@ -1144,6 +1142,7 @@ Polygonscan:    https://polygonscan.com/tx/0x37fd733a7f1854740bf702aa5bf59794f4e
   </tbody>
 </table>
 
+<section class="internal-only">
 <h3>11.4 Pre-submission checklist</h3>
 
 <ul class="checklist">
@@ -1165,6 +1164,7 @@ Polygonscan:    https://polygonscan.com/tx/0x37fd733a7f1854740bf702aa5bf59794f4e
   <li>Review the final rendered document in a browser: check page breaks, address wrapping, screenshot legibility, and print output on a monochrome printer</li>
   <li>Update document version to v1.0 and remove "Draft" designation when ready to submit</li>
 </ul>
+</section>
 
 </section>
 
