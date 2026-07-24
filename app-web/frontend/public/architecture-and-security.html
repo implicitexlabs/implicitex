@@ -27,7 +27,7 @@
 
   <!-- Document provenance -->
   <meta name="implicitex-document-source"
-        content="docs/blockaid-review-packet/ImplicitEx_Architecture_and_Security_Overview_v0.2.html">
+        content="docs/blockaid-review-packet/ImplicitEx_Architecture_and_Security_Overview_v1.0.html">
 
   <style>
     /* ─── Base ─────────────────────────────────────────────────────────── */
@@ -434,7 +434,7 @@
   <div class="doc-title">Architecture and Security Overview</div>
   <div class="doc-subtitle">ImplicitEx — Technical Review Packet</div>
   <div class="doc-meta">
-    <span class="label">Document</span>   <span>v0.2 — Draft, 2026-07-23</span>
+    <span class="label">Document</span>   <span>v1.0 — 2026-07-24</span>
     <span class="label">Prepared by</span><span>Antoine Dennison, ImplicitEx — connect@implicitex.com</span>
     <span class="label">Reference</span>  <span>Blockaid Ticket #1290666 / #1290665</span>
     <span class="label">Scope</span>      <span>Deployed production application — Polygon mainnet, chain ID 137</span>
@@ -1071,7 +1071,7 @@ Blockchain  →  executes only if user signature is valid and allowance is suffi
 
 <h3>8.2 Contract test coverage — areas exercised</h3>
 
-<p>The contract test suite (59 tests, Hardhat / Chai) covers the following scenarios:</p>
+<p>The contract test suite (66 tests, Hardhat / Chai) covers the following scenarios:</p>
 
 <ul>
   <li>Constructor validation — zero-address rejection for USDC and treasury; fee cap enforcement on initial fee basis points</li>
@@ -1175,7 +1175,7 @@ Polygonscan:    <a href="https://polygonscan.com/tx/0x37fd733a7f1854740bf702aa5b
     </tr>
     <tr>
       <td>Wallet-provider classification</td>
-      <td>During the observed 2026-07-23 flow, MetaMask displayed a Blockaid warning indicating “This is a deceptive request” at the USDC spending-approval step (ticket #1290666 / #1290665). The approval requested an exact 5.05 USDC cap, and the workflow subsequently reached the separate transfer request and transaction broadcast. Final settlement for that transaction was not yet resolved in the captured proof packet.</td>
+      <td>During the observed 2026-07-23 flow, MetaMask displayed a Blockaid warning indicating “This is a deceptive request” at the USDC spending-approval step (ticket #1290666 / #1290665). The approval requested an exact 1.01 USDC spending cap, matching the disclosed transfer amount (1.00 USDC) plus the platform fee (0.01 USDC). The subsequent transfer transaction was confirmed on-chain at block 90,776,572 with funds moved. See §7.4 and §7.7.1 for the full evidence record.</td>
     </tr>
     <tr>
       <td>Contract ownership</td>
@@ -1295,9 +1295,9 @@ Polygonscan:    <a href="https://polygonscan.com/tx/0x37fd733a7f1854740bf702aa5b
     <tr><td>TF-01</td><td>Ordered transaction-flow screenshot set (Figures 1–12) — approval path</td><td>Available — confirmed flow captured 2026-07-23</td></tr>
     <tr><td>PP-01</td><td><code>proof-packet.v1</code> export — transfer-only path (exact browser export)</td><td>Available — block 90,780,021; <code>approvalHash: null</code>; metadata preserved; 2026-07-24</td></tr>
     <tr><td>PP-02</td><td>Approval-path transaction reference — 2026-07-23</td><td>Available — block 90,776,572; approval hash 0xb137…; see §7.7.1</td></tr>
-    <tr><td>TX-02</td><td>2026-07-23 transaction record</td><td>Submitted-state hash and Polygonscan URL available</td></tr>
+    <tr><td>TX-02</td><td>2026-07-23 transaction record</td><td>Confirmed — block 90,776,572; see §7.7.1</td></tr>
     <tr><td>TX-01</td><td>Gate 4 transfer transaction (Polygonscan)</td><td>Available — publicly verifiable</td></tr>
-    <tr><td>TC-01</td><td>Contract test suite results (59/59)</td><td>Internal — available on request</td></tr>
+    <tr><td>TC-01</td><td>Contract test suite results (66/66)</td><td>Internal — available on request</td></tr>
     <tr><td>TC-02</td><td>Observability suite results (31/31)</td><td>Internal — available on request</td></tr>
     <tr><td>TC-03</td><td>Analytics suite results (24/24)</td><td>Internal — available on request</td></tr>
     <tr><td>TC-04</td><td>Static reference audit (631 references)</td><td>Internal — available on request</td></tr>
@@ -1310,7 +1310,7 @@ Polygonscan:    <a href="https://polygonscan.com/tx/0x37fd733a7f1854740bf702aa5b
 <!-- ═══════════════════════════════════════════════════════════════════════ -->
 
 <footer class="doc-footer">
-  <span>ImplicitEx Architecture and Security Overview — v0.2 Draft — 2026-07-23</span>
+  <span>ImplicitEx Architecture and Security Overview — v1.0 — 2026-07-24</span>
   <span>connect@implicitex.com · implicitex.com</span>
 </footer>
 </body>
