@@ -166,6 +166,7 @@ async function collectHeaderFooter(page) {
       .map((button) => button.getBoundingClientRect())
       .filter((rect) => rect.width > 0 && rect.height > 0);
     const navRect = nav ? nav.getBoundingClientRect() : null;
+    const portal = document.querySelector('.transfer-portal');
     const pseudoIsVisible = (style) => !!(
       style &&
       style.display !== 'none' &&
@@ -189,7 +190,12 @@ async function collectHeaderFooter(page) {
         navRects.every((rect) => Math.abs(rect.top - navRects[0].top) < 2)
       ),
       primaryNavButtonHeights: navRects.map((rect) => Math.round(rect.height)),
+      primaryNavBorderWidths: buttons.map((button) => {
+        const style = getComputedStyle(button);
+        return [style.borderTopWidth, style.borderRightWidth, style.borderBottomWidth, style.borderLeftWidth];
+      }),
       workspaceButtonHeights: workspaceButtonRects.map((rect) => Math.round(rect.height)),
+      portalBracketSize: portal ? Math.round(parseFloat(getComputedStyle(portal, '::before').width)) : 0,
       primaryNavCompact: !!(
         navRect &&
         navRect.width < 400 &&
@@ -501,10 +507,10 @@ test('portal modules are DOM descendants of #modules (containment regression gua
     const responsivePage = await browser.newPage();
     injectConnectedMockProvider(responsivePage);
     const responsiveViewports = [
-      { name: 'desktop', width: 1365, height: 900, expectedFooterColumns: 7, expectedWideInlineHeader: false },
-      { name: 'tablet', width: 820, height: 1000, expectedFooterColumns: 4 },
-      { name: 'phone-portrait', width: 390, height: 844, expectedFooterColumns: 2 },
-      { name: 'phone-landscape', width: 844, height: 390, expectedFooterColumns: 4 },
+      { name: 'desktop', width: 1365, height: 900, expectedFooterColumns: 7, expectedWideInlineHeader: false, expectedBracketSize: 28 },
+      { name: 'tablet', width: 820, height: 1000, expectedFooterColumns: 4, expectedBracketSize: 28 },
+      { name: 'phone-portrait', width: 390, height: 844, expectedFooterColumns: 2, expectedBracketSize: 24 },
+      { name: 'phone-landscape', width: 844, height: 390, expectedFooterColumns: 4, expectedBracketSize: 28 },
     ];
     const canonicalFooterLabels = [
       'Product', 'Legal', 'Trust', 'Developers', 'Support', 'Company', 'Social',
@@ -530,6 +536,12 @@ test('portal modules are DOM descendants of #modules (containment regression gua
         responsive.primaryNavButtonHeights.every((height) => height === 38),
         `${viewport.name}: every primary navigation button must be 38px high`
       );
+      assert.ok(
+        responsive.primaryNavBorderWidths.every((widths) => widths.every((width) => width === '1px')),
+        `${viewport.name}: selected and unselected primary navigation buttons must retain a 1px outline`
+      );
+      assert.equal(responsive.portalBracketSize, viewport.expectedBracketSize,
+        `${viewport.name}: portal corner brackets must use the extended arm size`);
       assert.ok(
         responsive.workspaceButtonHeights.every((height) => height === 38),
         `${viewport.name}: workspace controls must share the primary navigation's 38px height`

@@ -1279,7 +1279,7 @@ body.portal-active #nav {
   justify-content: center;
   gap: var(--sp-2);
   padding: 0 16px;
-  border: 1px solid transparent;
+  border: 1px solid var(--border);
   background: var(--surface);
   color: var(--white);
   font-family: var(--font-ui);
@@ -2168,8 +2168,8 @@ body.portal-active #nav {
 .portal-frame-brackets::after {
   content: "";
   position: absolute;
-  width: 18px;
-  height: 18px;
+  width: 28px;
+  height: 28px;
   opacity: 0.72;
   pointer-events: none;
   z-index: 3;
@@ -5505,8 +5505,8 @@ h1 + .gs-section-head {
   .transfer-portal::after,
   .portal-frame-brackets::before,
   .portal-frame-brackets::after {
-    width: 14px;
-    height: 14px;
+    width: 24px;
+    height: 24px;
     opacity: 0.65;
   }
   .transfer-portal::before {
