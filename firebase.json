@@ -3,6 +3,10 @@
     {
       "target": "main",
       "public": "app-web/frontend/public",
+      "predeploy": [
+        "node docs/blockaid-review-packet/build-public-page.js",
+        "git diff --exit-code app-web/frontend/public/architecture-and-security.html"
+      ],
       "ignore": [
         "firebase.json",
         "**/.*",
