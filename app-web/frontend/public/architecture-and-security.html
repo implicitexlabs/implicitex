@@ -893,11 +893,11 @@ Blockchain  →  executes only if user signature is valid and allowance is suffi
 <section id="s7">
 <h2><span class="section-num">7</span> Observed Transaction Flow</h2>
 
-<p>This section documents a production portal transaction observed on 2026-07-23. It follows the user-visible lifecycle from portal initialization through transaction submission. The Blockaid warning is recorded as one observed event within the ERC-20 approval stage.</p>
+<p>This section documents a production portal transaction observed on 2026-07-23. It follows the user-visible lifecycle from portal initialization through on-chain confirmation. The Blockaid warning is recorded as one observed event within the ERC-20 approval stage.</p>
 
 <div class="callout">
   <div class="callout-label">Observed transaction</div>
-  Amount: 5.00 USDC · Platform fee: 0.05 USDC · Total debit: 5.05 USDC · Network: Polygon · Sender: <span class="address">0xf614356f93408460b594addacc86a7fc94310f1d</span> · Recipient: <span class="address">0x5466bbA8cD334554c88F81342dDfcEc4c4A7698B</span>
+  Amount: 1.00 USDC · Platform fee: 0.01 USDC · Total debit: 1.01 USDC · Network: Polygon · Sender: <span class="address">0xf614356f93408460b594addacc86a7fc94310f1d</span> · Recipient: <span class="address">0x5466bbA8cD334554c88F81342dDfcEc4c4A7698B</span> · Receipt: IX-07FF5D03 · Block: 90,776,572
 </div>
 
 <table>
@@ -906,114 +906,110 @@ Blockchain  →  executes only if user signature is valid and allowance is suffi
   </thead>
   <tbody>
     <tr><td>1. Portal loaded</td><td>Production portal and Polygon chain data rendered successfully.</td></tr>
-    <tr><td>2. Wallet connection</td><td>MetaMask unlock, site connection request, sender address, and USDC balance.</td></tr>
+    <tr><td>2. Wallet connection</td><td>MetaMask site connection request, sender address, and USDC balance.</td></tr>
     <tr><td>3. Recipient validation</td><td>Recipient address accepted with “Format valid” status.</td></tr>
-    <tr><td>4. Fee calculation</td><td>5.00 USDC amount produced a 0.050000 USDC platform fee.</td></tr>
+    <tr><td>4. Fee calculation</td><td>1.00 USDC amount produced a 0.010000 USDC platform fee.</td></tr>
     <tr><td>5. User confirmation</td><td>Execute Transfer remained disabled until the user checked the explicit acknowledgement.</td></tr>
-    <tr><td>6. ERC-20 approval request</td><td>MetaMask presented a 5.05 USDC spending-cap request.</td></tr>
-    <tr><td>7. Observed Blockaid warning</td><td>The approval prompt displayed “This is a deceptive request.”</td></tr>
-    <tr><td>8. Transfer transaction request</td><td>After approval, MetaMask displayed the separate ImplicitEx contract transaction.</td></tr>
-    <tr><td>9. Transaction submission</td><td>The transfer was broadcast to Polygon and assigned a transaction hash.</td></tr>
-    <tr><td>10. Activity record</td><td>The portal recorded the transfer as submitted and awaiting confirmation.</td></tr>
-    <tr><td>11. Proof packet</td><td>The portal export recorded the approval hash, transaction hash, parties, amounts, and submitted-state settlement fields.</td></tr>
+    <tr><td>6. ERC-20 approval request</td><td>MetaMask presented a 1.01 USDC spending-cap request.</td></tr>
+    <tr><td>7. Observed Blockaid warning</td><td>The approval prompt displayed “This is a deceptive request.” The transfer proceeded after the user confirmed the approval.</td></tr>
+    <tr><td>8. Transfer transaction request</td><td>After approval, the portal issued the separate <code>transferWithFee()</code> call. The transfer was broadcast to Polygon.</td></tr>
+    <tr><td>9. On-chain confirmation</td><td>The transfer was confirmed at block 90,776,572. Funds moved.</td></tr>
+    <tr><td>10. Activity record</td><td>The portal recorded receipt IX-07FF5D03 as <strong>CONFIRMED</strong> with funds moved on Polygon.</td></tr>
+    <tr><td>11. Proof packet</td><td>The portal export recorded the transaction hash, block number, parties, amounts, and confirmed settlement fields.</td></tr>
   </tbody>
 </table>
 
 <h3>7.1 Portal initialization and wallet connection</h3>
 
-<figure class="evidence-figure">
-  <a class="evidence-image-link" href="assets/transaction-flow/01-portal-ready-wallet-disconnected.png" target="_blank" rel="noopener noreferrer"><img src="assets/transaction-flow/01-portal-ready-wallet-disconnected.png" alt="ImplicitEx transfer portal loaded with Polygon chain data and the wallet disconnected"></a>
-  <figcaption><span class="screenshot-id">Figure 1</span>Portal initialization. The interface and live Polygon chain data rendered before wallet connection.</figcaption>
+<figure class=”evidence-figure”>
+  <a class=”evidence-image-link” href=”assets/transaction-flow/01-portal-ready-wallet-disconnected.png” target=”_blank” rel=”noopener noreferrer”><img src=”assets/transaction-flow/01-portal-ready-wallet-disconnected.png” alt=”ImplicitEx transfer portal loaded with Polygon chain data and the wallet disconnected”></a>
+  <figcaption><span class=”screenshot-id”>Figure 1</span>Portal initialization. The interface and live Polygon chain data rendered before wallet connection.</figcaption>
 </figure>
 
-<figure class="evidence-figure">
-  <a class="evidence-image-link" href="assets/transaction-flow/02-metamask-unlock.png" target="_blank" rel="noopener noreferrer"><img src="assets/transaction-flow/02-metamask-unlock.png" alt="MetaMask unlock prompt over the ImplicitEx portal"></a>
-  <figcaption><span class="screenshot-id">Figure 2</span>MetaMask requested a local wallet unlock.</figcaption>
+<figure class=”evidence-figure”>
+  <a class=”evidence-image-link” href=”assets/transaction-flow/02-metamask-connect-request.png” target=”_blank” rel=”noopener noreferrer”><img src=”assets/transaction-flow/02-metamask-connect-request.png” alt=”MetaMask connection request for portal.implicitex.com”></a>
+  <figcaption><span class=”screenshot-id”>Figure 2</span>MetaMask displayed an explicit connection request for <code>portal.implicitex.com</code>.</figcaption>
 </figure>
 
-<figure class="evidence-figure">
-  <a class="evidence-image-link" href="assets/transaction-flow/03-metamask-connect-request.png" target="_blank" rel="noopener noreferrer"><img src="assets/transaction-flow/03-metamask-connect-request.png" alt="MetaMask connection request for portal.implicitex.com"></a>
-  <figcaption><span class="screenshot-id">Figure 3</span>MetaMask displayed an explicit connection request for <code>portal.implicitex.com</code>.</figcaption>
-</figure>
-
-<figure class="evidence-figure">
-  <a class="evidence-image-link" href="assets/transaction-flow/04-wallet-connected-balance-loaded.png" target="_blank" rel="noopener noreferrer"><img src="assets/transaction-flow/04-wallet-connected-balance-loaded.png" alt="ImplicitEx portal showing the connected sender and a 16.17 USDC balance"></a>
-  <figcaption><span class="screenshot-id">Figure 4</span>The sender connected and the portal loaded a 16.17 USDC balance.</figcaption>
+<figure class=”evidence-figure”>
+  <a class=”evidence-image-link” href=”assets/transaction-flow/03-wallet-connected-form-empty.png” target=”_blank” rel=”noopener noreferrer”><img src=”assets/transaction-flow/03-wallet-connected-form-empty.png” alt=”ImplicitEx portal showing the connected sender address and an 11.12 USDC balance with empty transfer fields”></a>
+  <figcaption><span class=”screenshot-id”>Figure 3</span>The sender connected. The portal loaded an 11.12 USDC balance and the transfer form became active.</figcaption>
 </figure>
 
 <h3>7.2 Recipient validation and fee calculation</h3>
 
-<figure class="evidence-figure">
-  <a class="evidence-image-link" href="assets/transaction-flow/05-recipient-valid.png" target="_blank" rel="noopener noreferrer"><img src="assets/transaction-flow/05-recipient-valid.png" alt="ImplicitEx portal showing a recipient address with format validation"></a>
-  <figcaption><span class="screenshot-id">Figure 5</span>The recipient address was entered and passed format validation.</figcaption>
+<figure class=”evidence-figure”>
+  <a class=”evidence-image-link” href=”assets/transaction-flow/04-recipient-entered-validated.png” target=”_blank” rel=”noopener noreferrer”><img src=”assets/transaction-flow/04-recipient-entered-validated.png” alt=”ImplicitEx portal showing the recipient address entered and passing format validation”></a>
+  <figcaption><span class=”screenshot-id”>Figure 4</span>The recipient address was entered and passed format validation.</figcaption>
 </figure>
 
-<figure class="evidence-figure">
-  <a class="evidence-image-link" href="assets/transaction-flow/06-amount-and-fee-calculated.png" target="_blank" rel="noopener noreferrer"><img src="assets/transaction-flow/06-amount-and-fee-calculated.png" alt="ImplicitEx portal showing a 5 USDC amount and a 0.05 USDC fee"></a>
-  <figcaption><span class="screenshot-id">Figure 6</span>The 5.00 USDC amount produced a 0.050000 USDC platform fee.</figcaption>
+<figure class=”evidence-figure”>
+  <a class=”evidence-image-link” href=”assets/transaction-flow/05-amount-entered-fee-calculated.png” target=”_blank” rel=”noopener noreferrer”><img src=”assets/transaction-flow/05-amount-entered-fee-calculated.png” alt=”ImplicitEx portal showing a 1.00 USDC amount and a 0.010000 USDC platform fee”></a>
+  <figcaption><span class=”screenshot-id”>Figure 5</span>The 1.00 USDC amount produced a 0.010000 USDC platform fee.</figcaption>
 </figure>
 
-<figure class="evidence-figure">
-  <a class="evidence-image-link" href="assets/transaction-flow/07-transfer-details-complete.png" target="_blank" rel="noopener noreferrer"><img src="assets/transaction-flow/07-transfer-details-complete.png" alt="ImplicitEx portal with recipient, amount, purpose, reference, balance, and fee populated"></a>
-  <figcaption><span class="screenshot-id">Figure 7</span>The transaction details were populated before execution review.</figcaption>
+<figure class=”evidence-figure”>
+  <a class=”evidence-image-link” href=”assets/transaction-flow/06-all-fields-complete.png” target=”_blank” rel=”noopener noreferrer”><img src=”assets/transaction-flow/06-all-fields-complete.png” alt=”ImplicitEx portal with recipient, amount, purpose, reference, memo, balance, and fee all populated”></a>
+  <figcaption><span class=”screenshot-id”>Figure 6</span>The transaction details were fully populated (recipient, amount, purpose, reference, memo) before execution review.</figcaption>
 </figure>
 
 <h3>7.3 Explicit user confirmation</h3>
 
-<figure class="evidence-figure">
-  <a class="evidence-image-link" href="assets/transaction-flow/08-execution-confirmation-unchecked.png" target="_blank" rel="noopener noreferrer"><img src="assets/transaction-flow/08-execution-confirmation-unchecked.png" alt="ImplicitEx confirmation checkbox unchecked and Execute Transfer disabled"></a>
-  <figcaption><span class="screenshot-id">Figure 8</span>Execute Transfer remained disabled while the acknowledgement checkbox was unchecked.</figcaption>
-</figure>
-
-<figure class="evidence-figure">
-  <a class="evidence-image-link" href="assets/transaction-flow/09-execution-confirmation-checked.png" target="_blank" rel="noopener noreferrer"><img src="assets/transaction-flow/09-execution-confirmation-checked.png" alt="ImplicitEx confirmation checkbox checked and Execute Transfer enabled"></a>
-  <figcaption><span class="screenshot-id">Figure 9</span>The user explicitly acknowledged the recipient, amount, fee, total debit, and irreversibility; Execute Transfer then became available.</figcaption>
+<figure class=”evidence-figure”>
+  <a class=”evidence-image-link” href=”assets/transaction-flow/07-confirmation-checked-execute-ready.png” target=”_blank” rel=”noopener noreferrer”><img src=”assets/transaction-flow/07-confirmation-checked-execute-ready.png” alt=”ImplicitEx confirmation checkbox checked and Execute Transfer enabled”></a>
+  <figcaption><span class=”screenshot-id”>Figure 7</span>The user explicitly acknowledged the recipient, amount, fee, total debit, and irreversibility. Execute Transfer became available only after the checkbox was checked.</figcaption>
 </figure>
 
 <h3>7.4 ERC-20 approval request and observed wallet warning</h3>
 
 <p>The portal requested a USDC allowance equal to the current transfer total. The requested cap was not unlimited and did not include an additional buffer.</p>
 
-<figure class="evidence-figure">
-  <a class="evidence-image-link" href="assets/transaction-flow/10-blockaid-warning-exact-spending-cap.png" target="_blank" rel="noopener noreferrer"><img src="assets/transaction-flow/10-blockaid-warning-exact-spending-cap.png" alt="MetaMask spending cap request showing the Blockaid warning and an exact 5.05 USDC cap"></a>
-  <figcaption><span class="screenshot-id">Figure 10</span>During the ERC-20 approval step, MetaMask displayed a Blockaid warning indicating “This is a deceptive request.” The approval requested an exact spending cap of <strong>5.05 USDC</strong>, matching the disclosed transfer amount (5.00 USDC) plus the platform fee (0.05 USDC). The subsequent transfer request and transaction broadcast proceeded normally.</figcaption>
+<figure class=”evidence-figure”>
+  <a class=”evidence-image-link” href=”assets/transaction-flow/08-blockaid-spending-cap-warning.png” target=”_blank” rel=”noopener noreferrer”><img src=”assets/transaction-flow/08-blockaid-spending-cap-warning.png” alt=”MetaMask spending cap request showing the Blockaid warning and an exact 1.01 USDC cap”></a>
+  <figcaption><span class=”screenshot-id”>Figure 8</span>During the ERC-20 approval step, MetaMask displayed a Blockaid warning indicating “This is a deceptive request.” The approval requested an exact spending cap of <strong>1.01 USDC</strong>, matching the disclosed transfer amount (1.00 USDC) plus the platform fee (0.01 USDC). The subsequent transfer transaction and on-chain confirmation proceeded normally.</figcaption>
 </figure>
 
-<h3>7.5 Separate transfer transaction request</h3>
+<h3>7.5 On-chain confirmation</h3>
 
-<p>After the approval transaction completed, the portal issued the separate <code>transferWithFee()</code> request. This second wallet prompt identified Polygon, <code>portal.implicitex.com</code>, and the ImplicitEx contract.</p>
+<p>After approval, the portal issued the separate <code>transferWithFee()</code> call. The transfer was confirmed on Polygon at block 90,776,572.</p>
 
-<figure class="evidence-figure">
-  <a class="evidence-image-link" href="assets/transaction-flow/11-metamask-transfer-request.png" target="_blank" rel="noopener noreferrer"><img src="assets/transaction-flow/11-metamask-transfer-request.png" alt="MetaMask transaction request for the ImplicitEx contract showing an estimated 5.05 USDC debit on Polygon"></a>
-  <figcaption><span class="screenshot-id">Figure 11</span>MetaMask displayed the actual transfer transaction as a separate request, with estimated changes showing a 5.05 USDC debit.</figcaption>
+<figure class=”evidence-figure”>
+  <a class=”evidence-image-link” href=”assets/transaction-flow/09-confirmed-transfer-right-panel.png” target=”_blank” rel=”noopener noreferrer”><img src=”assets/transaction-flow/09-confirmed-transfer-right-panel.png” alt=”ImplicitEx portal right panel showing the confirmed transfer receipt with transaction hash and block number”></a>
+  <figcaption><span class=”screenshot-id”>Figure 9</span>The portal displayed the confirmed transfer: receipt IX-07FF5D03, transaction hash <code>0x07ff5d03…077a57</code>, block 90,776,572, confirmed Jul 23, 11:10 PM. Actions available: View on Explorer, Copy Receipt, Export Proof Packet.</figcaption>
 </figure>
 
-<h3>7.6 Transaction submission and Activity record</h3>
-
-<figure class="evidence-figure">
-  <a class="evidence-image-link" href="assets/transaction-flow/12-activity-transfer-submitted.png" target="_blank" rel="noopener noreferrer"><img src="assets/transaction-flow/12-activity-transfer-submitted.png" alt="ImplicitEx Activity screen showing the 5 USDC transfer submitted and awaiting confirmation"></a>
-  <figcaption><span class="screenshot-id">Figure 12</span>The portal recorded the 5.00 USDC transfer as <strong>submitted</strong> and “Awaiting confirmation.” This capture does not represent confirmed settlement.</figcaption>
+<figure class=”evidence-figure”>
+  <a class=”evidence-image-link” href=”assets/transaction-flow/10-companion-tray-telemetry-confirmed.png” target=”_blank” rel=”noopener noreferrer”><img src=”assets/transaction-flow/10-companion-tray-telemetry-confirmed.png” alt=”ImplicitEx portal companion tray and telemetry panel showing confirmed state with contract and USDC addresses”></a>
+  <figcaption><span class=”screenshot-id”>Figure 10</span>The companion tray confirmed the transaction (TX HASH, BLOCK 90,776,572). The telemetry panel recorded the full contract address, USDC address, and wallet. No active transaction was pending.</figcaption>
 </figure>
 
-<h3>7.7 Submitted-state proof packet</h3>
+<h3>7.6 Activity record and on-chain verification</h3>
 
-<p>The exported <a href="assets/transaction-flow/transaction-proof-packet-submitted-2026-07-23.json">proof packet</a> records both wallet-stage and transaction-stage identifiers:</p>
+<figure class=”evidence-figure”>
+  <a class=”evidence-image-link” href=”assets/transaction-flow/11-activity-tab-confirmed-receipt.png” target=”_blank” rel=”noopener noreferrer”><img src=”assets/transaction-flow/11-activity-tab-confirmed-receipt.png” alt=”ImplicitEx Activity tab showing receipt IX-07FF5D03 in CONFIRMED state with Polygonscan verification link”></a>
+  <figcaption><span class=”screenshot-id”>Figure 11</span>The Activity tab recorded receipt IX-07FF5D03 as <strong>CONFIRMED</strong>. “Transfer confirmed. Funds moved on Polygon.” The explorer link is available for independent verification.</figcaption>
+</figure>
+
+<figure class=”evidence-figure”>
+  <a class=”evidence-image-link” href=”assets/transaction-flow/12-polygonscan-onchain-confirmation.png” target=”_blank” rel=”noopener noreferrer”><img src=”assets/transaction-flow/12-polygonscan-onchain-confirmation.png” alt=”Polygonscan transaction detail page showing status Success, block 90776572, and a 1 USDC ERC-20 transfer from sender to recipient”></a>
+  <figcaption><span class=”screenshot-id”>Figure 12</span>Polygonscan confirmed the <code>transferWithFee()</code> call: status <strong>Success</strong>, block 90,776,572, 86 confirmations at capture. The ERC-20 transfer record shows 1.00 USDC from sender <code>0xf614…f1D</code> to recipient <code>0x5466…698B</code>.</figcaption>
+</figure>
+
+<h3>7.7 Confirmed-state proof packet</h3>
+
+<p>The exported <a href=”assets/transaction-flow/transaction-proof-packet-confirmed-2026-07-23.json”>proof packet</a> records all settlement fields in confirmed state:</p>
 
 <table>
   <tbody>
-    <tr><td>Approval hash:</td><td class="address">0x4ad31a0bc64a4ca3827e82d035405ffb40ce113886ecb1cadd501978ee6ba9ad</td></tr>
-    <tr><td>Transaction hash:</td><td class="address">0x0a41b0c3375c489bd91fb126a0bed07d5e783ecfcf91d0f0d391c82090edab63</td></tr>
-    <tr><td>Explorer</td><td><a href="https://polygonscan.com/tx/0x0a41b0c3375c489bd91fb126a0bed07d5e783ecfcf91d0f0d391c82090edab63">Polygonscan transaction record</a></td></tr>
-    <tr><td>Status at export</td><td><code>submitted</code></td></tr>
-    <tr><td>Block number</td><td>Not observed at export (<code>null</code>)</td></tr>
-    <tr><td>Funds moved</td><td>Not resolved at export (<code>null</code>)</td></tr>
+    <tr><td>Transaction hash:</td><td class=”address”>0x07ff5d031ecc553edb6648f05169413715bc1a80fec46bb04910366ff2077a57</td></tr>
+    <tr><td>Explorer</td><td><a href=”https://polygonscan.com/tx/0x07ff5d031ecc553edb6648f05169413715bc1a80fec46bb04910366ff2077a57”>Polygonscan transaction record</a></td></tr>
+    <tr><td>Status at export</td><td><code>confirmed</code></td></tr>
+    <tr><td>Block number</td><td>90,776,572</td></tr>
+    <tr><td>Funds moved</td><td><code>true</code></td></tr>
+    <tr><td>Receipt ID</td><td>IX-07FF5D03</td></tr>
+    <tr><td>Confirmed at</td><td>2026-07-23T23:10 (local)</td></tr>
   </tbody>
 </table>
-
-<div class="callout">
-  <div class="callout-label">Settlement-status boundary</div>
-  This evidence establishes wallet connection, validation, fee calculation, explicit acknowledgement, the exact approval cap, the observed warning, the separate transfer request, and transaction broadcast. It does not yet establish final settlement for this specific transaction. After confirmation, regenerate the proof packet so that it records <code>status: confirmed</code>, a non-null <code>blockNumber</code>, a non-null <code>resolvedAt</code>, and <code>fundsMoved: true</code>.
-</div>
 
 </section>
 
@@ -1268,8 +1264,8 @@ Polygonscan:    <a href="https://polygonscan.com/tx/0x37fd733a7f1854740bf702aa5b
     <tr><th>ID</th><th>Item</th><th>Status</th></tr>
   </thead>
   <tbody>
-    <tr><td>TF-01</td><td>Ordered transaction-flow screenshot set (Figures 1–12)</td><td>Available — captured 2026-07-23</td></tr>
-    <tr><td>PP-01</td><td><code>proof-packet.v1</code> export for the 5.00 USDC flow</td><td>Available — submitted state; confirmation update pending</td></tr>
+    <tr><td>TF-01</td><td>Ordered transaction-flow screenshot set (Figures 1–12)</td><td>Available — confirmed flow captured 2026-07-23</td></tr>
+    <tr><td>PP-01</td><td><code>proof-packet.v1</code> export for the 1.00 USDC flow</td><td>Available — confirmed state; block 90,776,572; funds moved</td></tr>
     <tr><td>TX-02</td><td>2026-07-23 transaction record</td><td>Submitted-state hash and Polygonscan URL available</td></tr>
     <tr><td>TX-01</td><td>Gate 4 transfer transaction (Polygonscan)</td><td>Available — publicly verifiable</td></tr>
     <tr><td>TC-01</td><td>Contract test suite results (59/59)</td><td>Internal — available on request</td></tr>
