@@ -276,6 +276,165 @@ test('full approval path still works: READY → AUTHORIZING → AUTHORIZED → S
   assert.equal(active.fundsMoved, true);
 });
 
+// ---- user-entered metadata persistence ----
+//
+// Receipt creation stores purposeTag, referenceId, and memo at the point the
+// user enters review. Every subsequent state-transition patch (AUTHORIZING,
+// AUTHORIZED, SUBMITTING, SUBMITTED, CONFIRMED) must not erase these values.
+//
+// Root cause of the original defect: normalizeKnownFields() rebuilds the
+// receipt from DEFAULT_RECEIPT, which initialises those fields to ''. When
+// applyIntegrityUpdate() ran normalizeReceiptState(rawPatch) on a partial
+// patch that lacked purposeTag/referenceId/memo, the defaults ('') were
+// merged over the real values via Object.assign({}, current, nextPatch).
+// The preserveKnown guard loop did not include those three fields.
+// Fix: add purposeTag/referenceId/memo to the preserveKnown list in
+// mergeReceiptForward (receipt-schema.js).
+
+test('applyIntegrityUpdate preserves purposeTag through a state-transition patch', () => {
+  const existingReceipt = {
+    state: S.READY,
+    purposeTag: 'test',
+    referenceId: 'Invoice 001',
+    memo: 'Payment on services rendered.',
+    sender: '0x1111111111111111111111111111111111111111',
+    recipient: '0x2222222222222222222222222222222222222222',
+    amount: '1.000000',
+    fee: '0.010000',
+    totalDebit: '1.010000',
+    fundsMoved: null,
+  };
+
+  // A normal state-transition patch — does NOT include the metadata fields.
+  const patch = {
+    state: S.AUTHORIZING,
+    lastKnownMessage: 'USDC authorization requested.',
+    observationSource: schema.OBSERVATION_SOURCES.WALLET,
+  };
+
+  const result = integrity.applyIntegrityUpdate(existingReceipt, patch);
+
+  assert.equal(result.ok, true, 'READY → AUTHORIZING must succeed');
+  assert.equal(result.receipt.purposeTag, 'test',
+    'purposeTag must survive a state-transition patch');
+  assert.equal(result.receipt.referenceId, 'Invoice 001',
+    'referenceId must survive a state-transition patch');
+  assert.equal(result.receipt.memo, 'Payment on services rendered.',
+    'memo must survive a state-transition patch');
+});
+
+test('metadata survives the full approval-path lifecycle in the receipt store', () => {
+  const receipts = loadReceiptStore();
+
+  const stored = receipts.create({
+    state: S.READY,
+    sender: '0x1111111111111111111111111111111111111111',
+    recipient: '0x2222222222222222222222222222222222222222',
+    amount: '1.000000',
+    fee: '0.010000',
+    totalDebit: '1.010000',
+    chainId: 137,
+    purposeTag: 'test',
+    referenceId: 'Invoice 001',
+    memo: 'Payment on services rendered.',
+    lastKnownMessage: 'Transfer details validated.',
+    observationSource: schema.OBSERVATION_SOURCES.LOCAL,
+  });
+
+  function checkMeta(label) {
+    const active = receipts.getActive();
+    assert.equal(active.purposeTag, 'test', label + ': purposeTag must be preserved');
+    assert.equal(active.referenceId, 'Invoice 001', label + ': referenceId must be preserved');
+    assert.equal(active.memo, 'Payment on services rendered.', label + ': memo must be preserved');
+  }
+
+  checkMeta('after create');
+
+  receipts.update(stored.id, { state: S.AUTHORIZING, observationSource: schema.OBSERVATION_SOURCES.WALLET });
+  checkMeta('after AUTHORIZING');
+
+  receipts.update(stored.id, {
+    state: S.AUTHORIZED,
+    approvalHash: '0x' + 'aa'.repeat(32),
+    observationSource: schema.OBSERVATION_SOURCES.WALLET,
+  });
+  checkMeta('after AUTHORIZED');
+
+  receipts.update(stored.id, { state: S.SUBMITTING, observationSource: schema.OBSERVATION_SOURCES.WALLET });
+  checkMeta('after SUBMITTING');
+
+  receipts.update(stored.id, {
+    state: S.SUBMITTED,
+    transferHash: '0x' + 'bb'.repeat(32),
+    hash: '0x' + 'bb'.repeat(32),
+    explorerUrl: 'https://polygonscan.com/tx/0x' + 'bb'.repeat(32),
+    observationSource: schema.OBSERVATION_SOURCES.WALLET,
+  });
+  checkMeta('after SUBMITTED');
+
+  receipts.update(stored.id, {
+    state: S.CONFIRMED,
+    fundsMoved: true,
+    blockNumber: 90776572,
+    observationSource: schema.OBSERVATION_SOURCES.RPC,
+  });
+  checkMeta('after CONFIRMED');
+
+  // Archive and verify the archived copy also has the metadata
+  receipts.clearActive();
+  const archived = receipts.listRecent();
+  assert.equal(archived[0].purposeTag, 'test', 'archived receipt must have purposeTag');
+  assert.equal(archived[0].referenceId, 'Invoice 001', 'archived receipt must have referenceId');
+  assert.equal(archived[0].memo, 'Payment on services rendered.', 'archived receipt must have memo');
+});
+
+test('metadata survives the transfer-only lifecycle (READY → SUBMITTING) in the receipt store', () => {
+  // Regression test for the transfer-only path specifically.
+  // When requiresApproval is false, the path skips AUTHORIZING/AUTHORIZED
+  // and goes directly READY → SUBMITTING. Metadata must still survive.
+  const receipts = loadReceiptStore();
+
+  const stored = receipts.create({
+    state: S.READY,
+    sender: '0x1111111111111111111111111111111111111111',
+    recipient: '0x2222222222222222222222222222222222222222',
+    amount: '1.000000',
+    fee: '0.010000',
+    totalDebit: '1.010000',
+    chainId: 137,
+    purposeTag: 'invoice',
+    referenceId: 'REF-007',
+    memo: 'Allowance-sufficient test.',
+    lastKnownMessage: 'Transfer details validated.',
+    observationSource: schema.OBSERVATION_SOURCES.LOCAL,
+  });
+
+  receipts.update(stored.id, { state: S.SUBMITTING, observationSource: schema.OBSERVATION_SOURCES.WALLET });
+  const afterSubmitting = receipts.getActive();
+  assert.equal(afterSubmitting.purposeTag, 'invoice', 'purposeTag must survive READY → SUBMITTING');
+  assert.equal(afterSubmitting.referenceId, 'REF-007', 'referenceId must survive READY → SUBMITTING');
+  assert.equal(afterSubmitting.memo, 'Allowance-sufficient test.', 'memo must survive READY → SUBMITTING');
+
+  receipts.update(stored.id, {
+    state: S.SUBMITTED,
+    transferHash: '0x' + 'cc'.repeat(32),
+    hash: '0x' + 'cc'.repeat(32),
+    observationSource: schema.OBSERVATION_SOURCES.WALLET,
+  });
+  receipts.update(stored.id, {
+    state: S.CONFIRMED,
+    fundsMoved: true,
+    blockNumber: 90776600,
+    observationSource: schema.OBSERVATION_SOURCES.RPC,
+  });
+
+  receipts.clearActive();
+  const archived = receipts.listRecent();
+  assert.equal(archived[0].purposeTag, 'invoice', 'archived transfer-only receipt must have purposeTag');
+  assert.equal(archived[0].referenceId, 'REF-007', 'archived transfer-only receipt must have referenceId');
+  assert.equal(archived[0].memo, 'Allowance-sufficient test.', 'archived transfer-only receipt must have memo');
+});
+
 // ---- final summary ----
 
 console.log('');
