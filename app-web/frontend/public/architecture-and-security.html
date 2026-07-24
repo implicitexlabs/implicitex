@@ -434,7 +434,7 @@
   <div class="doc-title">Architecture and Security Overview</div>
   <div class="doc-subtitle">ImplicitEx — Technical Review Packet</div>
   <div class="doc-meta">
-    <span class="label">Document</span>   <span>v1.1 — 2026-07-24</span>
+    <span class="label">Document</span>   <span>v1.1.1 — 2026-07-24</span>
     <span class="label">Prepared by</span><span>Antoine Dennison, ImplicitEx — connect@implicitex.com</span>
     <span class="label">Reference</span>  <span>Blockaid Ticket #1290666 / #1290665</span>
     <span class="label">Scope</span>      <span>Deployed production application — Polygon mainnet, chain ID 137</span>
@@ -1062,7 +1062,7 @@ Blockchain  →  executes only if user signature is valid and allowance is suffi
 
 <p>The <a href="assets/transaction-flow/transaction-proof-packet-transfer-only-2026-07-24.json">exported proof packet</a> for this transaction includes all settlement fields, user-entered metadata, timestamps, and the three evidence sections from the <code>proof-packet.v1</code> schema.</p>
 
-<p>The preexisting 3.030000 USDC allowance decreased to 2.020000 USDC after the transfer — exactly matching the 1.010000 USDC total debit — confirming that the correct amount was consumed and no phantom spending occurred. The remaining 2.020000 USDC allowance reflects the balance of a prior allowance; it is not a residual from this transfer.</p>
+<p>The preexisting 3.030000 USDC allowance decreased to 2.020000 USDC after the transfer — exactly matching the 1.010000 USDC total debit — confirming that the correct amount was consumed and no phantom spending occurred. The remaining 2.020000 USDC is the unused portion of the preexisting 3.030000 USDC allowance. The transfer neither created nor increased the allowance; it consumed exactly the disclosed 1.010000 USDC total debit.</p>
 
 </section>
 
@@ -1343,7 +1343,7 @@ Polygonscan:    <a href="https://polygonscan.com/tx/0x37fd733a7f1854740bf702aa5b
 <!-- ═══════════════════════════════════════════════════════════════════════ -->
 
 <footer class="doc-footer">
-  <span>ImplicitEx Architecture and Security Overview — v1.1 — 2026-07-24</span>
+  <span>ImplicitEx Architecture and Security Overview — v1.1.1 — 2026-07-24</span>
   <span>connect@implicitex.com · implicitex.com</span>
 </footer>
 </body>
