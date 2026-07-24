@@ -2487,7 +2487,8 @@
   function currentButtonLabel() {
     if (!state.connected) return 'Connect wallet to continue';
     const netState = getNetworkState();
-    if (netState === 'WRONG_NETWORK' || netState === 'CONTRACT_UNAVAILABLE') return 'Switch to Polygon';
+    if (netState === 'WRONG_NETWORK') return 'Switch to Polygon';
+    if (netState === 'CONTRACT_UNAVAILABLE') return 'Retry verification';
     if (netState === 'TRANSFERS_DISABLED') return 'Transfers disabled';
     if (state.txPhase === 'SIMULATING') return 'Checking…';
     return 'Review transfer';
@@ -2730,8 +2731,12 @@
       return;
     }
     const netState = getNetworkState();
-    if (netState === 'WRONG_NETWORK' || netState === 'CONTRACT_UNAVAILABLE') {
+    if (netState === 'WRONG_NETWORK') {
       await switchToPolygonMainnet();
+      return;
+    }
+    if (netState === 'CONTRACT_UNAVAILABLE') {
+      await retryContractReadiness();
       return;
     }
     if (state.txPhase === 'DRAFT') {
@@ -3012,6 +3017,9 @@
     // Network is no longer valid for the frozen draft — exit review so inputs
     // are unlocked if the user switches back to a supported chain.
     exitReview();
+    // exitReview() is intentionally a no-op while already in DRAFT, so update
+    // the actionable network-state label and enabled state explicitly.
+    setTxState('idle', null);
 
     const short = shortAddr(state.address);
     const networkLabel = chainLabel(state.chainId);
@@ -3121,6 +3129,38 @@
       setStatus('Wallet has not confirmed Polygon Mainnet yet. Switch manually if this persists.');
       applyWrongNetworkPresentation();
     }
+  }
+
+  /**
+   * Retry contract readiness when the wallet is on the correct chain but the
+   * transfer contract could not be resolved. A network switch is not the remedy
+   * here — the issue is configuration or RPC, not chain selection.
+   *
+   * Flow:
+   *   1. Show "Verifying contract…" on the action button.
+   *   2. Re-sync provider state (re-reads chain + accounts from the wallet).
+   *   3. If CONTRACT_UNAVAILABLE persists after re-sync, surface a clear
+   *      service-unavailable message. No further automatic action.
+   */
+  async function retryContractReadiness() {
+    if (els.txBtn) {
+      els.txBtn.disabled = true;
+      els.txBtn.textContent = 'Verifying contract…';
+      els.txBtn.classList.remove('tx-btn--armed');
+    }
+    setStatus('Verifying transfer contract…');
+
+    await syncProviderState({ force: true });
+
+    if (getNetworkState() === 'CONTRACT_UNAVAILABLE') {
+      setStatus(
+        'Transfer service is temporarily unavailable. ' +
+        'Your wallet remains connected and no transaction was submitted.'
+      );
+      setTxState('idle');
+    }
+    // If state resolved (READY / TRANSFERS_DISABLED), syncProviderState already
+    // called applyCurrentNetworkPresentation which updated the full UI.
   }
 
   async function syncProviderAccounts(options = {}) {
@@ -3591,7 +3631,8 @@
     if (els.txBtn) {
       const netState = getNetworkState();
       // WRONG_NETWORK and CONTRACT_UNAVAILABLE are actionable — button must be
-      // enabled so the user can click "Switch to Polygon" to fix the state.
+      // enabled for their distinct "Switch to Polygon" / "Retry verification"
+      // recovery paths.
       // Only TRANSFERS_DISABLED (policy gate) and disconnected block the button.
       const isUnavailable = !state.connected || netState === 'TRANSFERS_DISABLED';
       els.txBtn.disabled = isPending || isUnavailable;
