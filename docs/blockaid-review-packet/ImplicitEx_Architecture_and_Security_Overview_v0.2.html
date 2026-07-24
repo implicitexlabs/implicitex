@@ -858,21 +858,48 @@ Blockchain  →  executes only if user signature is valid and allowance is suffi
   <figcaption><span class=”screenshot-id”>Figure 12</span>Polygonscan confirmed the <code>transferWithFee()</code> call: status <strong>Success</strong>, block 90,776,572, 86 confirmations at capture. The ERC-20 transfer record shows 1.00 USDC from sender <code>0xf614…f1D</code> to recipient <code>0x5466…698B</code>.</figcaption>
 </figure>
 
-<h3>7.7 Confirmed-state proof packet</h3>
+<h3>7.7 Production settlement evidence — two execution paths</h3>
 
-<p>The exported <a href=”assets/transaction-flow/transaction-proof-packet-confirmed-2026-07-23.json”>proof packet</a> records all settlement fields in confirmed state:</p>
+<p>Two production transactions were executed against the deployed system. Together they establish that both execution paths produce a consistent, independently verifiable settlement record.</p>
+
+<h4>7.7.1 Approval-path transaction (2026-07-23)</h4>
+
+<p>Documents the first-time-user flow: wallet had no prior allowance, so an ERC-20 approval was required before the transfer. This is the transaction visible in Figures 1–12 above. The Blockaid spending-cap warning appeared during the approval step (Figure 8) and did not prevent settlement.</p>
 
 <table>
   <tbody>
     <tr><td>Transaction hash:</td><td class=”address”>0x07ff5d031ecc553edb6648f05169413715bc1a80fec46bb04910366ff2077a57</td></tr>
+    <tr><td>Approval hash:</td><td class=”address”>0xb137bebac424d6f39630c00938776f1397450a0c531523432052aa57d001f7fb</td></tr>
     <tr><td>Explorer</td><td><a href=”https://polygonscan.com/tx/0x07ff5d031ecc553edb6648f05169413715bc1a80fec46bb04910366ff2077a57”>Polygonscan transaction record</a></td></tr>
-    <tr><td>Status at export</td><td><code>confirmed</code></td></tr>
+    <tr><td>Status</td><td><code>confirmed</code></td></tr>
     <tr><td>Block number</td><td>90,776,572</td></tr>
     <tr><td>Funds moved</td><td><code>true</code></td></tr>
-    <tr><td>Receipt ID</td><td>IX-07FF5D03</td></tr>
-    <tr><td>Confirmed at</td><td>2026-07-23T23:10 (local)</td></tr>
+    <tr><td>Execution path</td><td>READY → AUTHORIZING → AUTHORIZED → SUBMITTING → SUBMITTED → CONFIRMED</td></tr>
   </tbody>
 </table>
+
+<h4>7.7.2 Transfer-only path transaction (2026-07-24)</h4>
+
+<p>Documents the returning-user flow: wallet had an existing allowance of 3.03 USDC established via a direct contract call. The portal detected sufficient allowance and submitted the transfer directly — no approval step, no MetaMask spending-cap prompt, no Blockaid warning. The exported proof packet is the browser-generated artifact, preserved byte-for-byte.</p>
+
+<table>
+  <tbody>
+    <tr><td>Transaction hash:</td><td class=”address”>0x0e0b3c1f2d0565663743050f43282e97501b3ee8505084fa5af823da00b1e15a</td></tr>
+    <tr><td>Approval hash:</td><td><code>null</code> — no approval occurred</td></tr>
+    <tr><td>Explorer</td><td><a href=”https://polygonscan.com/tx/0x0e0b3c1f2d0565663743050f43282e97501b3ee8505084fa5af823da00b1e15a”>Polygonscan transaction record</a></td></tr>
+    <tr><td>Status</td><td><code>confirmed</code></td></tr>
+    <tr><td>Block number</td><td>90,780,021</td></tr>
+    <tr><td>Funds moved</td><td><code>true</code></td></tr>
+    <tr><td>Purpose tag</td><td><code>test</code></td></tr>
+    <tr><td>Reference</td><td>TRANSFER-ONLY-001</td></tr>
+    <tr><td>Memo</td><td>Production allowance verification</td></tr>
+    <tr><td>Execution path</td><td>READY → SUBMITTING → SUBMITTED → CONFIRMED</td></tr>
+  </tbody>
+</table>
+
+<p>The <a href=”assets/transaction-flow/transaction-proof-packet-transfer-only-2026-07-24.json”>exported proof packet</a> for this transaction includes all settlement fields, user-entered metadata, timestamps, and the three evidence sections from the <code>proof-packet.v1</code> schema.</p>
+
+<p>The on-chain allowance after this transfer was independently verified at 2.020000 USDC — exactly 3.030000 − 1.010000 — confirming that the correct totalDebit was consumed and no phantom spending occurred.</p>
 
 </section>
 
@@ -895,7 +922,8 @@ Blockchain  →  executes only if user signature is valid and allowance is suffi
     <tr><th>Suite</th><th>Tests passed</th><th>Result</th></tr>
   </thead>
   <tbody>
-    <tr><td>Contract (Hardhat / Chai)</td><td>59 / 59</td><td>PASS</td></tr>
+    <tr><td>Contract (Hardhat / Chai)</td><td>66 / 66</td><td>PASS</td></tr>
+    <tr><td>Receipt lifecycle + metadata</td><td>14 / 14</td><td>PASS</td></tr>
     <tr><td>Observability</td><td>31 / 31</td><td>PASS</td></tr>
     <tr><td>Analytics</td><td>24 / 24</td><td>PASS</td></tr>
     <tr><td>Consent</td><td>15 / 15</td><td>PASS</td></tr>
@@ -1127,8 +1155,9 @@ Polygonscan:    https://polygonscan.com/tx/0x37fd733a7f1854740bf702aa5bf59794f4e
     <tr><th>ID</th><th>Item</th><th>Status</th></tr>
   </thead>
   <tbody>
-    <tr><td>TF-01</td><td>Ordered transaction-flow screenshot set (Figures 1–12)</td><td>Available — confirmed flow captured 2026-07-23</td></tr>
-    <tr><td>PP-01</td><td><code>proof-packet.v1</code> export for the 1.00 USDC flow</td><td>Available — confirmed state; block 90,776,572; funds moved</td></tr>
+    <tr><td>TF-01</td><td>Ordered transaction-flow screenshot set (Figures 1–12) — approval path</td><td>Available — confirmed flow captured 2026-07-23</td></tr>
+    <tr><td>PP-01</td><td><code>proof-packet.v1</code> export — transfer-only path (exact browser export)</td><td>Available — block 90,780,021; <code>approvalHash: null</code>; metadata preserved; 2026-07-24</td></tr>
+    <tr><td>PP-02</td><td>Approval-path transaction reference — 2026-07-23</td><td>Available — block 90,776,572; approval hash 0xb137…; see §7.7.1</td></tr>
     <tr><td>TX-02</td><td>2026-07-23 transaction record</td><td>Submitted-state hash and Polygonscan URL available</td></tr>
     <tr><td>TX-01</td><td>Gate 4 transfer transaction (Polygonscan)</td><td>Available — publicly verifiable</td></tr>
     <tr><td>TC-01</td><td>Contract test suite results (59/59)</td><td>Internal — available on request</td></tr>

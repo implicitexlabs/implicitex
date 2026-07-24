@@ -67,17 +67,33 @@ The screenshot establishes that the warning appeared and that MetaMask
 displayed a 1.01 USDC cap. It does not, by itself, establish why Blockaid
 assigned the classification.
 
-## Settlement confirmation
+## Settlement evidence — two proof packets
 
-Figure 12 and the exported proof packet establish confirmed settlement:
+### PP-01: Transfer-only path (2026-07-24) — canonical state-machine fix artifact
 
-- `status: confirmed`
+Exported byte-for-byte from the browser after a production transfer where the wallet held an
+existing 3.03 USDC allowance established via a direct USDC contract call. No approval step
+occurred. This is the canonical evidence that the `READY → SUBMITTING → SUBMITTED → CONFIRMED`
+path works in production and that the metadata persistence fix is effective.
+
+File: `transaction-proof-packet-transfer-only-2026-07-24.json`
+
+Key fields:
+- `approvalHash: null` — no approval step occurred
+- `transactionHash: 0x0e0b3c1f2d0565663743050f43282e97501b3ee8505084fa5af823da00b1e15a`
+- `blockNumber: 90780021`
+- `fundsMoved: true`
+- `purposeTag: "test"`, `referenceId: "TRANSFER-ONLY-001"`, `memo: "Production allowance verification"`
+
+Post-transfer allowance confirmed at 2.020000 USDC (3.030000 − 1.010000).
+
+### PP-02: Approval-path transaction (2026-07-23) — complementary evidence
+
+Covered by Figures 1–12. Documents the first-time-user path including the Blockaid warning.
+- `transactionHash: 0x07ff5d031ecc553edb6648f05169413715bc1a80fec46bb04910366ff2077a57`
+- `approvalHash: 0xb137bebac424d6f39630c00938776f1397450a0c531523432052aa57d001f7fb`
 - `blockNumber: 90776572`
 - `fundsMoved: true`
-- `transactionHash: 0x07ff5d031ecc553edb6648f05169413715bc1a80fec46bb04910366ff2077a57`
-
-The confirmed-state export is preserved as
-`transaction-proof-packet-confirmed-2026-07-23.json`.
 
 ## Source-file handling
 
