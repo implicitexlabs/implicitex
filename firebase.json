@@ -159,7 +159,7 @@
       "target": "portal",
       "public": "app-web/frontend/public",
       "predeploy": [
-        "npm --prefix app-web run test:portal-integrity"
+        "npm --prefix app-web run predeploy:portal"
       ],
       "ignore": [
         "firebase.json",
