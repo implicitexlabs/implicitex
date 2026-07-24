@@ -860,11 +860,11 @@ Blockchain  →  executes only if user signature is valid and allowance is suffi
 
 <h3>7.7 Production settlement evidence — two execution paths</h3>
 
-<p>Two production transactions were executed against the deployed system. Together they establish that both execution paths produce a consistent, independently verifiable settlement record.</p>
+<p>Two production execution paths were exercised against the deployed system and each is supported by an exact browser-exported proof packet preserved byte-for-byte at time of export. Together they establish that both paths produce a consistent, independently verifiable settlement record.</p>
 
-<h4>7.7.1 Approval-path transaction (2026-07-23)</h4>
+<h4>7.7.1 Original Blockaid-observed approval-path transaction (2026-07-23)</h4>
 
-<p>Documents the first-time-user flow: wallet had no prior allowance, so an ERC-20 approval was required before the transfer. This is the transaction visible in Figures 1–12 above. The Blockaid spending-cap warning appeared during the approval step (Figure 8) and did not prevent settlement.</p>
+<p>Documents the first-time-user flow visible in Figures 1–12 above. The wallet had no prior allowance; an ERC-20 approval was required. The Blockaid spending-cap warning appeared during the approval step (Figure 8) and did not prevent settlement. This transaction is independently verifiable on Polygonscan. The original browser-exported proof packet for this transaction was not preserved at time of export; the chain record and screenshot evidence stand as the independent verification record.</p>
 
 <table>
   <tbody>
@@ -874,11 +874,31 @@ Blockchain  →  executes only if user signature is valid and allowance is suffi
     <tr><td>Status</td><td><code>confirmed</code></td></tr>
     <tr><td>Block number</td><td>90,776,572</td></tr>
     <tr><td>Funds moved</td><td><code>true</code></td></tr>
+    <tr><td>Evidence</td><td>Figures 1–12; Polygonscan; artifact gap noted — original browser JSON not preserved</td></tr>
     <tr><td>Execution path</td><td>READY → AUTHORIZING → AUTHORIZED → SUBMITTING → SUBMITTED → CONFIRMED</td></tr>
   </tbody>
 </table>
 
-<h4>7.7.2 Transfer-only path transaction (2026-07-24)</h4>
+<h4>7.7.2 Approval-path certification run (2026-07-24)</h4>
+
+<p>A dedicated approval-path certification run was executed to close the artifact gap. The wallet allowance was zeroed to 0 USDC before execution, forcing the full approval lifecycle. The exported proof packet is the browser-generated artifact, preserved byte-for-byte immediately after confirmation. Reference: <code>APPROVAL-PATH-002</code>.</p>
+
+<table>
+  <tbody>
+    <tr><td>Transaction hash:</td><td class="address">0x48c07f8039d50754a20c1b32ee701fa042fcb4bbeabd8d01ab0164805c5faa78</td></tr>
+    <tr><td>Approval hash:</td><td class="address">0x115647e9ec9cab18e1bd422a68d5fd4216383fa240b58eb02f53e44274a7f428</td></tr>
+    <tr><td>Explorer</td><td><a href="https://polygonscan.com/tx/0x48c07f8039d50754a20c1b32ee701fa042fcb4bbeabd8d01ab0164805c5faa78">Polygonscan transaction record</a></td></tr>
+    <tr><td>Status</td><td><code>confirmed</code></td></tr>
+    <tr><td>Block number</td><td>90,784,121</td></tr>
+    <tr><td>Funds moved</td><td><code>true</code></td></tr>
+    <tr><td>Purpose / reference</td><td><code>test</code> / APPROVAL-PATH-002</td></tr>
+    <tr><td>Execution path</td><td>READY → AUTHORIZING → AUTHORIZED → SUBMITTING → SUBMITTED → CONFIRMED</td></tr>
+  </tbody>
+</table>
+
+<p>The <a href="assets/transaction-flow/transaction-proof-packet-approval-2026-07-24.json">exported proof packet</a> for this certification run includes all settlement fields, user-entered metadata, timestamps, and the three evidence sections from the <code>proof-packet.v1</code> schema. The approval transaction targets the USDC contract with spender set to the ImplicitEx contract and an approved value of exactly 1.01 USDC — matching the disclosed total debit. Post-transfer allowance independently confirmed at 0.000000 USDC, verifying that the full approved amount was consumed.</p>
+
+<h4>7.7.3 Transfer-only path transaction (2026-07-24)</h4>
 
 <p>Documents the returning-user flow: wallet had an existing allowance of 3.03 USDC established via a direct contract call. The portal detected sufficient allowance and submitted the transfer directly — no approval step, no MetaMask spending-cap prompt, no Blockaid warning. The exported proof packet is the browser-generated artifact, preserved byte-for-byte.</p>
 
@@ -1157,8 +1177,8 @@ Polygonscan:    https://polygonscan.com/tx/0x37fd733a7f1854740bf702aa5bf59794f4e
   <tbody>
     <tr><td>TF-01</td><td>Ordered transaction-flow screenshot set (Figures 1–12) — approval path</td><td>Available — confirmed flow captured 2026-07-23</td></tr>
     <tr><td>PP-01</td><td><code>proof-packet.v1</code> export — transfer-only path (exact browser export)</td><td>Available — block 90,780,021; <code>approvalHash: null</code>; metadata preserved; 2026-07-24</td></tr>
-    <tr><td>PP-02</td><td>Approval-path transaction reference — 2026-07-23</td><td>Available — block 90,776,572; approval hash 0xb137…; see §7.7.1</td></tr>
-    <tr><td>TX-02</td><td>2026-07-23 transaction record</td><td>Confirmed — block 90,776,572; see §7.7.1</td></tr>
+    <tr><td>PP-02</td><td><code>proof-packet.v1</code> export — approval-path certification run (exact browser export)</td><td>Available — block 90,784,121; <code>approvalHash</code> populated; <code>referenceId: APPROVAL-PATH-002</code>; 2026-07-24; see §7.7.2</td></tr>
+    <tr><td>TX-02</td><td>Original Blockaid-observed approval-path transaction record — 2026-07-23</td><td>Confirmed — block 90,776,572; Polygonscan; Figures 1–12; artifact gap noted (original browser JSON not preserved); see §7.7.1</td></tr>
     <tr><td>TX-01</td><td>Gate 4 transfer transaction (Polygonscan)</td><td>Available — publicly verifiable</td></tr>
     <tr><td>TC-01</td><td>Contract test suite results (66/66)</td><td>Internal — available on request</td></tr>
     <tr><td>TC-02</td><td>Observability suite results (31/31)</td><td>Internal — available on request</td></tr>

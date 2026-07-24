@@ -1,0 +1,73 @@
+{
+  "app": "ImplicitEx",
+  "schemaVersion": "proof-packet.v1",
+  "version": "0.1.0",
+  "network": "Polygon",
+  "chainId": 137,
+  "token": "USDC",
+  "transferContract": "0x5015841D6E665e63Ea174aD6b8FeF854026dE0C0",
+  "coinCard": null,
+  "sender": "0xf614356f93408460b594addacc86a7fc94310f1d",
+  "recipient": "0x5466bbA8cD334554c88F81342dDfcEc4c4A7698B",
+  "amount": "1.0",
+  "fee": "0.01",
+  "totalDebit": "1.01",
+  "transactionHash": "0x48c07f8039d50754a20c1b32ee701fa042fcb4bbeabd8d01ab0164805c5faa78",
+  "approvalHash": "0x115647e9ec9cab18e1bd422a68d5fd4216383fa240b58eb02f53e44274a7f428",
+  "blockNumber": 90784121,
+  "status": "confirmed",
+  "fundsMoved": true,
+  "explorerUrl": "https://polygonscan.com/tx/0x48c07f8039d50754a20c1b32ee701fa042fcb4bbeabd8d01ab0164805c5faa78",
+  "purposeTag": "test",
+  "referenceId": "APPROVAL-PATH-002",
+  "memo": "Production approval-path artifact verification",
+  "observationSource": "rpc",
+  "lastObservedAt": "2026-07-24T08:19:38.952Z",
+  "createdAt": "2026-07-24T08:18:23.382Z",
+  "resolvedAt": "2026-07-24T08:19:38.955Z",
+  "lastKnownMessage": "Transfer confirmed. Funds moved on Polygon.",
+  "evidenceSections": [
+    {
+      "title": "Settlement Truth",
+      "owner": "Blockchain",
+      "facts": {
+        "transactionHash": "0x48c07f8039d50754a20c1b32ee701fa042fcb4bbeabd8d01ab0164805c5faa78",
+        "blockNumber": 90784121,
+        "sender": "0xf614356f93408460b594addacc86a7fc94310f1d",
+        "recipient": "0x5466bbA8cD334554c88F81342dDfcEc4c4A7698B",
+        "amount": "1.0",
+        "fee": "0.01",
+        "totalDebit": "1.01",
+        "network": "Polygon",
+        "chainId": 137,
+        "explorerUrl": "https://polygonscan.com/tx/0x48c07f8039d50754a20c1b32ee701fa042fcb4bbeabd8d01ab0164805c5faa78"
+      }
+    },
+    {
+      "title": "Recorded Coin Card Evidence",
+      "owner": "ImplicitEx",
+      "facts": {
+        "schema": null,
+        "version": null,
+        "manifestUrl": null,
+        "manifestHash": null,
+        "manifestCreated": null,
+        "manifestUpdated": null,
+        "routeValidation": null,
+        "recipientSource": null,
+        "contractAddress": "0x5015841D6E665e63Ea174aD6b8FeF854026dE0C0"
+      }
+    },
+    {
+      "title": "Host-Published Manifest Data",
+      "owner": "Publisher",
+      "facts": {
+        "name": null,
+        "recipientAddress": "0x5466bbA8cD334554c88F81342dDfcEc4c4A7698B",
+        "network": "Polygon",
+        "token": "USDC",
+        "status": null
+      }
+    }
+  ]
+}
