@@ -1378,8 +1378,22 @@ body.portal-active #nav {
 
 /* Nav sticky behaviour is now handled by the sticky portal-header at ≤1024px.
    The nav itself remains static inside the header. */
-@media (max-width: 1024px) and (display-mode: standalone) {
-  /* Safe-area top padding — applies to the sticky header, not the nav directly */
+
+/* Reinforce safe-area inset using env() directly — catches PWA cache state where
+   the custom property may not yet reflect the live inset value. */
+@media (display-mode: standalone) {
+  #nav {
+    height: calc(var(--nav-h) + env(safe-area-inset-top, 0px));
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+  .hero {
+    padding-top: calc(var(--nav-h) + env(safe-area-inset-top, 0px) + 3vh + 2rem);
+  }
+}
+@media (display-mode: standalone) and (max-width: 768px) {
+  .hero {
+    padding-top: calc(56px + env(safe-area-inset-top, 0px) + 1.5rem + 1rem);
+  }
 }
 
 .portal-install-strip {
@@ -2471,6 +2485,11 @@ body.portal-active #nav {
   /* Force OS popup to render in dark mode — prevents browser-default blue highlight,
      which carries no meaning in ImplicitEx's signal vocabulary (gray/amber/red). */
   color-scheme: dark;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' fill='none' stroke='%23929a98' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 12px;
+  padding-right: 28px;
 }
 
 .tx-field--select option {

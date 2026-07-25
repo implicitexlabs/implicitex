@@ -486,6 +486,16 @@
       }
     }
 
+    /* Tablet portrait (601–900px tall) — brackets are decorative framing for
+       the desktop canvas; they don't read well on a narrow portrait layout. */
+    @media (min-width: 601px) and (max-width: 900px) {
+      [data-portal-shell="direct"] .transfer-portal::before,
+      [data-portal-shell="direct"] .transfer-portal::after,
+      [data-portal-shell="direct"] .portal-frame-brackets {
+        display: none;
+      }
+    }
+
     /* ── Launch screen ─────────────────────────────────────────────── */
     #ix-launch {
       position: fixed;
@@ -841,7 +851,7 @@
       }
       body[data-portal-shell="direct"] .portal-header-wallet {
         flex: 0 0 auto;
-        width: 100%;
+        width: min(100%, 280px);
       }
       body[data-portal-shell="direct"] .portal-header-workspace {
         display: none;
@@ -922,7 +932,7 @@
       .portal-mobile-nav-button svg { width: 18px; height: 18px; }
       .portal-mobile-nav-button[aria-current="page"],
       .portal-mobile-nav-button[aria-expanded="true"] {
-        background: var(--ix-teal-soft);
+        background: var(--ix-surface-raised);
         border-color: var(--ix-teal);
         color: var(--ix-teal-strong);
       }
