@@ -4538,7 +4538,7 @@
         if (els.gasHeroVal) {
           const errSpan = document.createElement('span');
           errSpan.className = 'gas-tier-value gas-unavail';
-          errSpan.textContent = 'Unavail';
+          errSpan.textContent = 'Unavailable';
           els.gasHeroVal.replaceChildren(errSpan);
         }
         if (els.gweiDisplay)        els.gweiDisplay.textContent        = 'Unavailable';
