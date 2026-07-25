@@ -95,9 +95,9 @@
 
     /* Product subtitle — aligns under wordmark, not lettermark */
     [data-portal-shell="direct"] .portal-header-title {
-      font-size: 11px;
+      font-size: var(--text-11);
       font-weight: 500;
-      letter-spacing: 0.2em;
+      letter-spacing: 0.14em;
       color: var(--dim);
       line-height: 1;
       text-transform: uppercase;
@@ -155,7 +155,7 @@
       color: var(--bg);
       border: none;
       font-family: var(--font-ui);
-      font-size: var(--size-sm);
+      font-size: var(--text-12);
       font-weight: 600;
       letter-spacing: 0.02em;
       cursor: pointer;
@@ -385,7 +385,7 @@
         min-height: 38px;
         background: transparent;
         color: var(--white);
-        font-size: var(--size-sm);
+        font-size: var(--text-12);
         padding: 0.6rem 1rem;
         justify-content: flex-start;
       }
@@ -624,8 +624,8 @@
       height: 14px;
     }
     body[data-portal-shell="direct"] .portal-header-title {
-      font-size: 11px;
-      letter-spacing: 0.16em;
+      font-size: var(--text-11);
+      letter-spacing: 0.14em;
     }
     body[data-portal-shell="direct"] .portal-primary-nav-button,
     body[data-portal-shell="direct"] .portal-ctrl-btn,
@@ -636,8 +636,9 @@
       background: transparent;
       border-color: var(--ix-border);
       color: var(--ix-text-secondary);
-      font-size: 12px;
-      letter-spacing: 0.07em;
+      font-size: var(--text-12);
+      font-weight: var(--weight-medium);
+      letter-spacing: 0.05em;
     }
     body[data-portal-shell="direct"] .portal-primary-nav-button:hover,
     body[data-portal-shell="direct"] .portal-primary-nav-button:focus-visible,
@@ -670,11 +671,13 @@
     body[data-portal-shell="direct"] .mod-tag,
     body[data-portal-shell="direct"] .fee-explanation-label,
     body[data-portal-shell="direct"] .receipt-history-label {
-      font-size: 11px;
-      letter-spacing: 0.11em;
+      font-size: var(--text-11);
+      letter-spacing: 0.09em;
     }
     body[data-portal-shell="direct"] .mod-title {
-      font-size: clamp(20px, 2vw, 24px);
+      font-size: var(--text-22);
+      font-weight: var(--weight-semibold);
+      line-height: 1.2;
       margin-bottom: 20px;
     }
     body[data-portal-shell="direct"] .tx-field {
@@ -684,7 +687,7 @@
       background: var(--ix-surface-raised);
       color: var(--ix-text);
       font-family: var(--font-sans);
-      font-size: 14px;
+      font-size: var(--text-14);
       padding: 11px 12px;
     }
     body[data-portal-shell="direct"] .tx-field:focus,
@@ -710,7 +713,7 @@
       border-radius: 0 var(--ix-radius-sm) var(--ix-radius-sm) 0;
       color: var(--ix-text-secondary);
       font-family: var(--font-mono);
-      font-size: 12px;
+      font-size: var(--text-12);
       font-weight: 600;
       background: var(--ix-surface-muted);
     }
@@ -765,6 +768,14 @@
     body[data-portal-shell="direct"] .portal-footer-row {
       background: var(--ix-shell);
       border-radius: var(--ix-radius-md);
+    }
+    /* Footer typography — group labels tighter, link text smaller than body */
+    body[data-portal-shell="direct"] .portal-footer-label {
+      font-size: var(--text-11);    /* 11px — compact metadata, not body */
+    }
+    body[data-portal-shell="direct"] .portal-footer-group a,
+    body[data-portal-shell="direct"] .portal-footer-more > summary {
+      font-size: var(--text-12);    /* 12px — footer links, not body copy */
     }
 
     /* Mobile is an application shell: destination navigation moves to a
@@ -836,6 +847,15 @@
       }
       body[data-portal-shell="direct"] .mod-title {
         font-size: 20px;
+        line-height: 1.2;
+      }
+      /* iOS Safari auto-zooms inputs below 16px — editable fields stay at --size-md */
+      body[data-portal-shell="direct"] #txRecipient,
+      body[data-portal-shell="direct"] #txAmount,
+      body[data-portal-shell="direct"] #txPurposeTag,
+      body[data-portal-shell="direct"] #txReference,
+      body[data-portal-shell="direct"] #txMemo {
+        font-size: var(--text-16);  /* 16px — iOS zoom floor */
       }
       body[data-portal-shell="direct"] .portal-footer {
         margin-bottom: calc(76px + var(--portal-safe-bottom));
@@ -871,8 +891,8 @@
         background: transparent;
         color: var(--ix-text-muted);
         font-family: var(--font-sans);
-        font-size: 11px;
-        font-weight: 600;
+        font-size: var(--text-11);
+        font-weight: 500;
         cursor: pointer;
       }
       .portal-mobile-nav-button svg { width: 18px; height: 18px; }

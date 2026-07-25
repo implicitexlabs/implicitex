@@ -23,6 +23,14 @@
      --size-hero   clamp  hero display only
      8px, 9px, 10px are eliminated — too small to read on mobile
 
+   Portal six-step scale (--text-*):
+     --text-11     11px   metadata, eyebrow labels, compact technical labels
+     --text-12     12px   navigation, status text, footer group labels
+     --text-13     13px   field labels, supporting UI labels, secondary copy
+     --text-14     14px   body copy, input values, standard controls
+     --text-16     16px   strong values, account state, compact headings
+     --text-22     22px   primary task title
+
    Spacing:
      --sp-* tokens for all layout spacing (padding, margins, gaps).
      1px borders and hairline visual details may remain raw px.
@@ -99,6 +107,17 @@
   --size-lg:   1.125rem;                    /* 18px — prose body / lead copy            */
   --size-xl:   clamp(1.25rem, 2vw, 1.75rem); /* 20–28px — section headings             */
   --size-hero: clamp(1.75rem, 4vw, 2.75rem); /* 28–44px — hero display only            */
+
+  /* ---- Six-step portal UI scale ---- */
+  /* Maps to the governed portal typography scale. All portal selectors
+     should reference these tokens; raw px values in portal rules are a
+     migration debt marker. */
+  --text-11: 0.6875rem;   /* 11px — metadata, eyebrow labels, compact technical labels */
+  --text-12: 0.75rem;     /* 12px — navigation, status text, footer group labels       */
+  --text-13: 0.8125rem;   /* 13px — field labels, supporting UI labels, secondary copy */
+  --text-14: 0.875rem;    /* 14px — body copy, input values, standard controls         */
+  --text-16: 1rem;        /* 16px — strong values, account state, compact headings     */
+  --text-22: 1.375rem;    /* 22px — primary task title                                 */
 
   /* ---- Line heights ---- */
   --leading-tight: 1.15;
@@ -359,7 +378,7 @@ code, kbd, pre,
   gap: var(--sp-2);
   min-height: 36px;
   font-family: var(--font-ui);
-  font-size: var(--size-sm);
+  font-size: var(--text-12);
   font-weight: var(--weight-semibold);
   letter-spacing: 0.04em;
   color: var(--white);
@@ -398,16 +417,16 @@ code, kbd, pre,
 /* Wallet address in nav trigger — technical data, stays mono */
 .wallet-addr {
   font-family: var(--font-mono);
-  font-size: var(--size-xs);
+  font-size: var(--text-11);
   color: var(--white);
 }
 
 .wallet-account-label {
   color: var(--dim);
   font-family: var(--font-ui);
-  font-size: var(--size-xs);
+  font-size: var(--text-11);
   font-weight: var(--weight-semibold);
-  letter-spacing: 0.1em;
+  letter-spacing: 0.06em;
   line-height: 1;
   text-transform: uppercase;
   white-space: nowrap;
@@ -449,9 +468,9 @@ code, kbd, pre,
 
 .wallet-menu-title {
   font-family: var(--font-ui);
-  font-size: var(--size-sm);
+  font-size: var(--text-11);
   font-weight: var(--weight-semibold);
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--muted);
   margin-bottom: var(--sp-2);
@@ -460,7 +479,7 @@ code, kbd, pre,
 /* Full wallet address in menu — technical data, stays mono */
 .wallet-menu-address {
   font-family: var(--font-mono);
-  font-size: var(--size-xs);
+  font-size: var(--text-11);
   line-height: var(--leading-ui);
   color: var(--white);
   overflow-wrap: anywhere;
@@ -471,9 +490,9 @@ code, kbd, pre,
   display: block;
   width: 100%;
   font-family: var(--font-ui);
-  font-size: var(--size-sm);
+  font-size: var(--text-12);
   font-weight: var(--weight-semibold);
-  letter-spacing: 0.06em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--white);
   text-align: left;
@@ -503,9 +522,9 @@ code, kbd, pre,
 /* Operational state badge — keeps mono as a state/system signal */
 .nav-status {
   font-family: var(--font-mono);
-  font-size: var(--size-xs);
+  font-size: var(--text-11);
   font-weight: var(--weight-semibold);
-  letter-spacing: 0.12em;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
   color: var(--white);
   border: 1px solid var(--border);
@@ -1197,7 +1216,7 @@ body.portal-active #nav {
 /* × glyph — larger and bold to match triangle visual weight */
 .portal-tab-x {
   font-family: var(--font-ui);
-  font-size: 14px;
+  font-size: var(--text-14);
   font-weight: var(--weight-bold);
   color: inherit;
   line-height: 1;
@@ -1209,9 +1228,9 @@ body.portal-active #nav {
 .disconnect-btn,
 .switch-account-btn {
   font-family: var(--font-ui);
-  font-size: var(--size-sm);
+  font-size: var(--text-12);
   font-weight: var(--weight-semibold);
-  letter-spacing: 0.14em;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
   color: var(--dim);
   background: transparent;
@@ -1283,9 +1302,9 @@ body.portal-active #nav {
   background: var(--surface);
   color: var(--white);
   font-family: var(--font-ui);
-  font-size: var(--size-sm);
+  font-size: var(--text-12);
   font-weight: var(--weight-semibold);
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   line-height: 1.25;
   text-transform: uppercase;
   text-align: center;
@@ -1318,10 +1337,10 @@ body.portal-active #nav {
   border-bottom: 1px solid var(--border);
   color: var(--dim);
   font-family: var(--font-ui);
-  font-size: var(--size-xs);
+  font-size: var(--text-11);
   font-weight: var(--weight-semibold);
-  letter-spacing: 0.06em;
-  line-height: 1.5;
+  letter-spacing: 0.05em;
+  line-height: 1.4;
   text-transform: none;
 }
 
@@ -1543,7 +1562,7 @@ body.portal-active #nav {
 
 .portal-entry-preview-step {
   font-family: var(--font-mono);
-  font-size: var(--size-xs);
+  font-size: var(--text-11);
   font-weight: var(--weight-semibold);
   letter-spacing: 0.08em;
   color: var(--dim);
@@ -1655,7 +1674,7 @@ body.portal-active #nav {
   background: var(--surface-2);
   color: var(--white);
   font-family: var(--font-ui);
-  font-size: var(--size-sm);
+  font-size: var(--text-12);
   line-height: 1.55;
 }
 
@@ -1720,7 +1739,7 @@ body.portal-active #nav {
 
 [data-portal-shell="direct"] .portal-connect-inline {
   font-family: var(--font-sans);
-  font-size: var(--text-ui);
+  font-size: var(--text-13);
   font-weight: var(--weight-semibold);
   letter-spacing: normal;
   text-transform: none;
@@ -1735,7 +1754,7 @@ body.portal-active #nav {
 
 [data-portal-shell="direct"] .agent-guidance-note {
   font-family: var(--font-sans);
-  font-size: var(--text-ui);
+  font-size: var(--text-13);
   font-weight: var(--weight-medium);
   letter-spacing: normal;
   line-height: 1.5;
@@ -1743,30 +1762,30 @@ body.portal-active #nav {
 
 [data-portal-shell="direct"] .portal-footer-label {
   font-family: var(--font-sans);
-  font-size: var(--text-caption);
+  font-size: var(--text-11);
   font-weight: var(--weight-semibold);
-  letter-spacing: var(--tracking-label);
+  letter-spacing: 0.09em;
   text-transform: uppercase;
 }
 
 [data-portal-shell="direct"] .portal-footer-group a {
   font-family: var(--font-sans);
-  font-size: var(--text-ui);
+  font-size: var(--text-12);
   font-weight: 500;
   letter-spacing: 0.01em;
 }
 
 [data-portal-shell="direct"] .portal-footer-more > summary {
   font-family: var(--font-sans);
-  font-size: var(--text-ui);
+  font-size: var(--text-12);
   font-weight: var(--weight-semibold);
-  letter-spacing: var(--tracking-label);
+  letter-spacing: 0.07em;
   text-transform: uppercase;
 }
 
 [data-portal-shell="direct"] .portal-footer-install-note {
   font-family: var(--font-sans);
-  font-size: var(--text-caption);
+  font-size: var(--text-11);
   line-height: 1.45;
   color: var(--dim);
 }
@@ -1785,9 +1804,9 @@ body.portal-active #nav {
 
 .install-page-browser {
   font-family: var(--font-sans);
-  font-size: var(--text-caption);
+  font-size: var(--text-11);
   font-weight: var(--weight-semibold);
-  letter-spacing: var(--tracking-label);
+  letter-spacing: 0.07em;
   text-transform: uppercase;
   color: var(--dim);
   margin-bottom: var(--sp-2);
@@ -1882,15 +1901,15 @@ body.portal-active #nav {
 }
 
 .portal-minimized-label {
-  font-size: var(--size-sm);
+  font-size: var(--text-12);
   font-weight: var(--weight-semibold);
-  letter-spacing: 0.16em;
+  letter-spacing: 0.10em;
 }
 
 .portal-minimized-status {
   flex: 1;
-  font-size: var(--size-xs);
-  letter-spacing: 0.12em;
+  font-size: var(--text-11);
+  letter-spacing: 0.08em;
   color: var(--white);
   text-align: right;
 }
@@ -1919,9 +1938,9 @@ body.portal-active #nav {
 
 .portal-header-title {
   font-family: var(--font-display);
-  font-size: var(--size-base);
+  font-size: var(--text-14);
   font-weight: var(--weight-semibold);
-  letter-spacing: 0.22em;
+  letter-spacing: 0.14em;
   line-height: 1;
   text-transform: uppercase;
   color: var(--white);
@@ -1931,7 +1950,7 @@ body.portal-active #nav {
 .portal-header-sub {
   grid-column: 1 / -1;
   font-family: var(--font-sans);
-  font-size: var(--text-ui);
+  font-size: var(--text-12);
   letter-spacing: 0.01em;
   text-transform: none;
   color: var(--dim);
@@ -2051,7 +2070,7 @@ body.portal-active #nav {
   align-items: center;
   gap: 0.75rem;
   font-family: var(--font-sans);
-  font-size: var(--text-ui);
+  font-size: var(--text-13);
   line-height: 1.45;
   color: var(--white);
 }
@@ -2067,7 +2086,7 @@ body.portal-active #nav {
   margin-left: auto;
   color: var(--dim);
   font-family: var(--font-sans);
-  font-size: var(--text-caption);
+  font-size: var(--text-11);
   line-height: 1.3;
   flex-shrink: 0;
 }
@@ -2076,7 +2095,7 @@ body.portal-active #nav {
   margin-top: 0.5rem;
   color: var(--dim);
   font-family: var(--font-sans);
-  font-size: var(--text-ui);
+  font-size: var(--text-12);
   line-height: 1.45;
 }
 
@@ -2084,7 +2103,7 @@ body.portal-active #nav {
   margin-top: 0.4rem;
   color: var(--dim);
   font-family: var(--font-sans);
-  font-size: var(--text-caption);
+  font-size: var(--text-11);
   line-height: 1.35;
 }
 
@@ -2335,9 +2354,9 @@ body.portal-active #nav {
 .mod-tag {
   display: block;
   font-family: var(--font-ui);
-  font-size: var(--text-caption);
+  font-size: var(--text-11);
   font-weight: var(--weight-semibold);
-  letter-spacing: var(--tracking-label);
+  letter-spacing: 0.07em;
   text-transform: uppercase;
   color: var(--dim);
   margin-bottom: var(--sp-4);
@@ -2345,7 +2364,7 @@ body.portal-active #nav {
 
 .mod-title {
   font-family: var(--font-sans);
-  font-size: var(--text-heading-sm);
+  font-size: var(--text-22);
   font-weight: var(--weight-semibold);
   letter-spacing: -0.01em;
   line-height: 1.2;
@@ -2365,8 +2384,8 @@ body.portal-active #nav {
 
 .tx-field-label {
   font-family: var(--font-sans);
-  font-size: 13px;
-  font-weight: var(--weight-semibold);
+  font-size: var(--text-13);
+  font-weight: var(--weight-medium);
   line-height: 1.35;
   color: var(--white);
   letter-spacing: normal;
@@ -2377,7 +2396,7 @@ body.portal-active #nav {
   border: 1px solid var(--border-2);
   color: var(--white);
   font-family: var(--font-mono);  /* user-typed addresses and amounts — mono */
-  font-size: 15px;
+  font-size: var(--size-base);
   line-height: 1.2;
   min-height: 44px;
   padding: 11px 12px;
@@ -2420,7 +2439,7 @@ body.portal-active #nav {
   appearance: none;
   color: var(--dim);
   font-family: var(--font-sans);
-  font-size: 14px;
+  font-size: var(--text-14);
   font-weight: var(--weight-medium);
   /* Force OS popup to render in dark mode — prevents browser-default blue highlight,
      which carries no meaning in ImplicitEx's signal vocabulary (gray/amber/red). */
@@ -2460,7 +2479,7 @@ body.portal-active #nav {
 
 .tx-recipient-error {
   font-family: var(--font-sans);
-  font-size: 13px;
+  font-size: var(--text-13);
   line-height: 1.45;
   letter-spacing: normal;
   color: var(--warn);
@@ -2480,15 +2499,15 @@ body.portal-active #nav {
 
 .fee-label {
   font-family: var(--font-sans);   /* label — not a value */
-  font-size: 13px;
-  font-weight: var(--weight-semibold);
+  font-size: var(--text-13);
+  font-weight: var(--weight-medium);
   letter-spacing: normal;
   color: var(--white);
 }
 
 .fee-val {
   font-family: var(--font-mono);  /* numeric fee amount — stays mono */
-  font-size: 15px;
+  font-size: var(--size-base);
   font-weight: var(--weight-medium);
   color: var(--white);
 }
@@ -2503,7 +2522,7 @@ body.portal-active #nav {
   color: var(--dim);
   cursor: pointer;
   font-family: var(--font-sans);
-  font-size: 14px;
+  font-size: var(--text-13);
   font-weight: var(--weight-medium);
   line-height: 1.35;
   letter-spacing: normal;
@@ -2525,7 +2544,7 @@ body.portal-active #nav {
 
 #transferMod .data-k {
   font-family: var(--font-sans);
-  font-size: 13px;
+  font-size: var(--text-13);
   font-weight: var(--weight-semibold);
   letter-spacing: normal;
   text-transform: none;
@@ -2534,7 +2553,7 @@ body.portal-active #nav {
 
 #transferMod .data-v {
   font-family: var(--font-mono);
-  font-size: 15px;
+  font-size: var(--size-base);
   font-weight: var(--weight-medium);
   letter-spacing: normal;
   color: var(--white);
@@ -2542,7 +2561,7 @@ body.portal-active #nav {
 
 .tx-btn {
   font-family: var(--font-ui);
-  font-size: 14px;
+  font-size: var(--text-14);
   font-weight: var(--weight-semibold);
   letter-spacing: normal;
   text-transform: none;
@@ -2615,7 +2634,7 @@ body.portal-active #nav {
 
 .tx-state-note {
   font-family: var(--font-sans);
-  font-size: 13px;
+  font-size: var(--text-13);
   color: var(--dim);
   margin-top: 8px;
   text-align: center;
@@ -2623,7 +2642,7 @@ body.portal-active #nav {
 
 .tx-status {
   font-family: var(--font-sans);
-  font-size: 13px;
+  font-size: var(--text-13);
   color: var(--white);
   min-height: 1.4em;
   margin-top: 8px;
@@ -2679,8 +2698,8 @@ body.portal-active #nav {
 
 .tx-preview-label {
   font-family: var(--font-sans);
-  font-size: 13px;
-  font-weight: var(--weight-semibold);
+  font-size: var(--text-13);
+  font-weight: var(--weight-medium);
   letter-spacing: normal;
   text-transform: none;
   color: var(--dim);
@@ -2691,7 +2710,7 @@ body.portal-active #nav {
 
 .tx-preview-note {
   font-family: var(--font-sans);
-  font-size: 13px;
+  font-size: var(--text-13);
   letter-spacing: normal;
   color: var(--white);
   text-align: center;
@@ -2754,7 +2773,7 @@ body.portal-active #nav {
   margin-bottom: 10px;
   padding-top: 12px;
   font-family: var(--font-sans);  /* confirmation text the user reads carefully — prose */
-  font-size: 14px;
+  font-size: var(--text-14);      /* 14px minimum — user must read and understand */
   line-height: var(--leading-body);
   color: var(--white);
 }
@@ -2782,8 +2801,8 @@ body.portal-active #nav {
 
 .intel-label {
   font-family: var(--font-sans);
-  font-size: 13px;
-  font-weight: var(--weight-semibold);
+  font-size: var(--text-13);
+  font-weight: var(--weight-medium);
   letter-spacing: normal;
   text-transform: none;
   color: var(--dim);
@@ -2893,8 +2912,8 @@ body.portal-active #nav {
   cursor: pointer;
   user-select: none;
   font-family: var(--font-ui);
-  font-size: var(--size-sm);
-  letter-spacing: 0.14em;
+  font-size: var(--text-12);
+  letter-spacing: 0.07em;
   text-transform: uppercase;
   color: var(--dim);
   margin-bottom: 0;
@@ -2931,7 +2950,7 @@ body.portal-active #nav {
 
 .fee-explanation-body {
   font-family: var(--font-body);  /* explanatory prose — not technical data */
-  font-size: var(--size-sm);
+  font-size: var(--size-base);    /* disclosure text users must understand — 14px not 12px */
   color: var(--white);
   line-height: var(--leading-body);
   margin-top: 6px;
@@ -2951,8 +2970,8 @@ body.portal-active #nav {
 
 .receipt-history-label {
   font-family: var(--font-ui);
-  font-size: var(--size-sm);
-  letter-spacing: 0.14em;
+  font-size: var(--text-11);
+  letter-spacing: 0.07em;
   text-transform: uppercase;
   color: var(--dim);
   margin-bottom: 8px;
@@ -2967,7 +2986,7 @@ body.portal-active #nav {
 .receipt-empty,
 .receipt-item {
   font-family: var(--font-mono);  /* receipt records — structured data */
-  font-size: var(--size-xs);
+  font-size: var(--text-11);
   line-height: var(--leading-ui);
   color: var(--dim);
 }
@@ -3005,9 +3024,9 @@ body.portal-active #nav {
 
 .receipt-id-row {
   font-family: var(--font-mono);
-  font-size: var(--size-xs);
+  font-size: var(--text-11);
   color: var(--dim);
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   margin-bottom: 4px;
 }
 
@@ -3107,28 +3126,28 @@ body.portal-active #nav {
 
 .gas-detail-k {
   font-family: var(--font-ui);   /* field label */
-  font-size: var(--size-sm);
-  font-weight: var(--weight-bold);
-  letter-spacing: 0.12em;
+  font-size: var(--text-12);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.07em;
   text-transform: uppercase;
   color: var(--dim);
 }
 
 .gas-detail-v {
   font-family: var(--font-mono);  /* gas price — technical numeric value */
-  font-size: var(--size-xs);
+  font-size: var(--text-11);
   color: var(--white);
 }
 
 .gas-detail-row--meta .gas-detail-k {
   font-family: var(--font-ui);
-  font-size: var(--size-sm);
+  font-size: var(--text-12);
   color: var(--dim);
 }
 
 .gas-detail-row--meta .gas-detail-v {
   font-family: var(--font-mono);
-  font-size: var(--size-xs);
+  font-size: var(--text-11);
   color: var(--dim);
 }
 
@@ -3213,16 +3232,16 @@ body.portal-active #nav {
 
 .data-k {
   font-family: var(--font-ui);   /* row label */
-  font-size: var(--size-sm);
-  font-weight: var(--weight-bold);
-  letter-spacing: 0.14em;
+  font-size: var(--text-12);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.07em;
   text-transform: uppercase;
   color: var(--dim);
 }
 
 .data-v {
   font-family: var(--font-mono);  /* row value — address, hash, or amount */
-  font-size: var(--size-xs);
+  font-size: var(--text-11);
   color: var(--white);
 }
 
@@ -3241,7 +3260,7 @@ body.portal-active #nav {
   font-family: var(--font-ui);
   font-size: var(--size-sm);
   font-weight: var(--weight-semibold);
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--dim);
   text-decoration: none;
@@ -3431,9 +3450,9 @@ footer {
 
 .f-group-label {
   font-family: var(--font-ui);
-  font-size: var(--size-sm);
+  font-size: var(--text-11);
   font-weight: var(--weight-semibold);
-  letter-spacing: 0.18em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--muted);
   margin-bottom: var(--sp-1);
@@ -3441,9 +3460,9 @@ footer {
 
 .f-links a {
   font-family: var(--font-ui);
-  font-size: var(--size-sm);
+  font-size: var(--text-12);
   font-weight: var(--weight-semibold);
-  letter-spacing: 0.14em;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
   color: var(--dim);
   text-decoration: none;
@@ -3477,9 +3496,9 @@ footer {
 
 .f-net {
   font-family: var(--font-mono);   /* operational state badge — stays mono */
-  font-size: var(--size-xs);
+  font-size: var(--text-11);
   font-weight: var(--weight-semibold);
-  letter-spacing: 0.14em;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
   color: var(--white);
   border: 1px solid var(--border);
@@ -3553,9 +3572,9 @@ footer {
 
 .mobile-menu-title {
   font-family: var(--font-ui);
-  font-size: var(--size-sm);
+  font-size: var(--text-12);
   font-weight: var(--weight-semibold);
-  letter-spacing: 0.14em;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
   color: var(--white);
 }
@@ -3581,9 +3600,9 @@ footer {
 
 .mobile-menu-label {
   font-family: var(--font-ui);
-  font-size: var(--size-sm);
+  font-size: var(--text-11);
   font-weight: var(--weight-semibold);
-  letter-spacing: 0.18em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--dim);
   margin-bottom: var(--sp-3);
@@ -3593,8 +3612,8 @@ footer {
 .mobile-menu-sender,
 .mobile-menu-network {
   font-family: var(--font-mono);  /* wallet address / system state — technical data */
-  font-size: var(--size-xs);
-  letter-spacing: 0.08em;
+  font-size: var(--text-11);
+  letter-spacing: 0.06em;
   color: var(--white);
   margin-bottom: var(--sp-1);
   line-height: var(--leading-ui);
@@ -3610,9 +3629,9 @@ footer {
 
 .mobile-menu-btn {
   font-family: var(--font-ui);
-  font-size: var(--size-sm);
+  font-size: var(--text-12);
   font-weight: var(--weight-semibold);
-  letter-spacing: 0.12em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   background: transparent;
   border: 1px solid var(--border);
@@ -3644,7 +3663,7 @@ footer {
 
 .mobile-menu-portal-note {
   font-family: var(--font-ui);
-  font-size: var(--size-sm);
+  font-size: var(--text-12);
   color: var(--dim);
   letter-spacing: 0.02em;
   margin-top: var(--sp-2);
@@ -3660,9 +3679,9 @@ footer {
 .mobile-menu-links a:link,
 .mobile-menu-links a:visited {
   font-family: var(--font-ui);
-  font-size: var(--size-sm);
+  font-size: var(--text-12);
   font-weight: var(--weight-semibold);
-  letter-spacing: 0.14em;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
   color: var(--white);
   text-decoration: none;
@@ -3710,9 +3729,9 @@ footer {
 
 .wallet-choice-title {
   font-family: var(--font-ui);
-  font-size: var(--size-sm);
+  font-size: var(--text-12);
   font-weight: var(--weight-semibold);
-  letter-spacing: 0.14em;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
   color: var(--white);
 }
@@ -3738,9 +3757,9 @@ footer {
 
 .wallet-choice-btn {
   font-family: var(--font-ui);
-  font-size: var(--size-sm);
+  font-size: var(--text-12);
   font-weight: var(--weight-semibold);
-  letter-spacing: 0.12em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   background: transparent;
   border: 1px solid var(--border);
@@ -3768,7 +3787,7 @@ footer {
 
 .wallet-choice-note {
   font-family: var(--font-ui);
-  font-size: var(--size-sm);
+  font-size: var(--text-12);
   color: var(--muted);
   text-align: center;
   margin: 0;
@@ -4179,7 +4198,7 @@ h1 + .gs-section-head {
 
 .log-table thead th {
   font-family: var(--font-ui);
-  font-size: 11px;
+  font-size: var(--text-11);
   font-weight: var(--weight-semibold);
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -4210,7 +4229,7 @@ h1 + .gs-section-head {
 
 .log-date {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--text-11);
   color: var(--muted);
   white-space: nowrap;
   padding-top: calc(var(--sp-4) + 2px) !important; /* align with change title */
@@ -4235,7 +4254,7 @@ h1 + .gs-section-head {
 
 .log-status {
   font-family: var(--font-ui);
-  font-size: 11px;
+  font-size: var(--text-11);
   font-weight: var(--weight-semibold);
   letter-spacing: 0.1em;
   text-transform: uppercase;

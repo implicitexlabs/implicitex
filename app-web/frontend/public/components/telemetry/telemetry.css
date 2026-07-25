@@ -83,9 +83,9 @@
 /* ---- Label ---- */
 .telemetry-label {
   font-family: var(--font-ui);        /* panel title label — not data */
-  font-size: var(--size-sm);
-  font-weight: var(--weight-bold);
-  letter-spacing: 0.18em;
+  font-size: var(--text-11);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--muted);
   flex-shrink: 0;
@@ -94,9 +94,9 @@
 /* ---- Summary — one-line human-readable state description ---- */
 .telemetry-summary {
   font-family: var(--font-ui);        /* "Nominal", "Elevated" — human-readable, not data */
-  font-size: var(--size-sm);
+  font-size: var(--text-12);
   font-weight: var(--weight-medium);
-  letter-spacing: 0.06em;
+  letter-spacing: 0.02em;
   color: var(--dim);
   flex: 1;
   white-space: nowrap;
@@ -150,9 +150,9 @@
 
 .telemetry-section-label {
   font-family: var(--font-ui);        /* "Status", "Details" — section heading, not data */
-  font-size: var(--size-sm);          /* was 8px — worst size violation in the file */
-  font-weight: var(--weight-bold);
-  letter-spacing: 0.22em;
+  font-size: var(--text-11);          /* --text-11: 11px — compact section label */
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.09em;
   text-transform: uppercase;
   color: var(--muted);
   margin-bottom: 0.35rem;
@@ -173,9 +173,9 @@
 
 .telemetry-k {
   font-family: var(--font-ui);        /* row key label — not a technical value */
-  font-size: var(--size-sm);
-  font-weight: var(--weight-bold);
-  letter-spacing: 0.14em;
+  font-size: var(--text-11);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.07em;
   text-transform: uppercase;
   color: var(--muted);
   flex-shrink: 0;
@@ -183,7 +183,7 @@
 
 .telemetry-v {
   font-family: var(--font-mono);      /* row values: gas, addresses, hashes, contract IDs — stays mono */
-  font-size: var(--size-xs);          /* was 10px; --size-xs is 11px — meets the floor */
+  font-size: var(--text-11);          /* 11px — IBM Plex Mono at this size is legible; same nominal as key */
   color: var(--dim);
   text-align: right;
   padding-left: 1rem;
@@ -200,7 +200,7 @@
 .telemetry-v a:link,
 .telemetry-v a:visited {
   font-family: var(--font-mono);
-  font-size: var(--size-xs);
+  font-size: var(--text-11);
   color: var(--dim);
   text-decoration: none;
   transition: color 0.12s;
