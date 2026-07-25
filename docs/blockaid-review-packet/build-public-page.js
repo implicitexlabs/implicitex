@@ -191,7 +191,7 @@ const output = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>ImplicitEx — Architecture and Security Overview</title>
   <meta name="description" content="Technical documentation for the ImplicitEx non-custodial USDC transfer protocol on Polygon. Covers smart contract behavior, fee structure, trust boundaries, and the full transaction lifecycle.">
   <link rel="canonical" href="https://implicitex.com/architecture-and-security.html">
