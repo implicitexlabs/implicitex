@@ -193,7 +193,7 @@ async function openCommittedCard(page, options = {}) {
   await installProviderFirewall(page, options);
   await page.goto(`${serverUrl}/card/${CARD_ID}`, { waitUntil: 'networkidle0', timeout: 30000 });
   await page.waitForSelector('#ccFrame[data-state="VERIFIED"]', { timeout: 15000 });
-  await page.waitForFunction(() => document.getElementById('ccStatusLabel')?.textContent === 'Verified');
+  await page.waitForFunction(() => document.getElementById('ccStatusLabel')?.textContent === 'Route Verified');
 }
 
 async function enterAmount(page, value) {

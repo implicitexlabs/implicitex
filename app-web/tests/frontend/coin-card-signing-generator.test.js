@@ -1,6 +1,8 @@
 const assert = require('node:assert/strict');
 const { spawnSync } = require('node:child_process');
+const { webcrypto } = require('node:crypto');
 const fs = require('node:fs');
+const os = require('node:os');
 const path = require('node:path');
 const test = require('node:test');
 
@@ -60,5 +62,45 @@ test('generated signing artifacts contain no private key material', () => {
     const source = fs.readFileSync(artifactPath, 'utf8');
     assert.doesNotMatch(source, /"d"\s*:/, artifactPath);
     assert.doesNotMatch(source, /MIGH|BEGIN PRIVATE|PRIVATE KEY/, artifactPath);
+  }
+});
+
+test('dry-run publication covers every active registry card without writing artifacts', async () => {
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'coin-card-signing-test-'));
+  const manifestKeyPath = path.join(tempRoot, 'manifest.pkcs8.b64');
+  const lifecycleKeyPath = path.join(tempRoot, 'lifecycle.pkcs8.b64');
+  const before = generatedArtifactPaths.map((artifactPath) => fs.readFileSync(artifactPath));
+
+  try {
+    for (const keyPath of [manifestKeyPath, lifecycleKeyPath]) {
+      const keyPair = await webcrypto.subtle.generateKey(
+        { name: 'ECDSA', namedCurve: 'P-256' },
+        true,
+        ['sign', 'verify'],
+      );
+      const pkcs8 = await webcrypto.subtle.exportKey('pkcs8', keyPair.privateKey);
+      fs.writeFileSync(keyPath, Buffer.from(pkcs8).toString('base64'), { mode: 0o600 });
+    }
+
+    const result = runGenerator([
+      '--dry-run',
+      '--build-version',
+      'coin-card-signing-test',
+      '--manifest-key-file',
+      manifestKeyPath,
+      '--lifecycle-key-file',
+      lifecycleKeyPath,
+    ]);
+    const output = result.stdout + result.stderr;
+
+    assert.equal(result.status, 0, output);
+    assert.match(output, /lifecycle records: 2/);
+    assert.match(output, /cardIds: antoine, cc_demo_implicitex/);
+    assert.doesNotMatch(output, /MIGH|BEGIN PRIVATE|PRIVATE KEY/);
+    generatedArtifactPaths.forEach((artifactPath, index) => {
+      assert.deepEqual(fs.readFileSync(artifactPath), before[index], artifactPath);
+    });
+  } finally {
+    fs.rmSync(tempRoot, { recursive: true, force: true });
   }
 });

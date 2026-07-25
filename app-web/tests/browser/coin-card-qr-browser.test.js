@@ -18,11 +18,7 @@
  *   (a) A test coin-card-trusted-keys.js that registers a test P-256 key.
  *   (b) A signed test manifest whose asset hashes match the real files,
  *       except card/coin-card-trusted-keys.js whose hash reflects (a).
- *   (c) Path remapping for asset verification fetches: the verifier calls
- *       fetch('card/coin-card-trusted-keys.js') from /card/qr-test, which
- *       the browser resolves to /card/card/coin-card-trusted-keys.js. The
- *       interceptor maps /card/{x} → public/{x} for all misresolved paths.
- *   (d) Test registry records for /registry/coincards/qr-test.json and
+ *   (c) Test registry records for /registry/coincards/qr-test.json and
  *       /registry/coincards/qr-revoked.json.
  */
 
@@ -63,6 +59,7 @@ const PROTECTED_ASSET_PATHS = [
   'card/coin-card-verification.js',
   'card/card.js',
   'card/card.css',
+  'card/index.html',
 ];
 
 function sha256Hex(buf) {
@@ -875,7 +872,7 @@ describe('Coin Card QR handoff — browser tests', async () => {
       page.on('request', (request) => {
         const urlPath = new URL(request.url()).pathname;
         /* Abort qrcode to trigger a controlled FAILED state. */
-        if (urlPath === '/js/vendor/qrcode.min.js') {
+        if (urlPath === '/js/vendor/qrcode.min.js' && request.resourceType() === 'script') {
           request.abort('failed');
           return;
         }
@@ -940,7 +937,7 @@ describe('Coin Card QR handoff — browser tests', async () => {
         const urlPath = new URL(request.url()).pathname;
 
         /* Block qrcode.min.js — simulate network failure. */
-        if (urlPath === '/js/vendor/qrcode.min.js') {
+        if (urlPath === '/js/vendor/qrcode.min.js' && request.resourceType() === 'script') {
           request.abort('failed');
           return;
         }
@@ -1176,7 +1173,7 @@ describe('Coin Card QR handoff — browser tests', async () => {
         const urlPath = new URL(request.url()).pathname;
 
         /* Serve altered bytes — SRI hash will not match. */
-        if (urlPath === '/js/vendor/qrcode.min.js') {
+        if (urlPath === '/js/vendor/qrcode.min.js' && request.resourceType() === 'script') {
           request.respond({
             status: 200,
             headers: {

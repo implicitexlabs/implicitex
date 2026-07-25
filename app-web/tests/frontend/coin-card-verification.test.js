@@ -31,6 +31,7 @@ const REQUIRED_ASSET_BODIES = {
   'card/coin-card-verification.js': 'coin-card-verification asset body',
   'card/card.js': 'card runtime asset body',
   'card/card.css': 'card stylesheet asset body',
+  'card/index.html': 'card document asset body',
 };
 
 function sha256Hex(value) {
@@ -196,8 +197,8 @@ async function signManifestWithKeyPair(verification, manifest, keyPair) {
 
 const expectedStateCopy = {
   VERIFIED: {
-    statusLabel: 'Verified',
-    primaryMessage: 'This Coin Card matches the issued ImplicitEx package.',
+    statusLabel: 'Route Verified',
+    primaryMessage: 'This Coin Card route matches the issued ImplicitEx package.',
     actionLabel: 'Continue',
   },
   ASSET_HASHES_PASSED: {
@@ -237,6 +238,7 @@ const requiredAssetPaths = [
   'card/coin-card-verification.js',
   'card/card.js',
   'card/card.css',
+  'card/index.html',
 ];
 
 function makeElement(id) {
@@ -1874,6 +1876,13 @@ test('js/vendor/qrcode.min.js is a required protected asset', () => {
   const paths = verification.getRequiredAssetPaths();
   assert.ok(paths.includes('js/vendor/qrcode.min.js'),
     'qrcode.min.js must be in REQUIRED_ASSET_PATHS');
+});
+
+test('card/index.html is a required protected asset', () => {
+  const verification = loadVerification();
+  const paths = verification.getRequiredAssetPaths();
+  assert.ok(paths.includes('card/index.html'),
+    'card/index.html must be in REQUIRED_ASSET_PATHS');
 });
 
 test('omitting qrcode.min.js from manifest becomes VERIFICATION_UNAVAILABLE', async () => {

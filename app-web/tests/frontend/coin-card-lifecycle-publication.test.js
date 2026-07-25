@@ -949,12 +949,9 @@ test('null promoted result → authorizeExecution refuses it', async () => {
 });
 
 /* ----------------------------------------------------------------
- * 23. Real production bundle file loads and promotes cc_demo_implicitex
- *
- * This test will FAIL until Commit 2 generates coin-card-lifecycle-bundle.js
- * and coin-card-trusted-keys.js. That is by design.
+ * 23. Real production bundle file loads and promotes every active card.
  * ---------------------------------------------------------------- */
-test('real production bundle file authenticates and promotes cc_demo_implicitex', async () => {
+test('real production bundle authenticates and promotes every active registry card', async () => {
   assert.ok(
     fs.existsSync(lifecycleBundlePath),
     `coin-card-lifecycle-bundle.js must exist at ${lifecycleBundlePath}`,
@@ -979,8 +976,8 @@ test('real production bundle file authenticates and promotes cc_demo_implicitex'
   context.window.btoa = nodeBtoa;
   context.window.crypto = webcrypto;
 
-  /* Use a fixed verification time that is definitely after the bundle's generatedAt */
-  const FixedDate = makeFixedDateClass(FIXED_NOW);
+  /* Use a fixed verification time after the Gate 0 package publication. */
+  const FixedDate = makeFixedDateClass('2026-07-26T00:00:00.000Z');
   context.Date = FixedDate;
   context.window.Date = FixedDate;
 
@@ -1014,21 +1011,36 @@ test('real production bundle file authenticates and promotes cc_demo_implicitex'
     `bundle verification failed: ${proof.outcome} reason=${proof.reason || ''}`);
   assert.equal(proof.authenticated, true);
 
-  const selected = selectorApi.selectLifecycleEvidence(proof, {
-    cardId: DEMO_CARD_ID,
-    manifestId: DEMO_MANIFEST_ID,
-  });
-  assert.equal(selected.outcome, 'LIFECYCLE_EVIDENCE_SELECTED',
-    `selection failed: ${selected.outcome} reason=${selected.reason || ''}`);
-  assert.equal(selected.selected, true);
+  const manifest = JSON.parse(fs.readFileSync(
+    path.join(repoRoot, 'app-web/frontend/public/card/coin-card-manifest.json'),
+    'utf8',
+  ));
+  const cardsRoot = path.join(repoRoot, 'app-web/frontend/public/registry/coincards');
+  const activeCardIds = fs.readdirSync(cardsRoot)
+    .filter((name) => name.endsWith('.json') && name !== 'index.json')
+    .map((name) => JSON.parse(fs.readFileSync(path.join(cardsRoot, name), 'utf8')))
+    .filter((card) => card.status === 'active')
+    .map((card) => card.cardId)
+    .sort();
+  assert.deepEqual(activeCardIds, ['antoine', 'cc_demo_implicitex']);
 
-  const resolved = resolutionApi.resolveLifecycle(selected);
-  assert.equal(resolved.outcome, 'LIFECYCLE_ACTIVE',
-    `resolution failed: ${resolved.outcome}`);
+  for (const cardId of activeCardIds) {
+    const selected = selectorApi.selectLifecycleEvidence(proof, {
+      cardId,
+      manifestId: manifest.manifestHash,
+    });
+    assert.equal(selected.outcome, 'LIFECYCLE_EVIDENCE_SELECTED',
+      `${cardId} selection failed: ${selected.outcome} reason=${selected.reason || ''}`);
+    assert.equal(selected.selected, true, cardId);
 
-  const promoted = presentationApi.promotePresentation(resolved);
-  assert.equal(promoted.outcome, 'PRESENTATION_PROMOTED',
-    `promotion failed: ${promoted.outcome}`);
-  assert.equal(promoted.presentationEligible, true);
-  assert.equal(presentationApi.isPromotedPresentationResult(promoted), true);
+    const resolved = resolutionApi.resolveLifecycle(selected);
+    assert.equal(resolved.outcome, 'LIFECYCLE_ACTIVE',
+      `${cardId} resolution failed: ${resolved.outcome}`);
+
+    const promoted = presentationApi.promotePresentation(resolved);
+    assert.equal(promoted.outcome, 'PRESENTATION_PROMOTED',
+      `${cardId} promotion failed: ${promoted.outcome}`);
+    assert.equal(promoted.presentationEligible, true, cardId);
+    assert.equal(presentationApi.isPromotedPresentationResult(promoted), true, cardId);
+  }
 });

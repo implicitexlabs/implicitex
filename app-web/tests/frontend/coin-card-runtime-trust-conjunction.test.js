@@ -19,6 +19,7 @@ const lifecycleSelectionPath = path.join(publicRoot, 'card/coin-card-lifecycle-r
 const lifecycleResolutionPath = path.join(publicRoot, 'card/coin-card-lifecycle-resolution.js');
 const lifecyclePresentationPath = path.join(publicRoot, 'card/coin-card-lifecycle-presentation.js');
 const authorizationPath = path.join(publicRoot, 'card/coin-card-execution-authorization.js');
+const registryCardsRoot = path.join(publicRoot, 'registry/coincards');
 
 const trustedKeysSource = fs.readFileSync(trustedKeysPath, 'utf8');
 const trustedKeyResolutionSource = fs.readFileSync(trustedKeyResolutionPath, 'utf8');
@@ -82,7 +83,7 @@ function makeFixedDateClass(isoString) {
 }
 
 function makeContext(options = {}) {
-  const FixedDate = makeFixedDateClass(options.now || '2026-07-16T00:00:00.000Z');
+  const FixedDate = makeFixedDateClass(options.now || '2026-07-26T00:00:00.000Z');
   const context = {
     Buffer,
     Date: FixedDate,
@@ -135,12 +136,12 @@ async function runVerification(context, manifest) {
   });
 }
 
-async function runLifecycle(context, manifestId, lifecycleBundle) {
+async function runLifecycle(context, manifestId, lifecycleBundle, cardId = CARD_ID) {
   const bundle = lifecycleBundle || context.window.IX_COIN_CARD_LIFECYCLE_REGISTRY_BUNDLE;
   const proof = await context.window.IX_COIN_CARD_LIFECYCLE_BUNDLE_VERIFICATION
     .authenticateLifecycleRegistryBundle(bundle);
   const selected = context.window.IX_COIN_CARD_LIFECYCLE_RECORD_SELECTION
-    .selectLifecycleEvidence(proof, { cardId: CARD_ID, manifestId });
+    .selectLifecycleEvidence(proof, { cardId, manifestId });
   const resolved = context.window.IX_COIN_CARD_LIFECYCLE_RESOLUTION.resolveLifecycle(selected);
   const promoted = context.window.IX_COIN_CARD_LIFECYCLE_PRESENTATION.promotePresentation(resolved);
   return { proof, selected, resolved, promoted };
@@ -210,7 +211,7 @@ function mutateLifecycleBundle(context, mutateRecord) {
   return deepFreeze(bundle);
 }
 
-test('actual committed manifest verifies, lifecycle promotes, and authorization reaches EXECUTION_AUTHORIZED', async () => {
+test('actual committed manifest verifies and every active registry card lifecycle promotes', async () => {
   const context = makeContext();
   const manifest = readManifest();
   const verification = await runVerification(context, manifest);
@@ -218,11 +219,22 @@ test('actual committed manifest verifies, lifecycle promotes, and authorization 
   assert.equal(verification.signatureMode, 'signed-p256-v1');
   assert.equal(verification.keyId, 'ix-coin-card-manifest-v1');
 
-  const lifecycle = await runLifecycle(context, manifest.manifestHash);
-  assert.equal(lifecycle.proof.authenticated, true);
-  assert.equal(lifecycle.resolved.outcome, 'LIFECYCLE_ACTIVE');
-  assert.equal(lifecycle.promoted.outcome, 'PRESENTATION_PROMOTED');
+  const activeCardIds = fs.readdirSync(registryCardsRoot)
+    .filter((name) => name.endsWith('.json') && name !== 'index.json')
+    .map((name) => JSON.parse(fs.readFileSync(path.join(registryCardsRoot, name), 'utf8')))
+    .filter((card) => card.status === 'active')
+    .map((card) => card.cardId)
+    .sort();
+  assert.deepEqual(activeCardIds, ['antoine', 'cc_demo_implicitex']);
 
+  for (const cardId of activeCardIds) {
+    const lifecycle = await runLifecycle(context, manifest.manifestHash, null, cardId);
+    assert.equal(lifecycle.proof.authenticated, true, cardId);
+    assert.equal(lifecycle.resolved.outcome, 'LIFECYCLE_ACTIVE', cardId);
+    assert.equal(lifecycle.promoted.outcome, 'PRESENTATION_PROMOTED', cardId);
+  }
+
+  const lifecycle = await runLifecycle(context, manifest.manifestHash);
   const authorization = authorize(context, lifecycle.promoted, manifest.manifestHash);
   assert.equal(authorization.outcome, 'EXECUTION_AUTHORIZED');
 });
@@ -286,7 +298,8 @@ test('unsigned-dev manifest with ACTIVE lifecycle does not authorize', async () 
 test('invalid signature with ACTIVE lifecycle does not authorize', async () => {
   const context = makeContext();
   const manifest = readManifest();
-  manifest.signature.value = manifest.signature.value.replace(/.$/, manifest.signature.value.endsWith('A') ? 'B' : 'A');
+  manifest.signature.value = (manifest.signature.value.startsWith('A') ? 'B' : 'A')
+    + manifest.signature.value.slice(1);
 
   const verification = await runVerification(context, manifest);
   assert.equal(verification.state, 'INTEGRITY_FAILED');

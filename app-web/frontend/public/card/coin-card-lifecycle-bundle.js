@@ -2,11 +2,10 @@
  *
  * GENERATED FILE — do not edit by hand. Run scripts/generate_signed_coin_card_acceptance.js.
  *
- * GeneratedAt:      2026-07-15T21:36:43.556Z
- * RegistryVersion:  1
- * CardId:           cc_demo_implicitex
- * ManifestId:       sha256:a3308b11d516817c221d006c29ec139db1ae79e5e987247c1f2bee7fa0d89285
- * RecordId:         implicitex-production-r1-cc_demo_implicitex
+ * GeneratedAt:      2026-07-25T22:34:25.315Z
+ * RegistryVersion:  2
+ * ActiveCards:      antoine, cc_demo_implicitex
+ * ManifestId:       sha256:3c3354bc3112a89b4db6d18dbbd4fd0a1117eed537572d6e85052210a019afc3
  * Signer:           ix-lifecycle-pub-v1
  */
 
@@ -23,23 +22,23 @@
     "registrySchemaVersion": "coin-card-lifecycle-registry-bundle.v1",
     "registryId": "implicitex-production",
     "environment": "production",
-    "registryVersion": 1,
-    "generatedAt": "2026-07-15T21:36:43.556Z",
+    "registryVersion": 2,
+    "generatedAt": "2026-07-25T22:34:25.315Z",
     "entries": [
       {
         "registryId": "implicitex-production",
         "registrySchemaVersion": "coin-card-lifecycle-registry-record.v1",
         "environment": "production",
         "registryVersion": 1,
-        "recordId": "implicitex-production-r1-cc_demo_implicitex",
-        "publishedAt": "2026-07-15T21:36:43.556Z",
-        "cardId": "cc_demo_implicitex",
-        "manifestId": "sha256:a3308b11d516817c221d006c29ec139db1ae79e5e987247c1f2bee7fa0d89285",
+        "recordId": "implicitex-production-r1-antoine",
+        "publishedAt": "2026-07-25T22:34:25.315Z",
+        "cardId": "antoine",
+        "manifestId": "sha256:3c3354bc3112a89b4db6d18dbbd4fd0a1117eed537572d6e85052210a019afc3",
         "revision": 1,
         "previousManifestId": null,
         "cardStatus": "CARD_ACTIVE",
         "manifestStatus": "MANIFEST_CURRENT",
-        "effectiveFrom": "2026-07-15T21:36:43.556Z",
+        "effectiveFrom": "2026-07-25T22:34:25.315Z",
         "effectiveUntil": null,
         "supersededByManifestId": null,
         "reasonCode": null,
@@ -53,8 +52,39 @@
           "signatureValueEncoding": "base64url-unpadded",
           "keyId": "ix-lifecycle-pub-v1",
           "authorityId": "implicitex-registry",
-          "signedAt": "2026-07-15T21:36:43.556Z",
-          "value": "eXrYswppE8z00oKZbN9vyhB2j7if786_Yx9RaSSz55qdAEbeH1ZkvxfAskoK0Mda-UD_GWuRmr3u4qrseEMyuQ"
+          "signedAt": "2026-07-25T22:34:25.315Z",
+          "value": "insEnE19zDd1SKLoMDb0BWV7iuzU2zTEseMRa91CXkGmw4wJERVRfWOw_XwRq9iWRoxAE3lUYtHM6OQv1ADD-A"
+        }
+      },
+      {
+        "registryId": "implicitex-production",
+        "registrySchemaVersion": "coin-card-lifecycle-registry-record.v1",
+        "environment": "production",
+        "registryVersion": 2,
+        "recordId": "implicitex-production-r1-cc_demo_implicitex",
+        "publishedAt": "2026-07-25T22:34:25.315Z",
+        "cardId": "cc_demo_implicitex",
+        "manifestId": "sha256:3c3354bc3112a89b4db6d18dbbd4fd0a1117eed537572d6e85052210a019afc3",
+        "revision": 1,
+        "previousManifestId": null,
+        "cardStatus": "CARD_ACTIVE",
+        "manifestStatus": "MANIFEST_CURRENT",
+        "effectiveFrom": "2026-07-25T22:34:25.315Z",
+        "effectiveUntil": null,
+        "supersededByManifestId": null,
+        "reasonCode": null,
+        "authorityId": "implicitex-registry",
+        "administrationEvidenceHash": null,
+        "signature": {
+          "mode": "signed-p256-v1",
+          "algorithm": "ECDSA_P256_SHA256",
+          "signatureEncoding": "ieee-p1363",
+          "signatureLengthBytes": 64,
+          "signatureValueEncoding": "base64url-unpadded",
+          "keyId": "ix-lifecycle-pub-v1",
+          "authorityId": "implicitex-registry",
+          "signedAt": "2026-07-25T22:34:25.315Z",
+          "value": "EcWlM451lfirn60NiRTvwwFHTrP9JVJGhs_uQlow-WlXgS8EVhEvojybubzjEPPP0AdnKGBTZeIJ15KzTtYVzw"
         }
       }
     ]

@@ -145,6 +145,13 @@
   function el(id) { return document.getElementById(id); }
   function setText(id, text) { var e = el(id); if (e) e.textContent = text; }
 
+  function getRouteVerifiedStatusLabel() {
+    var copy = verification && typeof verification.getStateCopy === 'function'
+      ? verification.getStateCopy('VERIFIED')
+      : null;
+    return copy && copy.statusLabel || 'Route Verified';
+  }
+
   /* ----------------------------------------------------------------
    * PostMessage bridge
    * ---------------------------------------------------------------- */
@@ -538,7 +545,7 @@
     setText('ccAmountToken', token);
     setText('ccFeePctLabel', pctStr);
     setText('ccReviewFeePct', pctStr);
-    setStatus('verified', 'Verified');
+    setStatus('verified', getRouteVerifiedStatusLabel());
   }
 
   function renderRevoked(registryRecord) {
@@ -721,7 +728,7 @@
           state.activeProvider = null;
           transition('TRANSFER_INTENT_READY');
           setText('ccTxLabel', 'Send USDC');
-          setStatus('verified', 'Verified');
+          setStatus('verified', getRouteVerifiedStatusLabel());
           setChipState('cc-card-chip--ready', false, 'Connect wallet to send USDC');
           return;
         }
@@ -816,7 +823,7 @@
     if (!state.intent || !state.sender || !state.registryRecord) {
       transition('TRANSFER_INTENT_READY');
       setText('ccTxLabel', 'Send USDC');
-      setStatus('verified', 'Verified');
+      setStatus('verified', getRouteVerifiedStatusLabel());
       setChipState('cc-card-chip--ready', false, 'Connect wallet to send USDC');
       return;
     }
@@ -829,7 +836,7 @@
     setText('ccReviewTotal',   intent.total.toFixed(2) + ' ' + token);
     setText('ccReviewFeePct',  'Fee ' + (bps / 100).toFixed(1) + '%');
 
-    setStatus('verified', 'Verified');
+    setStatus('verified', getRouteVerifiedStatusLabel());
     transition('READY_TO_SEND');
     setChipState('cc-card-chip--ready', false, 'Confirm transfer in wallet');
     emit('CC_READY_TO_SEND', { sender: state.sender, intent: intent });
@@ -967,13 +974,13 @@
             if (result.status === 'wallet-rejected') {
               /* Proof is consumed — user must re-authorize on next attempt. */
               transition('READY_TO_SEND');
-              setStatus('verified', 'Verified');
+              setStatus('verified', getRouteVerifiedStatusLabel());
               setChipState('cc-card-chip--ready', false, 'Confirm transfer in wallet');
               return;
             }
             if (result.status === 'wallet-busy') {
               transition('READY_TO_SEND');
-              setStatus('verified', 'Verified');
+              setStatus('verified', getRouteVerifiedStatusLabel());
               setChipState('cc-card-chip--ready', false, 'Wallet busy — retry when ready');
               return;
             }
