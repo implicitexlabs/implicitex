@@ -142,7 +142,7 @@
   --sp-10: 4rem;      /* 64px */
 
   /* ---- Layout ---- */
-  --nav-h:             56px;
+  --nav-h:             64px;
   --ix-interface-max:  1280px;
   --ix-section-copy-max:  720px;
   --ix-section-title-max: 820px;
@@ -562,25 +562,31 @@ code, kbd, pre,
 .send-usdc-link,
 .send-usdc-link:link,
 .send-usdc-link:visited {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  padding: 0 16px;
   font-family: var(--font-ui);
-  font-size: var(--text-ui);
+  font-size: var(--text-12);
   font-weight: var(--weight-semibold);
-  letter-spacing: var(--tracking-button);
-  text-transform: none;
-  color: var(--bg);
-  background: var(--white);
-  border: 1px solid #e0e0e0;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  line-height: 1.25;
+  white-space: nowrap;
+  color: var(--white);
+  background: transparent;
+  border: 1px solid var(--accent);
   border-radius: 4px;
-  padding: var(--sp-2) var(--sp-3);
   text-decoration: none;
-  line-height: var(--leading-ui);
-  transition: background 0.12s, border-color 0.12s;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
 }
 
 .send-usdc-link:hover,
 .send-usdc-link:focus-visible {
-  background: var(--button-hover);
-  border-color: var(--button-hover);
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--bg);
 }
 
 .send-usdc-link:focus-visible {
@@ -895,6 +901,23 @@ body.portal-active #nav {
   display: inline-block;
   width: 1ch;
   text-align: center;
+}
+
+/* Loading and error states — single span replaces the tier grid */
+.gas-loading,
+.gas-unavail {
+  width: auto;
+  letter-spacing: 0.04em;
+}
+
+.gas-loading {
+  opacity: 0.45;
+  animation: gasPulse 1.8s ease-in-out infinite;
+}
+
+.gas-unavail {
+  opacity: 0.5;
+  font-size: 0.85em;
 }
 
 .gas-live {

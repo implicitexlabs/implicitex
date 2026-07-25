@@ -4535,7 +4535,12 @@
         renderGasDetail();
         renderGasChart();
       } catch (err) {
-        renderHeroGas({ standard: NaN, fast: NaN, rapid: NaN });
+        if (els.gasHeroVal) {
+          const errSpan = document.createElement('span');
+          errSpan.className = 'gas-tier-value gas-unavail';
+          errSpan.textContent = 'Unavail';
+          els.gasHeroVal.replaceChildren(errSpan);
+        }
         if (els.gweiDisplay)        els.gweiDisplay.textContent        = 'Unavailable';
         if (els.blockDisplay)       els.blockDisplay.textContent       = 'Pending';
         if (els.confirmTimeDisplay) els.confirmTimeDisplay.textContent = '—';

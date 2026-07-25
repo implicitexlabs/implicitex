@@ -370,6 +370,26 @@
       }
     }
 
+    /* ── Tablet wallet zone: cap width so Connect button stays proportional ──
+       Without this, flex: 1 1 260px expands the wallet control to fill the full
+       account bar width on iPad, making it look like a banner rather than a button. */
+    @media (min-width: 601px) and (max-width: 900px) {
+      [data-portal-shell="direct"] .portal-header-wallet {
+        flex: 0 1 360px;
+        max-width: 360px;
+      }
+    }
+
+    /* ── Touch tablets: suppress fullscreen — PWA is the right presentation mode ──
+       Browser fullscreen on iPad always shows an OS-owned exit control that
+       covers the portal header and blocks scrolling. Hide the button so users
+       are directed to install the PWA instead. Desktop pointer:fine retains it. */
+    @media (pointer: coarse) and (min-width: 601px) {
+      [data-portal-shell="direct"] #portalFullscreenAction {
+        display: none;
+      }
+    }
+
     /* ── Phone portrait (≤600px) and landscape (≤900px, h≤500px) ──
        Nav full width above account row; workspace controls always visible. */
     @media (max-width: 600px),
