@@ -142,6 +142,10 @@ async function collectHeaderFooter(page) {
   return page.evaluate(() => {
     const nav = document.getElementById('portalPrimaryNav');
     const buttons = nav ? Array.from(nav.querySelectorAll('.portal-primary-nav-button')) : [];
+    const mobileNav = document.getElementById('portalMobileNav');
+    const mobileButtons = mobileNav
+      ? Array.from(mobileNav.querySelectorAll('[data-mobile-destination]'))
+      : [];
     const active = buttons.find((button) => button.getAttribute('aria-current') === 'page');
     const wallet = document.getElementById('walletMenu');
     const walletTrigger = document.getElementById('walletMenuTrigger');
@@ -167,6 +171,7 @@ async function collectHeaderFooter(page) {
       .filter((rect) => rect.width > 0 && rect.height > 0);
     const navRect = nav ? nav.getBoundingClientRect() : null;
     const portal = document.querySelector('.transfer-portal');
+    const fields = Array.from(document.querySelectorAll('#txForm input, #txForm textarea, #txForm select'));
     const pseudoIsVisible = (style) => !!(
       style &&
       style.display !== 'none' &&
@@ -189,6 +194,16 @@ async function collectHeaderFooter(page) {
         navRects.every((rect) => rect.width > 0 && rect.height > 0) &&
         navRects.every((rect) => Math.abs(rect.top - navRects[0].top) < 2)
       ),
+      mobileNavVisible: !!(
+        mobileNav && getComputedStyle(mobileNav).display !== 'none' &&
+        mobileNav.getBoundingClientRect().width > 0 && mobileNav.getBoundingClientRect().height > 0
+      ),
+      mobileNavGrouped: !!(
+        mobileNav && mobileButtons.length === 3 &&
+        mobileButtons.every((button) => button.getBoundingClientRect().width > 0) &&
+        mobileButtons.every((button) => Math.abs(button.getBoundingClientRect().top - mobileButtons[0].getBoundingClientRect().top) < 2)
+      ),
+      mobileSettingsPresent: !!(mobileNav && mobileNav.querySelector('[data-mobile-settings]')),
       primaryNavButtonHeights: navRects.map((rect) => Math.round(rect.height)),
       primaryNavBorderWidths: buttons.map((button) => {
         const style = getComputedStyle(button);
@@ -213,6 +228,9 @@ async function collectHeaderFooter(page) {
         workspace && getComputedStyle(workspace).display !== 'none' &&
         workspace.getBoundingClientRect().width > 0
       ),
+      noHorizontalOverflow: document.documentElement.scrollWidth <= window.innerWidth + 1,
+      fieldHeights: fields.map((field) => Math.round(field.getBoundingClientRect().height)).filter(Boolean),
+      fieldRadii: fields.map((field) => getComputedStyle(field).borderRadius),
       activeHasUnderline: !!(
         active && activeStyle && (
           activeStyle.boxShadow.includes('inset') ||
@@ -528,18 +546,32 @@ test('portal modules are DOM descendants of #modules (containment regression gua
         `${viewport.name}: wallet control must expose the connected-wallet label`);
       assert.match(responsive.walletAddress, /^0xf614…0f1d$/i,
         `${viewport.name}: truncated connected wallet address must remain visible`);
-      assert.equal(responsive.primaryNavGrouped, true,
-        `${viewport.name}: primary navigation buttons must remain grouped`);
-      assert.equal(responsive.primaryNavCompact, true,
-        `${viewport.name}: primary navigation must remain content-width and compact`);
-      assert.ok(
-        responsive.primaryNavButtonHeights.every((height) => height === 38),
-        `${viewport.name}: every primary navigation button must be 38px high`
-      );
-      assert.ok(
-        responsive.primaryNavBorderWidths.every((widths) => widths.every((width) => width === '1px')),
-        `${viewport.name}: selected and unselected primary navigation buttons must retain a 1px outline`
-      );
+      const isMobileViewport = viewport.name === 'phone-portrait' || viewport.name === 'phone-landscape';
+      if (isMobileViewport) {
+        assert.equal(responsive.primaryNavGrouped, false,
+          `${viewport.name}: duplicate top destination navigation must be hidden`);
+        assert.equal(responsive.mobileNavVisible, true,
+          `${viewport.name}: mobile bottom navigation must be visible`);
+        assert.equal(responsive.mobileNavGrouped, true,
+          `${viewport.name}: mobile destination buttons must remain grouped`);
+        assert.equal(responsive.mobileSettingsPresent, true,
+          `${viewport.name}: mobile Settings access must be present`);
+      } else {
+        assert.equal(responsive.primaryNavGrouped, true,
+          `${viewport.name}: primary navigation buttons must remain grouped`);
+        assert.equal(responsive.primaryNavCompact, true,
+          `${viewport.name}: primary navigation must remain content-width and compact`);
+      }
+      if (!isMobileViewport) {
+        assert.ok(
+          responsive.primaryNavButtonHeights.every((height) => height === 38),
+          `${viewport.name}: every primary navigation button must be 38px high`
+        );
+        assert.ok(
+          responsive.primaryNavBorderWidths.every((widths) => widths.every((width) => width === '1px')),
+          `${viewport.name}: selected and unselected primary navigation buttons must retain a 1px outline`
+        );
+      }
       assert.equal(responsive.portalBracketSize, viewport.expectedBracketSize,
         `${viewport.name}: portal corner brackets must use the extended arm size`);
       assert.ok(
@@ -552,12 +584,18 @@ test('portal modules are DOM descendants of #modules (containment regression gua
       }
       assert.equal(responsive.workspaceLabelPresent, false,
         `${viewport.name}: WORKSPACE label must be absent`);
-      assert.equal(responsive.workspaceVisible, true,
-        `${viewport.name}: workspace controls must remain visible`);
+      assert.equal(responsive.workspaceVisible, !isMobileViewport,
+        `${viewport.name}: workspace controls should remain visible on larger viewports and move behind mobile Settings`);
       assert.equal(responsive.activeHasUnderline, false,
         `${viewport.name}: active navigation button must not have an underline indicator`);
       assert.equal(responsive.activeHasRaisedSurface, true,
         `${viewport.name}: active navigation button must use a raised surface`);
+      assert.equal(responsive.noHorizontalOverflow, true,
+        `${viewport.name}: portal must not introduce horizontal overflow`);
+      assert.ok(responsive.fieldHeights.every((height) => height >= 44),
+        `${viewport.name}: form controls must retain a 44px minimum height`);
+      assert.ok(new Set(responsive.fieldRadii).size <= 2,
+        `${viewport.name}: form controls must use a consistent corner radius`);
       assert.deepEqual(responsive.footerLabels, canonicalFooterLabels,
         `${viewport.name}: footer groups must remain canonical`);
       assert.equal(
@@ -574,7 +612,25 @@ test('portal modules are DOM descendants of #modules (containment regression gua
         path: path.join(responsiveScreenshotRoot, `${viewport.name}.png`),
         fullPage: true,
       });
+      if (isMobileViewport) {
+        await responsivePage.screenshot({
+          path: path.join(responsiveScreenshotRoot, `${viewport.name}-viewport.png`),
+          fullPage: false,
+        });
+      }
     }
+    await responsivePage.setViewport({ width: 390, height: 844 });
+    await responsivePage.evaluate(() => document.querySelector('[data-mobile-settings]')?.click());
+    const mobileSettingsState = await responsivePage.evaluate(() => ({
+      expanded: document.querySelector('[data-mobile-settings]')?.getAttribute('aria-expanded'),
+      workspaceOpen: document.getElementById('portalWorkspace')?.classList.contains('is-mobile-open'),
+    }));
+    assert.equal(mobileSettingsState.expanded, 'true', 'phone portrait: Settings must expose workspace preferences');
+    assert.equal(mobileSettingsState.workspaceOpen, true, 'phone portrait: Settings must open workspace preferences');
+    await responsivePage.screenshot({
+      path: path.join(responsiveScreenshotRoot, 'phone-settings-open-viewport.png'),
+      fullPage: false,
+    });
     await responsivePage.close();
     console.log(`Responsive screenshots: ${responsiveScreenshotRoot}/`);
 

@@ -300,7 +300,7 @@
       cursor: pointer;
       text-align: left;
     }
-    @media (max-width: 600px) {
+    @media (max-width: 600px), (max-width: 900px) and (max-height: 500px) {
       .portal-footer-row {
         padding-inline: 0.75rem;
       }
@@ -533,6 +533,360 @@
         animation-duration: 1ms;
         animation-delay: 0ms;
       }
+    }
+  </style>
+  <style id="portal-modern-interface">
+    /* Approved modern interface direction: clean structure, confident dark
+       surfaces, soft-tech controls, and restrained teal system signaling. */
+    body[data-portal-shell="direct"] {
+      --ix-page: #eef1f1;
+      --ix-shell: #ffffff;
+      --ix-surface: #ffffff;
+      --ix-surface-raised: #f7f9f9;
+      --ix-surface-muted: #e7ebeb;
+      --ix-text: #202629;
+      --ix-text-secondary: #5d686c;
+      --ix-text-muted: #899397;
+      --ix-border: #d3d9da;
+      --ix-border-strong: #b8c1c3;
+      --ix-graphite: #202629;
+      --ix-teal: #5f9892;
+      --ix-teal-soft: #dcebea;
+      --ix-teal-strong: #467b76;
+      --ix-radius-sm: 6px;
+      --ix-radius-md: 8px;
+      --ix-radius-lg: 12px;
+      --bg: var(--ix-page);
+      --surface: var(--ix-surface);
+      --surface-2: var(--ix-surface-raised);
+      --surface-3: var(--ix-surface-muted);
+      --white: var(--ix-text);
+      --dim: var(--ix-text-secondary);
+      --muted: var(--ix-text-muted);
+      --border: var(--ix-border);
+      --border-2: var(--ix-border-strong);
+      --accent: var(--ix-teal-strong);
+      --accent-dim: rgba(70, 123, 118, 0.78);
+      --accent-border: rgba(70, 123, 118, 0.34);
+      --control-focus: rgba(70, 123, 118, 0.42);
+      font-size: 14px;
+    }
+
+    [data-theme="dark"] body[data-portal-shell="direct"] {
+      --ix-page: #171c1e;
+      --ix-shell: #202629;
+      --ix-surface: #252c2f;
+      --ix-surface-raised: #2c3538;
+      --ix-surface-muted: #1e2527;
+      --ix-text: #f2f5f5;
+      --ix-text-secondary: #c4ccce;
+      --ix-text-muted: #899497;
+      --ix-border: #3b4649;
+      --ix-border-strong: #566266;
+      --ix-graphite: #202629;
+      --ix-teal: #6ca7a1;
+      --ix-teal-soft: #29413f;
+      --ix-teal-strong: #86bbb6;
+      --accent: var(--ix-teal);
+      --accent-dim: rgba(134, 187, 182, 0.84);
+      --accent-border: rgba(134, 187, 182, 0.38);
+      --control-focus: rgba(134, 187, 182, 0.44);
+    }
+
+    body[data-portal-shell="direct"] .portal-zone {
+      margin: 24px auto 0;
+      width: min(100% - 32px, var(--ix-interface-max));
+    }
+    body[data-portal-shell="direct"] .transfer-portal {
+      background: var(--ix-surface);
+      border: 1px solid var(--ix-border);
+      border-radius: var(--ix-radius-lg);
+      box-shadow: 0 12px 36px rgba(32, 38, 41, 0.08);
+      overflow: visible;
+    }
+    [data-theme="dark"] body[data-portal-shell="direct"] .transfer-portal {
+      box-shadow: 0 16px 44px rgba(0, 0, 0, 0.28);
+    }
+    body[data-portal-shell="direct"] .portal-header {
+      background: var(--ix-shell);
+      border-bottom-color: var(--ix-border);
+      padding: 16px 24px;
+      gap: 14px;
+    }
+    body[data-portal-shell="direct"] .portal-header-brand {
+      gap: 10px;
+    }
+    body[data-portal-shell="direct"] .portal-header-brand .brandmark {
+      width: 24px;
+      height: 24px;
+    }
+    body[data-portal-shell="direct"] .portal-header-brand .wordmark {
+      height: 14px;
+    }
+    body[data-portal-shell="direct"] .portal-header-title {
+      font-size: 11px;
+      letter-spacing: 0.16em;
+    }
+    body[data-portal-shell="direct"] .portal-primary-nav-button,
+    body[data-portal-shell="direct"] .portal-ctrl-btn,
+    body[data-portal-shell="direct"] .wallet-menu-trigger {
+      border-radius: var(--ix-radius-sm);
+    }
+    body[data-portal-shell="direct"] .portal-primary-nav-button {
+      background: transparent;
+      border-color: var(--ix-border);
+      color: var(--ix-text-secondary);
+      font-size: 12px;
+      letter-spacing: 0.07em;
+    }
+    body[data-portal-shell="direct"] .portal-primary-nav-button:hover,
+    body[data-portal-shell="direct"] .portal-primary-nav-button:focus-visible,
+    body[data-portal-shell="direct"] .portal-primary-nav-button[aria-current="page"] {
+      background: var(--ix-surface-raised);
+      border-color: var(--ix-teal);
+      color: var(--ix-text);
+    }
+    body[data-portal-shell="direct"] .wallet-menu-trigger {
+      border-color: var(--ix-border);
+      background: var(--ix-surface-raised);
+    }
+    body[data-portal-shell="direct"] .portal-ctrl-btn {
+      border-color: var(--ix-border);
+      background: transparent;
+    }
+    body[data-portal-shell="direct"] .portal-ctrl-btn:hover,
+    body[data-portal-shell="direct"] .portal-ctrl-btn:focus-visible {
+      border-color: var(--ix-teal);
+      color: var(--ix-teal-strong);
+      background: var(--ix-teal-soft);
+    }
+    body[data-portal-shell="direct"] .mod {
+      background: var(--ix-surface);
+      padding: 24px;
+    }
+    body[data-portal-shell="direct"] .mod-col {
+      gap: 16px;
+    }
+    body[data-portal-shell="direct"] .mod-tag,
+    body[data-portal-shell="direct"] .fee-explanation-label,
+    body[data-portal-shell="direct"] .receipt-history-label {
+      font-size: 11px;
+      letter-spacing: 0.11em;
+    }
+    body[data-portal-shell="direct"] .mod-title {
+      font-size: clamp(20px, 2vw, 24px);
+      margin-bottom: 20px;
+    }
+    body[data-portal-shell="direct"] .tx-field {
+      min-height: 46px;
+      border: 1px solid var(--ix-border);
+      border-radius: var(--ix-radius-sm);
+      background: var(--ix-surface-raised);
+      color: var(--ix-text);
+      font-family: var(--font-sans);
+      font-size: 14px;
+      padding: 11px 12px;
+    }
+    body[data-portal-shell="direct"] .tx-field:focus,
+    body[data-portal-shell="direct"] .tx-field--primary:focus {
+      border-color: var(--ix-teal);
+      box-shadow: 0 0 0 3px var(--control-focus);
+    }
+    body[data-portal-shell="direct"] .tx-amount-control {
+      position: relative;
+    }
+    body[data-portal-shell="direct"] .tx-amount-control .tx-field {
+      padding-right: 68px;
+    }
+    body[data-portal-shell="direct"] .tx-token-suffix {
+      position: absolute;
+      top: 1px;
+      right: 1px;
+      bottom: 1px;
+      display: inline-flex;
+      align-items: center;
+      padding: 0 12px;
+      border-left: 1px solid var(--ix-border);
+      border-radius: 0 var(--ix-radius-sm) var(--ix-radius-sm) 0;
+      color: var(--ix-text-secondary);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 600;
+      background: var(--ix-surface-muted);
+    }
+    body[data-portal-shell="direct"] #txRecipient,
+    body[data-portal-shell="direct"] #txAmount,
+    body[data-portal-shell="direct"] .fee-val,
+    body[data-portal-shell="direct"] #transferMod .data-v {
+      font-family: var(--font-mono);
+    }
+    body[data-portal-shell="direct"] .fee-row {
+      padding: 10px 0;
+      margin-bottom: 12px;
+      border-bottom-color: var(--ix-border);
+    }
+    body[data-portal-shell="direct"] .tx-btn {
+      width: 100%;
+      min-height: 48px;
+      margin: 20px 0 12px;
+      border: 1px solid var(--ix-graphite);
+      border-radius: var(--ix-radius-md);
+      background: var(--ix-graphite);
+      color: #ffffff;
+    }
+    [data-theme="dark"] body[data-portal-shell="direct"] .tx-btn {
+      background: var(--ix-text);
+      border-color: var(--ix-text);
+      color: var(--ix-graphite);
+    }
+    body[data-portal-shell="direct"] .tx-btn:hover,
+    body[data-portal-shell="direct"] .tx-btn:focus-visible {
+      background: var(--ix-teal-strong);
+      border-color: var(--ix-teal-strong);
+      color: #ffffff;
+    }
+    body[data-portal-shell="direct"] .tx-btn--cancel {
+      margin-top: 0;
+      background: transparent;
+      border-color: var(--ix-border-strong);
+      color: var(--ix-text-secondary);
+    }
+    body[data-portal-shell="direct"] .tx-btn--cancel:hover,
+    body[data-portal-shell="direct"] .tx-btn--cancel:focus-visible {
+      background: var(--ix-teal-soft);
+      border-color: var(--ix-teal);
+      color: var(--ix-teal-strong);
+    }
+    body[data-portal-shell="direct"] .fee-explanation {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top-color: var(--ix-border);
+    }
+    body[data-portal-shell="direct"] .portal-footer-row {
+      background: var(--ix-shell);
+      border-radius: var(--ix-radius-md);
+    }
+
+    /* Mobile is an application shell: destination navigation moves to a
+       persistent bottom dock, while Settings reveals the existing workspace
+       controls as a compact sheet. */
+    .portal-mobile-nav { display: none; }
+    @media (max-width: 600px), (max-width: 900px) and (max-height: 500px) {
+      body[data-portal-shell="direct"] .portal-zone {
+        width: 100%;
+        margin: 0;
+      }
+      body[data-portal-shell="direct"] .transfer-portal {
+        border-left: 0;
+        border-right: 0;
+        border-radius: 0;
+        box-shadow: none;
+      }
+      body[data-portal-shell="direct"] .portal-header {
+        padding: 12px 16px 14px;
+        gap: 12px;
+      }
+      body[data-portal-shell="direct"] .portal-header-identity {
+        padding-bottom: 0;
+      }
+      body[data-portal-shell="direct"] .portal-primary-nav {
+        display: none !important;
+      }
+      body[data-portal-shell="direct"] .portal-sticky-bar {
+        position: static;
+        flex: 0 0 auto;
+        border-bottom: 0;
+        background: transparent;
+      }
+      body[data-portal-shell="direct"] .portal-account-bar {
+        align-items: stretch;
+        flex-direction: column;
+        flex: 0 0 auto;
+        gap: 8px;
+      }
+      body[data-portal-shell="direct"] .portal-header-wallet {
+        flex: 0 0 auto;
+        width: 100%;
+      }
+      body[data-portal-shell="direct"] .portal-header-workspace {
+        display: none;
+      }
+      body[data-portal-shell="direct"] .portal-header-workspace.is-mobile-open {
+        display: block !important;
+        position: fixed;
+        z-index: 220;
+        left: 12px;
+        right: 12px;
+        bottom: calc(72px + var(--portal-safe-bottom));
+        padding: 12px;
+        border: 1px solid var(--ix-border);
+        border-radius: var(--ix-radius-lg);
+        background: var(--ix-shell);
+        box-shadow: 0 16px 44px rgba(0, 0, 0, 0.22);
+      }
+      body[data-portal-shell="direct"] .portal-header-workspace.is-mobile-open .portal-workspace-controls {
+        flex-wrap: wrap;
+        justify-content: flex-end;
+      }
+      body[data-portal-shell="direct"] .mod {
+        padding: 20px 16px;
+      }
+      body[data-portal-shell="direct"] #modules {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      body[data-portal-shell="direct"] .mod-title {
+        font-size: 20px;
+      }
+      body[data-portal-shell="direct"] .portal-footer {
+        margin-bottom: calc(76px + var(--portal-safe-bottom));
+      }
+      body[data-portal-shell="direct"] main.landing-main {
+        padding-bottom: calc(76px + var(--portal-safe-bottom));
+      }
+      .portal-mobile-nav {
+        position: fixed;
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        align-items: stretch;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 210;
+        min-height: 64px;
+        padding: 6px 8px calc(6px + var(--portal-safe-bottom));
+        border-top: 1px solid var(--ix-border);
+        background: color-mix(in srgb, var(--ix-shell) 94%, transparent);
+        backdrop-filter: blur(16px);
+      }
+      .portal-mobile-nav-button {
+        display: inline-flex;
+        min-width: 0;
+        min-height: 52px;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 3px;
+        border: 1px solid transparent;
+        border-radius: var(--ix-radius-sm);
+        background: transparent;
+        color: var(--ix-text-muted);
+        font-family: var(--font-sans);
+        font-size: 11px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .portal-mobile-nav-button svg { width: 18px; height: 18px; }
+      .portal-mobile-nav-button[aria-current="page"],
+      .portal-mobile-nav-button[aria-expanded="true"] {
+        background: var(--ix-teal-soft);
+        border-color: var(--ix-teal);
+        color: var(--ix-teal-strong);
+      }
+      .portal-mobile-nav-button:focus-visible {
+        outline: 3px solid var(--control-focus);
+        outline-offset: -2px;
+      }
+      .portal-mobile-nav-button[data-mobile-settings] { color: var(--ix-text-secondary); }
     }
   </style>
 </head>
@@ -791,16 +1145,19 @@
         </div>
         <div class="tx-field-group">
           <label class="tx-field-label" for="txAmount">Amount</label>
-          <input
-            class="tx-field tx-field--primary"
-            type="number"
-            id="txAmount"
-            placeholder="Enter amount in USDC"
-            inputmode="decimal"
-            min="1"
-            step="0.000001"
-            aria-label="Amount recipient gets in USDC"
-          >
+          <div class="tx-amount-control">
+            <input
+              class="tx-field tx-field--primary"
+              type="number"
+              id="txAmount"
+              placeholder="Enter amount in USDC"
+              inputmode="decimal"
+              min="1"
+              step="0.000001"
+              aria-label="Amount recipient gets in USDC"
+            >
+            <span class="tx-token-suffix" aria-hidden="true">USDC</span>
+          </div>
         </div>
         <div class="tx-meta-grid" aria-label="Transfer metadata">
           <div class="tx-field-group">
@@ -1234,6 +1591,27 @@
 
   </main>
 
+  <!-- Mobile application navigation. Destination buttons proxy the canonical
+       desktop coordinator; Settings opens the existing workspace controls. -->
+  <nav class="portal-mobile-nav" id="portalMobileNav" aria-label="Mobile portal navigation">
+    <button class="portal-mobile-nav-button" type="button" data-mobile-destination="TRANSFER" aria-current="page">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h14M13 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>Transfer</span>
+    </button>
+    <button class="portal-mobile-nav-button" type="button" data-mobile-destination="RECIPIENTS">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M3.5 19c.5-3 2.2-4.5 5.5-4.5s5 1.5 5.5 4.5M16 7.5a2.5 2.5 0 1 1 0 5M16 15c2.8.1 4.3 1.4 4.7 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <span>Recipients</span>
+    </button>
+    <button class="portal-mobile-nav-button" type="button" data-mobile-destination="ACTIVITY">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 7v5l3 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <span>Activity</span>
+    </button>
+    <button class="portal-mobile-nav-button" type="button" data-mobile-settings aria-expanded="false" aria-controls="portalWorkspace">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="12" r="3.5" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
+      <span>Settings</span>
+    </button>
+  </nav>
+
   <!-- Portal footer — standard links, always visible -->
   <footer class="portal-footer" id="portalFooter" aria-label="Portal information" data-portal-contextual-surface="SYSTEM">
     <div class="portal-footer-row">
@@ -1365,6 +1743,50 @@
         applyLayout(next);
       });
     }
+  }());
+  </script>
+
+  <!-- Mobile shell bridge: keep one canonical destination coordinator while
+       exposing a native-feeling bottom navigation and Settings sheet. -->
+  <script>
+  (function () {
+    var mobileNav = document.getElementById('portalMobileNav');
+    var workspace = document.getElementById('portalWorkspace');
+    var settingsButton = mobileNav && mobileNav.querySelector('[data-mobile-settings]');
+    var primaryNav = document.getElementById('portalPrimaryNav');
+
+    if (!mobileNav || !primaryNav) return;
+
+    function syncDestination() {
+      var active = primaryNav.querySelector('[aria-current="page"]');
+      var destination = active && active.getAttribute('data-portal-navigation-destination');
+      mobileNav.querySelectorAll('[data-mobile-destination]').forEach(function (button) {
+        var selected = button.getAttribute('data-mobile-destination') === destination;
+        if (selected) button.setAttribute('aria-current', 'page');
+        else button.removeAttribute('aria-current');
+      });
+    }
+
+    mobileNav.querySelectorAll('[data-mobile-destination]').forEach(function (button) {
+      button.addEventListener('click', function () {
+        var destination = button.getAttribute('data-mobile-destination');
+        var target = primaryNav.querySelector('[data-portal-navigation-destination="' + destination + '"]');
+        if (target) target.click();
+        window.setTimeout(syncDestination, 0);
+      });
+    });
+
+    if (settingsButton && workspace) {
+      settingsButton.addEventListener('click', function () {
+        var open = workspace.classList.toggle('is-mobile-open');
+        settingsButton.setAttribute('aria-expanded', String(open));
+        if (open) settingsButton.focus();
+      });
+    }
+
+    var observer = new MutationObserver(syncDestination);
+    observer.observe(primaryNav, { attributes: true, subtree: true, attributeFilter: ['aria-current'] });
+    syncDestination();
   }());
   </script>
 
