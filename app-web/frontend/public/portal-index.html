@@ -832,6 +832,14 @@
     }
 
     /* ── B. Disconnected wallet button — teal-bordered, content-width ── */
+    /* Ensure [hidden] attribute is respected even when portal-context display rules are active */
+    body[data-portal-shell="direct"] #connectBtn[hidden],
+    body[data-portal-shell="direct"] .portal-connect-btn[hidden] {
+      display: none !important;
+    }
+    body[data-portal-shell="direct"] .wallet-menu-trigger[hidden] {
+      display: none !important;
+    }
     body[data-portal-shell="direct"] .portal-connect-btn,
     body[data-portal-shell="direct"] #connectBtn:not(.connected) {
       display: inline-flex;
@@ -1157,13 +1165,6 @@
            href="https://metamask.app.link/dapp/implicitex.com" target="_blank" rel="noopener">
           Open MetaMask
         </a>
-        <button
-          class="wallet-choice-btn"
-          id="walletChoiceWalletConnect"
-          type="button"
-        >
-          Connect with WalletConnect
-        </button>
       </div>
     </div>
   </div>
@@ -1988,6 +1989,17 @@
         if (timeEl)   timeEl.textContent   = info.buildTime;
       })
       .catch(function () { /* silent — build-info.json absent in dev environments */ });
+  }());
+  </script>
+
+  <!-- MetaMask deep-link — host resolved at runtime so the link works on portal,
+       staging, and any future environment without hard-coding a domain. -->
+  <script>
+  (function () {
+    var mmLink = document.getElementById('walletChoiceMetaMask');
+    if (mmLink) {
+      mmLink.href = 'https://metamask.app.link/dapp/' + window.location.host;
+    }
   }());
   </script>
 
