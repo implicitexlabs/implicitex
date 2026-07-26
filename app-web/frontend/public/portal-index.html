@@ -1297,10 +1297,9 @@
         </button>
       </div>
       <div class="wallet-choice-actions">
-        <a class="wallet-choice-btn wallet-choice-btn--primary" id="walletChoiceMetaMask"
-           href="https://metamask.app.link/dapp/implicitex.com" target="_blank" rel="noopener">
+        <button class="wallet-choice-btn wallet-choice-btn--primary" id="walletChoiceMetaMask" type="button">
           Open MetaMask
-        </a>
+        </button>
       </div>
     </div>
   </div>
@@ -2086,6 +2085,7 @@
   <script src="js/portal-surface-registry.js"></script>
   <script src="js/portal-visibility-controller.js"></script>
   <script src="js/portal-navigation-coordinator.js"></script>
+  <script src="js/metamask-connect-provider.js"></script>
   <script src="js/wallet.js"></script>
   <script src="js/portal-display.js"></script>
   <script src="js/coincard.js"></script>
@@ -2173,38 +2173,64 @@
   }());
   </script>
 
-  <!-- MetaMask deep-link — built at click time (not page load) so that MetaMask
-       cold-start unlock receives a fresh destination URL rather than a stale
-       cached value. Static href on the element is the no-JS fallback only. -->
+  <!-- MetaMask Connect EVM — lazy-loaded SDK for mobile connection.
+       Desktop users with the MetaMask extension already have window.ethereum;
+       wallet.js handles them via the injected path before this handler runs.
+       Mobile users (no injected provider) go through IX_MM_CONNECT.connect(),
+       which loads the vendor bundle on demand and opens the MetaMask deeplink. -->
   <script>
   (function () {
     var mmChoice = document.getElementById('walletChoiceMetaMask');
-    if (mmChoice) {
-      mmChoice.addEventListener('click', function (e) {
-        e.preventDefault();
-        var dappUrl = window.location.host + window.location.pathname;
-        // strip trailing slash for consistency
-        dappUrl = dappUrl.replace(/\/$/, '');
-        // Signal that a connect was requested so ethereum#initialized can
-        // trigger auto-connect when MetaMask's provider arrives after cold start.
-        window._ixConnectPending = true;
-        window.location.href = 'https://metamask.app.link/dapp/' + dappUrl;
-      });
-    }
+    if (!mmChoice) return;
 
-    // When loaded inside MetaMask's in-app browser after a cold start, the
-    // injected ethereum provider may arrive after DOMContentLoaded. Listen for
-    // the provider-ready event and attempt auto-connect if a connect was pending.
-    if (window.ethereum) {
-      // Provider already present — wallet.js handles normal connect flow.
-    } else {
-      window.addEventListener('ethereum#initialized', function () {
-        if (window._ixConnectPending && window.IX && window.IX.connect) {
-          window._ixConnectPending = false;
-          window.IX.connect();
+    mmChoice.addEventListener('click', async function () {
+      if (mmChoice.disabled) return;
+
+      var originalText = mmChoice.textContent.trim();
+      mmChoice.disabled = true;
+      mmChoice.textContent = 'Connecting\u2026';
+
+      try {
+        // Desktop with MetaMask extension: window.ethereum already present.
+        // Close the overlay and hand off to wallet.js's injected path.
+        if (window.ethereum && typeof window.ethereum.request === 'function' &&
+            !window.IX_MM_CONNECT.isMobile()) {
+          var overlay = document.getElementById('walletChoiceOverlay');
+          if (overlay) overlay.setAttribute('hidden', '');
+          if (window.IX && window.IX.connect) window.IX.connect();
+          return;
         }
-      }, { once: true });
-    }
+
+        // Mobile or no injected provider: use MetaMask Connect EVM.
+        // connect() lazy-loads the vendor bundle, creates the client, and
+        // opens MetaMask via the SDK deeplink. Returns an EIP-1193 provider
+        // once the user approves the connection inside MetaMask.
+        var mmProvider = await window.IX_MM_CONNECT.connect();
+
+        // Close the wallet choice overlay.
+        var overlay = document.getElementById('walletChoiceOverlay');
+        if (overlay) overlay.setAttribute('hidden', '');
+
+        // Inject the MetaMask Connect EIP-1193 provider as window.ethereum so
+        // wallet.js's hasInjectedProvider() returns true and the injected path
+        // (setActiveProvider(window.ethereum, 'injected')) runs normally.
+        window.ethereum = mmProvider;
+
+        // Delegate to wallet.js to complete the connect sequence:
+        // requestWalletAccounts → setActiveProvider → onConnected.
+        if (window.IX && window.IX.connect) {
+          await window.IX.connect();
+        }
+
+      } catch (e) {
+        // User rejection or SDK error — restore button. wallet.js's own error
+        // handling covers any state reset if IX.connect() was reached.
+        console.warn('[IX] MetaMask Connect:', e && e.message);
+      } finally {
+        mmChoice.disabled = false;
+        mmChoice.textContent = originalText;
+      }
+    });
   }());
   </script>
 
