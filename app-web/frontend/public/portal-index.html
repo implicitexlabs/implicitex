@@ -871,14 +871,17 @@
         display: block !important;
         position: fixed;
         z-index: 220;
-        left: 12px;
-        right: 12px;
-        bottom: calc(72px + var(--portal-safe-bottom));
-        padding: 12px;
-        border: 1px solid var(--ix-border);
-        border-radius: var(--ix-radius-lg);
+        left: 0;
+        right: 0;
+        bottom: calc(76px + var(--portal-safe-bottom));
+        max-height: calc(100dvh - 76px - var(--portal-safe-bottom) - env(safe-area-inset-top, 0px) - 16px);
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        padding: 12px 16px;
+        border-top: 1px solid var(--ix-border);
+        border-radius: var(--ix-radius-lg) var(--ix-radius-lg) 0 0;
         background: var(--ix-shell);
-        box-shadow: 0 16px 44px rgba(0, 0, 0, 0.22);
+        box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.18);
       }
       body[data-portal-shell="direct"] .portal-header-workspace.is-mobile-open .portal-workspace-controls {
         flex-wrap: wrap;
@@ -959,8 +962,8 @@
       .portal-mobile-nav-button svg { width: 18px; height: 18px; }
       .portal-mobile-nav-button[aria-current="page"],
       .portal-mobile-nav-button[aria-expanded="true"] {
-        background: var(--ix-surface-raised);
-        border-color: var(--ix-teal);
+        background: transparent;
+        border-color: transparent;
         color: var(--ix-teal-strong);
       }
       .portal-mobile-nav-button:focus-visible {
@@ -1902,8 +1905,16 @@
       });
     }
 
+    function closeSettings() {
+      if (workspace.classList.contains('is-mobile-open')) {
+        workspace.classList.remove('is-mobile-open');
+        if (settingsButton) settingsButton.setAttribute('aria-expanded', 'false');
+      }
+    }
+
     mobileNav.querySelectorAll('[data-mobile-destination]').forEach(function (button) {
       button.addEventListener('click', function () {
+        closeSettings();
         var destination = button.getAttribute('data-mobile-destination');
         var target = primaryNav.querySelector('[data-portal-navigation-destination="' + destination + '"]');
         if (target) target.click();
@@ -1918,6 +1929,14 @@
         if (open) settingsButton.focus();
       });
     }
+
+    // Close Settings when tapping outside the panel or the Settings button.
+    document.addEventListener('click', function (e) {
+      if (!workspace.classList.contains('is-mobile-open')) return;
+      if (workspace.contains(e.target)) return;
+      if (settingsButton && settingsButton.contains(e.target)) return;
+      closeSettings();
+    }, { passive: true });
 
     var observer = new MutationObserver(syncDestination);
     observer.observe(primaryNav, { attributes: true, subtree: true, attributeFilter: ['aria-current'] });
