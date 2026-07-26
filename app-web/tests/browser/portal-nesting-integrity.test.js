@@ -150,6 +150,10 @@ async function collectHeaderFooter(page) {
     const wallet = document.getElementById('walletMenu');
     const walletTrigger = document.getElementById('walletMenuTrigger');
     const walletLabel = walletTrigger && walletTrigger.querySelector('.wallet-account-label');
+    // Mobile wallet rail — alternative connected control at ≤600px.
+    const railEl = document.getElementById('portalWalletRail');
+    const railConnected = railEl && railEl.querySelector('.rail-connected');
+    const railAddress = railEl && railEl.querySelector('.rail-address');
     const workspaceLabel = document.querySelector('.portal-workspace-label');
     const workspace = document.getElementById('portalWorkspaceControls');
     const workspaceButtons = workspace
@@ -180,14 +184,25 @@ async function collectHeaderFooter(page) {
       style.content !== ''
     );
 
+    // Rail connected button is visible when it has layout (display:flex and non-zero rect).
+    const railConnectedRect = railConnected ? railConnected.getBoundingClientRect() : null;
+    const railConnectedVisible = !!(
+      railConnected &&
+      getComputedStyle(railConnected).display !== 'none' &&
+      railConnectedRect && railConnectedRect.width > 0 && railConnectedRect.height > 0
+    );
     return {
       walletVisible: !!(
-        wallet && !wallet.hidden &&
-        getComputedStyle(wallet).display !== 'none' &&
-        walletRect && walletRect.width > 0 && walletRect.height > 0
+        (wallet && !wallet.hidden &&
+         getComputedStyle(wallet).display !== 'none' &&
+         walletRect && walletRect.width > 0 && walletRect.height > 0) ||
+        railConnectedVisible
       ),
-      walletLabel: walletLabel ? walletLabel.textContent.trim() : '',
-      walletAddress: document.getElementById('walletAddr')?.textContent.trim() || '',
+      walletLabel: walletLabel
+        ? walletLabel.textContent.trim()
+        : (railEl && railEl.classList.contains('is-connected') ? 'CONNECTED WALLET' : ''),
+      walletAddress: document.getElementById('walletAddr')?.textContent.trim() ||
+        (railAddress ? railAddress.textContent.trim() : '') || '',
       primaryNavGrouped: !!(
         nav && buttons.length === 3 &&
         buttons.every((button) => button.parentElement === nav) &&
