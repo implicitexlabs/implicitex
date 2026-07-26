@@ -290,6 +290,17 @@
     .portal-footer-install-link:hover {
       color: var(--white);
     }
+    /* Build identity — diagnostic version surface, not user-facing content */
+    .portal-build-id {
+      display: block;
+      padding: 0.5rem 1.5rem 0.75rem;
+      font-family: var(--ix-font-mono, monospace);
+      font-size: 10px;
+      color: var(--ix-text-dim, rgba(255,255,255,0.25));
+      letter-spacing: 0.04em;
+      user-select: all;
+    }
+
     /* Install link styled as footer link — no button chrome */
     .portal-footer-install-link {
       background: none;
@@ -1724,6 +1735,7 @@
         </div>
       </nav>
     </div>
+    <span class="portal-build-id" id="portalBuildId" aria-hidden="true"></span>
   </footer>
 
   <!-- Scripts — same as index.html minus canvas.js, feeds.js, news-data.js -->
@@ -1797,6 +1809,22 @@
         applyLayout(next);
       });
     }
+  }());
+  </script>
+
+  <!-- Build identity — populates portalBuildId from /build-info.json at runtime.
+       fetch uses no-store so every load reads the live server artifact.
+       Fails silently; never blocks portal initialisation. -->
+  <script>
+  (function () {
+    var el = document.getElementById('portalBuildId');
+    if (!el) return;
+    fetch('/build-info.json', { cache: 'no-store' })
+      .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+      .then(function (info) {
+        el.textContent = 'build\u00a0' + info.shortCommit + '\u00a0\u00b7\u00a0' + info.buildTime;
+      })
+      .catch(function () { /* silent — build-info.json absent in dev environments */ });
   }());
   </script>
 
