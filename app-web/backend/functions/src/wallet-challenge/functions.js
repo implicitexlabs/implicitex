@@ -9,7 +9,7 @@
 
 const { getFirestore } = require('firebase-admin/firestore');
 const { HttpsError, onCall } = require('firebase-functions/v2/https');
-const { logger } = require('firebase-functions');
+const logger = require('firebase-functions/logger');
 const { WalletChallengeError } = require('./domain');
 const { createFirestoreWalletChallengeStore } = require('./firestore-store');
 const { createWalletChallengeService } = require('./service');

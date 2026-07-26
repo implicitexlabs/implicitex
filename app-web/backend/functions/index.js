@@ -1,11 +1,11 @@
 'use strict';
 
-const admin = require('firebase-admin');
+const { getApps, initializeApp } = require('firebase-admin/app');
 
 // Initialize the admin SDK once; emulator environment variables take effect
 // before this module is loaded when running under firebase emulators:start.
-if (!admin.apps.length) {
-  admin.initializeApp();
+if (getApps().length === 0) {
+  initializeApp();
 }
 
 const {
