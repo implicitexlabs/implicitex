@@ -823,6 +823,73 @@
       font-size: var(--text-12);    /* 12px — footer links, not body copy */
     }
 
+    /* ── E. Header wallet area — no full-width stretching on desktop/iPad ──
+       The base rule sets flex: 1 1 260px which expands the wallet zone to fill
+       all remaining header width. Constrain to content width in direct context. */
+    body[data-portal-shell="direct"] .portal-header-wallet {
+      flex: 0 0 auto;
+      width: auto;
+    }
+
+    /* ── B. Disconnected wallet button — teal-bordered, content-width ── */
+    body[data-portal-shell="direct"] .portal-connect-btn,
+    body[data-portal-shell="direct"] #connectBtn:not(.connected) {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: auto;
+      min-width: 0;
+      max-width: none;
+      min-height: 44px;
+      padding: 0 20px;
+      border: 1.5px solid var(--ix-teal);
+      border-radius: var(--ix-radius-md);
+      background: transparent;
+      color: var(--ix-teal-strong);
+      font-family: var(--font-ui);
+      font-size: var(--text-12);
+      font-weight: var(--weight-semibold);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+    body[data-portal-shell="direct"] .portal-connect-btn:hover,
+    body[data-portal-shell="direct"] #connectBtn:not(.connected):hover {
+      background: transparent;
+      border-color: var(--ix-teal-strong);
+      color: var(--ix-teal-strong);
+      opacity: 1;
+    }
+
+    /* ── C. Connected wallet trigger — content-width, capped ── */
+    body[data-portal-shell="direct"] .wallet-menu-trigger {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--sp-2);
+      width: auto;
+      max-width: 220px;
+      min-height: 38px;
+      padding: 0 12px;
+      border: 1px solid var(--ix-border-strong);
+      border-radius: var(--ix-radius-md);
+      background: transparent;
+      color: var(--ix-text-secondary);
+      font-size: var(--text-12);
+      font-weight: var(--weight-medium);
+      cursor: pointer;
+      flex-shrink: 0;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+
+    /* ── D. Wallet dropdown — constrained to content, never runaway ── */
+    body[data-portal-shell="direct"] .wallet-menu {
+      width: max-content;
+      max-width: min(280px, 90vw);
+    }
+
     /* Mobile is an application shell: destination navigation moves to a
        persistent bottom dock, while Settings reveals the existing workspace
        controls as a compact sheet. */
@@ -845,7 +912,8 @@
         box-shadow: none;
       }
       body[data-portal-shell="direct"] .portal-header {
-        padding: 12px 16px 14px;
+        /* ── A. iOS status-bar safe-area — must not override to flat value ── */
+        padding: calc(12px + var(--portal-safe-top)) 16px 14px;
         gap: 12px;
       }
       body[data-portal-shell="direct"] .portal-header-identity {
