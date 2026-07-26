@@ -827,6 +827,12 @@
        persistent bottom dock, while Settings reveals the existing workspace
        controls as a compact sheet. */
     .portal-mobile-nav { display: none; }
+    /* portalWorkspace is promoted to body level when the Settings sheet opens on mobile
+       (JS moves the element to escape the containing-block created by the animated
+       .modules ancestor). The rule below suppresses it when at body level on desktop
+       so it does not render outside the header in normal flow. The mobile media query
+       below drives its display:none / display:block!important / position:fixed states. */
+    body[data-portal-shell="direct"] > .portal-header-workspace { display: none; }
     @media (max-width: 600px), (max-width: 900px) and (max-height: 500px) {
       body[data-portal-shell="direct"] .portal-zone {
         width: 100%;
@@ -970,7 +976,29 @@
         outline: 3px solid var(--control-focus);
         outline-offset: -2px;
       }
-      .portal-mobile-nav-button[data-mobile-settings] { color: var(--ix-text-secondary); }
+      /* Settings button: suppress all chrome in every state; only teal color when open */
+      .portal-mobile-nav-button[data-mobile-settings] {
+        color: var(--ix-text-secondary);
+        border-color: transparent;
+        background: transparent;
+        box-shadow: none;
+      }
+      .portal-mobile-nav-button[data-mobile-settings]:hover,
+      .portal-mobile-nav-button[data-mobile-settings]:active {
+        border-color: transparent;
+        background: transparent;
+        box-shadow: none;
+      }
+      .portal-mobile-nav-button[data-mobile-settings]:focus-visible {
+        outline: none;
+      }
+      .portal-mobile-nav-button[data-mobile-settings][aria-expanded="true"] {
+        border-color: transparent;
+        background: transparent;
+        box-shadow: none;
+        outline: none;
+        color: var(--ix-teal-strong);
+      }
     }
   </style>
 </head>
@@ -1905,10 +1933,34 @@
       });
     }
 
+    var _savedScrollTop = 0;
+    var _workspaceOriginalParent = workspace ? workspace.parentNode : null;
+    var _workspaceOriginalNextSibling = workspace ? workspace.nextSibling : null;
+
+    function _promoteWorkspace() {
+      if (workspace && workspace.parentNode !== document.body) {
+        _workspaceOriginalParent = workspace.parentNode;
+        _workspaceOriginalNextSibling = workspace.nextSibling;
+        document.body.appendChild(workspace);
+      }
+    }
+
+    function _restoreWorkspace() {
+      if (workspace && workspace.parentNode === document.body && _workspaceOriginalParent) {
+        _workspaceOriginalParent.insertBefore(workspace, _workspaceOriginalNextSibling);
+      }
+    }
+
     function closeSettings() {
       if (workspace.classList.contains('is-mobile-open')) {
         workspace.classList.remove('is-mobile-open');
         if (settingsButton) settingsButton.setAttribute('aria-expanded', 'false');
+        document.body.style.overflow = '';
+        _restoreWorkspace();
+        try {
+          document.documentElement.scrollTop = _savedScrollTop;
+          document.body.scrollTop = _savedScrollTop;
+        } catch (e) {}
       }
     }
 
@@ -1924,9 +1976,19 @@
 
     if (settingsButton && workspace) {
       settingsButton.addEventListener('click', function () {
-        var open = workspace.classList.toggle('is-mobile-open');
-        settingsButton.setAttribute('aria-expanded', String(open));
-        if (open) settingsButton.focus();
+        var isOpen = workspace.classList.contains('is-mobile-open');
+        if (!isOpen) {
+          // Promote to body before adding is-mobile-open so position:fixed
+          // resolves against the viewport, not the animated .modules ancestor.
+          _savedScrollTop = document.documentElement.scrollTop || document.body.scrollTop || 0;
+          _promoteWorkspace();
+          workspace.classList.add('is-mobile-open');
+          workspace.scrollTop = 0;
+          document.body.style.overflow = 'hidden';
+          settingsButton.setAttribute('aria-expanded', 'true');
+        } else {
+          closeSettings();
+        }
       });
     }
 
