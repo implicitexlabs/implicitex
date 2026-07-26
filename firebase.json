@@ -189,6 +189,15 @@
       ],
       "headers": [
         {
+          "source": "/build-info.json",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-store"
+            }
+          ]
+        },
+        {
           "source": "/",
           "headers": [
             {
