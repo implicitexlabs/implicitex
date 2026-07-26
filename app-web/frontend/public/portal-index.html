@@ -999,6 +999,10 @@
         outline: none;
         color: var(--ix-teal-strong);
       }
+      /* While Settings sheet is open, suppress teal on the current route button */
+      .portal-mobile-nav.settings-is-open .portal-mobile-nav-button[aria-current="page"] {
+        color: var(--ix-text-muted);
+      }
     }
   </style>
 </head>
@@ -1954,6 +1958,7 @@
     function closeSettings() {
       if (workspace.classList.contains('is-mobile-open')) {
         workspace.classList.remove('is-mobile-open');
+        mobileNav.classList.remove('settings-is-open');
         if (settingsButton) settingsButton.setAttribute('aria-expanded', 'false');
         document.body.style.overflow = '';
         _restoreWorkspace();
@@ -1983,6 +1988,7 @@
           _savedScrollTop = document.documentElement.scrollTop || document.body.scrollTop || 0;
           _promoteWorkspace();
           workspace.classList.add('is-mobile-open');
+          mobileNav.classList.add('settings-is-open');
           workspace.scrollTop = 0;
           document.body.style.overflow = 'hidden';
           settingsButton.setAttribute('aria-expanded', 'true');
