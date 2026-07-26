@@ -34,6 +34,17 @@
  *   Any async operation started through the MetaMask Connect provider must
  *   capture account and chain identity at start and verify those values still
  *   match before mutating UI, receipts, or transfer state.
+ *
+ * connect() return contract:
+ *   On success: returns an EIP-1193 provider (EIP1193Provider from the SDK).
+ *   The provider does NOT set isMetaMask: true — the portal click handler sets
+ *   window.ethereum = mmProvider before calling IX.connect(), which uses the
+ *   standard hasInjectedProvider() check (window.ethereum + .request present).
+ *
+ * connect() resolution:
+ *   _client.connect({ chainIds }) resolves to { accounts, chainId } once the
+ *   user approves in MetaMask. If the relay stalls, a 90 s timeout converts the
+ *   silent hang into an explicit rejection that the click handler can surface.
  */
 
 window.IX_MM_CONNECT = (function () {
@@ -42,6 +53,10 @@ window.IX_MM_CONNECT = (function () {
   // Same-origin self-hosted bundle. To update: npm run build:metamask-connect.
   var VENDOR_URL = 'js/vendor/metamask-connect-evm.browser.js';
 
+  // 90 seconds: long enough for the MetaMask mobile deeplink round-trip across
+  // slow connections, short enough to surface a relay failure rather than hang.
+  var CONNECT_TIMEOUT_MS = 90000;
+
   var _bundlePromise = null; // dedup guard — concurrent connect() calls share one load
   var _client       = null; // createEVMClient() instance (one per session)
   var _provider     = null; // EIP-1193 provider returned by _client.getProvider()
@@ -49,6 +64,8 @@ window.IX_MM_CONNECT = (function () {
 
   // Build the supportedNetworks map required by createEVMClient from IX_CHAINS.
   // IX_CHAINS is keyed by numeric chainId; MetaMask Connect wants hex keys.
+  // Always includes Polygon Mainnet so connect() has a known-good network even
+  // when IX_CHAINS is not yet loaded or contains only testnet entries.
   function buildSupportedNetworks() {
     var networks = {};
     if (window.IX_CHAINS) {
@@ -60,7 +77,7 @@ window.IX_MM_CONNECT = (function () {
         }
       });
     }
-    // Ensure at least Polygon Mainnet is present as a fallback.
+    // Ensure Polygon Mainnet is present — required for production transfers.
     if (!networks['0x89']) {
       networks['0x89'] = 'https://polygon-bor-rpc.publicnode.com';
     }
@@ -108,18 +125,37 @@ window.IX_MM_CONNECT = (function () {
    * Load the vendor bundle, create the MetaMask Connect client, connect to
    * MetaMask, and return an EIP-1193 provider. Reuses the client across calls
    * within the same session. Throws on user rejection or hard failure.
+   *
+   * Resolution path:
+   *   1. Load IIFE bundle → MetaMaskConnectEVM on window
+   *   2. createEVMClient({ dapp, api }) → _client (once per session)
+   *   3. _client.connect({ chainIds }) → { accounts, chainId } on approval
+   *   4. _client.getProvider() → EIP-1193 provider
+   *   5. Return provider — caller sets window.ethereum, then calls IX.connect()
+   *
+   * The 90 s timeout races against step 3. If the MetaMask relay does not
+   * complete the handshake within 90 s the promise rejects with a named error
+   * instead of hanging until the page is closed.
    */
   async function connect() {
-    if (_connecting) throw new Error('[IX_MM_CONNECT] Connection already in progress');
+    if (_connecting) {
+      console.warn('[IX:MMC] already connecting');
+      throw new Error('[IX_MM_CONNECT] Connection already in progress');
+    }
     _connecting = true;
+    console.warn('[IX:MMC] bundle-loading');
 
     try {
       var MMConnect = await loadBundle();
-      var networks  = buildSupportedNetworks();
-      var chainIds  = getSupportedChainIds(networks);
+      console.warn('[IX:MMC] bundle-loaded', Object.keys(MMConnect));
+
+      var networks = buildSupportedNetworks();
+      var chainIds = getSupportedChainIds(networks);
+      console.warn('[IX:MMC] networks', JSON.stringify(networks));
 
       // Create client once per session.
       if (!_client) {
+        console.warn('[IX:MMC] client-initializing');
         _client = await MMConnect.createEVMClient({
           dapp: {
             name: 'ImplicitEx',
@@ -129,19 +165,48 @@ window.IX_MM_CONNECT = (function () {
             supportedNetworks: networks,
           },
         });
+        console.warn('[IX:MMC] client-initialized status:', _client.status);
+      } else {
+        console.warn('[IX:MMC] client-reused status:', _client.status);
       }
 
-      // connect() establishes the MetaMask session and returns accounts + chainId.
-      // On desktop with the extension installed, the provider is already present
-      // in window.ethereum and the caller should not reach this path — wallet.js
-      // handles the injected path. On mobile, this opens MetaMask via deeplink.
-      await _client.connect({ chainIds: chainIds });
+      // _client.connect({ chainIds }) resolves to { accounts, chainId } once the
+      // user approves the connection inside MetaMask. A 90 s timeout converts a
+      // relay stall (silent hang) into an explicit rejection.
+      console.warn('[IX:MMC] connect-requested chainIds:', chainIds);
+      var connectResult = await Promise.race([
+        _client.connect({ chainIds: chainIds }).then(function (r) {
+          console.warn('[IX:MMC] connect-resolved', JSON.stringify(r));
+          return r;
+        }),
+        new Promise(function (_, reject) {
+          setTimeout(function () {
+            console.warn('[IX:MMC] connect-timeout after', CONNECT_TIMEOUT_MS, 'ms');
+            reject(new Error('[IX_MM_CONNECT] MetaMask Connect timeout — relay did not complete'));
+          }, CONNECT_TIMEOUT_MS);
+        }),
+      ]);
 
+      // getProvider() returns the EIP-1193 provider that wraps the SDK session.
+      // The provider has .request() and emits EIP-1193 events but does NOT set
+      // isMetaMask: true. The caller sets window.ethereum = mmProvider before
+      // calling IX.connect() so wallet.js's hasInjectedProvider() returns true.
+      console.warn('[IX:MMC] provider-installing');
       _provider = _client.getProvider();
+      console.warn('[IX:MMC] provider-installed',
+        'typeof:', typeof _provider,
+        'isMetaMask:', _provider && _provider.isMetaMask,
+        'request:', typeof (_provider && _provider.request),
+        'accounts:', connectResult && connectResult.accounts,
+        'chainId:', connectResult && connectResult.chainId
+      );
+
       _connecting = false;
+      console.warn('[IX:MMC] connected');
       return _provider;
 
     } catch (e) {
+      console.warn('[IX:MMC] connect-error', e && e.message, e && e.code);
       _connecting = false;
 
       var msg = (e && e.message) ? e.message.toLowerCase() : '';
@@ -154,8 +219,11 @@ window.IX_MM_CONNECT = (function () {
       if (isUserRejection) {
         // Clean cancel: keep the client alive so MetaMask does not need to
         // re-establish the SDK session on the next attempt.
+        console.warn('[IX:MMC] user-rejected — client preserved');
       } else {
-        // Hard failure: discard client and allow full re-init on retry.
+        // Hard failure (including timeout): discard client and allow full
+        // re-init on retry so the SDK session is not left in a broken state.
+        console.warn('[IX:MMC] hard-failure — client discarded');
         _client        = null;
         _provider      = null;
         _bundlePromise = null;
@@ -173,6 +241,7 @@ window.IX_MM_CONNECT = (function () {
     if (_client && typeof _client.disconnect === 'function') {
       try {
         await _client.disconnect();
+        console.warn('[IX:MMC] disconnected');
       } catch (_) {
         // Session may already be closed.
       }
