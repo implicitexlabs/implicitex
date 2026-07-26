@@ -908,6 +908,89 @@
        so it does not render outside the header in normal flow. The mobile media query
        below drives its display:none / display:block!important / position:fixed states. */
     body[data-portal-shell="direct"] > .portal-header-workspace { display: none; }
+    /* ── Mobile wallet account rail ── */
+    @keyframes ixPulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.4; transform: scale(0.85); }
+    }
+    .rail-status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--ix-teal);
+      flex-shrink: 0;
+      animation: ixPulse 2s ease-in-out infinite;
+    }
+    #portalWalletRail {
+      display: none; /* desktop: hidden; mobile media query shows it */
+    }
+    @media (max-width: 600px), (max-width: 900px) and (max-height: 500px) {
+      #portalWalletRail {
+        display: flex;
+        align-items: center;
+        width: 100%;
+        padding: 0 16px 14px;
+        box-sizing: border-box;
+        position: relative;
+      }
+      #portalWalletRail .rail-connect {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        min-height: 48px;
+        padding: 0 16px;
+        border: 1.5px solid var(--ix-teal);
+        border-radius: var(--ix-radius-md);
+        background: transparent;
+        color: var(--ix-teal-strong);
+        font-family: var(--font-ui);
+        font-size: var(--text-13);
+        font-weight: var(--weight-semibold);
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        cursor: pointer;
+        gap: 10px;
+        box-sizing: border-box;
+      }
+      #portalWalletRail.is-connecting .rail-connect {
+        opacity: 0.7;
+        pointer-events: none;
+      }
+      #portalWalletRail .rail-connected {
+        display: none;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        min-height: 48px;
+        padding: 0 16px;
+        border: 1px solid var(--ix-border-strong);
+        border-radius: var(--ix-radius-md);
+        background: transparent;
+        color: var(--ix-text);
+        font-family: var(--font-mono);
+        font-size: var(--text-13);
+        cursor: pointer;
+        gap: 10px;
+        box-sizing: border-box;
+      }
+      #portalWalletRail.is-connected .rail-connect   { display: none; }
+      #portalWalletRail.is-connected .rail-connected { display: flex; }
+      /* Account menu below the rail, full-width */
+      #portalWalletRail .wallet-menu-panel {
+        position: absolute;
+        top: calc(100% - 14px); /* align to bottom of rail, above the rail bottom padding */
+        left: 16px;
+        right: 16px;
+        width: auto;
+        max-width: none;
+        border-radius: 0 0 var(--ix-radius-md) var(--ix-radius-md);
+        border-top: none;
+        margin-top: -1px;
+        z-index: 200;
+      }
+    }
+
     @media (max-width: 600px), (max-width: 900px) and (max-height: 500px) {
       body[data-portal-shell="direct"] .portal-zone {
         width: 100%;
@@ -921,11 +1004,13 @@
       }
       body[data-portal-shell="direct"] .portal-header {
         /* ── A. iOS status-bar safe-area — must not override to flat value ── */
-        padding: calc(12px + var(--portal-safe-top)) 16px 14px;
-        gap: 12px;
+        padding: calc(12px + var(--portal-safe-top)) 16px 0;
+        gap: 0;
       }
       body[data-portal-shell="direct"] .portal-header-identity {
-        padding-bottom: 0;
+        display: flex;
+        justify-content: center;
+        padding: 0 0 12px;
       }
       body[data-portal-shell="direct"] .portal-primary-nav {
         display: none !important;
@@ -937,14 +1022,10 @@
         background: transparent;
       }
       body[data-portal-shell="direct"] .portal-account-bar {
-        align-items: stretch;
-        flex-direction: column;
-        flex: 0 0 auto;
-        gap: 8px;
+        display: none;
       }
       body[data-portal-shell="direct"] .portal-header-wallet {
-        flex: 0 0 auto;
-        width: min(100%, 280px);
+        display: none;
       }
       body[data-portal-shell="direct"] .portal-header-workspace {
         display: none;
@@ -1190,6 +1271,39 @@
           </div>
         </a>
       </div>
+      <!-- Mobile wallet account rail — visible only at ≤600px; centered lockup above, this rail below -->
+      <div id="portalWalletRail">
+        <!-- Disconnected state -->
+        <button class="rail-connect" type="button" aria-label="Connect wallet">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0">
+            <rect x="2" y="7" width="20" height="14" rx="2"/>
+            <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+            <line x1="12" y1="12" x2="12" y2="16"/>
+            <line x1="10" y1="14" x2="14" y2="14"/>
+          </svg>
+          <span style="flex:1;text-align:center">Connect Wallet</span>
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0">
+            <polyline points="5,3 9,7 5,11"/>
+          </svg>
+        </button>
+        <!-- Connected state -->
+        <button class="rail-connected" type="button" aria-label="Wallet account menu" aria-expanded="false" aria-controls="railWalletMenuPanel">
+          <span class="rail-status-dot" aria-hidden="true"></span>
+          <span class="rail-address" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left;padding:0 4px"></span>
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0">
+            <polyline points="2,4.5 6,8.5 10,4.5"/>
+          </svg>
+        </button>
+        <!-- Inline account menu panel for rail -->
+        <div class="wallet-menu-panel" id="railWalletMenuPanel" hidden>
+          <p class="wallet-menu-title">Wallet account</p>
+          <p class="wallet-menu-address" id="railWalletFullAddress"></p>
+          <button class="wallet-menu-action" id="railCopyAddressBtn" type="button">Copy address</button>
+          <button class="wallet-menu-action" id="railSwitchNetworkBtn" type="button" hidden>Switch to Polygon</button>
+          <button class="wallet-menu-action" id="railSwitchAccountBtn" type="button">Switch account</button>
+          <button class="wallet-menu-action wallet-menu-action--danger" id="railDisconnectBtn" type="button">Disconnect</button>
+        </div>
+      </div><!-- /#portalWalletRail -->
       <!-- Sticky bar: nav + account state (pins on mobile/tablet; identity scrolls away) -->
       <div class="portal-sticky-bar">
         <!-- Navigation tabs — hidden until coordinator initialises -->
@@ -2096,6 +2210,124 @@
     var observer = new MutationObserver(syncDestination);
     observer.observe(primaryNav, { attributes: true, subtree: true, attributeFilter: ['aria-current'] });
     syncDestination();
+  }());
+  </script>
+
+  <!-- Mobile wallet account rail — JS wiring. Mirrors the existing wallet lifecycle
+       without duplicating any state; reads from IX.getState() and listens on
+       ix:wallet-state-changed. Does not call IX internals beyond IX.connect(). -->
+  <script>
+  (function () {
+    var rail          = document.getElementById('portalWalletRail');
+    var railConnect   = rail && rail.querySelector('.rail-connect');
+    var railConnected = rail && rail.querySelector('.rail-connected');
+    var railAddress   = rail && rail.querySelector('.rail-address');
+    var railPanel     = document.getElementById('railWalletMenuPanel');
+    var railFullAddr  = document.getElementById('railWalletFullAddress');
+
+    // Mirror actions from rail panel to the canonical wallet action buttons.
+    // This avoids duplicating wallet logic; we proxy clicks to the existing buttons.
+    function proxyClick(railId, canonicalId) {
+      var railBtn = document.getElementById(railId);
+      if (!railBtn) return;
+      railBtn.addEventListener('click', function () {
+        closeRailMenu();
+        var canonical = document.getElementById(canonicalId);
+        if (canonical) canonical.click();
+      });
+    }
+    proxyClick('railCopyAddressBtn',    'copyAddressBtn');
+    proxyClick('railSwitchNetworkBtn',  'switchNetworkBtn');
+    proxyClick('railSwitchAccountBtn',  'switchAccountBtn');
+    proxyClick('railDisconnectBtn',     'disconnectBtn');
+
+    // Mirror visibility of switchNetworkBtn to rail equivalent.
+    function syncSwitchNetworkVisibility() {
+      var canonical = document.getElementById('switchNetworkBtn');
+      var railBtn   = document.getElementById('railSwitchNetworkBtn');
+      if (!canonical || !railBtn) return;
+      if (canonical.hidden) railBtn.setAttribute('hidden', '');
+      else railBtn.removeAttribute('hidden');
+    }
+
+    function openRailMenu() {
+      if (!railPanel || !railConnected) return;
+      railPanel.removeAttribute('hidden');
+      railConnected.setAttribute('aria-expanded', 'true');
+      // Sync full address into rail panel.
+      var canonical = document.getElementById('walletFullAddress');
+      if (canonical && railFullAddr) railFullAddr.textContent = canonical.textContent;
+      syncSwitchNetworkVisibility();
+    }
+
+    function closeRailMenu() {
+      if (!railPanel || !railConnected) return;
+      railPanel.setAttribute('hidden', '');
+      railConnected.setAttribute('aria-expanded', 'false');
+    }
+
+    function toggleRailMenu() {
+      if (!railPanel) return;
+      if (railPanel.hasAttribute('hidden')) openRailMenu();
+      else closeRailMenu();
+    }
+
+    // Connect button triggers IX.connect().
+    if (railConnect) {
+      railConnect.addEventListener('click', function () {
+        if (window.IX && window.IX.connect) window.IX.connect();
+      });
+    }
+
+    // Connected trigger opens/closes the rail account menu.
+    if (railConnected) {
+      railConnected.addEventListener('click', toggleRailMenu);
+    }
+
+    // Close rail menu on outside click.
+    document.addEventListener('click', function (e) {
+      if (!rail || !railPanel || railPanel.hasAttribute('hidden')) return;
+      if (rail.contains(e.target)) return;
+      closeRailMenu();
+    }, { passive: true });
+
+    function syncRail() {
+      if (!rail || !window.IX || !window.IX.getState) return;
+      var s = window.IX.getState();
+      if (s.address) {
+        rail.classList.add('is-connected');
+        rail.classList.remove('is-connecting');
+        if (railAddress) {
+          railAddress.textContent = s.address.slice(0, 6) + '\u2026' + s.address.slice(-4);
+        }
+        closeRailMenu(); // close menu on state change (e.g. account switch)
+      } else if (s.connecting) {
+        rail.classList.add('is-connecting');
+        rail.classList.remove('is-connected');
+        if (railConnect) {
+          var label = railConnect.querySelector('span');
+          if (label) label.textContent = 'Opening MetaMask\u2026';
+        }
+      } else {
+        rail.classList.remove('is-connected', 'is-connecting');
+        if (railConnect) {
+          var label = railConnect.querySelector('span');
+          if (label) label.textContent = 'Connect Wallet';
+        }
+        closeRailMenu();
+      }
+    }
+
+    window.addEventListener('ix:wallet-state-changed', syncRail);
+
+    // Initial sync — IX may not be initialised yet; retry briefly.
+    (function attemptSync(attempts) {
+      if (window.IX && window.IX.getState) {
+        syncRail();
+      } else if (attempts > 0) {
+        setTimeout(function () { attemptSync(attempts - 1); }, 200);
+      }
+    }(25));
   }());
   </script>
 
