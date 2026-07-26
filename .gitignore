@@ -38,3 +38,6 @@ ui-debug.log
 
 # Generated at deploy time — not committed; see app-web/scripts/generate_build_info.js
 app-web/frontend/public/build-info.json
+
+# Agent worktrees — ephemeral; never committed
+.claude/worktrees/
