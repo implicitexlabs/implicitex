@@ -884,6 +884,22 @@
         flex-wrap: wrap;
         justify-content: flex-end;
       }
+      /* Build identity block — visible only inside the Settings sheet on mobile.
+         Hidden on desktop where the footer already surfaces this information. */
+      .portal-build-info { display: none; }
+      body[data-portal-shell="direct"] .portal-header-workspace.is-mobile-open .portal-build-info {
+        display: block;
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px solid var(--ix-border);
+        font-family: var(--font-mono, 'IBM Plex Mono', monospace);
+        font-size: 11px;
+        line-height: 1.7;
+        color: var(--ix-text-secondary);
+      }
+      .portal-build-info-row { display: flex; gap: 6px; }
+      .portal-build-info-label { opacity: 0.6; flex: 0 0 auto; }
+      .portal-build-info-value { word-break: break-all; }
       body[data-portal-shell="direct"] .mod {
         padding: 20px 16px;
       }
@@ -1164,6 +1180,24 @@
                 </svg>
               </button>
             </div><!-- /.portal-workspace-controls -->
+            <div class="portal-build-info" id="portalBuildInfo" aria-label="Build identity">
+              <div class="portal-build-info-row">
+                <span class="portal-build-info-label">build</span>
+                <span class="portal-build-info-value" id="portalBuildInfoCommit">—</span>
+              </div>
+              <div class="portal-build-info-row">
+                <span class="portal-build-info-label">time</span>
+                <span class="portal-build-info-value" id="portalBuildInfoTime">—</span>
+              </div>
+              <div class="portal-build-info-row">
+                <span class="portal-build-info-label">origin</span>
+                <span class="portal-build-info-value" id="portalBuildInfoOrigin">—</span>
+              </div>
+              <div class="portal-build-info-row">
+                <span class="portal-build-info-label">mode</span>
+                <span class="portal-build-info-value" id="portalBuildInfoMode">—</span>
+              </div>
+            </div><!-- /.portal-build-info -->
           </div><!-- /.portal-header-workspace -->
         </div><!-- /.portal-account-bar -->
       </div><!-- /.portal-sticky-bar -->
@@ -1812,17 +1846,36 @@
   }());
   </script>
 
-  <!-- Build identity — populates portalBuildId from /build-info.json at runtime.
+  <!-- Build identity — populates portalBuildId (footer) and portalBuildInfo
+       (Settings sheet) from /build-info.json at runtime.
        fetch uses no-store so every load reads the live server artifact.
        Fails silently; never blocks portal initialisation. -->
   <script>
   (function () {
-    var el = document.getElementById('portalBuildId');
-    if (!el) return;
+    var footerEl = document.getElementById('portalBuildId');
+    var commitEl = document.getElementById('portalBuildInfoCommit');
+    var timeEl   = document.getElementById('portalBuildInfoTime');
+    var originEl = document.getElementById('portalBuildInfoOrigin');
+    var modeEl   = document.getElementById('portalBuildInfoMode');
+
+    // Display mode is a runtime property — read before fetch resolves.
+    if (modeEl) {
+      modeEl.textContent = window.matchMedia('(display-mode: standalone)').matches
+        ? 'standalone (PWA)'
+        : 'browser';
+    }
+    if (originEl) {
+      originEl.textContent = window.location.origin;
+    }
+
     fetch('/build-info.json', { cache: 'no-store' })
       .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
       .then(function (info) {
-        el.textContent = 'build\u00a0' + info.shortCommit + '\u00a0\u00b7\u00a0' + info.buildTime;
+        if (footerEl) {
+          footerEl.textContent = 'build\u00a0' + info.shortCommit + '\u00a0\u00b7\u00a0' + info.buildTime;
+        }
+        if (commitEl) commitEl.textContent = info.shortCommit;
+        if (timeEl)   timeEl.textContent   = info.buildTime;
       })
       .catch(function () { /* silent — build-info.json absent in dev environments */ });
   }());
