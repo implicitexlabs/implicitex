@@ -1,0 +1,45 @@
+// Coin Card authoritative backend rules.
+//
+// All customer mutations flow through callable Functions using the Admin SDK.
+// The public registry read service also uses the Admin SDK. No browser client
+// receives direct read or write access to ownership, order, registry, proof,
+// rate-limit, or audit records.
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /accounts/{document=**} {
+      allow read, write: if false;
+    }
+    match /handleReservations/{document=**} {
+      allow read, write: if false;
+    }
+    match /walletChallenges/{document=**} {
+      allow read, write: if false;
+    }
+    match /walletProofs/{document=**} {
+      allow read, write: if false;
+    }
+    match /walletChallengeRateLimits/{document=**} {
+      allow read, write: if false;
+    }
+    match /orders/{document=**} {
+      allow read, write: if false;
+    }
+    match /coinCards/{document=**} {
+      allow read, write: if false;
+    }
+    match /registry/{document=**} {
+      allow read, write: if false;
+    }
+    match /lifecycleRecords/{document=**} {
+      allow read, write: if false;
+    }
+    match /auditEvents/{document=**} {
+      allow read, write: if false;
+    }
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

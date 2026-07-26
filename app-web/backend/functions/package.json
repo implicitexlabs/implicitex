@@ -1,0 +1,21 @@
+{
+  "name": "implicitex-coincard-functions",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Firebase Functions for the Coin Card backend.",
+  "main": "index.js",
+  "engines": {
+    "node": "20"
+  },
+  "scripts": {
+    "test": "node test/wallet-challenge.test.js",
+    "test:rules": "firebase emulators:exec --config ../../../firebase.wallet-challenge-test.json --project demo-coincard-wallet --only firestore \"node test/firestore-rules-emulator.test.js\"",
+    "test:gate": "npm run lint && npm test && npm run test:rules",
+    "lint": "node --check index.js && node --check src/wallet-challenge/domain.js && node --check src/wallet-challenge/firestore-store.js && node --check src/wallet-challenge/functions.js && node --check src/wallet-challenge/service.js"
+  },
+  "dependencies": {
+    "ethers": "6.17.0",
+    "firebase-admin": "^12.0.0",
+    "firebase-functions": "^6.0.0"
+  }
+}
