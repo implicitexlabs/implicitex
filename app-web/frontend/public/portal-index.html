@@ -2173,13 +2173,37 @@
   }());
   </script>
 
-  <!-- MetaMask deep-link — host resolved at runtime so the link works on portal,
-       staging, and any future environment without hard-coding a domain. -->
+  <!-- MetaMask deep-link — built at click time (not page load) so that MetaMask
+       cold-start unlock receives a fresh destination URL rather than a stale
+       cached value. Static href on the element is the no-JS fallback only. -->
   <script>
   (function () {
-    var mmLink = document.getElementById('walletChoiceMetaMask');
-    if (mmLink) {
-      mmLink.href = 'https://metamask.app.link/dapp/' + window.location.host;
+    var mmChoice = document.getElementById('walletChoiceMetaMask');
+    if (mmChoice) {
+      mmChoice.addEventListener('click', function (e) {
+        e.preventDefault();
+        var dappUrl = window.location.host + window.location.pathname;
+        // strip trailing slash for consistency
+        dappUrl = dappUrl.replace(/\/$/, '');
+        // Signal that a connect was requested so ethereum#initialized can
+        // trigger auto-connect when MetaMask's provider arrives after cold start.
+        window._ixConnectPending = true;
+        window.location.href = 'https://metamask.app.link/dapp/' + dappUrl;
+      });
+    }
+
+    // When loaded inside MetaMask's in-app browser after a cold start, the
+    // injected ethereum provider may arrive after DOMContentLoaded. Listen for
+    // the provider-ready event and attempt auto-connect if a connect was pending.
+    if (window.ethereum) {
+      // Provider already present — wallet.js handles normal connect flow.
+    } else {
+      window.addEventListener('ethereum#initialized', function () {
+        if (window._ixConnectPending && window.IX && window.IX.connect) {
+          window._ixConnectPending = false;
+          window.IX.connect();
+        }
+      }, { once: true });
     }
   }());
   </script>
