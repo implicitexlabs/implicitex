@@ -235,7 +235,6 @@
   };
 
   const DEMO_FEE_RATE = 0.01;
-  const POLYGON_GAS_STATION_URL = 'https://gasstation.polygon.technology/v2';
   const POLYGON_MAINNET_CHAIN_ID = 137;
   const POLYGON_MAINNET_CHAIN_HEX = '0x89';
   const WALLET_LOCAL_DISCONNECT_KEY = 'ix.wallet.localDisconnect';
@@ -4319,11 +4318,6 @@
     return n.toFixed(2);
   }
 
-  function readGasTier(data, tier) {
-    const entry = data && data[tier];
-    return Number(entry && (entry.maxFee ?? entry.maxPriorityFee));
-  }
-
   function renderHeroGas(tiers) {
     if (!els.gasHeroVal) return;
 
@@ -4341,35 +4335,6 @@
       span.textContent = value;
       return span;
     }));
-  }
-
-  async function fetchGasData() {
-    const res = await fetch(POLYGON_GAS_STATION_URL, {
-      method: 'GET',
-      headers: { Accept: 'application/json' },
-      cache: 'no-store',
-    });
-
-    if (!res.ok) {
-      throw new Error(`Gas station returned ${res.status}`);
-    }
-
-    const data = await res.json();
-    const standard = readGasTier(data, 'standard');
-    const fast = readGasTier(data, 'fast');
-    const spread = Number.isFinite(standard) && Number.isFinite(fast)
-      ? Math.max(1, fast - standard)
-      : 1;
-
-    return {
-      standard,
-      fast,
-      // Polygon Gas Station exposes standard and fast. Rapid is a display
-      // premium over fast until a dedicated rapid oracle is wired.
-      rapid: Number.isFinite(fast) ? fast + Math.max(1, spread * 0.5) : NaN,
-      blockNumber: Number(data && data.blockNumber),
-      blockTime:   Number(data && data.blockTime),
-    };
   }
 
   // Probe the chain RPC directly — separate from Gas Station health.
@@ -4517,7 +4482,7 @@
       }
 
       try {
-        const tiers = await fetchGasData();
+        const tiers = await window.ImplicitExGas.fetchGasPrice();
         renderHeroGas(tiers);
 
         if (els.gweiDisplay) {

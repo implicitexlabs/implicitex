@@ -40,6 +40,7 @@
     "test:observability": "node tests/frontend/observability.test.js",
     "test:analytics": "node tests/frontend/analytics.test.js",
     "test:consent": "node tests/frontend/consent.test.js",
+    "test:gas-service": "node tests/frontend/gas-service.test.js",
     "test": "hardhat test"
   },
   "devDependencies": {
