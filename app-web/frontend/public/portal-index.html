@@ -459,12 +459,6 @@
         margin: 0.5rem 0;
       }
 
-      [data-portal-shell="direct"] .transfer-portal::before,
-      [data-portal-shell="direct"] .transfer-portal::after,
-      [data-portal-shell="direct"] .portal-frame-brackets {
-        display: none;
-      }
-
       .portal-footer {
         margin-bottom: 0;
         padding-inline: 0.5rem;
@@ -475,24 +469,6 @@
 
       [data-portal-shell="direct"] .portal-footer-row {
         padding-bottom: calc(1rem + var(--portal-safe-bottom));
-      }
-    }
-
-    @media (max-width: 900px) and (max-height: 500px) {
-      [data-portal-shell="direct"] .transfer-portal::before,
-      [data-portal-shell="direct"] .transfer-portal::after,
-      [data-portal-shell="direct"] .portal-frame-brackets {
-        display: none;
-      }
-    }
-
-    /* Tablet portrait (601–900px tall) — brackets are decorative framing for
-       the desktop canvas; they don't read well on a narrow portrait layout. */
-    @media (min-width: 601px) and (max-width: 900px) {
-      [data-portal-shell="direct"] .transfer-portal::before,
-      [data-portal-shell="direct"] .transfer-portal::after,
-      [data-portal-shell="direct"] .portal-frame-brackets {
-        display: none;
       }
     }
 
@@ -1455,7 +1431,6 @@
         </div><!-- /.portal-account-bar -->
       </div><!-- /.portal-sticky-bar -->
     </div><!-- /.portal-header -->
-    <span class="portal-frame-brackets" aria-hidden="true"></span>
     <!-- Coin Card intake banner — shown when opened via Coin Card handoff -->
     <div class="cc-intake" id="ccIntake" hidden aria-live="polite" aria-label="Coin Card handoff status" data-portal-primary-surface="TRANSFER">
       <div class="cc-intake-inner">

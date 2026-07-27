@@ -2190,99 +2190,6 @@ body.portal-active #nav {
   max-width: min(18rem, calc(100% - 1rem));
 }
 
-.transfer-portal:fullscreen::before,
-.transfer-portal:fullscreen::after,
-.transfer-portal:-webkit-full-screen::before,
-.transfer-portal:-webkit-full-screen::after,
-.transfer-portal:fullscreen .portal-frame-brackets::before,
-.transfer-portal:fullscreen .portal-frame-brackets::after,
-.transfer-portal:-webkit-full-screen .portal-frame-brackets::before,
-.transfer-portal:-webkit-full-screen .portal-frame-brackets::after {
-  left: auto;
-  right: auto;
-  top: auto;
-  bottom: auto;
-}
-
-.transfer-portal:fullscreen::before,
-.transfer-portal:-webkit-full-screen::before {
-  top: 0;
-  left: 0;
-}
-
-.transfer-portal:fullscreen::after,
-.transfer-portal:-webkit-full-screen::after {
-  right: 0;
-  bottom: 0;
-}
-
-.transfer-portal:fullscreen .portal-frame-brackets::before,
-.transfer-portal:-webkit-full-screen .portal-frame-brackets::before {
-  top: 0;
-  right: 0;
-}
-
-.transfer-portal:fullscreen .portal-frame-brackets::after,
-.transfer-portal:-webkit-full-screen .portal-frame-brackets::after {
-  bottom: 0;
-  left: 0;
-}
-
-/* ---- Portal frame brackets — all four corners from one coordinate system ----
-   .transfer-portal carries top-left and bottom-right via ::before/::after.
-   .portal-frame-brackets (first child, position:absolute inset:0) carries
-   top-right and bottom-left via its own ::before/::after.
-   All four share identical size, stroke, offset, and color. */
-.transfer-portal::before,
-.transfer-portal::after,
-.portal-frame-brackets::before,
-.portal-frame-brackets::after {
-  content: "";
-  position: absolute;
-  width: 28px;
-  height: 28px;
-  opacity: 0.72;
-  pointer-events: none;
-  z-index: 3;
-  border-color: var(--dim);
-  border-style: solid;
-  border-width: 0;
-}
-/* top-left */
-.transfer-portal::before {
-  top: -6px;
-  left: -6px;
-  border-top-width: 2px;
-  border-left-width: 2px;
-}
-/* bottom-right */
-.transfer-portal::after {
-  bottom: 0;
-  right: 0;
-  border-bottom-width: 2px;
-  border-right-width: 2px;
-}
-/* top-right */
-.portal-frame-brackets::before {
-  top: -6px;
-  right: -6px;
-  border-top-width: 2px;
-  border-right-width: 2px;
-}
-/* bottom-left */
-.portal-frame-brackets::after {
-  bottom: 0;
-  left: 0;
-  border-bottom-width: 2px;
-  border-left-width: 2px;
-}
-.portal-frame-brackets {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 3;
-}
-
 /* Collapsed portal inverts against page theme — functions as a featured instrument */
 @keyframes portal-toggle-glow {
   0%, 100% { opacity: 0.4; }
@@ -5576,32 +5483,6 @@ h1 + .gs-section-head {
   /* Portal zone owns the side clearance so tick markers clear the viewport edge */
   .portal-zone {
     margin-inline: 1.25rem;
-  }
-
-  /* Ticks scale back on mobile while staying inside the frame */
-  .transfer-portal::before,
-  .transfer-portal::after,
-  .portal-frame-brackets::before,
-  .portal-frame-brackets::after {
-    width: 24px;
-    height: 24px;
-    opacity: 0.65;
-  }
-  .transfer-portal::before {
-    top: 0;
-    left: 0;
-  }
-  .transfer-portal::after {
-    bottom: 0;
-    right: 0;
-  }
-  .portal-frame-brackets::before {
-    top: 0;
-    right: 0;
-  }
-  .portal-frame-brackets::after {
-    bottom: 0;
-    left: 0;
   }
 
   .tx-meta-grid {
