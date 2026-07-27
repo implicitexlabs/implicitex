@@ -2928,17 +2928,6 @@
       }
     }
 
-    // Terminate MetaMask Connect EVM session if it was used for this connection.
-    // IX_MM_CONNECT registers its provider as the injected provider (window.ethereum),
-    // so walletRuntime.source is 'injected' — check getProvider() to detect it.
-    if (!wasWalletConnect && window.IX_MM_CONNECT && window.IX_MM_CONNECT.getProvider()) {
-      try {
-        await window.IX_MM_CONNECT.disconnect();
-      } catch (err) {
-        console.warn('[ImplicitEx] MetaMask Connect disconnect failed', err);
-      }
-    }
-
     let providerChecked = false;
     let stillAuthorized = false;
     if (revokeProvider && !wasWalletConnect) await revokeWalletPermission(activeProvider);
