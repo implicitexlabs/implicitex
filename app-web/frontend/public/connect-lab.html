@@ -18,6 +18,7 @@
       --green: #22c55e;
       --red: #ef4444;
       --blue: #60a5fa;
+      --purple: #a78bfa;
       --mono: 'IBM Plex Mono', 'Courier New', monospace;
     }
 
@@ -31,293 +32,144 @@
       min-height: 100vh;
     }
 
-    h1 {
-      font-size: 16px;
-      font-weight: 600;
-      letter-spacing: 0.08em;
-      color: var(--muted);
-      text-transform: uppercase;
-      margin-bottom: 4px;
-    }
+    h1 { font-size: 16px; font-weight: 600; letter-spacing: 0.08em; color: var(--muted); text-transform: uppercase; margin-bottom: 4px; }
 
-    .lab-subtitle {
-      font-size: 12px;
-      color: var(--muted);
-      margin-bottom: 24px;
-      font-family: var(--mono);
+    .lab-subtitle { font-size: 11px; color: var(--muted); margin-bottom: 20px; font-family: var(--mono); }
+
+    /* ── Phase indicator ── */
+    .phase-strip { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 20px; }
+    .phase-chip {
+      font-family: var(--mono); font-size: 10px;
+      padding: 3px 8px; border-radius: 3px;
+      border: 1px solid var(--border); color: var(--muted); background: var(--surface);
     }
+    .phase-chip.--active { border-color: var(--amber); color: var(--amber); background: #1a1400; }
+    .phase-chip.--done   { border-color: var(--green); color: var(--green); background: #001a08; }
+    .phase-chip.--error  { border-color: var(--red);   color: var(--red);   background: #1a0000; }
 
     /* ── State panel ── */
-    .state-panel {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 16px;
-      margin-bottom: 16px;
-    }
-
-    .state-panel h2 {
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--muted);
-      margin-bottom: 12px;
-    }
-
-    .state-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-    }
-
-    @media (max-width: 480px) {
-      .state-grid { grid-template-columns: 1fr; }
-    }
-
-    .state-row {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-
-    .state-label {
-      font-size: 10px;
-      font-weight: 600;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--muted);
-    }
-
-    .state-value {
-      font-family: var(--mono);
-      font-size: 12px;
-      color: var(--text);
-      word-break: break-all;
-    }
-
-    .state-value.--pending  { color: var(--amber); }
-    .state-value.--ok       { color: var(--green); }
-    .state-value.--error    { color: var(--red); }
-    .state-value.--neutral  { color: var(--muted); }
-
-    /* ── Connect controls ── */
-    .controls {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      margin-bottom: 16px;
-    }
-
-    .btn-connect {
-      background: var(--amber);
-      color: #000;
-      border: none;
-      border-radius: 6px;
-      padding: 14px 24px;
-      font-size: 14px;
-      font-weight: 700;
-      letter-spacing: 0.04em;
-      cursor: pointer;
-      width: 100%;
-      transition: opacity 0.15s;
-    }
-
-    .btn-connect:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-    }
-
-    .btn-secondary {
-      background: transparent;
-      color: var(--text);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 10px 16px;
-      font-size: 13px;
-      cursor: pointer;
-      width: 100%;
-    }
-
-    .btn-secondary:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-    }
+    .state-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+    .state-panel h2 { font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
+    .state-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    @media (max-width: 480px) { .state-grid { grid-template-columns: 1fr; } }
+    .state-row { display: flex; flex-direction: column; gap: 2px; }
+    .state-label { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+    .state-value { font-family: var(--mono); font-size: 12px; color: var(--text); word-break: break-all; }
+    .state-value.--pending { color: var(--amber); }
+    .state-value.--ok      { color: var(--green); }
+    .state-value.--error   { color: var(--red);   }
+    .state-value.--neutral { color: var(--muted); }
 
     /* ── Status banner ── */
-    .status-banner {
-      border-radius: 6px;
-      padding: 12px 16px;
-      font-family: var(--mono);
-      font-size: 12px;
-      margin-bottom: 16px;
-      display: none;
-    }
-
+    .status-banner { border-radius: 6px; padding: 12px 16px; font-family: var(--mono); font-size: 12px; margin-bottom: 16px; display: none; }
     .status-banner.--visible { display: block; }
-    .status-banner.--waiting { background: #2a2000; border: 1px solid var(--amber); color: var(--amber); }
-    .status-banner.--timeout { background: #2a0000; border: 1px solid var(--red); color: var(--red); }
-    .status-banner.--success { background: #002a10; border: 1px solid var(--green); color: var(--green); }
-    .status-banner.--info    { background: #0a0a20; border: 1px solid var(--blue); color: var(--blue); }
+    .status-banner.--waiting { background: #1a1000; border: 1px solid var(--amber); color: var(--amber); }
+    .status-banner.--error   { background: #1a0000; border: 1px solid var(--red);   color: var(--red);   }
+    .status-banner.--success { background: #001a08; border: 1px solid var(--green); color: var(--green); }
+    .status-banner.--info    { background: #08080a; border: 1px solid var(--border); color: var(--muted); }
+
+    /* ── Controls ── */
+    .controls { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+    .btn-connect {
+      background: var(--amber); color: #000; border: none;
+      border-radius: 6px; padding: 14px 24px;
+      font-size: 14px; font-weight: 700; letter-spacing: 0.04em;
+      cursor: pointer; width: 100%;
+    }
+    .btn-connect:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-secondary {
+      background: transparent; color: var(--text);
+      border: 1px solid var(--border); border-radius: 6px;
+      padding: 10px 16px; font-size: 13px; cursor: pointer; width: 100%;
+    }
+    .btn-secondary:disabled { opacity: 0.4; cursor: not-allowed; }
 
     /* ── Event log ── */
-    .log-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 8px;
-    }
-
-    .log-header h2 {
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--muted);
-    }
-
-    .log-actions {
-      display: flex;
-      gap: 8px;
-    }
-
-    .log-action-btn {
-      background: transparent;
-      color: var(--muted);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      padding: 4px 10px;
-      font-size: 11px;
-      cursor: pointer;
-    }
-
+    .log-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+    .log-header h2 { font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+    .log-actions { display: flex; gap: 8px; }
+    .log-action-btn { background: transparent; color: var(--muted); border: 1px solid var(--border); border-radius: 4px; padding: 4px 10px; font-size: 11px; cursor: pointer; }
     .log-action-btn:hover { color: var(--text); border-color: var(--text); }
 
     #eventLog {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 12px;
-      height: 280px;
-      overflow-y: auto;
-      font-family: var(--mono);
-      font-size: 11px;
-      line-height: 1.7;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; padding: 12px; height: 360px;
+      overflow-y: auto; font-family: var(--mono); font-size: 11px; line-height: 1.7;
     }
-
-    .log-entry {
-      display: flex;
-      gap: 10px;
-      border-bottom: 1px solid #1a1a28;
-      padding: 3px 0;
-    }
-
+    .log-entry { display: flex; gap: 10px; border-bottom: 1px solid #1a1a28; padding: 3px 0; }
     .log-entry:last-child { border-bottom: none; }
-
-    .log-ts   { color: var(--muted); flex-shrink: 0; }
-    .log-tag  { flex-shrink: 0; width: 80px; text-align: right; }
-    .log-msg  { color: var(--text); word-break: break-all; }
-
-    .log-tag.--init    { color: #a78bfa; }
+    .log-ts  { color: var(--muted); flex-shrink: 0; }
+    .log-tag { flex-shrink: 0; width: 90px; text-align: right; }
+    .log-msg { color: var(--text); word-break: break-all; flex: 1; }
+    .log-tag.--init    { color: var(--purple); }
+    .log-tag.--restore { color: var(--blue); }
     .log-tag.--connect { color: var(--amber); }
     .log-tag.--resolve { color: var(--green); }
-    .log-tag.--error   { color: var(--red); }
-    .log-tag.--info    { color: var(--blue); }
+    .log-tag.--adopt   { color: #34d399; }
+    .log-tag.--event   { color: #f472b6; }
+    .log-tag.--rpc     { color: #38bdf8; }
     .log-tag.--page    { color: var(--muted); }
-    .log-tag.--query   { color: #f472b6; }
+    .log-tag.--error   { color: var(--red); }
     .log-tag.--timer   { color: #94a3b8; }
-    .log-tag.--sdk     { color: #fb923c; }
 
-    /* ── RPC query panel ── */
-    .rpc-panel {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 16px;
-      margin-bottom: 16px;
-    }
-
-    .rpc-panel h2 {
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--muted);
-      margin-bottom: 12px;
-    }
-
-    .rpc-btn {
-      background: transparent;
-      color: var(--blue);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      padding: 6px 12px;
-      font-size: 12px;
-      font-family: var(--mono);
-      cursor: pointer;
-      margin: 4px;
-    }
-
-    .rpc-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-
-    /* ── Build stamp ── */
-    .build-stamp {
-      margin-top: 24px;
-      font-family: var(--mono);
-      font-size: 10px;
-      color: var(--muted);
-      text-align: center;
-    }
+    .build-stamp { margin-top: 24px; font-family: var(--mono); font-size: 10px; color: var(--muted); text-align: center; }
   </style>
 </head>
 <body>
 
 <h1>MetaMask Connect Lab</h1>
-<p class="lab-subtitle">Isolated SDK test — no wallet.js — no window.ethereum assignment — preview only</p>
+<p class="lab-subtitle">v2 · relay CSP added · early SDK init · wallet_sessionChanged · no window.ethereum · no IX.connect() · preview only</p>
+
+<!-- Phase indicator -->
+<div class="phase-strip">
+  <div class="phase-chip" id="phase-client-initializing">client-initializing</div>
+  <div class="phase-chip" id="phase-client-ready">client-ready</div>
+  <div class="phase-chip" id="phase-restore-waiting">restore-waiting</div>
+  <div class="phase-chip" id="phase-no-session">no-session</div>
+  <div class="phase-chip" id="phase-session-restored">session-restored</div>
+  <div class="phase-chip" id="phase-connect-requested">connect-requested</div>
+  <div class="phase-chip" id="phase-connect-resolved">connect-resolved</div>
+  <div class="phase-chip" id="phase-provider-connected">provider-connected</div>
+  <div class="phase-chip" id="phase-account-adopted">account-adopted</div>
+  <div class="phase-chip" id="phase-chain-adopted">chain-adopted</div>
+  <div class="phase-chip" id="phase-lab-connected">lab-connected</div>
+</div>
 
 <!-- State panel -->
 <div class="state-panel">
-  <h2>Client State</h2>
+  <h2>Adopted Session State</h2>
   <div class="state-grid">
     <div class="state-row">
-      <span class="state-label">SDK loaded</span>
-      <span class="state-value --neutral" id="sdkLoaded">—</span>
+      <span class="state-label">account</span>
+      <span class="state-value --neutral" id="stAccount">—</span>
     </div>
     <div class="state-row">
-      <span class="state-label">connect() settled</span>
-      <span class="state-value --neutral" id="connectSettled">—</span>
-    </div>
-    <div class="state-row">
-      <span class="state-label">client.selectedAccount</span>
-      <span class="state-value --neutral" id="sdkAccount">—</span>
-    </div>
-    <div class="state-row">
-      <span class="state-label">client.selectedChainId</span>
-      <span class="state-value --neutral" id="sdkChain">—</span>
-    </div>
-    <div class="state-row">
-      <span class="state-label">client.accounts[]</span>
-      <span class="state-value --neutral" id="sdkAccounts">—</span>
+      <span class="state-label">chainId</span>
+      <span class="state-value --neutral" id="stChain">—</span>
     </div>
     <div class="state-row">
       <span class="state-label">connect() result</span>
-      <span class="state-value --neutral" id="connectResult">—</span>
-    </div>
-    <div class="state-row">
-      <span class="state-label">eth_accounts (RPC)</span>
-      <span class="state-value --neutral" id="rpcAccounts">—</span>
-    </div>
-    <div class="state-row">
-      <span class="state-label">eth_chainId (RPC)</span>
-      <span class="state-value --neutral" id="rpcChain">—</span>
+      <span class="state-value --neutral" id="stConnectResult">—</span>
     </div>
     <div class="state-row">
       <span class="state-label">provider present</span>
-      <span class="state-value --neutral" id="providerPresent">—</span>
+      <span class="state-value --neutral" id="stProvider">—</span>
+    </div>
+    <div class="state-row">
+      <span class="state-label">eth_accounts (RPC)</span>
+      <span class="state-value --neutral" id="stRpcAccounts">—</span>
+    </div>
+    <div class="state-row">
+      <span class="state-label">eth_chainId (RPC)</span>
+      <span class="state-value --neutral" id="stRpcChain">—</span>
+    </div>
+    <div class="state-row">
+      <span class="state-label">session source</span>
+      <span class="state-value --neutral" id="stSource">—</span>
     </div>
     <div class="state-row">
       <span class="state-label">last error</span>
-      <span class="state-value --neutral" id="lastError">—</span>
+      <span class="state-value --neutral" id="stError">—</span>
     </div>
   </div>
 </div>
@@ -327,25 +179,17 @@
 
 <!-- Controls -->
 <div class="controls">
-  <button class="btn-connect" id="btnConnect">Connect with MetaMask</button>
-  <button class="btn-secondary" id="btnQuery" disabled>Query RPC state</button>
+  <button class="btn-connect" id="btnConnect" disabled>Initializing SDK…</button>
+  <button class="btn-secondary" id="btnQueryRPC" disabled>Query RPC (eth_accounts + eth_chainId)</button>
   <button class="btn-secondary" id="btnPoll">Poll client properties</button>
 </div>
 
-<!-- RPC results -->
-<div class="rpc-panel" id="rpcPanel">
-  <h2>RPC Queries</h2>
-  <p id="rpcResult" style="font-family:var(--mono);font-size:11px;color:var(--muted)">
-    Press "Query RPC state" after connecting to run eth_accounts and eth_chainId.
-  </p>
-</div>
-
-<!-- Event log -->
+<!-- Log -->
 <div class="log-header">
   <h2>Event Log</h2>
   <div class="log-actions">
-    <button class="log-action-btn" id="btnCopyLog">Copy</button>
-    <button class="log-action-btn" id="btnClearLog">Clear</button>
+    <button class="log-action-btn" id="btnCopy">Copy</button>
+    <button class="log-action-btn" id="btnClear">Clear</button>
   </div>
 </div>
 <div id="eventLog"></div>
@@ -353,64 +197,69 @@
 <div class="build-stamp" id="buildStamp">build: loading…</div>
 
 <script>
-// ──────────────────────────────────────────────────
-// Lab constants
-// ──────────────────────────────────────────────────
-var CHAIN_IDS     = ['0x89'];          // Polygon mainnet
-var WARN_SECS     = 20;
-var TIMEOUT_SECS  = 45;
-var BUNDLE_PATH   = '/js/vendor/metamask-connect-evm.browser.js';
-var LS_KEY        = 'ix_connect_lab_log';
+// ─────────────────────────────────────────────────────────
+// Constants
+// ─────────────────────────────────────────────────────────
+var CHAIN_IDS    = ['0x89'];   // Polygon mainnet
+var BUNDLE_SRC   = '/js/vendor/metamask-connect-evm.browser.js';
+var LS_KEY       = 'ix_connect_lab_v2';
+var WARN_SECS    = 20;
+var TIMEOUT_SECS = 45;
 
-// ──────────────────────────────────────────────────
-// Globals
-// ──────────────────────────────────────────────────
-var _client       = null;
-var _provider     = null;
-var _connecting   = false;
-var _warnTimer    = null;
-var _timeoutTimer = null;
-var _logEntries   = [];
+// ─────────────────────────────────────────────────────────
+// Module state
+// ─────────────────────────────────────────────────────────
+var _client     = null;
+var _provider   = null;
+var _account    = null;
+var _chainId    = null;
+var _connecting = false;
+var _warnTimer  = null;
+var _toTimer    = null;
+var _logEntries = [];
 
-// ──────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────
 // Logging
-// ──────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────
 function ts() {
   var d = new Date();
   return d.toTimeString().slice(0, 8) + '.' + String(d.getMilliseconds()).padStart(3, '0');
 }
 
 function log(tag, msg, cls) {
-  var entry = { ts: ts(), tag: tag, msg: String(msg), cls: cls || 'info', wall: Date.now() };
+  var entry = { ts: ts(), tag: tag, msg: String(msg), cls: cls || 'page', wall: Date.now() };
   _logEntries.push(entry);
-
-  // Persist to localStorage (keep last 200)
-  try {
-    if (_logEntries.length > 200) _logEntries = _logEntries.slice(-200);
-    localStorage.setItem(LS_KEY, JSON.stringify(_logEntries));
-  } catch(e) {}
-
-  var el = document.getElementById('eventLog');
+  try { localStorage.setItem(LS_KEY, JSON.stringify(_logEntries.slice(-300))); } catch(e) {}
   var row = document.createElement('div');
   row.className = 'log-entry';
-  row.innerHTML = '<span class="log-ts">' + entry.ts + '</span>' +
-                  '<span class="log-tag --' + entry.cls + '">[' + tag + ']</span>' +
-                  '<span class="log-msg">' + escHtml(entry.msg) + '</span>';
+  row.innerHTML =
+    '<span class="log-ts">' + esc(entry.ts) + '</span>' +
+    '<span class="log-tag --' + entry.cls + '">[' + esc(tag) + ']</span>' +
+    '<span class="log-msg">' + esc(entry.msg) + '</span>';
+  var el = document.getElementById('eventLog');
   el.appendChild(row);
   el.scrollTop = el.scrollHeight;
 }
 
-function escHtml(s) {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-// ──────────────────────────────────────────────────
-// State panel helpers
-// ──────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────
+// Phase helpers
+// ─────────────────────────────────────────────────────────
+function setPhase(id, cls) {
+  var el = document.getElementById('phase-' + id);
+  if (el) el.className = 'phase-chip --' + cls;
+}
+
+// ─────────────────────────────────────────────────────────
+// UI helpers
+// ─────────────────────────────────────────────────────────
 function setState(id, value, cls) {
   var el = document.getElementById(id);
   if (!el) return;
-  el.textContent = value === undefined || value === null ? '—' : String(value);
+  el.textContent = (value === undefined || value === null) ? '—' : String(value);
   el.className = 'state-value' + (cls ? ' --' + cls : '');
 }
 
@@ -421,315 +270,438 @@ function setBanner(msg, cls) {
 }
 
 function clearBanner() {
-  var el = document.getElementById('statusBanner');
-  el.className = 'status-banner';
-  el.textContent = '';
+  document.getElementById('statusBanner').className = 'status-banner';
 }
 
-function pollClientProperties() {
-  if (!_client) {
-    log('poll', 'no client', 'error');
-    return;
-  }
-  try {
-    var acc  = _client.selectedAccount;
-    var accs = _client.accounts;
-    var cid  = _client.selectedChainId;
-    setState('sdkAccount',  acc || '(none)', acc ? 'ok' : 'neutral');
-    setState('sdkChain',    cid || '(none)', cid ? 'ok' : 'neutral');
-    setState('sdkAccounts', accs && accs.length ? accs.join(', ') : '(empty)', accs && accs.length ? 'ok' : 'neutral');
-    log('poll', 'selectedAccount=' + acc + ' selectedChainId=' + cid + ' accounts=' + JSON.stringify(accs), 'query');
-  } catch (e) {
-    log('poll', 'ERROR: ' + e.message, 'error');
-    setState('lastError', e.message, 'error');
-  }
+function setBtn(text, disabled) {
+  var b = document.getElementById('btnConnect');
+  b.textContent = text;
+  b.disabled    = !!disabled;
 }
 
-// ──────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────
 // Bundle loader
-// ──────────────────────────────────────────────────
-var _bundlePromise = null;
+// ─────────────────────────────────────────────────────────
+var _bundleP = null;
 
 function loadBundle() {
-  if (_bundlePromise) return _bundlePromise;
-  _bundlePromise = new Promise(function(resolve, reject) {
+  if (_bundleP) return _bundleP;
+  _bundleP = new Promise(function(resolve, reject) {
     if (window.MetaMaskConnectEVM) {
-      log('sdk', 'bundle already present', 'sdk');
+      log('init', 'bundle already present on window', 'init');
       return resolve(window.MetaMaskConnectEVM);
     }
-    log('sdk', 'loading bundle…', 'sdk');
+    log('init', 'loading bundle from ' + BUNDLE_SRC, 'init');
     var s = document.createElement('script');
-    s.src = BUNDLE_PATH;
+    s.src = BUNDLE_SRC;
     s.onload = function() {
       if (!window.MetaMaskConnectEVM) {
         return reject(new Error('bundle loaded but MetaMaskConnectEVM not on window'));
       }
-      log('sdk', 'bundle loaded — MetaMaskConnectEVM keys: ' + Object.keys(window.MetaMaskConnectEVM).join(', '), 'sdk');
-      setState('sdkLoaded', 'yes', 'ok');
+      log('init', 'bundle loaded — exports: ' + Object.keys(window.MetaMaskConnectEVM).join(', '), 'init');
       resolve(window.MetaMaskConnectEVM);
     };
-    s.onerror = function() {
-      reject(new Error('script load failed: ' + BUNDLE_PATH));
-    };
+    s.onerror = function() { reject(new Error('script load failed: ' + BUNDLE_SRC)); };
     document.head.appendChild(s);
   });
-  return _bundlePromise;
+  return _bundleP;
 }
 
-// ──────────────────────────────────────────────────
-// Connect
-// ──────────────────────────────────────────────────
-function startTimers() {
-  _warnTimer = setTimeout(function() {
-    log('timer', WARN_SECS + 's elapsed — still waiting for MetaMask', 'timer');
-    setBanner('Still waiting for MetaMask (' + WARN_SECS + 's). If MetaMask opened, approve the connection.', 'waiting');
-  }, WARN_SECS * 1000);
+// ─────────────────────────────────────────────────────────
+// Session adoption
+// Single path for both new connect() and session restoration.
+// Does NOT assign to window.ethereum.
+// Does NOT call IX.connect().
+// ─────────────────────────────────────────────────────────
+function adoptSession(provider, account, chainId, source) {
+  _provider = provider;
+  _account  = account;
+  _chainId  = chainId;
 
-  _timeoutTimer = setTimeout(function() {
-    log('timer', TIMEOUT_SECS + 's elapsed — ending attempt', 'timer');
-    _connecting = false;
-    setBanner('Connection attempt timed out after ' + TIMEOUT_SECS + 's. MetaMask may have approved but connect() did not resolve. Use Retry.', 'timeout');
-    document.getElementById('btnConnect').disabled = false;
-    document.getElementById('btnConnect').textContent = 'Retry Connection';
-    setState('connectSettled', 'timeout (' + TIMEOUT_SECS + 's)', 'error');
-  }, TIMEOUT_SECS * 1000);
-}
+  setState('stAccount',  account,  account  ? 'ok' : 'neutral');
+  setState('stChain',    chainId,  chainId === '0x89' ? 'ok' : 'pending');
+  setState('stProvider', provider ? 'yes' : 'null', provider ? 'ok' : 'error');
+  setState('stSource',   source,   'ok');
 
-function clearTimers() {
-  if (_warnTimer)    clearTimeout(_warnTimer);
-  if (_timeoutTimer) clearTimeout(_timeoutTimer);
-  _warnTimer    = null;
-  _timeoutTimer = null;
-}
+  setPhase('provider-connected', 'done');
+  setPhase('account-adopted',    'done');
+  setPhase('chain-adopted',      chainId === '0x89' ? 'done' : 'active');
+  setPhase('lab-connected',      'done');
 
-async function doConnect() {
-  if (_connecting) {
-    log('connect', 'already connecting — ignoring', 'info');
-    return;
+  log('adopt', 'account=' + account + ' chainId=' + chainId + ' source=' + source, 'adopt');
+  setBanner('Session adopted — account ' + account + ' on chain ' + chainId, 'success');
+  setBtn('Connected — Retry?', false);
+  document.getElementById('btnQueryRPC').disabled = false;
+
+  // Bind provider events (suppressed during initial connect flow)
+  if (provider && provider.on) {
+    provider.on('accountsChanged', function(accs) {
+      log('event', 'accountsChanged: ' + JSON.stringify(accs), 'event');
+      if (accs && accs.length) {
+        _account = accs[0];
+        setState('stAccount', _account, 'ok');
+      } else {
+        log('event', 'accountsChanged empty — wallet disconnected', 'event');
+        setState('stAccount', '(disconnected)', 'error');
+        setPhase('lab-connected', 'error');
+      }
+    });
+    provider.on('chainChanged', function(cid) {
+      log('event', 'chainChanged: ' + cid, 'event');
+      _chainId = cid;
+      setState('stChain', cid, cid === '0x89' ? 'ok' : 'pending');
+    });
+    provider.on('connect', function(info) {
+      log('event', 'provider connect: ' + JSON.stringify(info), 'event');
+    });
+    provider.on('disconnect', function(err) {
+      log('event', 'provider disconnect: ' + JSON.stringify(err), 'event');
+      setPhase('lab-connected', 'error');
+    });
   }
-  _connecting = true;
-  clearBanner();
+}
 
-  var btn = document.getElementById('btnConnect');
-  btn.disabled = true;
-  btn.textContent = 'Connecting…';
-
-  setState('connectSettled', 'pending…', 'pending');
-  setState('sdkAccount',    'pending…', 'pending');
-
-  log('connect', 'starting connect attempt', 'connect');
-  log('connect', 'host=' + window.location.host + ' pathname=' + window.location.pathname, 'info');
+// ─────────────────────────────────────────────────────────
+// Client init + session restore
+// Runs on page load — NOT on button click.
+// ─────────────────────────────────────────────────────────
+async function initClientAndRestore() {
+  log('init', 'page load — initializing SDK', 'init');
+  setPhase('client-initializing', 'active');
 
   try {
-    // 1. Load bundle
     var SDK = await loadBundle();
 
-    // 2. Create client
-    if (!_client) {
-      log('init', 'calling createEVMClient()', 'init');
-      var createFn = SDK.createEVMClient || (SDK.default && SDK.default.createEVMClient);
-      if (!createFn) throw new Error('createEVMClient not found on SDK — available keys: ' + Object.keys(SDK).join(', '));
+    var createFn = (SDK && SDK.createEVMClient)
+                || (SDK && SDK.default && SDK.default.createEVMClient);
 
-      _client = createFn({
-        logging: true,
-        checkInstallationImmediately: false,
-      });
-      log('init', 'client created — type: ' + typeof _client, 'init');
-      log('init', 'client keys: ' + Object.keys(_client || {}).join(', '), 'init');
-    } else {
-      log('init', 'reusing existing client', 'init');
+    if (!createFn) {
+      throw new Error('createEVMClient not found — SDK keys: ' + Object.keys(SDK || {}).join(', '));
     }
 
-    // 3. Start timers
-    startTimers();
-    log('connect', 'calling client.connect({ chainIds: ' + JSON.stringify(CHAIN_IDS) + ' })', 'connect');
+    _client = createFn({
+      logging: true,
+      analytics: { enabled: false },   // avoids needing analytics origin in CSP
+      checkInstallationImmediately: false,
+    });
+
+    log('init', 'client created — keys: ' + Object.keys(_client || {}).join(', '), 'init');
+    setPhase('client-initializing', 'done');
+    setPhase('client-ready', 'active');
+
+    // ── Register wallet_sessionChanged immediately ─────────────────
+    // MetaMask Connect restores sessions asynchronously post-load.
+    // If this event fires with a valid session we adopt it directly,
+    // without issuing a second connect() call.
+    if (_client && typeof _client.on === 'function') {
+      _client.on('wallet_sessionChanged', function(session) {
+        log('restore', 'wallet_sessionChanged: ' + JSON.stringify(session), 'restore');
+        if (session && session.namespaces) {
+          try {
+            var p    = _client.getProvider();
+            var accs = _client.accounts || [];
+            var cid  = _client.selectedChainId;
+            var acc  = _client.selectedAccount || accs[0];
+            if (acc && p) {
+              log('restore', 'adopting async-restored session: account=' + acc, 'restore');
+              setPhase('restore-waiting', 'done');
+              setPhase('session-restored', 'done');
+              adoptSession(p, acc, cid, 'wallet_sessionChanged');
+              return;
+            }
+          } catch(e) {
+            log('restore', 'getProvider() after sessionChanged threw: ' + e.message, 'error');
+          }
+        }
+        log('restore', 'wallet_sessionChanged — no adoptable session in payload', 'restore');
+      });
+    } else {
+      log('init', 'client.on not available — skipping wallet_sessionChanged', 'init');
+    }
+
+    setPhase('client-ready', 'done');
+    setPhase('restore-waiting', 'active');
+    log('restore', 'checking for synchronous existing session', 'restore');
+
+    // ── Synchronous session check ──────────────────────────────────
+    var existingAcc = null;
+    try { existingAcc = _client.selectedAccount; } catch(e) {}
+
+    if (existingAcc) {
+      log('restore', 'selectedAccount present at init: ' + existingAcc, 'restore');
+      try {
+        var p   = _client.getProvider();
+        var cid = _client.selectedChainId;
+        setPhase('restore-waiting', 'done');
+        setPhase('session-restored', 'done');
+        adoptSession(p, existingAcc, cid, 'sync-restore');
+        return;
+      } catch(e) {
+        log('restore', 'sync restore failed: ' + e.message, 'error');
+      }
+    }
+
+    // Give SDK 800ms to fire wallet_sessionChanged asynchronously
+    await new Promise(function(res) { setTimeout(res, 800); });
+
+    if (!_account) {
+      log('restore', 'no session after init window — ready for first connect', 'restore');
+      setPhase('restore-waiting', 'done');
+      setPhase('no-session', 'active');
+    }
+
+    setBtn('Connect with MetaMask', false);
+
+  } catch(e) {
+    log('error', 'SDK init failed: ' + e.message, 'error');
+    setState('stError', e.message, 'error');
+    setBanner('SDK init failed: ' + e.message, 'error');
+    setBtn('SDK Error — Reload', false);
+    setPhase('client-initializing', 'error');
+  }
+}
+
+// ─────────────────────────────────────────────────────────
+// Connect — called exactly once per user gesture
+// ─────────────────────────────────────────────────────────
+async function doConnect() {
+  if (_connecting) {
+    log('connect', 'already connecting — ignoring gesture', 'connect');
+    return;
+  }
+  if (_account) {
+    log('connect', 'existing session found — clearing for retry', 'connect');
+    _provider = null; _account = null; _chainId = null;
+  }
+
+  _connecting = true;
+  clearBanner();
+  setBtn('Connecting…', true);
+  setPhase('connect-requested', 'active');
+
+  log('connect', 'user gesture — calling client.connect({ chainIds: ' + JSON.stringify(CHAIN_IDS) + ' })', 'connect');
+  setState('stAccount', 'pending…', 'pending');
+  setState('stChain',   'pending…', 'pending');
+
+  _warnTimer = setTimeout(function() {
+    log('timer', WARN_SECS + 's — still waiting for MetaMask approval', 'timer');
+    setBanner('Still waiting (' + WARN_SECS + 's). Approve the connection in MetaMask.', 'waiting');
+  }, WARN_SECS * 1000);
+
+  _toTimer = setTimeout(function() {
+    log('timer', TIMEOUT_SECS + 's timeout — connect() did not resolve', 'timer');
+    _connecting = false;
+    setState('stAccount', 'timeout', 'error');
+    setState('stError',   'connect() did not resolve after ' + TIMEOUT_SECS + 's', 'error');
+    setBanner(
+      'connect() did not resolve after ' + TIMEOUT_SECS + 's. ' +
+      'If MetaMask showed "Return to app" but this page stayed stuck, the relay WebSocket was still blocked. ' +
+      'Check DevTools Network for wss:// connections to mm-sdk-relay.api.cx.metamask.io.',
+      'error'
+    );
+    setPhase('connect-requested', 'error');
+    setBtn('Retry Connection', false);
+  }, TIMEOUT_SECS * 1000);
+
+  try {
+    if (!_client) throw new Error('client not initialized — SDK init may have failed');
 
     var result = await _client.connect({ chainIds: CHAIN_IDS });
 
-    // 4. connect() resolved
-    clearTimers();
+    clearTimeout(_warnTimer); clearTimeout(_toTimer);
+    _warnTimer = null; _toTimer = null;
     _connecting = false;
-    clearBanner();
 
-    var resultStr = JSON.stringify(result);
-    log('resolve', 'connect() resolved — result: ' + resultStr, 'resolve');
-    setState('connectSettled', 'resolved', 'ok');
-    setState('connectResult',  resultStr, 'ok');
-    setBanner('connect() resolved. Polling client state…', 'success');
+    log('resolve', 'connect() resolved: ' + JSON.stringify(result), 'resolve');
+    setState('stConnectResult', JSON.stringify(result), 'ok');
+    setPhase('connect-requested', 'done');
+    setPhase('connect-resolved', 'done');
 
-    // 5. Poll client immediately
-    pollClientProperties();
+    // ── Adopt result directly — no second eth_requestAccounts ──────
+    var accounts = (result && result.accounts) ? result.accounts : [];
+    var chainId  = (result && result.chainId)  ? result.chainId  : null;
+    var account  = accounts[0] || null;
 
-    // 6. Get provider
+    log('resolve', 'accounts=' + JSON.stringify(accounts) + ' chainId=' + chainId, 'resolve');
+
+    var provider = null;
     try {
-      _provider = _client.getProvider();
-      log('resolve', 'getProvider() returned type: ' + typeof _provider, 'resolve');
-      setState('providerPresent', _provider ? 'yes' : 'null/undefined', _provider ? 'ok' : 'error');
-    } catch(pe) {
-      log('error', 'getProvider() threw: ' + pe.message, 'error');
-      setState('providerPresent', 'ERROR: ' + pe.message, 'error');
+      provider = _client.getProvider();
+      log('resolve', 'getProvider() → type=' + typeof provider, 'resolve');
+    } catch(e) {
+      log('error', 'getProvider() threw: ' + e.message, 'error');
+      setState('stError', 'getProvider() failed: ' + e.message, 'error');
     }
 
-    // 7. Enable RPC query
-    document.getElementById('btnQuery').disabled = false;
-    btn.textContent = 'Connected — Retry?';
-    btn.disabled = false;
+    // Fallback: read from client properties if result was sparse
+    if (!account) {
+      try {
+        account = _client.selectedAccount || (_client.accounts && _client.accounts[0]);
+        log('resolve', 'account from client properties: ' + account, 'resolve');
+      } catch(e) {}
+    }
+    if (!chainId) {
+      try { chainId = _client.selectedChainId; } catch(e) {}
+    }
 
-  } catch (e) {
-    clearTimers();
+    if (account) {
+      adoptSession(provider, account, chainId, 'connect-result');
+    } else {
+      log('error', 'connect() resolved but result and client both have no account', 'error');
+      setState('stError', 'No account in connect() result', 'error');
+      setBanner('connect() resolved but returned no account. This is unusual — see log.', 'error');
+      setBtn('Retry Connection', false);
+    }
+
+  } catch(e) {
+    clearTimeout(_warnTimer); clearTimeout(_toTimer);
+    _warnTimer = null; _toTimer = null;
     _connecting = false;
 
     log('error', 'connect() rejected: ' + e.message, 'error');
-    setState('connectSettled', 'rejected', 'error');
-    setState('lastError',      e.message,  'error');
-    setBanner('connect() rejected: ' + e.message, 'timeout');
-    btn.textContent = 'Retry Connection';
-    btn.disabled = false;
+    setState('stAccount', 'rejected', 'error');
+    setState('stError',   e.message,  'error');
+    setBanner('connect() rejected: ' + e.message, 'error');
+    setPhase('connect-requested', 'error');
+    setBtn('Retry Connection', false);
   }
 }
 
-// ──────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────
 // RPC query
-// ──────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────
 async function queryRPC() {
-  if (!_provider) {
-    log('query', 'no provider — cannot query', 'error');
-    document.getElementById('rpcResult').textContent = 'No provider. Connect first.';
-    return;
-  }
-  log('query', 'sending eth_accounts…', 'query');
+  if (!_provider) { log('rpc', 'no provider — connect first', 'error'); return; }
+  log('rpc', 'eth_accounts…', 'rpc');
   try {
     var accs = await _provider.request({ method: 'eth_accounts' });
-    log('query', 'eth_accounts: ' + JSON.stringify(accs), 'query');
-    setState('rpcAccounts', accs && accs.length ? accs.join(', ') : '(empty)', accs && accs.length ? 'ok' : 'neutral');
+    log('rpc', 'eth_accounts: ' + JSON.stringify(accs), 'rpc');
+    setState('stRpcAccounts', accs && accs.length ? accs.join(', ') : '(empty)', accs && accs.length ? 'ok' : 'neutral');
   } catch(e) {
-    log('query', 'eth_accounts error: ' + e.message, 'error');
-    setState('rpcAccounts', 'ERROR: ' + e.message, 'error');
+    log('rpc', 'eth_accounts error: ' + e.message, 'error');
+    setState('stRpcAccounts', 'ERROR: ' + e.message, 'error');
   }
-  log('query', 'sending eth_chainId…', 'query');
+  log('rpc', 'eth_chainId…', 'rpc');
   try {
     var cid = await _provider.request({ method: 'eth_chainId' });
-    log('query', 'eth_chainId: ' + cid, 'query');
-    setState('rpcChain', cid, cid === '0x89' ? 'ok' : 'pending');
+    log('rpc', 'eth_chainId: ' + cid, 'rpc');
+    setState('stRpcChain', cid, cid === '0x89' ? 'ok' : 'pending');
   } catch(e) {
-    log('query', 'eth_chainId error: ' + e.message, 'error');
-    setState('rpcChain', 'ERROR: ' + e.message, 'error');
+    log('rpc', 'eth_chainId error: ' + e.message, 'error');
+    setState('stRpcChain', 'ERROR: ' + e.message, 'error');
   }
-  document.getElementById('rpcResult').textContent = 'Query complete — see Event Log and state panel above.';
 }
 
-// ──────────────────────────────────────────────────
-// Visibility / page lifecycle reconciliation
-// ──────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────
+// Client property poll
+// ─────────────────────────────────────────────────────────
+function pollClient() {
+  if (!_client) { log('page', 'pollClient: no client', 'page'); return; }
+  try {
+    var acc  = _client.selectedAccount;
+    var accs = _client.accounts;
+    var cid  = _client.selectedChainId;
+    log('page', 'poll: selectedAccount=' + acc + ' selectedChainId=' + cid + ' accounts=' + JSON.stringify(accs), 'page');
+    if (acc && !_account) {
+      log('page', 'poll found account without active session — adopting', 'page');
+      var p = null;
+      try { p = _client.getProvider(); } catch(e) {}
+      setPhase('restore-waiting', 'done');
+      setPhase('session-restored', 'done');
+      adoptSession(p, acc, cid, 'poll-reconcile');
+    }
+  } catch(e) {
+    log('page', 'poll error: ' + e.message, 'error');
+  }
+}
+
+// ─────────────────────────────────────────────────────────
+// Page lifecycle — reconcile on return from MetaMask
+// ─────────────────────────────────────────────────────────
 document.addEventListener('visibilitychange', function() {
-  var state = document.visibilityState;
-  log('page', 'visibilitychange → ' + state, 'page');
-  if (state === 'visible' && _client) {
-    setTimeout(function() {
-      log('page', 'reconcile after visibility restore', 'page');
-      pollClientProperties();
-    }, 500);
+  log('page', 'visibilitychange → ' + document.visibilityState, 'page');
+  if (document.visibilityState === 'visible' && _client && !_account) {
+    setTimeout(function() { log('page', 'visibility-restore reconcile', 'page'); pollClient(); }, 600);
   }
 });
 
 window.addEventListener('pageshow', function(e) {
   log('page', 'pageshow persisted=' + e.persisted, 'page');
   if (e.persisted && _client) {
-    setTimeout(function() {
-      log('page', 'reconcile after bfcache restore', 'page');
-      pollClientProperties();
-    }, 500);
+    setTimeout(function() { log('page', 'bfcache-restore reconcile', 'page'); pollClient(); }, 600);
   }
 });
 
 window.addEventListener('focus', function() {
-  log('page', 'window focus', 'page');
-  if (_client && !_connecting) {
-    setTimeout(function() {
-      pollClientProperties();
-    }, 300);
+  if (_client && !_connecting && !_account) {
+    setTimeout(function() { log('page', 'window focus — reconcile', 'page'); pollClient(); }, 400);
   }
 });
 
-// ──────────────────────────────────────────────────
-// Restore persisted log on load
-// ──────────────────────────────────────────────────
-(function restoreLog() {
+// ─────────────────────────────────────────────────────────
+// Restore prior session log
+// ─────────────────────────────────────────────────────────
+(function() {
   try {
-    var saved = localStorage.getItem(LS_KEY);
-    if (!saved) return;
-    var entries = JSON.parse(saved);
-    if (!Array.isArray(entries) || !entries.length) return;
-    log('page', 'restored ' + entries.length + ' entries from previous session', 'page');
-    // Re-render them (they were already pushed into _logEntries via JSON.parse separately)
-    var el = document.getElementById('eventLog');
-    entries.forEach(function(entry) {
+    var saved = JSON.parse(localStorage.getItem(LS_KEY) || '[]');
+    if (!saved.length) return;
+    var el  = document.getElementById('eventLog');
+    var sep = document.createElement('div');
+    sep.className = 'log-entry';
+    sep.innerHTML = '<span class="log-ts">—</span><span class="log-tag --page">[prior]</span><span class="log-msg">── ' + saved.length + ' entries from prior session ──</span>';
+    el.appendChild(sep);
+    saved.forEach(function(e) {
       var row = document.createElement('div');
       row.className = 'log-entry';
-      row.innerHTML = '<span class="log-ts">' + escHtml(entry.ts || '') + '</span>' +
-                      '<span class="log-tag --' + (entry.cls || 'info') + '">[' + escHtml(entry.tag || '') + ']</span>' +
-                      '<span class="log-msg">' + escHtml(entry.msg || '') + '</span>';
-      el.insertBefore(row, el.firstChild);
+      row.innerHTML = '<span class="log-ts">' + esc(e.ts||'') + '</span>' +
+                      '<span class="log-tag --' + (e.cls||'page') + '">[' + esc(e.tag||'') + ']</span>' +
+                      '<span class="log-msg">' + esc(e.msg||'') + '</span>';
+      el.appendChild(row);
     });
     el.scrollTop = el.scrollHeight;
   } catch(e) {}
 })();
 
-// ──────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────
 // Button wiring
-// ──────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────
 document.getElementById('btnConnect').addEventListener('click', doConnect);
+document.getElementById('btnQueryRPC').addEventListener('click', queryRPC);
+document.getElementById('btnPoll').addEventListener('click', pollClient);
 
-document.getElementById('btnQuery').addEventListener('click', queryRPC);
-
-document.getElementById('btnPoll').addEventListener('click', function() {
-  pollClientProperties();
-});
-
-document.getElementById('btnCopyLog').addEventListener('click', function() {
-  var text = _logEntries.map(function(e) {
-    return e.ts + ' [' + e.tag + '] ' + e.msg;
-  }).join('\n');
+document.getElementById('btnCopy').addEventListener('click', function() {
+  var text = _logEntries.map(function(e) { return e.ts + ' [' + e.tag + '] ' + e.msg; }).join('\n');
   if (navigator.clipboard) {
-    navigator.clipboard.writeText(text).then(function() {
-      log('page', 'log copied to clipboard', 'info');
-    });
+    navigator.clipboard.writeText(text).then(function() { log('page', 'log copied', 'page'); });
   } else {
     var ta = document.createElement('textarea');
-    ta.value = text;
-    document.body.appendChild(ta);
-    ta.select();
-    document.execCommand('copy');
-    document.body.removeChild(ta);
-    log('page', 'log copied (fallback)', 'info');
+    ta.value = text; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+    log('page', 'log copied (fallback)', 'page');
   }
 });
 
-document.getElementById('btnClearLog').addEventListener('click', function() {
+document.getElementById('btnClear').addEventListener('click', function() {
   _logEntries = [];
   try { localStorage.removeItem(LS_KEY); } catch(e) {}
   document.getElementById('eventLog').innerHTML = '';
   log('page', 'log cleared', 'page');
 });
 
-// ──────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────
 // Build stamp
-// ──────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────
 fetch('/build-info.json')
   .then(function(r) { return r.json(); })
-  .then(function(info) {
-    document.getElementById('buildStamp').textContent =
-      'build: ' + info.shortCommit + ' — ' + info.buildTime;
-  })
-  .catch(function() {
-    document.getElementById('buildStamp').textContent = 'build: unknown';
-  });
+  .then(function(i) { document.getElementById('buildStamp').textContent = 'build: ' + i.shortCommit + ' — ' + i.buildTime; })
+  .catch(function() { document.getElementById('buildStamp').textContent = 'build: unknown'; });
 
-// ──────────────────────────────────────────────────
-// Page ready
-// ──────────────────────────────────────────────────
-log('page', 'connect-lab ready — host=' + window.location.host, 'page');
-log('page', 'test matrix: Safari warm/cold, PWA warm/cold — 2 runs each', 'info');
+// ─────────────────────────────────────────────────────────
+// Start
+// ─────────────────────────────────────────────────────────
+log('page', 'connect-lab v2 loaded — host=' + window.location.host, 'page');
+log('page', 'architecture: early SDK init · wallet_sessionChanged listener · adopt result directly · no window.ethereum · no IX.connect()', 'page');
+initClientAndRestore();
 </script>
 </body>
 </html>
