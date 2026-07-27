@@ -118,7 +118,7 @@
 <body>
 
 <h1>MetaMask Connect Lab</h1>
-<p class="lab-subtitle">v3 · createEVMClient awaited · api.supportedNetworks · eventHandlers · shape-assertions · no window.ethereum · no IX.connect() · preview only</p>
+<p class="lab-subtitle">v4 · visibility-aware timer · post-return reconcile · 4-min foreground ceiling · no window.ethereum · no IX.connect() · preview only</p>
 
 <!-- Phase indicator -->
 <div class="phase-strip">
@@ -200,23 +200,27 @@
 // ─────────────────────────────────────────────────────────
 // Constants
 // ─────────────────────────────────────────────────────────
-var CHAIN_IDS    = ['0x89'];   // Polygon mainnet
-var BUNDLE_SRC   = '/js/vendor/metamask-connect-evm.browser.js';
-var LS_KEY       = 'ix_connect_lab_v2';
-var WARN_SECS    = 20;
-var TIMEOUT_SECS = 45;
+var CHAIN_IDS            = ['0x89'];   // Polygon mainnet
+var BUNDLE_SRC           = '/js/vendor/metamask-connect-evm.browser.js';
+var LS_KEY               = 'ix_connect_lab_v4';
+var TICK_MS              = 500;            // foreground ticker resolution
+var WARN_FOREGROUND_MS   = 30  * 1000;    // warn after 30s of foreground time
+var MAX_FOREGROUND_MS    = 4   * 60 * 1000; // timeout after 4 min of foreground time
+var RECONCILE_DELAY_MS   = 300;           // pause after page return before reconcile
 
 // ─────────────────────────────────────────────────────────
 // Module state
 // ─────────────────────────────────────────────────────────
-var _client     = null;
-var _provider   = null;
-var _account    = null;
-var _chainId    = null;
-var _connecting = false;
-var _warnTimer  = null;
-var _toTimer    = null;
-var _logEntries = [];
+var _client          = null;
+var _provider        = null;
+var _account         = null;
+var _chainId         = null;
+var _connecting      = false;
+var _tickInterval    = null;   // foreground-time ticker (replaces wall-clock timers)
+var _foregroundMs    = 0;      // accumulated foreground milliseconds during connect
+var _hiddenAt        = null;   // wall timestamp when page became hidden (null if visible)
+var _warnFired       = false;  // tracks whether 30s foreground warning has fired
+var _logEntries      = [];
 
 // ─────────────────────────────────────────────────────────
 // Logging
@@ -501,33 +505,54 @@ async function doConnect() {
   setState('stAccount', 'pending…', 'pending');
   setState('stChain',   'pending…', 'pending');
 
-  _warnTimer = setTimeout(function() {
-    log('timer', WARN_SECS + 's — still waiting for MetaMask approval', 'timer');
-    setBanner('Still waiting (' + WARN_SECS + 's). Approve the connection in MetaMask.', 'waiting');
-  }, WARN_SECS * 1000);
+  // ── Foreground-time ticker ─────────────────────────────────────
+  // Counts only time the page is visible. Suspends while document.hidden.
+  // visibilitychange (below) updates _hiddenAt and triggers reconciliation
+  // when the user returns from MetaMask.
+  _foregroundMs = 0;
+  _warnFired    = false;
+  _hiddenAt     = document.hidden ? Date.now() : null;
 
-  _toTimer = setTimeout(function() {
-    log('timer', TIMEOUT_SECS + 's timeout — connect() did not resolve', 'timer');
-    _connecting = false;
-    setState('stAccount', 'timeout', 'error');
-    setState('stError',   'connect() did not resolve after ' + TIMEOUT_SECS + 's', 'error');
-    setBanner(
-      'connect() did not resolve after ' + TIMEOUT_SECS + 's. ' +
-      'If MetaMask showed "Return to app" but this page stayed stuck, the relay WebSocket was still blocked. ' +
-      'Check DevTools Network for wss:// connections to mm-sdk-relay.api.cx.metamask.io.',
-      'error'
-    );
-    setPhase('connect-requested', 'error');
-    setBtn('Retry Connection', false);
-  }, TIMEOUT_SECS * 1000);
+  _tickInterval = setInterval(function() {
+    if (!_connecting) { clearInterval(_tickInterval); _tickInterval = null; return; }
+    if (document.hidden) return;   // suspended — do not count hidden time
+
+    _foregroundMs += TICK_MS;
+
+    if (!_warnFired && _foregroundMs >= WARN_FOREGROUND_MS) {
+      _warnFired = true;
+      log('timer', Math.round(_foregroundMs / 1000) + 's foreground — still waiting for MetaMask', 'timer');
+      setBanner(
+        'Still waiting (' + Math.round(_foregroundMs / 1000) + 's foreground). ' +
+        'If MetaMask is showing accounts, approve the request and return here.',
+        'waiting'
+      );
+    }
+
+    if (_foregroundMs >= MAX_FOREGROUND_MS) {
+      clearInterval(_tickInterval); _tickInterval = null;
+      if (!_connecting) return;
+      var elapsed = Math.round(_foregroundMs / 1000);
+      log('timer', elapsed + 's foreground ceiling — connect() did not resolve', 'timer');
+      _connecting = false;
+      setState('stAccount', 'TIMEOUT', 'error');
+      setState('stError', 'connect() did not resolve after ' + elapsed + 's of foreground time', 'error');
+      setBanner(
+        'connect() did not resolve after ' + elapsed + 's of active foreground time. ' +
+        'Check DevTools Network for wss:// to mm-sdk-relay.api.cx.metamask.io.',
+        'error'
+      );
+      setPhase('connect-requested', 'error');
+      setBtn('Retry Connection', false);
+    }
+  }, TICK_MS);
 
   try {
     if (!_client) throw new Error('client not initialized — SDK init may have failed');
 
     var result = await _client.connect({ chainIds: CHAIN_IDS });
 
-    clearTimeout(_warnTimer); clearTimeout(_toTimer);
-    _warnTimer = null; _toTimer = null;
+    clearInterval(_tickInterval); _tickInterval = null;
     _connecting = false;
 
     log('resolve', 'connect() resolved: ' + JSON.stringify(result), 'resolve');
@@ -572,8 +597,7 @@ async function doConnect() {
     }
 
   } catch(e) {
-    clearTimeout(_warnTimer); clearTimeout(_toTimer);
-    _warnTimer = null; _toTimer = null;
+    clearInterval(_tickInterval); _tickInterval = null;
     _connecting = false;
 
     log('error', 'connect() threw: ' + e.message, 'error');
@@ -583,6 +607,69 @@ async function doConnect() {
     setBanner((isUserRejection ? 'connect() rejected by user: ' : 'connect() threw: ') + e.message, 'error');
     setPhase('connect-requested', 'error');
     setBtn('Retry Connection', false);
+  }
+}
+
+// ─────────────────────────────────────────────────────────
+// Post-return reconciliation
+// Called when the page becomes visible again while _connecting is true.
+// The iOS app-switch can background Safari before connect() resolves.
+// On return, the SDK may already have the account in its internal state
+// (set by the WalletConnect relay message processed before JS was frozen).
+// ─────────────────────────────────────────────────────────
+function reconcileAfterReturn(source) {
+  if (!_connecting || !_client) {
+    log('restore', 'reconcile skipped — not connecting or no client', 'restore');
+    return;
+  }
+
+  var status = '?';
+  try { status = _client.status; } catch(e) {}
+  log('restore', 'post-return reconcile (' + source + ') — client.status=' + status, 'restore');
+
+  var acc = null, cid = null;
+  try {
+    acc = _client.selectedAccount;
+    cid = _client.selectedChainId;
+    log('restore', 'selectedAccount=' + acc + ' selectedChainId=' + cid, 'restore');
+  } catch(e) {
+    log('restore', 'property read threw: ' + e.message, 'error');
+  }
+
+  if (!acc) {
+    log('restore', 'no account yet — connect() promise may still resolve when JS resumes', 'restore');
+    return;
+  }
+
+  // Account found — confirm via eth_accounts then adopt
+  var provider = null;
+  try { provider = _client.getProvider(); } catch(e) {
+    log('restore', 'getProvider() threw: ' + e.message, 'error');
+  }
+
+  if (provider && typeof provider.request === 'function') {
+    provider.request({ method: 'eth_accounts' }).then(function(accs) {
+      log('restore', 'eth_accounts confirms: ' + JSON.stringify(accs), 'resolve');
+      if (accs && accs.length) {
+        clearInterval(_tickInterval); _tickInterval = null;
+        _connecting = false;
+        setPhase('connect-requested', 'done');
+        setPhase('connect-resolved', 'done');
+        adoptSession(provider, accs[0], cid, 'post-return:' + source);
+      } else {
+        log('restore', 'eth_accounts empty — waiting for connect() promise', 'restore');
+      }
+    }).catch(function(e) {
+      log('restore', 'eth_accounts threw: ' + e.message, 'error');
+    });
+  } else {
+    // No provider yet — adopt from client properties directly
+    log('restore', 'no provider — adopting from client properties', 'restore');
+    clearInterval(_tickInterval); _tickInterval = null;
+    _connecting = false;
+    setPhase('connect-requested', 'done');
+    setPhase('connect-resolved', 'done');
+    adoptSession(null, acc, cid, 'post-return-noprovider:' + source);
   }
 }
 
@@ -639,6 +726,25 @@ function pollClient() {
 // ─────────────────────────────────────────────────────────
 document.addEventListener('visibilitychange', function() {
   log('page', 'visibilitychange → ' + document.visibilityState, 'page');
+
+  if (_connecting) {
+    if (document.hidden) {
+      // Leaving for MetaMask — suspend foreground timer
+      _hiddenAt = Date.now();
+      log('timer', 'page hidden — foreground timer suspended', 'timer');
+      setBanner('In MetaMask — awaiting approval. Approve the request and return here.', 'waiting');
+    } else {
+      // Returned from MetaMask — resume timer, reconcile immediately
+      var hiddenMs = _hiddenAt ? Date.now() - _hiddenAt : 0;
+      _hiddenAt = null;
+      log('page', 'page visible after ' + Math.round(hiddenMs / 1000) + 's hidden — reconciling', 'page');
+      setBanner('Returned from MetaMask — checking session…', 'waiting');
+      setTimeout(function() { reconcileAfterReturn('visibilitychange'); }, RECONCILE_DELAY_MS);
+    }
+    return;  // skip non-connecting poll below
+  }
+
+  // Not connecting — standard session-restore poll
   if (document.visibilityState === 'visible' && _client && !_account) {
     setTimeout(function() { log('page', 'visibility-restore reconcile', 'page'); pollClient(); }, 600);
   }
@@ -647,7 +753,14 @@ document.addEventListener('visibilitychange', function() {
 window.addEventListener('pageshow', function(e) {
   log('page', 'pageshow persisted=' + e.persisted, 'page');
   if (e.persisted && _client) {
-    setTimeout(function() { log('page', 'bfcache-restore reconcile', 'page'); pollClient(); }, 600);
+    if (_connecting) {
+      var hiddenMs = _hiddenAt ? Date.now() - _hiddenAt : 0;
+      _hiddenAt = null;
+      log('page', 'bfcache-restore during connect (' + Math.round(hiddenMs / 1000) + 's hidden) — reconciling', 'page');
+      setTimeout(function() { reconcileAfterReturn('pageshow'); }, RECONCILE_DELAY_MS);
+    } else {
+      setTimeout(function() { log('page', 'bfcache-restore reconcile', 'page'); pollClient(); }, 600);
+    }
   }
 });
 
