@@ -336,14 +336,24 @@ describe('startPolling — lifecycle', () => {
   });
 
   test('in-flight guard prevents overlapping requests', async () => {
-    let inFlightCount = 0;
-    let maxInFlight   = 0;
+    let activeRequests    = 0;
+    let maxActiveRequests = 0;
+    let completedRequests = 0;
 
-    const svc = loadService({
-      fetchImpl: makeSlowResponse(TYPICAL_RESPONSE, 80),
-    });
+    // Instrumented slow fetch: tracks active-request count around each call.
+    const instrumentedFetch = (url, opts) => {
+      activeRequests++;
+      maxActiveRequests = Math.max(maxActiveRequests, activeRequests);
+      return makeSlowResponse(TYPICAL_RESPONSE, 80)(url, opts).finally(() => {
+        activeRequests--;
+        completedRequests++;
+      });
+    };
 
-    // Interval of 20ms << fetch duration of 80ms → intervals pile up without guard
+    const svc = loadService({ fetchImpl: instrumentedFetch });
+
+    // Interval of 20ms << fetch duration of 80ms → 4–5 intervals fire per fetch.
+    // Without the in-flight guard, several requests would be active simultaneously.
     const results = [];
     const id = svc.startPolling(
       (err, tiers) => results.push({ err, tiers }),
@@ -351,16 +361,18 @@ describe('startPolling — lifecycle', () => {
       5000
     );
 
-    await new Promise(r => setTimeout(r, 200)); // span ~10 intervals, ~2 fetch completions
+    await new Promise(r => setTimeout(r, 210)); // span ~10 intervals, ~2 fetch completions
     clearInterval(id);
+    await new Promise(r => setTimeout(r, 10));  // let any in-progress tick drain
 
-    // With in-flight guard, at most ceil(200/80) = 3 requests should have completed,
-    // never two concurrent requests. We verify via result count (no more than 3)
-    // and that we got successes, not overlapping failures.
+    assert.equal(maxActiveRequests, 1,
+      `max concurrent requests must be 1, got ${maxActiveRequests}`);
+    assert.ok(completedRequests >= 2,
+      `expected ≥2 completed requests over 210ms window, got ${completedRequests}`);
     assert.ok(results.length >= 1,
-      'expected at least one successful poll');
+      'expected at least one successful callback');
     assert.ok(results.every(r => r.err === null),
-      'all results should be successes (no overlap races)');
+      'all callbacks must report success');
   });
 
   test('stop old loop, start new loop — only new loop fires after restart', async () => {
