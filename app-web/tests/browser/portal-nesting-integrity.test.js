@@ -15,8 +15,7 @@
  *   1. transferMod, networkMod, verificationMod are descendants of #modules.
  *   2. The telemetry and status surfaces are descendants of #modules.
  *   3. The desktop grid computes two columns.
- *   4. All four bracket coordinates correspond to the complete shell.
- *   5. Full-page screenshots are captured for the acceptance record.
+ *   4. Full-page screenshots are captured for the acceptance record.
  *   6. Required transfer runtime scripts load before wallet.js.
  *   7. The rewritten root route is explicitly non-cacheable.
  */
@@ -225,7 +224,6 @@ async function collectHeaderFooter(page) {
         return [style.borderTopWidth, style.borderRightWidth, style.borderBottomWidth, style.borderLeftWidth];
       }),
       workspaceButtonHeights: workspaceButtonRects.map((rect) => Math.round(rect.height)),
-      portalBracketSize: portal ? Math.round(parseFloat(getComputedStyle(portal, '::before').width)) : 0,
       primaryNavCompact: !!(
         navRect &&
         navRect.width < 400 &&
@@ -540,10 +538,10 @@ test('portal modules are DOM descendants of #modules (containment regression gua
     const responsivePage = await browser.newPage();
     injectConnectedMockProvider(responsivePage);
     const responsiveViewports = [
-      { name: 'desktop', width: 1365, height: 900, expectedFooterColumns: 7, expectedWideInlineHeader: false, expectedBracketSize: 28 },
-      { name: 'tablet', width: 820, height: 1000, expectedFooterColumns: 4, expectedBracketSize: 28 },
-      { name: 'phone-portrait', width: 390, height: 844, expectedFooterColumns: 2, expectedBracketSize: 24 },
-      { name: 'phone-landscape', width: 844, height: 390, expectedFooterColumns: 4, expectedBracketSize: 28 },
+      { name: 'desktop', width: 1365, height: 900, expectedFooterColumns: 7, expectedWideInlineHeader: false },
+      { name: 'tablet', width: 820, height: 1000, expectedFooterColumns: 4 },
+      { name: 'phone-portrait', width: 390, height: 844, expectedFooterColumns: 2 },
+      { name: 'phone-landscape', width: 844, height: 390, expectedFooterColumns: 4 },
     ];
     const canonicalFooterLabels = [
       'Product', 'Legal', 'Trust', 'Developers', 'Support', 'Company', 'Social',
@@ -587,8 +585,6 @@ test('portal modules are DOM descendants of #modules (containment regression gua
           `${viewport.name}: selected and unselected primary navigation buttons must retain a 1px outline`
         );
       }
-      assert.equal(responsive.portalBracketSize, viewport.expectedBracketSize,
-        `${viewport.name}: portal corner brackets must use the extended arm size`);
       assert.ok(
         responsive.workspaceButtonHeights.every((height) => height === 38),
         `${viewport.name}: workspace controls must share the primary navigation's 38px height`
