@@ -584,9 +584,14 @@
       --ix-border: #d3d9da;
       --ix-border-strong: #b8c1c3;
       --ix-graphite: #202629;
-      --ix-teal: #5f9892;
-      --ix-teal-soft: #dcebea;
-      --ix-teal-strong: #467b76;
+      /* Portal accent aliases: consume canonical Tourmaline tokens from main.css.
+         --ix-teal and --ix-teal-strong are kept as aliases so portal selectors
+         below need no changes. Both map to --accent; the teal/teal-strong
+         distinction is not preserved because Tourmaline serves both roles. */
+      --ix-teal:        var(--accent);
+      --ix-teal-strong: var(--accent);
+      /* Focus halo — translucent overlay; derived from Tourmaline light #35454A. */
+      --control-focus:  rgba(53, 69, 74, 0.32);
       --ix-radius-sm: 6px;
       --ix-radius-md: 8px;
       --ix-radius-lg: 12px;
@@ -599,10 +604,6 @@
       --muted: var(--ix-text-muted);
       --border: var(--ix-border);
       --border-2: var(--ix-border-strong);
-      --accent: var(--ix-teal-strong);
-      --accent-dim: rgba(70, 123, 118, 0.78);
-      --accent-border: rgba(70, 123, 118, 0.34);
-      --control-focus: rgba(70, 123, 118, 0.42);
       font-size: 14px;
     }
 
@@ -618,13 +619,11 @@
       --ix-border: #3b4649;
       --ix-border-strong: #566266;
       --ix-graphite: #202629;
-      --ix-teal: #6ca7a1;
-      --ix-teal-soft: #29413f;
-      --ix-teal-strong: #86bbb6;
-      --accent: var(--ix-teal);
-      --accent-dim: rgba(134, 187, 182, 0.84);
-      --accent-border: rgba(134, 187, 182, 0.38);
-      --control-focus: rgba(134, 187, 182, 0.44);
+      /* Focus halo — dark-mode variant; derived from Tourmaline dark #6F8B95. */
+      --control-focus:  rgba(111, 139, 149, 0.38);
+      /* --ix-teal and --ix-teal-strong inherit the var(--accent) alias from the
+         light-mode block above; --accent resolves to #6F8B95 in dark mode via
+         main.css :root, so no override is needed here. */
     }
 
     body[data-portal-shell="direct"] .portal-zone {
