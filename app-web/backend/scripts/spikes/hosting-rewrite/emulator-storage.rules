@@ -1,0 +1,22 @@
+// Storage security rules for the hosting-rewrite spike emulator.
+//
+// Purpose: prove that unauthenticated direct-URL access to the artifact bucket
+// is denied (criterion 7 of the routing proof). The spike function (Admin SDK)
+// bypasses these rules; unauthenticated HTTP requests are blocked.
+//
+// The production bucket uses GCS IAM (not Firebase Storage Rules). These emulator
+// rules approximate the IAM policy behavior for the routing proof only.
+//
+// DO NOT use these rules in any production or staging Firebase project.
+
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /{allPaths=**} {
+      // Deny all unauthenticated public access.
+      // The spike function uses the Admin SDK, which bypasses these rules.
+      // Direct HTTP requests (e.g., curl to the storage emulator URL) are denied.
+      allow read, write: if request.auth != null;
+    }
+  }
+}

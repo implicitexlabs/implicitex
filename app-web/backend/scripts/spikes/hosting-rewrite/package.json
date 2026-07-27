@@ -1,0 +1,16 @@
+{
+  "name": "coincard-hosting-rewrite-spike-scripts",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Seed and verify scripts for the hosting-rewrite routing proof.",
+  "scripts": {
+    "seed": "node seed-fixtures.js",
+    "verify": "node verify.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.0.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
