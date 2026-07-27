@@ -118,7 +118,7 @@
 <body>
 
 <h1>MetaMask Connect Lab</h1>
-<p class="lab-subtitle">v2 · relay CSP added · early SDK init · wallet_sessionChanged · no window.ethereum · no IX.connect() · preview only</p>
+<p class="lab-subtitle">v3 · createEVMClient awaited · api.supportedNetworks · eventHandlers · shape-assertions · no window.ethereum · no IX.connect() · preview only</p>
 
 <!-- Phase indicator -->
 <div class="phase-strip">
@@ -379,46 +379,64 @@ async function initClientAndRestore() {
       throw new Error('createEVMClient not found — SDK keys: ' + Object.keys(SDK || {}).join(', '));
     }
 
-    _client = createFn({
+    // ── createEVMClient is async — must be awaited ────────────────
+    // Passing api.supportedNetworks is required by the SDK.
+    // wallet_sessionChanged and lifecycle events go through eventHandlers,
+    // not through client.on() (which does not exist on the returned object).
+    _client = await createFn({
       logging: true,
-      analytics: { enabled: false },   // avoids needing analytics origin in CSP
+      analytics: { enabled: false },
       checkInstallationImmediately: false,
+      api: {
+        supportedNetworks: {
+          '0x89': 'https://polygon-rpc.com'   // Polygon mainnet
+        }
+      },
+      dapp: {
+        name: 'ImplicitEx Portal',
+        url:  'https://portal.implicitex.com',
+      },
+      eventHandlers: {
+        connect: function(info) {
+          log('event', 'eventHandlers.connect: accounts=' + JSON.stringify((info||{}).accounts) + ' chainId=' + (info||{}).chainId, 'event');
+        },
+        disconnect: function() {
+          log('event', 'eventHandlers.disconnect fired', 'event');
+          if (_account) { setState('stAccount', '(disconnected)', 'error'); setPhase('lab-connected', 'error'); }
+        },
+        chainChanged: function(cid) {
+          log('event', 'eventHandlers.chainChanged: ' + cid, 'event');
+          _chainId = cid;
+          setState('stChain', cid, cid === '0x89' ? 'ok' : 'pending');
+        },
+        accountsChanged: function(accs) {
+          log('event', 'eventHandlers.accountsChanged: ' + JSON.stringify(accs), 'event');
+          if (accs && accs.length) {
+            _account = accs[0];
+            setState('stAccount', _account, 'ok');
+          }
+        },
+        displayUri: function(uri) {
+          log('event', 'eventHandlers.displayUri: ' + String(uri).slice(0, 60), 'event');
+        }
+      }
     });
 
-    log('init', 'client created — keys: ' + Object.keys(_client || {}).join(', '), 'init');
+    // ── Shape assertion — fail here, not silently at connect time ──
+    var _proto = Object.getOwnPropertyNames(Object.getPrototypeOf(_client) || {});
+    log('init', 'client proto methods: ' + _proto.join(', '), 'init');
+    log('init', 'typeof connect=' + typeof _client.connect + ' getProvider=' + typeof _client.getProvider + ' disconnect=' + typeof _client.disconnect, 'init');
+
+    if (typeof _client.connect !== 'function' || typeof _client.getProvider !== 'function') {
+      throw new Error(
+        'API contract mismatch — connect=' + typeof _client.connect +
+        ' getProvider=' + typeof _client.getProvider +
+        ' (bundle/version incompatibility)'
+      );
+    }
+    log('init', 'shape assertions passed', 'init');
     setPhase('client-initializing', 'done');
     setPhase('client-ready', 'active');
-
-    // ── Register wallet_sessionChanged immediately ─────────────────
-    // MetaMask Connect restores sessions asynchronously post-load.
-    // If this event fires with a valid session we adopt it directly,
-    // without issuing a second connect() call.
-    if (_client && typeof _client.on === 'function') {
-      _client.on('wallet_sessionChanged', function(session) {
-        log('restore', 'wallet_sessionChanged: ' + JSON.stringify(session), 'restore');
-        if (session && session.namespaces) {
-          try {
-            var p    = _client.getProvider();
-            var accs = _client.accounts || [];
-            var cid  = _client.selectedChainId;
-            var acc  = _client.selectedAccount || accs[0];
-            if (acc && p) {
-              log('restore', 'adopting async-restored session: account=' + acc, 'restore');
-              setPhase('restore-waiting', 'done');
-              setPhase('session-restored', 'done');
-              adoptSession(p, acc, cid, 'wallet_sessionChanged');
-              return;
-            }
-          } catch(e) {
-            log('restore', 'getProvider() after sessionChanged threw: ' + e.message, 'error');
-          }
-        }
-        log('restore', 'wallet_sessionChanged — no adoptable session in payload', 'restore');
-      });
-    } else {
-      log('init', 'client.on not available — skipping wallet_sessionChanged', 'init');
-    }
-
     setPhase('client-ready', 'done');
     setPhase('restore-waiting', 'active');
     log('restore', 'checking for synchronous existing session', 'restore');
@@ -558,10 +576,11 @@ async function doConnect() {
     _warnTimer = null; _toTimer = null;
     _connecting = false;
 
-    log('error', 'connect() rejected: ' + e.message, 'error');
-    setState('stAccount', 'rejected', 'error');
+    log('error', 'connect() threw: ' + e.message, 'error');
+    var isUserRejection = e && (e.code === 4001 || (typeof e.message === 'string' && e.message.toLowerCase().includes('user rejected')));
+    setState('stAccount', isUserRejection ? 'rejected' : 'LAB ERROR', 'error');
     setState('stError',   e.message,  'error');
-    setBanner('connect() rejected: ' + e.message, 'error');
+    setBanner((isUserRejection ? 'connect() rejected by user: ' : 'connect() threw: ') + e.message, 'error');
     setPhase('connect-requested', 'error');
     setBtn('Retry Connection', false);
   }
