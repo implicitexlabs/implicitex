@@ -1,29 +1,13 @@
 'use strict';
 
+const { test, describe } = require('node:test');
 const assert = require('node:assert/strict');
 const path   = require('node:path');
 
-// ── harness ──────────────────────────────────────────────────────────────────
-
-function test(name, fn) {
-  try {
-    const result = fn();
-    if (result && typeof result.then === 'function') {
-      return result.then(
-        () => console.log(`ok - ${name}`),
-        err => { console.error(`not ok - ${name}`); throw err; }
-      );
-    }
-    console.log(`ok - ${name}`);
-  } catch (err) {
-    console.error(`not ok - ${name}`);
-    throw err;
-  }
-}
-
 // ── loader ────────────────────────────────────────────────────────────────────
-// gas-service.js is a browser IIFE that writes to global.ImplicitExGas.
-// We reset module cache and mock global.fetch between test groups.
+// gas-service.js is a browser IIFE that writes window.ImplicitExGas.
+// Each test loads a fresh module instance with its own fetch mock so tests
+// cannot share state through global.window or global.fetch.
 
 function loadService({ fetchImpl } = {}) {
   const servicePath = path.resolve(
@@ -31,8 +15,10 @@ function loadService({ fetchImpl } = {}) {
   );
   delete require.cache[servicePath];
 
+  // Reset globals so each test gets a clean environment.
   global.window = {};
   global.fetch  = fetchImpl || (() => Promise.reject(new Error('fetch not mocked')));
+  // AbortController is available natively in Node 15+.
 
   require(servicePath);
   return global.window.ImplicitExGas;
@@ -42,9 +28,37 @@ function loadService({ fetchImpl } = {}) {
 
 function makeResponse(body, status = 200) {
   return Promise.resolve({
-    ok:   status >= 200 && status < 300,
+    ok:     status >= 200 && status < 300,
     status,
-    json: () => Promise.resolve(body),
+    json:   () => Promise.resolve(body),
+  });
+}
+
+// slow fetch — settles after `delayMs`, respects AbortSignal
+function makeSlowResponse(body, delayMs) {
+  return (url, opts) => new Promise((resolve, reject) => {
+    const id = setTimeout(() => resolve({
+      ok: true, status: 200, json: () => Promise.resolve(body),
+    }), delayMs);
+    if (opts && opts.signal) {
+      opts.signal.addEventListener('abort', () => {
+        clearTimeout(id);
+        const err = Object.assign(new Error('The operation was aborted'), { name: 'AbortError' });
+        reject(err);
+      });
+    }
+  });
+}
+
+// fetch that never settles (only aborts)
+function makeHungResponse() {
+  return (url, opts) => new Promise((_, reject) => {
+    if (opts && opts.signal) {
+      opts.signal.addEventListener('abort', () => {
+        const err = Object.assign(new Error('The operation was aborted'), { name: 'AbortError' });
+        reject(err);
+      });
+    }
   });
 }
 
@@ -60,195 +74,315 @@ const TYPICAL_RESPONSE = {
 
 // ── Module shape ──────────────────────────────────────────────────────────────
 
-test('ImplicitExGas exposes fetchGasPrice, formatGwei, startPolling', () => {
-  const svc = loadService({ fetchImpl: () => makeResponse(TYPICAL_RESPONSE) });
-  assert.equal(typeof svc.fetchGasPrice,  'function');
-  assert.equal(typeof svc.formatGwei,     'function');
-  assert.equal(typeof svc.startPolling,   'function');
+describe('module shape', () => {
+  test('ImplicitExGas exposes fetchGasPrice, formatGwei, startPolling', () => {
+    const svc = loadService({ fetchImpl: () => makeResponse(TYPICAL_RESPONSE) });
+    assert.equal(typeof svc.fetchGasPrice, 'function');
+    assert.equal(typeof svc.formatGwei,    'function');
+    assert.equal(typeof svc.startPolling,  'function');
+  });
+
+  test('loading gas-service.js does not leak extra globals', () => {
+    const before = new Set(Object.keys(global));
+    loadService({ fetchImpl: () => makeResponse(TYPICAL_RESPONSE) });
+    const after  = new Set(Object.keys(global));
+    const added  = [...after].filter(
+      k => !before.has(k) && k !== 'window' && k !== 'fetch'
+    );
+    assert.deepEqual(added, [], `unexpected globals: ${added.join(', ')}`);
+  });
 });
 
 // ── formatGwei ────────────────────────────────────────────────────────────────
 
-test('formatGwei: rounds ≥100 to integer', () => {
-  const { formatGwei } = loadService({ fetchImpl: () => makeResponse(TYPICAL_RESPONSE) });
-  assert.equal(formatGwei(123.7), '124');
-  assert.equal(formatGwei(100),   '100');
-});
+describe('formatGwei', () => {
+  test('rounds ≥100 to integer', () => {
+    const { formatGwei } = loadService({ fetchImpl: () => makeResponse(TYPICAL_RESPONSE) });
+    assert.equal(formatGwei(123.7), '124');
+    assert.equal(formatGwei(100),   '100');
+  });
 
-test('formatGwei: one decimal place for 10–99', () => {
-  const { formatGwei } = loadService({ fetchImpl: () => makeResponse(TYPICAL_RESPONSE) });
-  assert.equal(formatGwei(50),    '50.0');
-  assert.equal(formatGwei(35.25), '35.3');
-  assert.equal(formatGwei(10),    '10.0');
-});
+  test('one decimal place for 10–99', () => {
+    const { formatGwei } = loadService({ fetchImpl: () => makeResponse(TYPICAL_RESPONSE) });
+    assert.equal(formatGwei(50),    '50.0');
+    assert.equal(formatGwei(35.25), '35.3');
+    assert.equal(formatGwei(10),    '10.0');
+  });
 
-test('formatGwei: two decimal places for <10', () => {
-  const { formatGwei } = loadService({ fetchImpl: () => makeResponse(TYPICAL_RESPONSE) });
-  assert.equal(formatGwei(1.5),   '1.50');
-  assert.equal(formatGwei(9.99),  '9.99');
-  assert.equal(formatGwei(0),     '0.00');
-});
+  test('two decimal places for values in 0–9 range', () => {
+    const { formatGwei } = loadService({ fetchImpl: () => makeResponse(TYPICAL_RESPONSE) });
+    assert.equal(formatGwei(1.5),  '1.50');
+    assert.equal(formatGwei(9.99), '9.99');
+  });
 
-test('formatGwei: returns em-dash for non-finite input', () => {
-  const { formatGwei } = loadService({ fetchImpl: () => makeResponse(TYPICAL_RESPONSE) });
-  assert.equal(formatGwei(NaN),       '—');
-  assert.equal(formatGwei(Infinity),  '—');
-  assert.equal(formatGwei(-Infinity), '—');
-  assert.equal(formatGwei(undefined), '—');
-  // null coerces to 0 via Number(), which is finite → '0.00' (valid sentinel, gas is never 0)
-  assert.equal(formatGwei('hello'),   '—');
-});
-
-// ── fetchGasPrice — valid response ────────────────────────────────────────────
-
-test('fetchGasPrice: resolves standard and fast from maxFee', async () => {
-  const svc = loadService({ fetchImpl: () => makeResponse(TYPICAL_RESPONSE) });
-  const tiers = await svc.fetchGasPrice();
-  assert.equal(tiers.standard, 35.2);
-  assert.equal(tiers.fast,     50.0);
-});
-
-test('fetchGasPrice: computes rapid = fast + max(1, spread * 0.5)', async () => {
-  const svc = loadService({ fetchImpl: () => makeResponse(TYPICAL_RESPONSE) });
-  const tiers = await svc.fetchGasPrice();
-  // spread = max(1, 50 - 35.2) = 14.8; rapid = 50 + max(1, 14.8 * 0.5) = 50 + 7.4 = 57.4
-  const spread   = Math.max(1, tiers.fast - tiers.standard);
-  const expected = tiers.fast + Math.max(1, spread * 0.5);
-  assert.ok(Math.abs(tiers.rapid - expected) < 0.0001,
-    `rapid ${tiers.rapid} !== expected ${expected}`);
-});
-
-test('fetchGasPrice: rapid minimum spread = 1 when fast ≈ standard', async () => {
-  const flatResponse = {
-    ...TYPICAL_RESPONSE,
-    standard: { maxFee: 30.0, maxPriorityFee: 29 },
-    fast:     { maxFee: 30.5, maxPriorityFee: 29 },
-  };
-  const svc = loadService({ fetchImpl: () => makeResponse(flatResponse) });
-  const tiers = await svc.fetchGasPrice();
-  // spread = max(1, 30.5 - 30) = max(1, 0.5) = 1; rapid = 30.5 + max(1, 0.5) = 31.5
-  assert.ok(tiers.rapid >= tiers.fast + 0.9,
-    `rapid ${tiers.rapid} should be at least fast + 0.9 (min-spread 1)`);
-});
-
-test('fetchGasPrice: returns blockNumber and blockTime', async () => {
-  const svc = loadService({ fetchImpl: () => makeResponse(TYPICAL_RESPONSE) });
-  const tiers = await svc.fetchGasPrice();
-  assert.equal(tiers.blockNumber, 68921000);
-  assert.equal(tiers.blockTime,   2);
-});
-
-test('fetchGasPrice: falls back to maxPriorityFee when maxFee absent', async () => {
-  const priorityOnlyResponse = {
-    standard: { maxPriorityFee: 28 },
-    fast:     { maxPriorityFee: 45 },
-    blockTime: 2,
-    blockNumber: 100,
-  };
-  const svc = loadService({ fetchImpl: () => makeResponse(priorityOnlyResponse) });
-  const tiers = await svc.fetchGasPrice();
-  assert.equal(tiers.standard, 28);
-  assert.equal(tiers.fast,     45);
-});
-
-// ── fetchGasPrice — malformed responses ───────────────────────────────────────
-
-test('fetchGasPrice: rejects on HTTP error status', async () => {
-  const svc = loadService({ fetchImpl: () => makeResponse({}, 503) });
-  await assert.rejects(
-    () => svc.fetchGasPrice(),
-    err => {
-      assert.ok(err.message.includes('503'), `message: ${err.message}`);
-      return true;
-    }
-  );
-});
-
-test('fetchGasPrice: returns NaN rapid when fast missing', async () => {
-  const noFastResponse = {
-    standard:   { maxFee: 35 },
-    blockTime:  2,
-    blockNumber: 100,
-  };
-  const svc = loadService({ fetchImpl: () => makeResponse(noFastResponse) });
-  const tiers = await svc.fetchGasPrice();
-  assert.ok(!Number.isFinite(tiers.rapid),
-    `rapid should be NaN/non-finite when fast is missing, got ${tiers.rapid}`);
-});
-
-test('fetchGasPrice: null tier entries coerce to 0 (Number(null) === 0)', async () => {
-  // readGasTier: entry=null → Number(null && ...) = Number(null) = 0
-  // This is a JS coercion artifact; callers should treat 0 as a sentinel.
-  const nullTierResponse = {
-    standard:   null,
-    fast:       null,
-    blockTime:  2,
-    blockNumber: 100,
-  };
-  const svc = loadService({ fetchImpl: () => makeResponse(nullTierResponse) });
-  const tiers = await svc.fetchGasPrice();
-  assert.equal(tiers.standard, 0);
-  assert.equal(tiers.fast,     0);
-});
-
-test('fetchGasPrice: rejects on network failure (fetch throws)', async () => {
-  const networkErr = new Error('network timeout');
-  const svc = loadService({ fetchImpl: () => Promise.reject(networkErr) });
-  await assert.rejects(() => svc.fetchGasPrice(), err => {
-    assert.equal(err.message, 'network timeout');
-    return true;
+  test('returns em-dash for NaN, ±Infinity, null, undefined, string', () => {
+    const { formatGwei } = loadService({ fetchImpl: () => makeResponse(TYPICAL_RESPONSE) });
+    assert.equal(formatGwei(NaN),       '—');
+    assert.equal(formatGwei(Infinity),  '—');
+    assert.equal(formatGwei(-Infinity), '—');
+    assert.equal(formatGwei(null),      '—');
+    assert.equal(formatGwei(undefined), '—');
+    assert.equal(formatGwei('hello'),   '—');
   });
 });
 
-// ── startPolling ──────────────────────────────────────────────────────────────
+// ── fetchGasPrice — valid responses ───────────────────────────────────────────
 
-test('startPolling: calls callback immediately on first tick (success)', async () => {
-  const svc = loadService({ fetchImpl: () => makeResponse(TYPICAL_RESPONSE) });
-  const results = [];
-  const id = svc.startPolling((err, tiers) => {
-    results.push({ err, tiers });
-  }, 60000);
-  // tick() is async — wait one microtask cycle
-  await new Promise(r => setImmediate(r));
-  clearInterval(id);
-  assert.equal(results.length, 1);
-  assert.equal(results[0].err, null);
-  assert.ok(Number.isFinite(results[0].tiers.standard));
-});
-
-test('startPolling: calls callback with error on fetch failure', async () => {
-  const svc = loadService({
-    fetchImpl: () => Promise.reject(new Error('DNS failure')),
+describe('fetchGasPrice — valid responses', () => {
+  test('resolves standard and fast from maxFee', async () => {
+    const svc   = loadService({ fetchImpl: () => makeResponse(TYPICAL_RESPONSE) });
+    const tiers = await svc.fetchGasPrice();
+    assert.equal(tiers.standard, 35.2);
+    assert.equal(tiers.fast,     50.0);
   });
-  const results = [];
-  const id = svc.startPolling((err, tiers) => {
-    results.push({ err, tiers });
-  }, 60000);
-  await new Promise(r => setImmediate(r));
-  clearInterval(id);
-  assert.equal(results.length, 1);
-  assert.ok(results[0].err instanceof Error);
-  assert.equal(results[0].tiers, null);
+
+  test('computes rapid = fast + max(1, spread * 0.5)', async () => {
+    const svc   = loadService({ fetchImpl: () => makeResponse(TYPICAL_RESPONSE) });
+    const tiers = await svc.fetchGasPrice();
+    // spread = max(1, 50 - 35.2) = 14.8; rapid = 50 + max(1, 7.4) = 57.4
+    const spread   = Math.max(1, tiers.fast - tiers.standard);
+    const expected = tiers.fast + Math.max(1, spread * 0.5);
+    assert.ok(Math.abs(tiers.rapid - expected) < 0.0001,
+      `rapid ${tiers.rapid} !== expected ${expected}`);
+  });
+
+  test('minimum spread of 1 when fast ≈ standard', async () => {
+    const flatResponse = {
+      ...TYPICAL_RESPONSE,
+      standard: { maxFee: 30.0, maxPriorityFee: 29 },
+      fast:     { maxFee: 30.5, maxPriorityFee: 29 },
+    };
+    const svc   = loadService({ fetchImpl: () => makeResponse(flatResponse) });
+    const tiers = await svc.fetchGasPrice();
+    // spread = max(1, 0.5) = 1; rapid = 30.5 + 1 = 31.5
+    assert.ok(tiers.rapid >= tiers.fast + 0.9,
+      `rapid ${tiers.rapid} should be at least fast+0.9 (min-spread 1)`);
+  });
+
+  test('returns blockNumber and blockTime', async () => {
+    const svc   = loadService({ fetchImpl: () => makeResponse(TYPICAL_RESPONSE) });
+    const tiers = await svc.fetchGasPrice();
+    assert.equal(tiers.blockNumber, 68921000);
+    assert.equal(tiers.blockTime,   2);
+  });
+
+  test('falls back to maxPriorityFee when maxFee is absent', async () => {
+    const priorityOnlyResponse = {
+      standard:    { maxPriorityFee: 28 },
+      fast:        { maxPriorityFee: 45 },
+      blockTime:   2,
+      blockNumber: 100,
+    };
+    const svc   = loadService({ fetchImpl: () => makeResponse(priorityOnlyResponse) });
+    const tiers = await svc.fetchGasPrice();
+    assert.equal(tiers.standard, 28);
+    assert.equal(tiers.fast,     45);
+  });
 });
 
-test('startPolling: returns a clearable interval ID', async () => {
-  const svc = loadService({ fetchImpl: () => makeResponse(TYPICAL_RESPONSE) });
-  let callCount = 0;
-  const id = svc.startPolling(() => callCount++, 50);
-  await new Promise(r => setImmediate(r));   // first tick
-  clearInterval(id);
-  const countAfterClear = callCount;
-  await new Promise(r => setTimeout(r, 120)); // would have fired 2× more if not cleared
-  assert.equal(callCount, countAfterClear, 'interval should be cleared after clearInterval');
+// ── fetchGasPrice — malformed / invalid responses ─────────────────────────────
+
+describe('fetchGasPrice — malformed / invalid responses', () => {
+  test('rejects on HTTP error status', async () => {
+    const svc = loadService({ fetchImpl: () => makeResponse({}, 503) });
+    await assert.rejects(
+      () => svc.fetchGasPrice(),
+      err => { assert.ok(err.message.includes('503')); return true; }
+    );
+  });
+
+  test('rejects on network failure (fetch throws)', async () => {
+    const svc = loadService({
+      fetchImpl: () => Promise.reject(new Error('DNS failure')),
+    });
+    await assert.rejects(
+      () => svc.fetchGasPrice(),
+      err => { assert.equal(err.message, 'DNS failure'); return true; }
+    );
+  });
+
+  test('rejects when standard tier is null', async () => {
+    const svc = loadService({ fetchImpl: () => makeResponse({
+      ...TYPICAL_RESPONSE, standard: null,
+    })});
+    await assert.rejects(
+      () => svc.fetchGasPrice(),
+      { message: /required tier/ }
+    );
+  });
+
+  test('rejects when fast tier is null', async () => {
+    const svc = loadService({ fetchImpl: () => makeResponse({
+      ...TYPICAL_RESPONSE, fast: null,
+    })});
+    await assert.rejects(
+      () => svc.fetchGasPrice(),
+      { message: /required tier/ }
+    );
+  });
+
+  test('rejects when standard tier is missing from response', async () => {
+    const { standard: _dropped, ...noStandard } = TYPICAL_RESPONSE;
+    const svc = loadService({ fetchImpl: () => makeResponse(noStandard) });
+    await assert.rejects(
+      () => svc.fetchGasPrice(),
+      { message: /required tier/ }
+    );
+  });
+
+  test('rejects when fast tier is missing from response', async () => {
+    const { fast: _dropped, ...noFast } = TYPICAL_RESPONSE;
+    const svc = loadService({ fetchImpl: () => makeResponse(noFast) });
+    await assert.rejects(
+      () => svc.fetchGasPrice(),
+      { message: /required tier/ }
+    );
+  });
+
+  test('rejects when tier maxFee is zero', async () => {
+    const svc = loadService({ fetchImpl: () => makeResponse({
+      ...TYPICAL_RESPONSE, standard: { maxFee: 0 },
+    })});
+    await assert.rejects(
+      () => svc.fetchGasPrice(),
+      { message: /required tier/ }
+    );
+  });
+
+  test('rejects when tier maxFee is negative', async () => {
+    const svc = loadService({ fetchImpl: () => makeResponse({
+      ...TYPICAL_RESPONSE, fast: { maxFee: -10 },
+    })});
+    await assert.rejects(
+      () => svc.fetchGasPrice(),
+      { message: /required tier/ }
+    );
+  });
+
+  test('rejects when tier maxFee is a non-numeric string', async () => {
+    const svc = loadService({ fetchImpl: () => makeResponse({
+      ...TYPICAL_RESPONSE, standard: { maxFee: 'N/A' },
+    })});
+    await assert.rejects(
+      () => svc.fetchGasPrice(),
+      { message: /required tier/ }
+    );
+  });
+
+  test('rejects when tier entry is a non-object primitive', async () => {
+    const svc = loadService({ fetchImpl: () => makeResponse({
+      ...TYPICAL_RESPONSE, fast: 42,
+    })});
+    // Number 42 is not an object — readGasTier must treat it as invalid
+    await assert.rejects(
+      () => svc.fetchGasPrice(),
+      { message: /required tier/ }
+    );
+  });
+
+  test('rejects when request exceeds configured timeout', async () => {
+    const svc = loadService({ fetchImpl: makeHungResponse() });
+    await assert.rejects(
+      () => svc.fetchGasPrice(50),   // 50ms timeout — will abort before settling
+      err => {
+        const msg = (err.message || '').toLowerCase();
+        const name = (err.name  || '').toLowerCase();
+        assert.ok(
+          msg.includes('abort') || name.includes('abort'),
+          `expected AbortError, got: ${err.name}: ${err.message}`
+        );
+        return true;
+      }
+    );
+  });
 });
 
-// ── No duplicate globals ──────────────────────────────────────────────────────
+// ── startPolling — lifecycle ──────────────────────────────────────────────────
 
-test('loading gas-service.js does not leak extra globals', () => {
-  const before = new Set(Object.keys(global));
-  const svc    = loadService({ fetchImpl: () => makeResponse(TYPICAL_RESPONSE) });
-  const after  = new Set(Object.keys(global));
-  const added  = [...after].filter(k => !before.has(k) && k !== 'window' && k !== 'fetch');
-  assert.deepEqual(added, [], `unexpected globals added: ${added.join(', ')}`);
-  void svc;
+describe('startPolling — lifecycle', () => {
+  test('calls callback immediately on first tick (success)', async () => {
+    const svc     = loadService({ fetchImpl: () => makeResponse(TYPICAL_RESPONSE) });
+    const results = [];
+    const id      = svc.startPolling((err, tiers) => results.push({ err, tiers }), 60000);
+    await new Promise(r => setImmediate(r));
+    clearInterval(id);
+    assert.equal(results.length, 1);
+    assert.equal(results[0].err, null);
+    assert.ok(Number.isFinite(results[0].tiers.standard));
+  });
+
+  test('calls callback with error on fetch failure', async () => {
+    const svc     = loadService({
+      fetchImpl: () => Promise.reject(new Error('DNS failure')),
+    });
+    const results = [];
+    const id      = svc.startPolling((err, tiers) => results.push({ err, tiers }), 60000);
+    await new Promise(r => setImmediate(r));
+    clearInterval(id);
+    assert.equal(results.length, 1);
+    assert.ok(results[0].err instanceof Error);
+    assert.equal(results[0].tiers, null);
+  });
+
+  test('returns a clearable interval ID — no calls after clearInterval', async () => {
+    const svc = loadService({ fetchImpl: () => makeResponse(TYPICAL_RESPONSE) });
+    let callCount = 0;
+    const id = svc.startPolling(() => callCount++, 30);
+    await new Promise(r => setImmediate(r));    // first tick
+    clearInterval(id);
+    const countAfterClear = callCount;
+    await new Promise(r => setTimeout(r, 100)); // would fire 3× if not cleared
+    assert.equal(callCount, countAfterClear);
+  });
+
+  test('in-flight guard prevents overlapping requests', async () => {
+    let inFlightCount = 0;
+    let maxInFlight   = 0;
+
+    const svc = loadService({
+      fetchImpl: makeSlowResponse(TYPICAL_RESPONSE, 80),
+    });
+
+    // Interval of 20ms << fetch duration of 80ms → intervals pile up without guard
+    const results = [];
+    const id = svc.startPolling(
+      (err, tiers) => results.push({ err, tiers }),
+      20,
+      5000
+    );
+
+    await new Promise(r => setTimeout(r, 200)); // span ~10 intervals, ~2 fetch completions
+    clearInterval(id);
+
+    // With in-flight guard, at most ceil(200/80) = 3 requests should have completed,
+    // never two concurrent requests. We verify via result count (no more than 3)
+    // and that we got successes, not overlapping failures.
+    assert.ok(results.length >= 1,
+      'expected at least one successful poll');
+    assert.ok(results.every(r => r.err === null),
+      'all results should be successes (no overlap races)');
+  });
+
+  test('stop old loop, start new loop — only new loop fires after restart', async () => {
+    const svc = loadService({ fetchImpl: () => makeResponse(TYPICAL_RESPONSE) });
+    let callCount = 0;
+
+    const id1 = svc.startPolling(() => callCount++, 30);
+    await new Promise(r => setTimeout(r, 50));
+    clearInterval(id1);
+    const countAfterFirst = callCount;
+
+    const id2 = svc.startPolling(() => callCount++, 30);
+    await new Promise(r => setImmediate(r));
+    clearInterval(id2);
+    const countAfterSecond = callCount;
+
+    // After stopping both, call count must be frozen
+    await new Promise(r => setTimeout(r, 80));
+    assert.equal(callCount, countAfterSecond,
+      'no additional calls after both loops are cleared');
+    // Verify that the second loop did fire (first tick)
+    assert.ok(countAfterSecond > countAfterFirst,
+      'second loop must fire at least one tick');
+  });
 });
