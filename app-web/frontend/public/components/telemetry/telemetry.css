@@ -64,6 +64,13 @@
 .telemetry--elevated .telemetry-dot { background: var(--telemetry-amber); }
 .telemetry--critical .telemetry-dot { background: var(--warn); }
 
+/* Light-mode elevated bar — amber background behind dot + summary text.
+   Matches nav-status badge pattern (border + tint on the containing element).
+   Not applied in dark mode: the amber dot/text already reads clearly on dark surfaces. */
+[data-theme="light"] .telemetry--elevated .telemetry-bar {
+  background: var(--telemetry-amber-bg);
+}
+
 /* Pulse animation — single keyframe, duration controls rate */
 @keyframes telemetry-pulse {
   0%, 100% { opacity: 1; }

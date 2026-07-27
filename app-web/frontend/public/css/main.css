@@ -3,7 +3,7 @@
 
    Color:
      Black / white / grey  → identity
-     Accent amber #D4A017  → state: active, live, verified, selected
+     Accent tourmaline     → state: active, live, verified, selected
      Telemetry amber       → advisory
      Red                   → critical
 
@@ -65,12 +65,17 @@
   --telemetry-amber:     #f0b44d;   /* ix-warning                              */
   --telemetry-amber-dim: rgba(240, 180, 77, 0.82);
   --telemetry-amber-border: rgba(240, 180, 77, 0.28);
+  /* --telemetry-amber-bg: light mode only — see [data-theme="light"] block  */
+  /* Mineral reference. Cinereous (#A98E86) is the named source color for the
+     light-mode telemetry amber palette. The amber values below are hardcoded,
+     not CSS-derived from this token. Reserved: do not use in selectors. */
+  --mineral-warm: #A98E86;
   /* Accent — active/live/verified/selected/focus states.
-     Mineral teal per Alloy discipline. Not for decoration.
+     Tourmaline per Alloy discipline. Not for decoration.
      Amber signaling lives in --telemetry-amber / --warn only. */
-  --accent:        #7ab5b1;
-  --accent-dim:    rgba(122, 181, 177, 0.80);
-  --accent-border: rgba(122, 181, 177, 0.30);
+  --accent:        #6F8B95;
+  --accent-dim:    rgba(111, 139, 149, 0.80);
+  --accent-border: rgba(111, 139, 149, 0.30);
   --logo-pixel: #f4f6f5;
 
   /* ---- Typefaces ---- */
@@ -180,14 +185,20 @@
   --warn:       #b83f3a;   /* ix-danger light                                  */
   --warn-border: rgba(184, 63, 58, 0.7);
   --control-focus: #232625;
-  --telemetry-amber:     #7a4e00;   /* ix-warning light                        */
-  --telemetry-amber-dim: rgba(122, 78, 0, 0.82);
-  --telemetry-amber-border: rgba(122, 78, 0, 0.28);
+  --telemetry-amber:     #944F38;   /* ix-warning light — see --mineral-warm (#A98E86) */
+  --telemetry-amber-bg:  #F2EEED;  /* badge/bar background in elevated state, light only */
+  --telemetry-amber-dim: rgba(148, 79, 56, 0.82);
+  --telemetry-amber-border: rgba(148, 79, 56, 0.28);
+  /* Canvas-safe text variant. --telemetry-amber (#944F38) only clears AA
+     against --telemetry-amber-bg or --cc-card-light-bg. Bare canvas (--bg,
+     #d9dddc) needs more depth: #7E4530 gives 5.51:1 against #d9dddc and
+     6.35:1 against --surface. Used by .log-status--pending only. */
+  --telemetry-amber-text: #7E4530;
   /* Accent — active/live/verified/selected/focus states.
-     Mineral teal per Alloy discipline. Not for decoration. */
-  --accent:        #2d5c58;
-  --accent-dim:    rgba(45, 92, 88, 0.75);
-  --accent-border: rgba(45, 92, 88, 0.30);
+     Tourmaline per Alloy discipline. Not for decoration. */
+  --accent:        #35454A;
+  --accent-dim:    rgba(53, 69, 74, 0.75);
+  --accent-border: rgba(53, 69, 74, 0.30);
   --logo-pixel: #232625;
 
   /* Coin Card surface tokens — light-mode overrides.
@@ -4311,6 +4322,8 @@ h1 + .gs-section-head {
 .log-status--deployed  { color: var(--dim); }
 .log-status--monitoring { color: var(--accent); }
 .log-status--pending   { color: var(--telemetry-amber); }
+
+[data-theme="light"] .log-status--pending { color: var(--telemetry-amber-text); }
 
 .log-commit {
   font-family: var(--font-mono);
