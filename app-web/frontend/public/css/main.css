@@ -2250,8 +2250,8 @@ body.portal-active #nav {
 }
 /* top-left */
 .transfer-portal::before {
-  top: 0;
-  left: 0;
+  top: -6px;
+  left: -6px;
   border-top-width: 2px;
   border-left-width: 2px;
 }
@@ -2264,8 +2264,8 @@ body.portal-active #nav {
 }
 /* top-right */
 .portal-frame-brackets::before {
-  top: 0;
-  right: 0;
+  top: -6px;
+  right: -6px;
   border-top-width: 2px;
   border-right-width: 2px;
 }
