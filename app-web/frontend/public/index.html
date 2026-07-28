@@ -297,114 +297,70 @@
   <section class="how-it-works" id="howItWorks" aria-labelledby="howItWorksTitle">
     <div class="section-kicker reveal-copy" id="howItWorksTitle">How it works</div>
     <div class="flow-grid">
-      <details class="flow-step reveal-copy">
-        <summary>
-          <span class="flow-num">01 — Connect</span>
-          <p>Your wallet, your keys. No account required.</p>
-          <p class="flow-note">
-            Need a wallet? Start with the
-            <a href="/faq.html#wallet-usdc">wallet setup FAQ</a>.
-          </p>
-          <span class="flow-toggle" aria-hidden="true"></span>
-        </summary>
-        <div class="flow-more">
-          <div class="flow-more-inner">
-            ImplicitEx connects through your browser wallet. The platform does not
-            ask for an email account, password, seed phrase, or private key.
-          </div>
+
+      <div class="flow-step reveal-copy">
+        <div class="flow-icon">
+          <svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges" aria-hidden="true">
+            <path fill="currentColor" d="M 2,3 H 13 V 4 H 2 Z M 2,4 H 14 V 5 H 2 Z M 2,5 H 4 V 6 H 2 Z M 13,5 H 14 V 6 H 13 Z M 2,6 H 4 V 7 H 2 Z M 9,6 H 15 V 7 H 9 Z M 2,7 H 4 V 8 H 2 Z M 9,7 H 11 V 8 H 9 Z M 14,7 H 15 V 8 H 14 Z M 2,8 H 4 V 9 H 2 Z M 9,8 H 11 V 9 H 9 Z M 12,8 H 13 V 9 H 12 Z M 14,8 H 15 V 9 H 14 Z M 2,9 H 4 V 10 H 2 Z M 9,9 H 11 V 10 H 9 Z M 14,9 H 15 V 10 H 14 Z M 2,10 H 4 V 11 H 2 Z M 9,10 H 15 V 11 H 9 Z M 2,11 H 4 V 12 H 2 Z M 13,11 H 14 V 12 H 13 Z M 2,12 H 14 V 13 H 2 Z M 2,13 H 14 V 14 H 2 Z"/>
+          </svg>
         </div>
-      </details>
-      <details class="flow-step reveal-copy">
-        <summary>
-          <span class="flow-num">02 — Send</span>
-          <p>Enter a recipient address and amount. The 1% platform fee is added on top — the recipient receives the full amount you enter.</p>
-          <span class="flow-toggle" aria-hidden="true"></span>
-        </summary>
-        <div class="flow-more">
-          <div class="flow-more-inner">
-            The transfer preview shows the recipient, amount, platform fee, and total
-            debit before any wallet action. You pay the amount plus the fee. The
-            recipient receives the full amount.
-          </div>
+        <span class="flow-label">Connect Wallet</span>
+      </div>
+
+      <div class="flow-step reveal-copy">
+        <div class="flow-icon">
+          <svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges" aria-hidden="true">
+            <path fill="currentColor" d="M 6,2 H 10 V 3 H 6 Z M 5,3 H 11 V 5 H 5 Z M 6,5 H 10 V 6 H 6 Z M 7,7 H 9 V 8 H 7 Z M 5,8 H 11 V 9 H 5 Z M 4,9 H 12 V 10 H 4 Z M 3,10 H 13 V 12 H 3 Z M 4,12 H 12 V 14 H 4 Z"/>
+          </svg>
         </div>
-      </details>
-      <details class="flow-step reveal-copy">
-        <summary>
-          <span class="flow-num">03 — Confirm</span>
-          <p>Two wallet confirmations: one to authorize, one to send. Authorization alone does not move funds.</p>
-          <span class="flow-toggle" aria-hidden="true"></span>
-        </summary>
-        <div class="flow-more">
-          <div class="flow-more-inner">
-            The first wallet prompt authorizes the ImplicitEx contract to transfer
-            the exact USDC amount. The second sends it. ImplicitEx records the
-            transfer in your receipt history and provides links to verify the
-            transaction on Polygon.
-          </div>
+        <span class="flow-label">Add Recipient</span>
+      </div>
+
+      <div class="flow-step reveal-copy">
+        <div class="flow-icon">
+          <svg width="11" height="11" viewBox="0 0 11 11" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges" aria-hidden="true">
+            <rect x="1" y="1" width="1" height="9" fill="currentColor"/>
+            <rect x="2" y="1" width="1" height="1" fill="currentColor"/>
+            <rect x="2" y="9" width="1" height="1" fill="currentColor"/>
+            <rect x="3" y="3" width="1" height="3" fill="currentColor"/>
+            <rect x="3" y="7" width="1" height="1" fill="currentColor"/>
+            <rect x="4" y="3" width="1" height="1" fill="currentColor"/>
+            <rect x="4" y="5" width="1" height="1" fill="currentColor"/>
+            <rect x="4" y="7" width="1" height="1" fill="currentColor"/>
+            <rect x="5" y="2" width="1" height="7" fill="currentColor"/>
+            <rect x="6" y="3" width="1" height="1" fill="currentColor"/>
+            <rect x="6" y="5" width="1" height="1" fill="currentColor"/>
+            <rect x="6" y="7" width="1" height="1" fill="currentColor"/>
+            <rect x="7" y="3" width="1" height="1" fill="currentColor"/>
+            <rect x="7" y="5" width="1" height="3" fill="currentColor"/>
+            <rect x="8" y="1" width="1" height="1" fill="currentColor"/>
+            <rect x="8" y="9" width="1" height="1" fill="currentColor"/>
+            <rect x="9" y="1" width="1" height="9" fill="currentColor"/>
+          </svg>
         </div>
-      </details>
+        <span class="flow-label">Enter Amount</span>
+      </div>
+
+      <div class="flow-step reveal-copy">
+        <div class="flow-icon">
+          <svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges" aria-hidden="true">
+            <path fill="currentColor" d="M 12,5 H 14 V 6 H 12 Z M 11,6 H 14 V 7 H 11 Z M 2,7 H 4 V 8 H 2 Z M 10,7 H 13 V 8 H 10 Z M 2,8 H 5 V 9 H 2 Z M 9,8 H 12 V 9 H 9 Z M 3,9 H 6 V 10 H 3 Z M 8,9 H 11 V 10 H 8 Z M 4,10 H 10 V 11 H 4 Z M 5,11 H 9 V 12 H 5 Z M 6,12 H 8 V 13 H 6 Z"/>
+          </svg>
+        </div>
+        <span class="flow-label">Review &amp; Send</span>
+      </div>
+
+      <div class="flow-step reveal-copy">
+        <div class="flow-icon">
+          <svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges" aria-hidden="true">
+            <path fill="currentColor" fill-rule="evenodd" d="M 2,5 H 9 V 11 H 2 Z M 4,7 H 9 V 9 H 4 Z M 7,5 H 14 V 11 H 7 Z M 7,7 H 12 V 9 H 7 Z"/>
+          </svg>
+        </div>
+        <span class="flow-label">On-chain Record</span>
+      </div>
+
     </div>
   </section>
-
-  <script>
-  (function () {
-    'use strict';
-    document.querySelectorAll('.flow-step').forEach(function (det) {
-      var summary = det.querySelector('summary');
-      var more    = det.querySelector('.flow-more');
-      var inner   = det.querySelector('.flow-more-inner');
-      if (!summary || !more || !inner) return;
-
-      summary.addEventListener('click', function (e) {
-        if (e.target.closest('a')) return;
-        e.preventDefault();
-
-        if (det.open) {
-          /* ── Closing ── */
-          more.style.height     = more.scrollHeight + 'px';
-          more.style.overflow   = 'hidden';
-          inner.style.opacity   = '0';
-          inner.style.transition = 'opacity 0.12s ease';
-          requestAnimationFrame(function () {
-            more.style.transition = 'height 0.28s ease';
-            more.style.height     = '0';
-          });
-          function onClose(ev) {
-            if (ev.propertyName !== 'height') return;
-            det.removeAttribute('open');
-            more.style.cssText  = '';
-            inner.style.cssText = '';
-            more.removeEventListener('transitionend', onClose);
-          }
-          more.addEventListener('transitionend', onClose);
-
-        } else {
-          /* ── Opening ── */
-          det.setAttribute('open', '');
-          more.style.height   = '0';
-          more.style.overflow = 'hidden';
-          inner.style.opacity = '0';
-          var target = more.scrollHeight;
-          requestAnimationFrame(function () {
-            more.style.transition = 'height 0.3s ease';
-            more.style.height     = target + 'px';
-            setTimeout(function () {
-              inner.style.transition = 'opacity 0.22s ease';
-              inner.style.opacity    = '1';
-            }, 80);
-          });
-          function onOpen(ev) {
-            if (ev.propertyName !== 'height') return;
-            more.style.cssText  = '';
-            inner.style.cssText = '';
-            more.removeEventListener('transitionend', onOpen);
-          }
-          more.addEventListener('transitionend', onOpen);
-        }
-      });
-    });
-  }());
-  </script>
 
 
   </main>
