@@ -66,6 +66,15 @@
       overscroll-behavior-x: none;
     }
 
+    /* Tablet/iPad: add 10px to --portal-safe-top so the status bar
+       (time, date, network, battery) does not overlap the portal header.
+       min-height: 501px excludes phone-landscape. 1024px covers iPad Pro 12.9". */
+    @media (min-width: 601px) and (max-width: 1024px) and (min-height: 501px) {
+      body[data-portal-shell="direct"] {
+        --portal-safe-top: calc(env(safe-area-inset-top, 0px) + 10px);
+      }
+    }
+
     /* ── Header shell — identity / navigation / account rows ── */
 
     /* Identity zone: lettermark + stacked wordmark group */
