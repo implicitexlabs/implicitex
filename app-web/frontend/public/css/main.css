@@ -1027,8 +1027,7 @@ body.portal-active #nav {
 .flow-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 1px;
-  background: var(--border);
+  gap: 0;
 }
 
 .flow-step {
@@ -1041,6 +1040,7 @@ body.portal-active #nav {
   gap: 0.875rem;
   transition: background 0.12s;
   text-align: center;
+  position: relative;
 }
 
 .flow-step:hover {
@@ -1057,6 +1057,20 @@ body.portal-active #nav {
 
 .flow-step:hover .flow-icon {
   color: var(--white);
+}
+
+/* Dividers: pseudo-element so they're independent of the cell's background transition.
+   Gap+background trick was abandoned because --border vs --surface-2 (hover) = 1.33:1,
+   making dividers vanish on hover. ::after at --border-2 gives 2.4:1+ on both states. */
+.flow-step:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--border-2);
+  pointer-events: none;
 }
 
 .flow-icon svg {
@@ -5413,11 +5427,33 @@ h1 + .gs-section-head {
 
   .flow-grid {
     grid-template-columns: repeat(2, 1fr);
-    background: transparent;
   }
 
+  /* Desktop ::after dividers don't map to the 2-col layout — suppress them. */
+  .flow-step:not(:last-child)::after {
+    display: none;
+  }
+
+  /* Keep step containers always at opacity:1 so box-shadow borders are
+     visible immediately. reveal-copy animation runs on inner content via
+     the .is-visible > * rules below. */
   .flow-grid .flow-step {
-    box-shadow: 0 0 0 1px var(--border);
+    box-shadow: 0 0 0 1px var(--border-2);
+    opacity: 1;
+    transform: none;
+    transition: background 0.12s;
+  }
+
+  /* Inner content fades in when the step is observed. */
+  .flow-grid .flow-step > * {
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 0.95s ease, transform 0.95s ease;
+  }
+
+  .flow-grid .flow-step.is-visible > * {
+    opacity: 1;
+    transform: translateY(0);
   }
 
   .flow-grid .flow-step:last-child {
@@ -5597,6 +5633,12 @@ h1 + .gs-section-head {
   }
 
   .reveal-copy {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .flow-grid .flow-step > * {
     opacity: 1;
     transform: none;
     transition: none;
