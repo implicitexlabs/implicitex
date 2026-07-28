@@ -1048,10 +1048,15 @@ body.portal-active #nav {
 }
 
 .flow-icon {
-  color: var(--white);
+  color: var(--muted);
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: color 0.12s;
+}
+
+.flow-step:hover .flow-icon {
+  color: var(--white);
 }
 
 .flow-icon svg {
@@ -1067,6 +1072,15 @@ body.portal-active #nav {
   text-transform: uppercase;
   color: var(--white);
   line-height: 1.4;
+}
+
+.flow-desc {
+  font-family: var(--font-ui);
+  font-size: var(--size-sm);
+  font-weight: var(--weight-regular);
+  color: var(--muted);
+  line-height: 1.5;
+  letter-spacing: 0;
 }
 
 .reveal-copy {
