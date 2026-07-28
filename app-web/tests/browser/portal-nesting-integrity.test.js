@@ -259,6 +259,168 @@ async function collectHeaderFooter(page) {
       footerGridColumns: footerNav ? getComputedStyle(footerNav).gridTemplateColumns : '',
       footerBorderTopWidth: footer ? parseFloat(getComputedStyle(footer).borderTopWidth) : -1,
       footerStatementPresent: !!document.querySelector('.portal-footer-statement'),
+      // ── Two-row hierarchy (Change 7) ────────────────────────────────────────
+      headerHeight: (function () {
+        var h = document.querySelector('.portal-header');
+        return h ? Math.round(h.getBoundingClientRect().height) : -1;
+      }()),
+      walletRailVisible: (function () {
+        var rail = document.getElementById('portalWalletRail');
+        if (!rail) return false;
+        var r = rail.getBoundingClientRect();
+        return getComputedStyle(rail).display !== 'none' && r.width > 0 && r.height > 0;
+      }()),
+      desktopWalletHidden: (function () {
+        var connectBtn = document.getElementById('connectBtn');
+        var walletMenu  = document.getElementById('walletMenu');
+        var btnHidden  = !connectBtn || connectBtn.hidden ||
+          getComputedStyle(connectBtn).display === 'none' ||
+          connectBtn.getBoundingClientRect().width === 0;
+        var menuHidden = !walletMenu || walletMenu.hidden ||
+          getComputedStyle(walletMenu).display === 'none' ||
+          walletMenu.getBoundingClientRect().width === 0;
+        return btnHidden && menuHidden;
+      }()),
+      row1Aligned: (function () {
+        // Brand vertical center and active wallet control vertical center within 8px.
+        // 8px tolerance accommodates height differences (brand 36px, wallet btn 44px).
+        var id = document.querySelector('.portal-header-identity');
+        if (!id) return false;
+        var idR    = id.getBoundingClientRect();
+        var trigger    = document.getElementById('walletMenuTrigger');
+        var connectBtn = document.getElementById('connectBtn');
+        var trigVisible = trigger && !trigger.hidden &&
+          getComputedStyle(trigger).display !== 'none' &&
+          trigger.getBoundingClientRect().width > 0;
+        var btnVisible = connectBtn && !connectBtn.hidden &&
+          getComputedStyle(connectBtn).display !== 'none' &&
+          connectBtn.getBoundingClientRect().width > 0;
+        var ctrlEl = trigVisible ? trigger : (btnVisible ? connectBtn : null);
+        if (!ctrlEl) return false;
+        var ctrlR = ctrlEl.getBoundingClientRect();
+        return Math.abs((idR.top + idR.height / 2) - (ctrlR.top + ctrlR.height / 2)) < 8;
+      }()),
+      row2Aligned: (function () {
+        // Nav buttons and first visible workspace control share the same top (within 2px).
+        var navButtons = Array.from(document.querySelectorAll('.portal-primary-nav-button'));
+        var wsButtons  = Array.from(
+          document.querySelectorAll('.portal-workspace-controls .portal-ctrl-btn')
+        ).filter(function (b) { return b.getBoundingClientRect().width > 0; });
+        if (!navButtons.length || !wsButtons.length) return false;
+        return Math.abs(
+          navButtons[0].getBoundingClientRect().top - wsButtons[0].getBoundingClientRect().top
+        ) < 2;
+      }()),
+      secondaryBelowPrimary: (function () {
+        // Primary row bottom = max(identity.bottom, wallet-control.bottom).
+        // The wallet button is taller than the brand lockup; using only identity.bottom
+        // would allow the sticky bar to overlap the wallet button.
+        var id = document.querySelector('.portal-header-identity');
+        var sb = document.querySelector('.portal-sticky-bar');
+        if (!id || !sb) return false;
+        var trigger    = document.getElementById('walletMenuTrigger');
+        var connectBtn = document.getElementById('connectBtn');
+        var trigVisible = trigger && !trigger.hidden &&
+          getComputedStyle(trigger).display !== 'none' &&
+          trigger.getBoundingClientRect().width > 0;
+        var btnVisible = connectBtn && !connectBtn.hidden &&
+          getComputedStyle(connectBtn).display !== 'none' &&
+          connectBtn.getBoundingClientRect().width > 0;
+        var ctrlEl = trigVisible ? trigger : (btnVisible ? connectBtn : null);
+        var primaryBottom = id.getBoundingClientRect().bottom;
+        if (ctrlEl) primaryBottom = Math.max(primaryBottom, ctrlEl.getBoundingClientRect().bottom);
+        return sb.getBoundingClientRect().top >= primaryBottom;
+      }()),
+      primaryRowGap: (function () {
+        // Signed gap between the bottom of row 1 and the top of the sticky bar.
+        // Positive = correct separation; zero or negative = overlap.
+        var id = document.querySelector('.portal-header-identity');
+        var sb = document.querySelector('.portal-sticky-bar');
+        if (!id || !sb) return -1;
+        var trigger    = document.getElementById('walletMenuTrigger');
+        var connectBtn = document.getElementById('connectBtn');
+        var trigVisible = trigger && !trigger.hidden &&
+          getComputedStyle(trigger).display !== 'none' &&
+          trigger.getBoundingClientRect().width > 0;
+        var btnVisible = connectBtn && !connectBtn.hidden &&
+          getComputedStyle(connectBtn).display !== 'none' &&
+          connectBtn.getBoundingClientRect().width > 0;
+        var ctrlEl = trigVisible ? trigger : (btnVisible ? connectBtn : null);
+        var primaryBottom = id.getBoundingClientRect().bottom;
+        if (ctrlEl) primaryBottom = Math.max(primaryBottom, ctrlEl.getBoundingClientRect().bottom);
+        return Math.round(sb.getBoundingClientRect().top - primaryBottom);
+      }()),
+      secondaryGroupsWrapped: (function () {
+        // True when workspace group top ≥ nav group bottom (secondary wraps to two lines).
+        var navButtons = Array.from(document.querySelectorAll('.portal-primary-nav-button'));
+        var wsButtons  = Array.from(
+          document.querySelectorAll('.portal-workspace-controls .portal-ctrl-btn')
+        ).filter(function (b) { return b.getBoundingClientRect().width > 0; });
+        if (!navButtons.length || !wsButtons.length) return false;
+        var navBottom = Math.max.apply(null, navButtons.map(function (b) {
+          return b.getBoundingClientRect().bottom;
+        }));
+        var wsTop = Math.min.apply(null, wsButtons.map(function (b) {
+          return b.getBoundingClientRect().top;
+        }));
+        return wsTop >= navBottom;
+      }()),
+      secondaryGroupsOverlap: (function () {
+        // True when nav and workspace rectangles share vertical space (groups overlap).
+        var navButtons = Array.from(document.querySelectorAll('.portal-primary-nav-button'));
+        var wsButtons  = Array.from(
+          document.querySelectorAll('.portal-workspace-controls .portal-ctrl-btn')
+        ).filter(function (b) { return b.getBoundingClientRect().width > 0; });
+        if (!navButtons.length || !wsButtons.length) return false;
+        var navTop    = Math.min.apply(null, navButtons.map(function (b) { return b.getBoundingClientRect().top; }));
+        var navBottom = Math.max.apply(null, navButtons.map(function (b) { return b.getBoundingClientRect().bottom; }));
+        var wsTop     = Math.min.apply(null, wsButtons.map(function (b) { return b.getBoundingClientRect().top; }));
+        var wsBottom  = Math.max.apply(null, wsButtons.map(function (b) { return b.getBoundingClientRect().bottom; }));
+        return navTop < wsBottom && wsTop < navBottom;
+      }()),
+      walletRightAligned: (function () {
+        // Active wallet control right edge within 40px of header right edge.
+        var trigger    = document.getElementById('walletMenuTrigger');
+        var connectBtn = document.getElementById('connectBtn');
+        var header = document.querySelector('.portal-header');
+        if (!header) return false;
+        var headerRight = header.getBoundingClientRect().right;
+        var trigVisible = trigger && !trigger.hidden &&
+          getComputedStyle(trigger).display !== 'none' &&
+          trigger.getBoundingClientRect().width > 0;
+        var btnVisible = connectBtn && !connectBtn.hidden &&
+          getComputedStyle(connectBtn).display !== 'none' &&
+          connectBtn.getBoundingClientRect().width > 0;
+        var ctrlEl = trigVisible ? trigger : (btnVisible ? connectBtn : null);
+        if (!ctrlEl) return false;
+        return headerRight - ctrlEl.getBoundingClientRect().right < 40;
+      }()),
+      workspaceRightAligned: (function () {
+        // Last visible workspace control right edge within 40px of header right edge.
+        var btns = Array.from(
+          document.querySelectorAll('.portal-workspace-controls .portal-ctrl-btn')
+        ).filter(function (b) { return b.getBoundingClientRect().width > 0; });
+        var header = document.querySelector('.portal-header');
+        if (!btns.length || !header) return false;
+        var lastR = btns[btns.length - 1].getBoundingClientRect();
+        return header.getBoundingClientRect().right - lastR.right < 40;
+      }()),
+      navButtonsGrouped: (function () {
+        // All nav buttons are on the same row (tops within 2px) — group-level wrap only.
+        var buttons = Array.from(document.querySelectorAll('.portal-primary-nav-button'));
+        if (!buttons.length) return true;
+        var tops = buttons.map(function (b) { return Math.round(b.getBoundingClientRect().top); });
+        return tops.every(function (t) { return Math.abs(t - tops[0]) < 2; });
+      }()),
+      workspaceButtonsGrouped: (function () {
+        // All visible workspace controls are on the same row — group-level wrap only.
+        var btns = Array.from(
+          document.querySelectorAll('.portal-workspace-controls .portal-ctrl-btn')
+        ).filter(function (b) { return b.getBoundingClientRect().width > 0; });
+        if (!btns.length) return true;
+        var tops = btns.map(function (b) { return Math.round(b.getBoundingClientRect().top); });
+        return tops.every(function (t) { return Math.abs(t - tops[0]) < 2; });
+      }()),
     };
   });
 }
@@ -540,6 +702,10 @@ test('portal modules are DOM descendants of #modules (containment regression gua
     const responsiveViewports = [
       { name: 'desktop', width: 1365, height: 900, expectedFooterColumns: 7, expectedWideInlineHeader: false },
       { name: 'tablet', width: 820, height: 1000, expectedFooterColumns: 4 },
+      { name: 'narrow-tablet', width: 620, height: 900, expectedFooterColumns: 4, isNarrowTablet: true },
+      // 601px is the lowest width that enters the two-row grid (min-width: 601px).
+      // At this width the secondary row wraps: workspace drops below navigation.
+      { name: 'wrap-boundary', width: 601, height: 900, expectedFooterColumns: 4, isNarrowTablet: true, isWrapped: true },
       { name: 'phone-portrait', width: 390, height: 844, expectedFooterColumns: 2 },
       { name: 'phone-landscape', width: 844, height: 390, expectedFooterColumns: 4 },
     ];
@@ -560,6 +726,8 @@ test('portal modules are DOM descendants of #modules (containment regression gua
       assert.match(responsive.walletAddress, /^0xf614…0f1d$/i,
         `${viewport.name}: truncated connected wallet address must remain visible`);
       const isMobileViewport = viewport.name === 'phone-portrait' || viewport.name === 'phone-landscape';
+      const isNarrowTablet  = !!viewport.isNarrowTablet;
+      const isWrapped       = !!viewport.isWrapped;
       if (isMobileViewport) {
         assert.equal(responsive.primaryNavGrouped, false,
           `${viewport.name}: duplicate top destination navigation must be hidden`);
@@ -569,6 +737,11 @@ test('portal modules are DOM descendants of #modules (containment regression gua
           `${viewport.name}: mobile destination buttons must remain grouped`);
         assert.equal(responsive.mobileSettingsPresent, true,
           `${viewport.name}: mobile Settings access must be present`);
+        // Mobile: rail replaces desktop wallet; desktop controls remain hidden.
+        assert.equal(responsive.walletRailVisible, true,
+          `${viewport.name}: mobile wallet rail must be visible`);
+        assert.equal(responsive.desktopWalletHidden, true,
+          `${viewport.name}: desktop Connect Wallet must be hidden on mobile`);
       } else {
         assert.equal(responsive.primaryNavGrouped, true,
           `${viewport.name}: primary navigation buttons must remain grouped`);
@@ -597,6 +770,42 @@ test('portal modules are DOM descendants of #modules (containment regression gua
         `${viewport.name}: WORKSPACE label must be absent`);
       assert.equal(responsive.workspaceVisible, !isMobileViewport,
         `${viewport.name}: workspace controls should remain visible on larger viewports and move behind mobile Settings`);
+      // ── Two-row hierarchy assertions (Change 7) ───────────────────────────
+      if (!isMobileViewport) {
+        assert.equal(responsive.row1Aligned, true,
+          `${viewport.name}: branding and Connect Wallet must share row one (vertical centers within 8px)`);
+        // secondaryBelowPrimary uses max(identity.bottom, walletControl.bottom) —
+        // the sticky bar must not overlap the wallet button.
+        assert.equal(responsive.secondaryBelowPrimary, true,
+          `${viewport.name}: secondary row must begin at or below the bottom of the tallest primary-row element`);
+        assert.ok(responsive.primaryRowGap > 0,
+          `${viewport.name}: primary-to-secondary row gap must be >0px, got ${responsive.primaryRowGap}px`);
+        assert.equal(responsive.walletRightAligned, true,
+          `${viewport.name}: Connect Wallet must be right-aligned in the header`);
+        assert.equal(responsive.navButtonsGrouped, true,
+          `${viewport.name}: navigation buttons must stay on the same row (group-level wrapping only)`);
+        assert.equal(responsive.workspaceButtonsGrouped, true,
+          `${viewport.name}: workspace controls must stay on the same row (group-level wrapping only)`);
+        if (isWrapped) {
+          // At the wrap boundary the secondary groups cannot share one row;
+          // workspace must be fully below the navigation group with no overlap.
+          assert.equal(responsive.secondaryGroupsWrapped, true,
+            `${viewport.name}: workspace controls must be below (not beside) the navigation row`);
+          assert.equal(responsive.secondaryGroupsOverlap, false,
+            `${viewport.name}: navigation and workspace groups must not overlap when wrapped`);
+          assert.ok(responsive.headerHeight <= 190,
+            `${viewport.name}: wrapped header height must be ≤190px, got ${responsive.headerHeight}px`);
+        } else if (!isNarrowTablet) {
+          // At full tablet/desktop widths the two secondary groups fit on one row.
+          assert.equal(responsive.row2Aligned, true,
+            `${viewport.name}: navigation and workspace controls must share row two (tops within 2px)`);
+          assert.equal(responsive.workspaceRightAligned, true,
+            `${viewport.name}: workspace controls must be right-aligned in the header`);
+          assert.ok(responsive.headerHeight <= 140,
+            `${viewport.name}: header height must be ≤140px, got ${responsive.headerHeight}px`);
+        }
+      }
+      // ─────────────────────────────────────────────────────────────────────
       assert.equal(responsive.activeHasUnderline, false,
         `${viewport.name}: active navigation button must not have an underline indicator`);
       assert.equal(responsive.activeHasRaisedSurface, true,

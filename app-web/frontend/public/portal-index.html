@@ -128,8 +128,6 @@
       display: flex;
       align-items: center;
       position: relative;
-      flex: 1 1 260px;
-      min-width: 0;
     }
     [data-portal-shell="direct"] .portal-header-wallet .wallet-menu {
       width: 100%;
@@ -175,29 +173,7 @@
       right: 0;
       left: auto;
     }
-    /* ── Shell structure: sticky-bar / account-bar / workspace controls ── */
-
-    /* Default hierarchy: identity gets its own row, followed by navigation and
-       a persistent account row. Very wide screens opt into the denser inline
-       composition below without making density the primary layout objective. */
-    [data-portal-shell="direct"] .portal-sticky-bar {
-      display: flex;
-      flex-direction: column;
-      align-items: stretch;
-      gap: 0.5rem;
-      flex: 1;
-      min-width: 0;
-    }
-    /* Account bar: wallet keeps priority; utilities wrap below when needed. */
-    [data-portal-shell="direct"] .portal-account-bar {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 0.5rem 0.75rem;
-      flex: 1 1 auto;
-      justify-content: space-between;
-      min-width: 0;
-    }
+    /* ── Shell structure: sticky-bar / workspace controls ── */
     /* Workspace control row: all icon buttons; always visible */
     [data-portal-shell="direct"] .portal-workspace-controls {
       display: flex;
@@ -316,68 +292,62 @@
       }
     }
 
-    /* Very wide desktop may use the denser inline composition when the full
-       account state still has generous breathing room. */
-    @media (min-width: 1600px) {
-      [data-portal-shell="direct"] .portal-header {
-        flex-direction: row;
-        align-items: center;
-        gap: 1.25rem;
-      }
-      [data-portal-shell="direct"] .portal-sticky-bar {
-        flex-direction: row;
-        align-items: center;
-        gap: 0.75rem;
-      }
-      [data-portal-shell="direct"] .portal-account-bar {
-        justify-content: flex-end;
-      }
-    }
-
-    /* ── Sticky nav strip on tablet/phone — identity scrolls, nav+wallet stay ── */
-    @media (max-width: 900px) {
-      [data-portal-shell="direct"] .portal-sticky-bar {
-        position: sticky;
-        top: 0;
-        z-index: 140;
-        background: var(--surface-2);
-        border-bottom: 1px solid var(--border);
-      }
-    }
-
     /* ── Prevent nav button text from wrapping vertically when columns are tight ── */
     [data-portal-shell="direct"] .portal-header .portal-primary-nav-button {
       white-space: nowrap;
     }
 
-    /* ── Tablet (600–900px): column header — identity scrolls, sticky bar below ── */
-    @media (max-width: 900px) {
-      /* Header stacks vertically: identity on top (scrollable), sticky-bar below */
+    /* ── Two-row header grid for tablet and desktop ──
+       Row 1: brand (left) | wallet (right)
+       Row 2: sticky-bar spanning full width — nav left, workspace controls right
+       Mobile (≤600px) and landscape (≤500px height) retain the flex mobile shell.
+       Landscape exclusion prevents #portalWalletRail from auto-placing into the
+       wallet grid column, which would shrink the brand area to 559px at 844px width. */
+    @media (min-width: 601px) and (min-height: 501px) {
       [data-portal-shell="direct"] .portal-header {
-        flex-direction: column;
-        align-items: stretch;
-        padding: calc(0.75rem + var(--portal-safe-top)) 1rem 0;
-        gap: 0;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        grid-template-rows: auto auto;
+        grid-template-areas:
+          "brand  wallet"
+          "sticky sticky";
+        align-items: center;
+        column-gap: 1.25rem;
+        row-gap: 0.75rem;
+        padding: calc(0.875rem + var(--portal-safe-top)) 0.875rem 0.875rem 1.5rem;
       }
-      /* Identity: padding to separate from sticky-bar below it */
-      [data-portal-shell="direct"] .portal-header-identity {
-        padding-bottom: 0.75rem;
-      }
-      /* Account bar: sits below nav without another detached rule. */
-      [data-portal-shell="direct"] .portal-account-bar {
-        padding: 0;
-        gap: 0.5rem 0.75rem;
+      [data-portal-shell="direct"] .portal-header-identity { grid-area: brand; }
+      [data-portal-shell="direct"] .portal-header-wallet   { grid-area: wallet; align-self: center; }
+      [data-portal-shell="direct"] .portal-sticky-bar      { grid-area: sticky; }
+
+      /* Secondary row: nav left, workspace controls right.
+         flex-wrap:wrap allows the two groups to stack at narrow widths, but each
+         group is flex:0 0 auto so individual buttons never orphan from their group. */
+      [data-portal-shell="direct"] .portal-sticky-bar {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        min-width: 0;
       }
     }
 
-    /* ── Tablet wallet zone: cap width so Connect button stays proportional ──
-       Without this, flex: 1 1 260px expands the wallet control to fill the full
-       account bar width on touch tablets, making it look like a banner.
-       Upper bound is 1180px to cover iPad landscape (~1024px CSS viewport). */
-    @media (min-width: 601px) and (max-width: 1180px) {
-      [data-portal-shell="direct"] .portal-header-wallet {
-        flex: 0 1 360px;
-        max-width: 360px;
+    /* ── Tablet (601–900px portrait): entire two-row header is the sticky unit ──
+       With Connect Wallet on the primary row, leaving only the secondary row
+       sticky would scroll the primary wallet action away. The compact two-row
+       header (~95–105px) is well under the previous 186px three-row burden.
+       min-height: 501px excludes phone-landscape from this sticky rule. */
+    @media (min-width: 601px) and (max-width: 900px) and (min-height: 501px) {
+      [data-portal-shell="direct"] .portal-header {
+        position: sticky;
+        top: 0;
+        z-index: 140;
+        background: var(--surface-2);
+        border-bottom: 1px solid var(--border);
+        padding-top: calc(0.75rem + var(--portal-safe-top));
+        row-gap: 0.625rem;
       }
     }
 
@@ -398,10 +368,9 @@
        Nav full width above account row; workspace controls always visible. */
     @media (max-width: 600px),
            (max-width: 900px) and (max-height: 500px) {
-      /* Wallet keeps the available row width before utilities wrap. */
+      /* Wallet is a direct header child — hidden on mobile; rail replaces it. */
       [data-portal-shell="direct"] .portal-header-wallet {
-        flex: 1 1 260px;
-        min-width: 0;
+        display: none;
       }
       /* Connect button: full height, left-aligned text, transparent bg */
       [data-portal-shell="direct"] .portal-connect-btn {
@@ -1047,9 +1016,6 @@
         border-bottom: 0;
         background: transparent;
       }
-      body[data-portal-shell="direct"] .portal-account-bar {
-        display: none;
-      }
       body[data-portal-shell="direct"] .portal-header-wallet {
         display: none;
       }
@@ -1281,6 +1247,26 @@
           </div>
         </a>
       </div>
+      <!-- Zone 2: Wallet control — primary row right; hidden at ≤600px (rail replaces it) -->
+      <div class="portal-header-wallet">
+        <button class="portal-connect-btn" id="connectBtn" type="button" onclick="IX.connect()">Connect wallet</button>
+        <div class="wallet-menu" id="walletMenu" hidden>
+          <button class="wallet-menu-trigger" id="walletMenuTrigger" type="button" aria-expanded="false" aria-controls="walletMenuPanel" aria-label="Wallet account menu">
+            <span class="wallet-dot" aria-hidden="true"></span>
+            <span class="wallet-account-label">CONNECTED WALLET</span>
+            <span class="wallet-addr" id="walletAddr"></span>
+            <span class="wallet-chevron" aria-hidden="true"></span>
+          </button>
+          <div class="wallet-menu-panel" id="walletMenuPanel" hidden>
+            <p class="wallet-menu-title">Wallet account</p>
+            <p class="wallet-menu-address" id="walletFullAddress"></p>
+            <button class="wallet-menu-action" id="copyAddressBtn" type="button">Copy address</button>
+            <button class="wallet-menu-action" id="switchNetworkBtn" type="button" hidden>Switch to Polygon</button>
+            <button class="wallet-menu-action" id="switchAccountBtn" type="button">Switch account</button>
+            <button class="wallet-menu-action wallet-menu-action--danger" id="disconnectBtn" type="button">Disconnect</button>
+          </div>
+        </div>
+      </div><!-- /.portal-header-wallet -->
       <!-- Mobile wallet account rail — visible only at ≤600px; centered lockup above, this rail below -->
       <div id="portalWalletRail">
         <!-- Disconnected state -->
@@ -1326,7 +1312,7 @@
         <p class="network-notice-text">Polygon required — switch before reviewing this transfer.</p>
         <button class="network-notice-btn" id="portalSwitchNetworkBtn" type="button">Switch to Polygon</button>
       </div>
-      <!-- Sticky bar: nav + account state (pins on mobile/tablet; identity scrolls away) -->
+      <!-- Sticky bar: navigation left, workspace controls right (secondary row on tablet/desktop) -->
       <div class="portal-sticky-bar">
         <!-- Navigation tabs — hidden until coordinator initialises -->
         <nav id="portalPrimaryNav" class="portal-primary-nav" aria-label="Portal destinations" hidden>
@@ -1335,29 +1321,7 @@
           <button id="portalNavActivity" class="portal-primary-nav-button" type="button" data-portal-navigation-destination="ACTIVITY">Activity</button>
         </nav>
         <p id="portalPrimaryNavStatus" class="portal-primary-nav-status" role="status" aria-live="polite" hidden></p>
-        <!-- Account bar: wallet (prominent) + workspace (subordinate) — share a row on mobile -->
-        <div class="portal-account-bar">
-          <!-- Wallet zone — global account state; rightmost on desktop, full-width on mobile -->
-          <div class="portal-header-wallet">
-            <button class="portal-connect-btn" id="connectBtn" type="button" onclick="IX.connect()">Connect wallet</button>
-            <div class="wallet-menu" id="walletMenu" hidden>
-              <button class="wallet-menu-trigger" id="walletMenuTrigger" type="button" aria-expanded="false" aria-controls="walletMenuPanel" aria-label="Wallet account menu">
-                <span class="wallet-dot" aria-hidden="true"></span>
-                <span class="wallet-account-label">CONNECTED WALLET</span>
-                <span class="wallet-addr" id="walletAddr"></span>
-                <span class="wallet-chevron" aria-hidden="true"></span>
-              </button>
-              <div class="wallet-menu-panel" id="walletMenuPanel" hidden>
-                <p class="wallet-menu-title">Wallet account</p>
-                <p class="wallet-menu-address" id="walletFullAddress"></p>
-                <button class="wallet-menu-action" id="copyAddressBtn" type="button">Copy address</button>
-                <button class="wallet-menu-action" id="switchNetworkBtn" type="button" hidden>Switch to Polygon</button>
-                <button class="wallet-menu-action" id="switchAccountBtn" type="button">Switch account</button>
-                <button class="wallet-menu-action wallet-menu-action--danger" id="disconnectBtn" type="button">Disconnect</button>
-              </div>
-            </div>
-          </div><!-- /.portal-header-wallet -->
-          <!-- Account utilities — exposed icons at every supported viewport -->
+        <!-- Workspace controls — secondary row right; promoted to settings sheet on mobile -->
           <div class="portal-header-workspace" id="portalWorkspace">
             <div class="portal-workspace-controls" id="portalWorkspaceControls">
               <!-- Clock toggle — time-based theme -->
@@ -1428,7 +1392,6 @@
               </button>
             </div><!-- /.portal-workspace-controls -->
           </div><!-- /.portal-header-workspace -->
-        </div><!-- /.portal-account-bar -->
       </div><!-- /.portal-sticky-bar -->
     </div><!-- /.portal-header -->
     <!-- Coin Card intake banner — shown when opened via Coin Card handoff -->
