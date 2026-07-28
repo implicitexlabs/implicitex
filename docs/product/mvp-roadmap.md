@@ -445,7 +445,8 @@ claims.
 Priority order:
 
 1. Coin Card Free — embeddable USDC payment surface.
-2. Distribution — examples, outreach, site integrations, and repeatable content.
+2. Distribution — social platform presence, repeatable content pipeline, and
+   site integrations. See `docs/strategy/marketing/social-distribution-strategy.md`.
 3. Trust receipts — contract address, recipient address, manifest hash, fee,
    network, token, and transaction hash anchored to the on-chain record where
    practical.
@@ -719,6 +720,104 @@ Relationship Agent   — maintains CRM across all contacts and interactions
 
 **Status:** Not started. Correctly deferred behind Layer 4 (need the product
 before building the distribution machine).
+
+---
+
+### Layer 7 — Marketing system
+
+**Mandate:** marketing for ImplicitEx is not a campaign. It is a system that
+produces output from work already being done. Human-authored content should
+not compete with product development — it should derive from it.
+
+Full specification: `docs/strategy/marketing/social-distribution-strategy.md`
+
+**Two-platform clarity (locked 2026-07-27):**
+
+- `implicitex.com` is the company's voice. It earns trust, explains the product,
+  and converts visitors into portal users.
+- `portal.implicitex.com` is the instrument. It accomplishes the task.
+  No ads, no promotions, no engagement mechanics. Open → complete task → leave.
+
+The portal does not persuade. It confirms that the homepage told the truth.
+
+**Three markets, one mission:**
+
+ImplicitEx does not define itself by one audience. The mission —
+reduce friction in the exchange of digital value — applies equally to:
+
+- Market 1: Human creators, freelancers, small businesses (receive money online)
+- Market 2: AI agents (payment rail that software can reliably invoke)
+- Market 3: Everyday people with cross-border remittance needs
+
+These are different users with different acquisition channels, but the same
+underlying problem. The platform architecture does not need to reinvent itself
+for each market.
+
+**Infrastructure identity (locked 2026-07-27):**
+
+ImplicitEx is an infrastructure company. The phone company does not decide what
+calls are made. The postal service does not judge the contents of the envelope.
+ImplicitEx's role is to make legitimate value transfer simple, not to become the
+arbiter of every transaction. This is a product philosophy, not a legal
+disclaimer. Defend it from feature creep that would make ImplicitEx a destination
+instead of a rail.
+
+**Platform compass:** `docs/strategy/marketing/platform-compass.md`
+
+**Social distribution tier system:**
+
+See full strategy at `docs/strategy/marketing/social-distribution-strategy.md`.
+
+Tier 1 (start now): X, YouTube, YouTube Shorts, TikTok
+Tier 2 (once producing consistently): Instagram, LinkedIn
+Tier 3 (reserve name only): Facebook, Reddit
+
+**Content pipeline:**
+
+Evening planning walks are the raw material. The pipeline:
+
+1. Record audio during walks
+2. Transcribe
+3. Extract 10–20 ideas
+4. Draft YouTube scripts / short-form clips / X posts / LinkedIn articles
+5. Queue for approval
+
+One productive conversation generates a week of content without inventing
+anything new. The pipeline runs from documented work, not from trying to
+produce content.
+
+**Homepage evolution (2026-07-27):**
+
+The product screenshot is stronger than any table of variables. Planned:
+
+1. Replace the feature table with real portal screenshots
+2. Add device mockups (iPhone, iPad, MacBook) using portal running as installed PWA
+3. Hero animation: Home Screen icon tap → lettermark loader → portal open → persistent display
+4. Each capability section introduced by its own screenshot, not described in prose
+5. Canonical demo data document: consistent sender/recipient/amounts across all assets
+
+The homepage earns trust through evidence. The portal confirms it.
+
+**Adversarial review workflow:**
+
+Claude credits should be used for leverage:
+- Adversarial security reviews of new features before Codex touches code
+- Architectural blind spots and scalability challenges
+- Threat models and abuse case enumeration
+- Marketing positioning critique from multiple customer perspectives
+
+Workflow: Antoine + Claude (strategy/tradeoffs) → Claude adversarial review
+(weaknesses) → Codex (implementation after design survives both reviews).
+
+**Preconditions:**
+
+- Coin Card Free live with at least one real external embed
+- At least one niche landing page live
+- Screenshot library built with canonical demo data
+- Device frames created (one per: iPhone, iPad, MacBook)
+
+**Status:** Not started. Deferred behind Coin Card Free. Homepage evolution
+starts as soon as product screenshots are stable enough to freeze.
 
 ---
 
