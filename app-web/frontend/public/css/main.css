@@ -433,17 +433,6 @@ code, kbd, pre,
   color: var(--white);
 }
 
-.wallet-account-label {
-  color: var(--dim);
-  font-family: var(--font-ui);
-  font-size: var(--text-11);
-  font-weight: var(--weight-semibold);
-  letter-spacing: 0.06em;
-  line-height: 1;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
 .wallet-chevron {
   width: 0;
   height: 0;
