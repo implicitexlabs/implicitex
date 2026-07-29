@@ -1,0 +1,80 @@
+{
+  "activeCurrent": {
+    "expectedState": "VALID_CURRENT",
+    "record": {
+      "cardId": "cc_01JYNZ1W7K9MHQPXEVR3ABCDEF",
+      "status": "active",
+      "currentManifestVersion": 1,
+      "activeHandle": "antoine",
+      "replacementCardId": null,
+      "revocationReasonCode": null,
+      "statusEffectiveAt": "2026-07-29T18:05:00Z",
+      "updatedAt": "2026-07-29T18:05:00Z"
+    }
+  },
+  "revoked": {
+    "expectedState": "REVOKED",
+    "record": {
+      "cardId": "cc_01JYNZ1W7K9MHQPXEVR3ABCDEF",
+      "status": "revoked",
+      "currentManifestVersion": 1,
+      "activeHandle": "antoine",
+      "replacementCardId": null,
+      "revocationReasonCode": "wallet-compromise",
+      "statusEffectiveAt": "2026-08-01T11:00:00Z",
+      "updatedAt": "2026-08-01T11:00:00Z"
+    }
+  },
+  "suspended": {
+    "expectedState": "SUSPENDED",
+    "record": {
+      "cardId": "cc_01JYNZ1W7K9MHQPXEVR3ABCDEF",
+      "status": "suspended",
+      "currentManifestVersion": 1,
+      "activeHandle": "antoine",
+      "replacementCardId": null,
+      "revocationReasonCode": null,
+      "statusEffectiveAt": "2026-08-01T11:00:00Z",
+      "updatedAt": "2026-08-01T11:00:00Z"
+    }
+  },
+  "replacedStatus": {
+    "expectedState": "REPLACED",
+    "record": {
+      "cardId": "cc_01JYNZ1W7K9MHQPXEVR3ABCDEF",
+      "status": "replaced",
+      "currentManifestVersion": 1,
+      "activeHandle": "antoine",
+      "replacementCardId": "cc_01JYNZ1W7K9MHQPXEVR3REPLACE",
+      "revocationReasonCode": "route-replaced",
+      "statusEffectiveAt": "2026-08-01T11:00:00Z",
+      "updatedAt": "2026-08-01T11:00:00Z"
+    }
+  },
+  "versionMismatch": {
+    "expectedState": "REPLACED",
+    "record": {
+      "cardId": "cc_01JYNZ1W7K9MHQPXEVR3ABCDEF",
+      "status": "active",
+      "currentManifestVersion": 2,
+      "activeHandle": "antoine",
+      "replacementCardId": null,
+      "revocationReasonCode": null,
+      "statusEffectiveAt": "2026-08-01T11:00:00Z",
+      "updatedAt": "2026-08-01T11:00:00Z"
+    }
+  },
+  "handleDivergence": {
+    "expectedState": "REPLACED",
+    "record": {
+      "cardId": "cc_01JYNZ1W7K9MHQPXEVR3ABCDEF",
+      "status": "active",
+      "currentManifestVersion": 1,
+      "activeHandle": "antoine-renamed",
+      "replacementCardId": null,
+      "revocationReasonCode": null,
+      "statusEffectiveAt": "2026-08-01T11:00:00Z",
+      "updatedAt": "2026-08-01T11:00:00Z"
+    }
+  }
+}
