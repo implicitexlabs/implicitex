@@ -976,19 +976,6 @@ body.portal-active #nav {
   letter-spacing: -0.02em;
 }
 
-.product-intro-copy {
-  font-size: var(--size-lg);
-  font-weight: var(--weight-regular);
-  line-height: var(--ix-copy-line);
-  color: var(--dim);
-  margin: 0 0 1rem;
-  text-align: center;
-}
-
-.product-intro-copy:last-child {
-  margin-bottom: 0;
-}
-
 /* ---- Settlement Visual ---- */
 .settlement-visual {
   max-width: var(--ix-interface-max);
@@ -1035,6 +1022,13 @@ body.portal-active #nav {
 
 [data-theme="light"] .settlement-visual__img--light {
   display: none;
+}
+
+.settlement-visual__caption {
+  max-width: var(--measure-lead);
+  margin: var(--sp-4) auto 0;
+  padding: 0 1.5rem;
+  text-align: center;
 }
 
 /* ---- How It Works ---- */
@@ -1497,7 +1491,8 @@ body.portal-active #nav {
   color: var(--white);
 }
 
-.portal-entry-lede {
+.portal-entry-lede,
+.settlement-visual__caption {
   font-family: var(--font-sans);
   font-size: var(--text-body);
   line-height: var(--leading-body);
