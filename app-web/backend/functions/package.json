@@ -16,6 +16,7 @@
     "lint": "node --check index.js && node --check src/wallet-challenge/domain.js && node --check src/wallet-challenge/firestore-store.js && node --check src/wallet-challenge/functions.js && node --check src/wallet-challenge/service.js && node --check src/handle-reservation/domain.js && node --check src/handle-reservation/firestore-store.js && node --check src/handle-reservation/functions.js && node --check src/handle-reservation/service.js && node --check test/handle-reservation.test.js && node --check test/handle-reservation-emulator.test.js"
   },
   "dependencies": {
+    "canonicalize": "^1.0.8",
     "ethers": "6.17.0",
     "firebase-admin": "14.2.0",
     "firebase-functions": "7.3.0"
