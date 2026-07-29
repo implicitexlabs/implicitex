@@ -8,10 +8,12 @@
     "node": "22"
   },
   "scripts": {
-    "test": "node test/wallet-challenge.test.js",
-    "test:rules": "firebase emulators:exec --config ../../../firebase.wallet-challenge-test.json --project demo-coincard-wallet --only firestore \"node test/firestore-rules-emulator.test.js\"",
+    "test": "npm run test:wallet-challenge && npm run test:handle-reservation",
+    "test:wallet-challenge": "node test/wallet-challenge.test.js",
+    "test:handle-reservation": "node test/handle-reservation.test.js",
+    "test:rules": "firebase emulators:exec --config ../../../firebase.wallet-challenge-test.json --project demo-coincard-wallet --only firestore \"node test/firestore-rules-emulator.test.js && node test/handle-reservation-emulator.test.js\"",
     "test:gate": "npm run lint && npm test && npm run test:rules",
-    "lint": "node --check index.js && node --check src/wallet-challenge/domain.js && node --check src/wallet-challenge/firestore-store.js && node --check src/wallet-challenge/functions.js && node --check src/wallet-challenge/service.js"
+    "lint": "node --check index.js && node --check src/wallet-challenge/domain.js && node --check src/wallet-challenge/firestore-store.js && node --check src/wallet-challenge/functions.js && node --check src/wallet-challenge/service.js && node --check src/handle-reservation/domain.js && node --check src/handle-reservation/firestore-store.js && node --check src/handle-reservation/functions.js && node --check src/handle-reservation/service.js && node --check test/handle-reservation.test.js && node --check test/handle-reservation-emulator.test.js"
   },
   "dependencies": {
     "ethers": "6.17.0",

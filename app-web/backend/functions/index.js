@@ -29,3 +29,10 @@ const {
 } = require('./src/wallet-challenge/functions');
 exports.coincardWalletChallenge = coincardWalletChallenge;
 exports.coincardWalletVerify = coincardWalletVerify;
+
+const {
+  coincardReserveHandle,
+  coincardCheckHandleAvailability,
+} = require('./src/handle-reservation/functions');
+exports.coincardReserveHandle = coincardReserveHandle;
+exports.coincardCheckHandleAvailability = coincardCheckHandleAvailability;
