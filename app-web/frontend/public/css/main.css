@@ -1025,7 +1025,8 @@ body.portal-active #nav {
 }
 
 .settlement-visual__caption {
-  max-width: var(--measure-lead);
+  max-width: var(--ix-interface-max);
+  width: 100%;
   margin: var(--sp-4) auto 0;
   padding: 0 1.5rem;
   text-align: center;
