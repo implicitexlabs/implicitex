@@ -1,7 +1,7 @@
 # CC-002 — Signed Card Manifest Acceptance Criteria
 
 **Drafted: July 29, 2026**
-**Status: DRAFT — governs CC-002 implementation scope**
+**Status: APPROVED — governs CC-002 implementation and completion**
 **Constitution: Signed-Record Constitution v0.2 (31579af)**
 
 ---
@@ -389,4 +389,5 @@ Record Constitution v0.2 must surface as proposed amendments, not silent deviati
 
 *Constitution reference: `31579af` — Signed-Record Constitution v0.2*
 *Acceptance criteria for: CC-002 Signed Card Manifest*
-*Implementation may not begin until this document is committed.*
+*This document is approved and frozen. Changes to scope require a documented amendment
+committed separately before implementation of the affected criteria.*
