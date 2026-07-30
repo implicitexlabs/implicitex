@@ -65,6 +65,32 @@
           ]
         },
         {
+          "source": "/v1-execution.html",
+          "headers": [
+            {
+              "key": "X-Robots-Tag",
+              "value": "noindex, nofollow"
+            }
+          ]
+        },
+        {
+          "source": "/downloads/implicitex-v1-execution-plan-rev6.pdf",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=3600"
+            },
+            {
+              "key": "Content-Disposition",
+              "value": "attachment; filename=\"implicitex-v1-execution-plan-rev6.pdf\""
+            },
+            {
+              "key": "X-Robots-Tag",
+              "value": "noindex, nofollow"
+            }
+          ]
+        },
+        {
           "source": "**",
           "headers": [
             {
