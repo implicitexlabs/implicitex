@@ -3,6 +3,10 @@
 Date: 2026-07-04
 Status: Product roadmap notes.
 
+This is a subordinate implementation watchlist. The horizontal entry gates in
+`docs/product/product-commercial-roadmap-2026-07-30.md` govern whether any
+additional asset or network may become active work.
+
 ## Strategic Position
 
 ImplicitEx should not become a broad token menu. The stronger product is:
@@ -22,8 +26,8 @@ stablecoins do not solve the current bottleneck by themselves:
 Supporting two assets does not matter if no one knows the product exists.
 ```
 
-USDT0 remains strategically useful, but it should not displace Coin Card Free,
-receipt proof, content, or early user acquisition.
+USDT0 remains strategically useful, but it should not displace the controlled
+Coin Card pilot, receipt proof, or early customer evidence.
 
 ## Recommended Order
 

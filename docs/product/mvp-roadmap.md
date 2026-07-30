@@ -3,6 +3,13 @@
 Last updated: 2026-07-19
 Branch: gate3-production-frontend-qa
 
+Commercial strategy, target market, monetization hypotheses, vertical product
+sequence, and exclusions are governed by
+`docs/product/product-commercial-roadmap-2026-07-30.md`. This document remains
+the launch-gate and implementation-status record. References below to a public
+Coin Card Free tier preserve earlier planning history; the current V1 is a
+controlled, manually issued, time-limited pilot, not a public free tier.
+
 ---
 
 ## Product scope
@@ -11,7 +18,10 @@ The MVP is a Polygon USDC transfer tool.
 
 ```
 Sender wallet → recipient wallet
-1% ImplicitEx fee, max 10 USDC
+Current interface: 250 USDC maximum transfer
+Maximum fee reachable through that interface: 2.50 USDC
+Deployed contract: 1% fee with no absolute contract-level cap
+Proposed future policy: deploy and verify a 10 USDC cap before supporting transfers above 1,000 USDC
 No custody
 No escrow
 No recovery claim
@@ -24,9 +34,10 @@ No reversal claim
 session restore polish, AI features, or social login before live-transfer smoke is complete.
 
 **Future expansion note:** preserve Polygon USDC as the reference route. The
-next product priority is Coin Card distribution, not another asset. Add USDT0
-later through an approved asset-route registry after Coin Card Free has a
-working external embed path. See `docs/product/usdt0-integration-plan.md`.
+next product priority is the controlled Coin Card pilot, not another asset.
+Add USDT0 later through an approved asset-route registry only after the master
+roadmap's horizontal entry gate passes. See
+`docs/product/usdt0-integration-plan.md`.
 
 ---
 
@@ -400,7 +411,7 @@ Longer-term mitigations (no single fix):
 | Signal / disclosure system | Complete — canonical vocabulary locked |
 | Mobile UX | PASS — responsive + real MetaMask mobile browser smoke 2026-06-14 |
 | Legal / disclosure | Research complete; attorney review pending |
-| Fee policy | LOCKED: 1%, max 10 USDC; portal label updated; contract revision drafted + tested; deployment deferred pending model review |
+| Fee policy | CURRENT: interface maximum 250 USDC / reachable fee 2.50 USDC; deployed contract charges uncapped 1%. FUTURE POLICY: 10 USDC cap revision drafted + tested, deployment deferred pending model review |
 | Product constitution | COMPLETE 2026-07-19: implicitex-constitution.md + fee-constitution.md |
 | Identity evidence architecture | PLANNED: schema at docs/product/identity-evidence-schema.md (DRAFT); feeds Coin Card V2, Commitment Review, Transfer Intelligence |
 | Public launch prep | Not started; correctly deferred |
@@ -422,7 +433,7 @@ Longer-term mitigations (no single fix):
 | Sparkline on gas row | Post-gas-row polish |
 | Ledger integration | After web + Electron both stable |
 | Ethereum mainnet | Post-Polygon-MVP |
-| Coin Card Free | Active next product priority after launch-stability defects |
+| Controlled Coin Card pilot | Active next product priority after launch-stability defects; public Free-tier plan superseded |
 | Creator dashboard | Post-Coin Card; requires transaction volume to be meaningful |
 
 ---

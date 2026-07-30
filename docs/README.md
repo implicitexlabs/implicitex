@@ -8,7 +8,11 @@ Product, operations, and legal documentation for ImplicitEx.
 docs/
 ├── product/
 │   ├── portal/                       Portal documentation (contract + inventory + projection + composition + global + visibility)
-│   ├── mvp-roadmap.md                Launch gate sequence and board (primary reference)
+│   ├── product-commercial-roadmap-2026-07-30.md
+│   │                                  Master one-year independent-operator, economics, validation, and exclusion roadmap
+│   ├── product-commercial-capability-register-2026-07-30.md
+│   │                                  Subordinate per-capability scope, dependency, validation, and completion records
+│   ├── mvp-roadmap.md                Historical launch gate sequence and implementation board
 │   ├── agent-financial-infrastructure-initiative.md
 │   │                                  Strategic thesis for agent treasury, permissions, settlement, and audit
 │   ├── transaction-states.md         10-state receipt machine vocabulary
@@ -36,6 +40,8 @@ docs/
 
 ## Start Here
 
+- **What governs product, market, revenue, and scope decisions?** `product/product-commercial-roadmap-2026-07-30.md`
+- **Where are detailed capability decisions recorded?** `product/product-commercial-capability-register-2026-07-30.md`
 - **Where are we in the launch sequence?** `product/mvp-roadmap.md`
 - **What is the product?** `product/service-model-summary.md`
 - **What is the larger agent infrastructure thesis?** `product/agent-financial-infrastructure-initiative.md`

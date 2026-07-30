@@ -2,6 +2,12 @@
 
 Last updated: 2026-07-04
 
+Commercial status: Historical tier exploration. The July 30 master roadmap
+supersedes the public Free-tier assumption. Current V1 is a controlled,
+manually issued, time-limited pilot. Retain this document for feature and
+pricing hypotheses only. See
+`docs/product/product-commercial-roadmap-2026-07-30.md`.
+
 ---
 
 ## Design principle
