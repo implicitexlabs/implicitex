@@ -337,7 +337,7 @@ const payload = {
     title: 'ImplicitEx Comprehensive Roadmap',
     source: path.relative(repoRoot, inventoryPath),
     sourceSha256: crypto.createHash('sha256').update(source).digest('hex'),
-    sourceState: 'Local, uncommitted founder review',
+    sourceState: 'Founder-approved WP-01 snapshot (not live authorization)',
     projectionBaseCommit: evidenceCommit,
     roadmapCommit: 'ec78178',
     generatedFromInventoryRevision: '0.2',

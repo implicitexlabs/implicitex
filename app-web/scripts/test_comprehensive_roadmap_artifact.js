@@ -73,7 +73,10 @@ async function main() {
   assert.strictEqual(data.meta.totals.parents, 42);
   assert.strictEqual(data.meta.totals.workPackages, 8);
   assert.strictEqual(data.meta.totals.exclusions, 30);
-  assert.strictEqual(data.meta.sourceState, 'Local, uncommitted founder review');
+  assert.strictEqual(
+    data.meta.sourceState,
+    'Founder-approved WP-01 snapshot (not live authorization)'
+  );
   assert.strictEqual(data.meta.generatedFromInventoryRevision, '0.2');
   assert.strictEqual(
     data.meta.projectionBaseCommit,
@@ -173,7 +176,10 @@ async function main() {
       waitUntil: 'networkidle0'
     });
     assert.strictEqual(response.status(), 200);
-    assert.strictEqual(await page.title(), 'ImplicitEx — Comprehensive Roadmap');
+    assert.strictEqual(
+      await page.title(),
+      'ImplicitEx — Comprehensive Roadmap Inventory'
+    );
     assert.strictEqual(
       await page.$eval('meta[name="robots"]', (element) => element.content),
       'noindex, nofollow'
@@ -192,7 +198,7 @@ async function main() {
     );
     assert.strictEqual(
       await page.$eval('#projectionState', (element) => element.textContent.trim()),
-      'Local, uncommitted founder review'
+      'Founder-approved WP-01 snapshot (not live authorization)'
     );
     assert.strictEqual(
       await page.$eval('#inventoryRevision', (element) => element.textContent.trim()),
@@ -271,16 +277,16 @@ async function main() {
     assert.strictEqual(
       await page.$eval('.roadmap-main', (element) => getComputedStyle(element).display),
       'none',
-      'The interactive partial view must not print during WP-01.'
+      'The interactive snapshot must not be used as the printable roadmap.'
     );
     assert.notStrictEqual(
       await page.$eval('.roadmap-print-block', (element) => getComputedStyle(element).display),
       'none',
-      'Print output must show the local-projection notice.'
+      'Print output must show the approved-snapshot notice.'
     );
     assert(
       await page.$eval('.roadmap-print-block', (element) =>
-        element.textContent.includes('Local review projection—not the printable roadmap')
+        element.textContent.includes('Approved review snapshot—not the printable roadmap')
       ),
       'The print notice must explain why roadmap printing is disabled.'
     );
