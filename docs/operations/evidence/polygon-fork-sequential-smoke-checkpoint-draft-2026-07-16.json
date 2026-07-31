@@ -1,0 +1,178 @@
+{
+  "schemaVersion": "implicitex-polygon-fork-sequential-smoke-checkpoint-draft.v1",
+  "status": "superseded-by-complete-matrix-preserved-for-provenance",
+  "supersededBy": "app-web/docs/operations/evidence/coin-card-approval-gas-policy/polygon-fork-gas-evidence.json",
+  "scope": "one controlled sequential approval-and-transfer smoke scenario only",
+  "preflight": {
+    "worktree": "/home/adenmediagroup/DevEnv/implicitex-visible-review-runtime",
+    "branch": "coin-card-visible-review-runtime",
+    "baseCommit": "013ee5a1533e159dda2977f33b0329a64688b0d5",
+    "upstreamEnvironmentAssignedCommandLocally": true,
+    "upstreamChainId": "137",
+    "deployerKeyRequired": false,
+    "deployerKeyLoaded": false,
+    "productionPrivateKeyLoaded": false,
+    "v3Backups": [
+      ["/tmp/coin-card-visible-review-runtime-013ee5a-v3.patch", "126663", "ec621a97f43c4b7c6d3125a07510e26e6e3a829a0493ca4e6383712069c7e2ef"],
+      ["/tmp/coin-card-visible-review-runtime-v3.test.js", "32257", "771b52b2ad36a13eb48f9dd9bd37243a05f5de40b05c9c2c04bfcf14ed9bce36"],
+      ["/tmp/coin-card-visible-review-runtime-backup-manifest-v3.json", "774", "ddd301a8adac05139e8f8e81e44830c5f99701303b3d3cdc477cf30fefe25d49"]
+    ],
+    "protectedTrustArtifactDiff": "none"
+  },
+  "toolVersions": {
+    "node": "v22.22.1",
+    "hardhat": "2.28.6",
+    "ethers": "6.16.0"
+  },
+  "providerSeparation": {
+    "upstream": {
+      "purpose": "chain and pinned-block reads plus Hardhat fork-state supply only",
+      "directMethodAllowlist": ["eth_chainId", "eth_getBlockByNumber"],
+      "observedDirectMethods": ["eth_chainId", "eth_getBlockByNumber", "eth_getBlockByNumber"],
+      "senderMethodRejectedBeforeTransport": true,
+      "configuredAsHardhatForkInputOnly": true,
+      "networkDefinitionWithAccountsCreated": false
+    },
+    "local": {
+      "transport": "in-process Hardhat EIP-1193 provider",
+      "networkName": "hardhat",
+      "chainId": "31337",
+      "clientVersion": "HardhatNetwork/2.28.6/@nomicfoundation/edr/0.3.8",
+      "identityChecks": [
+        "provider object identity equals Hardhat network.provider",
+        "network name and client version identify Hardhat",
+        "hardhat_metadata supplies a nonempty instance ID and the exact fork identity",
+        "local chain ID is deliberately distinct from source chain ID"
+      ],
+      "hardFailureBeforeNonlocalAction": true,
+      "exclusiveActionAudit": [
+        "evm_mine",
+        "hardhat_impersonateAccount",
+        "hardhat_setBalance",
+        "eth_sendTransaction",
+        "eth_getTransactionReceipt",
+        "hardhat_stopImpersonatingAccount",
+        "hardhat_setBalance",
+        "evm_snapshot",
+        "eth_estimateGas",
+        "eth_sendTransaction",
+        "eth_getTransactionReceipt",
+        "eth_estimateGas",
+        "eth_sendTransaction",
+        "eth_getTransactionReceipt",
+        "evm_revert"
+      ]
+    }
+  },
+  "fork": {
+    "sourceHead": {
+      "number": "90359708",
+      "hash": "0xd77aa1e133fc5e1b21b2f7a73e161ccaec2487c550449edf93802ca345bcc7be",
+      "timestamp": "1784244557",
+      "timestampIsoUtc": "2026-07-16T23:29:17Z"
+    },
+    "pinOffsetBlocks": "2048",
+    "pinnedBlock": {
+      "number": "90357660",
+      "hash": "0x58957b1e043b07b47b2c6a2ff141ed2678e8c6555b6ccd5be914b319b41633d9",
+      "timestamp": "1784241485",
+      "timestampIsoUtc": "2026-07-16T22:38:05Z"
+    },
+    "localPinnedBlockHashVerified": true,
+    "localInitialLatestHashVerified": true,
+    "stateReadBlockNumber": "90357661",
+    "stateReadBlockWasEmptyLocalSuccessor": true
+  },
+  "deployedConfiguration": {
+    "usdc": {
+      "address": "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359",
+      "runtimeCodeIdentity": ["1852", "0x7dbf0ee7d6d69b563891ceb7056cf0ff0fa09d21a48e5f812d89981c2ef95944"],
+      "decimals": "6",
+      "symbol": "USDC",
+      "approveSelector": "0x095ea7b3",
+      "proxyEvidence": "ZeppelinOS unstructured implementation storage slot",
+      "implementation": "0x235AE97b28466Db30469b89A9fe4cFf0659f82Cb",
+      "implementationRuntimeCodeIdentity": ["23464", "0x39ec98a4509fb2d4380a9cd4623e7b20cf651cb58edb8d8332bfad9c3d698143"]
+    },
+    "execution": {
+      "address": "0x5015841D6E665e63Ea174aD6b8FeF854026dE0C0",
+      "runtimeCodeIdentity": ["7161", "0xa94dad9f7f1da1e65b082d49b8e47c5d8b214534e73446809e1728073d6d9e06"],
+      "transferWithFeeSelector": "0x08acece2",
+      "configuredUsdc": "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359",
+      "treasury": "0xa7cE4232811021d2Dd01f4f0f264Df2427ab3919",
+      "feeBasisPoints": "100",
+      "minTransferAmount": "1000000",
+      "transferPrecision": "1000000",
+      "paused": false,
+      "recognizedProxyEvidence": null,
+      "implementation": null
+    }
+  },
+  "publicHolderDiscovery": {
+    "method": "bounded deployed-USDC Transfer-log candidates ranked deterministically, with balance and empty-code verification against pinned fork state",
+    "fromBlock": "90357597",
+    "toBlock": "90357660",
+    "transferLogCount": "994",
+    "candidateLimit": "128",
+    "selectedAddress": "0x166716C2838e182d64886135a96f1AABCA9A9756",
+    "selectedBalance": "2750771632066",
+    "controlledFundingTransfer": "300000000",
+    "impersonatedOnlyOnLocalFork": true,
+    "impersonationStoppedAfterSetup": true,
+    "storageSlotManipulation": false,
+    "ownershipClaimed": false
+  },
+  "smokeMethodology": [
+    "snapshot; verify payer balance and zero allowance",
+    "derive exact approval and transfer requests from current IX_EXECUTION",
+    "estimate, submit, receipt-check, and allowance-check approval locally",
+    "estimate transfer only after approval confirmation; submit and receipt-check locally",
+    "verify token and allowance deltas; revert snapshot and verify restoration"
+  ],
+  "smoke": {
+    "payer": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+    "recipient": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+    "treasury": "0xa7cE4232811021d2Dd01f4f0f264Df2427ab3919",
+    "paymentAmount": "125000000",
+    "fee": "1250000",
+    "totalDebit": "126250000",
+    "approvalEstimate": "55882",
+    "approvalReceiptGasUsed": "55449",
+    "transferEstimate": "106099",
+    "transferReceiptGasUsed": "95639",
+    "payerDelta": "-126250000",
+    "recipientDelta": "125000000",
+    "treasuryDelta": "1250000",
+    "allowanceBefore": "0",
+    "allowanceAfterApproval": "126250000",
+    "allowanceAfterTransfer": "0",
+    "approvalReceiptSucceeded": true,
+    "transferReceiptSucceeded": true,
+    "snapshotReverted": true,
+    "payerBalanceAndAllowanceRestored": true
+  },
+  "limitations": [
+    "One scenario is not a production gas bound; no fixed gas limit is derived.",
+    "Nonzero-to-nonzero approval was not exercised and still needs separate investigation.",
+    "The full matrix and production gas policy were not evaluated or changed.",
+    "Hardhat 2.28 EDR rejected calls explicitly tagged at the chain-137 fork block despite a fork-only hardfork history declaration. After verifying the exact pin, the harness mined one empty local block and read the unchanged successor state.",
+    "Raw gas values are one deterministic local-fork observation, not policy recommendations."
+  ],
+  "scopeConfirmations": {
+    "productionTransactionRequestChanged": false,
+    "productionGasPolicyIntroduced": false,
+    "reviewAuthorizationAttemptOrExecutionFingerprintChanged": false,
+    "protectedSignedArtifactChanged": false,
+    "protectedArtifactSignedOrRegenerated": false,
+    "signingKeyAccessed": false,
+    "deploymentPerformed": false,
+    "liveTransactionSubmitted": false
+  },
+  "contentSafety": {
+    "rpcEndpointValueIncluded": false,
+    "providerCredentialIncluded": false,
+    "privateKeyIncluded": false,
+    "shellEnvironmentDumpIncluded": false,
+    "fullProcessEnvironmentIncluded": false
+  }
+}

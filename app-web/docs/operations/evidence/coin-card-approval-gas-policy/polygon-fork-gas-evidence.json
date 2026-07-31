@@ -1,0 +1,355 @@
+{
+  "schemaVersion": "implicitex-polygon-fork-gas-evidence.v1",
+  "generatedAt": "2026-07-17T00:07:59.103Z",
+  "status": "complete-evidence-matrix-no-policy-adopted",
+  "scope": "Two source blocks, twelve canonical scenarios, two clean repetitions per scenario and block",
+  "provenance": {
+    "smokeCheckpointPreserved": true,
+    "smokeCheckpointDraft": "../../../../../docs/operations/evidence/polygon-fork-sequential-smoke-checkpoint-draft-2026-07-16.json",
+    "smokeSourceBlock": "90357660",
+    "smokeLocalExecutionBlock": "90357661",
+    "smokePayment": "125000000",
+    "smokeFee": "1250000",
+    "smokeTotalDebit": "126250000",
+    "smokeApprovalEstimate": "55882",
+    "smokeApprovalReceiptGas": "55449",
+    "smokeTransferEstimate": "106099",
+    "smokeTransferReceiptGas": "95639"
+  },
+  "toolVersions": {
+    "node": "v22.22.1",
+    "hardhat": "2.28.6",
+    "ethers": "6.16.0"
+  },
+  "providerSeparation": {
+    "upstreamReadAllowlist": [
+      "eth_chainId",
+      "eth_getBlockByNumber",
+      "eth_getCode",
+      "eth_getStorageAt",
+      "eth_call"
+    ],
+    "upstreamObservedMethodCounts": [
+      ["eth_chainId", "1"],
+      ["eth_getBlockByNumber", "2"],
+      ["eth_call", "40"],
+      ["eth_getCode", "4"],
+      ["eth_getStorageAt", "8"]
+    ],
+    "upstreamRejectedBeforeTransport": [
+      "eth_sendTransaction",
+      "eth_sendRawTransaction"
+    ],
+    "localTransport": "certified in-process Hardhat EIP-1193 provider",
+    "localChainId": "31337",
+    "localIdentityGuardedBeforeEveryAction": true,
+    "localActionCountsPerSourceBlock": {
+      "evm_mine": "1",
+      "hardhat_impersonateAccount": "1",
+      "hardhat_setBalance": "1",
+      "eth_sendTransaction": "87",
+      "eth_getTransactionReceipt": "87",
+      "hardhat_stopImpersonatingAccount": "1",
+      "evm_snapshot": "24",
+      "eth_estimateGas": "36",
+      "evm_revert": "24"
+    },
+    "storageSlotMutationUsed": false,
+    "liveTransactionSubmitted": false
+  },
+  "sourceAndLocalBlocks": [
+    {
+      "sourceState": {
+        "id": "checkpoint-pin",
+        "chainId": "137",
+        "blockNumber": "90357660",
+        "blockHash": "0x58957b1e043b07b47b2c6a2ff141ed2678e8c6555b6ccd5be914b319b41633d9",
+        "timestamp": "1784241485",
+        "baseFeePerGas": "247834090656",
+        "stateRoot": "0x5a5b45916ce2f4d31722e63f6f245ddf1e5d6d8483c6ed659234e24defbbd1be"
+      },
+      "localExecution": {
+        "chainId": "31337",
+        "blockNumber": "90357661",
+        "blockHash": "0x6352ffb6ed7fd74b07d663585d78fd86e26e314d1e2c97e0e09e5c0004b1605b",
+        "timestamp": "1784241486",
+        "baseFeePerGas": "239038935085",
+        "configuredHardfork": "shanghai",
+        "hardhatMetadataInstanceId": "0xdd69e5e5280154ec486f70d41a36c1631a6feacf3c2172cb96603ed732ba8218",
+        "relevantContractStateDigest": "0x73c64397c7cf36c15c31e4e790d5e978b5575959d1fa02b0460b15d31d93f6dd",
+        "relevantContractStorageUnchanged": true,
+        "globalStateRootChangedOnlyByHardhatLocalAccountMaterialization": true
+      },
+      "publicHolderDiscovery": {
+        "address": "0x166716C2838e182d64886135a96f1AABCA9A9756",
+        "balance": "2750771632066",
+        "fromBlock": "90357597",
+        "toBlock": "90357660",
+        "logCount": "994",
+        "candidateLimit": "128"
+      }
+    },
+    {
+      "sourceState": {
+        "id": "independent-historical",
+        "chainId": "137",
+        "blockNumber": "89853052",
+        "blockHash": "0x50e58d60eda6924c6a80f196963353b15f584384a117c21271b254f29175eeef",
+        "timestamp": "1783484573",
+        "baseFeePerGas": "251113976683",
+        "stateRoot": "0x68f1415f06022c39397d1e037c4c63c9b547325b77437a13576b59cab5b9b0ed"
+      },
+      "localExecution": {
+        "chainId": "31337",
+        "blockNumber": "89853053",
+        "blockHash": "0xba03ead47b7f0446813dfa4b442b1552471f1670a94548639a7b2c86d536db32",
+        "timestamp": "1783484574",
+        "baseFeePerGas": "234048606301",
+        "configuredHardfork": "shanghai",
+        "hardhatMetadataInstanceId": "0x077fce4892e6ca4998b25241bcf52cf02397db9bb08f8632a47e947bcb1a51dd",
+        "relevantContractStateDigest": "0x73c64397c7cf36c15c31e4e790d5e978b5575959d1fa02b0460b15d31d93f6dd",
+        "relevantContractStorageUnchanged": true,
+        "globalStateRootChangedOnlyByHardhatLocalAccountMaterialization": true
+      },
+      "publicHolderDiscovery": {
+        "address": "0x760DcE7eA6e8BA224BFFBEB8a7ff4Dd1Ef122BfF",
+        "balance": "4777462048996",
+        "fromBlock": "89852989",
+        "toBlock": "89853052",
+        "logCount": "1143",
+        "candidateLimit": "128"
+      }
+    }
+  ],
+  "deployedIdentities": {
+    "exactMatchAcrossSourceBlocks": true,
+    "usdc": {
+      "address": "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359",
+      "runtimeByteLength": "1852",
+      "runtimeKeccak256": "0x7dbf0ee7d6d69b563891ceb7056cf0ff0fa09d21a48e5f812d89981c2ef95944",
+      "proxyEvidence": "zeppelinos-unstructured-storage",
+      "implementation": "0x235AE97b28466Db30469b89A9fe4cFf0659f82Cb",
+      "implementationRuntimeByteLength": "23464",
+      "implementationRuntimeKeccak256": "0x39ec98a4509fb2d4380a9cd4623e7b20cf651cb58edb8d8332bfad9c3d698143",
+      "decimals": "6",
+      "symbol": "USDC",
+      "approveSelector": "0x095ea7b3"
+    },
+    "execution": {
+      "address": "0x5015841D6E665e63Ea174aD6b8FeF854026dE0C0",
+      "runtimeByteLength": "7161",
+      "runtimeKeccak256": "0xa94dad9f7f1da1e65b082d49b8e47c5d8b214534e73446809e1728073d6d9e06",
+      "recognizedProxyEvidence": null,
+      "transferWithFeeSelector": "0x08acece2",
+      "configuredUsdc": "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359",
+      "treasury": "0xa7cE4232811021d2Dd01f4f0f264Df2427ab3919",
+      "feeBasisPoints": "100",
+      "minTransferAmount": "1000000",
+      "transferPrecision": "1000000",
+      "paused": false
+    }
+  },
+  "scenarioDefinitions": [
+    ["approval-zero-minimum", "1000000", "zero", "exact", "zero"],
+    ["approval-zero-middle", "125000000", "zero", "excess", "nonzero"],
+    ["approval-zero-maximum", "250000000", "zero", "exact", "zero"],
+    ["approval-zero-six-decimal", "1005001", "zero", "excess", "nonzero"],
+    ["approval-insufficient-middle", "125000000", "insufficient", "exact", "zero"],
+    ["approval-insufficient-maximum", "250000000", "insufficient", "excess", "nonzero"],
+    ["transfer-only-exact-minimum", "1000000", "exact", "exact", "zero"],
+    ["transfer-only-exact-middle", "125000000", "exact", "excess", "nonzero"],
+    ["transfer-only-exact-maximum", "250000000", "exact", "exact", "nonzero"],
+    ["transfer-only-greater-minimum", "1000000", "greater", "excess", "nonzero"],
+    ["transfer-only-greater-middle", "125000000", "greater", "exact", "zero"],
+    ["transfer-only-greater-maximum", "250000000", "greater", "excess", "zero"]
+  ],
+  "scenarioDefinitionFields": [
+    "scenarioId",
+    "recipientAmount",
+    "initialAllowanceClass",
+    "payerBalanceClass",
+    "recipientInitialBalanceClass"
+  ],
+  "rawRepetitionEncoding": {
+    "note": "Each group explicitly represents repetitions 1 and 2. Both clean repetitions had identical raw values.",
+    "fields": [
+      "sourceBlockId",
+      "scenarioId",
+      "repetitions",
+      "recipientAmount",
+      "fee",
+      "totalDebit",
+      "feeDivisionRemainder",
+      "eligibleByDeployedPrecision",
+      "allowanceInputClass",
+      "payerBalanceClass",
+      "recipientInitialBalanceClass",
+      "treasuryInitialBalanceClass",
+      "payerBalanceBefore",
+      "recipientBalanceBefore",
+      "treasuryBalanceBefore",
+      "allowanceBefore",
+      "allowanceAfterApproval",
+      "allowanceAfter",
+      "allowanceTransition",
+      "approvalTransaction",
+      "transferTransaction",
+      "payerRecipientTreasuryDeltas",
+      "outcome"
+    ],
+    "transactionFields": [
+      "estimateStatus",
+      "estimate",
+      "submittedGasLimit",
+      "receiptGasUsed",
+      "receiptStatus",
+      "blockNumber",
+      "effectiveGasPrice",
+      "baseFeePerGas",
+      "estimateMinusActual",
+      "contractError"
+    ]
+  },
+  "rawRepetitionGroups": [
+    ["checkpoint-pin", "approval-zero-minimum", ["1", "2"], "1000000", "10000", "1010000", "0", true, "zero", "exact", "zero", "nonzero", "1010000", "0", "140000", "0", "1010000", "0", "zero-to-exact-approval-to-zero", ["succeeded", "55870", "55870", "55437", "1", "90357664", "161232225445", "160232225445", "433", null], ["succeeded", "105729", "105729", "90827", "1", "90357665", "141240208906", "140240208906", "14902", null], ["-1010000", "1000000", "10000"], "success"],
+    ["checkpoint-pin", "approval-zero-middle", ["1", "2"], "125000000", "1250000", "126250000", "0", true, "zero", "excess", "nonzero", "nonzero", "176250000", "7000000", "140000", "0", "126250000", "0", "zero-to-exact-approval-to-zero", ["succeeded", "55882", "55882", "55449", "1", "90357665", "141244696743", "140244696743", "433", null], ["succeeded", "88356", "88356", "78539", "1", "90357666", "123746511435", "122746511435", "9817", null], ["-126250000", "125000000", "1250000"], "success"],
+    ["checkpoint-pin", "approval-zero-maximum", ["1", "2"], "250000000", "2500000", "252500000", "0", true, "zero", "exact", "zero", "nonzero", "252500000", "0", "140000", "0", "252500000", "0", "zero-to-exact-approval-to-zero", ["succeeded", "55882", "55882", "55449", "1", "90357664", "161232234598", "160232234598", "433", null], ["succeeded", "105742", "105742", "90839", "1", "90357665", "141240224929", "140240224929", "14903", null], ["-252500000", "250000000", "2500000"], "success"],
+    ["checkpoint-pin", "approval-zero-six-decimal", ["1", "2"], "1005001", "10050", "1015051", "100", false, "zero", "excess", "nonzero", "nonzero", "51015051", "7000000", "140000", "0", "1015051", "1015051", "zero-to-exact-approval-transfer-not-executed", ["succeeded", "55870", "55870", "55437", "1", "90357665", "141244696743", "140244696743", "433", null], ["rejected", null, null, null, null, null, null, null, null, "InvalidTransferPrecision"], ["0", "0", "0"], "deployed-precision-rejection"],
+    ["checkpoint-pin", "approval-insufficient-middle", ["1", "2"], "125000000", "1250000", "126250000", "0", true, "insufficient", "exact", "zero", "nonzero", "126250000", "0", "140000", "63125000", "126250000", "0", "nonzero-insufficient-to-exact-replacement-to-zero", ["succeeded", "38648", "38648", "38349", "1", "90357665", "141240224929", "140240224929", "299", null], ["succeeded", "105742", "105742", "90839", "1", "90357666", "123732605448", "122732605448", "14903", null], ["-126250000", "125000000", "1250000"], "success"],
+    ["checkpoint-pin", "approval-insufficient-maximum", ["1", "2"], "250000000", "2500000", "252500000", "0", true, "insufficient", "excess", "nonzero", "nonzero", "302500000", "7000000", "140000", "126250000", "252500000", "0", "nonzero-insufficient-to-exact-replacement-to-zero", ["succeeded", "38648", "38648", "38349", "1", "90357666", "123746511435", "122746511435", "299", null], ["succeeded", "88356", "88356", "78539", "1", "90357667", "108422810864", "107422810864", "9817", null], ["-252500000", "250000000", "2500000"], "success"],
+    ["checkpoint-pin", "transfer-only-exact-minimum", ["1", "2"], "1000000", "10000", "1010000", "0", true, "exact", "exact", "zero", "nonzero", "1010000", "0", "140000", "1010000", "1010000", "0", "exact-to-zero", null, ["succeeded", "105729", "105729", "90827", "1", "90357665", "141240208906", "140240208906", "14902", null], ["-1010000", "1000000", "10000"], "success"],
+    ["checkpoint-pin", "transfer-only-exact-middle", ["1", "2"], "125000000", "1250000", "126250000", "0", true, "exact", "excess", "nonzero", "nonzero", "176250000", "7000000", "140000", "126250000", "126250000", "0", "exact-to-zero", null, ["succeeded", "88356", "88356", "78539", "1", "90357666", "123746511435", "122746511435", "9817", null], ["-126250000", "125000000", "1250000"], "success"],
+    ["checkpoint-pin", "transfer-only-exact-maximum", ["1", "2"], "250000000", "2500000", "252500000", "0", true, "exact", "exact", "nonzero", "nonzero", "252500000", "7000000", "140000", "252500000", "252500000", "0", "exact-to-zero", null, ["succeeded", "88429", "88429", "73739", "1", "90357666", "123746511435", "122746511435", "14690", null], ["-252500000", "250000000", "2500000"], "success"],
+    ["checkpoint-pin", "transfer-only-greater-minimum", ["1", "2"], "1000000", "10000", "1010000", "0", true, "greater", "excess", "nonzero", "nonzero", "51010000", "7000000", "140000", "34010000", "34010000", "33000000", "greater-to-nonzero-remainder", null, ["succeeded", "88534", "88534", "83327", "1", "90357666", "123746511435", "122746511435", "5207", null], ["-1010000", "1000000", "10000"], "success"],
+    ["checkpoint-pin", "transfer-only-greater-middle", ["1", "2"], "125000000", "1250000", "126250000", "0", true, "greater", "exact", "zero", "nonzero", "126250000", "0", "140000", "159250000", "159250000", "33000000", "greater-to-nonzero-remainder", null, ["succeeded", "106099", "106099", "95639", "1", "90357665", "141240224929", "140240224929", "10460", null], ["-126250000", "125000000", "1250000"], "success"],
+    ["checkpoint-pin", "transfer-only-greater-maximum", ["1", "2"], "250000000", "2500000", "252500000", "0", true, "greater", "excess", "zero", "nonzero", "302500000", "0", "140000", "285500000", "285500000", "33000000", "greater-to-nonzero-remainder", null, ["succeeded", "105932", "105932", "100439", "1", "90357665", "141240224929", "140240224929", "5493", null], ["-252500000", "250000000", "2500000"], "success"],
+    ["independent-historical", "approval-zero-minimum", ["1", "2"], "1000000", "10000", "1010000", "0", true, "zero", "exact", "zero", "nonzero", "1010000", "0", "140000", "0", "1010000", "0", "zero-to-exact-approval-to-zero", ["succeeded", "55870", "55870", "55437", "1", "89853056", "157887115634", "156887115634", "433", null], ["succeeded", "105729", "105729", "90827", "1", "89853057", "138312465143", "137312465143", "14902", null], ["-1010000", "1000000", "10000"], "success"],
+    ["independent-historical", "approval-zero-middle", ["1", "2"], "125000000", "1250000", "126250000", "0", true, "zero", "excess", "nonzero", "nonzero", "176250000", "7000000", "140000", "0", "126250000", "0", "zero-to-exact-approval-to-zero", ["succeeded", "55882", "55882", "55449", "1", "89853057", "138316859290", "137316859290", "433", null], ["succeeded", "88356", "88356", "78539", "1", "89853058", "121183977223", "120183977223", "9817", null], ["-126250000", "125000000", "1250000"], "success"],
+    ["independent-historical", "approval-zero-maximum", ["1", "2"], "250000000", "2500000", "252500000", "0", true, "zero", "exact", "zero", "nonzero", "252500000", "0", "140000", "0", "252500000", "0", "zero-to-exact-approval-to-zero", ["succeeded", "55882", "55882", "55449", "1", "89853056", "157887124596", "156887124596", "433", null], ["succeeded", "105742", "105742", "90839", "1", "89853057", "138312480831", "137312480831", "14903", null], ["-252500000", "250000000", "2500000"], "success"],
+    ["independent-historical", "approval-zero-six-decimal", ["1", "2"], "1005001", "10050", "1015051", "100", false, "zero", "excess", "nonzero", "nonzero", "51015051", "7000000", "140000", "0", "1015051", "1015051", "zero-to-exact-approval-transfer-not-executed", ["succeeded", "55870", "55870", "55437", "1", "89853057", "138316859290", "137316859290", "433", null], ["rejected", null, null, null, null, null, null, null, null, "InvalidTransferPrecision"], ["0", "0", "0"], "deployed-precision-rejection"],
+    ["independent-historical", "approval-insufficient-middle", ["1", "2"], "125000000", "1250000", "126250000", "0", true, "insufficient", "exact", "zero", "nonzero", "126250000", "0", "140000", "63125000", "126250000", "0", "nonzero-insufficient-to-exact-replacement-to-zero", ["succeeded", "38648", "38648", "38349", "1", "89853057", "138312480831", "137312480831", "299", null], ["succeeded", "105742", "105742", "90839", "1", "89853058", "121170361546", "120170361546", "14903", null], ["-126250000", "125000000", "1250000"], "success"],
+    ["independent-historical", "approval-insufficient-maximum", ["1", "2"], "250000000", "2500000", "252500000", "0", true, "insufficient", "excess", "nonzero", "nonzero", "302500000", "7000000", "140000", "126250000", "252500000", "0", "nonzero-insufficient-to-exact-replacement-to-zero", ["succeeded", "38648", "38648", "38349", "1", "89853058", "121183977223", "120183977223", "299", null], ["succeeded", "88356", "88356", "78539", "1", "89853059", "106180183968", "105180183968", "9817", null], ["-252500000", "250000000", "2500000"], "success"],
+    ["independent-historical", "transfer-only-exact-minimum", ["1", "2"], "1000000", "10000", "1010000", "0", true, "exact", "exact", "zero", "nonzero", "1010000", "0", "140000", "1010000", "1010000", "0", "exact-to-zero", null, ["succeeded", "105729", "105729", "90827", "1", "89853057", "138312465143", "137312465143", "14902", null], ["-1010000", "1000000", "10000"], "success"],
+    ["independent-historical", "transfer-only-exact-middle", ["1", "2"], "125000000", "1250000", "126250000", "0", true, "exact", "excess", "nonzero", "nonzero", "176250000", "7000000", "140000", "126250000", "126250000", "0", "exact-to-zero", null, ["succeeded", "88356", "88356", "78539", "1", "89853058", "121183977223", "120183977223", "9817", null], ["-126250000", "125000000", "1250000"], "success"],
+    ["independent-historical", "transfer-only-exact-maximum", ["1", "2"], "250000000", "2500000", "252500000", "0", true, "exact", "exact", "nonzero", "nonzero", "252500000", "7000000", "140000", "252500000", "252500000", "0", "exact-to-zero", null, ["succeeded", "88429", "88429", "73739", "1", "89853058", "121183977223", "120183977223", "14690", null], ["-252500000", "250000000", "2500000"], "success"],
+    ["independent-historical", "transfer-only-greater-minimum", ["1", "2"], "1000000", "10000", "1010000", "0", true, "greater", "excess", "nonzero", "nonzero", "51010000", "7000000", "140000", "34010000", "34010000", "33000000", "greater-to-nonzero-remainder", null, ["succeeded", "88534", "88534", "83327", "1", "89853058", "121183977223", "120183977223", "5207", null], ["-1010000", "1000000", "10000"], "success"],
+    ["independent-historical", "transfer-only-greater-middle", ["1", "2"], "125000000", "1250000", "126250000", "0", true, "greater", "exact", "zero", "nonzero", "126250000", "0", "140000", "159250000", "159250000", "33000000", "greater-to-nonzero-remainder", null, ["succeeded", "106099", "106099", "95639", "1", "89853057", "138312480831", "137312480831", "10460", null], ["-126250000", "125000000", "1250000"], "success"],
+    ["independent-historical", "transfer-only-greater-maximum", ["1", "2"], "250000000", "2500000", "252500000", "0", true, "greater", "excess", "zero", "nonzero", "302500000", "0", "140000", "285500000", "285500000", "33000000", "greater-to-nonzero-remainder", null, ["succeeded", "105932", "105932", "100439", "1", "89853057", "138312480831", "137312480831", "5493", null], ["-252500000", "250000000", "2500000"], "success"]
+  ],
+  "scenarioMaxima": [
+    ["approval-zero-minimum", "55870", "55437", "105729", "90827"],
+    ["approval-zero-middle", "55882", "55449", "88356", "78539"],
+    ["approval-zero-maximum", "55882", "55449", "105742", "90839"],
+    ["approval-zero-six-decimal", "55870", "55437", null, null],
+    ["approval-insufficient-middle", "38648", "38349", "105742", "90839"],
+    ["approval-insufficient-maximum", "38648", "38349", "88356", "78539"],
+    ["transfer-only-exact-minimum", null, null, "105729", "90827"],
+    ["transfer-only-exact-middle", null, null, "88356", "78539"],
+    ["transfer-only-exact-maximum", null, null, "88429", "73739"],
+    ["transfer-only-greater-minimum", null, null, "88534", "83327"],
+    ["transfer-only-greater-middle", null, null, "106099", "95639"],
+    ["transfer-only-greater-maximum", null, null, "105932", "100439"]
+  ],
+  "scenarioMaximaFields": [
+    "scenarioId",
+    "approvalMaximumEstimate",
+    "approvalMaximumActual",
+    "transferMaximumEstimate",
+    "transferMaximumActual"
+  ],
+  "globalMaxima": {
+    "approval": {
+      "maximumEstimate": "55882",
+      "maximumActualGasUsed": "55449",
+      "producingScenarios": ["approval-zero-middle", "approval-zero-maximum"],
+      "minimumEstimate": "38648",
+      "minimumActualGasUsed": "38349",
+      "estimateSpread": "17234",
+      "actualSpread": "17100",
+      "estimateToActualHeadroomRange": ["299", "433"]
+    },
+    "transfer": {
+      "maximumEstimate": "106099",
+      "maximumEstimateScenario": "transfer-only-greater-middle",
+      "maximumActualGasUsed": "100439",
+      "maximumActualScenario": "transfer-only-greater-maximum",
+      "minimumEstimate": "88356",
+      "minimumActualGasUsed": "73739",
+      "estimateSpread": "17743",
+      "actualSpread": "26700",
+      "estimateToActualHeadroomRange": ["5207", "14903"]
+    }
+  },
+  "maximaByOperationStorageClass": [
+    ["approval:zero", "55882", "55449"],
+    ["approval:insufficient-nonzero", "38648", "38349"],
+    ["transfer:recipient-zero:payer-exact:allowance-clears", "105742", "90839"],
+    ["transfer:recipient-nonzero:payer-excess:allowance-clears", "88356", "78539"],
+    ["transfer:recipient-nonzero:payer-exact:allowance-clears", "88429", "73739"],
+    ["transfer:recipient-nonzero:payer-excess:allowance-remains", "88534", "83327"],
+    ["transfer:recipient-zero:payer-exact:allowance-remains", "106099", "95639"],
+    ["transfer:recipient-zero:payer-excess:allowance-remains", "105932", "100439"]
+  ],
+  "repeatability": {
+    "sourceBlockScenarioPairs": "24",
+    "repetitionsPerPair": "2",
+    "rawRepetitionsRepresented": "48",
+    "identicalPairs": "24",
+    "differingPairs": "0",
+    "deterministicFullMatrixRerunsPassed": "4",
+    "runSpecificFieldsExcludedFromEquality": ["generatedAt", "hardhatMetadataInstanceId"]
+  },
+  "architectureGates": {
+    "nonzeroToNonzeroApprovalSupported": true,
+    "nonzeroReplacementRuns": "8",
+    "nonzeroReplacementApprovalEstimate": "38648",
+    "nonzeroReplacementApprovalActual": "38349",
+    "oneStepApprovalPlanAllowanceSemanticsValid": true,
+    "sixDecimalPrecisionRejectionRuns": "4",
+    "sixDecimalCurrentTransferPathValid": false
+  },
+  "failures": [
+    ["checkpoint-pin", "approval-zero-six-decimal", "1", "transfer-estimate", "InvalidTransferPrecision"],
+    ["checkpoint-pin", "approval-zero-six-decimal", "2", "transfer-estimate", "InvalidTransferPrecision"],
+    ["independent-historical", "approval-zero-six-decimal", "1", "transfer-estimate", "InvalidTransferPrecision"],
+    ["independent-historical", "approval-zero-six-decimal", "2", "transfer-estimate", "InvalidTransferPrecision"]
+  ],
+  "candidateMarginMethodsNotAdopted": [
+    {
+      "method": "twenty-percent-plus-five-thousand-fixed-reserve",
+      "approvalIllustration": "72059",
+      "transferIllustration": "132319",
+      "status": "illustrative-only-not-selected"
+    },
+    {
+      "method": "round-maximum-estimate-up-to-next-ten-thousand-boundary",
+      "approvalIllustration": "60000",
+      "transferIllustration": "110000",
+      "status": "illustrative-only-not-selected"
+    }
+  ],
+  "limitations": [
+    "The deployed transferPrecision rejects the six-decimal amount before transfer submission.",
+    "Rejected transfer estimates have no submitted gas limit or receipt gas value.",
+    "Global local-successor state roots differ because Hardhat materializes prefunded local accounts; relevant deployed state was compared separately and matched.",
+    "Observed values and illustrative margins are evidence only, not production limits or policy."
+  ],
+  "scopeConfirmations": {
+    "productionRuntimeChanged": false,
+    "productionTransactionRequestChanged": false,
+    "productionGasPolicyCreated": false,
+    "productionGasLimitSelected": false,
+    "fingerprintChanged": false,
+    "protectedArtifactSignedOrRegenerated": false,
+    "signingKeyAccessed": false,
+    "deploymentPerformed": false,
+    "commitCreated": false
+  },
+  "contentSafety": {
+    "rpcEndpointIncluded": false,
+    "providerCredentialIncluded": false,
+    "privateKeyIncluded": false,
+    "shellEnvironmentDumpIncluded": false,
+    "fullProcessEnvironmentIncluded": false
+  }
+}
