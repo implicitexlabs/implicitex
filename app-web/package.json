@@ -9,6 +9,8 @@
     "check:coincard-tokens": "node scripts/generate_coin_card_tokens_css.js --check",
     "build:coincard-review": "node scripts/generate_coin_card_review_contract.js",
     "check:coincard-review": "node scripts/generate_coin_card_review_contract.js --check",
+    "build:comprehensive-roadmap-pdf": "node scripts/generate_comprehensive_roadmap_pdf.js",
+    "test:comprehensive-roadmap-pdf": "node scripts/test_comprehensive_roadmap_pdf.js",
     "validate:architecture": "node scripts/validate_coin_card_architecture.js",
     "test:coincard-presentation-input": "node tests/frontend/coin-card-presentation-input.test.js",
     "test:coincard-display": "node tests/frontend/coin-card-display.test.js",
