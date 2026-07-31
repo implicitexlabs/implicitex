@@ -227,6 +227,43 @@
   text-align: right;
 }
 
+.roadmap-overlay-evidence {
+  margin: 0.85rem 0 0;
+  color: var(--rm-quiet);
+  font-size: 0.68rem;
+  line-height: 1.55;
+}
+
+.roadmap-overlay-evidence code {
+  color: var(--rm-copy);
+  font-family: var(--font-mono);
+}
+
+.roadmap-pdf-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.65rem;
+  margin-top: 0.9rem;
+  padding: 0.65rem 0.85rem;
+  color: var(--rm-paper);
+  background: var(--rm-ink);
+  border: 1px solid var(--rm-ink);
+  font-family: "IX Oxanium", var(--font-ui);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-align: center;
+  text-transform: uppercase;
+  transition: color 0.15s, background 0.15s;
+}
+
+.roadmap-pdf-link:hover,
+.roadmap-pdf-link:focus-visible {
+  color: var(--rm-ink);
+  background: var(--rm-active-soft);
+}
+
 .roadmap-command,
 .roadmap-view,
 .roadmap-source-note {

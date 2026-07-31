@@ -8,6 +8,11 @@ const puppeteer = require('puppeteer');
 
 const publicRoot = path.resolve(__dirname, '..', 'frontend', 'public');
 const dataPath = path.join(publicRoot, 'data', 'comprehensive-roadmap.json');
+const pdfPath = path.join(
+  publicRoot,
+  'downloads',
+  'implicitex-comprehensive-roadmap-2026-07-30.pdf'
+);
 
 const contentTypes = {
   '.css': 'text/css; charset=utf-8',
@@ -67,6 +72,7 @@ async function selectView(page, view) {
 
 async function main() {
   assert(fs.existsSync(dataPath), 'Generated comprehensive-roadmap data is missing.');
+  assert(fs.existsSync(pdfPath), 'Generated comprehensive-roadmap PDF is missing.');
   const data = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
   assert.strictEqual(data.meta.totals.roadmapRecords, 289);
   assert.strictEqual(data.meta.totals.fullRecords, 259);
@@ -183,6 +189,22 @@ async function main() {
     assert.strictEqual(
       await page.$eval('meta[name="robots"]', (element) => element.content),
       'noindex, nofollow'
+    );
+    assert.strictEqual(
+      await page.$eval('.roadmap-source-card > span', (element) =>
+        element.textContent.trim()
+      ),
+      'Operational overlay · July 30, 2026'
+    );
+    assert.strictEqual(
+      await page.$eval('.roadmap-overlay-evidence', (element) =>
+        element.textContent.replace(/\s+/g, ' ').trim()
+      ),
+      'Evidence eb73070 · 6952cf6 · b2404ce · 9a8b7a9'
+    );
+    assert.strictEqual(
+      await page.$eval('.roadmap-pdf-link', (element) => element.getAttribute('href')),
+      '/downloads/implicitex-comprehensive-roadmap-2026-07-30.pdf'
     );
     await page.waitForSelector('.roadmap-package');
     assert.strictEqual(await page.$$eval('.roadmap-package', (items) => items.length), 8);
