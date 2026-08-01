@@ -185,15 +185,10 @@
     var modules = getByIdOrFail(MODULES_ID, ERROR_CODES.STRUCTURE_INVALID);
     var nav = getByIdOrFail(NAV_ID, ERROR_CODES.STRUCTURE_INVALID);
     var status = getByIdOrFail(STATUS_ID, ERROR_CODES.STRUCTURE_INVALID);
-    var children = getChildren(modules);
     var projectedDestination = readProjectedDestinationSafely();
     var buttons = [];
     var currentCurrentCount = 0;
     var currentCurrentButton = null;
-
-    if (children.length < 5 || children[0] !== nav || children[1] !== status) {
-      fail(ERROR_CODES.STRUCTURE_INVALID);
-    }
 
     if ((nav.tagName || nav.nodeName || '').toUpperCase() !== 'NAV') {
       fail(ERROR_CODES.STRUCTURE_INVALID);
@@ -276,10 +271,6 @@
     }
 
     if (nav.children.length !== 3 || buttons.length !== 3) {
-      fail(ERROR_CODES.STRUCTURE_INVALID);
-    }
-
-    if (!children[2] || (children[2].className || '') !== 'portal-header') {
       fail(ERROR_CODES.STRUCTURE_INVALID);
     }
 

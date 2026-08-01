@@ -2,6 +2,12 @@
 
 Last updated: 2026-06-30
 
+Commercial status: The July 30, 2026 master roadmap supersedes references below
+to a public Coin Card Free tier. The current V1 is a controlled, manually
+issued, time-limited pilot. The evidence-first operating principles remain
+applicable. See
+`docs/product/product-commercial-roadmap-2026-07-30.md`.
+
 ---
 
 ## The mandate
@@ -173,7 +179,7 @@ The ambition is:
 
 ---
 
-## Tactical sequence (current)
+## Historical tactical sequence (superseded 2026-07-30)
 
 ```
 1. Coin Card Free

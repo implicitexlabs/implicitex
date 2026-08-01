@@ -17,6 +17,7 @@
   var browserLabel = document.getElementById('portalInstallBrowser');
   var actions = document.getElementById('portalInstallActions');
   var footerInstallLink = document.getElementById('portalFooterInstallLink');
+  var footerBtn = document.getElementById('portalFooterInstallBtn');
   var deferredPrompt = null;
   var installedThisSession = false;
   var hasGuide = !!instructions;
@@ -633,9 +634,94 @@
     syncPromotion();
   });
 
+  /* ---- Footer install button (portal-index.html sole install surface) ---- */
+
+  if (footerBtn) {
+    footerBtn.addEventListener('click', function () {
+      /* Already installed — nothing more to do. */
+      if (isStandalone() || installedThisSession) {
+        return;
+      }
+
+      /* Native install prompt available — invoke it directly. */
+      if (deferredPrompt) {
+        try {
+          deferredPrompt.prompt();
+        } catch (error) {
+          window.location.assign('/install.html');
+        }
+        Promise.resolve(deferredPrompt.userChoice)
+          .then(function (choiceResult) {
+            deferredPrompt = null;
+            if (choiceResult && choiceResult.outcome === 'accepted') {
+              installedThisSession = true;
+            }
+            syncPromotion();
+          })
+          .catch(function () {
+            deferredPrompt = null;
+            syncPromotion();
+          });
+        return;
+      }
+
+      /* No native prompt — send to install instructions page. */
+      window.location.assign('/install.html');
+    });
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
     syncPromotion();
   });
 
   syncPromotion();
+
+  /* ---- ?install=1 intent handling ---- */
+  /*
+   * When the portal is opened via ?install=1 (e.g. from the main-site
+   * "Install app" footer link), we:
+   *   1. Skip if already running as installed PWA.
+   *   2. Scroll the footer install button into view and focus it.
+   *   3. Mark it with data-install-intent so CSS can emphasise it.
+   *   4. On platforms where beforeinstallprompt is unavailable (iOS), append
+   *      the platform-specific instruction text near the button so the user has
+   *      actionable guidance without needing to tap first.
+   *
+   * We do NOT invoke the browser install prompt automatically.
+   */
+  (function () {
+    try {
+      var hasIntent = window.location.search.indexOf('install=1') !== -1;
+      if (!hasIntent) return;
+      if (!footerBtn) return;
+
+      // Already installed — nothing to highlight.
+      if (isStandalone()) return;
+
+      // Emphasise the control.
+      footerBtn.setAttribute('data-install-intent', '');
+
+      // Scroll and focus after a brief paint delay so layout is settled.
+      setTimeout(function () {
+        footerBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        footerBtn.focus({ preventScroll: true });
+      }, 60);
+
+      // On platforms without a native install prompt (principally iOS Safari),
+      // show the instruction text inline so the user can act immediately.
+      if (!isStandalone() && isIOS()) {
+        var note = document.getElementById('portalFooterInstallNote');
+        if (!note) {
+          var mode = getMode();
+          note = document.createElement('p');
+          note.className = 'portal-footer-install-note';
+          note.id = 'portalFooterInstallNote';
+          note.textContent = statusCopy(mode);
+          footerBtn.parentNode.insertBefore(note, footerBtn.nextSibling);
+        }
+      }
+    } catch (intentError) {
+      // Never let intent handling break the page.
+    }
+  }());
 })();

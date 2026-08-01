@@ -324,11 +324,17 @@
    *
    * Returns { fee: BigInt, total: BigInt } where total = rawAmount + fee.
    * Integer division throughout — no float rounding ambiguity.
+   *
+   * Fee is 1% of rawAmount, capped at 10 USDC (10_000_000 atomic units).
+   * Must mirror the calculateFee() function in implicitex_transfer.sol.
    * ---------------------------------------------------------------- */
+  var MAX_FEE = 10_000_000n; // 10 USDC (6 decimals) — mirrors contract MAX_FEE
+
   function calculateFee(rawAmount, chainId, feeBps) {
     var cfg = CHAINS[chainId];
     var bps = BigInt(feeBps != null ? feeBps : ((cfg && cfg.feeBps != null) ? cfg.feeBps : 100));
-    var fee = (rawAmount * bps) / 10000n;
+    var percentageFee = (rawAmount * bps) / 10000n;
+    var fee = percentageFee > MAX_FEE ? MAX_FEE : percentageFee;
     return { fee: fee, total: rawAmount + fee };
   }
 

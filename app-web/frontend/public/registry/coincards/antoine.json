@@ -17,6 +17,8 @@
   "feeBps": 100,
   "allowedParentOrigins": ["*"],
   "sourceDomain": "implicitex.com",
+  "activatedAt": null,
+  "registrationExpiresAt": null,
   "createdAt": "2026-07-06T00:00:00Z",
   "updatedAt": "2026-07-06T00:00:00Z",
   "revokedAt": null

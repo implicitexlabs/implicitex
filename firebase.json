@@ -3,6 +3,11 @@
     {
       "target": "main",
       "public": "app-web/frontend/public",
+      "predeploy": [
+        "npm --prefix app-web run predeploy:coin-card",
+        "node docs/blockaid-review-packet/build-public-page.js",
+        "git diff --exit-code app-web/frontend/public/architecture-and-security.html"
+      ],
       "ignore": [
         "firebase.json",
         "**/.*",
@@ -47,6 +52,41 @@
             {
               "key": "Cache-Control",
               "value": "no-cache, must-revalidate"
+            }
+          ]
+        },
+        {
+          "source": "**/*.css",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, must-revalidate"
+            }
+          ]
+        },
+        {
+          "source": "/v1-execution.html",
+          "headers": [
+            {
+              "key": "X-Robots-Tag",
+              "value": "noindex, nofollow"
+            }
+          ]
+        },
+        {
+          "source": "/downloads/implicitex-v1-execution-plan-rev6.pdf",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=3600"
+            },
+            {
+              "key": "Content-Disposition",
+              "value": "attachment; filename=\"implicitex-v1-execution-plan-rev6.pdf\""
+            },
+            {
+              "key": "X-Robots-Tag",
+              "value": "noindex, nofollow"
             }
           ]
         },
@@ -126,8 +166,54 @@
       ]
     },
     {
+      "target": "coincard",
+      "public": "coincard/public",
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**"
+      ],
+      "rewrites": [
+        {
+          "source": "/claim",
+          "destination": "/claim/index.html"
+        }
+      ],
+      "headers": [
+        {
+          "source": "**/*.html",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, must-revalidate"
+            }
+          ]
+        },
+        {
+          "source": "**",
+          "headers": [
+            {
+              "key": "Content-Security-Policy",
+              "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com; object-src 'none'; base-uri 'self'; form-action 'self'"
+            },
+            {
+              "key": "X-Content-Type-Options",
+              "value": "nosniff"
+            },
+            {
+              "key": "Referrer-Policy",
+              "value": "strict-origin-when-cross-origin"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "target": "portal",
       "public": "app-web/frontend/public",
+      "predeploy": [
+        "npm --prefix app-web run predeploy:portal"
+      ],
       "ignore": [
         "firebase.json",
         "**/.*",
@@ -146,6 +232,24 @@
       ],
       "headers": [
         {
+          "source": "/build-info.json",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-store"
+            }
+          ]
+        },
+        {
+          "source": "/",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, must-revalidate"
+            }
+          ]
+        },
+        {
           "source": "**/*.html",
           "headers": [
             {
@@ -156,6 +260,15 @@
         },
         {
           "source": "**/*.js",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, must-revalidate"
+            }
+          ]
+        },
+        {
+          "source": "**/*.css",
           "headers": [
             {
               "key": "Cache-Control",

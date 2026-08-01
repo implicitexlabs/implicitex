@@ -1,0 +1,25 @@
+{
+  "functions": [
+    {
+      "source": "app-web/backend/functions",
+      "codebase": "coincard-gate1a-staging",
+      "runtime": "nodejs22",
+      "ignore": [
+        ".git",
+        ".runtimeconfig.json",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "node_modules",
+        "src/spikes/**",
+        "test/**",
+        "scripts/**"
+      ],
+      "predeploy": [
+        "node \"$PROJECT_DIR/app-web/backend/functions/scripts/verify-gate1a-staging-deploy.js\""
+      ]
+    }
+  ],
+  "firestore": {
+    "rules": "app-web/backend/firestore.rules"
+  }
+}

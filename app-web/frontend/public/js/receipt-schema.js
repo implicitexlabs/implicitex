@@ -230,6 +230,10 @@
       'contractAddress',
       'coinCard',
       'explorerUrl',
+      // User-entered metadata — captured at receipt creation, must survive state transitions
+      'purposeTag',
+      'referenceId',
+      'memo',
       // On-chain hashes — set when tx is broadcast, must survive later state updates
       'approvalHash',
       'transferHash',

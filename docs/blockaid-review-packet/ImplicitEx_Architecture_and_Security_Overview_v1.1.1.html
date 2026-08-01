@@ -1,0 +1,1241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ImplicitEx — Architecture and Security Overview</title>
+  <style>
+    /* ─── Base ─────────────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, "Helvetica Neue", Arial, sans-serif;
+      font-size: 10.5pt;
+      line-height: 1.65;
+      color: #000;
+      background: #fff;
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 48px 48px 72px;
+    }
+
+    /* ─── Print ─────────────────────────────────────────────────────────── */
+    @media print {
+      body { max-width: 100%; padding: 0; font-size: 10pt; }
+      .no-print { display: none; }
+      h2, h3 { page-break-after: avoid; break-after: avoid; }
+      table { page-break-inside: auto; break-inside: auto; }
+      thead { display: table-header-group; }
+      tr { page-break-inside: avoid; break-inside: avoid; }
+      .callout, figure, pre { page-break-inside: avoid; break-inside: avoid; }
+      #s7 { page-break-before: always; break-before: page; }
+      #s7 h3,
+      #s7 h3 + p { page-break-after: avoid; break-after: avoid; }
+      pre {
+        white-space: pre-wrap;
+        overflow: visible;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+      }
+    }
+
+    /* ─── Document header ───────────────────────────────────────────────── */
+    .doc-header {
+      border-bottom: 2px solid #000;
+      padding-bottom: 18px;
+      margin-bottom: 28px;
+    }
+
+    .doc-title {
+      font-size: 16pt;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      margin-bottom: 4px;
+    }
+
+    .doc-subtitle {
+      font-size: 10pt;
+      color: #555;
+      margin-bottom: 14px;
+    }
+
+    .doc-meta {
+      display: grid;
+      grid-template-columns: 120px 1fr;
+      gap: 2px 8px;
+      font-size: 9.5pt;
+      color: #222;
+    }
+
+    .doc-meta .label { color: #666; }
+
+    /* ─── Table of contents ─────────────────────────────────────────────── */
+    .toc {
+      border: 1px solid #ccc;
+      background: #f8f8f8;
+      padding: 16px 20px;
+      margin-bottom: 36px;
+      font-size: 9.5pt;
+    }
+
+    .toc-title {
+      font-size: 9pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #444;
+      margin-bottom: 10px;
+    }
+
+    .toc ol {
+      margin: 0;
+      padding-left: 20px;
+      column-count: 2;
+      column-gap: 24px;
+    }
+
+    .toc li { margin-bottom: 3px; }
+    .toc a { color: #000; text-decoration: none; }
+    .toc a:hover { text-decoration: underline; }
+
+    /* ─── Section headings ──────────────────────────────────────────────── */
+    h2 {
+      font-size: 11.5pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 1px solid #000;
+      padding-bottom: 5px;
+      margin: 40px 0 18px;
+    }
+
+    h3 {
+      font-size: 10.5pt;
+      font-weight: 700;
+      margin: 24px 0 10px;
+      color: #000;
+    }
+
+    h4 {
+      font-size: 10pt;
+      font-weight: 700;
+      margin: 18px 0 8px;
+      color: #333;
+    }
+
+    /* ─── Body text ──────────────────────────────────────────────────────── */
+    p { margin-bottom: 12px; }
+    p:last-child { margin-bottom: 0; }
+
+    ul, ol {
+      margin: 10px 0 12px 22px;
+    }
+
+    li { margin-bottom: 4px; }
+
+    strong { font-weight: 700; }
+
+    /* ─── Code and monospace ────────────────────────────────────────────── */
+    code, .mono {
+      font-family: "SF Mono", "Menlo", "Consolas", "Liberation Mono", monospace;
+      font-size: 9pt;
+      background: #f0f0f0;
+      padding: 1px 4px;
+      border-radius: 2px;
+    }
+
+    pre {
+      font-family: "SF Mono", "Menlo", "Consolas", "Liberation Mono", monospace;
+      font-size: 8.5pt;
+      background: #f5f5f5;
+      border: 1px solid #ddd;
+      border-left: 3px solid #aaa;
+      padding: 12px 14px;
+      margin: 14px 0;
+      white-space: pre;
+      overflow-x: auto;
+      line-height: 1.5;
+    }
+
+    /* ─── Tables ────────────────────────────────────────────────────────── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0 20px;
+      font-size: 9.5pt;
+    }
+
+    th {
+      background: #e8e8e8;
+      font-weight: 700;
+      text-align: left;
+      padding: 7px 10px;
+      border: 1px solid #bbb;
+      font-size: 9pt;
+    }
+
+    td {
+      padding: 6px 10px;
+      border: 1px solid #ccc;
+      vertical-align: top;
+    }
+
+    tr:nth-child(even) td { background: #f7f7f7; }
+    tr:nth-child(odd) td { background: #fff; }
+
+    td code { background: #ebebeb; }
+
+    /* ─── Callout boxes ─────────────────────────────────────────────────── */
+    .callout {
+      border: 1px solid #bbb;
+      background: #f6f6f6;
+      padding: 14px 16px;
+      margin: 16px 0;
+      font-size: 9.5pt;
+    }
+
+    .callout-label {
+      font-size: 8pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #555;
+      margin-bottom: 6px;
+    }
+
+    /* ─── Transaction-flow evidence ─────────────────────────────────────── */
+    .evidence-figure {
+      margin: 18px 0 28px;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+
+    .evidence-figure img {
+      display: block;
+      width: 100%;
+      height: auto;
+      border: 1px solid #bbb;
+      background: #f5f5f5;
+    }
+
+    .evidence-image-link {
+      display: block;
+      cursor: zoom-in;
+    }
+
+    .evidence-figure figcaption {
+      margin-top: 8px;
+      font-size: 8.5pt;
+      line-height: 1.5;
+      color: #444;
+    }
+
+    .screenshot-id {
+      font-family: "SF Mono", "Menlo", "Consolas", monospace;
+      font-size: 8.5pt;
+      font-weight: 700;
+      color: #333;
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    /* ─── Horizontal rules ───────────────────────────────────────────────── */
+    hr {
+      border: none;
+      border-top: 1px solid #ddd;
+      margin: 32px 0;
+    }
+
+    /* ─── Document footer ───────────────────────────────────────────────── */
+    .doc-footer {
+      border-top: 1px solid #ccc;
+      margin-top: 48px;
+      padding-top: 14px;
+      font-size: 8.5pt;
+      color: #555;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    /* ─── Checkboxes ─────────────────────────────────────────────────────── */
+    .checklist { list-style: none; padding-left: 0; }
+    .checklist li::before { content: "☐  "; font-size: 9pt; }
+
+    /* ─── Verify annotations ─────────────────────────────────────────────── */
+    .verify {
+      font-size: 8.5pt;
+      font-style: italic;
+      color: #555;
+      border-left: 2px solid #aaa;
+      padding-left: 8px;
+      margin: 6px 0;
+    }
+
+    /* ─── Address display ────────────────────────────────────────────────── */
+    .address {
+      font-family: "SF Mono", "Menlo", "Consolas", "Liberation Mono", monospace;
+      font-size: 8.5pt;
+      word-break: break-all;
+    }
+
+    /* ─── Section separator label ─────────────────────────────────────────── */
+    .section-num {
+      font-size: 9pt;
+      color: #888;
+      font-weight: 400;
+      margin-right: 6px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<!-- DOCUMENT HEADER                                                         -->
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+<header class="doc-header">
+  <div class="doc-title">Architecture and Security Overview</div>
+  <div class="doc-subtitle">ImplicitEx — Technical Review Packet</div>
+  <div class="doc-meta">
+    <span class="label">Document</span>   <span>v1.1.1 — 2026-07-24</span>
+    <span class="label">Prepared by</span><span>Antoine Dennison, ImplicitEx — connect@implicitex.com</span>
+    <span class="label">Reference</span>  <span>Blockaid Ticket #1290666 / #1290665</span>
+    <span class="label">Scope</span>      <span>Deployed production application — Polygon mainnet, chain ID 137</span>
+  </div>
+</header>
+
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<!-- TABLE OF CONTENTS                                                        -->
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+<nav class="toc">
+  <div class="toc-title">Contents</div>
+  <ol>
+    <li><a href="#s1">Executive Summary</a></li>
+    <li><a href="#s2">System Architecture</a></li>
+    <li><a href="#s3">Transaction Lifecycle</a></li>
+    <li><a href="#s4">Trust Boundaries</a></li>
+    <li><a href="#s5">Smart Contract Behavior</a></li>
+    <li><a href="#s6">Deployed Security Controls</a></li>
+    <li><a href="#s7">Observed Transaction Flow</a></li>
+    <li><a href="#s8">Internal Verification Evidence</a></li>
+    <li><a href="#s9">Known Limitations</a></li>
+    <li><a href="#s10">Reviewer Reproduction Procedure</a></li>
+    <li><a href="#s11">Addresses and Evidence Inventory</a></li>
+  </ol>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<!-- 1. EXECUTIVE SUMMARY                                                     -->
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+<section id="s1">
+<h2><span class="section-num">1</span> Executive Summary</h2>
+
+<p>ImplicitEx is a non-custodial USDC transfer interface operating on Polygon (chain ID 137). It allows a sender to transfer USDC to a recipient address they specify. A platform fee of 1% is charged on each transfer. The production portal currently limits transfers to 250.00 USDC, making the highest fee reachable through the supported interface 2.50 USDC. The application does not hold, route through, or control user funds beyond what the user explicitly authorizes through their own wallet.</p>
+
+<p>This document was prepared in response to Blockaid tickets #1290666 and #1290665 concerning the classification of the ImplicitEx USDC approval request as deceptive. The sections below document the complete transaction lifecycle, deployed security controls, fee mechanics, and independently verifiable on-chain evidence available for review.</p>
+
+<p>The July 23 transaction is the original Blockaid-observed event and is supported by contemporaneous screenshots and its public on-chain record. The July 24 approval-path and transfer-only transactions are separate controlled certification runs whose original browser-exported proof packets were preserved byte-for-byte at time of export.</p>
+
+<h3>Why the wallet requests an approval</h3>
+
+<p>USDC is an ERC-20 token. ERC-20 tokens cannot be spent by a smart contract without the token holder first granting a spending allowance to that contract. The <code>approve()</code> call is the standard ERC-20 mechanism for establishing this permission. The allowance requested equals exactly the amount the user has already reviewed on-screen: the recipient amount plus the platform fee. No additional buffer is requested.</p>
+
+<h3>Why the approval amount is exact rather than unlimited</h3>
+
+<p>Many applications request an unlimited or large blanket allowance to avoid requiring a new approval on each transaction. ImplicitEx does not do this. The allowance request is calculated per transaction and covers only the current transfer total. After the contract calls <code>transferFrom()</code>, the allowance returns to zero. The user's residual exposure is zero after each transaction completes.</p>
+
+<h3>Why the contract is non-custodial</h3>
+
+<p>The smart contract does not hold funds at any point in the transfer. The <code>transferWithFee()</code> function issues two <code>safeTransferFrom()</code> calls in a single atomic execution: one from the sender directly to the recipient, and one from the sender directly to the treasury. The contract is not an intermediate holder. If either call fails, the entire transaction reverts and no funds move.</p>
+
+<div class="callout">
+  <div class="callout-label">Audit status</div>
+  This document does not constitute a third-party security assessment. ImplicitEx has not undergone an independent audit at this stage. The verification evidence presented in Section 8 is internal. This is stated explicitly in Section 9.
+</div>
+
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<!-- 2. SYSTEM ARCHITECTURE                                                   -->
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+<section id="s2">
+<h2><span class="section-num">2</span> System Architecture</h2>
+
+<h3>2.1 Component map</h3>
+
+<pre>User Browser
+     │
+     ▼
+ImplicitEx Transfer Portal
+(https://implicitex.com  /  https://portal.implicitex.com)
+     │
+     ├──── Reads on-chain state via public JSON-RPC
+     │     (polygon-bor-rpc.publicnode.com, chain ID 137)
+     │
+     ▼
+MetaMask or WalletConnect-compatible wallet
+     │
+     ├──── Prompt 1 of 2: User signs USDC approve() for exact total debit
+     │
+     └──── Prompt 2 of 2: User signs transferWithFee() execution
+               │
+               ▼
+    ImplicitExTransfer contract
+    0x5015841D6E665e63Ea174aD6b8FeF854026dE0C0
+               │
+               ├────► Recipient (address entered by user)
+               │       Receives: transfer amount
+               │
+               └────► Treasury
+                       0xa7cE4232811021d2Dd01f4f0f264Df2427ab3919
+                       Receives: platform fee (1% of transfer amount)</pre>
+
+<h3>2.2 Domains</h3>
+
+<table>
+  <thead>
+    <tr><th>Domain</th><th>Role</th><th>Status</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>https://implicitex.com</code></td>
+      <td>Primary production domain</td>
+      <td>Live</td>
+    </tr>
+    <tr>
+      <td><code>https://portal.implicitex.com</code></td>
+      <td>Transfer portal, direct entry point</td>
+      <td>Live</td>
+    </tr>
+    <tr>
+      <td><code>https://implicitex-236f2.web.app</code></td>
+      <td>Firebase staging URL — included in original Blockaid report</td>
+      <td>Staging</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>2.3 Network parameters</h3>
+
+<table>
+  <thead>
+    <tr><th>Parameter</th><th>Value</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Network</td><td>Polygon PoS Mainnet</td></tr>
+    <tr><td>Chain ID</td><td>137 (hex: <code>0x89</code>)</td></tr>
+    <tr><td>RPC endpoint</td><td><code>polygon-bor-rpc.publicnode.com</code> (public, no key required)</td></tr>
+    <tr><td>Block explorer</td><td><code>polygonscan.com</code></td></tr>
+  </tbody>
+</table>
+
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<!-- 3. TRANSACTION LIFECYCLE                                                  -->
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+<section id="s3">
+<h2><span class="section-num">3</span> Transaction Lifecycle</h2>
+
+<p>The following describes a 1.00 USDC transfer. The same sequence applies at all amounts within the configured limits.</p>
+
+<h3>3.1 User input</h3>
+
+<p>The user enters a recipient Ethereum address and a transfer amount. No wallet connection is required at this stage.</p>
+
+<h3>3.2 Pre-flight validation (no wallet prompt)</h3>
+
+<p>The portal calls <code>previewTransfer(sender, amount)</code> on the contract. This is a read-only view call. It returns the calculated fee, total debit, sender USDC balance, current allowance, and a boolean indicating whether the transfer can proceed.</p>
+
+<p>The portal also validates locally:</p>
+<ul>
+  <li>Connected network matches Polygon mainnet (chain ID 137)</li>
+  <li>Recipient address is non-zero and is an externally owned account (EOA), not a contract</li>
+  <li>Amount falls within the configured transfer limits (1.00 USDC floor, 250.00 USDC ceiling)</li>
+</ul>
+
+<p>No wallet action is initiated during this phase.</p>
+
+<h3>3.3 Review screen</h3>
+
+<p>Before any wallet prompt is triggered, the portal presents a summary of the pending transaction:</p>
+
+<pre>Recipient:      0xe0B02A6d...796B
+Amount:         1.000000 USDC
+Platform fee:   0.010000 USDC
+Total debit:    1.010000 USDC
+Network:        Polygon</pre>
+
+<p>The user must explicitly confirm past this screen to proceed. No wallet prompt has been issued at this point.</p>
+
+<h3>3.4 USDC spending approval (wallet prompt 1 of 2)</h3>
+
+<p>The portal calls <code>approve(contractAddress, totalDebit)</code> on the Circle USDC token contract (<code>0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359</code>).</p>
+
+<p>MetaMask surfaces this as a "Set a spending cap for your USDC" dialog. The spending cap displayed equals the exact total debit shown on the review screen — 1.010000 USDC in this example. During the observed 2026-07-23 transaction documented in Section 7, MetaMask displayed a Blockaid warning at this stage.</p>
+
+<p>The approval amount is not unlimited. It is not padded with a buffer. It matches the review screen figure precisely.</p>
+
+<h3>3.5 Transfer execution (wallet prompt 2 of 2)</h3>
+
+<p>After the approval transaction is confirmed on-chain, the portal calls <code>transferWithFee(recipientAddress, 1000000)</code> on the ImplicitExTransfer contract. MetaMask surfaces this as a separate contract interaction confirmation. The user must approve this second step independently.</p>
+
+<h3>3.6 On-chain execution</h3>
+
+<p>The contract executes atomically:</p>
+
+<pre>USDC.safeTransferFrom(sender, recipient, 1000000)   // 1.000000 USDC → recipient
+USDC.safeTransferFrom(sender, treasury, 10000)      // 0.010000 USDC → treasury fee</pre>
+
+<p>If either call reverts, the entire transaction reverts. The contract retains nothing.</p>
+
+<h3>3.7 Confirmation</h3>
+
+<p>The portal polls for block confirmation. It displays a pending state until the transaction is confirmed on-chain, then transitions to a confirmed state. It does not report success at submission time.</p>
+
+<h3>3.8 Economic summary — 1.00 USDC example</h3>
+
+<table>
+  <thead>
+    <tr><th>Flow</th><th>Amount</th><th>Verified</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Sender USDC deducted</td><td>1.010000 USDC</td><td>Gate 4 smoke (2026-06-15)</td></tr>
+    <tr><td>Recipient USDC received</td><td>1.000000 USDC</td><td>Gate 4 smoke, Polygonscan confirmed</td></tr>
+    <tr><td>Treasury fee received</td><td>0.010000 USDC</td><td>Gate 4 smoke, Polygonscan confirmed</td></tr>
+    <tr><td>Contract retained</td><td>0.000000 USDC</td><td>Gate 4 smoke, zero-custody confirmed</td></tr>
+  </tbody>
+</table>
+
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<!-- 4. TRUST BOUNDARIES                                                       -->
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+<section id="s4">
+<h2><span class="section-num">4</span> Trust Boundaries</h2>
+
+<h3>4.1 What the application can and cannot do</h3>
+
+<table>
+  <thead>
+    <tr><th>Capability</th><th>Permitted</th><th>Notes</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Read wallet address</td><td>Yes</td><td>Required to populate sender field</td></tr>
+    <tr><td>Request USDC allowance</td><td>Yes — exact amount only</td><td>ERC-20 standard mechanism; amount matches review screen</td></tr>
+    <tr><td>Execute <code>transferWithFee()</code></td><td>Yes — requires separate user signature</td><td>Wallet presents a second, distinct confirmation</td></tr>
+    <tr><td>Access funds beyond approved amount</td><td>No</td><td>Constrained by ERC-20 allowance model</td></tr>
+    <tr><td>Bypass wallet confirmation</td><td>No</td><td>Every on-chain action requires a valid user signature</td></tr>
+    <tr><td>Move funds without user signature</td><td>No</td><td>No server-side signing; no key storage</td></tr>
+    <tr><td>Hold user funds in contract</td><td>No</td><td>Direct sender→recipient and sender→treasury routing</td></tr>
+    <tr><td>Withdraw accumulated contract balance</td><td>No</td><td>Contract holds no USDC balance; no withdrawal function</td></tr>
+    <tr><td>Request unlimited USDC allowance</td><td>No</td><td>Approval amount is computed per transaction</td></tr>
+    <tr><td>Reverse or refund a confirmed transaction</td><td>No</td><td>Blockchain transactions are final; no reversal mechanism exists</td></tr>
+  </tbody>
+</table>
+
+<h3>4.2 User authorization sequence</h3>
+
+<p>Every on-chain action requires a private-key signature from the user. The wallet mediates this. The portal cannot initiate, sign, or bypass any wallet action.</p>
+
+<pre>Portal      →  constructs transaction parameters
+Wallet      →  displays parameters to user
+User        →  signs or rejects
+Blockchain  →  executes only if user signature is valid and allowance is sufficient</pre>
+
+<p>The portal has no mechanism to sign transactions on the user's behalf, store private keys, or initiate any transaction without explicit user action at the wallet prompt.</p>
+
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<!-- 5. SMART CONTRACT BEHAVIOR                                                -->
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+<section id="s5">
+<h2><span class="section-num">5</span> Smart Contract Behavior</h2>
+
+<table style="margin-bottom: 20px;">
+  <tbody>
+    <tr><td style="width:160px;"><strong>Contract name</strong></td><td><code>ImplicitExTransfer</code></td></tr>
+    <tr><td><strong>Solidity version</strong></td><td><code>^0.8.24</code></td></tr>
+    <tr><td><strong>License</strong></td><td>MIT</td></tr>
+    <tr><td><strong>Deployed address</strong></td><td class="address">0x5015841D6E665e63Ea174aD6b8FeF854026dE0C0</td></tr>
+    <tr><td><strong>Source file</strong></td><td><code>app-web/contracts/implicitex_transfer.sol</code></td></tr>
+    <tr><td><strong>Polygonscan source</strong></td><td>Verified — <code>https://polygonscan.com/address/0x5015841D6E665e63Ea174aD6b8FeF854026dE0C0#code</code></td></tr>
+  </tbody>
+</table>
+
+<h3>5.1 Core function: <code>transferWithFee(address recipient, uint256 amount)</code></h3>
+
+<p>This is the only function that moves funds. Execution sequence:</p>
+
+<ol>
+  <li>Rejects call if contract is paused (<code>whenNotPaused</code>)</li>
+  <li>Applies reentrancy guard (<code>nonReentrant</code>)</li>
+  <li>Rejects zero-address recipient</li>
+  <li>Rejects contract addresses as recipients (recipient must be EOA)</li>
+  <li>Enforces minimum transfer amount</li>
+  <li>Enforces transfer precision (amount must be divisible by configured precision)</li>
+  <li>Calculates fee: <code>(amount × feeBasisPoints) / 10000</code></li>
+  <li>Calls <code>safeTransferFrom(sender, recipient, amount)</code></li>
+  <li>Calls <code>safeTransferFrom(sender, treasury, fee)</code></li>
+  <li>Emits <code>TransferExecuted</code> event</li>
+</ol>
+
+<h3>5.2 View function: <code>previewTransfer(address sender, uint256 amount)</code></h3>
+
+<p>Read-only. Returns five values without any state change or gas cost beyond the RPC call:</p>
+
+<table>
+  <thead><tr><th>Return value</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>fee</code></td><td>Calculated platform fee for this amount</td></tr>
+    <tr><td><code>totalDebit</code></td><td>Amount + fee (the figure shown on the review screen)</td></tr>
+    <tr><td><code>balance</code></td><td>Sender's current USDC balance</td></tr>
+    <tr><td><code>allowance</code></td><td>Current USDC allowance granted to the contract</td></tr>
+    <tr><td><code>canTransfer</code></td><td>Boolean — true if balance and allowance are sufficient</td></tr>
+  </tbody>
+</table>
+
+<p>The portal calls this function before presenting the review screen and again immediately before initiating the approval step, to confirm on-chain state has not changed between input and execution.</p>
+
+<h3>5.3 Fee constants (compile-time constants; not administratively configurable)</h3>
+
+<table>
+  <thead><tr><th>Constant</th><th>Value</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><code>MAX_FEE_BPS</code></td>
+      <td>100</td>
+      <td>Maximum fee rate, in basis points. 100 bps = 1.00%. The owner cannot set <code>feeBasisPoints</code> above this value. This is the only compile-time fee constraint in the deployed contract.</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The contract limits the fee rate to a maximum of 100 basis points but does not enforce an absolute USDC transfer or fee-value ceiling. The fee formula is <code>(amount × feeBasisPoints) / 10000</code> with no cap on the resulting USDC amount. The supported production portal separately limits transfers to 250.00 USDC, making the maximum fee reachable through that interface 2.50 USDC. Direct contract callers are subject to the same deterministic percentage calculation but are not subject to the portal's amount ceiling. See Section 9 for disclosure of the future fee cap policy.</p>
+
+<h3>5.4 Events emitted</h3>
+
+<table>
+  <thead><tr><th>Event</th><th>Triggered by</th></tr></thead>
+  <tbody>
+    <tr><td><code>TransferExecuted(sender, recipient, amountSent, feeAmount, totalDebited)</code></td><td>Every successful <code>transferWithFee()</code> call</td></tr>
+    <tr><td><code>TreasuryUpdated(previousTreasury, newTreasury)</code></td><td>Owner changes the fee recipient address</td></tr>
+    <tr><td><code>FeeUpdated(previousFeeBps, newFeeBps)</code></td><td>Owner changes the fee rate</td></tr>
+    <tr><td><code>MinTransferUpdated(previous, new)</code></td><td>Owner changes the minimum transfer floor</td></tr>
+    <tr><td><code>PrecisionUpdated(previous, new)</code></td><td>Owner changes the transfer precision setting</td></tr>
+    <tr><td><code>TokensRescued(token, to, amount)</code></td><td>Owner calls <code>rescueERC20</code> for a non-USDC token</td></tr>
+  </tbody>
+</table>
+
+<h3>5.5 Owner-controlled parameters</h3>
+
+<table>
+  <thead><tr><th>Function</th><th>Effect</th><th>Constraint</th></tr></thead>
+  <tbody>
+    <tr><td><code>setTreasury(address)</code></td><td>Update the fee recipient address</td><td>Cannot be zero address</td></tr>
+    <tr><td><code>setFeeBasisPoints(uint16)</code></td><td>Adjust the fee rate</td><td>Cannot exceed <code>MAX_FEE_BPS</code> (100)</td></tr>
+    <tr><td><code>setMinTransferAmount(uint256)</code></td><td>Change the minimum transfer floor</td><td>Owner discretion</td></tr>
+    <tr><td><code>setTransferPrecision(uint256)</code></td><td>Change required precision divisor</td><td>Owner discretion</td></tr>
+    <tr><td><code>pause()</code></td><td>Halt all <code>transferWithFee()</code> calls</td><td>Owner-only</td></tr>
+    <tr><td><code>unpause()</code></td><td>Resume transfers</td><td>Owner-only</td></tr>
+    <tr><td><code>rescueERC20(token, to, amount)</code></td><td>Recover tokens sent to the contract by mistake</td><td>Explicitly reverts if <code>token == USDC</code> — USDC cannot be drained via this function</td></tr>
+  </tbody>
+</table>
+
+<h3>5.6 Ownership model</h3>
+
+<p>The contract uses OpenZeppelin <code>Ownable2Step</code>. An ownership transfer requires two transactions: the current owner nominates a new address, and that address must explicitly accept. This prevents accidental or unilateral ownership loss.</p>
+
+<p>Current owner: <span class="address">0x776A0D6b9F96445A38303F56d5B923e6d1FF8E97</span></p>
+
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<!-- 6. DEPLOYED SECURITY CONTROLS                                             -->
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+<section id="s6">
+<h2><span class="section-num">6</span> Deployed Security Controls</h2>
+
+<p>The following controls are active in the currently deployed contract and portal. "Deployed" means the control is live in production and was verified during the Gate 4 controlled smoke (2026-06-15). "Portal-enforced" means the control is implemented in the frontend JavaScript and does not rely on the contract.</p>
+
+<table>
+  <thead>
+    <tr><th>Control</th><th>Mechanism</th><th>Layer</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Exact-amount allowance</td>
+      <td><code>approve(contract, amount + fee)</code> — no unlimited approval, no buffer</td>
+      <td>Portal-enforced</td>
+    </tr>
+    <tr>
+      <td>Non-custodial routing</td>
+      <td><code>safeTransferFrom(sender, recipient)</code> and <code>safeTransferFrom(sender, treasury)</code> — contract is never an intermediate holder</td>
+      <td>Contract</td>
+    </tr>
+    <tr>
+      <td>Reentrancy protection</td>
+      <td><code>nonReentrant</code> modifier on <code>transferWithFee()</code></td>
+      <td>Contract</td>
+    </tr>
+    <tr>
+      <td>Pause mechanism</td>
+      <td><code>whenNotPaused</code> modifier; owner can halt all transfers</td>
+      <td>Contract</td>
+    </tr>
+    <tr>
+      <td>Zero-address rejection</td>
+      <td>Recipient validated as non-zero before <code>safeTransferFrom()</code></td>
+      <td>Contract</td>
+    </tr>
+    <tr>
+      <td>EOA-only recipients</td>
+      <td>Contract addresses rejected as recipients</td>
+      <td>Contract</td>
+    </tr>
+    <tr>
+      <td>USDC drain prevention</td>
+      <td><code>rescueERC20</code> explicitly reverts when <code>token == USDC</code></td>
+      <td>Contract</td>
+    </tr>
+    <tr>
+      <td>Transfer floor</td>
+      <td><code>minTransferAmount</code> — 1.000000 USDC at current deployment</td>
+      <td>Contract</td>
+    </tr>
+    <tr>
+      <td>Transfer ceiling (soft launch)</td>
+      <td>250.000000 USDC per transaction — limits maximum reachable fee to 2.50 USDC at current 1% rate</td>
+      <td>Portal-enforced</td>
+    </tr>
+    <tr>
+      <td>Two-step ownership</td>
+      <td><code>Ownable2Step</code> — ownership change requires explicit acceptance from new owner</td>
+      <td>Contract</td>
+    </tr>
+    <tr>
+      <td>Chain enforcement</td>
+      <td>Portal validates chain ID 137 before any wallet prompt</td>
+      <td>Portal-enforced</td>
+    </tr>
+    <tr>
+      <td>Global and per-chain transfer gates</td>
+      <td>As of 2026-07-22, the global <code>transfersEnabled</code> flag is <code>true</code>; Polygon mainnet (chain 137) is <code>true</code>; and Amoy testnet is <code>false</code>. These are frontend operating controls, not immutable contract limits. Contract-level <code>paused()</code> is separate and can be verified using the read-only query in Section 10.3.</td>
+      <td>Portal-enforced</td>
+    </tr>
+    <tr>
+      <td>Atomic execution</td>
+      <td>Both <code>safeTransferFrom</code> calls execute in one transaction; either both succeed or both revert</td>
+      <td>Contract</td>
+    </tr>
+    <tr>
+      <td>On-chain confirmation requirement</td>
+      <td>Portal displays pending state until block confirmation; does not report success at submission</td>
+      <td>Portal-enforced</td>
+    </tr>
+    <tr>
+      <td>Flow identity token</td>
+      <td>In-progress flow is invalidated on wallet account change or network change mid-session</td>
+      <td>Portal-enforced</td>
+    </tr>
+  </tbody>
+</table>
+
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<!-- 7. OBSERVED TRANSACTION FLOW                                              -->
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+<section id="s7">
+<h2><span class="section-num">7</span> Observed Transaction Flow</h2>
+
+<p>This section documents the observed transaction flow and independently verifiable on-chain evidence for both supported execution paths. The 2026-07-23 transaction is the original Blockaid-observed event, preserved as a distinct historical record supported by contemporaneous screenshots and its public chain record. The 2026-07-24 approval-path and transfer-only transactions are separate controlled certification runs whose original browser-exported proof packets were preserved byte-for-byte at time of export and are not attributed to the earlier event.</p>
+
+<div class="callout">
+  <div class="callout-label">Observed transaction</div>
+  Amount: 1.00 USDC · Platform fee: 0.01 USDC · Total debit: 1.01 USDC · Network: Polygon · Sender: <span class="address">0xf614356f93408460b594addacc86a7fc94310f1d</span> · Recipient: <span class="address">0x5466bbA8cD334554c88F81342dDfcEc4c4A7698B</span> · Receipt: IX-07FF5D03 · Block: 90,776,572
+</div>
+
+<table>
+  <thead>
+    <tr><th>Stage</th><th>Observed evidence</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>1. Portal loaded</td><td>Production portal and Polygon chain data rendered successfully.</td></tr>
+    <tr><td>2. Wallet connection</td><td>MetaMask site connection request, sender address, and USDC balance.</td></tr>
+    <tr><td>3. Recipient validation</td><td>Recipient address accepted with "Format valid" status.</td></tr>
+    <tr><td>4. Fee calculation</td><td>1.00 USDC amount produced a 0.010000 USDC platform fee.</td></tr>
+    <tr><td>5. User confirmation</td><td>Execute Transfer remained disabled until the user checked the explicit acknowledgement.</td></tr>
+    <tr><td>6. ERC-20 approval request</td><td>MetaMask presented a 1.01 USDC spending-cap request.</td></tr>
+    <tr><td>7. Observed Blockaid warning</td><td>The approval prompt displayed "This is a deceptive request." The transfer proceeded after the user confirmed the approval.</td></tr>
+    <tr><td>8. Transfer transaction request</td><td>After approval, the portal issued the separate <code>transferWithFee()</code> call. The transfer was broadcast to Polygon.</td></tr>
+    <tr><td>9. On-chain confirmation</td><td>The transfer was confirmed at block 90,776,572. Funds moved.</td></tr>
+    <tr><td>10. Activity record</td><td>The portal recorded receipt IX-07FF5D03 as <strong>CONFIRMED</strong> with funds moved on Polygon.</td></tr>
+    <tr><td>11. Proof packet</td><td>The portal export recorded the transaction hash, block number, parties, amounts, and confirmed settlement fields.</td></tr>
+  </tbody>
+</table>
+
+<h3>7.1 Portal initialization and wallet connection</h3>
+
+<figure class="evidence-figure">
+  <a class="evidence-image-link" href="assets/transaction-flow/01-portal-ready-wallet-disconnected.png" target="_blank" rel="noopener noreferrer"><img src="assets/transaction-flow/01-portal-ready-wallet-disconnected.png" alt="ImplicitEx transfer portal loaded with Polygon chain data and the wallet disconnected"></a>
+  <figcaption><span class="screenshot-id">Figure 1</span>Portal initialization. The interface and live Polygon chain data rendered before wallet connection.</figcaption>
+</figure>
+
+<figure class="evidence-figure">
+  <a class="evidence-image-link" href="assets/transaction-flow/02-metamask-connect-request.png" target="_blank" rel="noopener noreferrer"><img src="assets/transaction-flow/02-metamask-connect-request.png" alt="MetaMask connection request for portal.implicitex.com"></a>
+  <figcaption><span class="screenshot-id">Figure 2</span>MetaMask displayed an explicit connection request for <code>portal.implicitex.com</code>.</figcaption>
+</figure>
+
+<figure class="evidence-figure">
+  <a class="evidence-image-link" href="assets/transaction-flow/03-wallet-connected-form-empty.png" target="_blank" rel="noopener noreferrer"><img src="assets/transaction-flow/03-wallet-connected-form-empty.png" alt="ImplicitEx portal showing the connected sender address and an 11.12 USDC balance with empty transfer fields"></a>
+  <figcaption><span class="screenshot-id">Figure 3</span>The sender connected. The portal loaded an 11.12 USDC balance and the transfer form became active.</figcaption>
+</figure>
+
+<h3>7.2 Recipient validation and fee calculation</h3>
+
+<figure class="evidence-figure">
+  <a class="evidence-image-link" href="assets/transaction-flow/04-recipient-entered-validated.png" target="_blank" rel="noopener noreferrer"><img src="assets/transaction-flow/04-recipient-entered-validated.png" alt="ImplicitEx portal showing the recipient address entered and passing format validation"></a>
+  <figcaption><span class="screenshot-id">Figure 4</span>The recipient address was entered and passed format validation.</figcaption>
+</figure>
+
+<figure class="evidence-figure">
+  <a class="evidence-image-link" href="assets/transaction-flow/05-amount-entered-fee-calculated.png" target="_blank" rel="noopener noreferrer"><img src="assets/transaction-flow/05-amount-entered-fee-calculated.png" alt="ImplicitEx portal showing a 1.00 USDC amount and a 0.010000 USDC platform fee"></a>
+  <figcaption><span class="screenshot-id">Figure 5</span>The 1.00 USDC amount produced a 0.010000 USDC platform fee.</figcaption>
+</figure>
+
+<figure class="evidence-figure">
+  <a class="evidence-image-link" href="assets/transaction-flow/06-all-fields-complete.png" target="_blank" rel="noopener noreferrer"><img src="assets/transaction-flow/06-all-fields-complete.png" alt="ImplicitEx portal with recipient, amount, purpose, reference, memo, balance, and fee all populated"></a>
+  <figcaption><span class="screenshot-id">Figure 6</span>The transaction details were fully populated (recipient, amount, purpose, reference, memo) before execution review.</figcaption>
+</figure>
+
+<h3>7.3 Explicit user confirmation</h3>
+
+<figure class="evidence-figure">
+  <a class="evidence-image-link" href="assets/transaction-flow/07-confirmation-checked-execute-ready.png" target="_blank" rel="noopener noreferrer"><img src="assets/transaction-flow/07-confirmation-checked-execute-ready.png" alt="ImplicitEx confirmation checkbox checked and Execute Transfer enabled"></a>
+  <figcaption><span class="screenshot-id">Figure 7</span>The user explicitly acknowledged the recipient, amount, fee, total debit, and irreversibility. Execute Transfer became available only after the checkbox was checked.</figcaption>
+</figure>
+
+<h3>7.4 ERC-20 approval request and observed wallet warning</h3>
+
+<p>The portal requested a USDC allowance equal to the current transfer total. The requested cap was not unlimited and did not include an additional buffer.</p>
+
+<figure class="evidence-figure">
+  <a class="evidence-image-link" href="assets/transaction-flow/08-blockaid-spending-cap-warning.png" target="_blank" rel="noopener noreferrer"><img src="assets/transaction-flow/08-blockaid-spending-cap-warning.png" alt="MetaMask spending cap request showing the Blockaid warning and an exact 1.01 USDC cap"></a>
+  <figcaption><span class="screenshot-id">Figure 8</span>During the ERC-20 approval step, MetaMask displayed a Blockaid warning indicating "This is a deceptive request." The approval requested an exact spending cap of <strong>1.01 USDC</strong>, matching the disclosed transfer amount (1.00 USDC) plus the platform fee (0.01 USDC). The subsequent transfer transaction and on-chain confirmation proceeded normally.</figcaption>
+</figure>
+
+<h3>7.5 On-chain confirmation</h3>
+
+<p>After approval, the portal issued the separate <code>transferWithFee()</code> call. The transfer was confirmed on Polygon at block 90,776,572.</p>
+
+<figure class="evidence-figure">
+  <a class="evidence-image-link" href="assets/transaction-flow/09-confirmed-transfer-right-panel.png" target="_blank" rel="noopener noreferrer"><img src="assets/transaction-flow/09-confirmed-transfer-right-panel.png" alt="ImplicitEx portal right panel showing the confirmed transfer receipt with transaction hash and block number"></a>
+  <figcaption><span class="screenshot-id">Figure 9</span>The portal displayed the confirmed transfer: receipt IX-07FF5D03, transaction hash <code>0x07ff5d03…077a57</code>, block 90,776,572, confirmed Jul 23, 11:10 PM. Actions available: View on Explorer, Copy Receipt, Export Proof Packet.</figcaption>
+</figure>
+
+<figure class="evidence-figure">
+  <a class="evidence-image-link" href="assets/transaction-flow/10-companion-tray-telemetry-confirmed.png" target="_blank" rel="noopener noreferrer"><img src="assets/transaction-flow/10-companion-tray-telemetry-confirmed.png" alt="ImplicitEx portal companion tray and telemetry panel showing confirmed state with contract and USDC addresses"></a>
+  <figcaption><span class="screenshot-id">Figure 10</span>The companion tray confirmed the transaction (TX HASH, BLOCK 90,776,572). The telemetry panel recorded the full contract address, USDC address, and wallet. No active transaction was pending.</figcaption>
+</figure>
+
+<h3>7.6 Activity record and on-chain verification</h3>
+
+<figure class="evidence-figure">
+  <a class="evidence-image-link" href="assets/transaction-flow/11-activity-tab-confirmed-receipt.png" target="_blank" rel="noopener noreferrer"><img src="assets/transaction-flow/11-activity-tab-confirmed-receipt.png" alt="ImplicitEx Activity tab showing receipt IX-07FF5D03 in CONFIRMED state with Polygonscan verification link"></a>
+  <figcaption><span class="screenshot-id">Figure 11</span>The Activity tab recorded receipt IX-07FF5D03 as <strong>CONFIRMED</strong>. "Transfer confirmed. Funds moved on Polygon." The explorer link is available for independent verification.</figcaption>
+</figure>
+
+<figure class="evidence-figure">
+  <a class="evidence-image-link" href="assets/transaction-flow/12-polygonscan-onchain-confirmation.png" target="_blank" rel="noopener noreferrer"><img src="assets/transaction-flow/12-polygonscan-onchain-confirmation.png" alt="Polygonscan transaction detail page showing status Success, block 90776572, and a 1 USDC ERC-20 transfer from sender to recipient"></a>
+  <figcaption><span class="screenshot-id">Figure 12</span>Polygonscan confirmed the <code>transferWithFee()</code> call: status <strong>Success</strong>, block 90,776,572, 86 confirmations at capture. The ERC-20 transfer record shows 1.00 USDC from sender <code>0xf614…f1D</code> to recipient <code>0x5466…698B</code>.</figcaption>
+</figure>
+
+<h3>7.7 Production settlement evidence — two execution paths</h3>
+
+<p>Two production execution paths were exercised against the deployed system and each is supported by an exact browser-exported proof packet preserved byte-for-byte at time of export. Together they establish that both paths produce a consistent, independently verifiable settlement record.</p>
+
+<h4>7.7.1 Original Blockaid-observed approval-path transaction (2026-07-23)</h4>
+
+<p>Documents the first-time-user flow visible in Figures 1–12 above. The wallet had no prior allowance; an ERC-20 approval was required. The Blockaid spending-cap warning appeared during the approval step (Figure 8) and did not prevent settlement. This transaction is independently verifiable on Polygonscan. The original browser-exported proof packet for this transaction was not preserved at time of export; the chain record and screenshot evidence stand as the independent verification record.</p>
+
+<table>
+  <tbody>
+    <tr><td>Transaction hash:</td><td class="address">0x07ff5d031ecc553edb6648f05169413715bc1a80fec46bb04910366ff2077a57</td></tr>
+    <tr><td>Approval hash:</td><td class="address">0xb137bebac424d6f39630c00938776f1397450a0c531523432052aa57d001f7fb</td></tr>
+    <tr><td>Explorer</td><td><a href="https://polygonscan.com/tx/0x07ff5d031ecc553edb6648f05169413715bc1a80fec46bb04910366ff2077a57">Polygonscan transaction record</a></td></tr>
+    <tr><td>Status</td><td><code>confirmed</code></td></tr>
+    <tr><td>Block number</td><td>90,776,572</td></tr>
+    <tr><td>Funds moved</td><td><code>true</code></td></tr>
+    <tr><td>Evidence</td><td>Figures 1–12; Polygonscan; artifact gap noted — original browser JSON not preserved</td></tr>
+    <tr><td>Execution path</td><td>READY → AUTHORIZING → AUTHORIZED → SUBMITTING → SUBMITTED → CONFIRMED</td></tr>
+  </tbody>
+</table>
+
+<p>The approval transaction calldata was independently verified on-chain: selector <code>0x095ea7b3</code> (<code>approve</code>), target USDC contract (<code>0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359</code>), spender the ImplicitEx transfer contract (<code>0x5015841D6E665e63Ea174aD6b8FeF854026dE0C0</code>), approved value <code>1010000</code> (1.010000 USDC). This value matches the portal review total displayed in Figures 5–8: 1.00 USDC transfer plus 0.01 USDC platform fee.</p>
+
+<p>The transfer transaction emitted two ERC-20 Transfer events from the USDC contract: 1.000000 USDC from sender directly to recipient, and 0.010000 USDC from sender directly to treasury. Both transfers originate from the sender's address. The supported execution path does not route the transferred amount through the ImplicitEx contract.</p>
+
+<h4>7.7.2 Approval-path certification run (2026-07-24)</h4>
+
+<p>A dedicated approval-path certification run was executed to close the artifact gap. The wallet allowance was zeroed to 0 USDC before execution, forcing the full approval lifecycle. The exported proof packet is the browser-generated artifact, preserved byte-for-byte immediately after confirmation. Reference: <code>APPROVAL-PATH-002</code>.</p>
+
+<table>
+  <tbody>
+    <tr><td>Transaction hash:</td><td class="address">0x48c07f8039d50754a20c1b32ee701fa042fcb4bbeabd8d01ab0164805c5faa78</td></tr>
+    <tr><td>Approval hash:</td><td class="address">0x115647e9ec9cab18e1bd422a68d5fd4216383fa240b58eb02f53e44274a7f428</td></tr>
+    <tr><td>Explorer</td><td><a href="https://polygonscan.com/tx/0x48c07f8039d50754a20c1b32ee701fa042fcb4bbeabd8d01ab0164805c5faa78">Polygonscan transaction record</a></td></tr>
+    <tr><td>Status</td><td><code>confirmed</code></td></tr>
+    <tr><td>Block number</td><td>90,784,121</td></tr>
+    <tr><td>Funds moved</td><td><code>true</code></td></tr>
+    <tr><td>Purpose / reference</td><td><code>test</code> / APPROVAL-PATH-002</td></tr>
+    <tr><td>Execution path</td><td>READY → AUTHORIZING → AUTHORIZED → SUBMITTING → SUBMITTED → CONFIRMED</td></tr>
+  </tbody>
+</table>
+
+<p>The <a href="assets/transaction-flow/transaction-proof-packet-approval-2026-07-24.json">exported proof packet</a> for this certification run includes all settlement fields, user-entered metadata, timestamps, and the three evidence sections from the <code>proof-packet.v1</code> schema. The approval transaction targets the USDC contract with spender set to the ImplicitEx contract and an approved value of exactly 1.01 USDC — matching the disclosed total debit. On the approval-path branch, the exact 1.010000 USDC allowance is fully consumed by the transfer; post-transfer allowance was independently read back on-chain at 0.000000 USDC. Zero residual allowance is a property of the exact-approval branch: a wallet that enters through the transfer-only branch retains whatever valid allowance remains after the 1.010000 USDC deduction.</p>
+
+<h4>7.7.3 Transfer-only path transaction (2026-07-24)</h4>
+
+<p>Documents the returning-user flow: wallet had an existing allowance of 3.03 USDC established via a direct contract call. The portal detected sufficient allowance and submitted the transfer directly — no approval step, no MetaMask spending-cap prompt, no Blockaid warning. The exported proof packet is the browser-generated artifact, preserved byte-for-byte.</p>
+
+<table>
+  <tbody>
+    <tr><td>Transaction hash:</td><td class="address">0x0e0b3c1f2d0565663743050f43282e97501b3ee8505084fa5af823da00b1e15a</td></tr>
+    <tr><td>Approval hash:</td><td><code>null</code> — no approval occurred</td></tr>
+    <tr><td>Explorer</td><td><a href="https://polygonscan.com/tx/0x0e0b3c1f2d0565663743050f43282e97501b3ee8505084fa5af823da00b1e15a">Polygonscan transaction record</a></td></tr>
+    <tr><td>Status</td><td><code>confirmed</code></td></tr>
+    <tr><td>Block number</td><td>90,780,021</td></tr>
+    <tr><td>Funds moved</td><td><code>true</code></td></tr>
+    <tr><td>Purpose tag</td><td><code>test</code></td></tr>
+    <tr><td>Reference</td><td>TRANSFER-ONLY-001</td></tr>
+    <tr><td>Memo</td><td>Production allowance verification</td></tr>
+    <tr><td>Execution path</td><td>READY → SUBMITTING → SUBMITTED → CONFIRMED</td></tr>
+  </tbody>
+</table>
+
+<p>The <a href="assets/transaction-flow/transaction-proof-packet-transfer-only-2026-07-24.json">exported proof packet</a> for this transaction includes all settlement fields, user-entered metadata, timestamps, and the three evidence sections from the <code>proof-packet.v1</code> schema.</p>
+
+<p>The preexisting 3.030000 USDC allowance decreased to 2.020000 USDC after the transfer — exactly matching the 1.010000 USDC total debit — confirming that the correct amount was consumed and no phantom spending occurred. The remaining 2.020000 USDC is the unused portion of the preexisting 3.030000 USDC allowance. The transfer neither created nor increased the allowance; it consumed exactly the disclosed 1.010000 USDC total debit.</p>
+
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<!-- 8. INTERNAL VERIFICATION EVIDENCE                                         -->
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+<section id="s8">
+<h2><span class="section-num">8</span> Internal Verification Evidence</h2>
+
+<div class="callout">
+  <div class="callout-label">Scope of this section</div>
+  The evidence below reflects internal testing executed against the deployed application. It has not been reviewed or certified by an independent third party. The test suite results are developer-run. The Gate 4 transaction is independently verifiable on Polygonscan.
+</div>
+
+<h3>8.1 Test suite results</h3>
+
+<table>
+  <thead>
+    <tr><th>Suite</th><th>Tests passed</th><th>Result</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Contract (Hardhat / Chai)</td><td>66 / 66</td><td>PASS</td></tr>
+    <tr><td>Receipt lifecycle + metadata</td><td>14 / 14</td><td>PASS</td></tr>
+    <tr><td>Observability</td><td>31 / 31</td><td>PASS</td></tr>
+    <tr><td>Analytics</td><td>24 / 24</td><td>PASS</td></tr>
+    <tr><td>Consent</td><td>15 / 15</td><td>PASS</td></tr>
+    <tr><td>Portal integrity</td><td>—</td><td>PASS</td></tr>
+    <tr><td>Static reference audit</td><td>631 references checked</td><td>PASS</td></tr>
+  </tbody>
+</table>
+
+<h3>8.2 Contract test coverage — areas exercised</h3>
+
+<p>The contract test suite (66 tests, Hardhat / Chai) covers the following scenarios:</p>
+
+<ul>
+  <li>Constructor validation — zero-address rejection for USDC and treasury; fee cap enforcement on initial fee basis points</li>
+  <li>Treasury management — address update, event emission, zero-address guard</li>
+  <li>Fee configuration — floor boundary, cap boundary (MAX_FEE_BPS), event emission</li>
+  <li>Transfer execution — happy path, fee routing correctness, direct balance checks</li>
+  <li>Pause and unpause — state enforcement (transfers blocked when paused), event emission</li>
+  <li>Ownership transfer — two-step requirement (acceptance required)</li>
+  <li>Recipient validation — zero-address rejection, contract-address rejection</li>
+  <li>Reentrancy protection — reentrant call behavior under <code>nonReentrant</code></li>
+  <li><code>previewTransfer()</code> accuracy — fee and total-debit calculation</li>
+  <li><code>rescueERC20</code> — USDC rejection, non-USDC token recovery</li>
+  <li>Allowance and balance edge cases — insufficient balance, insufficient allowance</li>
+</ul>
+
+<h3>8.3 Gate 4 — Mainnet controlled live smoke (2026-06-15)</h3>
+
+<p>A controlled transfer was executed on Polygon mainnet from the production frontend. This is the primary on-chain evidence of correct fee routing and zero-custody behavior.</p>
+
+<pre>Date:           2026-06-15
+Network:        Polygon mainnet, chain ID 137
+Site:           https://implicitex-236f2.web.app
+Contract:       0x5015841D6E665e63Ea174aD6b8FeF854026dE0C0
+
+Sender:         0x2489587C9da6EaB970a5479BA70273BA37961221
+Recipient:      0xe0B02A6d9738aa36eE48004211E264b7a815796B
+Treasury:       0xa7cE4232811021d2Dd01f4f0f264Df2427ab3919
+
+Amount:         1.000000 USDC
+Fee:            0.010000 USDC  (100 basis points)
+Total debit:    1.010000 USDC
+
+Transaction:    0x37fd733a7f1854740bf702aa5bf59794f4ebab0f39d2a84fb2c231c29df622d9
+Block:          88565097
+
+Polygonscan:    https://polygonscan.com/tx/0x37fd733a7f1854740bf702aa5bf59794f4ebab0f39d2a84fb2c231c29df622d9</pre>
+
+<table>
+  <thead>
+    <tr><th>Flow</th><th>Expected</th><th>Result</th><th>Source</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Sender deducted</td><td>1.010000 USDC</td><td>Confirmed</td><td>Wallet balance delta</td></tr>
+    <tr><td>Recipient received</td><td>1.000000 USDC</td><td>Confirmed</td><td>Polygonscan ERC-20 log</td></tr>
+    <tr><td>Treasury received</td><td>0.010000 USDC</td><td>Confirmed</td><td>Polygonscan ERC-20 log</td></tr>
+    <tr><td>Contract retained</td><td>0.000000 USDC</td><td>Confirmed</td><td>Polygonscan contract balance</td></tr>
+  </tbody>
+</table>
+
+<p>The Polygonscan ERC-20 token transfer log for this transaction shows exactly two transfers originating from the same sender address: 1.000000 USDC to the recipient and 0.010000 USDC to the treasury. No additional transfers are present.</p>
+
+<h3>8.4 Gate 5 — Public launch attempt (2026-06-18)</h3>
+
+<p>Transfers were enabled for a first-user walkthrough on 2026-06-18. The walkthrough was halted at the USDC approval step (prompt 1 of 2) due to the Blockaid "deceptive request" classification. The transfer execution step (prompt 2 of 2) was not reached. No funds moved. Transfers were returned to disabled standby state on the same date.</p>
+
+<p>The false-positive report was submitted to Blockaid on 2026-06-18 for both <code>implicitex.com</code> and <code>implicitex-236f2.web.app</code>.</p>
+
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<!-- 9. KNOWN LIMITATIONS                                                      -->
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+<section id="s9">
+<h2><span class="section-num">9</span> Known Limitations</h2>
+
+<p>The following limitations apply to the currently deployed version. They are stated here for completeness and accuracy.</p>
+
+<table>
+  <thead>
+    <tr><th>Item</th><th>Current status</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Third-party security audit</td>
+      <td>Not yet completed. An independent audit is planned as the platform scales toward broader distribution. Internal test coverage is documented in Section 8 and is not a substitute for an external audit.</td>
+    </tr>
+    <tr>
+      <td>Transfer reversibility</td>
+      <td>Confirmed blockchain transactions cannot be reversed. ImplicitEx has no reversal, refund, or cancellation mechanism for executed transfers.</td>
+    </tr>
+    <tr>
+      <td>Network support</td>
+      <td>Polygon mainnet (chain ID 137) only. Other networks are not supported in the current deployment.</td>
+    </tr>
+    <tr>
+      <td>Transfer ceiling</td>
+      <td>250.00 USDC per transaction. This is a soft launch cap enforced in the portal; it is not a contract-level constraint.</td>
+    </tr>
+    <tr>
+      <td>Mobile wallet compatibility</td>
+      <td>MetaMask browser extension (desktop) is confirmed. MetaMask Mobile in-app browser is under active testing. A provider-sequencing issue affecting the transfer execution prompt (prompt 2 of 2) has been diagnosed and a fix has been deployed; device verification is pending.</td>
+    </tr>
+    <tr>
+      <td>WalletConnect</td>
+      <td>Integration is implemented and active in the production codebase. Full regression testing against WalletConnect wallet providers is ongoing.</td>
+    </tr>
+    <tr>
+      <td>Per-transfer fee ceiling</td>
+      <td>The deployed contract does not enforce an absolute fee ceiling in USDC terms. The fee formula is a flat 1% percentage with no upper bound enforced in contract code. ImplicitEx has adopted a future policy under which fees will be capped at 10.00 USDC for transfers above 1,000 USDC, but that policy has not been deployed in the current contract. The production portal's 250.00 USDC transfer ceiling prevents any user of the supported interface from reaching the amount at which the uncapped 1% formula would exceed 2.50 USDC. A future contract revision will implement the 10.00 USDC ceiling on-chain before the portal transfer ceiling is raised above 1,000 USDC.</td>
+    </tr>
+    <tr>
+      <td>Wallet-provider classification</td>
+      <td>During the observed 2026-07-23 flow, MetaMask displayed a Blockaid warning indicating "This is a deceptive request" at the USDC spending-approval step (ticket #1290666 / #1290665). The approval requested an exact 1.01 USDC spending cap, matching the disclosed transfer amount (1.00 USDC) plus the platform fee (0.01 USDC). The subsequent transfer transaction was confirmed on-chain at block 90,776,572 with funds moved. See §7.4 and §7.7.1 for the full evidence record.</td>
+    </tr>
+    <tr>
+      <td>Contract ownership</td>
+      <td>Single-key <code>Ownable2Step</code>. Multi-signature governance is on the planning roadmap but is not deployed.</td>
+    </tr>
+  </tbody>
+</table>
+
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<!-- 10. REVIEWER REPRODUCTION PROCEDURE                                       -->
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+<section id="s10">
+<h2><span class="section-num">10</span> Reviewer Reproduction Procedure</h2>
+
+<p>The following verification steps can be completed independently by a Blockaid analyst without wallet connection or access to the ImplicitEx codebase.</p>
+
+<h3>10.1 Contract source</h3>
+
+<p>The deployed contract is at <span class="address">0x5015841D6E665e63Ea174aD6b8FeF854026dE0C0</span> on Polygon mainnet (chain ID 137).</p>
+
+<p>The source is verified on Polygonscan. The matched Solidity source, compiler version, optimizer settings, ABI, and constructor arguments are publicly visible at:</p>
+
+<pre>https://polygonscan.com/address/0x5015841D6E665e63Ea174aD6b8FeF854026dE0C0#code</pre>
+
+<p>The contract's verified-source status was confirmed during the deployment procedure on 2026-05-22. A Hardhat <code>verify</code> invocation returned that the contract had already been verified on the block explorer. Polygonscan reports that the published source compiles to bytecode matching the deployed contract, and publicly exposes the matched Solidity source, compiler configuration, ABI, and constructor arguments for the deployed address. A reviewer can inspect these directly on Polygonscan without any supplemental file attachment.</p>
+
+<h3>10.2 Transaction verification</h3>
+
+<p>The Gate 4 controlled smoke transaction is publicly accessible:</p>
+
+<pre>https://polygonscan.com/tx/0x37fd733a7f1854740bf702aa5bf59794f4ebab0f39d2a84fb2c231c29df622d9</pre>
+
+<p>In the "ERC-20 Token Txns" tab on Polygonscan, two transfers are visible originating from the same sender:</p>
+<ul>
+  <li>To <code>0xe0B02A6d...796B</code> — 1.000000 USDC (recipient)</li>
+  <li>To <code>0xa7cE4232...3919</code> — 0.010000 USDC (treasury fee)</li>
+</ul>
+
+<h3>10.3 Contract state — read-only queries</h3>
+
+<p>The following state can be read from the deployed contract via Polygonscan "Read Contract" or any JSON-RPC client, without connecting a wallet:</p>
+
+<table>
+  <thead>
+    <tr><th>Function</th><th>Expected return</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>feeBasisPoints()</code></td><td>100 (1.00%)</td></tr>
+    <tr><td><code>MAX_FEE_BPS()</code></td><td>100 (hard-coded fee rate ceiling; owner cannot set feeBasisPoints above this value)</td></tr>
+    <tr><td><code>minTransferAmount()</code></td><td>1000000 (1.000000 USDC)</td></tr>
+    <tr><td><code>treasury()</code></td><td><code>0xa7cE4232811021d2Dd01f4f0f264Df2427ab3919</code></td></tr>
+    <tr><td><code>paused()</code></td><td>Current pause state</td></tr>
+    <tr><td><code>owner()</code></td><td><code>0x776A0D6b9F96445A38303F56d5B923e6d1FF8E97</code></td></tr>
+  </tbody>
+</table>
+
+<h3>10.4 Live approval flow — reviewer reproduction</h3>
+
+<p>Transfers are currently enabled on Polygon mainnet. The approval flow can be reproduced as follows:</p>
+
+<ol>
+  <li>Connect a Polygon wallet with at least 2 USDC to <code>https://portal.implicitex.com</code></li>
+  <li>Enter any valid EOA recipient and an amount (e.g. 1.00 USDC)</li>
+  <li>Proceed past the review screen</li>
+  <li>Observe the MetaMask spending-cap prompt</li>
+</ol>
+
+<p>When the approval path is triggered, MetaMask's spending-cap value will equal the portal's displayed total debit exactly: transfer amount plus the disclosed 1% platform fee, with no additional allowance buffer. For a 1.00 USDC transfer, the spending cap will be 1.01 USDC. The precise classifier basis for Blockaid's warning has not been provided by Blockaid; this packet documents observable behavior and reproducible transaction evidence rather than attributing an unconfirmed cause.</p>
+
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<!-- 11. ADDRESSES AND EVIDENCE INVENTORY                                      -->
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+<section id="s11">
+<h2><span class="section-num">11</span> Addresses and Evidence Inventory</h2>
+
+<h3>11.1 Deployed addresses — Polygon mainnet (chain ID 137)</h3>
+
+<table>
+  <thead>
+    <tr><th>Component</th><th>Address</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>ImplicitExTransfer contract</td><td class="address">0x5015841D6E665e63Ea174aD6b8FeF854026dE0C0</td></tr>
+    <tr><td>USDC (Circle native, Polygon)</td><td class="address">0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359</td></tr>
+    <tr><td>Treasury (fee recipient)</td><td class="address">0xa7cE4232811021d2Dd01f4f0f264Df2427ab3919</td></tr>
+    <tr><td>Contract owner</td><td class="address">0x776A0D6b9F96445A38303F56d5B923e6d1FF8E97</td></tr>
+  </tbody>
+</table>
+
+<h3>11.2 Deployment record</h3>
+
+<table>
+  <thead>
+    <tr><th>Parameter</th><th>Value</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Deployment date</td><td>2026-05-22</td></tr>
+    <tr><td>Deployment transaction:</td><td class="address">0x87593fdb3d256a4a94b3e73877ba0bc433c39e81eefc78334af6da79ff5ef1f3</td></tr>
+    <tr><td>Ownership transfer TX:</td><td class="address">0xd84181dbffbd4f760cfa650b2a1edb1acc17713e66bb5d6d478376dc5202d777</td></tr>
+    <tr><td>Ownership acceptance TX:</td><td class="address">0xd6bfb2876725391c956dbd17ec5f774f9246b50df5667e8b29e8c78305365e90</td></tr>
+  </tbody>
+</table>
+
+<h3>11.3 Evidence inventory</h3>
+
+<table>
+  <thead>
+    <tr><th>ID</th><th>Item</th><th>Status</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>TF-01</td><td>Ordered transaction-flow screenshot set (Figures 1–12) — approval path</td><td>Available — confirmed flow captured 2026-07-23</td></tr>
+    <tr><td>PP-01</td><td><code>proof-packet.v1</code> export — transfer-only path (exact browser export)<br>
+        Artifact: <a href="assets/transaction-flow/transaction-proof-packet-transfer-only-2026-07-24.json">transaction-proof-packet-transfer-only-2026-07-24.json</a><br>
+        TX: <code>0x0e0b3c1f2d0565663743050f43282e97501b3ee8505084fa5af823da00b1e15a</code> · Block: 90,780,021<br>
+        SHA-256: <code>541cbb3d41788648c0f8907475ed542dcd3f7899fd736c9ad21d44bbc3bd6da7</code></td><td>Publicly served — exact browser export, 2026-07-24; <code>approvalHash: null</code>; metadata preserved</td></tr>
+    <tr><td>PP-02</td><td><code>proof-packet.v1</code> export — approval-path certification run (exact browser export)<br>
+        Artifact: <a href="assets/transaction-flow/transaction-proof-packet-approval-2026-07-24.json">transaction-proof-packet-approval-2026-07-24.json</a><br>
+        TX: <code>0x48c07f8039d50754a20c1b32ee701fa042fcb4bbeabd8d01ab0164805c5faa78</code> · Block: 90,784,121<br>
+        Approval hash: see §7.7.2 table<br>
+        SHA-256: <code>ae91d64b50d20b28df8c9bcd8bd2ecfac595f872b7c65cfbd1bb98bd2ffdbf7a</code></td><td>Publicly served — exact browser export, 2026-07-24; <code>referenceId: APPROVAL-PATH-002</code>; see §7.7.2</td></tr>
+    <tr><td>TX-02</td><td>Original Blockaid-observed approval-path transaction record — 2026-07-23</td><td>Confirmed — block 90,776,572; Polygonscan; Figures 1–12; artifact gap noted (original browser JSON not preserved); see §7.7.1</td></tr>
+    <tr><td>TX-01</td><td>Gate 4 transfer transaction (Polygonscan)</td><td>Available — publicly verifiable</td></tr>
+    <tr><td>TC-01</td><td>Contract test suite results (66/66)</td><td>Internal — available on request</td></tr>
+    <tr><td>TC-02</td><td>Observability suite results (31/31)</td><td>Internal — available on request</td></tr>
+    <tr><td>TC-03</td><td>Analytics suite results (24/24)</td><td>Internal — available on request</td></tr>
+    <tr><td>TC-04</td><td>Static reference audit (631 references)</td><td>Internal — available on request</td></tr>
+  </tbody>
+</table>
+
+<section class="internal-only">
+<h3>11.4 Pre-submission checklist</h3>
+
+<ul class="checklist">
+  <li>Contract source verified on Polygonscan — confirmed 2026-05-22. Polygonscan source link included in Section 10.1. No exhibit attachment required.</li>
+  <li>Record current contract state snapshot via Polygonscan "Read Contract" and verify each value matches the corresponding claim in Sections 5 and 11. The contract is not deployed behind an upgradeable proxy, and its runtime code is not administratively upgradeable; configurable state values may nevertheless change.
+    <ul style="margin-top: 8px; list-style: disc; padding-left: 20px;">
+      <li><code>feeBasisPoints()</code> — expected: 100 (1.00%)</li>
+      <li><code>MAX_FEE_BPS()</code> — expected: 100 (compile-time constant; fee rate ceiling)</li>
+      <li><code>treasury()</code> — expected: 0xa7cE4232811021d2Dd01f4f0f264Df2427ab3919</li>
+      <li><code>owner()</code> — expected: 0x776A0D6b9F96445A38303F56d5B923e6d1FF8E97</li>
+      <li><code>paused()</code> — record current value; note in packet if state differs from deployment baseline</li>
+      <li><code>minTransferAmount()</code> — expected: 1000000 (1.000000 USDC)</li>
+    </ul>
+  </li>
+  <li>Verify the current portal operating policy against the deployed configuration (<code>chains.js</code>), including the 250.00 USDC transfer ceiling and the global and Polygon-specific <code>transfersEnabled</code> values. These are frontend operating controls, not on-chain contract constraints. Record the production revision or commit used for the comparison.</li>
+  <li>Confirm Gate 4 transaction (TX-01) resolves on Polygonscan</li>
+  <li>Review the final rendered document in a browser: check page breaks, address wrapping, screenshot legibility, and print output on a monochrome printer</li>
+</ul>
+
+<h3>11.5 Post-release follow-up (not a submission blocker)</h3>
+<ul>
+  <li><strong>Receipt-display parity gap:</strong> The portal's human-readable Activity receipt for the PP-02 certification run (IX-48C07F80) displays <code>purposeTag</code> and <code>referenceId</code> but omits the <code>memo</code> field and the <code>approvalHash</code>, even though both are present and correct in the exported JSON proof packet. The JSON is authoritative; the display omission does not affect artifact fidelity. Fix: surface <code>memo</code> and <code>approvalHash</code> in the receipt UI to eliminate the parity gap between what the portal shows and what the proof packet records.</li>
+</ul>
+</section>
+
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<!-- DOCUMENT FOOTER                                                          -->
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+<footer class="doc-footer">
+  <span>ImplicitEx Architecture and Security Overview — v1.1.1 — 2026-07-24</span>
+  <span>connect@implicitex.com · implicitex.com</span>
+</footer>
+
+</body>
+</html>

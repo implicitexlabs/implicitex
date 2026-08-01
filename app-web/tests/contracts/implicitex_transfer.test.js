@@ -37,8 +37,11 @@ describe("ImplicitExTransfer", function () {
     };
   }
 
+  const MAX_FEE = 10_000_000n; // 10 USDC (6 decimals) — mirrors contract MAX_FEE
+
   async function fundAndApprove({ usdc, transferContract, sender, amount, feeBps }) {
-    const fee = (amount * BigInt(feeBps)) / 10000n;
+    const percentageFee = (amount * BigInt(feeBps)) / 10000n;
+    const fee = percentageFee > MAX_FEE ? MAX_FEE : percentageFee;
     const totalDebit = amount + fee;
     await usdc.mint(sender.address, totalDebit);
     await usdc.connect(sender).approve(await transferContract.getAddress(), totalDebit);
@@ -839,6 +842,87 @@ describe("ImplicitExTransfer", function () {
     const result = await transferContract.previewTransfer(sender.address, amount);
 
     expect(result.canTransfer).to.equal(false);
+  });
+
+  // ---- fee cap boundary (MAX_FEE = 10 USDC) ----
+
+  it("MAX_FEE constant is 10 USDC in atomic units", async function () {
+    const { transferContract } = await deployFixture();
+    expect(await transferContract.MAX_FEE()).to.equal(10_000_000n);
+  });
+
+  it("calculateFee returns uncapped 1% for transfers below 1000 USDC", async function () {
+    const { transferContract } = await deployFixture({ feeBps: 100 });
+
+    // 999.999999 USDC → fee = 9_999_999 (below 10 USDC cap)
+    const amount = 999_999_999n;
+    const fee = await transferContract.calculateFee(amount);
+    expect(fee).to.equal(9_999_999n); // floor(999999999 * 100 / 10000) = 9999999
+    expect(fee).to.be.lt(10_000_000n);
+  });
+
+  it("calculateFee returns exactly 10 USDC fee at 1000 USDC transfer", async function () {
+    const { transferContract } = await deployFixture({ feeBps: 100 });
+
+    const amount = ethers.parseUnits("1000", 6); // 1_000_000_000
+    const fee = await transferContract.calculateFee(amount);
+    expect(fee).to.equal(10_000_000n); // 1% of 1000 USDC = 10 USDC, exactly at cap
+  });
+
+  it("calculateFee caps at 10 USDC for transfers above 1000 USDC", async function () {
+    const { transferContract } = await deployFixture({ feeBps: 100 });
+
+    const amount = ethers.parseUnits("2000", 6);
+    expect(await transferContract.calculateFee(amount)).to.equal(10_000_000n);
+
+    const largeAmount = ethers.parseUnits("10000", 6);
+    expect(await transferContract.calculateFee(largeAmount)).to.equal(10_000_000n);
+
+    const veryLargeAmount = ethers.parseUnits("20000", 6);
+    expect(await transferContract.calculateFee(veryLargeAmount)).to.equal(10_000_000n);
+  });
+
+  it("transferWithFee applies fee cap for large transfers", async function () {
+    const { transferContract, usdc, sender, recipient, treasury, feeBps } = await deployFixture({ feeBps: 100 });
+
+    // 2000 USDC → 1% = 20 USDC, but cap = 10 USDC
+    const amount = ethers.parseUnits("2000", 6);
+    const expectedFee = 10_000_000n;
+    const expectedTotal = amount + expectedFee;
+
+    await usdc.mint(sender.address, expectedTotal);
+    await usdc.connect(sender).approve(await transferContract.getAddress(), expectedTotal);
+
+    await expect(transferContract.connect(sender).transferWithFee(recipient.address, amount))
+      .to.emit(transferContract, "TransferExecuted")
+      .withArgs(sender.address, recipient.address, amount, expectedFee, expectedTotal);
+
+    expect(await usdc.balanceOf(recipient.address)).to.equal(amount);
+    expect(await usdc.balanceOf(treasury.address)).to.equal(expectedFee);
+    expect(await usdc.balanceOf(await transferContract.getAddress())).to.equal(0n);
+  });
+
+  it("previewTransfer reflects fee cap for large transfers", async function () {
+    const { transferContract, usdc, sender } = await deployFixture({ feeBps: 100 });
+
+    const amount = ethers.parseUnits("5000", 6);
+    const expectedFee = 10_000_000n;
+    const expectedTotal = amount + expectedFee;
+
+    await usdc.mint(sender.address, expectedTotal);
+    await usdc.connect(sender).approve(await transferContract.getAddress(), expectedTotal);
+
+    const result = await transferContract.previewTransfer(sender.address, amount);
+    expect(result.fee).to.equal(expectedFee);
+    expect(result.totalDebit).to.equal(expectedTotal);
+    expect(result.canTransfer).to.equal(true);
+  });
+
+  it("fee cap does not apply when feeBps is 0", async function () {
+    const { transferContract } = await deployFixture({ feeBps: 0 });
+
+    const largeAmount = ethers.parseUnits("10000", 6);
+    expect(await transferContract.calculateFee(largeAmount)).to.equal(0n);
   });
 
   it("pause blocks transferWithFee but owner config updates remain available", async function () {

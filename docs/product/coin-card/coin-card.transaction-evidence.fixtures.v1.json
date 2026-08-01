@@ -1,0 +1,996 @@
+{
+  "schemaVersion": "coin-card-transaction-evidence-fixtures.v1",
+  "domains": {
+    "authority": "ImplicitEx.CoinCard.TransactionEvidence.v1",
+    "lifecycleRecord": "ImplicitEx.CoinCard.AuthenticatedLifecycleRecord.v1",
+    "registryRecord": "ImplicitEx.CoinCard.ExecutableRegistryRecord.v2",
+    "frozenIntent": "ImplicitEx.CoinCard.FrozenUserIntent.v1"
+  },
+  "positive": {
+    "registryRecord": {
+      "registrySchemaVersion": "coin-card-registry-record.v2",
+      "registryId": "implicitex-executable-production",
+      "environment": "production",
+      "recordId": "ccr2-cc_merchant_001-r7",
+      "revision": "7",
+      "cardId": "cc_merchant_001",
+      "recipientAddress": "0x1111111111111111111111111111111111111111",
+      "chainId": "137",
+      "tokenContractAddress": "0x2222222222222222222222222222222222222222",
+      "executionContractAddress": "0x3333333333333333333333333333333333333333",
+      "executionContractInterfaceId": "implicitex-evidence-bound-transfer.v1",
+      "executionInterfaceDescriptorHash": "sha256:37715c194362030bc4a2e34e2663e8f2bac03b5274d3fd4bacbb767c6664e7af",
+      "feePolicy": {
+        "policyVersion": "implicitex-fee-policy.v2",
+        "feeBasisPoints": "100",
+        "feeCapAtomic": "10000000",
+        "minimumTransferAtomic": "1000000",
+        "maximumTransferAtomic": "250000000",
+        "transferPrecisionAtomic": "10000",
+        "roundingRule": "FLOOR_BPS_THEN_CAP",
+        "feeRecipientAddress": "0x4444444444444444444444444444444444444444"
+      }
+    },
+    "authority": {
+      "evidenceDomain": "ImplicitEx.CoinCard.TransactionEvidence",
+      "evidenceSchemaVersion": "transaction-evidence.v1",
+      "issuerId": "implicitex-production",
+      "environment": "production",
+      "cardId": "cc_merchant_001",
+      "runtimeManifestId": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "lifecycleRegistryId": "implicitex-production",
+      "lifecycleRegistrySchemaVersion": "coin-card-lifecycle-registry-record.v1",
+      "lifecycleRecordId": "implicitex-production-r19-cc_merchant_001",
+      "lifecycleRecordRevision": "7",
+      "lifecycleRecordHash": "sha256:85baa0e74eccbe70b41061335483164255163b026f419e4b8f3574fe62ce88ab",
+      "coinCardRegistryId": "implicitex-executable-production",
+      "coinCardRegistrySchemaVersion": "coin-card-registry-record.v2",
+      "coinCardRegistryRecordId": "ccr2-cc_merchant_001-r7",
+      "coinCardRegistryRecordRevision": "7",
+      "coinCardRegistryRecordHash": "sha256:0b4b3d4d0fc036c96c404287b1e6953e4a79b8cf9627edcf4afc171b6fb617e9",
+      "recipientAddress": "0x1111111111111111111111111111111111111111",
+      "chainId": "137",
+      "tokenContractAddress": "0x2222222222222222222222222222222222222222",
+      "executionContractAddress": "0x3333333333333333333333333333333333333333",
+      "executionContractInterfaceId": "implicitex-evidence-bound-transfer.v1",
+      "executionInterfaceDescriptorHash": "sha256:37715c194362030bc4a2e34e2663e8f2bac03b5274d3fd4bacbb767c6664e7af",
+      "feePolicy": {
+        "policyVersion": "implicitex-fee-policy.v2",
+        "feeBasisPoints": "100",
+        "feeCapAtomic": "10000000",
+        "minimumTransferAtomic": "1000000",
+        "maximumTransferAtomic": "250000000",
+        "transferPrecisionAtomic": "10000",
+        "roundingRule": "FLOOR_BPS_THEN_CAP",
+        "feeRecipientAddress": "0x4444444444444444444444444444444444444444"
+      }
+    },
+    "authorityPropertyOrderVariant": {
+      "feePolicy": {
+        "feeRecipientAddress": "0x4444444444444444444444444444444444444444",
+        "roundingRule": "FLOOR_BPS_THEN_CAP",
+        "transferPrecisionAtomic": "10000",
+        "maximumTransferAtomic": "250000000",
+        "minimumTransferAtomic": "1000000",
+        "feeCapAtomic": "10000000",
+        "feeBasisPoints": "100",
+        "policyVersion": "implicitex-fee-policy.v2"
+      },
+      "executionInterfaceDescriptorHash": "sha256:37715c194362030bc4a2e34e2663e8f2bac03b5274d3fd4bacbb767c6664e7af",
+      "executionContractInterfaceId": "implicitex-evidence-bound-transfer.v1",
+      "executionContractAddress": "0x3333333333333333333333333333333333333333",
+      "tokenContractAddress": "0x2222222222222222222222222222222222222222",
+      "chainId": "137",
+      "recipientAddress": "0x1111111111111111111111111111111111111111",
+      "coinCardRegistryRecordHash": "sha256:0b4b3d4d0fc036c96c404287b1e6953e4a79b8cf9627edcf4afc171b6fb617e9",
+      "coinCardRegistryRecordRevision": "7",
+      "coinCardRegistryRecordId": "ccr2-cc_merchant_001-r7",
+      "coinCardRegistrySchemaVersion": "coin-card-registry-record.v2",
+      "coinCardRegistryId": "implicitex-executable-production",
+      "lifecycleRecordHash": "sha256:85baa0e74eccbe70b41061335483164255163b026f419e4b8f3574fe62ce88ab",
+      "lifecycleRecordRevision": "7",
+      "lifecycleRecordId": "implicitex-production-r19-cc_merchant_001",
+      "lifecycleRegistrySchemaVersion": "coin-card-lifecycle-registry-record.v1",
+      "lifecycleRegistryId": "implicitex-production",
+      "runtimeManifestId": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "cardId": "cc_merchant_001",
+      "environment": "production",
+      "issuerId": "implicitex-production",
+      "evidenceSchemaVersion": "transaction-evidence.v1",
+      "evidenceDomain": "ImplicitEx.CoinCard.TransactionEvidence"
+    },
+    "frozenIntent": {
+      "intentSchemaVersion": "frozen-user-intent.v1",
+      "authorityHash": "sha256:e4384127b21da341c8ac23b21422387a89587adc1ff9122534ad4f2cd793868a",
+      "cardId": "cc_merchant_001",
+      "runtimeManifestId": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "senderAddress": "0x5555555555555555555555555555555555555555",
+      "recipientAddress": "0x1111111111111111111111111111111111111111",
+      "chainId": "137",
+      "tokenContractAddress": "0x2222222222222222222222222222222222222222",
+      "executionContractAddress": "0x3333333333333333333333333333333333333333",
+      "executionContractInterfaceId": "implicitex-evidence-bound-transfer.v1",
+      "executionInterfaceDescriptorHash": "sha256:37715c194362030bc4a2e34e2663e8f2bac03b5274d3fd4bacbb767c6664e7af",
+      "amountSentAtomic": "50000000",
+      "feeAmountAtomic": "500000",
+      "totalDebitedAtomic": "50500000"
+    },
+    "observedExecution": {
+      "observationSchemaVersion": "observed-execution-environment.v1",
+      "authorityHash": "sha256:e4384127b21da341c8ac23b21422387a89587adc1ff9122534ad4f2cd793868a",
+      "intentHash": "sha256:446b15beb7f9cf46dd7a1993ca8c24492dd402aa6e9e011c1a0c1def2494567e",
+      "observationBlockNumber": "69999999",
+      "observationBlockHash": "0x7777777777777777777777777777777777777777777777777777777777777777",
+      "connectedAccount": "0x5555555555555555555555555555555555555555",
+      "chainId": "137",
+      "tokenContractAddress": "0x2222222222222222222222222222222222222222",
+      "executionContractAddress": "0x3333333333333333333333333333333333333333",
+      "executionContractInterfaceId": "implicitex-evidence-bound-transfer.v1",
+      "executionInterfaceDescriptorHash": "sha256:37715c194362030bc4a2e34e2663e8f2bac03b5274d3fd4bacbb767c6664e7af",
+      "executionContractCodeHash": "0x8888888888888888888888888888888888888888888888888888888888888888",
+      "contractPaused": false,
+      "feePolicy": {
+        "policyVersion": "implicitex-fee-policy.v2",
+        "feeBasisPoints": "100",
+        "feeCapEnabled": true,
+        "feeCapAtomic": "10000000",
+        "minimumTransferAtomic": "1000000",
+        "transferPrecisionAtomic": "10000",
+        "roundingRule": "FLOOR_BPS_THEN_CAP",
+        "feeRecipientAddress": "0x4444444444444444444444444444444444444444"
+      },
+      "senderBalanceAtomic": "100000000",
+      "senderAllowanceAtomic": "100000000"
+    },
+    "settlement": {
+      "settlementSchemaVersion": "observed-settlement.v1",
+      "authorityHash": "sha256:e4384127b21da341c8ac23b21422387a89587adc1ff9122534ad4f2cd793868a",
+      "intentHash": "sha256:446b15beb7f9cf46dd7a1993ca8c24492dd402aa6e9e011c1a0c1def2494567e",
+      "transactionHash": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "blockNumber": "70000000",
+      "blockHash": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "logIndex": "3",
+      "eventContractAddress": "0x3333333333333333333333333333333333333333",
+      "senderAddress": "0x5555555555555555555555555555555555555555",
+      "recipientAddress": "0x1111111111111111111111111111111111111111",
+      "tokenContractAddress": "0x2222222222222222222222222222222222222222",
+      "amountSentAtomic": "50000000",
+      "feeAmountAtomic": "500000",
+      "totalDebitedAtomic": "50500000",
+      "policyCommitment": "0xbc1e8e4d24b0493f23a1be3402116a84a7e881d3b625f6813fb72a934352c294"
+    },
+    "expectedRegistryCanonicalJson": "{\"cardId\":\"cc_merchant_001\",\"chainId\":\"137\",\"environment\":\"production\",\"executionContractAddress\":\"0x3333333333333333333333333333333333333333\",\"executionContractInterfaceId\":\"implicitex-evidence-bound-transfer.v1\",\"executionInterfaceDescriptorHash\":\"sha256:37715c194362030bc4a2e34e2663e8f2bac03b5274d3fd4bacbb767c6664e7af\",\"feePolicy\":{\"feeBasisPoints\":\"100\",\"feeCapAtomic\":\"10000000\",\"feeRecipientAddress\":\"0x4444444444444444444444444444444444444444\",\"maximumTransferAtomic\":\"250000000\",\"minimumTransferAtomic\":\"1000000\",\"policyVersion\":\"implicitex-fee-policy.v2\",\"roundingRule\":\"FLOOR_BPS_THEN_CAP\",\"transferPrecisionAtomic\":\"10000\"},\"recipientAddress\":\"0x1111111111111111111111111111111111111111\",\"recordId\":\"ccr2-cc_merchant_001-r7\",\"registryId\":\"implicitex-executable-production\",\"registrySchemaVersion\":\"coin-card-registry-record.v2\",\"revision\":\"7\",\"tokenContractAddress\":\"0x2222222222222222222222222222222222222222\"}",
+    "expectedRegistryRecordHash": "sha256:0b4b3d4d0fc036c96c404287b1e6953e4a79b8cf9627edcf4afc171b6fb617e9",
+    "expectedAuthorityCanonicalJson": "{\"cardId\":\"cc_merchant_001\",\"chainId\":\"137\",\"coinCardRegistryId\":\"implicitex-executable-production\",\"coinCardRegistryRecordHash\":\"sha256:0b4b3d4d0fc036c96c404287b1e6953e4a79b8cf9627edcf4afc171b6fb617e9\",\"coinCardRegistryRecordId\":\"ccr2-cc_merchant_001-r7\",\"coinCardRegistryRecordRevision\":\"7\",\"coinCardRegistrySchemaVersion\":\"coin-card-registry-record.v2\",\"environment\":\"production\",\"evidenceDomain\":\"ImplicitEx.CoinCard.TransactionEvidence\",\"evidenceSchemaVersion\":\"transaction-evidence.v1\",\"executionContractAddress\":\"0x3333333333333333333333333333333333333333\",\"executionContractInterfaceId\":\"implicitex-evidence-bound-transfer.v1\",\"executionInterfaceDescriptorHash\":\"sha256:37715c194362030bc4a2e34e2663e8f2bac03b5274d3fd4bacbb767c6664e7af\",\"feePolicy\":{\"feeBasisPoints\":\"100\",\"feeCapAtomic\":\"10000000\",\"feeRecipientAddress\":\"0x4444444444444444444444444444444444444444\",\"maximumTransferAtomic\":\"250000000\",\"minimumTransferAtomic\":\"1000000\",\"policyVersion\":\"implicitex-fee-policy.v2\",\"roundingRule\":\"FLOOR_BPS_THEN_CAP\",\"transferPrecisionAtomic\":\"10000\"},\"issuerId\":\"implicitex-production\",\"lifecycleRecordHash\":\"sha256:85baa0e74eccbe70b41061335483164255163b026f419e4b8f3574fe62ce88ab\",\"lifecycleRecordId\":\"implicitex-production-r19-cc_merchant_001\",\"lifecycleRecordRevision\":\"7\",\"lifecycleRegistryId\":\"implicitex-production\",\"lifecycleRegistrySchemaVersion\":\"coin-card-lifecycle-registry-record.v1\",\"recipientAddress\":\"0x1111111111111111111111111111111111111111\",\"runtimeManifestId\":\"sha256:1111111111111111111111111111111111111111111111111111111111111111\",\"tokenContractAddress\":\"0x2222222222222222222222222222222222222222\"}",
+    "expectedAuthorityHash": "sha256:e4384127b21da341c8ac23b21422387a89587adc1ff9122534ad4f2cd793868a",
+    "expectedIntentCanonicalJson": "{\"amountSentAtomic\":\"50000000\",\"authorityHash\":\"sha256:e4384127b21da341c8ac23b21422387a89587adc1ff9122534ad4f2cd793868a\",\"cardId\":\"cc_merchant_001\",\"chainId\":\"137\",\"executionContractAddress\":\"0x3333333333333333333333333333333333333333\",\"executionContractInterfaceId\":\"implicitex-evidence-bound-transfer.v1\",\"executionInterfaceDescriptorHash\":\"sha256:37715c194362030bc4a2e34e2663e8f2bac03b5274d3fd4bacbb767c6664e7af\",\"feeAmountAtomic\":\"500000\",\"intentSchemaVersion\":\"frozen-user-intent.v1\",\"recipientAddress\":\"0x1111111111111111111111111111111111111111\",\"runtimeManifestId\":\"sha256:1111111111111111111111111111111111111111111111111111111111111111\",\"senderAddress\":\"0x5555555555555555555555555555555555555555\",\"tokenContractAddress\":\"0x2222222222222222222222222222222222222222\",\"totalDebitedAtomic\":\"50500000\"}",
+    "expectedIntentHash": "sha256:446b15beb7f9cf46dd7a1993ca8c24492dd402aa6e9e011c1a0c1def2494567e",
+    "signatureVector": {
+      "keyId": "fixture-p256-phase-1c-2026-07",
+      "publicKeyJwk": {
+        "kty": "EC",
+        "x": "dFxGday3JrWwLlvRuyavHMT2FrwYi-HkaoIlbRDq1OY",
+        "y": "RJmuUgSKQWFEXpMEeAwx_nrZjCiGmxx08mNGJ-uDNiI",
+        "crv": "P-256"
+      },
+      "signatureAlgorithm": "ECDSA_P256_SHA256_P1363",
+      "signature": "35ytUt-lboKT0r4459CIeXQf6ZMV730Pi9dFBxkKQxP2eUJHehVWup2N7VxELdbPGczRRUuWI2iKj3KQoEge4A"
+    }
+  },
+  "legacyCompatibility": {
+    "matchingProjection": {
+      "sourceSchemaVersion": "coin-card-signed-manifest-envelope.v1",
+      "manifestId": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "cardId": "cc_merchant_001",
+      "issuerId": "implicitex-production",
+      "environment": "production",
+      "recipientAddress": "0x1111111111111111111111111111111111111111",
+      "chainNamespace": "eip155",
+      "chainId": "137",
+      "tokenStandard": "ERC20",
+      "tokenContractAddress": "0x2222222222222222222222222222222222222222",
+      "amountPolicy": {
+        "type": "BOUNDED_AMOUNT",
+        "minAmountBaseUnits": "1000000",
+        "maxAmountBaseUnits": "250000000"
+      }
+    },
+    "paymentFreeRuntimeManifest": {
+      "sourceSchemaVersion": "coin-card-runtime-package.v2",
+      "paymentFieldsPresent": false
+    },
+    "compatibleAmountPolicies": [
+      {
+        "id": "open-authority-range",
+        "policy": {
+          "type": "OPEN_AMOUNT"
+        },
+        "expectedEffectiveMinimumAtomic": "1000000",
+        "expectedEffectiveMaximumAtomic": "250000000"
+      },
+      {
+        "id": "fixed-subset",
+        "policy": {
+          "type": "FIXED_AMOUNT",
+          "amountBaseUnits": "50000000"
+        },
+        "expectedEffectiveMinimumAtomic": "50000000",
+        "expectedEffectiveMaximumAtomic": "50000000"
+      },
+      {
+        "id": "minimum-narrows-lower-bound",
+        "policy": {
+          "type": "MINIMUM_AMOUNT",
+          "minAmountBaseUnits": "25000000"
+        },
+        "expectedEffectiveMinimumAtomic": "25000000",
+        "expectedEffectiveMaximumAtomic": "250000000"
+      },
+      {
+        "id": "bounded-narrows-both-bounds",
+        "policy": {
+          "type": "BOUNDED_AMOUNT",
+          "minAmountBaseUnits": "10000000",
+          "maxAmountBaseUnits": "100000000"
+        },
+        "expectedEffectiveMinimumAtomic": "10000000",
+        "expectedEffectiveMaximumAtomic": "100000000"
+      }
+    ],
+    "incompatibleAmountPolicies": [
+      {
+        "id": "fixed-below-authority",
+        "policy": {
+          "type": "FIXED_AMOUNT",
+          "amountBaseUnits": "990000"
+        },
+        "expectedCode": "CROSS_AUTHORITY_AMOUNT_POLICY_MISMATCH"
+      },
+      {
+        "id": "fixed-above-authority",
+        "policy": {
+          "type": "FIXED_AMOUNT",
+          "amountBaseUnits": "250010000"
+        },
+        "expectedCode": "CROSS_AUTHORITY_AMOUNT_POLICY_MISMATCH"
+      },
+      {
+        "id": "fixed-precision-invalid",
+        "policy": {
+          "type": "FIXED_AMOUNT",
+          "amountBaseUnits": "50000001"
+        },
+        "expectedCode": "CROSS_AUTHORITY_AMOUNT_POLICY_MISMATCH"
+      },
+      {
+        "id": "minimum-enlarges-lower-bound",
+        "policy": {
+          "type": "MINIMUM_AMOUNT",
+          "minAmountBaseUnits": "990000"
+        },
+        "expectedCode": "CROSS_AUTHORITY_AMOUNT_POLICY_MISMATCH"
+      },
+      {
+        "id": "minimum-above-authority",
+        "policy": {
+          "type": "MINIMUM_AMOUNT",
+          "minAmountBaseUnits": "250010000"
+        },
+        "expectedCode": "CROSS_AUTHORITY_AMOUNT_POLICY_MISMATCH"
+      },
+      {
+        "id": "minimum-precision-invalid",
+        "policy": {
+          "type": "MINIMUM_AMOUNT",
+          "minAmountBaseUnits": "25000001"
+        },
+        "expectedCode": "CROSS_AUTHORITY_AMOUNT_POLICY_MISMATCH"
+      },
+      {
+        "id": "bounded-enlarges-lower-bound",
+        "policy": {
+          "type": "BOUNDED_AMOUNT",
+          "minAmountBaseUnits": "990000",
+          "maxAmountBaseUnits": "100000000"
+        },
+        "expectedCode": "CROSS_AUTHORITY_AMOUNT_POLICY_MISMATCH"
+      },
+      {
+        "id": "bounded-enlarges-upper-bound",
+        "policy": {
+          "type": "BOUNDED_AMOUNT",
+          "minAmountBaseUnits": "10000000",
+          "maxAmountBaseUnits": "250010000"
+        },
+        "expectedCode": "CROSS_AUTHORITY_AMOUNT_POLICY_MISMATCH"
+      },
+      {
+        "id": "bounded-empty-intersection",
+        "policy": {
+          "type": "BOUNDED_AMOUNT",
+          "minAmountBaseUnits": "100000000",
+          "maxAmountBaseUnits": "10000000"
+        },
+        "expectedCode": "CROSS_AUTHORITY_AMOUNT_POLICY_MISMATCH"
+      },
+      {
+        "id": "bounded-minimum-precision-invalid",
+        "policy": {
+          "type": "BOUNDED_AMOUNT",
+          "minAmountBaseUnits": "10000001",
+          "maxAmountBaseUnits": "100000000"
+        },
+        "expectedCode": "CROSS_AUTHORITY_AMOUNT_POLICY_MISMATCH"
+      },
+      {
+        "id": "bounded-maximum-precision-invalid",
+        "policy": {
+          "type": "BOUNDED_AMOUNT",
+          "minAmountBaseUnits": "10000000",
+          "maxAmountBaseUnits": "100000001"
+        },
+        "expectedCode": "CROSS_AUTHORITY_AMOUNT_POLICY_MISMATCH"
+      }
+    ],
+    "frozenIntentAmountViolations": [
+      {
+        "id": "open-below-authority",
+        "policy": {
+          "type": "OPEN_AMOUNT"
+        },
+        "amountSentAtomic": "990000",
+        "expectedCode": "AMOUNT_POLICY_VIOLATION"
+      },
+      {
+        "id": "fixed-different-amount",
+        "policy": {
+          "type": "FIXED_AMOUNT",
+          "amountBaseUnits": "50000000"
+        },
+        "amountSentAtomic": "60000000",
+        "expectedCode": "AMOUNT_POLICY_VIOLATION"
+      },
+      {
+        "id": "minimum-below-effective-range",
+        "policy": {
+          "type": "MINIMUM_AMOUNT",
+          "minAmountBaseUnits": "25000000"
+        },
+        "amountSentAtomic": "24000000",
+        "expectedCode": "AMOUNT_POLICY_VIOLATION"
+      },
+      {
+        "id": "bounded-below-effective-range",
+        "policy": {
+          "type": "BOUNDED_AMOUNT",
+          "minAmountBaseUnits": "10000000",
+          "maxAmountBaseUnits": "100000000"
+        },
+        "amountSentAtomic": "9000000",
+        "expectedCode": "AMOUNT_POLICY_VIOLATION"
+      },
+      {
+        "id": "bounded-above-effective-range",
+        "policy": {
+          "type": "BOUNDED_AMOUNT",
+          "minAmountBaseUnits": "10000000",
+          "maxAmountBaseUnits": "100000000"
+        },
+        "amountSentAtomic": "100010000",
+        "expectedCode": "AMOUNT_POLICY_VIOLATION"
+      },
+      {
+        "id": "bounded-intent-precision-invalid",
+        "policy": {
+          "type": "BOUNDED_AMOUNT",
+          "minAmountBaseUnits": "10000000",
+          "maxAmountBaseUnits": "100000000"
+        },
+        "amountSentAtomic": "50000001",
+        "expectedCode": "AMOUNT_POLICY_VIOLATION"
+      }
+    ],
+    "missingTransactionEvidence": {
+      "expectedCode": "TRANSACTION_EVIDENCE_REQUIRED"
+    },
+    "conflicts": [
+      {
+        "id": "legacy-schema",
+        "path": "sourceSchemaVersion",
+        "replacement": "coin-card-signed-manifest-envelope.v0",
+        "expectedCode": "CROSS_AUTHORITY_LEGACY_SCHEMA_UNSUPPORTED"
+      },
+      {
+        "id": "legacy-manifest",
+        "path": "manifestId",
+        "replacement": "sha256:1111111111111111111111111111111111111111111111111111111111111110",
+        "expectedCode": "CROSS_AUTHORITY_RUNTIME_MANIFEST_MISMATCH"
+      },
+      {
+        "id": "legacy-card",
+        "path": "cardId",
+        "replacement": "cc_merchant_000",
+        "expectedCode": "CROSS_AUTHORITY_CARD_ID_MISMATCH"
+      },
+      {
+        "id": "legacy-issuer",
+        "path": "issuerId",
+        "replacement": "implicitex-staging",
+        "expectedCode": "CROSS_AUTHORITY_ISSUER_MISMATCH"
+      },
+      {
+        "id": "legacy-environment",
+        "path": "environment",
+        "replacement": "staging",
+        "expectedCode": "CROSS_AUTHORITY_ENVIRONMENT_MISMATCH"
+      },
+      {
+        "id": "legacy-recipient",
+        "path": "recipientAddress",
+        "replacement": "0x1111111111111111111111111111111111111110",
+        "expectedCode": "CROSS_AUTHORITY_RECIPIENT_MISMATCH"
+      },
+      {
+        "id": "legacy-chain-namespace",
+        "path": "chainNamespace",
+        "replacement": "solana",
+        "expectedCode": "CROSS_AUTHORITY_CHAIN_MISMATCH"
+      },
+      {
+        "id": "legacy-chain-id",
+        "path": "chainId",
+        "replacement": "136",
+        "expectedCode": "CROSS_AUTHORITY_CHAIN_MISMATCH"
+      },
+      {
+        "id": "legacy-token-standard",
+        "path": "tokenStandard",
+        "replacement": "NATIVE",
+        "expectedCode": "CROSS_AUTHORITY_TOKEN_MISMATCH"
+      },
+      {
+        "id": "legacy-token-contract",
+        "path": "tokenContractAddress",
+        "replacement": "0x2222222222222222222222222222222222222223",
+        "expectedCode": "CROSS_AUTHORITY_TOKEN_MISMATCH"
+      },
+      {
+        "id": "legacy-bounded-minimum-enlarges-authority",
+        "path": "amountPolicy.minAmountBaseUnits",
+        "replacement": "990000",
+        "expectedCode": "CROSS_AUTHORITY_AMOUNT_POLICY_MISMATCH"
+      },
+      {
+        "id": "legacy-bounded-maximum-enlarges-authority",
+        "path": "amountPolicy.maxAmountBaseUnits",
+        "replacement": "250010000",
+        "expectedCode": "CROSS_AUTHORITY_AMOUNT_POLICY_MISMATCH"
+      }
+    ]
+  },
+  "authorityMutations": [
+    {
+      "id": "evidence-domain",
+      "path": "evidenceDomain",
+      "replacement": "ImplicitEx.CoinCard.TransactionEvidencd",
+      "expectedCode": "EVIDENCE_DOMAIN_MISMATCH"
+    },
+    {
+      "id": "evidence-schema-version",
+      "path": "evidenceSchemaVersion",
+      "replacement": "transaction-evidence.v2",
+      "expectedCode": "EVIDENCE_SCHEMA_UNSUPPORTED"
+    },
+    {
+      "id": "issuer-id",
+      "path": "issuerId",
+      "replacement": "implicitex-productioo",
+      "expectedCode": "ISSUER_ID_MISMATCH"
+    },
+    {
+      "id": "environment",
+      "path": "environment",
+      "replacement": "productioo",
+      "expectedCode": "ENVIRONMENT_MISMATCH"
+    },
+    {
+      "id": "card-id",
+      "path": "cardId",
+      "replacement": "cc_merchant_000",
+      "expectedCode": "CARD_ID_MISMATCH"
+    },
+    {
+      "id": "runtime-manifest-id",
+      "path": "runtimeManifestId",
+      "replacement": "sha256:1111111111111111111111111111111111111111111111111111111111111110",
+      "expectedCode": "RUNTIME_MANIFEST_MISMATCH"
+    },
+    {
+      "id": "lifecycle-registry-id",
+      "path": "lifecycleRegistryId",
+      "replacement": "implicitex-staging",
+      "expectedCode": "LIFECYCLE_REGISTRY_ID_MISMATCH"
+    },
+    {
+      "id": "lifecycle-registry-schema-version",
+      "path": "lifecycleRegistrySchemaVersion",
+      "replacement": "coin-card-lifecycle-registry-record.v2",
+      "expectedCode": "LIFECYCLE_SCHEMA_MISMATCH"
+    },
+    {
+      "id": "lifecycle-record-id",
+      "path": "lifecycleRecordId",
+      "replacement": "implicitex-production-r18-cc_merchant_001",
+      "expectedCode": "LIFECYCLE_RECORD_ID_MISMATCH"
+    },
+    {
+      "id": "lifecycle-record-revision",
+      "path": "lifecycleRecordRevision",
+      "replacement": "6",
+      "expectedCode": "LIFECYCLE_RECORD_REVISION_MISMATCH"
+    },
+    {
+      "id": "lifecycle-record-hash",
+      "path": "lifecycleRecordHash",
+      "replacement": "sha256:85baa0e74eccbe70b41061335483164255163b026f419e4b8f3574fe62ce88aa",
+      "expectedCode": "LIFECYCLE_RECORD_HASH_MISMATCH"
+    },
+    {
+      "id": "coin-card-registry-id",
+      "path": "coinCardRegistryId",
+      "replacement": "implicitex-executable-staging",
+      "expectedCode": "COIN_CARD_REGISTRY_ID_MISMATCH"
+    },
+    {
+      "id": "coin-card-registry-schema-version",
+      "path": "coinCardRegistrySchemaVersion",
+      "replacement": "coin-card-registry-record.v1",
+      "expectedCode": "COIN_CARD_REGISTRY_SCHEMA_UNSUPPORTED"
+    },
+    {
+      "id": "coin-card-registry-record-id",
+      "path": "coinCardRegistryRecordId",
+      "replacement": "ccr2-cc_merchant_001-r6",
+      "expectedCode": "COIN_CARD_REGISTRY_RECORD_ID_MISMATCH"
+    },
+    {
+      "id": "coin-card-registry-record-revision",
+      "path": "coinCardRegistryRecordRevision",
+      "replacement": "6",
+      "expectedCode": "COIN_CARD_REGISTRY_REVISION_MISMATCH"
+    },
+    {
+      "id": "coin-card-registry-record-hash",
+      "path": "coinCardRegistryRecordHash",
+      "replacement": "sha256:0b4b3d4d0fc036c96c404287b1e6953e4a79b8cf9627edcf4afc171b6fb617e8",
+      "expectedCode": "COIN_CARD_REGISTRY_RECORD_HASH_MISMATCH"
+    },
+    {
+      "id": "recipient-address",
+      "path": "recipientAddress",
+      "replacement": "0x1111111111111111111111111111111111111110",
+      "expectedCode": "RECIPIENT_MISMATCH"
+    },
+    {
+      "id": "chain-id",
+      "path": "chainId",
+      "replacement": "136",
+      "expectedCode": "CHAIN_ID_MISMATCH"
+    },
+    {
+      "id": "token-contract",
+      "path": "tokenContractAddress",
+      "replacement": "0x2222222222222222222222222222222222222223",
+      "expectedCode": "TOKEN_CONTRACT_MISMATCH"
+    },
+    {
+      "id": "execution-contract",
+      "path": "executionContractAddress",
+      "replacement": "0x3333333333333333333333333333333333333332",
+      "expectedCode": "EXECUTION_CONTRACT_MISMATCH"
+    },
+    {
+      "id": "execution-interface",
+      "path": "executionContractInterfaceId",
+      "replacement": "implicitex-evidence-bound-transfer.v0",
+      "expectedCode": "EXECUTION_CONTRACT_INTERFACE_MISMATCH"
+    },
+    {
+      "id": "execution-interface-descriptor-hash",
+      "path": "executionInterfaceDescriptorHash",
+      "replacement": "sha256:37715c194362030bc4a2e34e2663e8f2bac03b5274d3fd4bacbb767c6664e7ae",
+      "expectedCode": "EXECUTION_INTERFACE_DESCRIPTOR_HASH_MISMATCH"
+    },
+    {
+      "id": "fee-policy-version",
+      "path": "feePolicy.policyVersion",
+      "replacement": "implicitex-fee-policy.v3",
+      "expectedCode": "FEE_POLICY_MISMATCH"
+    },
+    {
+      "id": "fee-basis-points",
+      "path": "feePolicy.feeBasisPoints",
+      "replacement": "101",
+      "expectedCode": "FEE_POLICY_MISMATCH"
+    },
+    {
+      "id": "fee-cap",
+      "path": "feePolicy.feeCapAtomic",
+      "replacement": "10000001",
+      "expectedCode": "FEE_POLICY_MISMATCH"
+    },
+    {
+      "id": "minimum-transfer",
+      "path": "feePolicy.minimumTransferAtomic",
+      "replacement": "1000001",
+      "expectedCode": "FEE_POLICY_MISMATCH"
+    },
+    {
+      "id": "maximum-transfer",
+      "path": "feePolicy.maximumTransferAtomic",
+      "replacement": "250000001",
+      "expectedCode": "FEE_POLICY_MISMATCH"
+    },
+    {
+      "id": "transfer-precision",
+      "path": "feePolicy.transferPrecisionAtomic",
+      "replacement": "10001",
+      "expectedCode": "FEE_POLICY_MISMATCH"
+    },
+    {
+      "id": "rounding-rule",
+      "path": "feePolicy.roundingRule",
+      "replacement": "CEIL_BPS_THEN_CAP",
+      "expectedCode": "FEE_POLICY_MISMATCH"
+    },
+    {
+      "id": "fee-recipient",
+      "path": "feePolicy.feeRecipientAddress",
+      "replacement": "0x4444444444444444444444444444444444444445",
+      "expectedCode": "FEE_POLICY_MISMATCH"
+    }
+  ],
+  "registryMutations": [
+    {
+      "id": "record-hash-one-field",
+      "path": "recipientAddress",
+      "replacement": "0x1111111111111111111111111111111111111110",
+      "refreshAuthorityRegistryHash": false,
+      "expectedCode": "COIN_CARD_REGISTRY_RECORD_HASH_MISMATCH"
+    },
+    {
+      "id": "hash-and-recipient-disagree",
+      "path": "recipientAddress",
+      "replacement": "0x1111111111111111111111111111111111111110",
+      "refreshAuthorityRegistryHash": true,
+      "expectedCode": "RECIPIENT_MISMATCH"
+    },
+    {
+      "id": "hash-and-fee-policy-disagree",
+      "path": "feePolicy.feeBasisPoints",
+      "replacement": "99",
+      "refreshAuthorityRegistryHash": true,
+      "expectedCode": "FEE_POLICY_MISMATCH"
+    }
+  ],
+  "invalidEncodings": [
+    {
+      "id": "mixed-case-address",
+      "path": "recipientAddress",
+      "replacement": "0x111111111111111111111111111111111111111A",
+      "expectedCode": "ADDRESS_ENCODING_INVALID"
+    },
+    {
+      "id": "zero-address",
+      "path": "tokenContractAddress",
+      "replacement": "0x0000000000000000000000000000000000000000",
+      "expectedCode": "ADDRESS_ENCODING_INVALID"
+    },
+    {
+      "id": "leading-zero-chain",
+      "path": "chainId",
+      "replacement": "0137",
+      "expectedCode": "INTEGER_ENCODING_INVALID"
+    },
+    {
+      "id": "decimal-basis-points",
+      "path": "feePolicy.feeBasisPoints",
+      "replacement": "100.0",
+      "expectedCode": "INTEGER_ENCODING_INVALID"
+    },
+    {
+      "id": "negative-minimum",
+      "path": "feePolicy.minimumTransferAtomic",
+      "replacement": "-1",
+      "expectedCode": "INTEGER_ENCODING_INVALID"
+    }
+  ],
+  "staleFeePolicy": {
+    "path": "feeBasisPoints",
+    "signedValue": "100",
+    "observedValue": "99",
+    "expectedCode": "FEE_POLICY_MISMATCH"
+  },
+  "observedFeeCapMutations": [
+    {
+      "id": "disabled-cap-with-nonzero-value",
+      "feeCapEnabled": false,
+      "feeCapAtomic": "10000000",
+      "expectedCode": "FEE_POLICY_MISMATCH"
+    },
+    {
+      "id": "uncapped-observation-against-capped-authority",
+      "feeCapEnabled": false,
+      "feeCapAtomic": "0",
+      "expectedCode": "FEE_POLICY_MISMATCH"
+    },
+    {
+      "id": "enabled-cap-value-mismatch",
+      "feeCapEnabled": true,
+      "feeCapAtomic": "0",
+      "expectedCode": "FEE_POLICY_MISMATCH"
+    }
+  ],
+  "unsupportedPolicyGuard": {
+    "replacement": "transferWithFee(address,uint256)",
+    "expectedCode": "EXECUTION_POLICY_GUARD_UNAVAILABLE"
+  },
+  "intentMutations": [
+    {
+      "id": "intent-schema-version",
+      "path": "intentSchemaVersion",
+      "replacement": "frozen-user-intent.v0",
+      "expectedCode": "EVIDENCE_SCHEMA_UNSUPPORTED"
+    },
+    {
+      "id": "intent-authority-hash",
+      "path": "authorityHash",
+      "replacement": "sha256:cd11e072d0f1e355300e7a613bd6827912055dc44ad35b56d4fd4cdc90944795",
+      "expectedCode": "EVIDENCE_HASH_MISMATCH"
+    },
+    {
+      "id": "intent-card-id",
+      "path": "cardId",
+      "replacement": "cc_merchant_000",
+      "expectedCode": "CARD_ID_MISMATCH"
+    },
+    {
+      "id": "intent-runtime-manifest",
+      "path": "runtimeManifestId",
+      "replacement": "sha256:1111111111111111111111111111111111111111111111111111111111111110",
+      "expectedCode": "RUNTIME_MANIFEST_MISMATCH"
+    },
+    {
+      "id": "intent-recipient",
+      "path": "recipientAddress",
+      "replacement": "0x1111111111111111111111111111111111111110",
+      "expectedCode": "RECIPIENT_MISMATCH"
+    },
+    {
+      "id": "intent-sender",
+      "path": "senderAddress",
+      "replacement": "0x5555555555555555555555555555555555555554",
+      "expectedCode": "SENDER_ACCOUNT_MISMATCH"
+    },
+    {
+      "id": "intent-chain",
+      "path": "chainId",
+      "replacement": "136",
+      "expectedCode": "CHAIN_ID_MISMATCH"
+    },
+    {
+      "id": "intent-token",
+      "path": "tokenContractAddress",
+      "replacement": "0x2222222222222222222222222222222222222223",
+      "expectedCode": "TOKEN_CONTRACT_MISMATCH"
+    },
+    {
+      "id": "intent-contract",
+      "path": "executionContractAddress",
+      "replacement": "0x3333333333333333333333333333333333333332",
+      "expectedCode": "EXECUTION_CONTRACT_MISMATCH"
+    },
+    {
+      "id": "intent-interface",
+      "path": "executionContractInterfaceId",
+      "replacement": "implicitex-evidence-bound-transfer.v0",
+      "expectedCode": "EXECUTION_CONTRACT_INTERFACE_MISMATCH"
+    },
+    {
+      "id": "intent-interface-descriptor-hash",
+      "path": "executionInterfaceDescriptorHash",
+      "replacement": "sha256:37715c194362030bc4a2e34e2663e8f2bac03b5274d3fd4bacbb767c6664e7ae",
+      "expectedCode": "EXECUTION_INTERFACE_DESCRIPTOR_HASH_MISMATCH"
+    },
+    {
+      "id": "intent-amount-above-maximum",
+      "path": "amountSentAtomic",
+      "replacement": "250000001",
+      "expectedCode": "AMOUNT_POLICY_VIOLATION"
+    },
+    {
+      "id": "intent-fee",
+      "path": "feeAmountAtomic",
+      "replacement": "500001",
+      "expectedCode": "FEE_CALCULATION_MISMATCH"
+    },
+    {
+      "id": "intent-total-debit",
+      "path": "totalDebitedAtomic",
+      "replacement": "50500001",
+      "expectedCode": "TOTAL_DEBIT_MISMATCH"
+    }
+  ],
+  "observationMutations": [
+    {
+      "id": "observation-interface-descriptor-hash",
+      "path": "executionInterfaceDescriptorHash",
+      "replacement": "sha256:37715c194362030bc4a2e34e2663e8f2bac03b5274d3fd4bacbb767c6664e7ae",
+      "expectedCode": "EXECUTION_INTERFACE_DESCRIPTOR_HASH_MISMATCH"
+    },
+    {
+      "id": "observation-runtime-code-hash",
+      "path": "executionContractCodeHash",
+      "replacement": "0x8888888888888888888888888888888888888888888888888888888888888889",
+      "expectedCode": "EXECUTION_CONTRACT_CODE_HASH_MISMATCH"
+    }
+  ],
+  "phase1DConformance": {
+    "authorizationVectors": [
+      {
+        "id": "contract-paused",
+        "path": "contractPaused",
+        "replacement": true,
+        "expectedCode": "CONTRACT_PAUSED"
+      },
+      {
+        "id": "insufficient-balance",
+        "path": "senderBalanceAtomic",
+        "replacement": "50499999",
+        "expectedCode": "INSUFFICIENT_BALANCE"
+      },
+      {
+        "id": "insufficient-allowance",
+        "path": "senderAllowanceAtomic",
+        "replacement": "50499999",
+        "expectedCode": "INSUFFICIENT_ALLOWANCE"
+      }
+    ],
+    "matrix": [
+      {
+        "id": "paused-contract",
+        "sourceFixture": "transaction-evidence",
+        "sourceCollection": "phase1DConformance.authorizationVectors",
+        "sourceVectorId": "contract-paused",
+        "expectedCode": "CONTRACT_PAUSED"
+      },
+      {
+        "id": "insufficient-balance",
+        "sourceFixture": "transaction-evidence",
+        "sourceCollection": "phase1DConformance.authorizationVectors",
+        "sourceVectorId": "insufficient-balance",
+        "expectedCode": "INSUFFICIENT_BALANCE"
+      },
+      {
+        "id": "insufficient-allowance",
+        "sourceFixture": "transaction-evidence",
+        "sourceCollection": "phase1DConformance.authorizationVectors",
+        "sourceVectorId": "insufficient-allowance",
+        "expectedCode": "INSUFFICIENT_ALLOWANCE"
+      },
+      {
+        "id": "descriptor-unavailable",
+        "sourceFixture": "execution-interface-descriptor",
+        "sourceCollection": "resolutionVectors",
+        "sourceVectorId": "descriptor-content-unavailable",
+        "expectedCode": "EXECUTION_INTERFACE_DESCRIPTOR_UNAVAILABLE"
+      },
+      {
+        "id": "descriptor-schema-unsupported",
+        "sourceFixture": "execution-interface-descriptor",
+        "sourceCollection": "mutations",
+        "sourceVectorId": "descriptor-schema",
+        "expectedCode": "EXECUTION_INTERFACE_DESCRIPTOR_SCHEMA_INVALID"
+      },
+      {
+        "id": "descriptor-hash-mismatch",
+        "sourceFixture": "transaction-evidence",
+        "sourceCollection": "authorityMutations",
+        "sourceVectorId": "execution-interface-descriptor-hash",
+        "expectedCode": "EXECUTION_INTERFACE_DESCRIPTOR_HASH_MISMATCH"
+      },
+      {
+        "id": "selector-derivation-mismatch",
+        "sourceFixture": "execution-interface-descriptor",
+        "sourceCollection": "mutations",
+        "sourceVectorId": "transfer-selector",
+        "expectedCode": "EXECUTION_FUNCTION_SELECTOR_MISMATCH"
+      },
+      {
+        "id": "event-topic-mismatch",
+        "sourceFixture": "execution-interface-descriptor",
+        "sourceCollection": "mutations",
+        "sourceVectorId": "event-topic",
+        "expectedCode": "EXECUTION_EVENT_TOPIC_MISMATCH"
+      },
+      {
+        "id": "runtime-code-hash-mismatch",
+        "sourceFixture": "transaction-evidence",
+        "sourceCollection": "observationMutations",
+        "sourceVectorId": "observation-runtime-code-hash",
+        "expectedCode": "EXECUTION_CONTRACT_CODE_HASH_MISMATCH"
+      },
+      {
+        "id": "cross-authority-conflict",
+        "sourceFixture": "transaction-evidence",
+        "sourceCollection": "legacyCompatibility.conflicts",
+        "sourceVectorId": "legacy-recipient",
+        "expectedCode": "CROSS_AUTHORITY_RECIPIENT_MISMATCH"
+      },
+      {
+        "id": "unsupported-lifecycle-schema",
+        "sourceFixture": "transaction-evidence",
+        "sourceCollection": "authorityMutations",
+        "sourceVectorId": "lifecycle-registry-schema-version",
+        "expectedCode": "LIFECYCLE_SCHEMA_MISMATCH"
+      },
+      {
+        "id": "unsupported-executable-registry-schema",
+        "sourceFixture": "transaction-evidence",
+        "sourceCollection": "authorityMutations",
+        "sourceVectorId": "coin-card-registry-schema-version",
+        "expectedCode": "COIN_CARD_REGISTRY_SCHEMA_UNSUPPORTED"
+      }
+    ]
+  },
+  "settlementMutations": [
+    {
+      "id": "event-emitter",
+      "path": "eventContractAddress",
+      "replacement": "0x3333333333333333333333333333333333333332",
+      "expectedCode": "EXECUTION_CONTRACT_MISMATCH"
+    },
+    {
+      "id": "event-sender",
+      "path": "senderAddress",
+      "replacement": "0x5555555555555555555555555555555555555554",
+      "expectedCode": "SENDER_ACCOUNT_MISMATCH"
+    },
+    {
+      "id": "event-recipient",
+      "path": "recipientAddress",
+      "replacement": "0x1111111111111111111111111111111111111110",
+      "expectedCode": "RECIPIENT_MISMATCH"
+    },
+    {
+      "id": "event-token",
+      "path": "tokenContractAddress",
+      "replacement": "0x2222222222222222222222222222222222222223",
+      "expectedCode": "TOKEN_CONTRACT_MISMATCH"
+    },
+    {
+      "id": "event-amount",
+      "path": "amountSentAtomic",
+      "replacement": "50000001",
+      "expectedCode": "EXECUTION_EVENT_MISMATCH"
+    },
+    {
+      "id": "event-fee",
+      "path": "feeAmountAtomic",
+      "replacement": "500001",
+      "expectedCode": "FEE_CALCULATION_MISMATCH"
+    },
+    {
+      "id": "event-total",
+      "path": "totalDebitedAtomic",
+      "replacement": "50500001",
+      "expectedCode": "TOTAL_DEBIT_MISMATCH"
+    },
+    {
+      "id": "event-policy-commitment",
+      "path": "policyCommitment",
+      "replacement": "0xbc1e8e4d24b0493f23a1be3402116a84a7e881d3b625f6813fb72a934352c295",
+      "expectedCode": "EXECUTION_POLICY_COMMITMENT_MISMATCH"
+    }
+  ]
+}

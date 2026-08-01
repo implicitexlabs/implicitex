@@ -1,0 +1,15 @@
+{
+  "_comment": "Wallet-challenge security-rule test only. Never use this config for deployment.",
+  "firestore": {
+    "rules": "app-web/backend/firestore.rules"
+  },
+  "emulators": {
+    "firestore": {
+      "port": 8083
+    },
+    "ui": {
+      "enabled": false
+    },
+    "singleProjectMode": true
+  }
+}

@@ -60,7 +60,11 @@
   // tests enforce the invariants that should not drift.
   const ALLOWED_TRANSITIONS = Object.freeze({
     [IX_TRANSFER_STATES.DRAFT]: Object.freeze([IX_TRANSFER_STATES.READY, IX_TRANSFER_STATES.EXPIRED]),
-    [IX_TRANSFER_STATES.READY]: Object.freeze([IX_TRANSFER_STATES.AUTHORIZING, IX_TRANSFER_STATES.EXPIRED]),
+    [IX_TRANSFER_STATES.READY]: Object.freeze([
+      IX_TRANSFER_STATES.AUTHORIZING,
+      IX_TRANSFER_STATES.SUBMITTING, // transfer-only path: allowance already sufficient, skip approval
+      IX_TRANSFER_STATES.EXPIRED,
+    ]),
     [IX_TRANSFER_STATES.AUTHORIZING]: Object.freeze([
       IX_TRANSFER_STATES.AUTHORIZED,
       IX_TRANSFER_STATES.REJECTED,

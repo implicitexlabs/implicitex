@@ -205,7 +205,7 @@
     if (typeof config.feeBasisPoints !== 'number') return 'Fee configured';
     var percent = config.feeBasisPoints / 100;
     var formatted = percent.toFixed(4).replace(/\.?0+$/, '');
-    return formatted + '% additive fee';
+    return formatted + '% additive fee, max 10 USDC';
   }
 
   function populateContractEvidence() {

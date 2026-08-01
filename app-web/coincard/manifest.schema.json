@@ -115,6 +115,20 @@
         { "type": "null" }
       ]
     },
+    "activatedAt": {
+      "description": "ISO 8601 timestamp when the card became publicly accessible (status: live). In the manual MVP this equals createdAt; when activation is automated it will differ from provisioning time.",
+      "oneOf": [
+        { "type": "string", "format": "date-time" },
+        { "type": "null" }
+      ]
+    },
+    "registrationExpiresAt": {
+      "description": "ISO 8601 date when the annual registration expires. Derived from activatedAt + 1 year, not from provisioning time. Null for demo/internal cards.",
+      "oneOf": [
+        { "type": "string", "format": "date-time" },
+        { "type": "null" }
+      ]
+    },
     "signature": {
       "type": "object",
       "description": "Cryptographic signature over the manifest. Not required for V1 static registry. Required for distributed or user-issued cards.",

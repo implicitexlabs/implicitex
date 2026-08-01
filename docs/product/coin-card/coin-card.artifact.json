@@ -28,6 +28,37 @@
       "The screenshot is visual evidence only. It does not define structure, ownership, or product boundaries."
     ]
   },
+  "promotionUnits": [
+    {
+      "id": "coinCardEvidenceAuthorityV1",
+      "status": "sealed",
+      "normativeContracts": [
+        "transactionEvidenceAuthorityContract",
+        "executionInterfaceDescriptorContract",
+        "lifecycleExecutableRegistryIdentityContract"
+      ],
+      "supportingArtifacts": [
+        "transactionEvidenceFixture",
+        "executionInterfaceDescriptorFixture",
+        "lifecycleExecutableRegistryIdentityFixture",
+        "transactionEvidenceConformanceTest",
+        "executionInterfaceDescriptorConformanceTest",
+        "lifecycleExecutableRegistryIdentityConformanceTest"
+      ]
+    },
+    {
+      "id": "coinCardEvidenceSignatureAuthorityV2",
+      "status": "sealed",
+      "normativeContracts": [
+        "transactionEvidenceAuthorityContractV2",
+        "trustedPublicKeyRecordContractV2"
+      ],
+      "supportingArtifacts": [
+        "transactionEvidenceSignatureFixtureV2",
+        "transactionEvidenceSignatureConformanceTestV2"
+      ]
+    }
+  ],
   "graph": {
     "nodes": [
       {
@@ -79,6 +110,20 @@
         "id": "lifecycleRegistry",
         "type": "responsibility",
         "role": "registry-canonicalization-and-empty-bundle-validation"
+      },
+      {
+        "id": "executableRegistryRecordVerification",
+        "type": "responsibility",
+        "role": "v2-record-schema-validation-and-content-hashing",
+        "source": "app-web/frontend/public/card/coin-card-executable-registry-record-verification.js",
+        "integrationStatus": "standalone-unwired"
+      },
+      {
+        "id": "transactionEvidenceContentVerification",
+        "type": "responsibility",
+        "role": "transaction-evidence-envelope-validation-and-authority-hashing",
+        "source": "app-web/frontend/public/card/coin-card-transaction-evidence-content-verification.js",
+        "integrationStatus": "standalone-unwired"
       },
       {
         "id": "lifecycleRecordVerification",
@@ -140,6 +185,101 @@
         "id": "feeMath",
         "type": "responsibility",
         "role": "single-authority"
+      },
+      {
+        "id": "transactionEvidenceAuthorityContract",
+        "type": "normative-contract",
+        "role": "payment-authority",
+        "status": "sealed",
+        "source": "docs/product/coin-card/COIN_CARD_TRANSACTION_EVIDENCE_CONTRACT_V1.md"
+      },
+      {
+        "id": "transactionEvidenceAuthorityContractV2",
+        "type": "normative-contract",
+        "role": "payment-authority-with-authenticated-signing-time",
+        "status": "sealed",
+        "source": "docs/product/coin-card/COIN_CARD_TRANSACTION_EVIDENCE_CONTRACT_V2.md"
+      },
+      {
+        "id": "trustedPublicKeyRecordContractV2",
+        "type": "normative-contract",
+        "role": "transaction-evidence-signing-key-authority",
+        "status": "sealed",
+        "source": "docs/product/coin-card/COIN_CARD_TRUSTED_PUBLIC_KEY_RECORD_CONTRACT_V2.md"
+      },
+      {
+        "id": "executionInterfaceDescriptorContract",
+        "type": "normative-contract",
+        "role": "executor-interface-authority",
+        "status": "sealed",
+        "source": "docs/product/coin-card/COIN_CARD_EXECUTION_INTERFACE_DESCRIPTOR_CONTRACT_V1.md"
+      },
+      {
+        "id": "lifecycleExecutableRegistryIdentityContract",
+        "type": "normative-contract",
+        "role": "identity-currentness-authority",
+        "status": "sealed",
+        "source": "docs/product/coin-card/COIN_CARD_LIFECYCLE_AND_EXECUTABLE_REGISTRY_IDENTITY_CONTRACT_V1.md"
+      },
+      {
+        "id": "transactionEvidenceFixture",
+        "type": "deterministic-fixture",
+        "role": "transaction-evidence-conformance-evidence",
+        "source": "docs/product/coin-card/coin-card.transaction-evidence.fixtures.v1.json"
+      },
+      {
+        "id": "transactionEvidenceSignatureFixtureV2",
+        "type": "deterministic-fixture",
+        "role": "signing-time-and-key-policy-conformance-evidence",
+        "source": "docs/product/coin-card/coin-card.transaction-evidence-signature.fixtures.v2.json"
+      },
+      {
+        "id": "executionInterfaceDescriptorFixture",
+        "type": "deterministic-fixture",
+        "role": "descriptor-conformance-evidence",
+        "source": "docs/product/coin-card/coin-card.execution-interface-descriptor.fixtures.v1.json"
+      },
+      {
+        "id": "lifecycleExecutableRegistryIdentityFixture",
+        "type": "deterministic-fixture",
+        "role": "identity-currentness-conformance-evidence",
+        "source": "docs/product/coin-card/coin-card.lifecycle-and-registry-identity.fixtures.v1.json"
+      },
+      {
+        "id": "transactionEvidenceConformanceTest",
+        "type": "conformance-test",
+        "role": "transaction-evidence-reference-predicates",
+        "source": "app-web/tests/frontend/coin-card-transaction-evidence-contract.test.js"
+      },
+      {
+        "id": "transactionEvidenceSignatureConformanceTestV2",
+        "type": "conformance-test",
+        "role": "signing-time-and-trusted-key-reference-predicates",
+        "source": "app-web/tests/frontend/coin-card-transaction-evidence-signature-contract.test.js"
+      },
+      {
+        "id": "executionInterfaceDescriptorConformanceTest",
+        "type": "conformance-test",
+        "role": "descriptor-reference-predicates",
+        "source": "app-web/tests/frontend/coin-card-execution-interface-descriptor-contract.test.js"
+      },
+      {
+        "id": "lifecycleExecutableRegistryIdentityConformanceTest",
+        "type": "conformance-test",
+        "role": "identity-currentness-reference-predicates",
+        "source": "app-web/tests/frontend/coin-card-lifecycle-and-registry-identity-contract.test.js"
+      },
+      {
+        "id": "executableRegistryRecordVerificationTest",
+        "type": "implementation-test",
+        "role": "v2-record-runtime-validation-and-hash-verification",
+        "source": "app-web/tests/frontend/coin-card-executable-registry-record-verification.test.js"
+      },
+      {
+        "id": "transactionEvidenceContentVerificationTest",
+        "type": "implementation-test",
+        "role": "transaction-evidence-runtime-content-and-hash-verification",
+        "source": "app-web/tests/frontend/coin-card-transaction-evidence-content-verification.test.js"
       }
     ],
     "edges": [
@@ -166,6 +306,16 @@
       {
         "from": "coinCard",
         "to": "lifecycleBundle",
+        "relationship": "owns"
+      },
+      {
+        "from": "coinCard",
+        "to": "executableRegistryRecordVerification",
+        "relationship": "owns"
+      },
+      {
+        "from": "coinCard",
+        "to": "transactionEvidenceContentVerification",
         "relationship": "owns"
       },
       {
@@ -201,6 +351,176 @@
       {
         "from": "executionAuthorization",
         "to": "lifecyclePresentationPromotion",
+        "relationship": "consumes"
+      },
+      {
+        "from": "transactionEvidenceAuthorityContract",
+        "to": "executionInterfaceDescriptorContract",
+        "relationship": "depends-on"
+      },
+      {
+        "from": "transactionEvidenceAuthorityContractV2",
+        "to": "transactionEvidenceAuthorityContract",
+        "relationship": "version-successor-of"
+      },
+      {
+        "from": "transactionEvidenceAuthorityContractV2",
+        "to": "executionInterfaceDescriptorContract",
+        "relationship": "depends-on"
+      },
+      {
+        "from": "transactionEvidenceAuthorityContractV2",
+        "to": "lifecycleExecutableRegistryIdentityContract",
+        "relationship": "depends-on"
+      },
+      {
+        "from": "transactionEvidenceAuthorityContractV2",
+        "to": "trustedPublicKeyRecordContractV2",
+        "relationship": "depends-on"
+      },
+      {
+        "from": "transactionEvidenceAuthorityContract",
+        "to": "lifecycleExecutableRegistryIdentityContract",
+        "relationship": "depends-on"
+      },
+      {
+        "from": "executableRegistryRecordVerification",
+        "to": "lifecycleRegistry",
+        "relationship": "consumes"
+      },
+      {
+        "from": "executableRegistryRecordVerification",
+        "to": "lifecycleExecutableRegistryIdentityContract",
+        "relationship": "partially-conforms-to"
+      },
+      {
+        "from": "transactionEvidenceContentVerification",
+        "to": "lifecycleRegistry",
+        "relationship": "consumes"
+      },
+      {
+        "from": "transactionEvidenceContentVerification",
+        "to": "transactionEvidenceAuthorityContract",
+        "relationship": "partially-conforms-to"
+      },
+      {
+        "from": "transactionEvidenceFixture",
+        "to": "transactionEvidenceAuthorityContract",
+        "relationship": "substantiates"
+      },
+      {
+        "from": "transactionEvidenceSignatureFixtureV2",
+        "to": "transactionEvidenceAuthorityContractV2",
+        "relationship": "substantiates"
+      },
+      {
+        "from": "transactionEvidenceSignatureFixtureV2",
+        "to": "trustedPublicKeyRecordContractV2",
+        "relationship": "substantiates"
+      },
+      {
+        "from": "transactionEvidenceSignatureFixtureV2",
+        "to": "lifecycleExecutableRegistryIdentityFixture",
+        "relationship": "repins-current-head"
+      },
+      {
+        "from": "executionInterfaceDescriptorFixture",
+        "to": "executionInterfaceDescriptorContract",
+        "relationship": "substantiates"
+      },
+      {
+        "from": "lifecycleExecutableRegistryIdentityFixture",
+        "to": "lifecycleExecutableRegistryIdentityContract",
+        "relationship": "substantiates"
+      },
+      {
+        "from": "transactionEvidenceConformanceTest",
+        "to": "transactionEvidenceAuthorityContract",
+        "relationship": "verifies"
+      },
+      {
+        "from": "transactionEvidenceSignatureConformanceTestV2",
+        "to": "transactionEvidenceAuthorityContractV2",
+        "relationship": "verifies"
+      },
+      {
+        "from": "transactionEvidenceSignatureConformanceTestV2",
+        "to": "trustedPublicKeyRecordContractV2",
+        "relationship": "verifies"
+      },
+      {
+        "from": "executionInterfaceDescriptorConformanceTest",
+        "to": "executionInterfaceDescriptorContract",
+        "relationship": "verifies"
+      },
+      {
+        "from": "lifecycleExecutableRegistryIdentityConformanceTest",
+        "to": "lifecycleExecutableRegistryIdentityContract",
+        "relationship": "verifies"
+      },
+      {
+        "from": "transactionEvidenceConformanceTest",
+        "to": "transactionEvidenceFixture",
+        "relationship": "consumes"
+      },
+      {
+        "from": "transactionEvidenceSignatureConformanceTestV2",
+        "to": "transactionEvidenceSignatureFixtureV2",
+        "relationship": "consumes"
+      },
+      {
+        "from": "transactionEvidenceSignatureConformanceTestV2",
+        "to": "transactionEvidenceFixture",
+        "relationship": "consumes"
+      },
+      {
+        "from": "transactionEvidenceSignatureConformanceTestV2",
+        "to": "lifecycleExecutableRegistryIdentityFixture",
+        "relationship": "consumes"
+      },
+      {
+        "from": "lifecycleExecutableRegistryIdentityConformanceTest",
+        "to": "transactionEvidenceSignatureFixtureV2",
+        "relationship": "consumes"
+      },
+      {
+        "from": "transactionEvidenceConformanceTest",
+        "to": "executionInterfaceDescriptorFixture",
+        "relationship": "consumes"
+      },
+      {
+        "from": "executionInterfaceDescriptorConformanceTest",
+        "to": "executionInterfaceDescriptorFixture",
+        "relationship": "consumes"
+      },
+      {
+        "from": "lifecycleExecutableRegistryIdentityConformanceTest",
+        "to": "lifecycleExecutableRegistryIdentityFixture",
+        "relationship": "consumes"
+      },
+      {
+        "from": "lifecycleExecutableRegistryIdentityConformanceTest",
+        "to": "transactionEvidenceFixture",
+        "relationship": "consumes"
+      },
+      {
+        "from": "executableRegistryRecordVerificationTest",
+        "to": "executableRegistryRecordVerification",
+        "relationship": "verifies"
+      },
+      {
+        "from": "executableRegistryRecordVerificationTest",
+        "to": "lifecycleExecutableRegistryIdentityFixture",
+        "relationship": "consumes"
+      },
+      {
+        "from": "transactionEvidenceContentVerificationTest",
+        "to": "transactionEvidenceContentVerification",
+        "relationship": "verifies"
+      },
+      {
+        "from": "transactionEvidenceContentVerificationTest",
+        "to": "transactionEvidenceFixture",
         "relationship": "consumes"
       },
       {

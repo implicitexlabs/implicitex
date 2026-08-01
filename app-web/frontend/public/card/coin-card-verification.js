@@ -73,6 +73,7 @@
     'card/coin-card-verification.js',
     'card/card.js',
     'card/card.css',
+    'card/index.html',
   ]);
   var SUPPORTED_SIGNATURE_MODES = Object.freeze({
     'signed-p256-v1': true,
@@ -101,9 +102,9 @@
 
   var STATE_COPY = Object.freeze({
     VERIFIED: Object.freeze({
-      statusLabel: 'Verified',
-      primaryMessage: 'This Coin Card matches the issued ImplicitEx package.',
-      secondaryMessage: 'The protected assets and Integrity Manifest evidence are valid for this card.',
+      statusLabel: 'Route Verified',
+      primaryMessage: 'This Coin Card route matches the issued ImplicitEx package.',
+      secondaryMessage: 'The protected assets, signed lifecycle, and recipient route are valid. This is not an identity-verification claim.',
       actionLabel: 'Continue',
     }),
     ASSET_HASHES_PASSED: Object.freeze({
@@ -376,25 +377,36 @@
     });
   }
 
-  function fetchArrayBuffer(request, url) {
+  function protectedAssetRequestUrl(assetPath) {
+    /* Manifest paths are rooted at frontend/public. A Coin Card document is
+     * served from /card/{cardId}; resolving "card/..." relative to that URL
+     * would incorrectly request /card/card/... and could hash a Hosting
+     * rewrite response instead of the protected asset. */
+    if (window.location && typeof window.location.origin === 'string') {
+      return '/' + assetPath;
+    }
+    return assetPath;
+  }
+
+  function fetchArrayBuffer(request, url, declaredAssetPath) {
     return Promise.resolve()
       .then(function () {
         return request(url);
       })
       .then(function (response) {
         if (!response || response.ok === false) {
-          return unavailable('integrity-manifest-asset-fetch-failed', { assetPath: url });
+          return unavailable('integrity-manifest-asset-fetch-failed', { assetPath: declaredAssetPath });
         }
         if (typeof response.arrayBuffer !== 'function') {
-          return unavailable('integrity-manifest-asset-response-invalid', { assetPath: url });
+          return unavailable('integrity-manifest-asset-response-invalid', { assetPath: declaredAssetPath });
         }
         return response.arrayBuffer().then(function (buffer) {
           return buffer;
         }, function () {
-          return unavailable('integrity-manifest-asset-read-failed', { assetPath: url });
+          return unavailable('integrity-manifest-asset-read-failed', { assetPath: declaredAssetPath });
         });
       }, function () {
-        return unavailable('integrity-manifest-asset-fetch-failed', { assetPath: url });
+        return unavailable('integrity-manifest-asset-fetch-failed', { assetPath: declaredAssetPath });
       });
   }
 
@@ -422,7 +434,7 @@
     var assetVerifications = assetPaths.map(function (assetPath) {
       var declaredAsset = findAssetByPath(integrityManifest, assetPath);
 
-      return fetchArrayBuffer(request, assetPath).then(function (bufferOrResult) {
+      return fetchArrayBuffer(request, protectedAssetRequestUrl(assetPath), assetPath).then(function (bufferOrResult) {
         if (bufferOrResult && bufferOrResult.state === STATES.VERIFICATION_UNAVAILABLE) {
           return bufferOrResult;
         }

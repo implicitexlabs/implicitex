@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>ImplicitEx — V1 Execution Plan</title>
+  <meta name="description" content="The controlled V1 Coin Card pilot execution plan for ImplicitEx.">
+  <meta name="robots" content="noindex, nofollow">
+  <meta property="og:url" content="https://implicitex.com/v1-execution.html">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="ImplicitEx — V1 Execution Plan">
+  <meta property="og:description" content="The controlled V1 Coin Card pilot execution plan for ImplicitEx.">
+  <link rel="canonical" href="https://implicitex.com/v1-execution.html">
+  <script>
+    (function () {
+      try {
+        var saved = localStorage.getItem('implicitex-theme');
+        document.documentElement.dataset.theme =
+          saved === 'light' || saved === 'dark'
+            ? saved
+            : (new Date().getHours() >= 7 && new Date().getHours() < 19 ? 'light' : 'dark');
+      } catch (error) {
+        document.documentElement.dataset.theme = 'dark';
+      }
+    }());
+  </script>
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/v1-execution.css">
+</head>
+<body class="v1-document">
+  <nav class="v1-nav" aria-label="Document navigation">
+    <a class="v1-brand" href="/" aria-label="ImplicitEx home">
+      <img src="/components/images/lettermark-white.svg" alt="" aria-hidden="true">
+      <img src="/components/images/wordmark-white.svg" alt="ImplicitEx">
+    </a>
+    <div class="v1-nav-actions">
+      <a href="/status.html">Platform status</a>
+      <a class="v1-nav-download" href="/downloads/implicitex-v1-execution-plan-rev6.pdf" download>Download PDF</a>
+    </div>
+  </nav>
+
+  <main class="v1-main">
+    <header class="v1-hero">
+      <div class="v1-hero-copy">
+        <p class="v1-kicker">Controlled Payment Credential Pilot · August–October 2026</p>
+        <h1>V1 Execution Plan</h1>
+        <p class="v1-lead">
+          Finish the controlled Coin Card pilot gates, production-security dependencies,
+          controlled issuance, placements, and genuine-payment evidence. Do not begin
+          billing, V2 accounts, horizontal expansion, or V3 experiments early.
+        </p>
+      </div>
+      <aside class="v1-status-card" aria-label="Document status">
+        <span class="v1-status-label">Current phase</span>
+        <strong>V1 · Active</strong>
+        <dl>
+          <div><dt>Source</dt><dd>Roadmap Revision 6</dd></div>
+          <div><dt>Governing commit</dt><dd><code>ec78178</code></dd></div>
+          <div><dt>Published</dt><dd>July 30, 2026</dd></div>
+          <div><dt>Custody</dt><dd>Self-custodial</dd></div>
+        </dl>
+      </aside>
+      <div class="v1-actions" aria-label="Document actions">
+        <a class="v1-button v1-button--primary" href="/downloads/implicitex-v1-execution-plan-rev6.pdf" download>
+          Download PDF
+        </a>
+        <button class="v1-button" id="printDocument" type="button">Print page</button>
+      </div>
+    </header>
+
+    <section class="v1-command" aria-labelledby="command-title">
+      <p class="v1-section-label">Command</p>
+      <h2 id="command-title">What V1 must prove</h2>
+      <div class="v1-proof-grid">
+        <article>
+          <span>01</span>
+          <h3>Trustworthy route</h3>
+          <p>A payer can verify the current signed route, wallet-control evidence, lifecycle state, and transaction-time record.</p>
+        </article>
+        <article>
+          <span>02</span>
+          <h3>Real use</h3>
+          <p>Qualified recipients place controlled cards and receive genuine third-party payments—not demos or founder-created traffic.</p>
+        </article>
+        <article>
+          <span>03</span>
+          <h3>Operable pilot</h3>
+          <p>Issuance, suspension, revocation, expiry, evidence, incidents, and support work without unsafe improvisation.</p>
+        </article>
+      </div>
+    </section>
+
+    <section aria-labelledby="sequence-title">
+      <p class="v1-section-label">Execution sequence</p>
+      <h2 id="sequence-title">Work in this order</h2>
+      <ol class="v1-sequence">
+        <li>
+          <span class="v1-sequence-number">1</span>
+          <div>
+            <h3>Lock the governing decisions</h3>
+            <p>Ratify the signed-record stack, namespace policy, minimal V1 data boundary, custody tripwires, validity period, and reverification interval.</p>
+          </div>
+        </li>
+        <li>
+          <span class="v1-sequence-number">2</span>
+          <div>
+            <h3>Close production-security dependencies</h3>
+            <p>Resolve Gate 1A, complete the structured security review, harden administrative accounts, and establish the served-content integrity tripwire.</p>
+          </div>
+        </li>
+        <li>
+          <span class="v1-sequence-number">3</span>
+          <div>
+            <h3>Complete the controlled credential path</h3>
+            <p>Verify wallet control, sign the manifest, publish lifecycle state, fail closed when authority is unavailable, and preserve the governing route in the evidence packet.</p>
+          </div>
+        </li>
+        <li>
+          <span class="v1-sequence-number">4</span>
+          <div>
+            <h3>Prepare pilot operations</h3>
+            <p>Approve the cohort manually; rehearse issuance, support, suspension, revocation, expiry, compromise, and incident procedures; obtain counsel’s screening determination before the first genuine payment.</p>
+          </div>
+        </li>
+        <li>
+          <span class="v1-sequence-number">5</span>
+          <div>
+            <h3>Run the evidence program</h3>
+            <p>Make qualified offers, place cards, observe genuine third-party payments, retain evidence, and record where the workflow helped or failed.</p>
+          </div>
+        </li>
+        <li>
+          <span class="v1-sequence-number">6</span>
+          <div>
+            <h3>Make the gate decision</h3>
+            <p>Advance only if the binding gates pass and the working thresholds justify V2. Otherwise pause, narrow, or stop according to the recorded evidence.</p>
+          </div>
+        </li>
+      </ol>
+    </section>
+
+    <section class="v1-checklist-section" aria-labelledby="checklist-title">
+      <div class="v1-section-head">
+        <div>
+          <p class="v1-section-label">Execution checklist</p>
+          <h2 id="checklist-title">V1 gate tracker</h2>
+        </div>
+        <div class="v1-checklist-tools">
+          <span id="checklistProgress" aria-live="polite">0 of 0 complete</span>
+          <button id="resetChecklist" type="button">Reset local progress</button>
+        </div>
+      </div>
+
+      <div class="v1-checklist-grid">
+        <fieldset class="v1-check-group">
+          <legend>A · Governance decisions</legend>
+          <label><input type="checkbox" data-check="signed-records"> Existing signed-record contracts ratified for the V1 claim.</label>
+          <label><input type="checkbox" data-check="namespace"> Handle URL and namespace-governance policy locked.</label>
+          <label><input type="checkbox" data-check="data-boundary"> Minimal V1 PII and retention boundary approved.</label>
+          <label><input type="checkbox" data-check="custody-tripwires"> Custody tripwires published internally.</label>
+          <label><input type="checkbox" data-check="validity"> Credential validity and reverification interval ratified.</label>
+        </fieldset>
+
+        <fieldset class="v1-check-group">
+          <legend>B · Production security</legend>
+          <label><input type="checkbox" data-check="gate-1a"> Gate 1A production dependency exception resolved.</label>
+          <label><input type="checkbox" data-check="security-review"> Structured security review completed.</label>
+          <label><input type="checkbox" data-check="admin-mfa"> Registrar, DNS, GitHub, and Firebase use hardware-backed MFA where supported.</label>
+          <label><input type="checkbox" data-check="integrity-tripwire"> Served-content integrity tripwire operating.</label>
+          <label><input type="checkbox" data-check="findings"> No unresolved critical or high-severity pilot-path findings.</label>
+        </fieldset>
+
+        <fieldset class="v1-check-group">
+          <legend>C · Credential and evidence path</legend>
+          <label><input type="checkbox" data-check="wallet-control"> Production wallet-control challenge verified.</label>
+          <label><input type="checkbox" data-check="manifest"> Signed manifest issued from canonical bytes.</label>
+          <label><input type="checkbox" data-check="verifier"> Independent verifier works without mutable presentation trust.</label>
+          <label><input type="checkbox" data-check="lifecycle"> Active, expired, suspended, revoked, replaced, and unavailable states verified.</label>
+          <label><input type="checkbox" data-check="fail-closed"> Every non-current or unauthenticated state blocks payment.</label>
+          <label><input type="checkbox" data-check="route-evidence"> Transaction evidence preserves the governing route version.</label>
+          <label><input type="checkbox" data-check="hosted-route"> Hosted Coin Card route and durable card ID verified.</label>
+          <label><input type="checkbox" data-check="iframe"> Static iframe or hosted-link path verified.</label>
+        </fieldset>
+
+        <fieldset class="v1-check-group">
+          <legend>D · Pilot operations</legend>
+          <label><input type="checkbox" data-check="cohort"> Initial cohort selected through manual approval.</label>
+          <label><input type="checkbox" data-check="issuance-runbook"> Issuance and reverification runbook rehearsed.</label>
+          <label><input type="checkbox" data-check="revocation-runbook"> Suspension, revocation, replacement, and compromise runbook rehearsed.</label>
+          <label><input type="checkbox" data-check="support-runbook"> Support and uncertain-outcome procedure rehearsed.</label>
+          <label><input type="checkbox" data-check="incident-runbook"> Incident, rollback, and communication procedure rehearsed.</label>
+          <label><input type="checkbox" data-check="screening-decision"> Counsel determination on address screening recorded before the first genuine payment.</label>
+        </fieldset>
+
+        <fieldset class="v1-check-group">
+          <legend>E · Customer evidence</legend>
+          <label><input type="checkbox" data-check="offers"> Up to 50 qualified direct pilot offers recorded.</label>
+          <label><input type="checkbox" data-check="placements"> At least 10 pilot cards placed.</label>
+          <label><input type="checkbox" data-check="placement-rate"> At least 5 placements achieved within the first 50 qualified offers.</label>
+          <label><input type="checkbox" data-check="real-payments"> At least 3 cards receive genuine third-party payments.</label>
+          <label><input type="checkbox" data-check="evidence-retained"> Placement, payment, failure, support, and customer-response evidence retained.</label>
+        </fieldset>
+
+        <fieldset class="v1-check-group">
+          <legend>F · Gate decision</legend>
+          <label><input type="checkbox" data-check="binding-gates"> Every binding security, authority, evidence, and legal gate passes.</label>
+          <label><input type="checkbox" data-check="threshold-review"> Working thresholds reviewed as decision evidence, not statistical proof.</label>
+          <label><input type="checkbox" data-check="decision-record"> Advance, pause, narrow, or stop decision recorded with supporting evidence.</label>
+        </fieldset>
+      </div>
+    </section>
+
+    <section aria-labelledby="scope-title">
+      <p class="v1-section-label">Scope control</p>
+      <h2 id="scope-title">What belongs in V1</h2>
+      <div class="v1-scope-grid">
+        <article class="v1-scope-card v1-scope-card--in">
+          <h3>Included</h3>
+          <ul>
+            <li>Manually approved, time-limited pilot entitlements</li>
+            <li>Hosted Coin Card route with durable card ID and revocable handle</li>
+            <li>Production wallet-control verification</li>
+            <li>Signed manifest and independently usable verifier</li>
+            <li>Lifecycle, revocation, supersession, and degraded unavailable state</li>
+            <li>Static iframe or hosted link</li>
+            <li>Polygon USDC only</li>
+            <li>Current transfer execution, receipt, and proof packet</li>
+            <li>Issuance, revocation, incident, and support runbooks</li>
+          </ul>
+        </article>
+        <article class="v1-scope-card v1-scope-card--out">
+          <h3>Excluded until a later gate</h3>
+          <ul>
+            <li>Billing and automatic renewal</li>
+            <li>Public self-service issuance or public Free tier</li>
+            <li>Analytics beyond operating evidence</li>
+            <li>Additional assets or chains</li>
+            <li>Directory or discovery</li>
+            <li>On-ramp or off-ramp</li>
+            <li>Embedded wallets</li>
+            <li>Arbitrary customization</li>
+            <li>Automatic or recurring payment pulls</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section aria-labelledby="gates-title">
+      <p class="v1-section-label">Decision rules</p>
+      <h2 id="gates-title">Binding gates and working thresholds</h2>
+      <div class="v1-gate-grid">
+        <article>
+          <h3>Binding gates</h3>
+          <p>Failure blocks release regardless of customer interest.</p>
+          <ul>
+            <li>Production security and dependency closure</li>
+            <li>Custody and authority boundary</li>
+            <li>Signed-record and evidence integrity</li>
+            <li>Fail-closed lifecycle behavior</li>
+            <li>Legal and screening determination for the actual V1 flow</li>
+            <li>No unresolved critical or high-severity finding</li>
+          </ul>
+        </article>
+        <article>
+          <h3>Working evidence thresholds</h3>
+          <p>These support the next decision; they are not market validation.</p>
+          <ul>
+            <li>10 controlled cards placed</li>
+            <li>3 genuine third-party payments</li>
+            <li>5 placements from no more than 50 qualified offers</li>
+            <li>Evidence that recipients share and reuse the credential</li>
+            <li>Evidence that the route or proof distinction matters</li>
+          </ul>
+        </article>
+      </div>
+      <div class="v1-stop-rule">
+        <strong>Stop rule.</strong>
+        If fewer than five qualified prospects place a card after 50 direct offers,
+        stop feature expansion and re-interview the segment. If placed cards do not
+        receive genuine payments, investigate the actual use case before billing.
+      </div>
+    </section>
+
+    <section aria-labelledby="authority-title">
+      <p class="v1-section-label">Master boundary</p>
+      <h2 id="authority-title">Authority ImplicitEx does not take</h2>
+      <p class="v1-boundary">
+        ImplicitEx does not receive, hold, independently direct, guarantee, insure,
+        lend, convert, or recover customer funds.
+      </p>
+      <p>
+        The user controls the wallet and authorizes the transaction. Any feature that
+        would introduce key control, balances, independent initiation, release control,
+        conversion, yield, credit, or principal-loss reimbursement stops for written
+        legal and architectural review.
+      </p>
+    </section>
+
+    <section class="v1-evidence-section" aria-labelledby="evidence-title">
+      <p class="v1-section-label">Printable record</p>
+      <h2 id="evidence-title">Pilot evidence log</h2>
+      <table class="v1-evidence-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Card / prospect</th>
+            <th>Event</th>
+            <th>Evidence location</th>
+            <th>Outcome / next action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td></td><td></td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="v1-signoff" aria-labelledby="signoff-title">
+      <p class="v1-section-label">Completion record</p>
+      <h2 id="signoff-title">V1 disposition</h2>
+      <div class="v1-signoff-options">
+        <span>□ Advance to V2 Gate 0</span>
+        <span>□ Continue V1 evidence</span>
+        <span>□ Narrow or change segment</span>
+        <span>□ Stop the current thesis</span>
+      </div>
+      <div class="v1-signoff-lines">
+        <p><span>Decision date</span></p>
+        <p><span>Evidence record</span></p>
+        <p><span>Decision rationale</span></p>
+        <p><span>Next authorized action</span></p>
+      </div>
+    </section>
+
+    <footer class="v1-footer">
+      <p>ImplicitEx V1 Execution Plan · Roadmap Revision 6 · Governing commit <code>ec78178</code></p>
+      <p>This is a planning artifact, not legal advice or a customer promise.</p>
+    </footer>
+  </main>
+
+  <script src="/js/v1-execution.js"></script>
+</body>
+</html>

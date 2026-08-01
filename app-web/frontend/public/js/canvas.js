@@ -136,8 +136,11 @@
     requestAnimationFrame(tick);
   }
   function resize() {
+    // Derive height from the same ratio as the CSS aspect-ratio (100/52).
+    // Using offsetHeight would let layout reflows diverge from the pixel buffer,
+    // causing the cells to appear stretched or squeezed on narrow/tall viewports.
     canvas.width = canvas.offsetWidth;
-    canvas.height = canvas.offsetHeight;
+    canvas.height = Math.round(canvas.offsetWidth * (ROWS + 8) / (COLS + 12));
     draw();
   }
   buildMap();

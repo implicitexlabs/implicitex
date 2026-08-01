@@ -1027,7 +1027,7 @@ test('null promoted result → authorizeExecution refuses it', async () => {
 });
 
 /* ----------------------------------------------------------------
- * 23. Real production bundle file loads and promotes cc_demo_implicitex
+ * 23a. Real production bundle file loads and promotes cc_demo_implicitex
  *
  * All fixture values are derived from the committed production artifacts.
  * Future signing ceremonies require no calendar-literal or manifest-hash
@@ -1155,3 +1155,93 @@ test('real production bundle file authenticates and promotes cc_demo_implicitex'
   assert.equal(wrongSelected.outcome, 'LIFECYCLE_EVIDENCE_MANIFEST_NOT_FOUND',
     'wrong manifest ID must yield LIFECYCLE_EVIDENCE_MANIFEST_NOT_FOUND');
 });
+
+/* ----------------------------------------------------------------
+ * 23b. Real production bundle authenticates and promotes every active
+ * registry card — pilot fixture assertion.
+ *
+ * Fails if any active registry card is not promoted by the committed
+ * lifecycle bundle. Anchors the pilot card set machine-checkably.
+ * ---------------------------------------------------------------- */
+test('real production bundle authenticates and promotes every active registry card', async () => {
+  assert.ok(fs.existsSync(lifecycleBundlePath),
+    `coin-card-lifecycle-bundle.js must exist at ${lifecycleBundlePath}`);
+  assert.ok(fs.existsSync(trustedKeysPath),
+    `coin-card-trusted-keys.js must exist at ${trustedKeysPath}`);
+
+  const productionBundle = extractProductionBundle();
+  const productionVerificationNow = deriveProductionVerificationTime(productionBundle);
+  const manifest = JSON.parse(fs.readFileSync(
+    path.join(repoRoot, 'app-web/frontend/public/card/coin-card-manifest.json'),
+    'utf8',
+  ));
+  const cardsRoot = path.join(repoRoot, 'app-web/frontend/public/registry/coincards');
+  const activeCardIds = fs.readdirSync(cardsRoot)
+    .filter((name) => name.endsWith('.json') && name !== 'index.json')
+    .map((name) => JSON.parse(fs.readFileSync(path.join(cardsRoot, name), 'utf8')))
+    .filter((card) => card.status === 'active')
+    .map((card) => card.cardId)
+    .sort();
+  /* Pilot card set assertion — update when registry changes. */
+  assert.deepEqual(activeCardIds, ['antoine', 'cc_demo_implicitex']);
+
+  const context = {
+    TextEncoder, Promise,
+    window: {},
+    atob: nodeAtob,
+    btoa: nodeBtoa,
+  };
+  context.globalThis = context;
+  context.window.TextEncoder = TextEncoder;
+  context.window.atob = nodeAtob;
+  context.window.btoa = nodeBtoa;
+  context.window.crypto = webcrypto;
+  const FixedDate = makeFixedDateClass(productionVerificationNow);
+  context.Date = FixedDate;
+  context.window.Date = FixedDate;
+
+  const lifecycleBundleSource = fs.readFileSync(lifecycleBundlePath, 'utf8');
+  const trustedKeysSource     = fs.readFileSync(trustedKeysPath, 'utf8');
+  vm.runInNewContext(trustedKeysSource, context, { filename: trustedKeysPath });
+  vm.runInNewContext(trustedKeyResolutionSource, context, { filename: trustedKeyResolutionPath });
+  vm.runInNewContext(lifecycleBundleSource, context, { filename: lifecycleBundlePath });
+  vm.runInNewContext(lifecycleRegistrySource, context, { filename: lifecycleRegistryPath });
+  vm.runInNewContext(lifecycleRecordVerifSource, context, { filename: lifecycleRecordVerifPath });
+  vm.runInNewContext(lifecycleBundleVerifSource, context, { filename: lifecycleBundleVerifPath });
+  vm.runInNewContext(lifecycleSelectionSource, context, { filename: lifecycleSelectionPath });
+  vm.runInNewContext(lifecycleResolutionSource, context, { filename: lifecycleResolutionPath });
+  vm.runInNewContext(lifecyclePresentationSource, context, { filename: lifecyclePresentationPath });
+
+  const bundleApi       = context.window.IX_COIN_CARD_LIFECYCLE_BUNDLE_VERIFICATION;
+  const selectorApi     = context.window.IX_COIN_CARD_LIFECYCLE_RECORD_SELECTION;
+  const resolutionApi   = context.window.IX_COIN_CARD_LIFECYCLE_RESOLUTION;
+  const presentationApi = context.window.IX_COIN_CARD_LIFECYCLE_PRESENTATION;
+  const bundle          = context.window.IX_COIN_CARD_LIFECYCLE_REGISTRY_BUNDLE;
+
+  assert.ok(bundle, 'IX_COIN_CARD_LIFECYCLE_REGISTRY_BUNDLE must be defined');
+  assert.ok(Array.isArray(bundle.entries) && bundle.entries.length >= 1, 'bundle must have at least one entry');
+
+  const proof = await bundleApi.authenticateLifecycleRegistryBundle(bundle);
+  assert.equal(proof.outcome, 'LIFECYCLE_BUNDLE_RECORDS_AUTHENTICATED',
+    `bundle verification failed: ${proof.outcome} reason=${proof.reason || ''}`);
+  assert.equal(proof.authenticated, true);
+
+  for (const cardId of activeCardIds) {
+    const selected = selectorApi.selectLifecycleEvidence(proof, {
+      cardId,
+      manifestId: manifest.manifestHash,
+    });
+    assert.equal(selected.outcome, 'LIFECYCLE_EVIDENCE_SELECTED',
+      `${cardId} selection failed: ${selected.outcome} reason=${selected.reason || ''}`);
+    assert.equal(selected.selected, true, cardId);
+
+    const resolved = resolutionApi.resolveLifecycle(selected);
+    assert.equal(resolved.outcome, 'LIFECYCLE_ACTIVE',
+      `${cardId} resolution failed: ${resolved.outcome}`);
+
+    const promoted = presentationApi.promotePresentation(resolved);
+    assert.equal(promoted.outcome, 'PRESENTATION_PROMOTED',
+      `${cardId} promotion failed: ${promoted.outcome}`);
+    assert.equal(promoted.presentationEligible, true, cardId);
+    assert.equal(presentationApi.isPromotedPresentationResult(promoted), true, cardId);
+  }

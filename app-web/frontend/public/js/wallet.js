@@ -8,6 +8,61 @@
   'use strict';
 
   // ----------------------------------------------------------------
+  // Dependency guard — fail loudly if required modules are missing.
+  //
+  // Silent exceptions inside wallet.js disable the UI with no visible
+  // error, making script-ordering omissions very hard to diagnose.
+  // Throwing here produces a stack trace pointing to the init site and
+  // reveals the fatalError element so the user sees a clear message
+  // instead of a disabled button with no explanation.
+  //
+  // Hard dependencies (called without null guards):
+  //   IX_EXECUTION — js/ix-execution.js, must precede wallet.js
+  //   IX_CHAINS    — config/chains.js, must precede wallet.js
+  //   IX_CONFIG    — config/chains.js (same file as IX_CHAINS)
+  //
+  // Soft dependencies (all call sites have null guards):
+  //   ethers        — ethers.js CDN, degrades gracefully without checksum validation
+  //   IX_PROVIDER   — walletconnect-provider.js, lazy-initialized at connect time
+  // ----------------------------------------------------------------
+  (function checkDependencies() {
+    const missing = [];
+
+    // IX_EXECUTION: both methods are called without null guards
+    if (!window.IX_EXECUTION ||
+        typeof window.IX_EXECUTION.calculateFee    !== 'function' ||
+        typeof window.IX_EXECUTION.executeTransfer !== 'function') {
+      missing.push('window.IX_EXECUTION.calculateFee / executeTransfer (js/ix-execution.js)');
+    }
+
+    // IX_CHAINS: consumed as an object keyed by chain ID
+    if (!window.IX_CHAINS || typeof window.IX_CHAINS !== 'object') {
+      missing.push('window.IX_CHAINS (config/chains.js)');
+    }
+
+    // IX_CONFIG: transfersEnabled is compared with === true / !== true, so the
+    // type must be boolean — a string "true" or null would pass existence checks
+    // but behave incorrectly in getNetworkState() and isLiveTransferChain().
+    if (!window.IX_CONFIG || typeof window.IX_CONFIG.transfersEnabled !== 'boolean') {
+      missing.push('window.IX_CONFIG.transfersEnabled boolean (config/chains.js)');
+    }
+
+    if (missing.length === 0) return;
+
+    const msg =
+      'Transfer Portal failed to initialize. Missing required module' +
+      (missing.length > 1 ? 's' : '') + ':\n' + missing.join('\n') + '\n\n' +
+      'Check that these scripts are included in the page before wallet.js.';
+
+    const el = document.getElementById('fatalErrorMessage');
+    const wrap = document.getElementById('fatalError');
+    if (el)   el.textContent = msg.replace(/\n/g, ' — ');
+    if (wrap) wrap.style.display = 'flex';
+
+    throw new Error(msg);
+  }());
+
+  // ----------------------------------------------------------------
   // Provider runtime — source of truth for the active wallet provider.
   //
   // walletRuntime.provider is null until the user connects. Pre-connect
@@ -2432,7 +2487,8 @@
   function currentButtonLabel() {
     if (!state.connected) return 'Connect wallet to continue';
     const netState = getNetworkState();
-    if (netState === 'WRONG_NETWORK' || netState === 'CONTRACT_UNAVAILABLE') return 'Switch to Polygon';
+    if (netState === 'WRONG_NETWORK') return 'Switch to Polygon';
+    if (netState === 'CONTRACT_UNAVAILABLE') return 'Retry verification';
     if (netState === 'TRANSFERS_DISABLED') return 'Transfers disabled';
     if (state.txPhase === 'SIMULATING') return 'Checking…';
     return 'Review transfer';
@@ -2672,6 +2728,15 @@
   async function handleTxAction() {
     if (!state.connected) {
       connect();
+      return;
+    }
+    const netState = getNetworkState();
+    if (netState === 'WRONG_NETWORK') {
+      await switchToPolygonMainnet();
+      return;
+    }
+    if (netState === 'CONTRACT_UNAVAILABLE') {
+      await retryContractReadiness();
       return;
     }
     if (state.txPhase === 'DRAFT') {
@@ -2952,6 +3017,9 @@
     // Network is no longer valid for the frozen draft — exit review so inputs
     // are unlocked if the user switches back to a supported chain.
     exitReview();
+    // exitReview() is intentionally a no-op while already in DRAFT, so update
+    // the actionable network-state label and enabled state explicitly.
+    setTxState('idle', null);
 
     const short = shortAddr(state.address);
     const networkLabel = chainLabel(state.chainId);
@@ -3005,11 +3073,17 @@
       return;
     }
 
+    // Show switching state on the main action button so the user has feedback.
+    if (els.txBtn) {
+      els.txBtn.disabled = true;
+      els.txBtn.textContent = 'Switching to Polygon…';
+      els.txBtn.classList.remove('tx-btn--armed');
+    }
     if (els.connectBtn) {
       els.connectBtn.disabled = true;
-      els.connectBtn.textContent = 'Switching...';
+      els.connectBtn.textContent = 'Switching…';
     }
-    setStatus('Requesting Polygon Mainnet in MetaMask...');
+    setStatus('Requesting Polygon Mainnet in your wallet…');
 
     try {
       await provider.request({
@@ -3020,34 +3094,31 @@
       const errorCode = err && (err.code || (err.data && err.data.originalError && err.data.originalError.code));
 
       if (errorCode === 4902) {
+        // Polygon Mainnet is not configured in this wallet — request to add it.
         try {
           await provider.request({
             method: 'wallet_addEthereumChain',
             params: [{
               chainId: POLYGON_MAINNET_CHAIN_HEX,
               chainName: 'Polygon Mainnet',
-              nativeCurrency: {
-                name: 'POL',
-                symbol: 'POL',
-                decimals: 18,
-              },
-              rpcUrls: ['https://polygon-rpc.com'],
+              nativeCurrency: { name: 'POL', symbol: 'POL', decimals: 18 },
+              rpcUrls: ['https://polygon-bor-rpc.publicnode.com'],
               blockExplorerUrls: ['https://polygonscan.com'],
             }],
           });
         } catch (addErr) {
           const rejectedAdd = addErr && addErr.code === 4001;
           setStatus(rejectedAdd
-            ? 'Polygon network add request rejected. Switch MetaMask to Polygon Mainnet before sending USDC.'
-            : 'Could not add Polygon Mainnet in MetaMask.');
+            ? 'Network add cancelled. Open your wallet and add Polygon Mainnet, then return here.'
+            : 'Polygon Mainnet could not be added automatically. Add it in your wallet, then return here.');
           applyWrongNetworkPresentation();
           return;
         }
       } else {
         const rejectedSwitch = err && err.code === 4001;
         setStatus(rejectedSwitch
-          ? 'Network switch rejected. Switch MetaMask to Polygon Mainnet before sending USDC.'
-          : 'Could not switch MetaMask to Polygon Mainnet.');
+          ? 'Network switch cancelled. Open your wallet, select Polygon Mainnet, then return here.'
+          : 'Could not switch to Polygon Mainnet. Switch in your wallet, then return here.');
         applyWrongNetworkPresentation();
         return;
       }
@@ -3055,9 +3126,41 @@
 
     await syncProviderState({ force: true });
     if (state.chainId !== POLYGON_MAINNET_CHAIN_ID) {
-      setStatus('MetaMask has not reported Polygon Mainnet to this site yet.');
+      setStatus('Wallet has not confirmed Polygon Mainnet yet. Switch manually if this persists.');
       applyWrongNetworkPresentation();
     }
+  }
+
+  /**
+   * Retry contract readiness when the wallet is on the correct chain but the
+   * transfer contract could not be resolved. A network switch is not the remedy
+   * here — the issue is configuration or RPC, not chain selection.
+   *
+   * Flow:
+   *   1. Show "Verifying contract…" on the action button.
+   *   2. Re-sync provider state (re-reads chain + accounts from the wallet).
+   *   3. If CONTRACT_UNAVAILABLE persists after re-sync, surface a clear
+   *      service-unavailable message. No further automatic action.
+   */
+  async function retryContractReadiness() {
+    if (els.txBtn) {
+      els.txBtn.disabled = true;
+      els.txBtn.textContent = 'Verifying contract…';
+      els.txBtn.classList.remove('tx-btn--armed');
+    }
+    setStatus('Verifying transfer contract…');
+
+    await syncProviderState({ force: true });
+
+    if (getNetworkState() === 'CONTRACT_UNAVAILABLE') {
+      setStatus(
+        'Transfer service is temporarily unavailable. ' +
+        'Your wallet remains connected and no transaction was submitted.'
+      );
+      setTxState('idle');
+    }
+    // If state resolved (READY / TRANSFERS_DISABLED), syncProviderState already
+    // called applyCurrentNetworkPresentation which updated the full UI.
   }
 
   async function syncProviderAccounts(options = {}) {
@@ -3526,7 +3629,12 @@
   function setTxState(txState, message, buttonLabel) {
     const isPending = txState === 'pending';
     if (els.txBtn) {
-      const isUnavailable = getNetworkState() !== 'READY';
+      const netState = getNetworkState();
+      // WRONG_NETWORK and CONTRACT_UNAVAILABLE are actionable — button must be
+      // enabled for their distinct "Switch to Polygon" / "Retry verification"
+      // recovery paths.
+      // Only TRANSFERS_DISABLED (policy gate) and disconnected block the button.
+      const isUnavailable = !state.connected || netState === 'TRANSFERS_DISABLED';
       els.txBtn.disabled = isPending || isUnavailable;
       if (isPending) {
         els.txBtn.textContent = buttonLabel || 'Processing…';
@@ -3535,7 +3643,9 @@
         els.txBtn.textContent = currentButtonLabel();
         els.txBtn.classList.remove('tx-btn--pending');
       }
-      if (isPending || isUnavailable) els.txBtn.classList.remove('tx-btn--armed');
+      if (isPending || isUnavailable || netState !== 'READY') {
+        els.txBtn.classList.remove('tx-btn--armed');
+      }
     }
     // Disable Edit Details while a wallet prompt is open — clicking it during
     // an active MetaMask request would leave the prompt orphaned.
@@ -3940,10 +4050,23 @@
           setStatus(`This is the funds-moving request. Recipient gets ${amountHuman} USDC; total wallet debit is ${totalDebitHuman} USDC.`);
           setTxState('pending', 'Wallet confirmation required.', 'Confirm transfer in MetaMask…');
           if (els.previewNote) els.previewNote.textContent = 'Transfer confirmation requested. Confirm in MetaMask only if recipient amount, platform fee, and total wallet debit match.';
-          updateReceipt(receiptId, {
+          const submittingOk = updateReceipt(receiptId, {
             state: IX_TRANSFER_STATES.SUBMITTING,
             lastKnownMessage: 'Transfer confirmation requested. Funds move only after on-chain confirmation.',
           });
+          if (!submittingOk) {
+            // Receipt state machine rejected the READY → SUBMITTING transition.
+            // This must not silently continue — an invalid transition means the receipt
+            // will not track the hash or fundsMoved, producing an orphaned READY archive.
+            persistWalletDiag('receipt_transition_rejected', null, {
+              fromHint: 'READY',
+              toHint: 'SUBMITTING',
+              receiptId,
+            });
+            const transitionErr = new Error('Receipt state transition READY → SUBMITTING rejected by the state machine.');
+            transitionErr.code = 'RECEIPT_STATE_TRANSITION_FAILED';
+            throw transitionErr;
+          }
           companionState(IX_TRANSFER_STATES.SUBMITTING, {
             statusLine: 'Confirm transfer.',
             stateVal:   'Awaiting confirmation',
@@ -4004,7 +4127,18 @@
             blockNumber: executionReceipt.blockNumber || null,
             lastKnownMessage: 'Transfer confirmed. Funds moved on Polygon.',
           }, OBSERVATION_SOURCES && OBSERVATION_SOURCES.RPC);
-          if (window.IX && window.IX.receipts) window.IX.receipts.clearActive();
+          // Guard: only archive the receipt once it is in a terminal state.
+          // If the CONFIRMED update was rejected by the state machine the receipt
+          // will not be terminal — clearActive() must not archive a non-terminal record.
+          {
+            const confirmedActive = window.IX && window.IX.receipts && window.IX.receipts.getActive();
+            const confirmedIsTerminal = confirmedActive &&
+              TRANSFER_STATUS && typeof TRANSFER_STATUS.isTerminalState === 'function' &&
+              TRANSFER_STATUS.isTerminalState(confirmedActive.state);
+            if (confirmedIsTerminal) {
+              window.IX.receipts.clearActive();
+            }
+          }
           markTransferStep('confirmed');
           renderTransferSummary(refreshedSummary, {
             label: 'Transfer Confirmed',
@@ -4401,7 +4535,12 @@
         renderGasDetail();
         renderGasChart();
       } catch (err) {
-        renderHeroGas({ standard: NaN, fast: NaN, rapid: NaN });
+        if (els.gasHeroVal) {
+          const errSpan = document.createElement('span');
+          errSpan.className = 'gas-tier-value gas-unavail';
+          errSpan.textContent = 'Unavailable';
+          els.gasHeroVal.replaceChildren(errSpan);
+        }
         if (els.gweiDisplay)        els.gweiDisplay.textContent        = 'Unavailable';
         if (els.blockDisplay)       els.blockDisplay.textContent       = 'Pending';
         if (els.confirmTimeDisplay) els.confirmTimeDisplay.textContent = '—';

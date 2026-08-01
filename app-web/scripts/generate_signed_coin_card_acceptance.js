@@ -20,7 +20,7 @@ const PUBLIC_ROOT = path.join(ROOT, 'frontend/public');
 const MANIFEST_PATH = path.join(PUBLIC_ROOT, 'card/coin-card-manifest.json');
 const TRUSTED_KEYS_OUT = path.join(PUBLIC_ROOT, 'card/coin-card-trusted-keys.js');
 const BUNDLE_OUT = path.join(PUBLIC_ROOT, 'card/coin-card-lifecycle-bundle.js');
-const CARD_RECORD_PATH = path.join(PUBLIC_ROOT, 'registry/coincards/cc_demo_implicitex.json');
+const CARD_RECORDS_ROOT = path.join(PUBLIC_ROOT, 'registry/coincards');
 
 const args = process.argv.slice(2);
 const DRY_RUN = args.includes('--dry-run');
@@ -53,6 +53,7 @@ const PROTECTED_ASSETS = Object.freeze([
   'card/coin-card-verification.js',
   'card/card.js',
   'card/card.css',
+  'card/index.html',
 ]);
 
 function toBase64Url(buffer) {
@@ -731,13 +732,51 @@ async function signLifecycleRecord(lifecycleKey, record) {
   return toBase64Url(sig);
 }
 
-function buildLifecycleRecord(cardId, manifestId, now, lifecycleKeyId) {
+function loadActiveRegistryCards() {
+  const cardFiles = fs.readdirSync(CARD_RECORDS_ROOT)
+    .filter((name) => name.endsWith('.json') && name !== 'index.json')
+    .sort();
+  const activeCards = [];
+  const seenCardIds = new Set();
+
+  for (const name of cardFiles) {
+    const filePath = path.join(CARD_RECORDS_ROOT, name);
+    const card = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    if (!card || card.schema !== 'implicitex.coincard.v1') {
+      throw new Error(`unsupported Coin Card registry schema: ${name}`);
+    }
+    if (typeof card.cardId !== 'string' || !card.cardId.trim()) {
+      throw new Error(`Coin Card registry record has no cardId: ${name}`);
+    }
+    if (seenCardIds.has(card.cardId)) {
+      throw new Error(`duplicate Coin Card registry cardId: ${card.cardId}`);
+    }
+    seenCardIds.add(card.cardId);
+    if (card.status !== 'active') continue;
+    // Route validation — all active cards must have a valid recipient address and chain
+    if (typeof card.recipient !== 'string' || !/^0x[0-9a-fA-F]{40}$/.test(card.recipient)) {
+      throw new Error(`Coin Card registry record has invalid recipient address: ${card.cardId}`);
+    }
+    if (!Number.isInteger(card.chainId) || card.chainId <= 0) {
+      throw new Error(`Coin Card registry record has invalid chainId: ${card.cardId}`);
+    }
+    if (typeof card.token !== 'string' || !card.token.trim()) {
+      throw new Error(`Coin Card registry record has no token: ${card.cardId}`);
+    }
+    activeCards.push(card);
+  }
+
+  if (!activeCards.length) throw new Error('no active Coin Card registry records found');
+  return activeCards.sort((left, right) => compareCodePoints(left.cardId, right.cardId));
+}
+
+function buildLifecycleRecord(cardId, manifestId, now, lifecycleKeyId, registryVersion) {
   return {
     registryId: 'implicitex-production',
     registrySchemaVersion: 'coin-card-lifecycle-registry-record.v1',
     environment: ENVIRONMENT,
-    registryVersion: 1,
-    recordId: `implicitex-production-r1-${cardId.slice(0, 20)}`,
+    registryVersion,
+    recordId: `implicitex-production-r1-${cardId}`,
     publishedAt: now,
     cardId,
     manifestId,
@@ -765,25 +804,25 @@ function buildLifecycleRecord(cardId, manifestId, now, lifecycleKeyId) {
   };
 }
 
-function renderLifecycleBundle(record, generatedAt) {
+function renderLifecycleBundle(records, generatedAt) {
+  const registryVersion = records[records.length - 1].registryVersion;
   const bundle = {
     registrySchemaVersion: 'coin-card-lifecycle-registry-bundle.v1',
     registryId: 'implicitex-production',
     environment: ENVIRONMENT,
-    registryVersion: 1,
+    registryVersion,
     generatedAt,
-    entries: [record],
+    entries: records,
   };
   return `/* coin-card-lifecycle-bundle.js — signed lifecycle registry publication
  *
  * GENERATED FILE — do not edit by hand. Run scripts/generate_signed_coin_card_acceptance.js.
  *
  * GeneratedAt:      ${generatedAt}
- * RegistryVersion:  1
- * CardId:           ${record.cardId}
- * ManifestId:       ${record.manifestId}
- * RecordId:         ${record.recordId}
- * Signer:           ${record.signature.keyId}
+ * RegistryVersion:  ${registryVersion}
+ * ActiveCards:      ${records.map((record) => record.cardId).join(', ')}
+ * ManifestId:       ${records[0].manifestId}
+ * Signer:           ${records[0].signature.keyId}
  */
 
 (function () {
@@ -876,7 +915,7 @@ async function validateCompletePackage(packageData, faultStage) {
   if (record.signature.keyId !== lifecycleKeyId) throw new Error('lifecycle signer ID mismatch');
   if (record.manifestId !== manifest.manifestHash) throw new Error('lifecycle manifest binding mismatch');
   if (record.cardId !== card.cardId) throw new Error('lifecycle card ID mismatch');
-  if (record.registryId !== 'implicitex-production' || record.registryVersion !== 1 || record.authorityId !== AUTHORITY_ID || record.environment !== ENVIRONMENT) {
+  if (record.registryId !== 'implicitex-production' || !Number.isInteger(record.registryVersion) || record.registryVersion < 1 || record.authorityId !== AUTHORITY_ID || record.environment !== ENVIRONMENT) {
     throw new Error('lifecycle production metadata mismatch');
   }
   const lifecyclePayload = JSON.parse(JSON.stringify(record));
@@ -1021,33 +1060,38 @@ async function main() {
     throw new Error('manifest signature self-verification failed');
   }
 
-  const card = JSON.parse(fs.readFileSync(CARD_RECORD_PATH, 'utf8'));
   const now = new Date().toISOString();
-  const record = buildLifecycleRecord(card.cardId, manifest.manifestHash, now, lifecycleKeyId);
-  record.signature.value = await signLifecycleRecord(lifecycleKey, record);
-  const lifecyclePayload = JSON.parse(JSON.stringify(record));
-  delete lifecyclePayload.signature.value;
-  const lifecycleBytes = Buffer.concat([
-    Buffer.from(LIFECYCLE_DOMAIN, 'utf8'),
-    Buffer.from([0]),
-    Buffer.from(canonicalizeJson(lifecyclePayload), 'utf8'),
-  ]);
-  if (!await verifySignature(lifecycleKey.publicJwk, record.signature.value, lifecycleBytes)) {
-    throw new Error('lifecycle signature self-verification failed');
+  const cards = loadActiveRegistryCards();
+  const records = [];
+  for (let index = 0; index < cards.length; index++) {
+    const activeCard = cards[index];
+    const record = buildLifecycleRecord(activeCard.cardId, manifest.manifestHash, now, lifecycleKeyId, index + 1);
+    record.signature.value = await signLifecycleRecord(lifecycleKey, record);
+    const lifecyclePayload = JSON.parse(JSON.stringify(record));
+    delete lifecyclePayload.signature.value;
+    const lifecycleBytes = Buffer.concat([
+      Buffer.from(LIFECYCLE_DOMAIN, 'utf8'),
+      Buffer.from([0]),
+      Buffer.from(canonicalizeJson(lifecyclePayload), 'utf8'),
+    ]);
+    if (!await verifySignature(lifecycleKey.publicJwk, record.signature.value, lifecycleBytes)) {
+      throw new Error(`lifecycle signature self-verification failed for ${record.cardId}`);
+    }
+    await validateCompletePackage({
+      trustedRecords,
+      preservedRecords: existingRecords,
+      manifestKey,
+      lifecycleKey,
+      manifestKeyId,
+      lifecycleKeyId,
+      trustedKeys,
+      manifest,
+      record,
+      card: activeCard,
+    }, testFailValidationStage);
+    records.push(record);
   }
-  const lifecycleBundle = renderLifecycleBundle(record, now);
-  await validateCompletePackage({
-    trustedRecords,
-    preservedRecords: existingRecords,
-    manifestKey,
-    lifecycleKey,
-    manifestKeyId,
-    lifecycleKeyId,
-    trustedKeys,
-    manifest,
-    record,
-    card,
-  }, testFailValidationStage);
+  if (!DRY_RUN) fs.writeFileSync(BUNDLE_OUT, renderLifecycleBundle(records, now), 'utf8');
 
   if (testMutateSourceBeforePromote === 'trusted-keys-output') {
     fs.appendFileSync(trustedKeysOut, '\n/* simulated concurrent mutation */\n');
@@ -1076,8 +1120,8 @@ async function main() {
   console.log(`lifecycle public fingerprint: ${lifecycleKey.fingerprint}`);
   console.log(`buildVersion: ${buildVersion}`);
   console.log(`manifestHash: ${manifest.manifestHash}`);
-  console.log(`lifecycle recordId: ${record.recordId}`);
-  console.log(`cardId: ${card.cardId}`);
+  console.log(`lifecycle records: ${records.length}`);
+  console.log(`cardIds: ${records.map((record) => record.cardId).join(', ')}`);
 }
 
 main().catch((error) => {

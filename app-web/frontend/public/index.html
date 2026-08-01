@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="description" content="Non-custodial USDC transfers on Polygon. Transparent 1% platform fee.">
   <meta property="og:url" content="https://implicitex.com/">
   <meta property="og:type" content="website">
@@ -227,11 +227,7 @@
         <div class="stat-sep" aria-hidden="true"></div>
         <a class="stat-item stat-link stat-gas" href="https://polygonscan.com/gastracker" target="_blank" rel="noopener" aria-label="View live Polygon gas prices on PolygonScan">
           <span class="stat-val gas-tiers gas-live" id="gasHeroVal">
-            <span>—</span>
-            <span>|</span>
-            <span>—</span>
-            <span>|</span>
-            <span>—</span>
+            <span class="gas-tier-value gas-loading">···</span>
           </span>
           <span class="stat-label">Gwei</span>
         </a>
@@ -248,21 +244,20 @@
   <section class="product-intro">
     <p class="product-intro-statement">
       <span class="usdc-badge" aria-hidden="true"><img class="usdc-icon" src="/assets/icons/usdc.svg" alt=""></span>
-      Send and Receive USDC.
+      A clear path to settlement.
     </p>
 
       <p class="product-intro-copy">
-      Send USDC directly from your wallet on Polygon with a transparent 1% platform fee
-      and a verifiable on-chain record. Open the Transfer Portal to review the recipient,
-      amount, fee, and network before sending.
+      Review the recipient, amount, network, and platform fee in one dedicated workspace
+      before approving the transaction in your wallet.
     </p>
   </section>
   <section class="portal-entry" id="transfer" aria-labelledby="portalEntryTitle">
     <div class="portal-entry-copy">
       <p class="portal-entry-kicker">Quick access</p>
-      <h2 class="portal-entry-title" id="portalEntryTitle">Send USDC with ImplicitEx</h2>
+      <h2 class="portal-entry-title" id="portalEntryTitle">A dedicated transfer workspace.</h2>
       <p class="portal-entry-lede">
-        Open the Transfer Portal to review the recipient, amount, fee, and network before you send USDC on Polygon.
+        Preparation, review, and confirmation remain separate. Nothing is submitted until you approve the transaction in your wallet.
       </p>
       <div class="portal-entry-actions">
         <a class="portal-entry-action portal-entry-action--primary" href="https://portal.implicitex.com/">Open Transfer Portal</a>
@@ -501,35 +496,55 @@
       <nav class="f-links" aria-label="Footer links">
         <div class="f-group">
           <span class="f-group-label">Product</span>
-          <a href="/start.html">Start</a>
-          <a href="/faq.html">FAQ</a>
-          <a href="/learn.html">Learn</a>
-          <a href="/verify.html">Verify</a>
-          <a href="/log.html">Devlog</a>
+          <a href="/start.html" data-footer-entry="start">Start</a>
+          <a href="/faq.html" data-footer-entry="faq">FAQ</a>
+          <a href="/learn.html" data-footer-entry="learn">Learn</a>
+          <a href="/verify.html" data-footer-entry="verify">Verify</a>
+          <a href="/log.html" data-footer-entry="devlog">Devlog</a>
+          <a href="https://portal.implicitex.com/?install=1" data-footer-entry="install-app">Install app</a>
         </div>
         <div class="f-group">
           <span class="f-group-label">Legal</span>
-          <a href="/terms.html">Terms</a>
-          <a href="/privacy.html">Privacy</a>
-          <a href="/legal.html">Legal</a>
+          <a href="/terms.html" data-footer-entry="terms">Terms</a>
+          <a href="/privacy.html" data-footer-entry="privacy">Privacy</a>
+          <a href="/legal.html" data-footer-entry="legal">Legal</a>
+          <a href="/risk-disclosure.html" data-footer-entry="risk-disclosure">Risk Disclosure</a>
+          <a href="/fee-disclosure.html" data-footer-entry="fee-network">Fee &amp; Network</a>
+          <a href="/acceptable-use.html" data-footer-entry="acceptable-use">Acceptable Use</a>
+        </div>
+        <div class="f-group">
+          <span class="f-group-label">Trust</span>
+          <a href="/contract-addresses.html" data-footer-entry="contract-addresses">Contract Addresses</a>
+          <a href="/security.html" data-footer-entry="security">Security</a>
+          <a href="/status.html" data-footer-entry="status">Status</a>
+          <a href="/verify.html" data-footer-entry="verification">Verification</a>
+        </div>
+        <div class="f-group">
+          <span class="f-group-label">Developers</span>
+          <a href="/metadata.html" data-footer-entry="metadata">Metadata</a>
+          <a href="/llms.txt" data-footer-entry="llms-txt">llms.txt</a>
+          <a href="/robots.txt" data-footer-entry="robots-txt">robots.txt</a>
+          <a href="/sitemap.xml" data-footer-entry="sitemap-xml">sitemap.xml</a>
         </div>
         <div class="f-group">
           <span class="f-group-label">Support</span>
-          <a href="/contact.html">Contact</a>
-          <a href="/jurisdictions.html">Access</a>
+          <a href="/contact.html" data-footer-entry="contact">Contact</a>
+          <a href="/jurisdictions.html" data-footer-entry="access">Access</a>
+          <a href="mailto:connect@implicitex.com" data-footer-entry="legal-contact">Legal Contact</a>
+          <a href="/security.html" data-footer-entry="report-security">Report Security Issue</a>
         </div>
         <div class="f-group">
           <span class="f-group-label">Company</span>
-          <a href="/about.html">About</a>
-          <a href="/media.html">Media</a>
-          <a href="/brand.html">Brand</a>
-          <a href="/news.html">News</a>
+          <a href="/about.html" data-footer-entry="about">About</a>
+          <a href="/media.html" data-footer-entry="media">Media</a>
+          <a href="/brand.html" data-footer-entry="brand">Brand</a>
+          <a href="/news.html" data-footer-entry="news">News</a>
         </div>
         <div class="f-group">
           <span class="f-group-label">Social</span>
-          <a href="https://x.com/implicitex" target="_blank" rel="noopener">X</a>
-          <a href="https://www.linkedin.com/in/implicitex/" target="_blank" rel="noopener">LinkedIn</a>
-          <a href="https://github.com/implicitexlabs" target="_blank" rel="noopener">GitHub</a>
+          <a href="https://x.com/implicitex" target="_blank" rel="noopener" data-footer-entry="social-x">X</a>
+          <a href="https://www.linkedin.com/in/implicitex/" target="_blank" rel="noopener" data-footer-entry="social-linkedin">LinkedIn</a>
+          <a href="https://github.com/implicitexlabs" target="_blank" rel="noopener" data-footer-entry="social-github">GitHub</a>
         </div>
       </nav>
       <div class="f-bottom">

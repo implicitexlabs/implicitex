@@ -1,0 +1,498 @@
+{
+  "schemaVersion": "coin-card-transaction-evidence-signature-fixtures.v2",
+  "domains": {
+    "authority": "ImplicitEx.CoinCard.TransactionEvidence.v2",
+    "headSignature": "ImplicitEx.CoinCard.ExecutableRegistryHead.v1",
+    "headArtifact": "ImplicitEx.CoinCard.ExecutableRegistryHeadArtifact.v1"
+  },
+  "positive": {
+    "authority": {
+      "evidenceDomain": "ImplicitEx.CoinCard.TransactionEvidence",
+      "evidenceSchemaVersion": "transaction-evidence.v2",
+      "issuerId": "implicitex-production",
+      "environment": "production",
+      "cardId": "cc_merchant_001",
+      "runtimeManifestId": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "lifecycleRegistryId": "implicitex-production",
+      "lifecycleRegistrySchemaVersion": "coin-card-lifecycle-registry-record.v1",
+      "lifecycleRecordId": "implicitex-production-r19-cc_merchant_001",
+      "lifecycleRecordRevision": "7",
+      "lifecycleRecordHash": "sha256:85baa0e74eccbe70b41061335483164255163b026f419e4b8f3574fe62ce88ab",
+      "coinCardRegistryId": "implicitex-executable-production",
+      "coinCardRegistrySchemaVersion": "coin-card-registry-record.v2",
+      "coinCardRegistryRecordId": "ccr2-cc_merchant_001-r7",
+      "coinCardRegistryRecordRevision": "7",
+      "coinCardRegistryRecordHash": "sha256:0b4b3d4d0fc036c96c404287b1e6953e4a79b8cf9627edcf4afc171b6fb617e9",
+      "recipientAddress": "0x1111111111111111111111111111111111111111",
+      "chainId": "137",
+      "tokenContractAddress": "0x2222222222222222222222222222222222222222",
+      "executionContractAddress": "0x3333333333333333333333333333333333333333",
+      "executionContractInterfaceId": "implicitex-evidence-bound-transfer.v1",
+      "executionInterfaceDescriptorHash": "sha256:37715c194362030bc4a2e34e2663e8f2bac03b5274d3fd4bacbb767c6664e7af",
+      "feePolicy": {
+        "policyVersion": "implicitex-fee-policy.v2",
+        "feeBasisPoints": "100",
+        "feeCapAtomic": "10000000",
+        "minimumTransferAtomic": "1000000",
+        "maximumTransferAtomic": "250000000",
+        "transferPrecisionAtomic": "10000",
+        "roundingRule": "FLOOR_BPS_THEN_CAP",
+        "feeRecipientAddress": "0x4444444444444444444444444444444444444444"
+      },
+      "signedAt": "2026-07-20T12:04:00.000Z",
+      "signingKeyId": "fixture-transaction-evidence-signing-key-v2"
+    },
+    "wrapper": {
+      "authorityHash": "sha256:65e47e9cc14e644af68fc7a92f3e33600f834140fa22c3715d1dafe223151919",
+      "keyId": "fixture-transaction-evidence-signing-key-v2",
+      "signature": "tOWgaHRpFB8NC8AnQ9pd2mDPpEtpI34PRZYVrCvnulVdGSbOvuN4MN_FctDqIT8tgMAx1aHp5Xqm2kGMGCrVsQ",
+      "signatureAlgorithm": "ECDSA_P256_SHA256_P1363"
+    },
+    "trustedKeyRecord": {
+      "schemaVersion": "coin-card-trusted-key-record.v2",
+      "keyId": "fixture-transaction-evidence-signing-key-v2",
+      "algorithm": "ECDSA_P256_SHA256",
+      "publicKey": {
+        "kty": "EC",
+        "x": "SeI4_e8DjctwdRMg1-QA6tqf2wxbC3GRzWZUEHuADDI",
+        "y": "AewuMGywrNfpMMIPlysBdxl_0UOy-5GX_zwc0tRtFdA",
+        "crv": "P-256",
+        "ext": true,
+        "key_ops": [
+          "verify"
+        ]
+      },
+      "issuerId": "implicitex-production",
+      "usage": [
+        "coin-card-transaction-evidence"
+      ],
+      "status": "ACTIVE",
+      "validFrom": "2026-07-20T12:04:00.000Z",
+      "validUntil": "2026-07-31T23:59:59.999Z",
+      "revokedAt": null,
+      "revocationReason": null,
+      "revocationPolicy": null,
+      "successorKeyId": null,
+      "environment": "production"
+    },
+    "verificationTime": "2026-07-20T12:10:00.000Z",
+    "currentHeadIssuedAt": "2026-07-20T12:05:00.000Z",
+    "expectedAuthorityCanonicalJson": "{\"cardId\":\"cc_merchant_001\",\"chainId\":\"137\",\"coinCardRegistryId\":\"implicitex-executable-production\",\"coinCardRegistryRecordHash\":\"sha256:0b4b3d4d0fc036c96c404287b1e6953e4a79b8cf9627edcf4afc171b6fb617e9\",\"coinCardRegistryRecordId\":\"ccr2-cc_merchant_001-r7\",\"coinCardRegistryRecordRevision\":\"7\",\"coinCardRegistrySchemaVersion\":\"coin-card-registry-record.v2\",\"environment\":\"production\",\"evidenceDomain\":\"ImplicitEx.CoinCard.TransactionEvidence\",\"evidenceSchemaVersion\":\"transaction-evidence.v2\",\"executionContractAddress\":\"0x3333333333333333333333333333333333333333\",\"executionContractInterfaceId\":\"implicitex-evidence-bound-transfer.v1\",\"executionInterfaceDescriptorHash\":\"sha256:37715c194362030bc4a2e34e2663e8f2bac03b5274d3fd4bacbb767c6664e7af\",\"feePolicy\":{\"feeBasisPoints\":\"100\",\"feeCapAtomic\":\"10000000\",\"feeRecipientAddress\":\"0x4444444444444444444444444444444444444444\",\"maximumTransferAtomic\":\"250000000\",\"minimumTransferAtomic\":\"1000000\",\"policyVersion\":\"implicitex-fee-policy.v2\",\"roundingRule\":\"FLOOR_BPS_THEN_CAP\",\"transferPrecisionAtomic\":\"10000\"},\"issuerId\":\"implicitex-production\",\"lifecycleRecordHash\":\"sha256:85baa0e74eccbe70b41061335483164255163b026f419e4b8f3574fe62ce88ab\",\"lifecycleRecordId\":\"implicitex-production-r19-cc_merchant_001\",\"lifecycleRecordRevision\":\"7\",\"lifecycleRegistryId\":\"implicitex-production\",\"lifecycleRegistrySchemaVersion\":\"coin-card-lifecycle-registry-record.v1\",\"recipientAddress\":\"0x1111111111111111111111111111111111111111\",\"runtimeManifestId\":\"sha256:1111111111111111111111111111111111111111111111111111111111111111\",\"signedAt\":\"2026-07-20T12:04:00.000Z\",\"signingKeyId\":\"fixture-transaction-evidence-signing-key-v2\",\"tokenContractAddress\":\"0x2222222222222222222222222222222222222222\"}",
+    "expectedAuthorityHash": "sha256:65e47e9cc14e644af68fc7a92f3e33600f834140fa22c3715d1dafe223151919",
+    "expectedKeyOutcome": "TRUSTED_KEY_ACTIVE",
+    "expectedAuthenticationOutcome": "TRANSACTION_EVIDENCE_SIGNATURE_AUTHENTICATED"
+  },
+  "keyPolicyVectors": [
+    {
+      "id": "exact-activation-boundary",
+      "recordOverrides": {
+        "validFrom": "2026-07-20T12:04:00.000Z"
+      },
+      "expectedKeyOutcome": "TRUSTED_KEY_ACTIVE"
+    },
+    {
+      "id": "exact-valid-until-boundary",
+      "recordOverrides": {
+        "validUntil": "2026-07-20T12:04:00.000Z"
+      },
+      "expectedKeyOutcome": "TRUSTED_KEY_ACTIVE"
+    },
+    {
+      "id": "usage-denied",
+      "recordOverrides": {
+        "usage": [
+          "coin-card-manifest-signing"
+        ]
+      },
+      "expectedKeyOutcome": "TRUSTED_KEY_USAGE_DENIED"
+    },
+    {
+      "id": "environment-mismatch",
+      "recordOverrides": {
+        "environment": "staging"
+      },
+      "expectedKeyOutcome": "TRUSTED_KEY_ENVIRONMENT_MISMATCH"
+    },
+    {
+      "id": "issuer-mismatch",
+      "recordOverrides": {
+        "issuerId": "implicitex-staging"
+      },
+      "expectedKeyOutcome": "TRUSTED_KEY_USAGE_DENIED"
+    },
+    {
+      "id": "not-yet-active",
+      "recordOverrides": {
+        "validFrom": "2026-07-20T12:04:00.001Z"
+      },
+      "expectedKeyOutcome": "TRUSTED_KEY_NOT_YET_ACTIVE"
+    },
+    {
+      "id": "signed-after-valid-until",
+      "recordOverrides": {
+        "validUntil": "2026-07-20T12:03:59.999Z"
+      },
+      "expectedKeyOutcome": "TRUSTED_KEY_EXPIRED"
+    },
+    {
+      "id": "expired-status",
+      "recordOverrides": {
+        "status": "EXPIRED",
+        "validUntil": null
+      },
+      "expectedKeyOutcome": "TRUSTED_KEY_EXPIRED"
+    },
+    {
+      "id": "future-beyond-skew",
+      "contextOverrides": {
+        "signatureTime": "2026-07-20T12:15:00.001Z"
+      },
+      "expectedKeyOutcome": "TRUSTED_KEY_RECORD_INVALID"
+    },
+    {
+      "id": "invalidate-all-signatures",
+      "recordOverrides": {
+        "status": "REVOKED",
+        "validUntil": null,
+        "revokedAt": "2026-07-20T12:05:00.000Z",
+        "revocationReason": "fixture-compromise",
+        "revocationPolicy": "INVALIDATE_ALL_SIGNATURES"
+      },
+      "expectedKeyOutcome": "TRUSTED_KEY_REVOKED"
+    },
+    {
+      "id": "invalidate-after-before-boundary",
+      "recordOverrides": {
+        "status": "REVOKED",
+        "validUntil": null,
+        "revokedAt": "2026-07-20T12:05:00.000Z",
+        "revocationReason": "fixture-emergency-cutoff",
+        "revocationPolicy": "INVALIDATE_AFTER_TIMESTAMP"
+      },
+      "contextOverrides": {
+        "verificationTime": "2026-07-20T12:04:59.999Z"
+      },
+      "expectedKeyOutcome": "TRUSTED_KEY_ACTIVE"
+    },
+    {
+      "id": "invalidate-after-at-boundary",
+      "recordOverrides": {
+        "status": "REVOKED",
+        "validUntil": null,
+        "revokedAt": "2026-07-20T12:05:00.000Z",
+        "revocationReason": "fixture-emergency-cutoff",
+        "revocationPolicy": "INVALIDATE_AFTER_TIMESTAMP"
+      },
+      "contextOverrides": {
+        "verificationTime": "2026-07-20T12:05:00.000Z"
+      },
+      "expectedKeyOutcome": "TRUSTED_KEY_REVOKED"
+    },
+    {
+      "id": "no-new-signatures-before-boundary",
+      "recordOverrides": {
+        "status": "REVOKED",
+        "validUntil": null,
+        "revokedAt": "2026-07-20T12:05:00.000Z",
+        "revocationReason": "fixture-rotation",
+        "revocationPolicy": "NO_NEW_SIGNATURES"
+      },
+      "expectedKeyOutcome": "TRUSTED_KEY_ACTIVE"
+    },
+    {
+      "id": "no-new-signatures-at-boundary",
+      "recordOverrides": {
+        "status": "REVOKED",
+        "validUntil": null,
+        "revokedAt": "2026-07-20T12:05:00.000Z",
+        "revocationReason": "fixture-rotation",
+        "revocationPolicy": "NO_NEW_SIGNATURES"
+      },
+      "contextOverrides": {
+        "signatureTime": "2026-07-20T12:05:00.000Z"
+      },
+      "expectedKeyOutcome": "TRUSTED_KEY_REVOKED"
+    }
+  ],
+  "trustedSourceDataVectors": [
+    {
+      "id": "source-key-record-key-mismatch",
+      "sourceKeyId": "fixture-transaction-evidence-signing-key-v2",
+      "recordOverrides": {
+        "keyId": "fixture-other-transaction-evidence-key"
+      },
+      "expectedKeyOutcome": "TRUSTED_KEY_SOURCE_UNAVAILABLE",
+      "expectedAuthenticationCode": "EVIDENCE_SIGNATURE_INVALID"
+    },
+    {
+      "id": "signed-key-absent-from-source",
+      "sourceMode": "empty",
+      "expectedKeyOutcome": "TRUSTED_KEY_UNKNOWN",
+      "expectedAuthenticationCode": "EVIDENCE_SIGNATURE_INVALID"
+    },
+    {
+      "id": "private-jwk-d",
+      "publicKeyOverrides": {
+        "d": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+      },
+      "expectedKeyOutcome": "TRUSTED_KEY_SOURCE_UNAVAILABLE",
+      "expectedAuthenticationCode": "EVIDENCE_SIGNATURE_INVALID"
+    },
+    {
+      "id": "wrong-jwk-curve",
+      "publicKeyOverrides": {
+        "crv": "P-384"
+      },
+      "expectedKeyOutcome": "TRUSTED_KEY_SOURCE_UNAVAILABLE",
+      "expectedAuthenticationCode": "EVIDENCE_SIGNATURE_INVALID"
+    },
+    {
+      "id": "malformed-jwk-x",
+      "publicKeyOverrides": {
+        "x": "short"
+      },
+      "expectedKeyOutcome": "TRUSTED_KEY_SOURCE_UNAVAILABLE",
+      "expectedAuthenticationCode": "EVIDENCE_SIGNATURE_INVALID"
+    },
+    {
+      "id": "noncanonical-jwk-y",
+      "publicKeyOverrides": {
+        "y": "AewuMGywrNfpMMIPlysBdxl_0UOy-5GX_zwc0tRtFdB"
+      },
+      "expectedKeyOutcome": "TRUSTED_KEY_SOURCE_UNAVAILABLE",
+      "expectedAuthenticationCode": "EVIDENCE_SIGNATURE_INVALID"
+    },
+    {
+      "id": "wrong-jwk-key-ops",
+      "publicKeyOverrides": {
+        "key_ops": [
+          "sign"
+        ]
+      },
+      "expectedKeyOutcome": "TRUSTED_KEY_SOURCE_UNAVAILABLE",
+      "expectedAuthenticationCode": "EVIDENCE_SIGNATURE_INVALID"
+    },
+    {
+      "id": "jwk-ext-false",
+      "publicKeyOverrides": {
+        "ext": false
+      },
+      "expectedKeyOutcome": "TRUSTED_KEY_SOURCE_UNAVAILABLE",
+      "expectedAuthenticationCode": "EVIDENCE_SIGNATURE_INVALID"
+    },
+    {
+      "id": "duplicate-usage",
+      "recordOverrides": {
+        "usage": [
+          "coin-card-transaction-evidence",
+          "coin-card-transaction-evidence"
+        ]
+      },
+      "expectedKeyOutcome": "TRUSTED_KEY_SOURCE_UNAVAILABLE",
+      "expectedAuthenticationCode": "EVIDENCE_SIGNATURE_INVALID"
+    },
+    {
+      "id": "unsupported-usage",
+      "recordOverrides": {
+        "usage": [
+          "coin-card-transaction-evidencd"
+        ]
+      },
+      "expectedKeyOutcome": "TRUSTED_KEY_SOURCE_UNAVAILABLE",
+      "expectedAuthenticationCode": "EVIDENCE_SIGNATURE_INVALID"
+    },
+    {
+      "id": "self-successor",
+      "recordOverrides": {
+        "successorKeyId": "fixture-transaction-evidence-signing-key-v2"
+      },
+      "expectedKeyOutcome": "TRUSTED_KEY_SOURCE_UNAVAILABLE",
+      "expectedAuthenticationCode": "EVIDENCE_SIGNATURE_INVALID"
+    },
+    {
+      "id": "active-record-with-revocation-time",
+      "recordOverrides": {
+        "revokedAt": "2026-07-20T12:05:00.000Z"
+      },
+      "expectedKeyOutcome": "TRUSTED_KEY_SOURCE_UNAVAILABLE",
+      "expectedAuthenticationCode": "EVIDENCE_SIGNATURE_INVALID"
+    },
+    {
+      "id": "revoked-record-without-policy",
+      "recordOverrides": {
+        "status": "REVOKED",
+        "revokedAt": "2026-07-20T12:05:00.000Z",
+        "revocationReason": "fixture-invalid",
+        "revocationPolicy": null
+      },
+      "expectedKeyOutcome": "TRUSTED_KEY_SOURCE_UNAVAILABLE",
+      "expectedAuthenticationCode": "EVIDENCE_SIGNATURE_INVALID"
+    },
+    {
+      "id": "wrong-record-algorithm",
+      "recordOverrides": {
+        "algorithm": "ECDSA_P384_SHA384"
+      },
+      "expectedKeyOutcome": "TRUSTED_KEY_SOURCE_UNAVAILABLE",
+      "expectedAuthenticationCode": "EVIDENCE_SIGNATURE_INVALID"
+    }
+  ],
+  "trustedSourceStructuralVectors": [
+    { "id": "hidden-record-property", "construction": "hidden-record-property" },
+    { "id": "accessor-record-property", "construction": "accessor-record-property" },
+    { "id": "cyclic-record", "construction": "cyclic-record" },
+    { "id": "cyclic-jwk", "construction": "cyclic-jwk" },
+    { "id": "shared-jwk", "construction": "shared-jwk" },
+    { "id": "mutable-source", "construction": "mutable-source" },
+    { "id": "mutable-record", "construction": "mutable-record" },
+    { "id": "mutable-jwk", "construction": "mutable-jwk" },
+    { "id": "nonplain-source", "construction": "nonplain-source" },
+    { "id": "nonplain-record", "construction": "nonplain-record" },
+    { "id": "hidden-jwk-property", "construction": "hidden-jwk-property" },
+    { "id": "accessor-jwk-property", "construction": "accessor-jwk-property" },
+    { "id": "malformed-unrelated-record", "construction": "malformed-unrelated-record" }
+  ],
+  "trustedSourceStructuralExpected": {
+    "keyOutcome": "TRUSTED_KEY_SOURCE_UNAVAILABLE",
+    "authenticationCode": "EVIDENCE_SIGNATURE_INVALID"
+  },
+  "inheritedAuthorityVectors": [
+    {
+      "id": "unsupported-lifecycle-schema",
+      "sourceGroup": "authorityMutations",
+      "sourceVectorId": "lifecycle-registry-schema-version",
+      "expectedCode": "LIFECYCLE_SCHEMA_MISMATCH"
+    },
+    {
+      "id": "unsupported-registry-v2-schema",
+      "sourceGroup": "authorityMutations",
+      "sourceVectorId": "coin-card-registry-schema-version",
+      "expectedCode": "COIN_CARD_REGISTRY_SCHEMA_UNSUPPORTED"
+    },
+    {
+      "id": "mixed-case-recipient",
+      "sourceGroup": "invalidEncodings",
+      "sourceVectorId": "mixed-case-address",
+      "expectedCode": "ADDRESS_ENCODING_INVALID"
+    },
+    {
+      "id": "malformed-runtime-manifest-hash",
+      "path": "runtimeManifestId",
+      "replacement": "sha256:abcd",
+      "expectedCode": "EVIDENCE_CANONICALIZATION_INVALID"
+    },
+    {
+      "id": "native-number-chain-id",
+      "path": "chainId",
+      "replacement": 137,
+      "expectedCode": "INTEGER_ENCODING_INVALID"
+    },
+    {
+      "id": "leading-zero-chain-id",
+      "sourceGroup": "invalidEncodings",
+      "sourceVectorId": "leading-zero-chain",
+      "expectedCode": "INTEGER_ENCODING_INVALID"
+    },
+    {
+      "id": "maximum-below-minimum",
+      "path": "feePolicy.maximumTransferAtomic",
+      "replacement": "999999",
+      "expectedCode": "INTEGER_ENCODING_INVALID"
+    },
+    {
+      "id": "unsupported-rounding-rule",
+      "sourceGroup": "authorityMutations",
+      "sourceVectorId": "rounding-rule",
+      "expectedCode": "FEE_POLICY_MISMATCH"
+    },
+    {
+      "id": "noncanonical-issuer-identifier",
+      "path": "issuerId",
+      "replacement": " implicitex-production",
+      "expectedCode": "EVIDENCE_CANONICALIZATION_INVALID"
+    },
+    {
+      "id": "mixed-case-fee-recipient",
+      "path": "feePolicy.feeRecipientAddress",
+      "replacement": "0x444444444444444444444444444444444444444A",
+      "expectedCode": "ADDRESS_ENCODING_INVALID"
+    }
+  ],
+  "authenticationMutations": [
+    {
+      "id": "v1-profile-not-authenticatable",
+      "path": "authority.evidenceSchemaVersion",
+      "replacement": "transaction-evidence.v1",
+      "expectedCode": "TRANSACTION_EVIDENCE_SIGNATURE_PROFILE_REQUIRED"
+    },
+    {
+      "id": "missing-signed-at-precedes-hash",
+      "path": "authority.signedAt",
+      "remove": true,
+      "alsoUseStaleHash": true,
+      "expectedCode": "EVIDENCE_SIGNING_TIME_INVALID"
+    },
+    {
+      "id": "noncanonical-signed-at-precedes-hash",
+      "path": "authority.signedAt",
+      "replacement": "2026-07-20T12:04:00Z",
+      "alsoUseStaleHash": true,
+      "expectedCode": "EVIDENCE_SIGNING_TIME_INVALID"
+    },
+    {
+      "id": "null-signed-at-precedes-hash",
+      "path": "authority.signedAt",
+      "replacement": null,
+      "alsoUseStaleHash": true,
+      "expectedCode": "EVIDENCE_SIGNING_TIME_INVALID"
+    },
+    {
+      "id": "wrapper-key-disagrees-with-signed-key",
+      "path": "keyId",
+      "replacement": "fixture-other-transaction-evidence-key",
+      "expectedCode": "EVIDENCE_SIGNING_KEY_ID_MISMATCH"
+    },
+    {
+      "id": "signed-key-mutation-with-stale-hash",
+      "path": "authority.signingKeyId",
+      "replacement": "fixture-other-transaction-evidence-key",
+      "expectedCode": "EVIDENCE_HASH_MISMATCH"
+    },
+    {
+      "id": "signature-one-bit-mutation",
+      "path": "signature",
+      "replacement": "tOWgaHRpFB8NC8AnQ9pd2mDPpEtpI34PRZYVrCvnulVdGSbOvuN4MN_FctDqIT8tgMAx1aHp5Xqm2kGMGCrVsA",
+      "expectedCode": "EVIDENCE_SIGNATURE_INVALID"
+    }
+  ],
+  "afterHeadVector": {
+    "signedAt": "2026-07-20T12:05:00.001Z",
+    "authorityHash": "sha256:937f092854f454018119f47f844187c259c4b8254e50e1fc97393bbb54b32e15",
+    "signature": "4QAqDccZBc3EZR6lz294ubqSesvFElYITGIgSvfWPVsAJWiyt_mRDzwAyBk2WXltmxAxtjfnd3NVGE1UaecJVA",
+    "headIssuedAt": "2026-07-20T12:05:00.000Z",
+    "expectedCode": "EVIDENCE_SIGNING_TIME_AFTER_HEAD"
+  },
+  "dependentEvidenceRepin": {
+    "authorityHash": "sha256:65e47e9cc14e644af68fc7a92f3e33600f834140fa22c3715d1dafe223151919",
+    "expectedIntentCanonicalJson": "{\"amountSentAtomic\":\"50000000\",\"authorityHash\":\"sha256:65e47e9cc14e644af68fc7a92f3e33600f834140fa22c3715d1dafe223151919\",\"cardId\":\"cc_merchant_001\",\"chainId\":\"137\",\"executionContractAddress\":\"0x3333333333333333333333333333333333333333\",\"executionContractInterfaceId\":\"implicitex-evidence-bound-transfer.v1\",\"executionInterfaceDescriptorHash\":\"sha256:37715c194362030bc4a2e34e2663e8f2bac03b5274d3fd4bacbb767c6664e7af\",\"feeAmountAtomic\":\"500000\",\"intentSchemaVersion\":\"frozen-user-intent.v1\",\"recipientAddress\":\"0x1111111111111111111111111111111111111111\",\"runtimeManifestId\":\"sha256:1111111111111111111111111111111111111111111111111111111111111111\",\"senderAddress\":\"0x5555555555555555555555555555555555555555\",\"tokenContractAddress\":\"0x2222222222222222222222222222222222222222\",\"totalDebitedAtomic\":\"50500000\"}",
+    "expectedIntentHash": "sha256:837579e0ef08fb3ba49fa50d07fd2c28ee3536f4c51919defe513866009dcec1",
+    "observationAuthorityHash": "sha256:65e47e9cc14e644af68fc7a92f3e33600f834140fa22c3715d1dafe223151919",
+    "observationIntentHash": "sha256:837579e0ef08fb3ba49fa50d07fd2c28ee3536f4c51919defe513866009dcec1",
+    "settlementAuthorityHash": "sha256:65e47e9cc14e644af68fc7a92f3e33600f834140fa22c3715d1dafe223151919",
+    "settlementIntentHash": "sha256:837579e0ef08fb3ba49fa50d07fd2c28ee3536f4c51919defe513866009dcec1"
+  },
+  "repinnedHead": {
+    "transactionEvidenceAuthorityHash": "sha256:65e47e9cc14e644af68fc7a92f3e33600f834140fa22c3715d1dafe223151919",
+    "signatureKeyId": "fixture-signing-time-reconciliation-head-key",
+    "signature": "BvHYQIVypnVriBRslzb-7kd7NRdumwagZx5wLLF1OXyfdNGDYR-Wfew85cuyOunJycJAIFpTVrowQDbbbEfzLA",
+    "publicKeyJwk": {
+      "kty": "EC",
+      "x": "zMf1YVnnG1JWkKvAHeT-fXJXGOFH1SG5vubLdnTujMM",
+      "y": "jVjJ2Kg39vTOIfsV57DNgGBMG4WxGEcF5qBE1Ei2Y2c",
+      "crv": "P-256"
+    },
+    "expectedSignedPayloadCanonicalJson": "{\"authorityId\":\"implicitex-executable-registry\",\"cardId\":\"cc_merchant_001\",\"coinCardRegistryRecordHash\":\"sha256:0b4b3d4d0fc036c96c404287b1e6953e4a79b8cf9627edcf4afc171b6fb617e9\",\"coinCardRegistryRecordId\":\"ccr2-cc_merchant_001-r7\",\"coinCardRegistryRecordRevision\":\"7\",\"environment\":\"production\",\"expiresAt\":\"2026-07-21T12:05:00.000Z\",\"headSchemaVersion\":\"executable-registry-head.v1\",\"headSequence\":\"12\",\"issuedAt\":\"2026-07-20T12:05:00.000Z\",\"lifecycleRecordHash\":\"sha256:85baa0e74eccbe70b41061335483164255163b026f419e4b8f3574fe62ce88ab\",\"registryId\":\"implicitex-executable-production\",\"signature\":{\"algorithm\":\"ECDSA_P256_SHA256\",\"authorityId\":\"implicitex-executable-registry\",\"keyId\":\"fixture-signing-time-reconciliation-head-key\",\"keyUsage\":\"coin-card-executable-registry-head\",\"mode\":\"signed-p256-v1\",\"signatureEncoding\":\"ieee-p1363\",\"signatureValueEncoding\":\"base64url-unpadded\",\"signedAt\":\"2026-07-20T12:05:00.000Z\"},\"transactionEvidenceAuthorityHash\":\"sha256:65e47e9cc14e644af68fc7a92f3e33600f834140fa22c3715d1dafe223151919\"}",
+    "expectedHeadCanonicalJson": "{\"authorityId\":\"implicitex-executable-registry\",\"cardId\":\"cc_merchant_001\",\"coinCardRegistryRecordHash\":\"sha256:0b4b3d4d0fc036c96c404287b1e6953e4a79b8cf9627edcf4afc171b6fb617e9\",\"coinCardRegistryRecordId\":\"ccr2-cc_merchant_001-r7\",\"coinCardRegistryRecordRevision\":\"7\",\"environment\":\"production\",\"expiresAt\":\"2026-07-21T12:05:00.000Z\",\"headSchemaVersion\":\"executable-registry-head.v1\",\"headSequence\":\"12\",\"issuedAt\":\"2026-07-20T12:05:00.000Z\",\"lifecycleRecordHash\":\"sha256:85baa0e74eccbe70b41061335483164255163b026f419e4b8f3574fe62ce88ab\",\"registryId\":\"implicitex-executable-production\",\"signature\":{\"algorithm\":\"ECDSA_P256_SHA256\",\"authorityId\":\"implicitex-executable-registry\",\"keyId\":\"fixture-signing-time-reconciliation-head-key\",\"keyUsage\":\"coin-card-executable-registry-head\",\"mode\":\"signed-p256-v1\",\"signatureEncoding\":\"ieee-p1363\",\"signatureValueEncoding\":\"base64url-unpadded\",\"signedAt\":\"2026-07-20T12:05:00.000Z\",\"value\":\"BvHYQIVypnVriBRslzb-7kd7NRdumwagZx5wLLF1OXyfdNGDYR-Wfew85cuyOunJycJAIFpTVrowQDbbbEfzLA\"},\"transactionEvidenceAuthorityHash\":\"sha256:65e47e9cc14e644af68fc7a92f3e33600f834140fa22c3715d1dafe223151919\"}",
+    "expectedHeadHash": "sha256:97b2c30299fac526fab9c3ba81584adf893881288093718d552ca5fbd0e0d33e"
+  }
+}

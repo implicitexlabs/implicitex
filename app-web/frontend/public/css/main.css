@@ -23,6 +23,14 @@
      --size-hero   clamp  hero display only
      8px, 9px, 10px are eliminated — too small to read on mobile
 
+   Portal six-step scale (--text-*):
+     --text-11     11px   metadata, eyebrow labels, compact technical labels
+     --text-12     12px   navigation, status text, footer group labels
+     --text-13     13px   field labels, supporting UI labels, secondary copy
+     --text-14     14px   body copy, input values, standard controls
+     --text-16     16px   strong values, account state, compact headings
+     --text-22     22px   primary task title
+
    Spacing:
      --sp-* tokens for all layout spacing (padding, margins, gaps).
      1px borders and hairline visual details may remain raw px.
@@ -39,29 +47,31 @@
 
 /* ---- Tokens ---- */
 :root {
-  --bg:         #080808;
-  --surface:    #111111;
-  --surface-2:  #1a1a1a;
-  --surface-3:  #222222;
-  --white:      #f2f2f0;
-  --dim:        rgba(242, 242, 240, 0.58);
-  --muted:      rgba(242, 242, 240, 0.30);
-  --border:     rgba(255, 255, 255, 0.09);
-  --border-2:   rgba(255, 255, 255, 0.18);
-  --nav-bg:     rgba(8, 8, 8, 0.92);
-  --button-hover: #d8d8d6;
-  --status-ok:  rgba(242, 242, 240, 0.7);
-  --warn:       #c0392b;
-  --warn-border: rgba(192, 57, 43, 0.7);
-  --control-focus: rgba(242, 242, 240, 0.84);
-  --telemetry-amber:     #b87a1e;
-  --telemetry-amber-dim: rgba(184, 122, 30, 0.82);
-  --telemetry-amber-border: rgba(184, 122, 30, 0.28);
-  /* Accent — active/live/verified/selected states. Not for decoration. */
-  --accent:        #D4A017;
-  --accent-dim:    rgba(212, 160, 23, 0.80);
-  --accent-border: rgba(212, 160, 23, 0.30);
-  --logo-pixel: rgba(242, 242, 240, 1);
+  --bg:         #202323;   /* ix-canvas — deep carbon with mineral undertone   */
+  --surface:    #292d2c;   /* ix-surface — primary panels                      */
+  --surface-2:  #333837;   /* ix-surface-raised — cards, elevated sections     */
+  --surface-3:  #3d4342;   /* ix-surface-elevated — modals, active modules     */
+  --white:      #f4f6f5;   /* ix-text-primary — headlines, values, primary copy */
+  --dim:        #c6cdcb;   /* ix-text-secondary — supporting copy              */
+  --muted:      #929a98;   /* ix-text-muted — metadata and quiet labels        */
+  --border:     #444b4a;   /* ix-border-subtle — standard boundaries           */
+  --border-2:   #687270;   /* ix-border-strong — active, focused               */
+  --nav-bg:     rgba(32, 35, 35, 0.95);
+  --button-hover: #b2c2bf; /* ix-brand-hover                                   */
+  --status-ok:  rgba(244, 246, 245, 0.7);
+  --warn:       #f06e68;   /* ix-danger                                        */
+  --warn-border: rgba(240, 110, 104, 0.7);
+  --control-focus: rgba(244, 246, 245, 0.84);
+  --telemetry-amber:     #f0b44d;   /* ix-warning                              */
+  --telemetry-amber-dim: rgba(240, 180, 77, 0.82);
+  --telemetry-amber-border: rgba(240, 180, 77, 0.28);
+  /* Accent — active/live/verified/selected/focus states.
+     Mineral teal per Alloy discipline. Not for decoration.
+     Amber signaling lives in --telemetry-amber / --warn only. */
+  --accent:        #7ab5b1;
+  --accent-dim:    rgba(122, 181, 177, 0.80);
+  --accent-border: rgba(122, 181, 177, 0.30);
+  --logo-pixel: #f4f6f5;
 
   /* ---- Typefaces ---- */
   --font-body:    'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -98,6 +108,17 @@
   --size-xl:   clamp(1.25rem, 2vw, 1.75rem); /* 20–28px — section headings             */
   --size-hero: clamp(1.75rem, 4vw, 2.75rem); /* 28–44px — hero display only            */
 
+  /* ---- Six-step portal UI scale ---- */
+  /* Maps to the governed portal typography scale. All portal selectors
+     should reference these tokens; raw px values in portal rules are a
+     migration debt marker. */
+  --text-11: 0.6875rem;   /* 11px — metadata, eyebrow labels, compact technical labels */
+  --text-12: 0.75rem;     /* 12px — navigation, status text, footer group labels       */
+  --text-13: 0.8125rem;   /* 13px — field labels, supporting UI labels, secondary copy */
+  --text-14: 0.875rem;    /* 14px — body copy, input values, standard controls         */
+  --text-16: 1rem;        /* 16px — strong values, account state, compact headings     */
+  --text-22: 1.375rem;    /* 22px — primary task title                                 */
+
   /* ---- Line heights ---- */
   --leading-tight: 1.15;
   --leading-ui:    1.35;
@@ -121,7 +142,8 @@
   --sp-10: 4rem;      /* 64px */
 
   /* ---- Layout ---- */
-  --nav-h:             56px;
+  --nav-h:             64px;
+  --ix-safe-top:       env(safe-area-inset-top, 0px);
   --ix-interface-max:  1280px;
   --ix-section-copy-max:  720px;
   --ix-section-title-max: 820px;
@@ -143,29 +165,58 @@
 }
 
 [data-theme="light"] {
-  --bg:         #f2f2f0;
-  --surface:    #ffffff;
-  --surface-2:  #ececea;
-  --surface-3:  #dededb;
-  --white:      #080808;
-  --dim:        rgba(8, 8, 8, 0.58);
-  --muted:      rgba(8, 8, 8, 0.34);
-  --border:     rgba(0, 0, 0, 0.10);
-  --border-2:   rgba(0, 0, 0, 0.24);
-  --nav-bg:     rgba(242, 242, 240, 0.92);
-  --button-hover: #222222;
-  --status-ok:  rgba(8, 8, 8, 0.7);
-  --warn:       #b03020;
-  --warn-border: rgba(176, 48, 32, 0.7);
-  --control-focus: rgba(8, 8, 8, 0.72);
-  --telemetry-amber:     #a06818;
-  --telemetry-amber-dim: rgba(160, 104, 24, 0.82);
-  --telemetry-amber-border: rgba(160, 104, 24, 0.28);
-  /* Accent — slightly darker on light bg for contrast */
-  --accent:        #A87E10;
-  --accent-dim:    rgba(168, 126, 16, 0.80);
-  --accent-border: rgba(168, 126, 16, 0.30);
-  --logo-pixel: rgba(8, 8, 8, 1);
+  --bg:         #d9dddc;   /* ix-canvas — machined pale metal                  */
+  --surface:    #e9eceb;   /* ix-surface — standard panels                     */
+  --surface-2:  #f5f6f5;   /* ix-surface-raised — cards, important modules     */
+  --surface-3:  #c8cecc;   /* ix-surface-inset — inputs, recessed areas        */
+  --white:      #232625;   /* ix-text-primary — headlines, values              */
+  --dim:        #4f5755;   /* ix-text-secondary — labels and explanatory text  */
+  --muted:      #717a78;   /* ix-text-muted — metadata, timestamps             */
+  --border:     #bcc3c1;   /* ix-border-subtle                                 */
+  --border-2:   #7d8785;   /* ix-border-strong                                 */
+  --nav-bg:     rgba(217, 221, 220, 0.96);
+  --button-hover: #344c4b; /* ix-brand-hover                                   */
+  --status-ok:  #232625;
+  --warn:       #b83f3a;   /* ix-danger light                                  */
+  --warn-border: rgba(184, 63, 58, 0.7);
+  --control-focus: #232625;
+  --telemetry-amber:     #7a4e00;   /* ix-warning light                        */
+  --telemetry-amber-dim: rgba(122, 78, 0, 0.82);
+  --telemetry-amber-border: rgba(122, 78, 0, 0.28);
+  /* Accent — active/live/verified/selected/focus states.
+     Mineral teal per Alloy discipline. Not for decoration. */
+  --accent:        #2d5c58;
+  --accent-dim:    rgba(45, 92, 88, 0.75);
+  --accent-border: rgba(45, 92, 88, 0.30);
+  --logo-pixel: #232625;
+
+  /* Coin Card surface tokens — light-mode overrides.
+     Alloy mineral neutral; independent from Portal slate palette. */
+  --cc-card-bg:     #d0d8d5;
+  --cc-card-border: rgba(35, 38, 37, 0.20);
+}
+
+/* ---- Light-theme input overrides ----
+   In dark mode --surface-3 (darker) reads as "inset/carved" — correct.
+   In light mode the same value is darker than the page field, which reads
+   as filled or disabled. Override to near-white so inputs float clearly
+   above the light background as interactive form fields.             ---- */
+[data-theme="light"] .tx-field,
+[data-theme="light"] .tx-field--primary {
+  background: #f5f6f5;   /* ix-surface-raised — floats above #d9dddc canvas */
+  border-color: rgba(30, 45, 60, 0.22);
+}
+
+[data-theme="light"] .tx-field--primary:disabled {
+  background: var(--surface-2);   /* clearly distinct from enabled #f0f6fb */
+  border-color: var(--border);
+  color: var(--dim);
+}
+
+[data-theme="light"] .tx-field:focus,
+[data-theme="light"] .tx-field--primary:focus {
+  border-color: var(--white);     /* var(--white) = #080808 in light mode */
+  box-shadow: 0 0 0 1px var(--control-focus);
 }
 
 /* ---- Base ---- */
@@ -238,11 +289,11 @@ code, kbd, pre,
   position: fixed;
   top: 0; left: 0; right: 0;
   z-index: 200;
-  height: var(--nav-h);
+  height: calc(var(--nav-h) + var(--ix-safe-top));
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 2rem;
+  padding: var(--ix-safe-top) 2rem 0;
   border-bottom: 1px solid var(--border);
   background: var(--nav-bg);
   backdrop-filter: blur(10px);
@@ -279,7 +330,7 @@ code, kbd, pre,
 [data-theme="light"] .wordmark path,
 [data-theme="light"] .wordmark polygon,
 [data-theme="light"] .wordmark rect {
-  fill: #080808;
+  fill: #232625;
 }
 
 [data-theme="light"] img.wordmark,
@@ -328,7 +379,7 @@ code, kbd, pre,
   gap: var(--sp-2);
   min-height: 36px;
   font-family: var(--font-ui);
-  font-size: var(--size-sm);
+  font-size: var(--text-12);
   font-weight: var(--weight-semibold);
   letter-spacing: 0.04em;
   color: var(--white);
@@ -367,8 +418,19 @@ code, kbd, pre,
 /* Wallet address in nav trigger — technical data, stays mono */
 .wallet-addr {
   font-family: var(--font-mono);
-  font-size: var(--size-xs);
+  font-size: var(--text-11);
   color: var(--white);
+}
+
+.wallet-account-label {
+  color: var(--dim);
+  font-family: var(--font-ui);
+  font-size: var(--text-11);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.06em;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .wallet-chevron {
@@ -407,9 +469,9 @@ code, kbd, pre,
 
 .wallet-menu-title {
   font-family: var(--font-ui);
-  font-size: var(--size-sm);
+  font-size: var(--text-11);
   font-weight: var(--weight-semibold);
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--muted);
   margin-bottom: var(--sp-2);
@@ -418,7 +480,7 @@ code, kbd, pre,
 /* Full wallet address in menu — technical data, stays mono */
 .wallet-menu-address {
   font-family: var(--font-mono);
-  font-size: var(--size-xs);
+  font-size: var(--text-11);
   line-height: var(--leading-ui);
   color: var(--white);
   overflow-wrap: anywhere;
@@ -429,9 +491,9 @@ code, kbd, pre,
   display: block;
   width: 100%;
   font-family: var(--font-ui);
-  font-size: var(--size-sm);
+  font-size: var(--text-12);
   font-weight: var(--weight-semibold);
-  letter-spacing: 0.06em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--white);
   text-align: left;
@@ -461,9 +523,9 @@ code, kbd, pre,
 /* Operational state badge — keeps mono as a state/system signal */
 .nav-status {
   font-family: var(--font-mono);
-  font-size: var(--size-xs);
+  font-size: var(--text-11);
   font-weight: var(--weight-semibold);
-  letter-spacing: 0.12em;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
   color: var(--white);
   border: 1px solid var(--border);
@@ -501,25 +563,31 @@ code, kbd, pre,
 .send-usdc-link,
 .send-usdc-link:link,
 .send-usdc-link:visited {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  padding: 0 16px;
   font-family: var(--font-ui);
-  font-size: var(--text-ui);
+  font-size: var(--text-12);
   font-weight: var(--weight-semibold);
-  letter-spacing: var(--tracking-button);
-  text-transform: none;
-  color: var(--bg);
-  background: var(--white);
-  border: 1px solid #e0e0e0;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  line-height: 1.25;
+  white-space: nowrap;
+  color: var(--white);
+  background: transparent;
+  border: 1px solid var(--accent);
   border-radius: 4px;
-  padding: var(--sp-2) var(--sp-3);
   text-decoration: none;
-  line-height: var(--leading-ui);
-  transition: background 0.12s, border-color 0.12s;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
 }
 
 .send-usdc-link:hover,
 .send-usdc-link:focus-visible {
-  background: var(--button-hover);
-  border-color: var(--button-hover);
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--bg);
 }
 
 .send-usdc-link:focus-visible {
@@ -590,7 +658,7 @@ code, kbd, pre,
   display: grid;
   justify-items: center;
   overflow: hidden;
-  padding: calc(var(--nav-h) + 3vh + 2rem) 0 2vh;
+  padding: calc(var(--nav-h) + var(--ix-safe-top) + 3vh + 2rem) 0 2vh;
   transition: opacity 0.45s ease, padding 0.45s ease;
 }
 
@@ -615,7 +683,10 @@ body.portal-active #nav {
   --ix-map-optical-nudge: 0px;
   transform: translateX(calc(-50% + var(--ix-map-optical-nudge)));
   width: min(100vw, 1184px);
-  height: 100%;
+  /* aspect-ratio keeps pixel cells square regardless of hero height.
+     Ratio matches natural map proportions: (COLS + 12) / (ROWS + 8) = 100/52. */
+  aspect-ratio: 100 / 52;
+  height: auto;
   pointer-events: none;
 }
 
@@ -834,6 +905,23 @@ body.portal-active #nav {
   display: inline-block;
   width: 1ch;
   text-align: center;
+}
+
+/* Loading and error states — single span replaces the tier grid */
+.gas-loading,
+.gas-unavail {
+  width: auto;
+  letter-spacing: 0.04em;
+}
+
+.gas-loading {
+  opacity: 0.45;
+  animation: gasPulse 1.8s ease-in-out infinite;
+}
+
+.gas-unavail {
+  opacity: 0.5;
+  font-size: 0.85em;
 }
 
 .gas-live {
@@ -1080,7 +1168,7 @@ body.portal-active #nav {
 }
 
 .transfer-anchor {
-  scroll-margin-top: calc(var(--nav-h) + 1rem);
+  scroll-margin-top: calc(var(--nav-h) + var(--ix-safe-top) + 1rem);
 }
 
 /* Portal zone — positions the four-corner tick markers and owns all vertical spacing
@@ -1092,41 +1180,6 @@ body.portal-active #nav {
   margin: clamp(2rem, 4.5vh, 3.5rem) auto;
 }
 
-/* Top-right tick */
-.portal-zone::before {
-  content: "";
-  position: absolute;
-  top: -14px;
-  right: -14px;
-  width: 18px;
-  height: 18px;
-  opacity: 0.72;
-  pointer-events: none;
-  z-index: 3;
-  border-color: var(--dim);
-  border-style: solid;
-  border-width: 0;
-  border-top-width: 2px;
-  border-right-width: 2px;
-}
-
-/* Bottom-left tick */
-.portal-zone::after {
-  content: "";
-  position: absolute;
-  bottom: -14px;
-  left: -14px;
-  width: 18px;
-  height: 18px;
-  opacity: 0.72;
-  pointer-events: none;
-  z-index: 3;
-  border-color: var(--dim);
-  border-style: solid;
-  border-width: 0;
-  border-bottom-width: 2px;
-  border-left-width: 2px;
-}
 
 /* ---- Portal controls — square tabs anchored to upper-right of portal border ---- */
 .portal-controls {
@@ -1190,7 +1243,7 @@ body.portal-active #nav {
 /* × glyph — larger and bold to match triangle visual weight */
 .portal-tab-x {
   font-family: var(--font-ui);
-  font-size: 14px;
+  font-size: var(--text-14);
   font-weight: var(--weight-bold);
   color: inherit;
   line-height: 1;
@@ -1202,9 +1255,9 @@ body.portal-active #nav {
 .disconnect-btn,
 .switch-account-btn {
   font-family: var(--font-ui);
-  font-size: var(--size-sm);
+  font-size: var(--text-12);
   font-weight: var(--weight-semibold);
-  letter-spacing: 0.14em;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
   color: var(--dim);
   background: transparent;
@@ -1252,41 +1305,39 @@ body.portal-active #nav {
 
 .modules[hidden] { display: none; }
 
-.portal-primary-nav,
-.portal-primary-nav-status {
-  grid-column: 1 / -1;
-}
-
 .portal-primary-nav {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 1px;
-  background: var(--border);
-  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 0.35rem;
+  width: max-content;
+  max-width: 100%;
+  background: transparent;
+  border: 0;
 }
 
 .portal-primary-nav-button {
-  min-width: 0;
-  min-height: 48px;
+  flex: 0 0 auto;
+  min-width: max-content;
+  min-height: 38px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: var(--sp-2);
-  padding: var(--sp-3) var(--sp-2);
-  border: 0;
+  padding: 0 16px;
+  border: 1px solid var(--border);
   background: var(--surface);
   color: var(--white);
   font-family: var(--font-ui);
-  font-size: var(--size-sm);
+  font-size: var(--text-12);
   font-weight: var(--weight-semibold);
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   line-height: 1.25;
   text-transform: uppercase;
   text-align: center;
   cursor: pointer;
-  white-space: normal;
-  overflow-wrap: anywhere;
-  transition: background 0.12s, color 0.12s, box-shadow 0.12s;
+  white-space: nowrap;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
 }
 
 .portal-primary-nav-button:hover,
@@ -1302,7 +1353,8 @@ body.portal-active #nav {
 
 .portal-primary-nav-button[aria-current="page"] {
   background: var(--surface-2);
-  box-shadow: inset 0 -2px 0 var(--white);
+  border-color: var(--border-2);
+  color: var(--white);
 }
 
 .portal-primary-nav-status {
@@ -1312,10 +1364,10 @@ body.portal-active #nav {
   border-bottom: 1px solid var(--border);
   color: var(--dim);
   font-family: var(--font-ui);
-  font-size: var(--size-xs);
+  font-size: var(--text-11);
   font-weight: var(--weight-semibold);
-  letter-spacing: 0.06em;
-  line-height: 1.5;
+  letter-spacing: 0.05em;
+  line-height: 1.4;
   text-transform: none;
 }
 
@@ -1324,19 +1376,23 @@ body.portal-active #nav {
   display: none;
 }
 
-@media (max-width: 1024px) {
-  .portal-primary-nav {
-    position: sticky;
-    top: 0;
-    z-index: 140;
-    background: var(--surface);
-    border-bottom: 1px solid var(--border-2);
+/* Nav sticky behaviour is now handled by the sticky portal-header at ≤1024px.
+   The nav itself remains static inside the header. */
+
+/* Reinforce safe-area inset using env() directly — catches PWA cache state where
+   the custom property may not yet reflect the live inset value. */
+@media (display-mode: standalone) {
+  #nav {
+    height: calc(var(--nav-h) + env(safe-area-inset-top, 0px));
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+  .hero {
+    padding-top: calc(var(--nav-h) + env(safe-area-inset-top, 0px) + 3vh + 2rem);
   }
 }
-
-@media (max-width: 1024px) and (display-mode: standalone) {
-  .portal-primary-nav {
-    padding-top: calc(env(safe-area-inset-top, 0px) + 0.35rem);
+@media (display-mode: standalone) and (max-width: 768px) {
+  .hero {
+    padding-top: calc(56px + env(safe-area-inset-top, 0px) + 1.5rem + 1rem);
   }
 }
 
@@ -1547,7 +1603,7 @@ body.portal-active #nav {
 
 .portal-entry-preview-step {
   font-family: var(--font-mono);
-  font-size: var(--size-xs);
+  font-size: var(--text-11);
   font-weight: var(--weight-semibold);
   letter-spacing: 0.08em;
   color: var(--dim);
@@ -1659,7 +1715,7 @@ body.portal-active #nav {
   background: var(--surface-2);
   color: var(--white);
   font-family: var(--font-ui);
-  font-size: var(--size-sm);
+  font-size: var(--text-12);
   line-height: 1.55;
 }
 
@@ -1724,7 +1780,7 @@ body.portal-active #nav {
 
 [data-portal-shell="direct"] .portal-connect-inline {
   font-family: var(--font-sans);
-  font-size: var(--text-ui);
+  font-size: var(--text-13);
   font-weight: var(--weight-semibold);
   letter-spacing: normal;
   text-transform: none;
@@ -1739,47 +1795,38 @@ body.portal-active #nav {
 
 [data-portal-shell="direct"] .agent-guidance-note {
   font-family: var(--font-sans);
-  font-size: var(--text-ui);
+  font-size: var(--text-13);
   font-weight: var(--weight-medium);
   letter-spacing: normal;
   line-height: 1.5;
 }
 
-[data-portal-shell="direct"] .portal-footer-statement {
-  font-family: var(--font-sans);
-  font-size: var(--text-body);
-  font-weight: 400;
-  letter-spacing: 0.01em;
-  line-height: 1.55;
-  max-width: var(--measure-footer);
-}
-
 [data-portal-shell="direct"] .portal-footer-label {
   font-family: var(--font-sans);
-  font-size: var(--text-caption);
+  font-size: var(--text-11);
   font-weight: var(--weight-semibold);
-  letter-spacing: var(--tracking-label);
+  letter-spacing: 0.09em;
   text-transform: uppercase;
 }
 
 [data-portal-shell="direct"] .portal-footer-group a {
   font-family: var(--font-sans);
-  font-size: var(--text-ui);
+  font-size: var(--text-12);
   font-weight: 500;
   letter-spacing: 0.01em;
 }
 
 [data-portal-shell="direct"] .portal-footer-more > summary {
   font-family: var(--font-sans);
-  font-size: var(--text-ui);
+  font-size: var(--text-12);
   font-weight: var(--weight-semibold);
-  letter-spacing: var(--tracking-label);
+  letter-spacing: 0.07em;
   text-transform: uppercase;
 }
 
 [data-portal-shell="direct"] .portal-footer-install-note {
   font-family: var(--font-sans);
-  font-size: var(--text-caption);
+  font-size: var(--text-11);
   line-height: 1.45;
   color: var(--dim);
 }
@@ -1798,9 +1845,9 @@ body.portal-active #nav {
 
 .install-page-browser {
   font-family: var(--font-sans);
-  font-size: var(--text-caption);
+  font-size: var(--text-11);
   font-weight: var(--weight-semibold);
-  letter-spacing: var(--tracking-label);
+  letter-spacing: 0.07em;
   text-transform: uppercase;
   color: var(--dim);
   margin-bottom: var(--sp-2);
@@ -1895,15 +1942,15 @@ body.portal-active #nav {
 }
 
 .portal-minimized-label {
-  font-size: var(--size-sm);
+  font-size: var(--text-12);
   font-weight: var(--weight-semibold);
-  letter-spacing: 0.16em;
+  letter-spacing: 0.10em;
 }
 
 .portal-minimized-status {
   flex: 1;
-  font-size: var(--size-xs);
-  letter-spacing: 0.12em;
+  font-size: var(--text-11);
+  letter-spacing: 0.08em;
   color: var(--white);
   text-align: right;
 }
@@ -1932,9 +1979,9 @@ body.portal-active #nav {
 
 .portal-header-title {
   font-family: var(--font-display);
-  font-size: var(--size-base);
+  font-size: var(--text-14);
   font-weight: var(--weight-semibold);
-  letter-spacing: 0.22em;
+  letter-spacing: 0.14em;
   line-height: 1;
   text-transform: uppercase;
   color: var(--white);
@@ -1944,7 +1991,7 @@ body.portal-active #nav {
 .portal-header-sub {
   grid-column: 1 / -1;
   font-family: var(--font-sans);
-  font-size: var(--text-ui);
+  font-size: var(--text-12);
   letter-spacing: 0.01em;
   text-transform: none;
   color: var(--dim);
@@ -2064,7 +2111,7 @@ body.portal-active #nav {
   align-items: center;
   gap: 0.75rem;
   font-family: var(--font-sans);
-  font-size: var(--text-ui);
+  font-size: var(--text-13);
   line-height: 1.45;
   color: var(--white);
 }
@@ -2080,7 +2127,7 @@ body.portal-active #nav {
   margin-left: auto;
   color: var(--dim);
   font-family: var(--font-sans);
-  font-size: var(--text-caption);
+  font-size: var(--text-11);
   line-height: 1.3;
   flex-shrink: 0;
 }
@@ -2089,7 +2136,7 @@ body.portal-active #nav {
   margin-top: 0.5rem;
   color: var(--dim);
   font-family: var(--font-sans);
-  font-size: var(--text-ui);
+  font-size: var(--text-12);
   line-height: 1.45;
 }
 
@@ -2097,7 +2144,7 @@ body.portal-active #nav {
   margin-top: 0.4rem;
   color: var(--dim);
   font-family: var(--font-sans);
-  font-size: var(--text-caption);
+  font-size: var(--text-11);
   line-height: 1.35;
 }
 
@@ -2136,10 +2183,10 @@ body.portal-active #nav {
 .transfer-portal:fullscreen::after,
 .transfer-portal:-webkit-full-screen::before,
 .transfer-portal:-webkit-full-screen::after,
-.transfer-portal:fullscreen .portal-zone::before,
-.transfer-portal:fullscreen .portal-zone::after,
-.transfer-portal:-webkit-full-screen .portal-zone::before,
-.transfer-portal:-webkit-full-screen .portal-zone::after {
+.transfer-portal:fullscreen .portal-frame-brackets::before,
+.transfer-portal:fullscreen .portal-frame-brackets::after,
+.transfer-portal:-webkit-full-screen .portal-frame-brackets::before,
+.transfer-portal:-webkit-full-screen .portal-frame-brackets::after {
   left: auto;
   right: auto;
   top: auto;
@@ -2158,28 +2205,31 @@ body.portal-active #nav {
   bottom: 0;
 }
 
-.transfer-portal:fullscreen .portal-zone::before,
-.transfer-portal:-webkit-full-screen .portal-zone::before {
+.transfer-portal:fullscreen .portal-frame-brackets::before,
+.transfer-portal:-webkit-full-screen .portal-frame-brackets::before {
   top: 0;
   right: 0;
 }
 
-.transfer-portal:fullscreen .portal-zone::after,
-.transfer-portal:-webkit-full-screen .portal-zone::after {
+.transfer-portal:fullscreen .portal-frame-brackets::after,
+.transfer-portal:-webkit-full-screen .portal-frame-brackets::after {
   bottom: 0;
   left: 0;
 }
 
-/* Corner instrument ticks — perimeter markers around the portal's protected zone.
-   Kept inside the frame so they preserve the bracket look without widening the layout.
-   Diagonal pair (top-left / bottom-right) in both collapsed and expanded states.
-   var(--dim) adapts to page theme; no separate light/dark rule needed. */
+/* ---- Portal frame brackets — all four corners from one coordinate system ----
+   .transfer-portal carries top-left and bottom-right via ::before/::after.
+   .portal-frame-brackets (first child, position:absolute inset:0) carries
+   top-right and bottom-left via its own ::before/::after.
+   All four share identical size, stroke, offset, and color. */
 .transfer-portal::before,
-.transfer-portal::after {
+.transfer-portal::after,
+.portal-frame-brackets::before,
+.portal-frame-brackets::after {
   content: "";
   position: absolute;
-  width: 18px;
-  height: 18px;
+  width: 28px;
+  height: 28px;
   opacity: 0.72;
   pointer-events: none;
   z-index: 3;
@@ -2187,17 +2237,39 @@ body.portal-active #nav {
   border-style: solid;
   border-width: 0;
 }
+/* top-left */
 .transfer-portal::before {
   top: 0;
   left: 0;
   border-top-width: 2px;
   border-left-width: 2px;
 }
+/* bottom-right */
 .transfer-portal::after {
   bottom: 0;
   right: 0;
   border-bottom-width: 2px;
   border-right-width: 2px;
+}
+/* top-right */
+.portal-frame-brackets::before {
+  top: 0;
+  right: 0;
+  border-top-width: 2px;
+  border-right-width: 2px;
+}
+/* bottom-left */
+.portal-frame-brackets::after {
+  bottom: 0;
+  left: 0;
+  border-bottom-width: 2px;
+  border-left-width: 2px;
+}
+.portal-frame-brackets {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
 }
 
 /* Collapsed portal inverts against page theme — functions as a featured instrument */
@@ -2323,9 +2395,9 @@ body.portal-active #nav {
 .mod-tag {
   display: block;
   font-family: var(--font-ui);
-  font-size: var(--text-caption);
+  font-size: var(--text-11);
   font-weight: var(--weight-semibold);
-  letter-spacing: var(--tracking-label);
+  letter-spacing: 0.07em;
   text-transform: uppercase;
   color: var(--dim);
   margin-bottom: var(--sp-4);
@@ -2333,7 +2405,7 @@ body.portal-active #nav {
 
 .mod-title {
   font-family: var(--font-sans);
-  font-size: var(--text-heading-sm);
+  font-size: var(--text-22);
   font-weight: var(--weight-semibold);
   letter-spacing: -0.01em;
   line-height: 1.2;
@@ -2353,8 +2425,8 @@ body.portal-active #nav {
 
 .tx-field-label {
   font-family: var(--font-sans);
-  font-size: 13px;
-  font-weight: var(--weight-semibold);
+  font-size: var(--text-13);
+  font-weight: var(--weight-medium);
   line-height: 1.35;
   color: var(--white);
   letter-spacing: normal;
@@ -2365,7 +2437,7 @@ body.portal-active #nav {
   border: 1px solid var(--border-2);
   color: var(--white);
   font-family: var(--font-mono);  /* user-typed addresses and amounts — mono */
-  font-size: 15px;
+  font-size: var(--size-base);
   line-height: 1.2;
   min-height: 44px;
   padding: 11px 12px;
@@ -2408,11 +2480,16 @@ body.portal-active #nav {
   appearance: none;
   color: var(--dim);
   font-family: var(--font-sans);
-  font-size: 14px;
+  font-size: var(--text-14);
   font-weight: var(--weight-medium);
   /* Force OS popup to render in dark mode — prevents browser-default blue highlight,
      which carries no meaning in ImplicitEx's signal vocabulary (gray/amber/red). */
   color-scheme: dark;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' fill='none' stroke='%23929a98' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 12px;
+  padding-right: 28px;
 }
 
 .tx-field--select option {
@@ -2448,7 +2525,7 @@ body.portal-active #nav {
 
 .tx-recipient-error {
   font-family: var(--font-sans);
-  font-size: 13px;
+  font-size: var(--text-13);
   line-height: 1.45;
   letter-spacing: normal;
   color: var(--warn);
@@ -2468,15 +2545,15 @@ body.portal-active #nav {
 
 .fee-label {
   font-family: var(--font-sans);   /* label — not a value */
-  font-size: 13px;
-  font-weight: var(--weight-semibold);
+  font-size: var(--text-13);
+  font-weight: var(--weight-medium);
   letter-spacing: normal;
   color: var(--white);
 }
 
 .fee-val {
   font-family: var(--font-mono);  /* numeric fee amount — stays mono */
-  font-size: 15px;
+  font-size: var(--size-base);
   font-weight: var(--weight-medium);
   color: var(--white);
 }
@@ -2491,7 +2568,7 @@ body.portal-active #nav {
   color: var(--dim);
   cursor: pointer;
   font-family: var(--font-sans);
-  font-size: 14px;
+  font-size: var(--text-13);
   font-weight: var(--weight-medium);
   line-height: 1.35;
   letter-spacing: normal;
@@ -2513,7 +2590,7 @@ body.portal-active #nav {
 
 #transferMod .data-k {
   font-family: var(--font-sans);
-  font-size: 13px;
+  font-size: var(--text-13);
   font-weight: var(--weight-semibold);
   letter-spacing: normal;
   text-transform: none;
@@ -2522,7 +2599,7 @@ body.portal-active #nav {
 
 #transferMod .data-v {
   font-family: var(--font-mono);
-  font-size: 15px;
+  font-size: var(--size-base);
   font-weight: var(--weight-medium);
   letter-spacing: normal;
   color: var(--white);
@@ -2530,7 +2607,7 @@ body.portal-active #nav {
 
 .tx-btn {
   font-family: var(--font-ui);
-  font-size: 14px;
+  font-size: var(--text-14);
   font-weight: var(--weight-semibold);
   letter-spacing: normal;
   text-transform: none;
@@ -2603,7 +2680,7 @@ body.portal-active #nav {
 
 .tx-state-note {
   font-family: var(--font-sans);
-  font-size: 13px;
+  font-size: var(--text-13);
   color: var(--dim);
   margin-top: 8px;
   text-align: center;
@@ -2611,7 +2688,7 @@ body.portal-active #nav {
 
 .tx-status {
   font-family: var(--font-sans);
-  font-size: 13px;
+  font-size: var(--text-13);
   color: var(--white);
   min-height: 1.4em;
   margin-top: 8px;
@@ -2667,8 +2744,8 @@ body.portal-active #nav {
 
 .tx-preview-label {
   font-family: var(--font-sans);
-  font-size: 13px;
-  font-weight: var(--weight-semibold);
+  font-size: var(--text-13);
+  font-weight: var(--weight-medium);
   letter-spacing: normal;
   text-transform: none;
   color: var(--dim);
@@ -2679,7 +2756,7 @@ body.portal-active #nav {
 
 .tx-preview-note {
   font-family: var(--font-sans);
-  font-size: 13px;
+  font-size: var(--text-13);
   letter-spacing: normal;
   color: var(--white);
   text-align: center;
@@ -2742,7 +2819,7 @@ body.portal-active #nav {
   margin-bottom: 10px;
   padding-top: 12px;
   font-family: var(--font-sans);  /* confirmation text the user reads carefully — prose */
-  font-size: 14px;
+  font-size: var(--text-14);      /* 14px minimum — user must read and understand */
   line-height: var(--leading-body);
   color: var(--white);
 }
@@ -2770,8 +2847,8 @@ body.portal-active #nav {
 
 .intel-label {
   font-family: var(--font-sans);
-  font-size: 13px;
-  font-weight: var(--weight-semibold);
+  font-size: var(--text-13);
+  font-weight: var(--weight-medium);
   letter-spacing: normal;
   text-transform: none;
   color: var(--dim);
@@ -2881,8 +2958,8 @@ body.portal-active #nav {
   cursor: pointer;
   user-select: none;
   font-family: var(--font-ui);
-  font-size: var(--size-sm);
-  letter-spacing: 0.14em;
+  font-size: var(--text-12);
+  letter-spacing: 0.07em;
   text-transform: uppercase;
   color: var(--dim);
   margin-bottom: 0;
@@ -2919,7 +2996,7 @@ body.portal-active #nav {
 
 .fee-explanation-body {
   font-family: var(--font-body);  /* explanatory prose — not technical data */
-  font-size: var(--size-sm);
+  font-size: var(--size-base);    /* disclosure text users must understand — 14px not 12px */
   color: var(--white);
   line-height: var(--leading-body);
   margin-top: 6px;
@@ -2939,8 +3016,8 @@ body.portal-active #nav {
 
 .receipt-history-label {
   font-family: var(--font-ui);
-  font-size: var(--size-sm);
-  letter-spacing: 0.14em;
+  font-size: var(--text-11);
+  letter-spacing: 0.07em;
   text-transform: uppercase;
   color: var(--dim);
   margin-bottom: 8px;
@@ -2955,7 +3032,7 @@ body.portal-active #nav {
 .receipt-empty,
 .receipt-item {
   font-family: var(--font-mono);  /* receipt records — structured data */
-  font-size: var(--size-xs);
+  font-size: var(--text-11);
   line-height: var(--leading-ui);
   color: var(--dim);
 }
@@ -2993,9 +3070,9 @@ body.portal-active #nav {
 
 .receipt-id-row {
   font-family: var(--font-mono);
-  font-size: var(--size-xs);
+  font-size: var(--text-11);
   color: var(--dim);
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   margin-bottom: 4px;
 }
 
@@ -3095,28 +3172,28 @@ body.portal-active #nav {
 
 .gas-detail-k {
   font-family: var(--font-ui);   /* field label */
-  font-size: var(--size-sm);
-  font-weight: var(--weight-bold);
-  letter-spacing: 0.12em;
+  font-size: var(--text-12);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.07em;
   text-transform: uppercase;
   color: var(--dim);
 }
 
 .gas-detail-v {
   font-family: var(--font-mono);  /* gas price — technical numeric value */
-  font-size: var(--size-xs);
+  font-size: var(--text-11);
   color: var(--white);
 }
 
 .gas-detail-row--meta .gas-detail-k {
   font-family: var(--font-ui);
-  font-size: var(--size-sm);
+  font-size: var(--text-12);
   color: var(--dim);
 }
 
 .gas-detail-row--meta .gas-detail-v {
   font-family: var(--font-mono);
-  font-size: var(--size-xs);
+  font-size: var(--text-11);
   color: var(--dim);
 }
 
@@ -3201,16 +3278,16 @@ body.portal-active #nav {
 
 .data-k {
   font-family: var(--font-ui);   /* row label */
-  font-size: var(--size-sm);
-  font-weight: var(--weight-bold);
-  letter-spacing: 0.14em;
+  font-size: var(--text-12);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.07em;
   text-transform: uppercase;
   color: var(--dim);
 }
 
 .data-v {
   font-family: var(--font-mono);  /* row value — address, hash, or amount */
-  font-size: var(--size-xs);
+  font-size: var(--text-11);
   color: var(--white);
 }
 
@@ -3229,7 +3306,7 @@ body.portal-active #nav {
   font-family: var(--font-ui);
   font-size: var(--size-sm);
   font-weight: var(--weight-semibold);
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--dim);
   text-decoration: none;
@@ -3419,9 +3496,9 @@ footer {
 
 .f-group-label {
   font-family: var(--font-ui);
-  font-size: var(--size-sm);
+  font-size: var(--text-11);
   font-weight: var(--weight-semibold);
-  letter-spacing: 0.18em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--muted);
   margin-bottom: var(--sp-1);
@@ -3429,9 +3506,9 @@ footer {
 
 .f-links a {
   font-family: var(--font-ui);
-  font-size: var(--size-sm);
+  font-size: var(--text-12);
   font-weight: var(--weight-semibold);
-  letter-spacing: 0.14em;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
   color: var(--dim);
   text-decoration: none;
@@ -3465,9 +3542,9 @@ footer {
 
 .f-net {
   font-family: var(--font-mono);   /* operational state badge — stays mono */
-  font-size: var(--size-xs);
+  font-size: var(--text-11);
   font-weight: var(--weight-semibold);
-  letter-spacing: 0.14em;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
   color: var(--white);
   border: 1px solid var(--border);
@@ -3541,9 +3618,9 @@ footer {
 
 .mobile-menu-title {
   font-family: var(--font-ui);
-  font-size: var(--size-sm);
+  font-size: var(--text-12);
   font-weight: var(--weight-semibold);
-  letter-spacing: 0.14em;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
   color: var(--white);
 }
@@ -3569,9 +3646,9 @@ footer {
 
 .mobile-menu-label {
   font-family: var(--font-ui);
-  font-size: var(--size-sm);
+  font-size: var(--text-11);
   font-weight: var(--weight-semibold);
-  letter-spacing: 0.18em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--dim);
   margin-bottom: var(--sp-3);
@@ -3581,8 +3658,8 @@ footer {
 .mobile-menu-sender,
 .mobile-menu-network {
   font-family: var(--font-mono);  /* wallet address / system state — technical data */
-  font-size: var(--size-xs);
-  letter-spacing: 0.08em;
+  font-size: var(--text-11);
+  letter-spacing: 0.06em;
   color: var(--white);
   margin-bottom: var(--sp-1);
   line-height: var(--leading-ui);
@@ -3598,9 +3675,9 @@ footer {
 
 .mobile-menu-btn {
   font-family: var(--font-ui);
-  font-size: var(--size-sm);
+  font-size: var(--text-12);
   font-weight: var(--weight-semibold);
-  letter-spacing: 0.12em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   background: transparent;
   border: 1px solid var(--border);
@@ -3632,7 +3709,7 @@ footer {
 
 .mobile-menu-portal-note {
   font-family: var(--font-ui);
-  font-size: var(--size-sm);
+  font-size: var(--text-12);
   color: var(--dim);
   letter-spacing: 0.02em;
   margin-top: var(--sp-2);
@@ -3648,9 +3725,9 @@ footer {
 .mobile-menu-links a:link,
 .mobile-menu-links a:visited {
   font-family: var(--font-ui);
-  font-size: var(--size-sm);
+  font-size: var(--text-12);
   font-weight: var(--weight-semibold);
-  letter-spacing: 0.14em;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
   color: var(--white);
   text-decoration: none;
@@ -3698,9 +3775,9 @@ footer {
 
 .wallet-choice-title {
   font-family: var(--font-ui);
-  font-size: var(--size-sm);
+  font-size: var(--text-12);
   font-weight: var(--weight-semibold);
-  letter-spacing: 0.14em;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
   color: var(--white);
 }
@@ -3726,9 +3803,9 @@ footer {
 
 .wallet-choice-btn {
   font-family: var(--font-ui);
-  font-size: var(--size-sm);
+  font-size: var(--text-12);
   font-weight: var(--weight-semibold);
-  letter-spacing: 0.12em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   background: transparent;
   border: 1px solid var(--border);
@@ -3756,7 +3833,7 @@ footer {
 
 .wallet-choice-note {
   font-family: var(--font-ui);
-  font-size: var(--size-sm);
+  font-size: var(--text-12);
   color: var(--muted);
   text-align: center;
   margin: 0;
@@ -3770,7 +3847,7 @@ footer {
 .policy-shell {
   max-width: var(--ix-interface-max);
   margin: 0 auto;
-  padding: calc(var(--nav-h) + 4.5rem) 0 5rem;
+  padding: calc(var(--nav-h) + var(--ix-safe-top) + 4.5rem) 0 5rem;
   column-count: 2;
   column-gap: var(--ix-page-gap);
 }
@@ -3912,7 +3989,7 @@ h1 + .gs-section-head {
   column-count: unset;
   display: block;
   max-width: var(--ix-interface-max);
-  padding: calc(var(--nav-h) + 4.5rem) clamp(1rem, 2vw, 1.5rem) 5rem;
+  padding: calc(var(--nav-h) + var(--ix-safe-top) + 4.5rem) clamp(1rem, 2vw, 1.5rem) 5rem;
   --faq-copy-size: 1.0625rem;
   --faq-copy-line: 1.65;
 }
@@ -4167,7 +4244,7 @@ h1 + .gs-section-head {
 
 .log-table thead th {
   font-family: var(--font-ui);
-  font-size: 11px;
+  font-size: var(--text-11);
   font-weight: var(--weight-semibold);
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -4198,7 +4275,7 @@ h1 + .gs-section-head {
 
 .log-date {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--text-11);
   color: var(--muted);
   white-space: nowrap;
   padding-top: calc(var(--sp-4) + 2px) !important; /* align with change title */
@@ -4223,7 +4300,7 @@ h1 + .gs-section-head {
 
 .log-status {
   font-family: var(--font-ui);
-  font-size: 11px;
+  font-size: var(--text-11);
   font-weight: var(--weight-semibold);
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -4869,7 +4946,7 @@ h1 + .gs-section-head {
 .about-shell {
   max-width: var(--ix-interface-max);
   margin: 0 auto;
-  padding: calc(var(--nav-h) + 4.5rem) 0 5rem;
+  padding: calc(var(--nav-h) + var(--ix-safe-top) + 4.5rem) 0 5rem;
 }
 
 .about-head {
@@ -5417,10 +5494,10 @@ h1 + .gs-section-head {
   }
 
   #nav {
-    height: var(--nav-h);
-    min-height: var(--nav-h);
+    height: calc(var(--nav-h) + var(--ix-safe-top));
+    min-height: calc(var(--nav-h) + var(--ix-safe-top));
     align-items: center;
-    padding: 0 1rem;
+    padding: var(--ix-safe-top) 1rem 0;
   }
 
   .nav-right {
@@ -5446,7 +5523,7 @@ h1 + .gs-section-head {
   }
 
   .hero {
-    padding: calc(var(--nav-h) + 1.5rem + 1rem) 0 1.5rem;
+    padding: calc(var(--nav-h) + var(--ix-safe-top) + 1.5rem + 1rem) 0 1.5rem;
   }
 
   .how-it-works {
@@ -5478,13 +5555,9 @@ h1 + .gs-section-head {
     grid-template-columns: 1fr;
   }
 
-  .portal-primary-nav {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
   .portal-primary-nav-button {
-    min-height: 44px;
-    padding-inline: var(--sp-1);
+    min-height: 38px;
+    padding-inline: 10px;
   }
 
   /* Portal zone owns the side clearance so tick markers clear the viewport edge */
@@ -5495,10 +5568,10 @@ h1 + .gs-section-head {
   /* Ticks scale back on mobile while staying inside the frame */
   .transfer-portal::before,
   .transfer-portal::after,
-  .portal-zone::before,
-  .portal-zone::after {
-    width: 14px;
-    height: 14px;
+  .portal-frame-brackets::before,
+  .portal-frame-brackets::after {
+    width: 24px;
+    height: 24px;
     opacity: 0.65;
   }
   .transfer-portal::before {
@@ -5509,13 +5582,13 @@ h1 + .gs-section-head {
     bottom: 0;
     right: 0;
   }
-  .portal-zone::before {
-    top: -10px;
-    right: -10px;
+  .portal-frame-brackets::before {
+    top: 0;
+    right: 0;
   }
-  .portal-zone::after {
-    bottom: -10px;
-    left: -10px;
+  .portal-frame-brackets::after {
+    bottom: 0;
+    left: 0;
   }
 
   .tx-meta-grid {
@@ -6085,7 +6158,7 @@ input[type="number"] {
   .learn-sidebar {
     display: none;
     position: fixed;
-    top: calc(var(--nav-h) + var(--learn-mobile-toggle-h, 42px));
+    top: calc(var(--nav-h) + var(--ix-safe-top) + var(--learn-mobile-toggle-h, 42px));
     left: 0;
     right: 0;
     z-index: 180;
@@ -6194,29 +6267,29 @@ input[type="number"] {
 }
 
 [data-theme="light"] .consent-banner {
-  background: #f0f0ee;
-  border-top-color: rgba(0, 0, 0, 0.12);
+  background: var(--surface-2);
+  border-top-color: var(--border);
 }
 
 [data-theme="light"] .consent-btn--decline {
-  color: rgba(0, 0, 0, 0.55);
-  border-color: rgba(0, 0, 0, 0.18);
+  color: var(--dim);
+  border-color: var(--border-2);
 }
 
 [data-theme="light"] .consent-btn--decline:hover {
-  background: rgba(0, 0, 0, 0.06);
-  color: #080808;
+  background: var(--surface-3);
+  color: var(--white);
 }
 
 [data-theme="light"] .consent-btn--accept {
-  background: #080808;
-  color: #f2f2f0;
-  border-color: #080808;
+  background: #232625;
+  color: #f4f6f5;
+  border-color: #232625;
 }
 
 [data-theme="light"] .consent-btn--accept:hover {
-  background: #222;
-  border-color: #222;
+  background: #344c4b;
+  border-color: #344c4b;
 }
 
 @media (max-width: 640px) {
@@ -6355,7 +6428,7 @@ input[type="number"] {
 .ccp-shell {
   max-width: var(--ix-interface-max);
   margin: 0 auto;
-  padding: calc(var(--nav-h) + var(--sp-8)) var(--sp-6) var(--sp-8);
+  padding: calc(var(--nav-h) + var(--ix-safe-top) + var(--sp-8)) var(--sp-6) var(--sp-8);
 }
 
 .ccp-head {
@@ -6710,6 +6783,11 @@ input[type="number"] {
   --cc-card-landscape-max:   440px;
   --cc-card-portrait-max:    277px;
   --cc-card-radius:          10px;
+
+  /* Coin Card surface tokens — independent from Portal --surface-2/--border-2.
+     Changes to the Portal palette must not silently alter card.html appearance. */
+  --cc-card-bg:     #1a1a1a;
+  --cc-card-border: rgba(255, 255, 255, 0.18);
 }
 
 /* Coin Card typographic tokens
@@ -6741,8 +6819,8 @@ input[type="number"] {
   width: 100%;
   max-width: var(--cc-card-landscape-max);
   aspect-ratio: var(--cc-card-ratio-landscape);
-  background: var(--surface-2);
-  border: 1px solid var(--border-2);
+  background: var(--cc-card-bg);
+  border: 1px solid var(--cc-card-border);
   border-radius: var(--cc-card-radius);
   box-shadow: 0 8px 32px rgba(0,0,0,0.48), 0 2px 8px rgba(0,0,0,0.32);
   display: grid;
@@ -7846,6 +7924,10 @@ input[type="number"] {
   .portal-entry-copy,
   .portal-entry-preview {
     padding: var(--sp-4);
+  }
+
+  .portal-entry-actions {
+    flex-direction: column;
   }
 
   .portal-entry-preview-row {

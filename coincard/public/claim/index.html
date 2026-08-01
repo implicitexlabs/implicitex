@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Claim your Coin Card — ImplicitEx</title>
+  <meta name="description" content="Connect your wallet and claim your Coin Card address.">
+  <meta name="robots" content="noindex">
+  <link rel="canonical" href="https://coincard.click/claim/">
+  <link rel="stylesheet" href="/css/coincard.css">
+</head>
+<body>
+
+<nav class="cc-nav">
+  <div class="cc-nav-inner">
+    <a href="/" class="cc-nav-logo" aria-label="Coin Card home">
+      <img class="cc-nav-coincard-logo" src="/components/images/coincard-logo.svg" alt="COIN CARD">
+      <span class="cc-nav-powered">Powered by ImplicitEx</span>
+    </a>
+  </div>
+</nav>
+
+<main>
+  <div class="cc-claim-wrap">
+
+    <a href="/" class="cc-claim-back" aria-label="Back to Coin Card home">
+      <span aria-hidden="true">←</span> Back
+    </a>
+
+    <h1 class="cc-claim-heading">Claim your Coin Card.</h1>
+
+    <!-- ── Section 1: Wallet ──────────────────────────────────── -->
+    <!-- Always visible. All other sections unlock after this one. -->
+    <div class="cc-section" id="section-wallet">
+
+      <h2 class="cc-section-heading">Choose where you&rsquo;d like to receive payments.</h2>
+
+      <!-- Verified state — shown after successful connection -->
+      <div class="cc-wallet-state cc-wallet-state-verified" id="walletVerifiedPanel" style="display:none" aria-live="polite">
+        <div class="cc-wallet-state-icon" aria-hidden="true">✓</div>
+        <div class="cc-wallet-state-body">
+          <p class="cc-wallet-state-label">Wallet verified</p>
+          <p class="cc-wallet-state-addr" id="walletVerifiedAddr"></p>
+          <p class="cc-wallet-state-note">Ownership confirmed by signature on Polygon.</p>
+          <button class="cc-wallet-change-btn" id="changeWalletBtn" type="button">Change wallet</button>
+        </div>
+      </div>
+
+      <!-- Connect area — hidden after verified -->
+      <div id="walletConnectArea">
+
+        <button class="cc-wallet-connect-btn" id="connectWalletBtn" type="button">
+          <span class="cc-wallet-connect-icon" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="1" y="4" width="16" height="11" rx="2" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M1 7h16" stroke="currentColor" stroke-width="1.5"/>
+              <circle cx="13" cy="11" r="1.25" fill="currentColor"/>
+            </svg>
+          </span>
+          <span class="cc-wallet-connect-label">Connect wallet</span>
+          <span class="cc-wallet-connect-badge">Recommended</span>
+        </button>
+
+        <p class="cc-field-error" id="wallet-connect-error" role="alert" aria-live="polite"></p>
+
+        <!-- Trouble area — hidden until wallet connection fails or is unavailable -->
+        <div class="cc-wallet-trouble" id="walletTroubleArea" style="display:none">
+
+          <button class="cc-wallet-option-link" id="walletFallbackToggle" type="button">
+            Having trouble? Continue another way &rarr;
+          </button>
+
+          <!-- Manual address fallback — hidden until explicitly requested -->
+          <div class="cc-wallet-fallback" id="walletFallback" style="display:none">
+
+            <a href="https://metamask.io" target="_blank" rel="noopener" class="cc-wallet-option-link">
+              Don&rsquo;t have a wallet yet? Get MetaMask &rarr;
+            </a>
+
+            <div class="cc-field">
+              <label class="cc-label" for="walletPasteInput">Wallet address</label>
+              <input
+                class="cc-input cc-input--mono"
+                type="text"
+                id="walletPasteInput"
+                placeholder="0x..."
+                autocomplete="off"
+                autocorrect="off"
+                autocapitalize="none"
+                spellcheck="false"
+                maxlength="42"
+                aria-describedby="walletPaste-error">
+              <p class="cc-field-error" id="walletPaste-error" role="alert" aria-live="polite"></p>
+            </div>
+
+            <!-- Unverified state — shown after valid address pasted -->
+            <div class="cc-wallet-state cc-wallet-state-unverified" id="walletUnverifiedPanel" style="display:none" aria-live="polite">
+              <div class="cc-wallet-state-icon" aria-hidden="true">⚠</div>
+              <div class="cc-wallet-state-body">
+                <p class="cc-wallet-state-label">Address entered — verification required</p>
+                <p class="cc-wallet-state-addr" id="walletUnverifiedAddr"></p>
+                <p class="cc-wallet-state-note">
+                  Payments go directly to this address. ImplicitEx cannot reverse or redirect funds
+                  sent to an incorrect address. Your Coin Card cannot go live until wallet ownership
+                  is verified. We&rsquo;ll contact you to complete that step before activation.
+                </p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── Section 2: Plan ──────────────────────────────────────── -->
+    <!-- Revealed after wallet is set. -->
+    <div class="cc-section cc-reveal" id="section-plan" style="display:none" aria-live="polite">
+
+      <h2 class="cc-section-heading">How will you use Coin Card?</h2>
+
+      <div class="cc-tier-radios" role="group" aria-label="Plan selection">
+
+        <label class="cc-tier-radio">
+          <input type="radio" name="tier" value="creator" checked>
+          <span class="cc-tier-radio-label">
+            <span class="cc-tier-radio-name">Creator</span>
+            <span class="cc-tier-radio-price">$10 / year</span>
+            <span class="cc-tier-radio-desc">A link to share anywhere.</span>
+          </span>
+        </label>
+
+        <label class="cc-tier-radio">
+          <input type="radio" name="tier" value="business">
+          <span class="cc-tier-radio-label">
+            <span class="cc-tier-radio-name">Business</span>
+            <span class="cc-tier-radio-price">$25 / year</span>
+            <span class="cc-tier-radio-desc">Link plus website embed.</span>
+          </span>
+        </label>
+
+      </div>
+
+    </div>
+
+    <!-- ── Section 3: Address ───────────────────────────────────── -->
+    <!-- Revealed after plan is selected. -->
+    <div class="cc-section cc-reveal" id="section-address" style="display:none" aria-live="polite">
+
+      <h2 class="cc-section-heading">Choose your address.</h2>
+
+      <div class="cc-field">
+        <div class="cc-input-prefix-wrap">
+          <span class="cc-input-prefix" aria-hidden="true">coincard.click/</span>
+          <input
+            class="cc-input-inline"
+            type="text"
+            id="cardId"
+            name="cardId"
+            placeholder="yourname"
+            autocomplete="off"
+            autocorrect="off"
+            autocapitalize="none"
+            spellcheck="false"
+            maxlength="32"
+            aria-label="Coin Card address"
+            aria-describedby="cardId-note cardId-error">
+        </div>
+        <p class="cc-field-note" id="cardId-note">
+          Letters, digits, hyphens, and underscores &mdash; 3 to 32 characters.
+          This becomes your permanent URL and cannot be changed after your card is live.
+        </p>
+        <p class="cc-field-error" id="cardId-error" role="alert" aria-live="polite"></p>
+      </div>
+
+    </div>
+
+    <!-- ── Section 4: Identity ──────────────────────────────────── -->
+    <!-- Revealed after a valid address is entered. -->
+    <div class="cc-section cc-reveal" id="section-identity" style="display:none" aria-live="polite">
+
+      <h2 class="cc-section-heading">A few details.</h2>
+
+      <!-- Display name -->
+      <div class="cc-field">
+        <label class="cc-label" for="displayName">Your name</label>
+        <input
+          class="cc-input"
+          type="text"
+          id="displayName"
+          name="displayName"
+          placeholder="Your name or creator name"
+          autocomplete="name"
+          maxlength="80"
+          aria-describedby="displayName-error">
+        <p class="cc-field-error" id="displayName-error" role="alert" aria-live="polite"></p>
+      </div>
+
+      <!-- Email -->
+      <div class="cc-field">
+        <label class="cc-label" for="email">Email address</label>
+        <input
+          class="cc-input"
+          type="email"
+          id="email"
+          name="email"
+          placeholder="you@example.com"
+          autocomplete="email"
+          aria-describedby="email-note email-error">
+        <div class="cc-field-disclosure" id="email-note">
+          <p class="cc-disclosure-heading">Why we need your email</p>
+          <p class="cc-disclosure-body">
+            We send your Coin Card link, renewal notices, and security alerts here.
+            Email access alone does not authorize a wallet change.
+            We don't send marketing email.
+          </p>
+        </div>
+        <p class="cc-field-error" id="email-error" role="alert" aria-live="polite"></p>
+      </div>
+
+      <!-- Platform (optional) -->
+      <div class="cc-field">
+        <label class="cc-label" for="platform">
+          Where do people find you?
+          <span class="cc-label-note">&nbsp;&mdash;&nbsp;optional</span>
+        </label>
+        <select class="cc-input" id="platform" name="platform">
+          <option value="">Choose one (optional)</option>
+          <option value="tiktok">TikTok</option>
+          <option value="youtube">YouTube</option>
+          <option value="instagram">Instagram</option>
+          <option value="podcast">Podcast</option>
+          <option value="website">Website</option>
+          <option value="business">Business</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+
+    </div>
+
+    <!-- ── Section 5: Submit ────────────────────────────────────── -->
+    <!-- Revealed after name and email are filled. -->
+    <div class="cc-section cc-reveal" id="section-submit" style="display:none" aria-live="polite">
+
+      <!-- Lightweight inline summary -->
+      <div class="cc-submit-summary" id="submitSummary">
+        <!-- Populated by claim.js before reveal -->
+      </div>
+
+      <p class="cc-review-security-note">
+        Payments route directly to the wallet above. ImplicitEx never holds funds.
+      </p>
+
+      <button class="cc-submit" type="button" id="submitBtn">
+        Submit Coin Card request
+      </button>
+
+      <p class="cc-field-error" id="submit-error" role="alert" aria-live="polite" style="margin-top:10px"></p>
+
+      <p class="cc-field-note" style="text-align:center;margin-top:12px">
+        By submitting you agree to ImplicitEx's
+        <a href="https://implicitex.com/terms.html" target="_blank" rel="noopener">Terms of Service</a>
+        and <a href="https://implicitex.com/acceptable-use.html" target="_blank" rel="noopener">Acceptable Use Policy</a>.
+      </p>
+
+    </div>
+
+    <!-- ── Confirmation ─────────────────────────────────────────── -->
+    <div class="cc-confirm" id="confirmPanel" aria-live="polite" style="display:none">
+
+      <div class="cc-confirm-preview">
+        <p class="cc-confirm-preview-label">Your Coin Card</p>
+        <div class="cc-confirm-preview-url">
+          <span class="cc-confirm-url-base">coincard.click/</span><span id="confirmCardId" class="cc-confirm-url-slug"></span>
+        </div>
+        <div class="cc-confirm-preview-status">
+          <span class="cc-confirm-status-dot" aria-hidden="true"></span>
+          <div class="cc-confirm-status-body">
+            <span class="cc-confirm-status-text">Requested</span>
+            <p class="cc-confirm-status-note">We'll email you when your card is ready.</p>
+          </div>
+        </div>
+      </div>
+
+      <h2 class="cc-confirm-heading">Request received.</h2>
+      <p class="cc-confirm-body">
+        We're reviewing your request. We'll send your Coin Card link to
+        <span class="cc-confirm-mono" id="confirmEmail"></span>
+        within one business day.
+        <br><br>
+        In the meantime, make sure your wallet is set up to receive USDC on the Polygon network.
+      </p>
+    </div>
+
+  </div>
+</main>
+
+<footer class="cc-footer">
+  <div class="cc-site-wrap" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;width:100%">
+    <p class="cc-footer-brand">
+      &copy; 2026 <a href="https://implicitex.com" target="_blank" rel="noopener">ImplicitEx</a>
+      &middot; Coin Card
+    </p>
+    <nav class="cc-footer-links" aria-label="Footer links">
+      <a href="https://implicitex.com/privacy.html" target="_blank" rel="noopener">Privacy</a>
+      <a href="https://implicitex.com/terms.html" target="_blank" rel="noopener">Terms</a>
+    </nav>
+  </div>
+</footer>
+
+<script src="/js/claim.js"></script>
+</body>
+</html>

@@ -27,6 +27,7 @@ const protectedAssets = [
   'card/coin-card-verification.js',
   'card/card.js',
   'card/card.css',
+  'card/index.html',
 ];
 
 function run(command, args, options = {}) {
@@ -141,6 +142,8 @@ function main() {
     'card/card.js',
     '--asset',
     'card/card.css',
+    '--asset',
+    'card/index.html',
     '--out',
     manifestPath,
   ]);
