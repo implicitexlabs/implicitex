@@ -15,7 +15,8 @@ contract ImplicitExTransfer is Ownable2Step, Pausable, ReentrancyGuard {
     address public treasury;
 
     uint16 public feeBasisPoints;
-    uint16 public constant MAX_FEE_BPS = 100; // 1.00% — owner may lower but never raise above this
+    uint16 public constant MAX_FEE_BPS = 100;         // 1.00% — owner may lower but never raise above this
+    uint256 public constant MAX_FEE    = 10_000_000;  // 10 USDC (6 decimals) — absolute per-transfer fee ceiling
     uint256 public minTransferAmount;
     uint256 public transferPrecision;
 
@@ -85,9 +86,7 @@ contract ImplicitExTransfer is Ownable2Step, Pausable, ReentrancyGuard {
             revert InvalidTransferPrecision(amount, transferPrecision);
         }
 
-        // Floor fee math is intentional. The configured minimum transfer and
-        // precision keep valid USDC transfers out of dust ranges.
-        uint256 fee = (amount * feeBasisPoints) / 10000;
+        uint256 fee = calculateFee(amount);
         uint256 totalDebit = amount + fee;
 
         // Route directly — funds never touch the contract balance.
@@ -116,7 +115,7 @@ contract ImplicitExTransfer is Ownable2Step, Pausable, ReentrancyGuard {
         uint256 allowance,
         bool canTransfer
     ) {
-        fee = (amount * feeBasisPoints) / 10000;
+        fee = calculateFee(amount);
         totalDebit = amount + fee;
 
         if (sender == address(0) || amount == 0) {
@@ -129,6 +128,17 @@ contract ImplicitExTransfer is Ownable2Step, Pausable, ReentrancyGuard {
                       amount % transferPrecision == 0 &&
                       balance >= totalDebit &&
                       allowance >= totalDebit;
+    }
+
+    /**
+     * @notice Returns the platform fee for a given transfer amount.
+     * @dev    1% of amount, capped at MAX_FEE (10 USDC). Floor division is
+     *         intentional — dust is avoided by the minimum transfer and precision
+     *         constraints enforced in transferWithFee.
+     */
+    function calculateFee(uint256 amount) public view returns (uint256) {
+        uint256 percentageFee = (amount * feeBasisPoints) / 10000;
+        return percentageFee > MAX_FEE ? MAX_FEE : percentageFee;
     }
 
     function setTreasury(address newTreasury) external onlyOwner {

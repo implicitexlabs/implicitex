@@ -2,6 +2,11 @@
 
 Last updated: 2026-05-27
 
+Historical status: This document preserves the original technical-readiness
+roadmap. Current commercial strategy, target market, economics, vertical
+sequence, and exclusions are governed by
+`docs/product/product-commercial-roadmap-2026-07-30.md`.
+
 ## Current MVP Readiness Snapshot
 
 Estimated MVP readiness: 96-98%.

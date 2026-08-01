@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>ImplicitEx — Coin Card</title>
+  <meta name="description" content="Stop sharing raw wallet addresses. Share a Coin Card — a verified USDC payment surface that shows who you're paying, what network to use, and what happens before money moves.">
+  <meta property="og:url" content="https://implicitex.com/coincard.html">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="ImplicitEx — Coin Card">
+  <meta property="og:description" content="Stop sharing raw wallet addresses. Share a Coin Card — verified USDC payment identity for creators, freelancers, and small businesses.">
+  <meta property="og:image" content="https://implicitex.com/components/images/og-proof.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="628">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@implicitex">
+  <meta name="twitter:title" content="ImplicitEx — Coin Card">
+  <meta name="twitter:description" content="Stop sharing raw wallet addresses. Share a Coin Card — verified USDC payment identity for creators, freelancers, and small businesses.">
+  <meta name="twitter:image" content="https://implicitex.com/components/images/og-proof.png">
+  <link rel="canonical" href="https://implicitex.com/coincard.html">
+  <script>(function(){try{var t=localStorage.getItem('implicitex-theme');if(t==='light'||t==='dark'){document.documentElement.dataset.theme=t;}else{var h=new Date().getHours();document.documentElement.dataset.theme=(h>=7&&h<19)?'light':'dark';}}catch(e){}})();</script>
+  <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav id="nav">
+    <a href="/" class="logo" aria-label="ImplicitEx home">
+      <svg class="brandmark" width="25" height="25" viewBox="0 0 25 25" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+        <path d="M18.4,21.48L2.64,5.73l.43-.43,15.76,15.76s1.3,1.3,2.79-.19.21-2.77.21-2.77L6.05,2.32l.43-.43,4.07,4.07,1.38,1.38,1.28-1.28,4.28-4.28.43.43-5.56,5.56,2.98,2.98,5.56-5.56.43.43-5.56,5.56,1.28,1.28,5.56-5.56s1.28-1.28-.21-2.77-2.79-.19-2.79-.19l-4.26,4.26-.43-.43,4.26-4.26s1.3-1.3-.19-2.79-2.77-.21-2.77-.21l-4.28,4.28L7.75.62s-1.28-1.28-2.77.21-.19,2.79-.19,2.79l15.76,15.76-.43.43L4.37,4.05s-1.3-1.3-2.79.19-.11,2.87-.11,2.87l15.68,15.68-.43.43-5.56-5.56-5.54,5.54-.43-.43,5.54-5.54-2.98-2.98-5.54,5.54-.43-.43,5.54-5.54-1.28-1.28L.51,18.08s-1.28,1.28.21,2.77,2.79.19,2.79.19l4.23-4.23.43.43-4.23,4.23s-1.3,1.3.19,2.79,2.77.21,2.77.21l4.26-4.26,4.28,4.28s1.28,1.28,2.77-.21.19-2.79.19-2.79Z" fill="#f2f2f0"/>
+      </svg>
+      <img class="wordmark" src="/components/images/wordmark-white.svg" alt="" aria-hidden="true">
+    </a>
+    <div class="nav-right">
+      <button class="clock-toggle" id="clockToggle" type="button" aria-label="Set theme by time of day">
+        <svg class="clock-icon" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+          <circle cx="7" cy="7" r="6" fill="none" stroke="currentColor" stroke-width="1.2"/>
+          <line id="clockHourHand" x1="7" y1="7" x2="7" y2="4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <line id="clockMinuteHand" x1="7" y1="7" x2="7" y2="2.5" stroke="currentColor" stroke-width="1" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch to light theme" aria-pressed="false">
+        <svg class="theme-icon" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+          <path d="M7 1 A6 6 0 0 0 7 13 Z" fill="var(--white)"/>
+          <path d="M7 1 A6 6 0 0 1 7 13 Z" fill="var(--bg)"/>
+          <circle cx="7" cy="7" r="6" fill="none" stroke="currentColor" stroke-width="1.2"/>
+        </svg>
+      </button>
+      <span class="nav-status">Polygon · Live</span>
+      <a class="send-usdc-link" href="/#transfer">Transfer Portal</a>
+      <button class="connect-btn" id="connectBtn" onclick="IX.connect()">
+        Connect Wallet
+      </button>
+      <div class="wallet-menu" id="walletMenu" hidden>
+        <button class="wallet-menu-trigger" id="walletMenuTrigger" type="button" aria-expanded="false" aria-controls="walletMenuPanel" aria-label="Wallet account menu">
+          <span class="wallet-dot" aria-hidden="true"></span>
+          <span class="wallet-addr" id="walletAddr"></span>
+          <span class="wallet-chevron" aria-hidden="true"></span>
+        </button>
+        <div class="wallet-menu-panel" id="walletMenuPanel" hidden>
+          <p class="wallet-menu-title">Wallet account</p>
+          <p class="wallet-menu-address" id="walletFullAddress"></p>
+          <button class="wallet-menu-action" id="copyAddressBtn" type="button">Copy address</button>
+          <button class="wallet-menu-action" id="switchNetworkBtn" type="button" hidden>Switch to Polygon</button>
+          <button class="wallet-menu-action" id="switchAccountBtn" type="button">Switch account</button>
+          <button class="wallet-menu-action wallet-menu-action--danger" id="disconnectBtn" type="button">Disconnect</button>
+        </div>
+      </div>
+      <button class="hamburger-btn" id="hamburgerBtn" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
+        <svg width="18" height="14" viewBox="0 0 18 14" aria-hidden="true">
+          <rect y="0"  width="18" height="1.8" fill="currentColor"/>
+          <rect y="6"  width="18" height="1.8" fill="currentColor"/>
+          <rect y="12" width="18" height="1.8" fill="currentColor"/>
+        </svg>
+      </button>
+    </div>
+  </nav>
+
+  <!-- MOBILE MENU OVERLAY -->
+  <div class="mobile-menu" id="mobileMenu" role="dialog" aria-modal="true" aria-label="Site menu" hidden>
+    <div class="mobile-menu-inner">
+      <div class="mobile-menu-head">
+        <span class="mobile-menu-title">Menu</span>
+        <button class="mobile-menu-close" id="mobileMenuClose" type="button" aria-label="Close menu">
+          <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+            <line x1="1" y1="1" x2="13" y2="13" stroke="currentColor" stroke-width="1.6"/>
+            <line x1="13" y1="1" x2="1" y2="13" stroke="currentColor" stroke-width="1.6"/>
+          </svg>
+        </button>
+      </div>
+
+      <section class="mobile-menu-section" aria-label="Wallet">
+        <p class="mobile-menu-label">Wallet</p>
+        <p class="mobile-menu-status" id="menuWalletStatus">No wallet connected.</p>
+        <p class="mobile-menu-sender" id="menuSenderDisplay" hidden></p>
+        <p class="mobile-menu-network" id="menuNetworkDisplay" hidden></p>
+        <div class="mobile-menu-actions">
+          <button class="mobile-menu-btn mobile-menu-btn--primary" id="menuConnectBtn" type="button">Connect Wallet</button>
+          <button class="mobile-menu-btn" id="menuSwitchBtn" type="button" hidden>Switch Account</button>
+          <button class="mobile-menu-btn mobile-menu-btn--danger" id="menuDisconnectBtn" type="button" hidden>Disconnect</button>
+        </div>
+      </section>
+
+      <section class="mobile-menu-section" aria-label="Transaction">
+        <p class="mobile-menu-label">Transaction</p>
+        <button class="mobile-menu-btn mobile-menu-btn--primary" id="menuOpenPortalBtn" type="button">Transfer Portal</button>
+        <p class="mobile-menu-portal-note">Open the USDC transfer interface.</p>
+      </section>
+
+      <section class="mobile-menu-section" aria-label="Navigation">
+        <p class="mobile-menu-label">Site</p>
+        <nav class="mobile-menu-links">
+          <a href="/coincard.html">Coin Card</a>
+          <a href="/start.html">Start</a>
+          <a href="/about.html">About</a>
+          <a href="/faq.html">FAQ</a>
+          <a href="/learn.html">Learn</a>
+          <a href="/verify.html">Verify</a>
+          <a href="/log.html">Devlog</a>
+          <a href="/terms.html">Terms</a>
+          <a href="/privacy.html">Privacy</a>
+          <a href="/legal.html">Legal</a>
+          <a href="/jurisdictions.html">Access</a>
+          <a href="/news.html">News</a>
+          <a href="/contact.html">Contact</a>
+        </nav>
+      </section>
+
+      <section class="mobile-menu-section" aria-label="Social">
+        <p class="mobile-menu-label">Social</p>
+        <nav class="mobile-menu-links">
+          <a href="https://x.com/implicitex" target="_blank" rel="noopener">X</a>
+          <a href="https://github.com/implicitexlabs" target="_blank" rel="noopener">GitHub</a>
+        </nav>
+      </section>
+    </div>
+    <div class="mobile-menu-backdrop" id="mobileMenuBackdrop" aria-hidden="true"></div>
+  </div>
+
+  <main class="about-shell">
+
+    <!-- HERO -->
+    <header class="about-head">
+      <div class="about-hero-mark about-hero-mark--stacked" aria-hidden="true">
+        <img class="about-brandmark" src="components/images/lettermark-white.svg" alt="">
+        <img class="about-wordmark" src="components/images/wordmark-white.svg" alt="">
+      </div>
+
+      <h1>Stop sharing raw wallet addresses.</h1>
+      <p class="about-subtitle">Share a Coin Card.</p>
+
+      <p>
+        A Coin Card is a verified USDC payment surface. It shows who you're paying,
+        what network and token to use, and the card's current status — before any
+        money moves.
+      </p>
+
+      <p>
+        Instead of copying a 42-character hex string and hoping it landed correctly,
+        a sender opens a Coin Card link, sees the verified recipient and network,
+        reviews the fee, and proceeds to the transfer surface. The card checks itself
+        against the registry before use.
+      </p>
+    </header>
+
+    <!-- COMPARISON: Raw address vs. Coin Card -->
+    <section class="about-grid" aria-label="Raw wallet address versus Coin Card">
+      <article class="about-card">
+        <div class="gs-section-head">
+          <svg class="gs-mark" width="32" height="32" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges" aria-hidden="true">
+            <path fill="currentColor" d="M 2,2 H 4 V 4 H 2 Z M 12,2 H 14 V 4 H 12 Z M 4,4 H 6 V 6 H 4 Z M 10,4 H 12 V 6 H 10 Z M 6,6 H 8 V 8 H 6 Z M 8,6 H 10 V 8 H 8 Z M 6,8 H 8 V 10 H 6 Z M 8,8 H 10 V 10 H 8 Z M 4,10 H 6 V 12 H 4 Z M 10,10 H 12 V 12 H 10 Z M 2,12 H 4 V 14 H 2 Z M 12,12 H 14 V 14 H 12 Z"/>
+          </svg>
+          <h2>Raw wallet address</h2>
+        </div>
+        <p>Pasting a wallet address directly works — but it carries real friction and risk:</p>
+        <ul>
+          <li>42-character string — easy to mistype, truncate, or paste wrong</li>
+          <li>No recipient context — who is this address?</li>
+          <li>No network indicator — Polygon, Ethereum, Base, or somewhere else?</li>
+          <li>No token indicator — USDC, MATIC, or something unexpected?</li>
+          <li>No status — is this address still current, deprecated, or wrong?</li>
+          <li>No proof layer — nothing to verify after the fact</li>
+          <li>No professional surface — awkward to share or publish</li>
+        </ul>
+      </article>
+
+      <article class="about-card">
+        <div class="gs-section-head">
+          <svg class="gs-mark" width="32" height="32" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges" aria-hidden="true">
+            <path fill="currentColor" d="M 2,2 H 14 V 4 H 2 Z M 2,4 H 3 V 12 H 2 Z M 13,4 H 14 V 12 H 13 Z M 4,5 H 12 V 6 H 4 Z M 4,7 H 10 V 8 H 4 Z M 4,9 H 8 V 10 H 4 Z M 2,12 H 14 V 14 H 2 Z"/>
+          </svg>
+          <h2>Coin Card</h2>
+        </div>
+        <p>A Coin Card structures the payment identity so the sender knows exactly what they're doing:</p>
+        <ul>
+          <li>Shows verified recipient name — confirmed against the registry</li>
+          <li>Indicates the correct network and token before transfer</li>
+          <li>Displays card status — active, revoked, or deprecated</li>
+          <li>Hands sender into the ImplicitEx transfer surface</li>
+          <li>Produces a receipt with the on-chain transaction hash</li>
+          <li>Shareable as a clean, professional link</li>
+          <li>Can be revoked or updated without changing the published link</li>
+        </ul>
+      </article>
+    </section>
+
+    <p class="about-thesis">
+      A Coin Card does not replace the blockchain. It reduces the confusion before money
+      moves — so both the sender and recipient know exactly what happened and can prove it.
+    </p>
+
+    <!-- WHO IT'S FOR -->
+    <section class="about-foot" aria-label="Who Coin Card is for">
+      <div class="gs-section-head">
+        <svg class="gs-mark" width="32" height="32" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges" aria-hidden="true">
+          <path fill="currentColor" d="M 4,1 H 12 V 2 H 4 Z M 4,2 H 5 V 13 H 4 Z M 11,2 H 12 V 13 H 11 Z M 6,4 H 10 V 5 H 6 Z M 6,7 H 10 V 8 H 6 Z M 6,10 H 9 V 11 H 6 Z M 4,13 H 5 V 14 H 4 Z M 6,13 H 7 V 14 H 6 Z M 8,13 H 9 V 14 H 8 Z M 10,13 H 11 V 14 H 10 Z"/>
+        </svg>
+        <h2>Who it's for</h2>
+      </div>
+
+      <p>
+        Coin Card is designed for anyone who receives USDC and wants a cleaner,
+        more trustworthy surface than posting a raw wallet address.
+      </p>
+
+      <ul>
+        <li><strong>Creators</strong> — publish a verified payment card for support, commissions, and sponsorships</li>
+        <li><strong>Freelancers</strong> — share a professional payment link on invoices and proposals instead of a raw address</li>
+        <li><strong>Agencies</strong> — receive client USDC payments with verified recipient confirmation and receipt proof</li>
+        <li><strong>Local businesses</strong> — accept direct USDC payments with a shareable, revocable card link</li>
+        <li><strong>Donation and support pages</strong> — let contributors verify the destination before sending</li>
+      </ul>
+
+      <p>
+        You do not need to be a crypto engineer to use Coin Card. You need a wallet
+        address and a reason someone should trust it.
+      </p>
+    </section>
+
+    <!-- HOW IT WORKS -->
+    <section class="about-foot" aria-label="How Coin Card works for a sender">
+      <div class="gs-section-head">
+        <svg class="gs-mark" width="32" height="32" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges" aria-hidden="true">
+          <path fill="currentColor" d="M 8,1 H 13 V 3 H 8 Z M 11,3 H 13 V 6 H 11 Z M 3,7 H 13 V 10 H 3 Z M 3,10 H 7 V 13 H 3 Z M 9,10 H 13 V 13 H 9 Z M 3,13 H 13 V 14 H 3 Z"/>
+        </svg>
+        <h2>How it works</h2>
+      </div>
+
+      <p>When someone receives a Coin Card link:</p>
+
+      <ol>
+        <li>Open the Coin Card — the card checks its registry status automatically</li>
+        <li>See the verified recipient, network, and token before entering any amount</li>
+        <li>Enter the transfer amount in USDC</li>
+        <li>Review the platform fee and total debit before any wallet action</li>
+        <li>Connect your wallet and approve the exact transfer amount</li>
+        <li>Confirm and execute the transfer on-chain through the ImplicitEx contract</li>
+        <li>Receive a local receipt with the transaction hash — independent proof of what happened</li>
+      </ol>
+
+      <p class="ccp-notice">
+        Transfer execution is currently paused while we document our exact-approval flow
+        for a third-party wallet security review. The Coin Card identity and verification
+        surface is fully live. Transfers will re-enable after the review resolves.
+        See the <a href="/faq.html#faq-security">FAQ</a> for details.
+      </p>
+    </section>
+
+    <!-- TRUST PROPERTIES -->
+    <section class="about-foot" aria-label="Coin Card trust and safety properties">
+      <div class="gs-section-head">
+        <svg class="gs-mark" width="32" height="32" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges" aria-hidden="true">
+          <path fill="currentColor" d="M 5,1 H 11 V 3 H 5 Z M 5,3 H 7 V 5 H 5 Z M 9,3 H 11 V 5 H 9 Z M 5,5 H 11 V 7 H 5 Z M 7,7 H 9 V 14 H 7 Z M 9,10 H 11 V 11 H 9 Z M 9,12 H 12 V 13 H 9 Z"/>
+        </svg>
+        <h2>Non-custodial by design</h2>
+      </div>
+
+      <p>
+        Coin Card is issued by ImplicitEx and operates on the same principles as the
+        ImplicitEx transfer platform:
+      </p>
+
+      <ul>
+        <li>Non-custodial — ImplicitEx never holds your funds at any point</li>
+        <li>No sender account required — only a compatible wallet</li>
+        <li>Fee shown before transfer, not after</li>
+        <li>Card status is checked against the registry before the transfer surface opens</li>
+        <li>Transfers confirmed on-chain cannot be reversed</li>
+        <li>The receipt includes the on-chain transaction hash as independently verifiable proof</li>
+        <li>A revoked card shows its revocation status and does not allow transfer handoff</li>
+      </ul>
+    </section>
+
+    <!-- CTA -->
+    <section class="about-foot" aria-label="See a Coin Card">
+      <div class="gs-section-head">
+        <svg class="gs-mark" width="32" height="32" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges" aria-hidden="true">
+          <path fill="currentColor" d="M 2,7 H 10 V 9 H 2 Z M 8,4 H 10 V 7 H 8 Z M 8,9 H 10 V 12 H 8 Z M 10,5 H 12 V 7 H 10 Z M 10,9 H 12 V 11 H 10 Z M 12,6 H 14 V 10 H 12 Z"/>
+        </svg>
+        <h2>See a live Coin Card</h2>
+      </div>
+
+      <p>
+        The demo below is a live Coin Card on the ImplicitEx registry.
+        It shows the verified recipient surface, card status, and network/token
+        information exactly as a real card holder would publish it.
+      </p>
+
+      <a class="back" href="/card/antoine">View demo Coin Card &rarr;</a>
+      <a class="back" href="/">Return to ImplicitEx</a>
+    </section>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="f-inner">
+      <div class="f-brand">
+        <div class="f-brand-lockup">
+          <img src="/components/images/lettermark-white.svg" alt="" aria-hidden="true" class="f-brand-mark">
+          <img src="/components/images/wordmark-white.svg" alt="ImplicitEx" class="f-brand-word">
+        </div>
+        <span class="f-tagline">Wallet-to-wallet USDC transfers.</span>
+      </div>
+      <nav class="f-links" aria-label="Footer links">
+        <div class="f-group">
+          <span class="f-group-label">Product</span>
+          <a href="/coincard.html">Coin Card</a>
+          <a href="/start.html">Start</a>
+          <a href="/faq.html">FAQ</a>
+          <a href="/learn.html">Learn</a>
+          <a href="/verify.html">Verify</a>
+          <a href="/log.html">Devlog</a>
+        </div>
+        <div class="f-group">
+          <span class="f-group-label">Legal</span>
+          <a href="/terms.html">Terms</a>
+          <a href="/privacy.html">Privacy</a>
+          <a href="/legal.html">Legal</a>
+        </div>
+        <div class="f-group">
+          <span class="f-group-label">Support</span>
+          <a href="/contact.html">Contact</a>
+          <a href="/jurisdictions.html">Access</a>
+        </div>
+        <div class="f-group">
+          <span class="f-group-label">Company</span>
+          <a href="/about.html">About</a>
+          <a href="/media.html">Media</a>
+          <a href="/brand.html">Brand</a>
+          <a href="/news.html">News</a>
+        </div>
+        <div class="f-group">
+          <span class="f-group-label">Social</span>
+          <a href="https://x.com/implicitex" target="_blank" rel="noopener">X</a>
+          <a href="https://www.linkedin.com/in/implicitex/" target="_blank" rel="noopener">LinkedIn</a>
+          <a href="https://github.com/implicitexlabs" target="_blank" rel="noopener">GitHub</a>
+        </div>
+      </nav>
+      <div class="f-bottom">
+        <span class="f-net is-live" id="networkBadge">Polygon live</span>
+        <span class="f-copy">&#169; <a href="https://adenmediagroup.com" target="_blank" rel="noopener noreferrer">Aden Media Group, LLC</a></span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="config/chains.js"></script>
+  <script src="js/analytics.js"></script>
+  <script src="js/consent.js"></script>
+  <script src="js/wallet.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/mobile-menu.js"></script>
+</body>
+</html>

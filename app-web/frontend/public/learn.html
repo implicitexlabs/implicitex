@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>ImplicitEx — Learn</title>
+  <meta name="description" content="Guides and concepts for first-time crypto users. Learn about wallets, USDC, Polygon, gas fees, and how ImplicitEx works.">
+  <meta property="og:url" content="https://implicitex.com/learn.html">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="ImplicitEx — Learn">
+  <meta property="og:description" content="Guides for first-time crypto users. Learn about wallets, USDC, Polygon, gas fees, and how ImplicitEx works.">
+  <meta property="og:image" content="https://implicitex.com/components/images/og-learn.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="628">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@implicitex">
+  <meta name="twitter:title" content="ImplicitEx — Learn">
+  <meta name="twitter:description" content="Guides for first-time crypto users. Learn about wallets, USDC, Polygon, gas fees, and how ImplicitEx works.">
+  <meta name="twitter:image" content="https://implicitex.com/components/images/og-learn.png">
+  <link rel="canonical" href="https://implicitex.com/learn.html">
+  <script>(function(){try{var t=localStorage.getItem('implicitex-theme');if(t==='light'||t==='dark'){document.documentElement.dataset.theme=t;}else{var h=new Date().getHours();document.documentElement.dataset.theme=(h>=7&&h<19)?'light':'dark';}}catch(e){}})();</script>
+  <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+
+  <nav id="nav">
+    <a href="/" class="logo" aria-label="ImplicitEx home">
+      <svg class="brandmark" width="25" height="25" viewBox="0 0 25 25" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+        <path d="M18.4,21.48L2.64,5.73l.43-.43,15.76,15.76s1.3,1.3,2.79-.19.21-2.77.21-2.77L6.05,2.32l.43-.43,4.07,4.07,1.38,1.38,1.28-1.28,4.28-4.28.43.43-5.56,5.56,2.98,2.98,5.56-5.56.43.43-5.56,5.56,1.28,1.28,5.56-5.56s1.28-1.28-.21-2.77-2.79-.19-2.79-.19l-4.26,4.26-.43-.43,4.26-4.26s1.3-1.3-.19-2.79-2.77-.21-2.77-.21l-4.28,4.28L7.75.62s-1.28-1.28-2.77.21-.19,2.79-.19,2.79l15.76,15.76-.43.43L4.37,4.05s-1.3-1.3-2.79.19-.11,2.87-.11,2.87l15.68,15.68-.43.43-5.56-5.56-5.54,5.54-.43-.43,5.54-5.54-2.98-2.98-5.54,5.54-.43-.43,5.54-5.54-1.28-1.28L.51,18.08s-1.28,1.28.21,2.77,2.79.19,2.79.19l4.23-4.23.43.43-4.23,4.23s-1.3,1.3.19,2.79,2.77.21,2.77.21l4.26-4.26,4.28,4.28s1.28,1.28,2.77-.21.19-2.79.19-2.79Z" fill="#f2f2f0"/>
+      </svg>
+      <img class="wordmark" src="/components/images/wordmark-white.svg" alt="" aria-hidden="true">
+    </a>
+    <div class="nav-right">
+      
+      <button class="clock-toggle" id="clockToggle" type="button" aria-label="Set theme by time of day">
+        <svg class="clock-icon" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+          <circle cx="7" cy="7" r="6" fill="none" stroke="currentColor" stroke-width="1.2"/>
+          <line id="clockHourHand" x1="7" y1="7" x2="7" y2="4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <line id="clockMinuteHand" x1="7" y1="7" x2="7" y2="2.5" stroke="currentColor" stroke-width="1" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch to light theme" aria-pressed="false">
+        <svg class="theme-icon" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+          <path d="M7 1 A6 6 0 0 0 7 13 Z" fill="var(--white)"/>
+          <path d="M7 1 A6 6 0 0 1 7 13 Z" fill="var(--bg)"/>
+          <circle cx="7" cy="7" r="6" fill="none" stroke="currentColor" stroke-width="1.2"/>
+        </svg>
+      </button>
+      <span class="nav-status">Polygon · Live</span>
+      <a class="send-usdc-link" href="/#transfer">Transfer Portal</a>
+      <button class="connect-btn" id="connectBtn" onclick="IX.connect()">
+        Connect Wallet
+      </button>
+      <div class="wallet-menu" id="walletMenu" hidden>
+        <button class="wallet-menu-trigger" id="walletMenuTrigger" type="button" aria-expanded="false" aria-controls="walletMenuPanel" aria-label="Wallet account menu">
+          <span class="wallet-dot" aria-hidden="true"></span>
+          <span class="wallet-addr" id="walletAddr"></span>
+          <span class="wallet-chevron" aria-hidden="true"></span>
+        </button>
+        <div class="wallet-menu-panel" id="walletMenuPanel" hidden>
+          <p class="wallet-menu-title">Wallet account</p>
+          <p class="wallet-menu-address" id="walletFullAddress"></p>
+          <button class="wallet-menu-action" id="copyAddressBtn" type="button">Copy address</button>
+          <button class="wallet-menu-action" id="switchNetworkBtn" type="button" hidden>Switch to Polygon</button>
+          <button class="wallet-menu-action" id="switchAccountBtn" type="button">Switch account</button>
+          <button class="wallet-menu-action wallet-menu-action--danger" id="disconnectBtn" type="button">Disconnect</button>
+        </div>
+      </div>
+      <!-- Hamburger — mobile only, hidden on desktop via CSS -->
+      <button class="hamburger-btn" id="hamburgerBtn" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
+        <svg width="18" height="14" viewBox="0 0 18 14" aria-hidden="true">
+          <rect y="0"  width="18" height="1.8" fill="currentColor"/>
+          <rect y="6"  width="18" height="1.8" fill="currentColor"/>
+          <rect y="12" width="18" height="1.8" fill="currentColor"/>
+        </svg>
+      </button>
+    </div>
+  </nav>
+
+  <!-- MOBILE MENU OVERLAY -->
+  <div class="mobile-menu" id="mobileMenu" role="dialog" aria-modal="true" aria-label="Site menu" hidden>
+    <div class="mobile-menu-inner">
+      <div class="mobile-menu-head">
+        <span class="mobile-menu-title">Menu</span>
+        <button class="mobile-menu-close" id="mobileMenuClose" type="button" aria-label="Close menu">
+          <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+            <line x1="1" y1="1" x2="13" y2="13" stroke="currentColor" stroke-width="1.6"/>
+            <line x1="13" y1="1" x2="1" y2="13" stroke="currentColor" stroke-width="1.6"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Wallet section -->
+      <section class="mobile-menu-section" aria-label="Wallet">
+        <p class="mobile-menu-label">Wallet</p>
+        <p class="mobile-menu-status" id="menuWalletStatus">No wallet connected.</p>
+        <p class="mobile-menu-sender" id="menuSenderDisplay" hidden></p>
+        <p class="mobile-menu-network" id="menuNetworkDisplay" hidden></p>
+        <div class="mobile-menu-actions">
+          <button class="mobile-menu-btn mobile-menu-btn--primary" id="menuConnectBtn" type="button">
+            Connect Wallet
+          </button>
+          <button class="mobile-menu-btn" id="menuSwitchBtn" type="button" hidden>
+            Switch Account
+          </button>
+          <button class="mobile-menu-btn mobile-menu-btn--danger" id="menuDisconnectBtn" type="button" hidden>
+            Disconnect
+          </button>
+        </div>
+      </section>
+
+      <!-- Transaction section -->
+      <section class="mobile-menu-section" aria-label="Transaction">
+        <p class="mobile-menu-label">Transaction</p>
+        <button class="mobile-menu-btn mobile-menu-btn--primary" id="menuOpenPortalBtn" type="button">
+          Transfer Portal
+        </button>
+        <p class="mobile-menu-portal-note">Open the USDC transfer interface.</p>
+      </section>
+
+      <!-- Navigation links -->
+      <section class="mobile-menu-section" aria-label="Navigation">
+        <p class="mobile-menu-label">Site</p>
+        <nav class="mobile-menu-links">
+          <a href="/start.html">Start</a>
+          <a href="/about.html">About</a>
+          <a href="/faq.html">FAQ</a>
+          <a href="/learn.html">Learn</a>
+          <a href="/verify.html">Verify</a>
+          <a href="/log.html">Devlog</a>
+          <a href="/terms.html">Terms</a>
+          <a href="/privacy.html">Privacy</a>
+          <a href="/legal.html">Legal</a>
+          <a href="/jurisdictions.html">Access</a>
+          <a href="/news.html">News</a>
+          <a href="/contact.html">Contact</a>
+        </nav>
+      </section>
+
+      <!-- Social links — separated from site navigation -->
+      <section class="mobile-menu-section" aria-label="Social">
+        <p class="mobile-menu-label">Social</p>
+        <nav class="mobile-menu-links">
+          <a href="https://x.com/implicitex" target="_blank" rel="noopener">X</a>
+          <a href="https://github.com/implicitexlabs" target="_blank" rel="noopener">GitHub</a>
+        </nav>
+      </section>
+    </div>
+    <!-- Backdrop — tap to close -->
+    <div class="mobile-menu-backdrop" id="mobileMenuBackdrop" aria-hidden="true"></div>
+  </div>
+
+  <!-- WALLET CHOICE OVERLAY -->
+  <!-- Shown when Connect Wallet is tapped on a device without an injected provider. -->
+  <div class="wallet-choice" id="walletChoiceOverlay" role="dialog" aria-modal="true" aria-label="Choose wallet" hidden>
+    <div class="wallet-choice-backdrop" id="walletChoiceBackdrop" aria-hidden="true"></div>
+    <div class="wallet-choice-inner">
+      <div class="wallet-choice-head">
+        <span class="wallet-choice-title">Connect Wallet</span>
+        <button class="wallet-choice-close" id="walletChoiceClose" type="button" aria-label="Close">
+          <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
+            <line x1="1" y1="1" x2="11" y2="11" stroke="currentColor" stroke-width="1.6"/>
+            <line x1="11" y1="1" x2="1" y2="11" stroke="currentColor" stroke-width="1.6"/>
+          </svg>
+        </button>
+      </div>
+      <div class="wallet-choice-actions">
+        <a class="wallet-choice-btn wallet-choice-btn--primary" id="walletChoiceMetaMask"
+           href="https://metamask.app.link/dapp/implicitex.com" target="_blank" rel="noopener">
+          Open MetaMask
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile: topic toggle button appears above the sidebar -->
+  <button class="learn-mobile-toggle" id="learnMobileToggle" type="button" aria-expanded="false" aria-controls="learnSidebar">
+    Browse Topics
+  </button>
+
+  <div class="learn-layout">
+
+    <!-- LEFT SIDEBAR -->
+    <aside class="learn-sidebar" id="learnSidebar" aria-label="Learn topics">
+
+      <div class="learn-search-wrap">
+        <input
+          class="learn-search"
+          id="learnSearch"
+          type="search"
+          placeholder="Search topics…"
+          autocomplete="off"
+          aria-label="Search Learn topics"
+        >
+      </div>
+
+      <nav class="learn-nav" id="learnNav">
+        <!-- Built by JS from LEARN_DATA -->
+      </nav>
+
+      <p class="learn-sidebar-foot" id="learnNoResults" hidden>No topics match.</p>
+
+    </aside>
+
+    <!-- RIGHT CONTENT PANEL -->
+    <main class="learn-panel" id="learnPanel" aria-live="polite" aria-label="Topic content">
+
+      <!-- Welcome state — shown until a topic is selected -->
+      <div class="learn-welcome" id="learnWelcome">
+        <p class="policy-eyebrow">ImplicitEx</p>
+        <h1 class="learn-h1">Learn</h1>
+        <p class="learn-intro">
+          Guides and definitions for first-time crypto users.
+          Select a topic from the list or search above.
+        </p>
+        <div class="learn-popular" id="learnPopular">
+          <p class="learn-popular-label">Popular topics</p>
+          <div class="learn-popular-grid" id="learnPopularGrid">
+            <a class="learn-popular-btn" href="#wallet">Wallet</a>
+            <a class="learn-popular-btn" href="#usdc">USDC</a>
+            <a class="learn-popular-btn" href="#polygon">Polygon</a>
+            <a class="learn-popular-btn" href="#wallet-warning">Wallet warnings</a>
+            <a class="learn-popular-btn" href="#is-safe">Risks and safety</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Entry state — shown when a topic is selected -->
+      <div class="learn-entry" id="learnEntry" hidden aria-live="polite">
+        <!-- Entry HTML injected by JS -->
+      </div>
+
+    </main>
+
+  </div>
+
+  <footer>
+    <div class="f-inner">
+      <div class="f-brand">
+        <div class="f-brand-lockup">
+          <img src="/components/images/lettermark-white.svg" alt="" aria-hidden="true" class="f-brand-mark">
+          <img src="/components/images/wordmark-white.svg" alt="ImplicitEx" class="f-brand-word">
+        </div>
+        <span class="f-tagline">Wallet-to-wallet USDC transfers.</span>
+      </div>
+      <nav class="f-links" aria-label="Footer links">
+        <div class="f-group">
+          <span class="f-group-label">Product</span>
+          <a href="/start.html">Start</a>
+          <a href="/faq.html">FAQ</a>
+          <a href="/learn.html">Learn</a>
+          <a href="/verify.html">Verify</a>
+          <a href="/log.html">Devlog</a>
+        </div>
+        <div class="f-group">
+          <span class="f-group-label">Legal</span>
+          <a href="/terms.html">Terms</a>
+          <a href="/privacy.html">Privacy</a>
+          <a href="/legal.html">Legal</a>
+        </div>
+        <div class="f-group">
+          <span class="f-group-label">Support</span>
+          <a href="/contact.html">Contact</a>
+          <a href="/jurisdictions.html">Access</a>
+        </div>
+        <div class="f-group">
+          <span class="f-group-label">Company</span>
+          <a href="/about.html">About</a>
+          <a href="/media.html">Media</a>
+          <a href="/brand.html">Brand</a>
+          <a href="/news.html">News</a>
+        </div>
+        <div class="f-group">
+          <span class="f-group-label">Social</span>
+          <a href="https://x.com/implicitex" target="_blank" rel="noopener">X</a>
+          <a href="https://www.linkedin.com/in/implicitex/" target="_blank" rel="noopener">LinkedIn</a>
+          <a href="https://github.com/implicitexlabs" target="_blank" rel="noopener">GitHub</a>
+        </div>
+      </nav>
+      <div class="f-bottom">
+        <span class="f-net is-live" id="networkBadge">Polygon live</span>
+        <span class="f-copy">&#169; <a href="https://adenmediagroup.com" target="_blank" rel="noopener noreferrer">Aden Media Group, LLC</a></span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="config/chains.js"></script>
+  <script src="js/analytics.js"></script>
+  <script src="js/consent.js"></script>
+  <script src="js/wallet.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/mobile-menu.js"></script>
+
+  <script>
+  (function () {
+    'use strict';
+
+    /* ------------------------------------------------------------------ */
+    /* Content data                                                         */
+    /* ------------------------------------------------------------------ */
+
+    var LEARN_DATA = {
+      popular: ['no-account', 'what-wallet', 'usdc', 'polygon', 'gas', 'verify-transfer'],
+      sections: [
+        {
+          label: 'Getting Started',
+          entries: [
+            {
+              id: 'no-account',
+              title: 'Do I need an account?',
+              keywords: 'matic signup registration login email password',
+              html: `<h2>Do I need an account?</h2>
+<p>ImplicitEx does not require a traditional account. There is no email address, password, or identity verification required to use the transfer interface. You connect using a crypto wallet you already control.</p>
+<p>This is different from platforms like PayPal or Venmo, which create an account on your behalf and hold your funds. ImplicitEx is non-custodial — your wallet remains under your control at all times.</p>
+<h3>What you need</h3>
+<ul>
+  <li>A crypto wallet — MetaMask is the most common for desktop</li>
+  <li>USDC on Polygon in that wallet</li>
+  <li>A small amount of MATIC to cover network gas fees</li>
+</ul>
+<p>If you don't have a wallet yet, start with <button class="learn-inline-link" data-entry="get-wallet">How do I get a wallet?</button></p>`
+            },
+            {
+              id: 'what-wallet',
+              title: 'What is a crypto wallet?',
+              keywords: 'metamask browser extension private key seed phrase mnemonic recovery backup',
+              html: `<h2>What is a crypto wallet?</h2>
+<p>A crypto wallet is software that manages your private key — the mathematical secret that proves ownership of your funds on a blockchain. Your wallet does not hold USDC or MATIC the way a physical wallet holds cash. It holds the key that lets you authorize transactions on the blockchain.</p>
+<p>Think of it this way:</p>
+<ul>
+  <li>The blockchain is a public ledger that records who owns what</li>
+  <li>Your address is your entry in that ledger</li>
+  <li>Your private key is the only way to authorize changes to your entry</li>
+</ul>
+<p>If someone else has your private key or seed phrase, they have full access to your funds. Losing both your wallet access and your seed phrase means losing your funds permanently.</p>
+<p>The most common wallet for use with ImplicitEx is MetaMask. See <button class="learn-inline-link" data-entry="metamask">What is MetaMask?</button></p>`
+            },
+            {
+              id: 'get-wallet',
+              title: 'How do I get a wallet?',
+              html: `<h2>How do I get a wallet?</h2>
+<p>The simplest way to get a wallet for ImplicitEx is to install MetaMask, a browser extension available for Chrome, Firefox, Brave, and Edge.</p>
+<h3>Steps</h3>
+<ol>
+  <li>Go to <a href="https://metamask.io" target="_blank" rel="noopener noreferrer">metamask.io</a> and click Download</li>
+  <li>Install the browser extension — only install from the official site or your browser's verified extension store</li>
+  <li>Follow the setup to create a new wallet</li>
+  <li>Write down your seed phrase and store it somewhere physically secure</li>
+</ol>
+<p>Your seed phrase is typically 12 or 24 words. It is the only way to recover your wallet if you lose access to your device. Never photograph it, store it in a notes app, or share it with anyone — including ImplicitEx. No legitimate service will ever ask for it.</p>
+<p>Once MetaMask is installed, you can connect it to ImplicitEx from the homepage. See <button class="learn-inline-link" data-entry="connect-wallet">How do I connect my wallet?</button></p>`
+            },
+            {
+              id: 'get-usdc',
+              title: 'How do I get USDC?',
+              keywords: 'matic buy purchase coinbase kraken exchange acquire stablecoin gas token',
+              html: `<h2>How do I get USDC?</h2>
+<p>USDC is a stablecoin issued by Circle. You can acquire it in several ways.</p>
+<h3>Receive it from someone</h3>
+<p>If someone sends you USDC on Polygon, it will appear in your wallet automatically once the transaction confirms.</p>
+<h3>Buy it on an exchange</h3>
+<p>Coinbase, Kraken, and other exchanges allow you to purchase USDC directly. After buying, you withdraw it to your wallet address. When you withdraw, select the Polygon network — not Ethereum mainnet.</p>
+<p>Sending USDC on the wrong network to a Polygon address may result in inaccessible funds. Always confirm the network before withdrawing from an exchange.</p>
+<h3>MATIC for gas</h3>
+<p>You also need a small amount of MATIC in your wallet to pay Polygon network fees. MATIC is available on the same exchanges that carry USDC. Even a small amount (a few dollars) is enough for many transactions.</p>
+<p>See <button class="learn-inline-link" data-entry="gas">Gas and network fees</button> for more on what gas is and why it's needed.</p>`
+            },
+            {
+              id: 'exchange-to-polygon',
+              title: 'How do I move USDC from an exchange to Polygon?',
+              keywords: 'matic coinbase kraken withdraw withdrawal bridge network mainnet chain id 137',
+              html: `<h2>How do I move USDC from an exchange to Polygon?</h2>
+<p>Buying USDC on an exchange does not put it in your wallet on <a href="https://polygon.technology" target="_blank" rel="noopener noreferrer">Polygon</a>. Most exchanges hold purchased assets in their own accounts until you explicitly withdraw to a destination address on a specific network. The network you select during withdrawal determines which blockchain receives the funds — and the wrong selection can put funds somewhere they are not accessible.</p>
+<h3>Why the same asset can exist on multiple networks</h3>
+<p>USDC exists on multiple blockchains — Ethereum mainnet, Polygon, Arbitrum, Solana, and others. Each is a separate ledger. USDC on Ethereum mainnet and USDC on Polygon are different tokens on different blockchains, even though both represent $1.00 and share the same name and ticker symbol.</p>
+<p>ImplicitEx operates exclusively on Polygon mainnet (chain ID 137). If you withdraw USDC to the correct wallet address but select the wrong network at the exchange, the funds arrive on a different blockchain and are not accessible through ImplicitEx.</p>
+<h3>Step 1 — Confirm your exchange supports Polygon withdrawals</h3>
+<p>Not every exchange supports withdrawals to Polygon. Before you begin, verify that Polygon is listed as an available withdrawal network for USDC. <a href="https://www.coinbase.com" target="_blank" rel="noopener noreferrer">Coinbase</a>, <a href="https://www.kraken.com" target="_blank" rel="noopener noreferrer">Kraken</a>, and several other major exchanges support Polygon USDC withdrawals. Check your exchange's withdrawal page or support documentation to confirm before proceeding.</p>
+<h3>Step 2 — Copy your wallet address from MetaMask</h3>
+<p>Open <a href="https://metamask.io" target="_blank" rel="noopener noreferrer">MetaMask</a> and copy your wallet address. Your Polygon address uses the same 0x format as Ethereum — the address format is identical across both networks. Do not enter the address by hand. Copy and paste it directly to avoid transcription errors.</p>
+<h3>Step 3 — Select Polygon as the withdrawal network</h3>
+<p>In your exchange's withdrawal flow, find the network selection option. Select <strong>Polygon</strong> (sometimes labeled "Polygon PoS" or "MATIC Network"). Do not select Ethereum mainnet, Arbitrum, or any other network. If you are unsure which option corresponds to Polygon, look for the chain ID — Polygon mainnet is chain ID 137.</p>
+<p>The exchange will typically display the expected fee and estimated arrival time after you select a network. Polygon withdrawals are usually fast (a few minutes) and low cost.</p>
+<h3>Step 4 — Start with a small test withdrawal</h3>
+<p>Before moving a larger amount, withdraw a small test amount — a few dollars of USDC — to confirm the configuration is correct. This is standard practice for any first withdrawal to a new address or network. If the test amount arrives correctly, proceed with the remaining amount. If it does not arrive, diagnose the issue before sending more.</p>
+<h3>Step 5 — Confirm arrival in MetaMask</h3>
+<p>After the exchange confirms the withdrawal, open MetaMask and verify that your wallet is set to Polygon mainnet. If MetaMask is displaying Ethereum mainnet or another network, switch to Polygon. USDC received on Polygon will not appear when MetaMask is showing a different network — the balance is network-scoped.</p>
+<p>Once on Polygon, your USDC balance should update within a few minutes of the exchange confirming the withdrawal. If it does not appear, look up your wallet address on <a href="https://polygonscan.com" target="_blank" rel="noopener noreferrer">Polygonscan</a> to confirm the transaction arrived and view its status.</p>
+<h3>Step 6 — Verify you have MATIC for gas</h3>
+<p>Polygon transactions require a small amount of MATIC to pay network fees. If your wallet has USDC but no MATIC, you will not be able to authorize transactions. MATIC is available on most exchanges that carry USDC. A small amount — a few dollars — is sufficient for many transactions.</p>
+<h3>Common mistakes</h3>
+<ul>
+  <li><strong>Wrong network selected at the exchange</strong> — Sending USDC via Ethereum mainnet to a Polygon address may result in funds that are inaccessible without a bridge. Always confirm the withdrawal network before submitting.</li>
+  <li><strong>Viewing the wrong network in MetaMask</strong> — USDC on Polygon is invisible when MetaMask is set to Ethereum mainnet or another network. If your balance appears to be missing, check which network MetaMask is displaying and switch to Polygon mainnet.</li>
+  <li><strong>Wrong address after pasting</strong> — Verify the first and last several characters of the destination address after pasting. Clipboard-hijacking malware can silently replace a copied address with an attacker's address. Confirm the full address matches before submitting.</li>
+  <li><strong>Not accounting for exchange minimums or fees</strong> — Most exchanges impose a minimum withdrawal amount and charge a network fee per withdrawal. Factor these into your transfer amount, particularly for smaller amounts.</li>
+</ul>
+<p>See also: <button class="learn-inline-link" data-entry="polygon">Polygon</button> · <button class="learn-inline-link" data-entry="get-usdc">How do I get USDC?</button> · <button class="learn-inline-link" data-entry="connect-wallet">How do I connect my wallet?</button> · <button class="learn-inline-link" data-entry="verify-transfer">How do I verify a transfer?</button> · <button class="learn-inline-link" data-entry="gas">Gas and network fees</button></p>`
+            },
+            {
+              id: 'connect-wallet',
+              title: 'How do I connect my wallet?',
+              html: `<h2>How do I connect my wallet to ImplicitEx?</h2>
+<ol>
+  <li>Open ImplicitEx in a browser that has MetaMask installed</li>
+  <li>Click <strong>Connect Wallet</strong> in the navigation bar</li>
+  <li>MetaMask will prompt you to approve the connection</li>
+  <li>Once connected, your wallet address appears in the navigation bar</li>
+</ol>
+<p>Connecting your wallet does not authorize any transfer. It only allows ImplicitEx to read your public wallet address and USDC balance on Polygon. No funds move at this step.</p>
+<p>ImplicitEx will ask you to switch to the Polygon network if your wallet is on a different network. Do not send on Ethereum mainnet — only Polygon mainnet transfers are supported.</p>`
+            }
+          ]
+        },
+        {
+          label: 'Using ImplicitEx',
+          entries: [
+            {
+              id: 'how-transfers',
+              title: 'How do transfers work?',
+              html: `<h2>How do transfers work?</h2>
+<p>ImplicitEx transfers happen in three steps.</p>
+<h3>1 — Connect</h3>
+<p>Connect your wallet. ImplicitEx reads your public address and USDC balance on Polygon.</p>
+<h3>2 — Enter</h3>
+<p>Enter the recipient address and the amount you want them to receive. The transfer preview shows the recipient, amount, 1% platform fee, and the total that will leave your wallet. Nothing moves yet.</p>
+<h3>3 — Confirm</h3>
+<p>Two wallet prompts: the first authorizes the ImplicitEx contract to move the exact USDC amount. The second executes the transfer. The recipient receives the amount you entered. The 1% fee goes to the ImplicitEx treasury. The contract is designed not to retain USDC after standard transfer execution.</p>
+<p>Once the second transaction confirms on Polygon, the transfer is final and irreversible. A receipt is recorded locally in your browser and links to the on-chain transaction.</p>
+<p>See <button class="learn-inline-link" data-entry="two-confirmations">Why two wallet confirmations?</button> for more detail on why both steps are required.</p>`
+            },
+            {
+              id: 'costs',
+              title: 'What does it cost?',
+              html: `<h2>What does ImplicitEx cost?</h2>
+<p>There are two fees: a platform fee and a network gas fee. They go to different places.</p>
+<h3>Platform fee — 1%</h3>
+<p>ImplicitEx charges 1% of the transfer amount. The fee is additive — added on top of the amount the recipient receives.</p>
+<p>Example: to send 100 USDC to a recipient, you pay 101 USDC total. The recipient gets 100 USDC. The 1 USDC fee goes to ImplicitEx.</p>
+<p>The fee is displayed in the transfer preview before any wallet action is taken.</p>
+<h3>Network gas fee</h3>
+<p>Polygon validators charge a small fee to process transactions. On Polygon, this is typically a fraction of a cent. ImplicitEx does not receive gas fees — they go entirely to the Polygon network.</p>
+<p>The exact gas cost is shown by your wallet when you confirm each step. Gas fees may still be charged if a transaction fails or is reverted.</p>
+<p>See <button class="learn-inline-link" data-entry="gas">Gas and network fees</button> for more.</p>`
+            },
+            {
+              id: 'two-confirmations',
+              title: 'Why two wallet confirmations?',
+              keywords: 'allowance approve authorize erc20 approval prompt steps',
+              html: `<h2>Why are there two wallet confirmations?</h2>
+<p>The two-step process is a feature of how ERC-20 tokens like USDC work — it is not specific to ImplicitEx.</p>
+<h3>First prompt — Authorization</h3>
+<p>You allow the ImplicitEx contract to transfer a specific USDC amount from your wallet. The authorization is scoped to the exact total of your transfer — not an unlimited approval. At this point, no funds have moved.</p>
+<h3>Second prompt — Execution</h3>
+<p>The transfer executes. USDC moves from your wallet to the recipient. The 1% fee goes to the ImplicitEx treasury. The contract is designed not to retain USDC after standard transfer execution.</p>
+<p>Your wallet controls your funds at all times. The ImplicitEx contract cannot move USDC unless you explicitly authorize it through the first prompt. Authorization alone does not send anything.</p>
+<p>The behavior of the contract — including what happens to the fee and what the contract is designed to retain — is documented on the <a href="/verify.html">Verify page</a> with a verified on-chain transaction record.</p>
+<p>See also: <button class="learn-inline-link" data-entry="token-approval">Token approval</button></p>`
+            },
+            {
+              id: 'verify-transfer',
+              title: 'How do I verify a transfer?',
+              html: `<h2>How do I verify that a transfer went through?</h2>
+<p>Every transfer on Polygon is permanently recorded on a public blockchain and can be verified without any account or login.</p>
+<h3>Using the receipt</h3>
+<p>After a transfer, ImplicitEx records a receipt in your browser. The receipt contains a transaction hash — a unique identifier starting with 0x — and a link to view it on Polygonscan.</p>
+<h3>Using Polygonscan directly</h3>
+<ol>
+  <li>Go to <a href="https://polygonscan.com" target="_blank" rel="noopener noreferrer">polygonscan.com</a></li>
+  <li>Paste the transaction hash into the search box</li>
+  <li>The result shows sender, recipient, amount, fee, timestamp, and confirmation status</li>
+</ol>
+<p>You can also look up your wallet address on Polygonscan to see all incoming and outgoing transactions associated with it.</p>
+<p>The transaction record is permanent. Anyone with the hash can independently verify what happened — including the routing of the 1% fee to the treasury address listed on the <a href="/verify.html">Verify page</a>.</p>`
+            },
+            {
+              id: 'wrong-address',
+              title: 'What if I send to the wrong address?',
+              html: `<h2>What if I send to the wrong address?</h2>
+<p>The transfer will still execute. Blockchain transactions are irreversible — once confirmed on-chain, they cannot be cancelled, reversed, or recovered by ImplicitEx, the recipient, or anyone else.</p>
+<p>If the destination address is controlled by someone else, those funds are now theirs. If it is an address that nobody controls — a mistyped address, a burn address — the funds may be permanently inaccessible.</p>
+<h3>Before you confirm</h3>
+<p>ImplicitEx displays the full recipient address in the transfer preview before any wallet action is taken. Check the address carefully. It is common practice to verify the first and last several characters of an address, since the full 42-character string is difficult to read at a glance.</p>
+<p>If you are entering an address manually, consider pasting it and double-checking rather than typing it by hand.</p>
+<p>For more on what ImplicitEx cannot do after a transfer completes, see <a href="/legal.html">Legal</a> and <a href="/contact.html">Contact</a>.</p>`
+            },
+            {
+              id: 'wallet-warning',
+              title: 'Why does my wallet show a warning?',
+              keywords: 'untrusted blockaid security alert metamask prompt contract address verification',
+              html: `<h2>Why does my wallet show an "untrusted contract" warning?</h2>
+<p>Wallet security systems assess contracts based on age, transaction history, and known behavior patterns. A new contract with limited on-chain history may be classified as "untrusted" even if no malicious behavior has been detected.</p>
+<p>The ImplicitEx contract is relatively new. The warning reflects its age — not a finding of fraud or malicious activity.</p>
+<h3>What to do</h3>
+<p>Compare the contract address shown in your wallet warning with the contract address on the <a href="/verify.html">Verify page</a>. If they match, you are interacting with the correct ImplicitEx contract — the same one with publicly verified source code and a documented on-chain transaction record.</p>
+<p>If the addresses do not match, do not proceed. Contact ImplicitEx at <a href="/contact.html">connect@implicitex.com</a>.</p>
+<p>See also the <a href="/faq.html">FAQ</a> entry on wallet warnings for more detail on how wallet security providers classify new contracts.</p>`
+            }
+          ]
+        },
+        {
+          label: 'Concepts',
+          entries: [
+            {
+              id: 'address',
+              title: 'Address',
+              keywords: 'matic wallet 0x polygon ethereum public account number',
+              html: `<h2>Address</h2>
+<p>A blockchain address is a unique identifier — similar to an account number — that represents a location on the blockchain where assets can be held or received. On Polygon and Ethereum, addresses are 42 characters long and begin with 0x.</p>
+<p>Example: <code>0x742d35Cc6634C0532925a3b8D4C9C5…</code></p>
+<p>You can share your address publicly. Unlike your private key or seed phrase, your address is not a secret — sharing it only allows others to send you funds, not to access them.</p>
+<p>One address can hold multiple types of tokens simultaneously. Your USDC, MATIC, and any other Polygon-compatible tokens all share the same address.</p>
+<p>See also: <button class="learn-inline-link" data-entry="private-key">Private key and seed phrase</button></p>`
+            },
+            {
+              id: 'blockchain',
+              title: 'Blockchain',
+              html: `<h2>Blockchain</h2>
+<p>A blockchain is a shared public ledger that records transactions. Once a transaction is written to the blockchain, it is permanent and visible to anyone.</p>
+<p>On Polygon — the blockchain ImplicitEx uses — every transfer, approval, and contract interaction is recorded as an on-chain transaction. There is no central company controlling the ledger. Anyone can verify what happened by looking up a transaction hash on a block explorer like Polygonscan.</p>
+<p>This public nature is what makes the <a href="/verify.html">Verify page</a> possible. The transaction record there is not a claim made by ImplicitEx — it is a public on-chain record that anyone can verify independently and permanently.</p>
+<p>See also: <button class="learn-inline-link" data-entry="polygon">Polygon</button></p>`
+            },
+            {
+              id: 'gas',
+              title: 'Gas and network fees',
+              keywords: 'matic fee network cost validators polygon pay transaction',
+              html: `<h2>Gas and network fees</h2>
+<p>Gas is the fee paid to the validators who process transactions on Polygon. ImplicitEx does not receive gas fees — they go entirely to the Polygon network.</p>
+<p>Gas fees on Polygon are typically very small — often a fraction of a cent. The exact amount varies based on network activity at the time of your transaction. Your wallet shows the estimated gas cost before you confirm each step.</p>
+<h3>Gas fees and failed transactions</h3>
+<p>Gas fees are charged per transaction attempt, including transactions that fail or are reverted by the network. Submitting a transaction and having it fail still costs gas. This is a property of how blockchains work — it is not specific to ImplicitEx.</p>
+<h3>Gas vs. the ImplicitEx platform fee</h3>
+<p>These are two separate fees paid to two different parties:</p>
+<ul>
+  <li><strong>Platform fee (1%)</strong> — paid to ImplicitEx, built into the transfer amount</li>
+  <li><strong>Gas fee</strong> — paid to Polygon validators, charged separately by your wallet</li>
+</ul>
+<p>You need MATIC in your wallet to pay gas fees. See <button class="learn-inline-link" data-entry="get-usdc">How do I get USDC?</button> for how to acquire MATIC alongside USDC.</p>`
+            },
+            {
+              id: 'non-custodial',
+              title: 'Non-custodial',
+              keywords: 'custody control funds wallet bank exchange coinbase self-custody',
+              html: `<h2>Non-custodial</h2>
+<p>Non-custodial means ImplicitEx never takes possession of your funds. Your wallet remains under your control before, during, and after the transfer.</p>
+<h3>How it differs from custodial services</h3>
+<p>When you deposit money at a bank or on an exchange like Coinbase, that institution holds your funds. You trust them to return it when you ask. You are accessing their record of what they owe you — not the blockchain directly.</p>
+<p>ImplicitEx works differently. You sign transactions with your own wallet. The smart contract executes the transfer on-chain. At no point does ImplicitEx hold, move, or have access to your funds outside of what you explicitly authorize in a signed transaction.</p>
+<h3>The tradeoff</h3>
+<p>ImplicitEx cannot reverse mistakes, recover lost funds, or override your decisions. That responsibility stays with you. Non-custodial design reduces platform risk, but it places more weight on the decisions you make before you confirm a transaction.</p>`
+            },
+            {
+              id: 'private-key',
+              title: 'Private key and seed phrase',
+              html: `<h2>Private key and seed phrase</h2>
+<p>Your private key is a long cryptographic secret that proves your ownership of a blockchain address. Anyone who has your private key can authorize any transaction from your wallet — there is no override, no recovery, no customer service escalation.</p>
+<p>Your seed phrase (also called a recovery phrase or mnemonic) is a human-readable version of your private key — typically 12 or 24 words. Knowing the seed phrase is equivalent to having the private key.</p>
+<h3>How to protect them</h3>
+<ul>
+  <li>Write the seed phrase down on paper and store it somewhere physically secure</li>
+  <li>Do not photograph it or store it in a notes app, cloud storage, or email</li>
+  <li>Do not share it with any website, app, or person</li>
+</ul>
+<h3>What ImplicitEx does not do</h3>
+<p>ImplicitEx will never ask for your private key or seed phrase. No legitimate service ever will. Anyone requesting your seed phrase is attempting to steal your funds.</p>
+<p>If you lose access to your wallet software but still have your seed phrase, you can restore access to your wallet on any device. If you lose both, the funds in that wallet are permanently inaccessible.</p>`
+            },
+            {
+              id: 'token',
+              title: 'Token',
+              keywords: 'matic erc20 standard digital asset cryptocurrency',
+              html: `<h2>Token</h2>
+<p>A token is a digital asset that exists on a blockchain. USDC is a token. MATIC is a token. Thousands of tokens exist across different blockchains, each issued and governed differently.</p>
+<p>Tokens follow standards that make them compatible with wallets, contracts, and other services. USDC follows the ERC-20 standard, which means it can be transferred using the same approval and transfer flow as any other ERC-20 token on Polygon or Ethereum.</p>
+<h3>USDC denominations</h3>
+<p>USDC has 6 decimal places. The smallest unit is 0.000001 USDC (one millionth of a dollar).</p>
+<table>
+  <thead><tr><th>Display</th><th>Base units</th></tr></thead>
+  <tbody>
+    <tr><td>1.00 USDC</td><td>1,000,000</td></tr>
+    <tr><td>0.01 USDC</td><td>10,000</td></tr>
+    <tr><td>0.001 USDC</td><td>1,000</td></tr>
+    <tr><td>0.000001 USDC</td><td>1</td></tr>
+  </tbody>
+</table>
+<p>When you enter an amount in ImplicitEx, you enter it in USDC (e.g., 10.50). The contract handles the base unit conversion internally.</p>
+<p>See also: <button class="learn-inline-link" data-entry="usdc">USDC</button></p>`
+            },
+            {
+              id: 'token-approval',
+              title: 'Token approval',
+              keywords: 'allowance approve authorize erc20 revoke permission smart contract',
+              html: `<h2>Token approval</h2>
+<p>Before a smart contract can move tokens from your wallet, you must explicitly authorize it to do so. This authorization is called an approval or allowance.</p>
+<p>When you use ImplicitEx, the first wallet prompt is an approval: you are telling the USDC contract that the ImplicitEx contract may transfer a specific amount from your wallet. This approval is scoped to the exact transfer total — not an unlimited authorization.</p>
+<p>The approval alone does not move any funds. Funds move only when you sign the second transaction.</p>
+<h3>Reviewing your approvals</h3>
+<p>You can review and revoke token approvals at any time using tools like <a href="https://revoke.cash" target="_blank" rel="noopener noreferrer">revoke.cash</a> or Polygonscan's Token Approval Checker. It is good practice to revoke allowances for contracts you no longer use.</p>
+<p>See also: <button class="learn-inline-link" data-entry="two-confirmations">Why two wallet confirmations?</button></p>`
+            },
+            {
+              id: 'wallet',
+              title: 'Wallet',
+              keywords: 'matic metamask browser extension seed phrase private key software',
+              html: `<h2>Wallet</h2>
+<p>A wallet is software that stores your private key and uses it to sign blockchain transactions. The most common wallet used with ImplicitEx is MetaMask, a browser extension.</p>
+<p>Your wallet does not hold USDC or MATIC the way a bank account holds dollars. The assets exist on the blockchain — your wallet holds the key that proves you control them.</p>
+<h3>What happens if you lose your device</h3>
+<p>Losing your wallet software — for example, if your computer fails — does not mean losing your funds. As long as you have your seed phrase, you can restore access to your wallet on any device.</p>
+<p>Losing your seed phrase and your wallet access at the same time means losing your funds permanently. There is no account recovery, no customer support override, and no blockchain mechanism to undo it.</p>
+<p>See also: <button class="learn-inline-link" data-entry="private-key">Private key and seed phrase</button> · <button class="learn-inline-link" data-entry="metamask">MetaMask</button></p>`
+            }
+          ]
+        },
+        {
+          label: 'Ecosystem',
+          entries: [
+            {
+              id: 'usdc',
+              title: 'USDC',
+              html: `<h2>USDC</h2>
+<p>USDC is a stablecoin issued by <a href="https://www.circle.com" target="_blank" rel="noopener noreferrer">Circle Internet Group</a>. It is designed to maintain a stable value of $1.00 per token, making it predictable for transfers, payments, and remittances. The value does not fluctuate the way Bitcoin or Ethereum does.</p>
+<p>USDC is not bank money. It is not FDIC-insured. It does not automatically carry the consumer protections that apply to traditional financial accounts. One USDC represents a claim on reserve assets held by Circle, subject to Circle's operational and regulatory status.</p>
+<h3>USDC under federal law</h3>
+<p>Under the <a href="https://www.govinfo.gov/app/details/PLAW-119publ27" target="_blank" rel="noopener noreferrer">GENIUS Act</a> (Public Law 119-27, enacted July 18, 2025), USDC qualifies as a payment stablecoin under US federal law. Circle, as a permitted payment stablecoin issuer, is required to maintain dollar-for-dollar reserves in qualifying assets, publish monthly reserve disclosures with independent verification, and comply with federal anti-money-laundering obligations.</p>
+<h3>USDC on Polygon</h3>
+<p>ImplicitEx uses native USDC on <a href="https://polygon.technology" target="_blank" rel="noopener noreferrer">Polygon</a> — specifically the contract issued directly by Circle for the Polygon network. Other USDC variants (wrapped, bridged, or issued on other networks) are not supported.</p>
+<p>The USDC contract address used by ImplicitEx is documented on the <a href="/verify.html">Verify page</a>.</p>
+<p>See also: <button class="learn-inline-link" data-entry="who-issues-usdc">Who issues USDC?</button> · <button class="learn-inline-link" data-entry="payment-stablecoin">What is a payment stablecoin?</button> · <button class="learn-inline-link" data-entry="stablecoin-not-insured">Are stablecoins insured?</button> · <button class="learn-inline-link" data-entry="usdc-denominations">USDC denominations</button></p>`
+            },
+            {
+              id: 'usdc-denominations',
+              title: 'USDC denominations',
+              html: `<h2>USDC denominations</h2>
+<p>USDC has 6 decimal places. One USDC equals 1,000,000 base units. The smallest possible USDC amount is 0.000001 USDC.</p>
+<table>
+  <thead><tr><th>Display</th><th>Base units</th></tr></thead>
+  <tbody>
+    <tr><td>1.00 USDC</td><td>1,000,000</td></tr>
+    <tr><td>0.50 USDC</td><td>500,000</td></tr>
+    <tr><td>0.01 USDC</td><td>10,000</td></tr>
+    <tr><td>0.000001 USDC</td><td>1</td></tr>
+  </tbody>
+</table>
+<p>ImplicitEx accepts amounts down to 0.000001 USDC precision. The minimum transfer is 1 USDC. During the current soft-launch period, the maximum transfer is 250 USDC per transaction.</p>
+<p>When you enter an amount in ImplicitEx, enter it in whole USDC (e.g., 10.50). The contract handles internal conversion automatically.</p>`
+            },
+            {
+              id: 'polygon',
+              title: 'Polygon',
+              keywords: 'matic network mainnet chain id 137 gas fees ethereum compatible pos',
+              html: `<h2>Polygon</h2>
+<p>Polygon is the blockchain network ImplicitEx uses to move USDC between wallets. It was chosen because transaction fees are typically much lower than Ethereum mainnet — often a fraction of a cent — and confirmation times are fast.</p>
+<p>Polygon uses the same address format as Ethereum (0x…) and supports the same ERC-20 token standard. Many Ethereum wallets, including MetaMask, support Polygon natively. MATIC is Polygon's native token — it is used to pay gas fees on the network.</p>
+<h3>Polygon mainnet only</h3>
+<p>ImplicitEx operates exclusively on Polygon mainnet (chain ID 137). Ethereum mainnet, Polygon test networks, and other EVM networks are not supported.</p>
+<p>If you attempt a transfer on the wrong network, ImplicitEx will prompt you to switch. Do not proceed on a network other than Polygon mainnet.</p>
+<p>See also: <button class="learn-inline-link" data-entry="ethereum">Ethereum</button> · <button class="learn-inline-link" data-entry="gas">Gas and network fees</button></p>`
+            },
+            {
+              id: 'ethereum',
+              title: 'Ethereum',
+              html: `<h2>Ethereum</h2>
+<p>Ethereum is the blockchain platform that pioneered smart contracts and the ERC-20 token standard. USDC, MetaMask, Polygon, and the vast majority of crypto applications are built within the Ethereum ecosystem.</p>
+<h3>ImplicitEx and Ethereum</h3>
+<p>ImplicitEx does not operate on Ethereum mainnet. Gas fees on Ethereum are typically much higher than on Polygon — often several dollars or more per transaction — which is why ImplicitEx uses Polygon instead.</p>
+<p>Polygon is compatible with Ethereum tools and addresses, but it is a separate network. A USDC transfer on Ethereum mainnet and a USDC transfer on Polygon are different transactions on different ledgers.</p>
+<p>If you try to use ImplicitEx while your wallet is connected to Ethereum mainnet, ImplicitEx will ask you to switch to Polygon. If you send Ethereum mainnet USDC to a Polygon address, or interact with Polygon contracts from the wrong network, funds could be at risk.</p>
+<p>Always verify the network in your wallet before confirming any transaction.</p>`
+            },
+            {
+              id: 'metamask',
+              title: 'MetaMask',
+              keywords: 'browser extension install desktop chrome firefox brave edge wallet connect',
+              html: `<h2>MetaMask</h2>
+<p>MetaMask is a browser extension wallet that allows you to interact with Ethereum-compatible blockchains, including Polygon. It is the primary wallet supported by ImplicitEx for desktop use.</p>
+<p>MetaMask stores your private key locally on your device — not on MetaMask's servers. MetaMask cannot access your funds or authorize transactions on your behalf. Every transaction requires your explicit approval.</p>
+<h3>Installing MetaMask</h3>
+<p>Install MetaMask from <a href="https://metamask.io" target="_blank" rel="noopener noreferrer">metamask.io</a> or from your browser's verified extension store. Only install from official sources — fake MetaMask extensions are a common method of theft.</p>
+<h3>How MetaMask works with ImplicitEx</h3>
+<p>When ImplicitEx requests a wallet connection or a transaction signature, MetaMask displays a prompt. You must approve each action manually. MetaMask shows the contract address, the action type, and the amount involved before you confirm.</p>
+<p>If your wallet shows an "untrusted contract" warning for ImplicitEx, see <button class="learn-inline-link" data-entry="wallet-warning">Why does my wallet show a warning?</button></p>`
+            }
+          ]
+        },
+        {
+          label: 'Trust and Regulation',
+          entries: [
+            {
+              id: 'is-legal',
+              title: 'Is crypto legal?',
+              html: `<h2>Is crypto legal?</h2>
+<p>In most major jurisdictions, using cryptocurrency to transfer value between wallets is legal. The regulatory landscape varies by country and continues to evolve.</p>
+<h3>Restricted jurisdictions</h3>
+<p>ImplicitEx is not available in jurisdictions subject to comprehensive US or international sanctions, including Belarus, Cuba, Iran, North Korea, Russia, Syria, and certain regions of Ukraine. The full list is maintained on the <a href="/jurisdictions.html">Access page</a>.</p>
+<h3>Your responsibilities</h3>
+<p>ImplicitEx is not a financial institution and does not provide legal, tax, or financial advice. You are responsible for understanding and complying with the laws that apply to your use of digital assets in your jurisdiction — including any applicable tax reporting, withholding, or payment obligations.</p>
+<p>For platform-specific legal boundaries, see the <a href="/legal.html">Legal page</a>.</p>`
+            },
+            {
+              id: 'genius-act',
+              title: 'What is the GENIUS Act?',
+              keywords: 'federal law regulation stablecoin usdc circle reserve aml bsa compliance issuer',
+              html: `<h2>What is the GENIUS Act?</h2>
+<p>The GENIUS Act — Guiding and Establishing National Innovation for U.S. Stablecoins Act — is US federal law enacted July 18, 2025 (<a href="https://www.govinfo.gov/app/details/PLAW-119publ27" target="_blank" rel="noopener noreferrer">Public Law 119-27</a>, 12 U.S.C. 5901). It establishes the first comprehensive federal regulatory framework for payment stablecoin issuers in the United States.</p>
+<h3>What it requires of issuers</h3>
+<p>The GENIUS Act requires permitted payment stablecoin issuers — companies like <a href="https://www.circle.com" target="_blank" rel="noopener noreferrer">Circle</a>, which issues USDC — to maintain dollar-for-dollar reserves in high-quality liquid assets, publish monthly reserve disclosures with independent verification, comply with Bank Secrecy Act anti-money-laundering obligations, and obtain prior approval from federal or state regulators before issuing stablecoins in the United States.</p>
+<p>Issuers are prohibited from rehypothecating reserve assets (using them as collateral for other purposes), paying interest or yield to stablecoin holders, and misrepresenting stablecoins as insured by the US government or the FDIC.</p>
+<h3>Who it applies to</h3>
+<p>The law targets stablecoin issuers, not users or transfer platforms. It applies to Circle's authority to issue USDC — not to ImplicitEx's use of USDC for transfers between wallets. ImplicitEx does not issue, hold, or redeem USDC and is not a permitted payment stablecoin issuer under the Act.</p>
+<h3>Transition period</h3>
+<p>The Act provides a three-year compliance window. Issuing a payment stablecoin in the US without meeting the permitting requirements carries penalties up to $1 million per day and potential criminal liability.</p>
+<p>See also: <button class="learn-inline-link" data-entry="payment-stablecoin">What is a payment stablecoin?</button> · <button class="learn-inline-link" data-entry="stablecoin-reserves">Stablecoin reserve requirements</button> · <button class="learn-inline-link" data-entry="who-issues-usdc">Who issues USDC?</button></p>`
+            },
+            {
+              id: 'payment-stablecoin',
+              title: 'What is a payment stablecoin?',
+              html: `<h2>What is a payment stablecoin?</h2>
+<p>A payment stablecoin is a specific legal classification under the <a href="https://www.govinfo.gov/app/details/PLAW-119publ27" target="_blank" rel="noopener noreferrer">GENIUS Act</a> (Public Law 119-27, enacted July 18, 2025). Not every asset that claims to be stable qualifies.</p>
+<h3>The statutory definition</h3>
+<p>Under the GENIUS Act, a payment stablecoin is a digital asset that meets three criteria:</p>
+<ol>
+  <li>It is designed to be used as a means of payment or settlement</li>
+  <li>The issuer is obligated to convert or redeem it at a fixed monetary value on demand</li>
+  <li>It is designed to maintain a stable value relative to that monetary value</li>
+</ol>
+<p>The law explicitly excludes: national currencies, bank deposits, securities regulated under federal securities law, and open-loop prepaid accounts.</p>
+<h3>How USDC qualifies</h3>
+<p>USDC is designed for payment and settlement. <a href="https://www.circle.com" target="_blank" rel="noopener noreferrer">Circle</a> is obligated to redeem USDC at $1.00 per token on demand. USDC is designed to maintain a $1.00 stable value. It meets all three criteria under the GENIUS Act definition.</p>
+<h3>Why the classification matters</h3>
+<p>Being classified as a payment stablecoin subjects the issuer — Circle, not ImplicitEx — to mandatory reserve requirements, monthly audits, regulatory oversight, and anti-money-laundering obligations under federal law. Users of USDC gain the benefit of those regulatory requirements applied to the issuer's conduct.</p>
+<p>See also: <button class="learn-inline-link" data-entry="genius-act">What is the GENIUS Act?</button> · <button class="learn-inline-link" data-entry="stablecoin-reserves">Stablecoin reserve requirements</button> · <button class="learn-inline-link" data-entry="usdc">USDC</button></p>`
+            },
+            {
+              id: 'stablecoin-reserves',
+              title: 'Stablecoin reserve requirements',
+              html: `<h2>Stablecoin reserve requirements</h2>
+<p>The <a href="https://www.govinfo.gov/app/details/PLAW-119publ27" target="_blank" rel="noopener noreferrer">GENIUS Act</a> (Public Law 119-27, enacted July 18, 2025) requires permitted payment stablecoin issuers to maintain dollar-for-dollar reserves backing every token in circulation.</p>
+<h3>What counts as a qualifying reserve asset</h3>
+<p>The Act specifies a narrow list of high-quality liquid assets that may back payment stablecoins:</p>
+<ul>
+  <li>US coins and Federal Reserve notes (physical currency)</li>
+  <li>US Treasury bills with maturity of 93 days or less</li>
+  <li>Deposits at a Federal Reserve Bank</li>
+  <li>Same-day demand deposits or overnight reserves at insured depository institutions</li>
+  <li>Short-term money market funds invested exclusively in Treasury or agency securities</li>
+</ul>
+<p>The list is intentionally conservative — only assets that can be liquidated quickly at stable value qualify. Longer-maturity bonds, equities, and other stablecoins do not.</p>
+<h3>Prohibition on rehypothecation</h3>
+<p>Issuers are prohibited from pledging, lending, or otherwise reusing reserve assets as collateral for other financial activity. The reserves must remain available to meet redemption requests.</p>
+<h3>Monthly disclosure and certification</h3>
+<p>Issuers must publish a monthly public report disclosing their reserve composition and total tokens outstanding, verified by an independent public accounting firm. The CEO and CFO must certify reserve compliance each month.</p>
+<h3>What this means for USDC holders</h3>
+<p><a href="https://www.circle.com" target="_blank" rel="noopener noreferrer">Circle</a> is required by federal law to hold qualifying assets equal in value to every USDC token in circulation and to demonstrate this publicly each month. Circle publishes reserve attestation reports at <a href="https://www.circle.com/en/transparency" target="_blank" rel="noopener noreferrer">circle.com/transparency</a>. These requirements apply to Circle as the issuer — not to ImplicitEx.</p>
+<p>See also: <button class="learn-inline-link" data-entry="stablecoin-not-insured">Are stablecoins insured?</button> · <button class="learn-inline-link" data-entry="who-issues-usdc">Who issues USDC?</button></p>`
+            },
+            {
+              id: 'stablecoin-not-insured',
+              title: 'Are stablecoins insured?',
+              keywords: 'fdic insurance bank deposit government guarantee protection circle usdc risk',
+              html: `<h2>Are stablecoins insured?</h2>
+<p>No. Payment stablecoins, including USDC, are not insured by the Federal Deposit Insurance Corporation (FDIC), the Securities Investor Protection Corporation (SIPC), or any other government insurance program.</p>
+<h3>What the GENIUS Act says explicitly</h3>
+<p>The <a href="https://www.govinfo.gov/app/details/PLAW-119publ27" target="_blank" rel="noopener noreferrer">GENIUS Act</a> (Public Law 119-27, enacted July 18, 2025) states directly that payment stablecoins are not backed by the full faith and credit of the United States government. The law makes it unlawful for any issuer to misrepresent that a payment stablecoin is FDIC-insured or US-government-backed.</p>
+<h3>How this differs from a bank account</h3>
+<p>Deposits at FDIC-insured banks are protected up to $250,000 per depositor per institution if the bank fails. The US government guarantees the repayment. USDC does not have this guarantee.</p>
+<p>What USDC does have instead: Circle is required under federal law to hold qualifying reserve assets backing every token in circulation and to disclose that reserve composition monthly. If Circle were to become insolvent, USDC holders would have claims on those reserve assets through the legal process — but there is no government guarantee of recovery.</p>
+<h3>What this means in practice</h3>
+<p>USDC's value is backed by Circle's reserve assets and regulatory compliance, not by a government guarantee. The <a href="https://www.govinfo.gov/app/details/PLAW-119publ27" target="_blank" rel="noopener noreferrer">GENIUS Act</a> imposes strict requirements on what those reserves must consist of, but holding USDC is not equivalent to holding insured bank deposits.</p>
+<p>See also: <button class="learn-inline-link" data-entry="stablecoin-reserves">Stablecoin reserve requirements</button> · <button class="learn-inline-link" data-entry="usdc">USDC</button> · <button class="learn-inline-link" data-entry="user-protections">What protections do users have?</button></p>`
+            },
+            {
+              id: 'is-safe',
+              title: 'Is ImplicitEx safe?',
+              html: `<h2>Is ImplicitEx safe?</h2>
+<p>ImplicitEx is designed with a non-custodial, on-chain architecture. No party — including ImplicitEx — can access your funds without your explicit wallet authorization. The contract source code is publicly verified on Polygonscan and can be read by anyone.</p>
+<p>A controlled mainnet transfer was executed before public launch to confirm that the contract routes funds as described: the transfer amount to the recipient, the 1% fee to the treasury, and no USDC retained by the contract after that standard transfer execution. This is documented on the <a href="/verify.html">Verify page</a>.</p>
+<h3>What ImplicitEx cannot guarantee</h3>
+<p>No smart contract, wallet, blockchain network, or internet service can be guaranteed to be free of all risk. You remain responsible for:</p>
+<ul>
+  <li>Verifying the recipient address before confirming</li>
+  <li>Protecting your wallet and private key</li>
+  <li>Reviewing wallet prompts before signing</li>
+  <li>Using the correct network (Polygon mainnet)</li>
+</ul>
+<p>For full risk disclosure, see the <a href="/legal.html">Legal page</a>.</p>`
+            },
+            {
+              id: 'who-issues-usdc',
+              title: 'Who issues USDC?',
+              html: `<h2>Who issues USDC?</h2>
+<p>USDC is issued by <a href="https://www.circle.com" target="_blank" rel="noopener noreferrer">Circle Internet Group</a>, a US-based financial technology company. Circle holds dollar-denominated reserve assets backing each USDC in circulation and publishes monthly attestation reports from independent accounting firms at <a href="https://www.circle.com/en/transparency" target="_blank" rel="noopener noreferrer">circle.com/transparency</a>.</p>
+<h3>Circle's regulatory status</h3>
+<p>Under the <a href="https://www.govinfo.gov/app/details/PLAW-119publ27" target="_blank" rel="noopener noreferrer">GENIUS Act</a> (Public Law 119-27, enacted July 18, 2025), Circle is subject to federal oversight as a permitted payment stablecoin issuer. This requires Circle to maintain 1:1 reserves in qualifying liquid assets, submit to monthly audits with public disclosure, comply with Bank Secrecy Act anti-money-laundering obligations, and obtain regulatory approval to continue issuing USDC in the United States.</p>
+<h3>What ImplicitEx does and does not do</h3>
+<p>ImplicitEx does not issue USDC. ImplicitEx does not redeem USDC for dollars. ImplicitEx transfers USDC between wallets — the asset itself is governed entirely by Circle and subject to federal law governing its issuance.</p>
+<p>Circle may make decisions affecting USDC that are outside ImplicitEx's control, including address-level restrictions, reserve management changes, contract upgrades, or business changes. These decisions could affect the value or accessibility of USDC independently of anything ImplicitEx does.</p>
+<p>The USDC contract address used by ImplicitEx is documented on the <a href="/verify.html">Verify page</a>.</p>
+<p>See also: <button class="learn-inline-link" data-entry="genius-act">What is the GENIUS Act?</button> · <button class="learn-inline-link" data-entry="stablecoin-reserves">Stablecoin reserve requirements</button></p>`
+            },
+            {
+              id: 'user-protections',
+              title: 'What protections do users have?',
+              html: `<h2>What protections do users have?</h2>
+<p>ImplicitEx provides several structural protections by design.</p>
+<h3>What ImplicitEx does</h3>
+<ul>
+  <li><strong>Non-custodial</strong> — ImplicitEx never holds your funds at any point</li>
+  <li><strong>Transparent fees</strong> — the 1% fee is displayed before any wallet action</li>
+  <li><strong>Address preview</strong> — the recipient address is shown before confirmation</li>
+  <li><strong>On-chain record</strong> — every transfer is permanently recorded on Polygon and independently verifiable</li>
+  <li><strong>Published contract</strong> — source code is publicly available on Polygonscan</li>
+</ul>
+<h3>What ImplicitEx cannot do</h3>
+<ul>
+  <li>Reverse a completed transfer</li>
+  <li>Recover funds sent to a wrong address</li>
+  <li>Provide FDIC or SIPC-style deposit protection</li>
+  <li>Override blockchain network behavior</li>
+  <li>Protect you from your own wallet being compromised</li>
+</ul>
+<p>The protections ImplicitEx offers are transparency, on-chain verification, and non-custodial design — not institutional guarantees. For the full scope of limitations, see <a href="/legal.html">Legal</a>.</p>`
+            }
+          ]
+        }
+      ]
+    };
+
+    /* ------------------------------------------------------------------ */
+    /* State                                                                */
+    /* ------------------------------------------------------------------ */
+
+    var activeId = null;
+    var allEntries = [];   // flat list built at init
+
+    // Build flat entry list for lookup
+    LEARN_DATA.sections.forEach(function (s) {
+      s.entries.forEach(function (e) { allEntries.push(e); });
+    });
+
+    function findEntry(id) {
+      for (var i = 0; i < allEntries.length; i++) {
+        if (allEntries[i].id === id) return allEntries[i];
+      }
+      return null;
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* Sidebar                                                              */
+    /* ------------------------------------------------------------------ */
+
+    /* ---- Accordion helpers ---- */
+
+    function expandSection(sectionEl) {
+      var toggle  = sectionEl.querySelector('.learn-nav-toggle');
+      var entries = sectionEl.querySelector('.learn-nav-entries');
+      if (!entries || toggle.getAttribute('aria-expanded') === 'true') return;
+      toggle.setAttribute('aria-expanded', 'true');
+      var target = entries.scrollHeight;
+      requestAnimationFrame(function () {
+        entries.style.transition = 'height 0.25s ease';
+        entries.style.height = target + 'px';
+      });
+      function onDone(ev) {
+        if (ev.propertyName !== 'height') return;
+        entries.style.height = '';
+        entries.style.transition = '';
+        entries.removeEventListener('transitionend', onDone);
+      }
+      entries.addEventListener('transitionend', onDone);
+    }
+
+    function collapseSection(sectionEl) {
+      var toggle  = sectionEl.querySelector('.learn-nav-toggle');
+      var entries = sectionEl.querySelector('.learn-nav-entries');
+      if (!entries || toggle.getAttribute('aria-expanded') === 'false') return;
+      toggle.setAttribute('aria-expanded', 'false');
+      entries.style.height = entries.offsetHeight + 'px';
+      requestAnimationFrame(function () {
+        entries.style.transition = 'height 0.25s ease';
+        entries.style.height = '0';
+      });
+      function onDone(ev) {
+        if (ev.propertyName !== 'height') return;
+        entries.style.height = '0';
+        entries.style.transition = '';
+        entries.removeEventListener('transitionend', onDone);
+      }
+      entries.addEventListener('transitionend', onDone);
+    }
+
+    function buildSidebar() {
+      var nav = document.getElementById('learnNav');
+      if (!nav) return;
+      var html = '';
+      LEARN_DATA.sections.forEach(function (section) {
+        html += '<div class="learn-nav-section" data-section>' +
+          '<button class="learn-nav-toggle" data-section-toggle aria-expanded="true">' +
+          section.label +
+          '<span class="learn-nav-chevron" aria-hidden="true"></span>' +
+          '</button>' +
+          '<div class="learn-nav-entries">';
+        section.entries.forEach(function (entry) {
+          html += '<button class="learn-nav-link" data-entry="' + entry.id + '"' +
+            (entry.keywords ? ' data-keywords="' + entry.keywords + '"' : '') + '>' +
+            entry.title + '</button>';
+        });
+        html += '</div></div>';
+      });
+      nav.innerHTML = html;
+
+      nav.addEventListener('click', function (e) {
+        // Section toggle
+        var toggleBtn = e.target.closest('[data-section-toggle]');
+        if (toggleBtn) {
+          var sectionEl = toggleBtn.closest('[data-section]');
+          if (sectionEl) {
+            if (toggleBtn.getAttribute('aria-expanded') === 'true') {
+              collapseSection(sectionEl);
+            } else {
+              expandSection(sectionEl);
+            }
+          }
+          return;
+        }
+        // Entry link
+        var btn = e.target.closest('[data-entry]');
+        if (btn && btn.classList.contains('learn-nav-link')) {
+          loadEntry(btn.dataset.entry);
+          var sidebar = document.getElementById('learnSidebar');
+          if (sidebar) sidebar.classList.remove('is-open');
+          var mobileToggle = document.getElementById('learnMobileToggle');
+          if (mobileToggle) {
+            mobileToggle.setAttribute('aria-expanded', 'false');
+            mobileToggle.textContent = 'Browse Topics';
+          }
+        }
+      });
+    }
+
+    function setActiveLink(id) {
+      var links = document.querySelectorAll('.learn-nav-link');
+      links.forEach(function (link) {
+        link.classList.toggle('is-active', link.dataset.entry === id);
+      });
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* Search                                                               */
+    /* ------------------------------------------------------------------ */
+
+    function filterSidebar(query) {
+      var q = query.trim().toLowerCase();
+      var links = document.querySelectorAll('.learn-nav-link');
+      var sections = document.querySelectorAll('[data-section]');
+      var noResults = document.getElementById('learnNoResults');
+      var anyVisible = false;
+
+      links.forEach(function (link) {
+        var match = !q ||
+          link.textContent.toLowerCase().indexOf(q) !== -1 ||
+          (link.dataset.keywords && link.dataset.keywords.toLowerCase().indexOf(q) !== -1);
+        link.classList.toggle('is-hidden', !match);
+        if (match) anyVisible = true;
+      });
+
+      // Show/hide sections; expand sections that have matching entries during search
+      sections.forEach(function (section) {
+        var visibleLinks = section.querySelectorAll('.learn-nav-link:not(.is-hidden)');
+        if (visibleLinks.length) {
+          section.style.display = '';
+          if (q) {
+            // Force-expand so matching entries are visible
+            var toggle  = section.querySelector('.learn-nav-toggle');
+            var entries = section.querySelector('.learn-nav-entries');
+            if (toggle && entries) {
+              toggle.setAttribute('aria-expanded', 'true');
+              entries.style.height = '';
+              entries.style.transition = '';
+            }
+          }
+        } else {
+          section.style.display = 'none';
+        }
+      });
+
+      if (noResults) noResults.hidden = anyVisible;
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* Load entry                                                           */
+    /* ------------------------------------------------------------------ */
+
+    function loadEntry(id) {
+      var entry = findEntry(id);
+      if (!entry) return;
+
+      var welcome = document.getElementById('learnWelcome');
+      var entryEl = document.getElementById('learnEntry');
+
+      if (welcome) welcome.hidden = true;
+      if (entryEl) {
+        entryEl.hidden = false;
+        entryEl.innerHTML = entry.html +
+          '<div class="learn-entry-foot">' +
+          '<button class="learn-back" id="learnBackBtn">&#8592; All topics</button>' +
+          '</div>';
+
+        // Wire inline links within the rendered content
+        entryEl.querySelectorAll('.learn-inline-link').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            loadEntry(btn.dataset.entry);
+          });
+        });
+
+        // Wire back button
+        var backBtn = document.getElementById('learnBackBtn');
+        if (backBtn) {
+          backBtn.addEventListener('click', showWelcome);
+        }
+
+        // Scroll to top of panel
+        var panel = document.getElementById('learnPanel');
+        if (panel) panel.scrollTop = 0;
+        window.scrollTo(0, 0);
+      }
+
+      setActiveLink(id);
+      activeId = id;
+
+      // Ensure the entry's section is expanded
+      var activeLink = document.querySelector('.learn-nav-link[data-entry="' + id + '"]');
+      if (activeLink) {
+        var sectionEl = activeLink.closest('[data-section]');
+        if (sectionEl) expandSection(sectionEl);
+      }
+
+      // Update URL hash for shareability
+      try { history.replaceState(null, '', '#' + id); } catch (e) {}
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* Welcome state                                                        */
+    /* ------------------------------------------------------------------ */
+
+    function showWelcome() {
+      var welcome = document.getElementById('learnWelcome');
+      var entryEl = document.getElementById('learnEntry');
+      if (welcome) welcome.hidden = false;
+      if (entryEl) entryEl.hidden = true;
+      setActiveLink(null);
+      activeId = null;
+      try { history.replaceState(null, '', location.pathname); } catch (e) {}
+    }
+
+    function buildPopular() {
+      var grid = document.getElementById('learnPopularGrid');
+      if (!grid) return;
+      var html = '';
+      LEARN_DATA.popular.forEach(function (id) {
+        var entry = findEntry(id);
+        if (entry) {
+          html += '<button class="learn-popular-btn" data-entry="' + id + '">' +
+            entry.title + '</button>';
+        }
+      });
+      grid.innerHTML = html;
+      grid.addEventListener('click', function (e) {
+        var btn = e.target.closest('[data-entry]');
+        if (btn) loadEntry(btn.dataset.entry);
+      });
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* Mobile toggle                                                        */
+    /* ------------------------------------------------------------------ */
+
+    function initMobileToggle() {
+      var btn = document.getElementById('learnMobileToggle');
+      var sidebar = document.getElementById('learnSidebar');
+      if (!btn || !sidebar) return;
+      btn.addEventListener('click', function () {
+        var open = sidebar.classList.toggle('is-open');
+        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        btn.textContent = open ? 'Close Topics' : 'Browse Topics';
+      });
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* Init                                                                 */
+    /* ------------------------------------------------------------------ */
+
+    function init() {
+      buildSidebar();
+      buildPopular();
+      initMobileToggle();
+
+      var searchEl = document.getElementById('learnSearch');
+      if (searchEl) {
+        searchEl.addEventListener('input', function () {
+          filterSidebar(searchEl.value);
+        });
+      }
+
+      // Load from URL hash on arrival
+      var hash = location.hash.slice(1);
+      if (hash && findEntry(hash)) {
+        loadEntry(hash);
+      }
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+
+  }());
+  </script>
+
+</body>
+</html>

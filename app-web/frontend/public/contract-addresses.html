@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>ImplicitEx — Contract Addresses</title>
+  <meta name="description" content="Canonical contract addresses for ImplicitEx on Polygon mainnet.">
+  <meta property="og:url" content="https://implicitex.com/contract-addresses.html">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="ImplicitEx — Contract Addresses">
+  <meta property="og:description" content="Canonical contract addresses for ImplicitEx on Polygon mainnet.">
+  <meta property="og:image" content="https://implicitex.com/components/images/og-primary.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="628">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@implicitex">
+  <meta name="twitter:title" content="ImplicitEx — Contract Addresses">
+  <meta name="twitter:description" content="Canonical contract addresses for ImplicitEx on Polygon mainnet.">
+  <meta name="twitter:image" content="https://implicitex.com/components/images/og-primary.png">
+  <link rel="canonical" href="https://implicitex.com/contract-addresses.html">
+  <script>(function(){try{var t=localStorage.getItem('implicitex-theme');if(t==='light'||t==='dark'){document.documentElement.dataset.theme=t;}else{var h=new Date().getHours();document.documentElement.dataset.theme=(h>=7&&h<19)?'light':'dark';}}catch(e){}})();</script>
+  <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+  <nav id="nav">
+    <a href="/" class="logo" aria-label="ImplicitEx home">
+      <svg class="brandmark" width="25" height="25" viewBox="0 0 25 25" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+        <path d="M18.4,21.48L2.64,5.73l.43-.43,15.76,15.76s1.3,1.3,2.79-.19.21-2.77.21-2.77L6.05,2.32l.43-.43,4.07,4.07,1.38,1.38,1.28-1.28,4.28-4.28.43.43-5.56,5.56,2.98,2.98,5.56-5.56.43.43-5.56,5.56,1.28,1.28,5.56-5.56s1.28-1.28-.21-2.77-2.79-.19-2.79-.19l-4.26,4.26-.43-.43,4.26-4.26s1.3-1.3-.19-2.79-2.77-.21-2.77-.21l-4.28,4.28L7.75.62s-1.28-1.28-2.77.21-.19,2.79-.19,2.79l15.76,15.76-.43.43L4.37,4.05s-1.3-1.3-2.79.19-.11,2.87-.11,2.87l15.68,15.68-.43.43-5.56-5.56-5.54,5.54-.43-.43,5.54-5.54-2.98-2.98-5.54,5.54-.43-.43,5.54-5.54-1.28-1.28L.51,18.08s-1.28,1.28.21,2.77,2.79.19,2.79.19l4.23-4.23.43.43-4.23,4.23s-1.3,1.3.19,2.79,2.77.21,2.77.21l4.26-4.26,4.28,4.28s1.28,1.28,2.77-.21.19-2.79.19-2.79Z" fill="#f2f2f0"/>
+      </svg>
+      <img class="wordmark" src="/components/images/wordmark-white.svg" alt="" aria-hidden="true">
+    </a>
+    <div class="nav-right">
+      <button class="clock-toggle" id="clockToggle" type="button" aria-label="Set theme by time of day">
+        <svg class="clock-icon" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+          <circle cx="7" cy="7" r="6" fill="none" stroke="currentColor" stroke-width="1.2"/>
+          <line id="clockHourHand" x1="7" y1="7" x2="7" y2="4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <line id="clockMinuteHand" x1="7" y1="7" x2="7" y2="2.5" stroke="currentColor" stroke-width="1" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch to light theme" aria-pressed="false">
+        <svg class="theme-icon" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+          <path d="M7 1 A6 6 0 0 0 7 13 Z" fill="var(--white)"/>
+          <path d="M7 1 A6 6 0 0 1 7 13 Z" fill="var(--bg)"/>
+          <circle cx="7" cy="7" r="6" fill="none" stroke="currentColor" stroke-width="1.2"/>
+        </svg>
+      </button>
+      <span class="nav-status">Polygon · Live</span>
+      <a class="send-usdc-link" href="/#transfer">Transfer Portal</a>
+      <button class="connect-btn" id="connectBtn" onclick="IX.connect()">Connect Wallet</button>
+      <div class="wallet-menu" id="walletMenu" hidden>
+        <button class="wallet-menu-trigger" id="walletMenuTrigger" type="button" aria-expanded="false" aria-controls="walletMenuPanel" aria-label="Wallet account menu">
+          <span class="wallet-dot" aria-hidden="true"></span>
+          <span class="wallet-addr" id="walletAddr"></span>
+          <span class="wallet-chevron" aria-hidden="true"></span>
+        </button>
+        <div class="wallet-menu-panel" id="walletMenuPanel" hidden>
+          <p class="wallet-menu-title">Wallet account</p>
+          <p class="wallet-menu-address" id="walletFullAddress"></p>
+          <button class="wallet-menu-action" id="copyAddressBtn" type="button">Copy address</button>
+          <button class="wallet-menu-action" id="switchNetworkBtn" type="button" hidden>Switch to Polygon</button>
+          <button class="wallet-menu-action" id="switchAccountBtn" type="button">Switch account</button>
+          <button class="wallet-menu-action wallet-menu-action--danger" id="disconnectBtn" type="button">Disconnect</button>
+        </div>
+      </div>
+      <button class="hamburger-btn" id="hamburgerBtn" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
+        <svg width="18" height="14" viewBox="0 0 18 14" aria-hidden="true">
+          <rect y="0"  width="18" height="1.8" fill="currentColor"/>
+          <rect y="6"  width="18" height="1.8" fill="currentColor"/>
+          <rect y="12" width="18" height="1.8" fill="currentColor"/>
+        </svg>
+      </button>
+    </div>
+  </nav>
+
+  <!-- MOBILE MENU OVERLAY -->
+  <div class="mobile-menu" id="mobileMenu" role="dialog" aria-modal="true" aria-label="Site menu" hidden>
+    <div class="mobile-menu-inner">
+      <div class="mobile-menu-head">
+        <span class="mobile-menu-title">Menu</span>
+        <button class="mobile-menu-close" id="mobileMenuClose" type="button" aria-label="Close menu">
+          <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+            <line x1="1" y1="1" x2="13" y2="13" stroke="currentColor" stroke-width="1.6"/>
+            <line x1="13" y1="1" x2="1" y2="13" stroke="currentColor" stroke-width="1.6"/>
+          </svg>
+        </button>
+      </div>
+      <section class="mobile-menu-section" aria-label="Wallet">
+        <p class="mobile-menu-label">Wallet</p>
+        <p class="mobile-menu-status" id="menuWalletStatus">No wallet connected.</p>
+        <p class="mobile-menu-sender" id="menuSenderDisplay" hidden></p>
+        <p class="mobile-menu-network" id="menuNetworkDisplay" hidden></p>
+        <div class="mobile-menu-actions">
+          <button class="mobile-menu-btn mobile-menu-btn--primary" id="menuConnectBtn" type="button">Connect Wallet</button>
+          <button class="mobile-menu-btn" id="menuSwitchBtn" type="button" hidden>Switch Account</button>
+          <button class="mobile-menu-btn mobile-menu-btn--danger" id="menuDisconnectBtn" type="button" hidden>Disconnect</button>
+        </div>
+      </section>
+      <section class="mobile-menu-section" aria-label="Transaction">
+        <p class="mobile-menu-label">Transaction</p>
+        <button class="mobile-menu-btn mobile-menu-btn--primary" id="menuOpenPortalBtn" type="button">Transfer Portal</button>
+        <p class="mobile-menu-portal-note">Open the USDC transfer interface.</p>
+      </section>
+      <section class="mobile-menu-section" aria-label="Navigation">
+        <p class="mobile-menu-label">Site</p>
+        <nav class="mobile-menu-links">
+          <a href="/start.html">Start</a>
+          <a href="/about.html">About</a>
+          <a href="/faq.html">FAQ</a>
+          <a href="/learn.html">Learn</a>
+          <a href="/verify.html">Verify</a>
+          <a href="/log.html">Devlog</a>
+          <a href="/terms.html">Terms</a>
+          <a href="/privacy.html">Privacy</a>
+          <a href="/legal.html">Legal</a>
+          <a href="/jurisdictions.html">Access</a>
+          <a href="/news.html">News</a>
+          <a href="/contact.html">Contact</a>
+        </nav>
+      </section>
+      <section class="mobile-menu-section" aria-label="Social">
+        <p class="mobile-menu-label">Social</p>
+        <nav class="mobile-menu-links">
+          <a href="https://x.com/implicitex" target="_blank" rel="noopener">X</a>
+          <a href="https://github.com/implicitexlabs" target="_blank" rel="noopener">GitHub</a>
+        </nav>
+      </section>
+    </div>
+    <div class="mobile-menu-backdrop" id="mobileMenuBackdrop" aria-hidden="true"></div>
+  </div>
+
+  <main class="policy-shell">
+    <div class="about-hero-mark about-hero-mark--stacked" aria-hidden="true">
+      <img class="about-brandmark" src="/components/images/lettermark-white.svg" alt="" aria-hidden="true">
+      <img class="about-wordmark" src="/components/images/wordmark-white.svg" alt="ImplicitEx" aria-hidden="true">
+    </div>
+
+    <h1>Contract Addresses</h1>
+
+    <p class="updated">Last updated: June 30, 2026</p>
+
+    <p>
+      This page lists the canonical on-chain addresses for ImplicitEx on Polygon
+      mainnet. Verify these addresses against what the Transfer Portal shows in the
+      transfer preview before signing any transaction.
+    </p>
+
+    <h2>Polygon Mainnet</h2>
+
+    <ul>
+      <li>
+        <strong>Network:</strong> Polygon (PoS) Mainnet
+      </li>
+      <li>
+        <strong>Chain ID:</strong> 137
+      </li>
+      <li>
+        <strong>ImplicitEx Contract:</strong><br>
+        <code>0x5015841D6E665e63Ea174aD6b8FeF854026dE0C0</code><br>
+        <a href="https://polygonscan.com/address/0x5015841D6E665e63Ea174aD6b8FeF854026dE0C0"
+           target="_blank" rel="noopener">View on Polygonscan →</a>
+      </li>
+      <li>
+        <strong>USDC Token (Circle native Polygon USDC):</strong><br>
+        <code>0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359</code><br>
+        <a href="https://polygonscan.com/token/0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359"
+           target="_blank" rel="noopener">View on Polygonscan →</a>
+      </li>
+      <li>
+        <strong>Platform fee:</strong> 1% (100 basis points)
+      </li>
+      <li>
+        <strong>Transfer minimum:</strong> 1.00 USDC
+      </li>
+      <li>
+        <strong>Transfer maximum:</strong> 250.00 USDC (soft launch)
+      </li>
+    </ul>
+
+    <h2>How to Verify</h2>
+
+    <p>
+      Before confirming any transfer, the Transfer Portal displays a preview that
+      includes the contract address, USDC token address, network, recipient, fee,
+      and total. Compare these values against the addresses on this page.
+    </p>
+
+    <p>
+      To verify independently on Polygonscan:
+    </p>
+    <ul>
+      <li>Open the ImplicitEx contract on Polygonscan using the link above.</li>
+      <li>Check that the contract is source-verified (green checkmark on the Contract tab).</li>
+      <li>Review recent transactions to confirm transfer activity matches expected behavior.</li>
+      <li>The contract source code is published and verifiable on-chain.</li>
+    </ul>
+
+    <p>
+      The <a href="/verify.html">Verification</a> page includes a confirmed
+      on-chain transaction record as additional proof of operation.
+    </p>
+
+    <h2>What Is Not Listed Here</h2>
+
+    <ul>
+      <li>The treasury address is not published on this page.</li>
+      <li>Testnet addresses are internal and not for public use.</li>
+      <li>Do not send funds to any address not listed on this page or shown in the Transfer Portal preview.</li>
+    </ul>
+
+    <p>
+      See also: <a href="/fee-disclosure.html">Fee &amp; Network Disclosure</a> ·
+      <a href="/risk-disclosure.html">Risk Disclosure</a> ·
+      <a href="/verify.html">Verification</a>
+    </p>
+
+    <a class="back" href="/">Return to ImplicitEx</a>
+  </main>
+
+  <footer>
+    <div class="f-inner">
+      <div class="f-brand">
+        <div class="f-brand-lockup">
+          <img src="/components/images/lettermark-white.svg" alt="" aria-hidden="true" class="f-brand-mark">
+          <img src="/components/images/wordmark-white.svg" alt="ImplicitEx" class="f-brand-word">
+        </div>
+        <span class="f-tagline">Wallet-to-wallet USDC transfers.</span>
+      </div>
+      <nav class="f-links" aria-label="Footer links">
+        <div class="f-group">
+          <span class="f-group-label">Product</span>
+          <a href="/start.html">Start</a>
+          <a href="/faq.html">FAQ</a>
+          <a href="/learn.html">Learn</a>
+          <a href="/verify.html">Verify</a>
+          <a href="/log.html">Devlog</a>
+        </div>
+        <div class="f-group">
+          <span class="f-group-label">Legal</span>
+          <a href="/terms.html">Terms</a>
+          <a href="/privacy.html">Privacy</a>
+          <a href="/legal.html">Legal</a>
+          <a href="/risk-disclosure.html">Risk Disclosure</a>
+          <a href="/fee-disclosure.html">Fee &amp; Network</a>
+          <a href="/acceptable-use.html">Acceptable Use</a>
+        </div>
+        <div class="f-group">
+          <span class="f-group-label">Trust</span>
+          <a href="/contract-addresses.html">Contract Addresses</a>
+          <a href="/security.html">Security</a>
+          <a href="/status.html">Status</a>
+        </div>
+        <div class="f-group">
+          <span class="f-group-label">Support</span>
+          <a href="/contact.html">Contact</a>
+          <a href="/jurisdictions.html">Access</a>
+        </div>
+        <div class="f-group">
+          <span class="f-group-label">Company</span>
+          <a href="/about.html">About</a>
+          <a href="/media.html">Media</a>
+          <a href="/news.html">News</a>
+        </div>
+      </nav>
+      <div class="f-bottom">
+        <span class="f-net is-live" id="networkBadge">Polygon live</span>
+        <span class="f-copy">&#169; <a href="https://adenmediagroup.com" target="_blank" rel="noopener noreferrer">Aden Media Group, LLC</a></span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="config/chains.js"></script>
+  <script src="js/analytics.js"></script>
+  <script src="js/consent.js"></script>
+  <script src="js/wallet.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/mobile-menu.js"></script>
+</body>
+</html>

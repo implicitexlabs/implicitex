@@ -95,6 +95,7 @@ Both keys are namespaced under `ix.receipt` to avoid collisions.
   "state":            "string — from canonical state vocabulary",
   "fundsMoved":       "boolean | null — null means unknown or pre-terminal",
   "explorerUrl":      "string | null — full URL to block explorer tx page",
+  "coinCard":         "object | null — optional Coin Card context captured at transfer time",
   "purposeTag":       "string — optional local/off-chain transfer purpose",
   "referenceId":      "string — optional local/off-chain invoice or internal reference",
   "memo":             "string — optional local/off-chain memo",
@@ -102,6 +103,42 @@ Both keys are namespaced under `ix.receipt` to avoid collisions.
   "network":          "string — chain name (e.g. 'Polygon')"
 }
 ```
+
+### Coin Card receipt context
+
+When a transfer is initiated from Coin Card, receipts should preserve enough
+context to prove what the card presented at the time of transaction without
+putting human-readable metadata on-chain.
+
+Planned optional shape:
+
+```json
+{
+  "coinCard": {
+    "schema": "implicitex.coincard.free.v1",
+    "version": 1,
+    "manifestUrl": "https://example.com/coin-card.json",
+    "manifestHash": "0x...",
+    "manifestCreated": "2026-07-04T18:00:00Z",
+    "manifestUpdated": "2026-07-04T18:00:00Z",
+    "routeValidation": "valid",
+    "recipientSource": "host-manifest"
+  }
+}
+```
+
+These fields are evidence context, not recipient verification. The receipt may
+say the recipient address was loaded from a host manifest. It must not say
+ImplicitEx verified that the address belonged to the host unless the Coin Card
+was enrolled in a separate verified-recipient program.
+
+`manifestCreated` and `manifestUpdated` are host-declared chronology fields.
+They are useful for dispute context but are not cryptographic proof of
+publication time.
+
+Purpose labels such as `donation`, `invoice`, or `creator-support` remain
+off-chain semantic metadata. They do not change settlement behavior, fee math,
+route validation, or the trust boundary.
 
 ### fundsMoved values
 

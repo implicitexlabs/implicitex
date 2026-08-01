@@ -30,8 +30,14 @@ venv/
 .ruff_cache/
 implicitex_local_quarantine_*
 
-# Firebase local cache
+# Firebase local cache and runtime logs
 .firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
 
-# Firebase local cache
-.firebase/
+# Generated fork test evidence (re-created on each run; contains hook-triggering hashes)
+app-web/tests/fork/polygon-fork-gas-evidence.json
+
+# Generated at deploy time — not committed; see app-web/scripts/generate_build_info.js
+app-web/frontend/public/build-info.json

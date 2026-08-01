@@ -1,0 +1,1242 @@
+/* ============================================================
+   Coin Card microsite — coincard.css
+   Audience: creators, not blockchain users. Copy is warm
+   and direct. Technical vocabulary is minimal.
+   Design tokens match implicitex.com for brand coherence.
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Orbitron:wght@700;800&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:        #080808;
+  --surface:   #111111;
+  --surface-2: #1a1a1a;
+  --white:     #f2f2f0;
+  --dim:       rgba(242,242,240,0.82);
+  --muted:     rgba(242,242,240,0.48);
+  --border:    rgba(255,255,255,0.09);
+  --border-2:  rgba(255,255,255,0.18);
+  --accent:    #D4A017;
+  --warn:      #c0392b;
+
+  --font-ui:      'Inter', system-ui, sans-serif;
+  --font-display: 'Orbitron', sans-serif;
+  --font-mono:    'IBM Plex Mono', monospace;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--white);
+  font-family: var(--font-ui);
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Layout ─────────────────────────────────────────────── */
+
+.cc-site-wrap {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* ── Nav ─────────────────────────────────────────────────── */
+
+.cc-nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(8,8,8,0.92);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+}
+
+.cc-nav-inner {
+  max-width: 780px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 56px;
+  gap: 16px;
+}
+
+.cc-nav-logo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.cc-nav-coincard-logo {
+  height: 20px;
+  display: block;
+  /* SVG uses currentColor which resolves to black in <img>;
+     brightness(0) collapses to silhouette, invert(1) makes it white */
+  filter: brightness(0) invert(1);
+}
+
+.cc-nav-powered {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+/* ── Hero ─────────────────────────────────────────────────── */
+
+.cc-hero {
+  padding: 80px 0 64px;
+  text-align: center;
+}
+
+.cc-hero-eyebrow {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--accent);
+  text-transform: uppercase;
+  margin-bottom: 20px;
+}
+
+.cc-hero-heading {
+  font-family: var(--font-display);
+  font-size: clamp(28px, 6vw, 44px);
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  margin-bottom: 20px;
+}
+
+.cc-hero-tagline {
+  font-size: 15px;
+  color: var(--muted);
+  letter-spacing: 0.01em;
+  margin-bottom: 20px;
+}
+
+.cc-hero-sub {
+  font-size: 18px;
+  color: var(--dim);
+  max-width: 520px;
+  margin: 0 auto 40px;
+  line-height: 1.55;
+}
+
+.cc-hero-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 28px;
+  background: var(--white);
+  color: var(--bg);
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: 5px;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+
+.cc-hero-cta:hover { background: #d8d8d6; }
+
+.cc-hero-cta-arrow { font-size: 18px; line-height: 1; }
+
+.cc-hero-note {
+  margin-top: 14px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* ── How it works ─────────────────────────────────────────── */
+
+.cc-how {
+  padding: 64px 0;
+  border-top: 1px solid var(--border);
+}
+
+.cc-section-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 36px;
+  text-align: center;
+}
+
+.cc-steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 24px;
+}
+
+.cc-step {
+  padding: 24px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.cc-step-num {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+.cc-step-title {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.cc-step-body {
+  font-size: 14px;
+  color: var(--dim);
+  line-height: 1.5;
+}
+
+/* ── URL preview ──────────────────────────────────────────── */
+
+.cc-url-preview {
+  padding: 48px 0;
+  text-align: center;
+  border-top: 1px solid var(--border);
+}
+
+.cc-url-display {
+  display: inline-flex;
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--border-2);
+  border-radius: 6px;
+  padding: 14px 22px;
+  font-family: var(--font-mono);
+  font-size: 20px;
+  gap: 0;
+  margin-bottom: 12px;
+}
+
+.cc-url-base  { color: var(--muted); }
+.cc-url-slash { color: var(--muted); }
+.cc-url-name  { color: var(--white); font-weight: 500; }
+
+.cc-url-note {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* ── Tiers ────────────────────────────────────────────────── */
+
+.cc-tiers {
+  padding: 64px 0;
+  border-top: 1px solid var(--border);
+}
+
+.cc-tiers-heading {
+  font-size: 22px;
+  font-weight: 600;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.cc-tiers-sub {
+  font-size: 14px;
+  color: var(--dim);
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.cc-tiers-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+@media (max-width: 560px) {
+  .cc-tiers-grid { grid-template-columns: 1fr; }
+}
+
+.cc-tier {
+  padding: 28px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+}
+
+.cc-tier-name {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.cc-tier-title {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.cc-tier-desc {
+  font-size: 13px;
+  color: var(--dim);
+  line-height: 1.4;
+  margin-bottom: 12px;
+}
+
+.cc-tier-context {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 10px 12px;
+  background: var(--surface-2);
+  border-radius: 4px;
+  margin-bottom: 16px;
+}
+
+.cc-tier-context-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.cc-tier-context-items {
+  font-size: 13px;
+  color: var(--dim);
+}
+
+.cc-tier-price {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--accent);
+  margin-bottom: 20px;
+}
+
+.cc-tier-features {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  flex: 1; /* expand to fill remaining card height, pushing CTA to bottom */
+}
+
+.cc-tier-features li {
+  font-size: 14px;
+  color: var(--dim);
+  padding-left: 18px;
+  position: relative;
+}
+
+.cc-tier-features li::before {
+  content: '—';
+  position: absolute;
+  left: 0;
+  color: var(--muted);
+}
+
+.cc-tier-cta {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 24px; /* fixed gap above CTA; feature list absorbs remaining space */
+  padding: 10px 20px;
+  background: var(--white);
+  color: var(--bg);
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 4px;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+
+.cc-tier-cta:hover { background: #d8d8d6; }
+
+/* ── FAQ ──────────────────────────────────────────────────── */
+
+.cc-faq {
+  padding: 64px 0;
+  border-top: 1px solid var(--border);
+}
+
+.cc-faq-list {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.cc-faq-q {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.cc-faq-a {
+  font-size: 14px;
+  color: var(--dim);
+  line-height: 1.6;
+}
+
+.cc-faq-a a {
+  color: var(--white);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* ── Footer ───────────────────────────────────────────────── */
+
+.cc-footer {
+  padding: 32px 0 48px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.cc-footer-brand {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.cc-footer-brand a {
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.cc-footer-brand a:hover { color: var(--dim); }
+
+.cc-footer-links {
+  display: flex;
+  gap: 20px;
+}
+
+.cc-footer-links a {
+  font-size: 12px;
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.cc-footer-links a:hover { color: var(--dim); }
+
+/* ── Progressive disclosure sections ─────────────────────── */
+
+/* Sections that fade in as the user progresses */
+.cc-reveal {
+  opacity: 0;
+  transform: translateY(10px);
+  pointer-events: none;
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  padding-top: 36px;
+  margin-top: 36px;
+  border-top: 1px solid var(--border);
+}
+
+/* Section — flex column, consistent internal gap */
+.cc-section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Section intro copy — appears in the wallet section */
+.cc-section-intro {
+  font-size: 15px;
+  color: var(--dim);
+  line-height: 1.6;
+}
+
+/* Section heading — asks a question, not a title; Inter keeps it approachable */
+.cc-section-heading {
+  font-family: var(--font-ui);
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--white);
+}
+
+/* ── Wallet section ────────────────────────────────────────── */
+
+/* Secondary links below the connect button */
+.cc-wallet-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+/* Shared style for anchor + button secondary wallet options */
+.cc-wallet-option-link {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  color: var(--muted);
+  cursor: pointer;
+  text-decoration: none;
+  text-align: left;
+  transition: color 0.15s;
+}
+
+.cc-wallet-option-link:hover { color: var(--dim); }
+
+/* Trouble area — surfaces only when wallet connection fails */
+.cc-wallet-trouble {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* "Change wallet" inside the verified state panel */
+.cc-wallet-change-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--muted);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: rgba(242,242,240,0.20);
+  transition: color 0.15s;
+  margin-top: 4px;
+}
+
+.cc-wallet-change-btn:hover { color: var(--dim); }
+
+/* Submit section — summary sits above the button */
+.cc-submit-summary {
+  margin-bottom: 4px;
+}
+
+/* "Coin Card" label above the review table — identifies what's being submitted */
+.cc-submit-summary-label {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+/* Mono variant for wallet address inside review val */
+.cc-review-val--mono {
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+/* ── Claim form page ──────────────────────────────────────── */
+
+.cc-claim-wrap {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 72px 24px 80px;
+}
+
+.cc-claim-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--muted);
+  text-decoration: none;
+  margin-bottom: 36px;
+}
+
+.cc-claim-back:hover { color: var(--dim); }
+
+.cc-claim-heading {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 800;
+  margin-bottom: 32px;
+}
+
+.cc-claim-sub {
+  font-size: 15px;
+  color: var(--dim);
+  margin-bottom: 40px;
+  line-height: 1.55;
+}
+
+.cc-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.cc-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cc-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--white);
+}
+
+.cc-label-note {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.cc-input {
+  background: var(--surface);
+  border: 1px solid var(--border-2);
+  border-radius: 5px;
+  color: var(--white);
+  font-family: var(--font-ui);
+  font-size: 15px;
+  padding: 12px 14px;
+  outline: none;
+  transition: border-color 0.15s;
+  width: 100%;
+  -webkit-appearance: none;
+}
+
+.cc-input:focus { border-color: rgba(255,255,255,0.35); }
+.cc-input::placeholder { color: var(--muted); }
+
+/* select inherits .cc-input; override OS appearance */
+select.cc-input {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='rgba(242,242,240,0.3)'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 36px;
+  cursor: pointer;
+}
+
+select.cc-input option { background: var(--surface); color: var(--white); }
+
+.cc-input--mono {
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+.cc-input-prefix-wrap {
+  display: flex;
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--border-2);
+  border-radius: 5px;
+  overflow: hidden;
+  transition: border-color 0.15s;
+}
+
+.cc-input-prefix-wrap:focus-within { border-color: rgba(255,255,255,0.35); }
+
+.cc-input-prefix {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--muted);
+  padding: 12px 0 12px 14px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.cc-input-inline {
+  background: transparent;
+  border: none;
+  color: var(--white);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  padding: 12px 14px 12px 0;
+  outline: none;
+  min-width: 0;
+  flex: 1;
+}
+
+.cc-input-inline::placeholder { color: var(--muted); }
+
+.cc-field-note {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.cc-field-error {
+  font-size: 12px;
+  color: var(--warn);
+  display: none;
+}
+
+.cc-field-error.is-visible { display: block; }
+
+/* Tier radio */
+
+.cc-tier-radios {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.cc-tier-radio { position: relative; }
+
+.cc-tier-radio input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.cc-tier-radio-label {
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border-2);
+  border-radius: 5px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+  gap: 4px;
+}
+
+.cc-tier-radio input:checked + .cc-tier-radio-label {
+  border-color: var(--white);
+}
+
+.cc-tier-radio-name {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.cc-tier-radio-price {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--accent);
+}
+
+.cc-tier-radio-desc {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+/* Submit */
+
+.cc-submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 14px 24px;
+  background: var(--white);
+  color: var(--bg);
+  font-family: var(--font-ui);
+  font-size: 15px;
+  font-weight: 600;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s;
+}
+
+.cc-submit:hover:not(:disabled) { background: #d8d8d6; }
+.cc-submit:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* Confirmation state */
+
+.cc-confirm {
+  display: none;
+  text-align: center;
+  padding: 32px 0;
+}
+
+.cc-confirm.is-visible { display: block; }
+.cc-form.is-hidden { display: none; }
+
+.cc-confirm-mark {
+  font-size: 32px;
+  margin-bottom: 16px;
+}
+
+.cc-confirm-heading {
+  font-size: 22px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.cc-confirm-body {
+  font-size: 15px;
+  color: var(--dim);
+  line-height: 1.6;
+  max-width: 380px;
+  margin: 0 auto;
+}
+
+.cc-confirm-mono {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--white);
+}
+
+/* Card preview — shown in the confirmation panel */
+
+.cc-confirm-preview {
+  background: var(--surface);
+  border: 1px solid var(--border-2);
+  border-radius: 8px;
+  padding: 24px 24px 20px;
+  margin-bottom: 28px;
+  text-align: left;
+}
+
+.cc-confirm-preview-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.cc-confirm-preview-url {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  margin-bottom: 16px;
+  overflow-wrap: anywhere; /* slugs have no spaces; break at any char rather than forcing ugly hyphenation */
+}
+
+.cc-confirm-url-base { color: var(--muted); }
+.cc-confirm-url-slug { color: var(--white); }
+
+.cc-confirm-preview-status {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.cc-confirm-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+  margin-top: 4px; /* align dot with first line of text */
+}
+
+.cc-confirm-status-body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.cc-confirm-status-text {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--accent);
+  letter-spacing: 0.05em;
+}
+
+.cc-confirm-status-note {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+/* ── Multi-step claim flow ────────────────────────────────────── */
+
+/* Step progress indicator */
+
+.cc-progress {
+  margin-bottom: 36px;
+}
+
+.cc-progress-steps {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.cc-progress-step {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--border-2);
+  background: var(--surface);
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.cc-progress-step.is-active {
+  background: var(--white);
+  color: var(--bg);
+  border-color: var(--white);
+}
+
+.cc-progress-step.is-done {
+  background: var(--surface-2);
+  border-color: var(--border-2);
+  color: var(--muted);
+}
+
+.cc-progress-line {
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.cc-progress-labels {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 2px;
+}
+
+.cc-progress-labels span {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* Step panels */
+
+.cc-step-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.cc-step-heading {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 800;
+  margin-bottom: 0;
+}
+
+.cc-step-sub {
+  font-size: 14px;
+  color: var(--dim);
+  line-height: 1.55;
+  margin-top: -8px; /* tighten gap after heading */
+}
+
+/* Wallet connect button */
+
+.cc-wallet-connect-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 16px 18px;
+  background: transparent;
+  border: 1px solid var(--border-2);
+  border-radius: 5px;
+  color: var(--white);
+  font-family: var(--font-ui);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  text-align: left;
+}
+
+.cc-wallet-connect-btn:hover:not(:disabled) {
+  border-color: rgba(255,255,255,0.40);
+  background: rgba(255,255,255,0.04);
+}
+
+.cc-wallet-connect-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.cc-wallet-connect-icon {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+}
+
+.cc-wallet-connect-label { flex: 1; }
+
+.cc-wallet-connect-badge {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--accent);
+  letter-spacing: 0.06em;
+  border: 1px solid rgba(212,160,23,0.4);
+  padding: 2px 7px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+
+/* Wallet fallback toggle (secondary path — hidden by default) */
+
+.cc-wallet-fallback-toggle {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--muted);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: rgba(242,242,240,0.25);
+  transition: color 0.15s;
+  text-align: left;
+}
+
+.cc-wallet-fallback-toggle:hover { color: var(--dim); }
+
+.cc-wallet-fallback { display: flex; flex-direction: column; gap: 14px; }
+
+.cc-wallet-fallback-note {
+  font-size: 12px;
+  color: var(--dim);
+  line-height: 1.55;
+  padding: 12px 14px;
+  background: rgba(192,57,43,0.06);
+  border: 1px solid rgba(192,57,43,0.22);
+  border-radius: 4px;
+}
+
+/* "or" divider */
+
+.cc-or-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 12px;
+  font-family: var(--font-mono);
+}
+
+.cc-or-divider::before,
+.cc-or-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* Wallet state panels */
+
+.cc-wallet-state {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px;
+  border-radius: 5px;
+}
+
+.cc-wallet-state-verified {
+  background: rgba(212,160,23,0.07);
+  border: 1px solid rgba(212,160,23,0.28);
+}
+
+.cc-wallet-state-unverified {
+  background: rgba(192,57,43,0.07);
+  border: 1px solid rgba(192,57,43,0.32);
+}
+
+.cc-wallet-state-icon {
+  font-size: 15px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.cc-wallet-state-verified .cc-wallet-state-icon { color: var(--accent); }
+.cc-wallet-state-unverified .cc-wallet-state-icon { color: var(--warn); }
+
+.cc-wallet-state-label {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.cc-wallet-state-verified .cc-wallet-state-label { color: var(--accent); }
+.cc-wallet-state-unverified .cc-wallet-state-label { color: var(--warn); }
+
+.cc-wallet-state-addr {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--white);
+  margin-bottom: 6px;
+  overflow-wrap: anywhere;
+}
+
+.cc-wallet-state-note {
+  font-size: 12px;
+  color: var(--dim);
+  line-height: 1.55;
+}
+
+/* Step navigation (Back / Continue) */
+
+.cc-step-nav {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.cc-step-back {
+  display: inline-flex;
+  align-items: center;
+  padding: 11px 18px;
+  background: transparent;
+  border: 1px solid var(--border-2);
+  border-radius: 5px;
+  color: var(--dim);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+
+.cc-step-back:hover {
+  border-color: rgba(255,255,255,0.30);
+  color: var(--white);
+}
+
+.cc-step-next {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 20px;
+  background: var(--white);
+  color: var(--bg);
+  border: none;
+  border-radius: 5px;
+  font-family: var(--font-ui);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s;
+}
+
+.cc-step-next:hover:not(:disabled) { background: #d8d8d6; }
+.cc-step-next:disabled { opacity: 0.40; cursor: not-allowed; }
+
+/* Email disclosure block */
+
+.cc-field-disclosure {
+  padding: 12px 14px;
+  background: var(--surface-2);
+  border-left: 2px solid var(--border-2);
+  border-radius: 0 4px 4px 0;
+}
+
+.cc-disclosure-heading {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--dim);
+  margin-bottom: 4px;
+}
+
+.cc-disclosure-body {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+/* Tier radio compact description */
+.cc-tier-radio-desc { line-height: 1.35; }
+
+/* Review table */
+
+.cc-review-table {
+  background: var(--surface);
+  border: 1px solid var(--border-2);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.cc-review-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.cc-review-row:last-child { border-bottom: none; }
+
+.cc-review-key {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  flex-shrink: 0;
+  width: 72px;
+  padding-top: 3px;
+}
+
+.cc-review-val {
+  font-size: 14px;
+  color: var(--white);
+  overflow-wrap: anywhere;
+  line-height: 1.4;
+}
+
+.cc-review-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+.cc-review-badge-verified {
+  color: var(--accent);
+  background: rgba(212,160,23,0.12);
+}
+
+.cc-review-badge-unverified {
+  color: var(--warn);
+  background: rgba(192,57,43,0.12);
+}
+
+.cc-review-security-note {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.55;
+  padding: 12px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+}

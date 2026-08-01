@@ -65,14 +65,35 @@
   var LEVELS = ['dormant', 'status', 'elevated', 'critical'];
   var RATES  = ['low', 'avg', 'high'];
 
+  // ---- Init: remove hidden attr and collapse via height so JS controls state ----
+  panel.removeAttribute('hidden');
+  panel.style.height = '0';
+
   // ---- Open / close ----
   function open() {
     if (isOpen) return;
     isOpen = true;
     root.classList.add('is-open');
     bar.setAttribute('aria-expanded', 'true');
-    panel.removeAttribute('hidden');
-    panel.style.visibility = 'visible';
+
+    var body = panel.querySelector('.telemetry-body');
+    var target = panel.scrollHeight;
+    if (body) { body.style.opacity = '0'; body.style.transition = 'none'; }
+    requestAnimationFrame(function () {
+      panel.style.transition = 'height 0.3s ease';
+      panel.style.height = target + 'px';
+      setTimeout(function () {
+        if (body) { body.style.transition = 'opacity 0.22s ease'; body.style.opacity = '1'; }
+      }, 80);
+    });
+    function onOpen(ev) {
+      if (ev.propertyName !== 'height') return;
+      panel.style.height = '';
+      panel.style.transition = '';
+      if (body) body.style.cssText = '';
+      panel.removeEventListener('transitionend', onOpen);
+    }
+    panel.addEventListener('transitionend', onOpen);
   }
 
   function close() {
@@ -80,7 +101,23 @@
     isOpen = false;
     root.classList.remove('is-open');
     bar.setAttribute('aria-expanded', 'false');
-    panel.setAttribute('hidden', '');
+
+    var body = panel.querySelector('.telemetry-body');
+    var currentH = panel.offsetHeight;
+    panel.style.height = currentH + 'px';
+    if (body) { body.style.opacity = '0'; body.style.transition = 'opacity 0.12s ease'; }
+    requestAnimationFrame(function () {
+      panel.style.transition = 'height 0.28s ease';
+      panel.style.height = '0';
+    });
+    function onClose(ev) {
+      if (ev.propertyName !== 'height') return;
+      panel.style.height = '0';
+      panel.style.transition = '';
+      if (body) body.style.cssText = '';
+      panel.removeEventListener('transitionend', onClose);
+    }
+    panel.addEventListener('transitionend', onClose);
   }
 
   function toggle() {

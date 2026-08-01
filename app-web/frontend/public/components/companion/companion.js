@@ -24,6 +24,11 @@
 
   if (!els.companion || !els.bar) return;
 
+  // Collapse panel on init so JS controls height from the start
+  if (els.detail) {
+    els.detail.style.height = '0';
+  }
+
   function normalizeSeverity(severity) {
     if (!severity) return null;
     if (severity === 'error' || severity === 'critical') return 'critical';
@@ -64,18 +69,67 @@
   }
 
   // ----------------------------------------------------------------
+  // Animation helpers
+  // ----------------------------------------------------------------
+  function animateOpen(panel, body) {
+    var target = panel.scrollHeight;
+    if (body) { body.style.opacity = '0'; body.style.transition = 'none'; }
+    requestAnimationFrame(function () {
+      panel.style.transition = 'height 0.3s ease';
+      panel.style.height = target + 'px';
+      setTimeout(function () {
+        if (body) { body.style.transition = 'opacity 0.22s ease'; body.style.opacity = '1'; }
+      }, 80);
+    });
+    function onDone(ev) {
+      if (ev.propertyName !== 'height') return;
+      panel.style.height = '';
+      panel.style.transition = '';
+      if (body) body.style.cssText = '';
+      panel.removeEventListener('transitionend', onDone);
+    }
+    panel.addEventListener('transitionend', onDone);
+  }
+
+  function animateClose(panel, body) {
+    var currentH = panel.offsetHeight;
+    panel.style.height = currentH + 'px';
+    if (body) { body.style.opacity = '0'; body.style.transition = 'opacity 0.12s ease'; }
+    requestAnimationFrame(function () {
+      panel.style.transition = 'height 0.28s ease';
+      panel.style.height = '0';
+    });
+    function onDone(ev) {
+      if (ev.propertyName !== 'height') return;
+      panel.style.height = '0';
+      panel.style.transition = '';
+      if (body) body.style.cssText = '';
+      panel.removeEventListener('transitionend', onDone);
+    }
+    panel.addEventListener('transitionend', onDone);
+  }
+
+  // ----------------------------------------------------------------
   // Toggle
   // ----------------------------------------------------------------
   function open() {
+    if (els.companion.classList.contains('is-open')) return;
     els.companion.classList.add('is-open');
     els.bar.setAttribute('aria-expanded', 'true');
-    if (els.detail) els.detail.removeAttribute('aria-hidden');
+    if (els.detail) {
+      els.detail.removeAttribute('aria-hidden');
+      animateOpen(els.detail, els.detail.querySelector('.companion-body'));
+    }
   }
 
   function close() {
+    if (!els.companion.classList.contains('is-open')) return;
     els.companion.classList.remove('is-open');
     els.bar.setAttribute('aria-expanded', 'false');
-    if (els.detail) els.detail.setAttribute('aria-hidden', 'true');
+    if (els.detail) {
+      els.detail.setAttribute('aria-hidden', 'true');
+      animateClose(els.detail, els.detail.querySelector('.companion-body'));
+    }
   }
 
   function toggle() {

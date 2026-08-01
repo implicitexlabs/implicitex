@@ -56,6 +56,7 @@
 
   function classifyError(err, context = {}) {
     const code = providerErrorCode(err);
+    const ethersCode = err && err.code; // ethers.js v6 uses string codes e.g. 'ACTION_REJECTED'
     const detail = cleanDetail(err);
     const broadcastKnown = context.broadcastKnown === true;
     const chainReceiptStatus = context.chainReceiptStatus;
@@ -100,7 +101,10 @@
       });
     }
 
-    if (code === 4001) {
+    // 4001 = standard EIP-1193 user rejection
+    // 5000 = WalletConnect v2 user rejection ("User rejected methods")
+    // ACTION_REJECTED = ethers.js v6 string code for user rejection
+    if (code === 4001 || code === 5000 || ethersCode === 'ACTION_REJECTED') {
       return base({
         code: 'USER_REJECTED',
         state: STATES.REJECTED,
@@ -124,6 +128,19 @@
         fundsMoved: false,
         broadcastKnown: false,
         retryGuidance: 'Open MetaMask, finish or cancel the pending request, then retry.',
+        severity: 'warning',
+      });
+    }
+
+    if (code === -32603) {
+      return base({
+        code: 'WALLET_INTERNAL_ERROR',
+        state: STATES.INTERRUPTED,
+        title: 'Wallet returned an internal error',
+        message: 'MetaMask reported an internal error processing this request. No funds were sent.',
+        fundsMoved: false,
+        broadcastKnown: false,
+        retryGuidance: 'Return to MetaMask, dismiss any pending prompts, then retry the transfer.',
         severity: 'warning',
       });
     }

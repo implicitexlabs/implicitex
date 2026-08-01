@@ -1,0 +1,159 @@
+{
+  "schemaVersion": "implicitex-polygon-live-applicability-checkpoint.v1",
+  "status": "LIVE_POLYGON_APPLICABILITY_ACCEPTED",
+  "observationDate": "2026-07-19",
+  "observationTimestampUtc": "2026-07-19T07:12:40Z",
+  "repositoryHead": "2d74bf7",
+  "testedRuntimeCommit": "627586a",
+  "acceptanceSuiteCommit": "715a685",
+  "canonicalPolicyId": "COIN_CARD_POLYGON_V1",
+  "policyRevision": "2026-07-17.1",
+  "observationBlock": {
+    "chainId": "137",
+    "number": "90493442",
+    "blockHash": "0xbccb88da9a0706b25a0cd804701a8757734af54477a0ca601dcfa2a7a3e61a25",
+    "parentBlockHash": "0x1403920bb2494c52a2157cb1a0d748f7c85eb97f297a47f673feee6c2cc6034a",
+    "timestamp": "1784445160",
+    "timestampIsoUtc": "2026-07-19T07:12:40Z",
+    "headAtObservationTime": "90493458",
+    "offsetFromHead": "16"
+  },
+  "reorgCheck": {
+    "method": "eth_getBlockByNumber fetched twice (before and after all contract reads); hash compared",
+    "result": "NO_REORG",
+    "blockHashStable": true
+  },
+  "applicabilityResult": {
+    "status": "APPLICABLE",
+    "reasonCodes": []
+  },
+  "matchTable": {
+    "chainId": {
+      "expected": "137",
+      "actual": "137",
+      "status": "MATCH"
+    },
+    "token": {
+      "address": {
+        "expected": "0x3c499c542cef5e3811e1192ce70d8cc03d5c3359",
+        "actual": "0x3c499c542cef5e3811e1192ce70d8cc03d5c3359",
+        "status": "MATCH"
+      },
+      "runtimeHash": {
+        "expected_identifier": "TOKEN_PROXY_RUNTIME_KECCAK256",
+        "status": "MATCH",
+        "byteLength": "1852"
+      },
+      "implementationSlot": {
+        "expected_identifier": "ZEPPELINOS_IMPLEMENTATION_SLOT",
+        "status": "MATCH"
+      },
+      "implementationAddress": {
+        "expected": "0x235ae97b28466db30469b89a9fe4cff0659f82cb",
+        "actual": "0x235ae97b28466db30469b89a9fe4cff0659f82cb",
+        "status": "MATCH"
+      },
+      "implementationRuntimeHash": {
+        "expected_identifier": "TOKEN_IMPLEMENTATION_RUNTIME_KECCAK256",
+        "status": "MATCH",
+        "byteLength": "23464"
+      },
+      "decimals": {
+        "expected": "6",
+        "actual": "6",
+        "status": "MATCH"
+      },
+      "symbol": {
+        "expected": "USDC",
+        "actual": "USDC",
+        "status": "MATCH"
+      }
+    },
+    "executionContract": {
+      "address": {
+        "expected": "0x5015841d6e665e63ea174ad6b8fef854026de0c0",
+        "actual": "0x5015841d6e665e63ea174ad6b8fef854026de0c0",
+        "status": "MATCH"
+      },
+      "runtimeHash": {
+        "expected_identifier": "EXECUTION_RUNTIME_KECCAK256",
+        "status": "MATCH",
+        "byteLength": "7161"
+      },
+      "treasury": {
+        "expected": "0xa7ce4232811021d2dd01f4f0f264df2427ab3919",
+        "actual": "0xa7ce4232811021d2dd01f4f0f264df2427ab3919",
+        "status": "MATCH"
+      },
+      "feeBasisPoints": {
+        "expected": "100",
+        "actual": "100",
+        "status": "MATCH"
+      },
+      "minimumRecipientAmountAtomic": {
+        "expected": "1000000",
+        "actual": "1000000",
+        "status": "MATCH"
+      },
+      "maximumRecipientAmountAtomic": {
+        "expected": "250000000",
+        "actual": null,
+        "status": "POLICY_BOUND",
+        "source": "POLICY",
+        "note": "Not observable on-chain; authoritative through validated policy binding only"
+      },
+      "transferPrecisionAtomic": {
+        "expected": "1000000",
+        "actual": "1000000",
+        "status": "MATCH"
+      },
+      "paused": {
+        "expected": "false",
+        "actual": "false",
+        "status": "MATCH"
+      }
+    }
+  },
+  "reasonCodeMap": {
+    "totalCodes": 25,
+    "codesActive": 0,
+    "mapComplete": true,
+    "mapUnique": true
+  },
+  "rpcMethodCounts": {
+    "eth_chainId": 1,
+    "eth_blockNumber": 1,
+    "eth_getBlockByNumber": 2,
+    "eth_getCode": 3,
+    "eth_getStorageAt": 1,
+    "eth_call": 7
+  },
+  "readOnlyConfirmation": {
+    "eth_sendTransaction": false,
+    "eth_sendRawTransaction": false,
+    "eth_sign": false,
+    "personal_sign": false,
+    "eth_requestAccounts": false,
+    "walletProviderAccessed": false,
+    "localStateMutated": false,
+    "productionWalletAccessed": false
+  },
+  "noLiveTransactionBroadcast": true,
+  "testResults": {
+    "ix-execution-gas-policy.test.js": "pass",
+    "ix-execution-policy-applicability.test.js": "pass",
+    "coin-card-fork-policy-authority.test.js": "11/11 pass",
+    "ix-execution.test.js": "15/15 pass",
+    "ix-execution-authorized-path.test.js": "20/20 pass",
+    "coin-card-visible-review-runtime.test.js": "pass",
+    "coin-card-qr-browser.test.js": "19/19 pass",
+    "coin-card-geometry-browser.test.js": "10/10 pass",
+    "coin-card-runtime-trust-conjunction.test.js": "3/10 pass — 7 stale-integrity failures (pre-existing; manifest not yet regenerated)"
+  },
+  "contentSafety": {
+    "rpcEndpointIncluded": false,
+    "providerCredentialIncluded": false,
+    "privateKeyIncluded": false,
+    "shellEnvironmentIncluded": false
+  }
+}

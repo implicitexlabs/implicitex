@@ -1,14 +1,31 @@
 /*
   companion.css — Transaction Companion Tray
-  Inherits design tokens from main.css (--mono, --surface, --border, etc.)
+  Inherits design tokens from main.css (--font-*, --size-*, --sp-*, --surface, --border, etc.)
+  Type rules: labels/status/guidance → --font-ui; technical values → --font-mono; min size → --size-sm.
   Do not introduce new color values. Monochrome only.
 */
 
 /* ---- Tray container ---- */
 .companion {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
   background: var(--surface);
-  border-top: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
+  border: 1px solid var(--border);
+  border-top: 0;
+  outline: 1px solid var(--border-2);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.06),
+    0 2px 0 rgba(255, 255, 255, 0.05),
+    0 4px 18px rgba(0, 0, 0, 0.5);
+}
+
+.transfer-portal > .companion {
+  max-width: none;
+  margin: 0;
+  border: 0;
+  outline: 0;
+  box-shadow: none;
 }
 
 /* ---- Collapsed bar ---- */
@@ -55,12 +72,12 @@
   background: var(--telemetry-amber);
 }
 
-/* Status line — dim keeps it readable while remaining secondary to page content */
+/* Status line — human-readable state string, not technical data → UI font */
 .companion-status {
-  font-family: var(--mono);
-  font-size: 10px;
-  font-weight: 400;
-  letter-spacing: 0.06em;
+  font-family: var(--font-ui);
+  font-size: var(--text-12);
+  font-weight: var(--weight-medium);
+  letter-spacing: 0.03em;
   color: var(--dim);
   flex: 1;
   white-space: nowrap;
@@ -100,16 +117,12 @@
 
 /* ---- Detail panel — expands downward below bar ---- */
 .companion-detail {
-  max-height: 0;
   overflow: hidden;
-  /* ease-out: mechanical extension — quick start, decelerates to rest.
-     Not ease (soft/app-like). Not linear (abrupt). Not slow (theatrical). */
-  transition: max-height 0.18s ease-out;
   border-top: 0px solid var(--border);
+  /* height and transition managed by JS animation */
 }
 
 .companion.is-open .companion-detail {
-  max-height: 260px;
   border-top-width: 1px;
 }
 
@@ -134,17 +147,18 @@
 }
 
 .companion-k {
-  font-family: var(--mono);
-  font-size: 9px;
-  letter-spacing: 0.14em;
+  font-family: var(--font-ui);     /* row label — not data */
+  font-size: var(--text-11);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.07em;
   text-transform: uppercase;
   color: var(--muted);
   flex-shrink: 0;
 }
 
 .companion-v {
-  font-family: var(--mono);
-  font-size: 11px;
+  font-family: var(--font-mono);   /* technical values: amounts, state codes, chain data */
+  font-size: var(--text-11);       /* 11px — IBM Plex Mono at 11px; same nominal as key */
   color: var(--dim);
   text-align: right;
   padding-left: 1rem;
@@ -158,16 +172,17 @@
   color: var(--dim);
 }
 
-/* Next-step action value — slightly dimmer, not a call to action */
+/* Next-step action value — guidance prose, not a technical value */
 .companion-action {
   color: var(--dim);
-  font-size: 10px;
+  font-family: var(--font-ui);
+  font-size: var(--text-12);
 }
 
-/* Action link — rendered when a state provides external chain verification */
+/* Action link — inline link text, not technical data */
 .companion-action-link {
-  font-family: var(--mono);
-  font-size: 10px;
+  font-family: var(--font-ui);
+  font-size: var(--text-12);
   color: var(--dim);
   text-decoration: none;
   transition: color 0.12s;
@@ -206,10 +221,6 @@
 
 /* ---- Reduced motion ---- */
 @media (prefers-reduced-motion: reduce) {
-  .companion-detail {
-    transition: none;
-  }
-
   .companion-toggle {
     transition: none;
   }

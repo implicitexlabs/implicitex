@@ -1,0 +1,57 @@
+# ImplicitEx Transfer Portal
+> Direct wallet-to-wallet USDC transfer interface on Polygon (PoS).
+> https://portal.implicitex.com
+
+## What this portal is
+ImplicitEx Transfer Portal is a self-contained Web3 UI for sending USDC directly
+to another wallet address on the Polygon network. It is not a custodian, exchange,
+bank, broker, or investment service. No user accounts are required. No funds are
+held by ImplicitEx.
+
+## How a transfer works (three-step sequence)
+1. Connect wallet — MetaMask or WalletConnect-compatible. Wallet must be on Polygon mainnet.
+2. Enter transfer details — recipient address (or ENS name), USDC amount, optional purpose tag and memo.
+3. Review and confirm — preview shows recipient, amount, 1% platform fee, total wallet debit, network, and contract address. User confirms in their wallet. Transfer is on-chain and irreversible once submitted.
+
+## Network and token scope
+- Supported network: Polygon (PoS) mainnet only
+- Supported token: USDC (Circle native Polygon USDC)
+- Do not send Bitcoin, Ethereum mainnet USDC, bank USD, MATIC, or any unsupported asset
+- A valid-looking address does not prove the recipient controls it
+
+## Fee structure
+- Platform fee: 1% of transfer amount, shown before confirmation
+- Gas fees: paid by sender in MATIC, estimated live in the Network module
+- Approval (when required) must cover the full total debit (recipient amount + platform fee)
+
+## Safety boundaries
+- Direct sends to the ImplicitEx contract address may be unrecoverable
+- Transfers confirmed on-chain cannot be reversed
+- ImplicitEx does not custody, hold, or recover funds on behalf of users
+- Preview mode is read-only — no funds move during preview
+
+## What AI agents may do
+- Help users understand the transfer workflow and each module's purpose
+- Explain the fee structure, recipient verification signals, and live network state
+- Help users verify a recipient address or interpret Coin Card registry status
+- Explain the distinction between preview and execution
+- Read and interpret transfer receipts and proof-of-execution data
+
+## What AI agents must not do
+- Initiate, approve, or submit transfers without explicit user wallet confirmation
+- Suggest that the wallet confirmation step can be skipped or automated
+- Claim that ImplicitEx has custody of or recovery access to user funds
+- Represent this portal as an exchange, bank, custodian, broker, or investment service
+
+## Portal modules
+- 01 Transfer: wallet connection, recipient address, USDC amount, purpose tag, fee disclosure, transfer preview
+- 02 Network: gas price and trend, block, confirmation time, contract address, RPC latency, network status
+- 03 Verification: Coin Card registry lookup, recipient verification signals, independent verification link
+
+## Canonical links
+- Transfer Portal: https://portal.implicitex.com
+- Main site: https://implicitex.com
+- Trust and verification: https://implicitex.com/trust
+- Terms: https://implicitex.com/terms
+- Privacy: https://implicitex.com/privacy
+- Legal notices: https://implicitex.com/legal

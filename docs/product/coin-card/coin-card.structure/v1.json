@@ -1,0 +1,309 @@
+{
+  "schema": "implicitex.coin-card.structure.v1",
+  "name": "Coin Card Structure Contract V1",
+  "status": "implementation-contract",
+  "date": "2026-07-07",
+  "artifactContract": "docs/product/coin-card/coin-card.artifact.json",
+  "checkpoint": {
+    "rebuiltCardCommit": "b1bc58e",
+    "tag": "coincard-instrument-checkpoint-2026-07-06",
+    "checkpointDocument": "app-web/docs/product/coin-card/CURRENT_STATE_2026-07-06.md"
+  },
+  "root": {
+    "selector": ".cc-frame[data-state]"
+  },
+  "nodeMapping": {
+    "coinCard": {
+      "implementation": "app-web/frontend/public/card/card.js",
+      "surface": "app-web/frontend/public/card/index.html"
+    },
+    "ixExecute": {
+      "implementation": "app-web/frontend/public/js/ix-execution.js",
+      "symbol": "window.IX_EXECUTION"
+    },
+    "transferPortal": {
+      "implementation": "app-web/frontend/public/js/wallet.js",
+      "relationship": "separate-surface"
+    },
+    "lifecyclePresentationPromotion": {
+      "implementation": "app-web/frontend/public/card/coin-card-lifecycle-presentation.js",
+      "symbol": "window.IX_COIN_CARD_LIFECYCLE_PRESENTATION"
+    },
+    "executionAuthorization": {
+      "implementation": "app-web/frontend/public/card/coin-card-execution-authorization.js",
+      "symbol": "window.IX_COIN_CARD_EXECUTION_AUTHORIZATION"
+    },
+    "executableRegistryRecordVerification": {
+      "implementation": "app-web/frontend/public/card/coin-card-executable-registry-record-verification.js",
+      "symbol": "window.IX_COIN_CARD_EXECUTABLE_REGISTRY_RECORD_VERIFICATION",
+      "integrationStatus": "standalone-unwired"
+    },
+    "transactionEvidenceContentVerification": {
+      "implementation": "app-web/frontend/public/card/coin-card-transaction-evidence-content-verification.js",
+      "symbol": "window.IX_COIN_CARD_TRANSACTION_EVIDENCE_CONTENT_VERIFICATION",
+      "integrationStatus": "standalone-unwired"
+    }
+  },
+  "implementedEdges": [
+    {
+      "from": "coinCard",
+      "to": "identity",
+      "relationship": "owns"
+    },
+    {
+      "from": "coinCard",
+      "to": "transaction",
+      "relationship": "owns"
+    },
+    {
+      "from": "coinCard",
+      "to": "verifiedTransferIntent",
+      "relationship": "owns"
+    },
+    {
+      "from": "coinCard",
+      "to": "receipt",
+      "relationship": "owns"
+    },
+    {
+      "from": "coinCard",
+      "to": "ixExecute",
+      "relationship": "consumes"
+    },
+    {
+      "from": "transferPortal",
+      "to": "ixExecute",
+      "relationship": "consumes"
+    },
+    {
+      "from": "transferPortal",
+      "to": "coinCard",
+      "relationship": "augments"
+    },
+    {
+      "from": "ixExecute",
+      "to": "executionFulfillment",
+      "relationship": "owns"
+    },
+    {
+      "from": "lifecyclePresentationPromotion",
+      "to": "lifecycleResolution",
+      "relationship": "consumes"
+    },
+    {
+      "from": "executionAuthorization",
+      "to": "lifecyclePresentationPromotion",
+      "relationship": "consumes"
+    },
+    {
+      "from": "coinCard",
+      "to": "executableRegistryRecordVerification",
+      "relationship": "owns"
+    },
+    {
+      "from": "executableRegistryRecordVerification",
+      "to": "lifecycleRegistry",
+      "relationship": "consumes"
+    },
+    {
+      "from": "executableRegistryRecordVerification",
+      "to": "lifecycleExecutableRegistryIdentityContract",
+      "relationship": "partially-conforms-to"
+    },
+    {
+      "from": "coinCard",
+      "to": "transactionEvidenceContentVerification",
+      "relationship": "owns"
+    },
+    {
+      "from": "transactionEvidenceContentVerification",
+      "to": "lifecycleRegistry",
+      "relationship": "consumes"
+    },
+    {
+      "from": "transactionEvidenceContentVerification",
+      "to": "transactionEvidenceAuthorityContract",
+      "relationship": "partially-conforms-to"
+    }
+  ],
+  "regions": [
+    {
+      "id": "issuerStatusHeader",
+      "artifactNode": "identity",
+      "artifactRole": "identity-region",
+      "selector": ".cc-card-top",
+      "stateControlled": false,
+      "requiredChildren": [
+        ".cc-card-issuer",
+        ".cc-card-status"
+      ]
+    },
+    {
+      "id": "transactionBody",
+      "artifactNode": "transaction",
+      "artifactRole": "workflow-region",
+      "selector": ".cc-card-body",
+      "stateControlled": true,
+      "allowedPanels": [
+        "#ccBodyInput",
+        "#ccBodyReview",
+        "#ccBodyExec",
+        "#ccBodyConfirmed",
+        "#ccBodyError"
+      ]
+    },
+    {
+      "id": "actionChip",
+      "artifactNode": "transaction",
+      "artifactRole": "workflow-region",
+      "selector": ".cc-card-action",
+      "stateControlled": true,
+      "requiredChildren": [
+        "#ccChip"
+      ],
+      "allowedChipClasses": [
+        "cc-card-chip--waiting",
+        "cc-card-chip--ready",
+        "cc-card-chip--active",
+        "cc-card-chip--done"
+      ],
+      "onlyActionTriggerInsideCard": true
+    },
+    {
+      "id": "networkStampFooter",
+      "artifactNode": "identity",
+      "artifactRole": "identity-region",
+      "selector": ".cc-card-bottom",
+      "stateControlled": false,
+      "requiredChildren": [
+        ".cc-card-network",
+        ".cc-card-stamp"
+      ]
+    }
+  ],
+  "states": [
+    {
+      "id": "VERIFIED",
+      "lifecycle": "identity-loaded",
+      "bodyPanel": "#ccBodyInput",
+      "chipClass": "cc-card-chip--waiting",
+      "fundMovingWriteAllowed": false
+    },
+    {
+      "id": "AMOUNT_READY",
+      "lifecycle": "amount-ready",
+      "bodyPanel": "#ccBodyInput",
+      "chipClass": "cc-card-chip--ready",
+      "fundMovingWriteAllowed": false
+    },
+    {
+      "id": "TRANSFER_INTENT_READY",
+      "lifecycle": "transfer-intent-ready",
+      "bodyPanel": "#ccBodyInput",
+      "chipClass": "cc-card-chip--ready",
+      "targetDispatch": "IX_EXECUTION.executeTransfer"
+    },
+    {
+      "id": "WRONG_NETWORK",
+      "lifecycle": "transfer-intent-ready",
+      "bodyPanel": "#ccBodyInput",
+      "chipClass": "cc-card-chip--ready",
+      "targetDispatch": "IX_EXECUTION.executeTransfer"
+    },
+    {
+      "id": "READY_TO_SEND",
+      "lifecycle": "transfer-intent-ready",
+      "bodyPanel": "#ccBodyReview",
+      "chipClass": "cc-card-chip--ready",
+      "targetDispatch": "IX_EXECUTION.executeTransfer"
+    },
+    {
+      "id": "CONNECTING",
+      "lifecycle": "execution-pending",
+      "bodyPanel": "#ccBodyExec",
+      "chipClass": "cc-card-chip--active"
+    },
+    {
+      "id": "SWITCHING_NETWORK",
+      "lifecycle": "execution-pending",
+      "bodyPanel": "#ccBodyExec",
+      "chipClass": "cc-card-chip--active"
+    },
+    {
+      "id": "APPROVE_PENDING",
+      "lifecycle": "execution-pending",
+      "bodyPanel": "#ccBodyExec",
+      "chipClass": "cc-card-chip--active"
+    },
+    {
+      "id": "EXECUTE_PENDING",
+      "lifecycle": "execution-pending",
+      "bodyPanel": "#ccBodyExec",
+      "chipClass": "cc-card-chip--active"
+    },
+    {
+      "id": "CONFIRMED",
+      "lifecycle": "confirmed",
+      "bodyPanel": "#ccBodyConfirmed",
+      "chipClass": "cc-card-chip--done"
+    },
+    {
+      "id": "TX_FAILED",
+      "lifecycle": "recovery",
+      "bodyPanel": "#ccBodyError",
+      "chipClass": "cc-card-chip--ready"
+    },
+    {
+      "id": "REVOKED",
+      "lifecycle": "recovery",
+      "bodyPanel": "#ccBodyError",
+      "chipClass": "cc-card-chip--waiting",
+      "fundMovingWriteAllowed": false
+    }
+  ],
+  "validation": {
+    "stateFieldRefs": [
+      {
+        "field": "bodyPanel",
+        "region": "transactionBody",
+        "allowedFrom": "allowedPanels"
+      },
+      {
+        "field": "chipClass",
+        "region": "actionChip",
+        "allowedFrom": "allowedChipClasses"
+      }
+    ],
+    "requiredTerminalStates": [
+      {
+        "state": "CONFIRMED",
+        "requires": {
+          "lifecycle": "confirmed",
+          "bodyPanel": "#ccBodyConfirmed"
+        }
+      }
+    ]
+  },
+  "executionOwnership": {
+    "implementationFile": "app-web/frontend/public/js/ix-execution.js",
+    "targetRequestMethod": "IX_EXECUTION.executeTransfer",
+    "targetBoundaryRule": "Coin Card creates a verified transfer intent. IX_EXECUTION fulfills it.",
+    "publicExecutionMethod": "IX_EXECUTION.executeTransfer",
+    "internalPrimitiveMethods": ["connectWallet", "switchChain", "approve", "transferWithFee", "waitForReceipt"],
+    "singleFeeAuthority": "IX_EXECUTION.calculateFee",
+    "forbiddenOutsideExecutionFile": [
+      "eth_sendTransaction",
+      "IX_EXECUTION.approve",
+      "IX_EXECUTION.transferWithFee",
+      "IX_EXECUTION.waitForReceipt",
+      ".approve(",
+      "transferWithFee("
+    ]
+  },
+  "migration": {
+    "version": "v1",
+    "previous": null,
+    "next": null,
+    "notes": "Coin Card targets the single IX_EXECUTION.executeTransfer request boundary. Execution primitives remain owned by IX_EXECUTION."
+  }
+}

@@ -1,7 +1,14 @@
 # ImplicitEx MVP Roadmap
 
-Last updated: 2026-06-01
-Branch: walletconnect-mobile-session
+Last updated: 2026-07-19
+Branch: gate3-production-frontend-qa
+
+Commercial strategy, target market, monetization hypotheses, vertical product
+sequence, and exclusions are governed by
+`docs/product/product-commercial-roadmap-2026-07-30.md`. This document remains
+the launch-gate and implementation-status record. References below to a public
+Coin Card Free tier preserve earlier planning history; the current V1 is a
+controlled, manually issued, time-limited pilot, not a public free tier.
 
 ---
 
@@ -11,7 +18,10 @@ The MVP is a Polygon USDC transfer tool.
 
 ```
 Sender wallet → recipient wallet
-1% ImplicitEx fee
+Current interface: 250 USDC maximum transfer
+Maximum fee reachable through that interface: 2.50 USDC
+Deployed contract: 1% fee with no absolute contract-level cap
+Proposed future policy: deploy and verify a 10 USDC cap before supporting transfers above 1,000 USDC
 No custody
 No escrow
 No recovery claim
@@ -23,6 +33,12 @@ No reversal claim
 **Scope boundary:** do not add swaps, embedded wallets, fiat ramps, accounts, analytics dashboards,
 session restore polish, AI features, or social login before live-transfer smoke is complete.
 
+**Future expansion note:** preserve Polygon USDC as the reference route. The
+next product priority is the controlled Coin Card pilot, not another asset.
+Add USDT0 later through an approved asset-route registry only after the master
+roadmap's horizontal entry gate passes. See
+`docs/product/usdt0-integration-plan.md`.
+
 ---
 
 ## Launch gate sequence
@@ -30,18 +46,54 @@ session restore polish, AI features, or social login before live-transfer smoke 
 ```
 Gate 1: Wallet + UI regression smoke         ← COMPLETE
 Gate 2: Live-transfer readiness review       ← COMPLETE
-Gate 3: Builder-controlled launch readiness  ← current position
-Gate 4: Mainnet controlled live smoke
-Gate 5: Public soft launch
+Gate 3: Builder-controlled launch readiness  ← COMPLETE 2026-06-15
+Gate 4: Mainnet controlled live smoke        ← COMPLETE 2026-06-15
+Gate 5: Public soft launch                   ← current position
 ```
 
 **Positioning:** Gate 2 complete. Live transfer smoke passed 2026-06-01 with real USDC on
 Polygon. Full approve → transferWithFee → receipt lifecycle verified end-to-end.
 
-Gate 3 is builder-controlled launch readiness: failure-path validation, mobile UX smoke,
-support/disclaimer copy, transfer gate discipline, and public launch checklist. Attorney
-review is recommended before scale but is not a blocker — it is a third-party dependency
-outside MVP scope.
+Gate 3 is builder-controlled launch readiness. The question it answers is no longer "can
+it work?" — that is proven. Gate 3 answers: "can we expose it without embarrassing trust
+failures, stale wallet state, unclear risk language, or unsafe deploy procedure?"
+
+Gate 3 checklist — **COMPLETE 2026-06-15**:
+```
+[x] Failure paths — FP1–FP5 PASS, FP6 verified by code review
+[x] Mobile UX smoke — responsive viewport + real MetaMask mobile browser PASS
+[x] Wallet/provider regression — PASS WITH CAVEATS; Reown noise documented
+[x] Support/disclaimer copy pass — FAQ added to mobile menu; 'being developed' removed
+[x] Transfer gate + deploy safety checklist — docs/operations/deploy-safety-checklist.md
+[x] Firebase deploy smoke — PASS 2026-06-15; all routes, gate closed, config fresh
+```
+
+Gate 4 checklist — **COMPLETE 2026-06-15**:
+```
+[x] Confirm branch/commit/suite before opening gate
+[x] Flip transfersEnabled intentionally
+[x] Deploy live config
+[x] Execute small controlled USDC transfer (1.00 USDC)
+[x] Verify approval prompt → transfer prompt → receipt → Polygonscan → fee split
+[x] Close gate immediately
+[x] Deploy closed-gate config
+[x] Confirm public app is closed again
+[x] Commit evidence
+```
+
+Gate 5 (public soft launch) minimum posture:
+```
+[ ] Homepage copy final
+[ ] Support/contact route works
+[x] Known-limitations note (added legal.html 2026-06-15)
+[ ] First-user walkthrough tested
+[ ] Launch announcement ready
+[ ] Transfer cap low; fee simple; analytics watched manually
+[ ] Rollback plan ready
+```
+
+Attorney review is recommended before scale but is not a hard MVP blocker — it is a
+third-party dependency outside builder-controlled scope.
 
 **Every work session should start by asking: which launch risk are we removing today?**
 
@@ -86,7 +138,13 @@ are correctly out of scope.
 [x] transferWithFee execution — tx confirmed on Polygon
 [x] Fee deducted correctly (sender −1.01 USDC, recipient +1.00 USDC, treasury +0.01 USDC)
 [x] Explorer verification — Polygonscan shows correct split to 0xe0B0...796B + 0xa7cE...3919
-[ ] Failure/rejection paths under real wallet prompts
+[~] Failure/rejection paths under real wallet prompts
+    FP1 approval rejection          PASS 2026-06-01
+    FP2 transfer rejection          PASS 2026-06-01
+    FP3 wallet busy / -32002        PASS 2026-06-11
+    FP4 insufficient balance        PASS 2026-06-14
+    FP5 wrong network mid-flow      PASS 2026-06-14
+    FP6 RPC failure / interruption  VERIFIED (code review) 2026-06-11
 ```
 
 ---
@@ -125,10 +183,10 @@ are correctly out of scope.
 [x] Gas price row — expandable, collapsed by default
 [x] Disclosure triangle consistency (CSS border-triangle canonical)
 [x] Signal proportionality (gray/amber/red hierarchy)
-[ ] Mobile menu — hamburger nav, browsing vs transaction modes
-[ ] Mobile form — spacing, tap targets, keyboard overlays
-[ ] No duplicate provider events — verify on WC reconnect
-[ ] WalletConnect reconnect after MetaMask session and vice versa
+[x] Mobile menu — hamburger nav confirmed functional 2026-06-14
+[x] Mobile form — tap targets, balance/fee readable; real MetaMask mobile browser PASS 2026-06-14
+[x] No duplicate provider events — verified 2026-06-14; event dispatch clean; Reown noise is library-side
+[x] WalletConnect reconnect after MetaMask session and vice versa — PASS WITH CAVEATS 2026-06-14
 ```
 
 ---
@@ -166,17 +224,177 @@ plus four screenshots.
 
 ### 6. Public launch prep
 
+**Strategic framing (Gate 5):** The engineering question — "will the system work?" — is
+answered. The Gate 5 question is: "can a new visitor understand why they should trust it?"
+This is a copy, transparency, and communication problem, not a smart contract problem.
+
+**The two abandonment points** (observed from Gate 4 evidence, not hypothetical):
+1. The wallet prompt — "Why am I seeing two prompts? What does each one do?"
+2. The Blockaid warning — "Why is MetaMask warning me? What exactly is this contract doing?"
+The first-time visitor stops at one of these moments and either finds an answer or leaves.
+FAQ entries 1 and 2 exist to intercept those moments before doubt compounds.
+
+**Gate 5 session opening order:**
+1. verification.html — facts only, no adjectives. Build this first. It anchors everything
+   that follows: the FAQ has something to cite, the homepage has something to point to,
+   the launch announcement has something to link instead of claims to make.
+2. FAQ: Why does MetaMask show two confirmations? (cites verification page)
+3. FAQ: Why does MetaMask say the contract is untrusted? (cites verification page)
+4. Homepage copy — anchored to a proven, documented, revenue-producing transaction
+5. Launch announcement — points to evidence, not positioning
+
+Gate 5 items split into two categories:
+
+#### Trust-critical (affects whether a first-time visitor proceeds or bounces)
+
 ```
 [x] FAQ added — Polygon, USDC, two wallet confirmations, fee vs gas, wrong address risk
 [x] Landing page How It Works copy aligned to proven fee-on-top model and two-prompt flow
 [x] About page copy aligned — fee example with total debit, jargon removed
-[ ] Homepage copy final
-[ ] Contact path
-[ ] Basic support language
-[ ] Known-limitations note (no recovery, no reversal, Polygon only)
-[ ] X/Reddit launch post draft
-[ ] First user walkthrough tested
+
+[x] Transparency / Verification page — carries the most weight of any remaining item.
+    Name it "Transparency", "Verification", or "How ImplicitEx Works" — not "Trust".
+    Trust is the result of evidence. This page publishes the evidence. A visitor who
+    sees the Blockaid "untrusted contract" warning immediately asks: who built this,
+    what address am I interacting with, where does the fee go, is the source public,
+    has anyone used this before? This page answers all five in one place.
+    Do not use the words "Secure", "Transparent", "Decentralized", or "Audited" without
+    evidence behind them. Everything on this page is a fact or a link.
+
+    Public Verification Section — a linked checklist answering the six questions a
+    cautious user asks before clicking Confirm. Purpose is not to impress; it is to
+    remove each specific uncertainty:
+
+        Contract Address   → 0x5015841D6E665e63Ea174aD6b8FeF854026dE0C0 (Polygonscan)
+        Treasury Address   → 0xa7cE4232811021d2Dd01f4f0f264Df2427ab3919
+        Supported Network  → Polygon mainnet
+        Supported Asset    → USDC (Circle native, 0x3c499c...3359)
+        Source Code        → [link to verified source on Polygonscan]
+        Fee Model          → 1% additive; sender pays amount + fee; recipient receives full amount
+        Latest Verified Tx → [link — updated as transaction history grows]
+
+    Verified Live Transaction section (no hype, no adjectives — just facts):
+
+          Controlled Mainnet Validation — 2026-06-15
+          Network: Polygon | Asset: USDC
+          Sender debit:       1.01 USDC
+          Recipient received: 1.00 USDC
+          Treasury received:  0.01 USDC
+          Status: Confirmed on-chain
+          Tx: 0x37fd733a7f1854740bf702aa5bf59794f4ebab0f39d2a84fb2c231c29df622d9
+
+        The fee path is visible and auditable. Treasury received exactly what the UI said
+        it would. Most crypto projects never show this. Showing it is the point of the page.
+
+[x] FAQ entry: "Why does MetaMask show two confirmations?" (present pre-Gate 4)
+[x] FAQ entry: "Why does MetaMask warn that the contract is untrusted?" (added 2026-06-15, cites verification.html)
+
+[x] 1. Known-limitations note — added to legal.html 2026-06-15 (e479e43).
+         Seven bullet points: Polygon only, USDC only, 250 USDC cap, irreversible,
+         no address recovery, wallet required, no fiat. Links to Proof page.
+
+[ ] 2. Contact path — gives users somewhere to go when uncertain; reduces
+         abandonment from questions that FAQ doesn't answer.
+
+[ ] 3. First-user walkthrough
+
+   Brief: give the tester the URL (implicitex-236f2.web.app) and one sentence:
+   "This is a USDC transfer tool. Take a look around."
+   No other context. No hints. No narration.
+
+   Observer watches for:
+   - Where do they go first?
+   - Do they find FAQ, Proof, Legal, Contact without prompting?
+   - Do they hesitate at any point? If so, where exactly?
+   - Do they understand what Polygon and USDC mean in this context?
+   - Do they understand the 1% fee before being told?
+   - Do they expect Ethereum, other tokens, or fiat support?
+
+   Known watch items from Gate 4 evidence:
+   - Wallet prompts: does the two-confirmation flow make sense unprompted?
+   - Blockaid warning: does "Proof" in the footer get clicked when they see it?
+   - Proof/Verification label: does "Verification" h1 cause confusion after clicking "Proof"?
+
+   Signal vs. noise:
+   - Hesitation + question = signal (something the site isn't answering)
+   - Hesitation + self-resolution = noise (the site is working, user just needed a moment)
+   - Confusion + no self-resolution = fix before cutover
+
+   After walkthrough: update FAQ/Proof/Contact as needed, then make cutover decision.
+
+**Domain cutover (implicitex.com → implicitex-236f2.web.app) is held until after
+the walkthrough.** Cutover is irreversible in terms of public visibility — run the
+cheapest comprehension test first.
 ```
+
+#### Conversion-critical (affects whether someone who already trusts the platform completes a transfer)
+
+```
+[ ] 4. Homepage copy final — easier once limitations note and walkthrough feedback exist.
+
+[ ] 5. Launch announcement — last item; points to verification.html, not marketing claims.
+        "Here is the contract. Here is the treasury. Here is a verified transaction.
+        Here is how the fee works." That is the announcement.
+```
+
+#### Post-walkthrough (informed by tester behavior, not assumptions)
+
+```
+[ ] 6. WalletConnect end-to-end smoke
+
+   Status: Deferred. Implementation is complete — wallet.js:3935-4004,
+   walletconnect-provider.js, vendor bundle present, project ID set.
+   Button soft-disabled in index.html pending verification.
+
+   Required to re-enable:
+   - QR modal opens on a real mobile device
+   - Session connects and account is returned
+   - Transfer flow completes through WalletConnect provider
+   - Disconnect lifecycle clears session and localStorage correctly
+
+   Restore path: one-line HTML change (restore <button> in wallet-choice overlay)
+   Block: do not re-enable until all four checks pass
+
+[ ] 7. LEARN — crypto onboarding center
+
+   Status: Design locked, content deferred. Architecture is defined at
+   docs/product/learn-design-brief.md. Do not write entries before the
+   walkthrough. Walkthrough findings determine which content to write first.
+
+   Scope: LEARN is not a glossary. It is a crypto onboarding center — the
+   bridge between traditional finance users and crypto users. It answers
+   questions that belong neither in FAQ (product questions) nor in Legal
+   (boundaries and disclaimers).
+
+   Guiding principle:
+   "It costs nothing to educate. It can cost everything to assume."
+
+   Three layers (see design brief for full spec):
+   - Layer 1: Quick Definitions — searchable, alphabetical, one-paragraph answers
+   - Layer 2: First-Time User Guides — getting started, using ImplicitEx
+   - Layer 3: Trust & Regulation — legality, USDC, GENIUS Act, user protections
+
+   FAQ boundary:
+   - FAQ: focused product questions (why two confirmations? why Polygon? why the warning?)
+   - LEARN: educational resources (what is a wallet? how do I get one? is this legal?)
+   - When a FAQ answer becomes a teaching resource, it moves to LEARN
+
+   Name: LEARN (not "Terms" — collision with Terms of Service; not "Glossary" — too academic)
+   URL: /learn.html
+   Nav: primary footer link + inline term links from FAQ and homepage
+```
+
+**Blockaid warning principle:** The correct response is not to hide or dismiss it. The
+better response is: "You may see an untrusted-contract warning because the contract is new.
+Here is the address. Here is the source. Here is exactly what the transaction does."
+Sophisticated users who see MetaMask performing security analysis and then see the
+transaction reconcile perfectly will develop more trust than users who are told to ignore
+the warning. Transparency is the mitigation.
+
+Longer-term mitigations (no single fix):
+- Polygonscan source verification (already complete — launch safety above)
+- Transaction history accumulation (Blockaid becomes less aggressive over time)
+- Lightweight audit published publicly (post-MVP, before scale)
 
 ---
 
@@ -184,15 +402,18 @@ plus four screenshots.
 
 | Area | Status |
 |------|--------|
-| Core contract | Deployed, hardened, 59/59 tests passing |
+| Core contract | Deployed, hardened, 66/66 tests passing; fee-cap revision DRAFTED, deployment DEFERRED |
 | MetaMask wallet | Complete |
 | WalletConnect / Reown | Complete — Gate 1 closed |
-| Transfer safety gates | Complete — live smoke passed 2026-06-01 |
+| Transfer safety gates | Complete — Gate 4 mainnet smoke passed 2026-06-15 |
 | Receipt lifecycle | Complete — full lifecycle verified on live transfer |
 | Gas transparency | Complete — expandable row, session-local |
 | Signal / disclosure system | Complete — canonical vocabulary locked |
-| Mobile UX | Architecture decided; manual QA pending |
+| Mobile UX | PASS — responsive + real MetaMask mobile browser smoke 2026-06-14 |
 | Legal / disclosure | Research complete; attorney review pending |
+| Fee policy | CURRENT: interface maximum 250 USDC / reachable fee 2.50 USDC; deployed contract charges uncapped 1%. FUTURE POLICY: 10 USDC cap revision drafted + tested, deployment deferred pending model review |
+| Product constitution | COMPLETE 2026-07-19: implicitex-constitution.md + fee-constitution.md |
+| Identity evidence architecture | PLANNED: schema at docs/product/identity-evidence-schema.md (DRAFT); feeds Coin Card V2, Commitment Review, Transfer Intelligence |
 | Public launch prep | Not started; correctly deferred |
 
 ---
@@ -206,22 +427,400 @@ plus four screenshots.
 | Social / email login | Post-MVP |
 | Smart accounts | Post-MVP |
 | Gas sponsorship | Post-MVP |
+| Transfer ceiling above 1,000 USDC | **HARD GATE** — blocked until fee-cap contract deployed and bound in chains.js; portal previews 10 USDC cap but deployed contract charges uncapped 1%; raising ceiling above 1,000 USDC before migration would make portal preview diverge from contract execution |
 | totalSent in recipient history | Float safety; v2 will use integer base units |
 | Recipient memory UX | Only if subtle; not before live smoke |
 | Sparkline on gas row | Post-gas-row polish |
 | Ledger integration | After web + Electron both stable |
 | Ethereum mainnet | Post-Polygon-MVP |
+| Controlled Coin Card pilot | Active next product priority after launch-stability defects; public Free-tier plan superseded |
+| Creator dashboard | Post-Coin Card; requires transaction volume to be meaningful |
 
 ---
 
-## Static verification (as of branch park 2026-05-30)
+## Post-MVP expansion
+
+The MVP answers one question: **can a person reliably transfer USDC?**
+
+The next questions depend on it.
+
+## Current Priority Order — July 2026
+
+Product is no longer the only bottleneck. The transfer path works; the next
+bottlenecks are distribution, trust, and narrative.
+
+Nothing is currently prioritized ahead of Coin Card except defects that could
+misroute funds, misstate fees, weaken receipts, or create misleading trust
+claims.
+
+Priority order:
+
+1. Coin Card Free — embeddable USDC payment surface.
+2. Distribution — examples, outreach, site integrations, and repeatable content.
+3. Trust receipts — contract address, recipient address, manifest hash, fee,
+   network, token, and transaction hash anchored to the on-chain record where
+   practical.
+4. Content — explain non-custodial transfer, verification, custody boundaries,
+   stablecoin payment rails, and why money movement should be auditable.
+5. User acquisition — creators, freelancers, donation pages, invoices, and
+   small sites that need a clean USDC receiving surface.
+6. Additional stablecoins — USDT0 and later assets only after distribution
+   signals justify the added surface area.
+
+Do not add chains, token menus, swaps, bridges, or complex routing ahead of
+Coin Card. Simplicity is a product advantage:
+
+```text
+USDC
+Polygon
+Wallet-to-wallet
+Non-custodial
+Transparent fee
+On-chain proof
+```
+
+Coin Card should extend that advantage across other websites without turning
+ImplicitEx into a generic crypto routing product.
+
+---
+
+### Layer 1 — Transfer engine (current)
 
 ```
-Static check:     145/145 pass
+Wallet → Wallet
+1% fee
+No custody
+```
+
+This is what ships. Everything below requires this to work first.
+
+---
+
+### Layer 2 — Coin Card Free
+
+An embeddable USDC payment surface for creator pages, blogs, newsletters,
+invoice pages, donation pages, project sites, and small business websites. The
+sender does not create an ImplicitEx account, download a new wallet, or join a
+closed ecosystem. They use the wallet they already have.
+
+```
+Host Website
+      ↓
+Coin Card
+      ↓
+USDC Transfer
+```
+
+V1 architecture:
+
+```
+coin-card.js     — ImplicitEx-controlled software and transfer flow
+coin-card.json   — host-controlled payment manifest
+transfer contract — official ImplicitEx settlement rail
+```
+
+The host controls the recipient address by editing a plain JSON manifest. The
+free tier verifies only what can be verified without becoming a recipient
+endorsement:
+
+- official ImplicitEx contract
+- supported network and token route
+- syntactically valid recipient wallet address
+- transfer amount and fee math
+- transaction hash and on-chain settlement
+- manifest hash or equivalent fingerprint at the time of transaction
+
+The free tier does not verify:
+
+- the recipient's legal identity
+- whether the address belongs to the host
+- whether the host entered the intended address
+- whether the host later changed its local manifest
+
+Receipt language should say:
+
+```text
+Payment was sent to the wallet address loaded from this Coin Card manifest at
+the time of transaction.
+```
+
+It should not say:
+
+```text
+ImplicitEx verified the recipient.
+```
+
+**Why this is the right first expansion:**
+
+- Every external embed becomes distribution.
+- Every successful payment teaches the Coin Card pattern.
+- The host receives USDC directly; ImplicitEx never sees or controls funds.
+- It creates real use cases before broader token support adds complexity.
+
+**Technical preconditions before building:**
+
+- Transfer engine proven stable under low-limit public use
+- Fee model confirmed working and understood by users
+- Receipt lifecycle reliable (no orphaned receipts in production)
+- Embed architecture defined: script tag, iframe, redirect flow, or hybrid
+- Manifest schema locked for the free tier
+- Manifest fingerprint captured in the receipt path
+- Free-tier verification language locked: route verified, recipient not verified
+
+**Status:** Active next product priority. Free tier visual and transaction-state
+surfaces are partially implemented (Lane A smoke surfaces, verify page,
+publisher MVP). Public self-serve Free tier is not complete until embed
+configuration, manifest creation, card creation, and onboarding flow exist for a
+recipient who has never spoken to anyone from ImplicitEx.
+
+**V1 trust model is frozen as of 2026-07-04.** Do not keep iterating on the
+philosophy before implementation. The next work is build evidence:
+
+1. `coin-card.json`
+2. manifest validation
+3. manifest fingerprinting
+4. receipt evidence recording
+5. dispute-proof receipt rendering
+6. first external embed
+
+Implementation acceptance rules:
+
+- Free Coin Card verifies the route, not recipient identity.
+- `purpose` remains metadata and must not affect settlement or fee logic.
+- Receipts preserve transaction-time Coin Card evidence.
+- Evidence Supremacy Principle governs conflicts:
+  blockchain evidence, recorded Coin Card evidence, current manifest, then human
+  testimony.
+
+---
+
+### Layer 3 — Verified / Registered Coin Card
+
+Paid trust escalation. This is where ImplicitEx may verify domain association,
+wallet control, registry status, signed manifests, revocation, and branded
+receipt metadata.
+
+Verification should use wallet signatures where possible:
+
+```
+Connect recipient wallet → sign message → publish signed manifest
+```
+
+This is preferable to micro-deposit verification because it proves address
+control without moving funds or requiring gas.
+
+Paid tiers may add:
+
+- verified domain association
+- wallet-control proof
+- signed manifest
+- registry status page
+- revocation and update history
+- branded receipts and proof packets
+- assisted setup
+- exportable records
+
+Do not include this language in Free tier:
+
+```text
+Verified recipient
+Verified business
+ImplicitEx approved
+Trusted merchant
+```
+
+**Status:** Not started beyond publisher MVP experiments. Do not launch paid
+verification until Free tier proves at least one real external embed use case.
+
+---
+
+### Layer 4 — Creator dashboard
+
+Post-Coin Card. Only meaningful when transaction volume exists.
+
+```
+Creators:   transfer analytics, supporter history, top supporters
+Supporters: recurring support, campaign tracking
+```
+
+This is where ImplicitEx starts competing with creator monetization tools.
+Do not design for this before Coin Card Free ships and generates real data.
+
+---
+
+### Layer 5 — Coin Card tiers
+
+Full specification: `docs/product/coincard-tiers.md`
+
+Coin Card is the public payment object that makes ImplicitEx useful before large
+transaction volume exists. Each tier escalates evidence, verification,
+customization, and operational responsibility.
+
+```
+Tier 1 — Free        Embeddable payment card. Current public fee policy. No account.
+Tier 2 — Registered  Verified domain + brand. Annual subscription.
+Tier 3 — Business    Multiple cards, receipts, export, assisted setup.
+Tier 4 — Advanced    Escrow / conditional release. Deferred — legal review required.
+```
+
+**Non-custodial doctrine applies at every tier:**
+
+> ImplicitEx verifies payment intent and records transfer proof; it does not
+> custody funds, maintain user balances, or control user wallets.
+
+**Economic bridge function:**
+
+Transaction revenue at 1% requires $2.5M in volume to produce $25,000/year.
+
+Coin Card Business setup services require 33 customers at $750 to reach the
+same threshold.
+
+Layer 4 (Tiers 2 and 3) is the primary revenue path while transaction volume
+is still building. It does not require waiting for platform scale.
+
+**Preconditions:**
+
+- Coin Card Free embed is stable in production
+- At least one real external embed use case exists
+- Publisher flow exists for Registered tier
+- Domain verification and wallet-control proof are scoped
+- Aden Media Group setup offer is defined and priced
+
+**Status:** See Layer 2 and Layer 3.
+
+---
+
+### Layer 6 — Agent distribution system
+
+Full specification: `docs/strategy/marketing/agent-system.md`
+
+**Mandate:** human-scale outreach does not work for a 1% fee business. Agents
+replace repetitive reach. Humans retain strategic judgment.
+
+The agent system is not a mass DM campaign. It is a precision tool that gets
+better before it gets bigger.
+
+```
+Market Scout Agent   — finds prospects already experiencing the problem
+Fit Scoring Agent    — ranks by pain signal and tier match
+Offer Agent          — maps prospect to niche landing page and message
+Copy Agent           — writes personalized first-contact drafts for human review
+Landing Page Agent   — generates and maintains niche-specific pages
+Onboarding Agent     — guides card creation and first embed
+Support Agent        — handles common post-onboarding questions
+Relationship Agent   — maintains CRM across all contacts and interactions
+```
+
+**Automation sequence (do not skip steps):**
+
+1. Research one niche (50–500 prospects)
+2. Score by fit
+3. Build niche landing page
+4. Send first 20–50 messages (agent drafts, human approves)
+5. Measure reply rate
+6. Use objections to improve offer and copy
+7. Only then scale volume in that niche
+
+**Preconditions:**
+
+- Mac Studio provisioned with agent runtime (Ollama + orchestrator + pgvector)
+- At least one niche landing page live
+- Coin Card Free available for immediate onboarding
+- MEMORY.md and agent instruction files written for each agent role
+
+**Status:** Not started. Correctly deferred behind Layer 4 (need the product
+before building the distribution machine).
+
+---
+
+## Static verification (as of branch park 2026-06-14)
+
+```
+Static check:     231/231 pass
 Observability:     27/27  pass
 Contract tests:    59/59  pass
 Working tree:      clean
 ```
+
+## Post-Gate 3 fixes and improvements (2026-06-15)
+
+Suite result after all changes: 232/232 static · 31/31 observability · 59/59 contract.
+
+### 5. Nav shows WALLET CONNECTED with no wallet authorized — fixed (`898a547`)
+
+`applyCurrentNetworkPresentation()` had no guard for the `DISCONNECTED` state.
+On every `focus` and `visibilitychange` event, `syncProviderState({ force: true })`
+called `applyCurrentNetworkPresentation()`, which fell through to
+`applyConnectedPresentation()` even when `state.connected = false`. This applied
+the `.connected` class to `connectBtn` and set nav status to "Wallet connected"
+on every tab-switch and window-focus event when no wallet was authorized — a
+direct trust contradiction visible to any unauthenticated visitor.
+
+Fixed by adding an early return for `DISCONNECTED` at the top of
+`applyCurrentNetworkPresentation()`. Focus/visibility sync events now exit
+immediately when no wallet is connected. All connected paths (chain change,
+account change, real connect) are unchanged. Nav smoke confirmed: hard refresh
+→ "Connect Wallet"; tab-away/back → "Connect Wallet"; connect → connected state;
+disconnect → "Connect Wallet". Pre-Gate-4 blocker closed.
+
+### 1. Receipt-recovery path broken — fixed (`95d9c91` + `b48a680`)
+
+`polygon-rpc.com` began returning 401 (unauthenticated access disabled) for all
+JSON-RPC calls including `eth_getTransactionReceipt`. The live in-session transfer
+path (`tx.wait()` via MetaMask) was unaffected — it uses the wallet's own RPC.
+But `reconcileActiveReceipt()`, called on page reload with a pending receipt and on
+the manual "Check status" button, was silently failing with `OUTCOME_UNKNOWN` and
+"App status check failed. Check the explorer before retrying."
+
+Fixed by replacing the endpoint with `polygon-bor-rpc.publicnode.com` in `chains.js`.
+The endpoint swap alone was not sufficient: `polygon-bor-rpc.publicnode.com` was not
+in the CSP `connect-src` directive in `firebase.json`, so the browser blocked the
+fetch silently — receipt recovery remained broken until both changes landed together.
+
+Verified against a recent transaction receipt (block 88,536,207) and a 14-day-old
+receipt (block 87,697,424, Gate 2 block range). Both returned correctly with
+`status: 0x1`. CORS `*` confirmed from both `implicitex.app` and
+`implicitex-236f2.web.app` origins. `eth_getLogs` is pruned on publicnode for
+old blocks; `eth_getTransactionReceipt` is not — receipt data is retained.
+
+### 2. Execute Transfer button armed in TRANSFERS_DISABLED state — fixed (`b48a680`)
+
+`updatePreview()` reached `setDraftButton('Execute Transfer', false)` unconditionally
+when the form was valid (valid recipient, sufficient balance, above minimum), even
+in `TRANSFERS_DISABLED` state. If the user checked the ack checkbox, the button
+appeared armed and clickable alongside an amber "Transfers paused by launch gate"
+preflight bullet — a direct visual contradiction.
+
+The click-time guard in `enterReview()` was always present and safe (it returns
+immediately with a status message, no wallet prompt). But the visual state was
+misleading. Fixed by adding a `TRANSFERS_DISABLED` guard in `updatePreview()` after
+the preview renders: transfer summary remains visible, ack checkbox is hidden, button
+stays inert with label "Transfers disabled." The `enterReview()` guard remains as a
+second layer.
+
+### 3. Ack checkbox not hiding due to `display:flex` CSS override — fixed (`34d746c`)
+
+`.tx-confirm { display: flex }` overrides the browser UA stylesheet's default
+`[hidden] { display: none }`. `setReviewAcknowledgementVisible(false)` was setting
+the `hidden` attribute correctly, but CSS won — the checkbox remained visible.
+Added `.tx-confirm[hidden] { display: none; }`, matching the pattern used by every
+other `[hidden]` element in the codebase.
+
+### 4. Network column additions — RPC latency and confirmation time (`793f0dd`)
+
+Two new rows added to the 02 Network panel:
+
+- **Confirmation**: `blockTime × 2` from the Gas Station response (~3.0 sec typical).
+  Live data, not a static string. Resets to `—` on Gas Station failure.
+- **RPC latency**: Direct `eth_blockNumber` probe to `polygon-bor-rpc.publicnode.com`
+  (the chain RPC, independent of the Gas Station). Gray numeric on success, red
+  "Unavailable" on timeout (5s AbortController), non-200, or network failure.
+  Resets to `—` at the start of each 30-second cycle to prevent stale readings.
+  Amber reserved for transfer-flow signals; gray/red only here.
+
+Root cause note: the CSP gap (item 1) initially caused this row to show red
+"Unavailable" even after the endpoint swap, since the browser blocked the fetch.
+Both resolved together.
 
 ## Gate 2 Smoke Attempt Log
 

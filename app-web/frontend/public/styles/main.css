@@ -23,16 +23,41 @@
 .header-logo {
   display: flex;
   align-items: center;
-  gap: 1.2rem;
+  gap: 12px;
   min-width: 0;
+}
+
+.header-logo .brandmark {
+  display: block;
+  flex: 0 0 auto;
+  width: 29px;
+  height: 29px;
 }
 
 .header-logo .wordmark {
   display: block;
+  width: 200px;
   height: auto;
 }
 
+.header-logo .brandmark path {
+  fill: var(--color-text-primary);
+}
+
+[data-theme="light"] .header-logo img.wordmark {
+  filter: invert(1);
+}
+
+[data-theme="light"] .header-logo .brandmark path {
+  fill: #080808;
+}
+
 @media (max-width: 600px) {
+  .header-logo .brandmark {
+    width: 25px;
+    height: 25px;
+  }
+
   .header-logo .wordmark {
     display: none;
   }

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Coin Card — Host Page Example</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, sans-serif;
+      background: #111;
+      color: rgba(255, 255, 255, 0.75);
+      font-size: 14px;
+      line-height: 1.6;
+      padding: 3rem 2rem;
+    }
+
+    .host-shell {
+      max-width: 640px;
+      margin: 0 auto;
+    }
+
+    .host-label {
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.3);
+      margin-bottom: 1rem;
+    }
+
+    .host-title {
+      font-size: 22px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.88);
+      margin-bottom: 0.5rem;
+    }
+
+    .host-body {
+      color: rgba(255, 255, 255, 0.50);
+      margin-bottom: 2rem;
+      max-width: 520px;
+    }
+
+    /* ---- Coin Card embed ---- */
+    .coincard-embed {
+      width: 300px;
+      height: 440px;
+      border: none;
+      border-radius: 2px;
+      display: block;
+      /* Host controls size. Card fills the iframe. */
+    }
+
+    /* Host-page note */
+    .embed-note {
+      margin-top: 0.75rem;
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      color: rgba(255, 255, 255, 0.20);
+    }
+
+    /* ---- Event log (dev only) ---- */
+    .event-log {
+      margin-top: 2.5rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      padding-top: 1.5rem;
+    }
+    .event-log-label {
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.25);
+      margin-bottom: 0.75rem;
+    }
+    .event-log-entries {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+    .event-entry {
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.40);
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    .event-entry--handoff { color: rgba(34, 197, 94, 0.75); }
+    .event-entry--error   { color: rgba(239, 68,  68, 0.75); }
+  </style>
+</head>
+<body>
+
+<div class="host-shell">
+
+  <p class="host-label">Coin Card — Host page example</p>
+  <h1 class="host-title">Support this creator</h1>
+  <p class="host-body">
+    This page demonstrates embedding a Coin Card iframe and listening to
+    postMessage events from the card surface. Replace the <code>src</code> with
+    your card's URL. The iframe handles verification, amount entry, and
+    transfer intent construction. Transfer execution happens on ImplicitEx.
+  </p>
+
+  <!--
+    Coin Card embed.
+    - sandbox: allow-scripts (card.js), allow-forms (amount input),
+               allow-popups (handoff window.open), allow-popups-to-escape-sandbox
+    - referrerpolicy: strict-origin-when-cross-origin
+    - title: required for accessibility
+    Replace cc_demo_implicitex with your card ID.
+  -->
+  <iframe
+    class="coincard-embed"
+    id="coinCard"
+    src="https://implicitex.com/card/cc_demo_implicitex"
+    sandbox="allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox"
+    referrerpolicy="strict-origin-when-cross-origin"
+    title="Coin Card — USDC transfer"
+    loading="lazy"
+  ></iframe>
+  <p class="embed-note">Powered by ImplicitEx · implicitex.com/card/cc_demo_implicitex</p>
+
+  <!-- Dev-only event log -->
+  <div class="event-log">
+    <p class="event-log-label">PostMessage events</p>
+    <div class="event-log-entries" id="eventLog">
+      <span class="event-entry" style="color:rgba(255,255,255,0.18)">Waiting for card events…</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  /* ---- PostMessage listener ---- */
+  var log    = document.getElementById('eventLog');
+  var iframe = document.getElementById('coinCard');
+  var first  = true;
+
+  window.addEventListener('message', function (event) {
+    /* Safety: only accept messages from the expected Coin Card origin.
+     * In production, replace '*' with 'https://implicitex.com'. */
+    var msg = event.data;
+    if (!msg || msg.source !== 'implicitex-coincard') return;
+
+    if (first) {
+      log.innerHTML = '';
+      first = false;
+    }
+
+    var entry = document.createElement('span');
+    entry.className = 'event-entry';
+
+    if (msg.type === 'CC_HANDOFF') {
+      entry.className += ' event-entry--handoff';
+      /* Host can intercept the handoff and open the transfer portal
+       * in the same tab, show a modal, or handle it another way.
+       * Default (card does window.open) fires unless you call
+       * event.preventDefault() — not applicable for postMessage,
+       * so the card opens the URL itself after 120ms if not intercepted. */
+    }
+
+    if (msg.type === 'CC_ERROR') {
+      entry.className += ' event-entry--error';
+    }
+
+    entry.textContent = '[' + msg.type + '] ' + JSON.stringify(msg.payload || {}, null, 0);
+    log.appendChild(entry);
+  });
+
+  /* ---- Send theme to card ---- */
+  /* Uncomment to send theme on load:
+  iframe.addEventListener('load', function () {
+    iframe.contentWindow.postMessage({
+      source: 'coincard-host',
+      type:   'CC_THEME',
+      data:   { theme: 'dark' },
+    }, 'https://implicitex.com');
+  });
+  */
+</script>
+
+</body>
+</html>

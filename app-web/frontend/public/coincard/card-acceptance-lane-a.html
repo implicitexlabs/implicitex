@@ -1,0 +1,1993 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Coin Card — Lane A Acceptance Mark Artifact</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500&family=Oxanium:wght@500;600;700&display=swap" rel="stylesheet">
+  <!-- ethers@6.13.4 — same version as wallet.js; CDN already on CSP allowlist -->
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
+  <script src="coin-card-display.js"></script>
+  <style>
+
+    /* ---- Design tokens ---- */
+    :root {
+      --cc-card-inset: 20px;   /* uniform interior safe area on all four sides */
+      --cc-card-radius: 12px;  /* credit/debit card corner radius */
+      --cc-mark-inset: 14px;   /* lettermark inset from card edge — fully within bounds */
+
+      /* Text value tiers — pure white base; functional text never below 0.65 */
+      --cc-text-primary:   rgba(255, 255, 255, 0.97); /* title, amounts */
+      --cc-text-secondary: rgba(255, 255, 255, 0.92); /* row values, payment facts */
+      --cc-text-label:     rgba(255, 255, 255, 0.78); /* micro / network copy */
+      --cc-text-meta:      rgba(255, 255, 255, 0.72); /* row labels (uppercase mono) */
+      --cc-text-muted:     rgba(255, 255, 255, 0.65); /* subcopy, attribution */
+      --cc-text-disabled:  rgba(255, 255, 255, 0.36); /* disabled controls */
+      --cc-text-ghost:     rgba(255, 255, 255, 0.28); /* decorative only */
+    }
+
+    /* ---- Reset ---- */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    /* Ensure [hidden] always wins regardless of display declarations */
+    [hidden] { display: none !important; }
+
+    /* ---- Artifact shell — light host-page simulation ---- */
+    body {
+      background: #f0f0ee;
+      color: #1a1a18;
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      line-height: 1.7;
+      min-height: 100vh;
+    }
+
+    .artifact-shell {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 4rem 2rem 7rem;
+    }
+
+    .artifact-header {
+      margin-bottom: 4rem;
+      padding-bottom: 1.25rem;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.10);
+    }
+
+    .artifact-eyebrow {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: rgba(0, 0, 0, 0.28);
+      margin-bottom: 0.75rem;
+    }
+
+    .artifact-test {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11.5px;
+      color: rgba(0, 0, 0, 0.48);
+      line-height: 1.6;
+      font-style: italic;
+      max-width: 520px;
+    }
+
+    /* ---- Variant sections ---- */
+    .variant { margin-bottom: 3.5rem; }
+
+    .variant-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 8.5px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: rgba(0, 0, 0, 0.24);
+      margin-bottom: 1rem;
+    }
+
+    .variant-stage {
+      background: #ffffff;
+      padding: 2.5rem 2rem;
+      display: flex;
+      align-items: flex-start;
+      justify-content: flex-start;
+      border: 1px solid rgba(0, 0, 0, 0.06);
+    }
+
+    .variant-stage--center { justify-content: center; }
+
+
+    /* ═══════════════════════════════════════════════════════════════
+       COIN CARD BADGE SYSTEM
+       Self-contained. All values explicit.
+
+       STATE SEQUENCE:  BADGE → INSPECT → TRANSACT → SETTLE
+       CSS CLASSES:     .cc-wrapper (base)
+                        .is-open         (panel visible)
+                        .is-transact     (transact mode)
+                        .is-details-open (full rows visible in transact)
+                        .is-settle       (proof state — replaces transact controls)
+
+       TRANSACT MODEL (locked 2026-06-27):
+       — TRANSACT may compress INSPECT, but may not erase it.
+       — Full rows collapse to compact strip when TRANSACT opens.
+       — "credential details" toggle re-expands full rows above controls.
+       — TRANSACT is gated: manifest must be VERIFIED (active + all fields).
+       — REVOKED / UNAVAILABLE → no proceed, no TRANSACT, ever.
+    ═══════════════════════════════════════════════════════════════ */
+
+    /* ─── WRAPPER ────────────────────────────────────────────────── */
+
+    .cc-wrapper {
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      width: fit-content;
+      position: relative;
+      overflow: hidden;
+      border-radius: var(--cc-card-radius);
+    }
+
+
+    /* ─── SHARED BADGE BASE ──────────────────────────────────────── */
+
+    .cc-badge {
+      position: relative;
+      background: #0c0c0a;
+      overflow: hidden;
+      border-radius: var(--cc-card-radius);
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+      cursor: default;
+    }
+
+    .cc-badge--interactive {
+      cursor: pointer;
+      border-radius: var(--cc-card-radius) var(--cc-card-radius) 0 0;
+    }
+
+    .cc-wrapper:not(.is-open) .cc-badge--interactive {
+      border-radius: var(--cc-card-radius);
+    }
+
+    .cc-badge::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: inherit;
+      pointer-events: none;
+      transition: border-color 0.22s ease;
+      z-index: 3;
+    }
+
+    .cc-badge:hover::before,
+    .cc-badge:focus-visible::before {
+      border-color: rgba(255, 255, 255, 0.20);
+    }
+
+    .cc-badge:focus-visible {
+      outline: 2px solid rgba(255, 255, 255, 0.40);
+      outline-offset: -3px; /* inset — wrapper overflow: hidden would clip an outer ring */
+    }
+
+
+    /* ─── COPY BLOCK ─────────────────────────────────────────────── */
+
+    .cc-copy {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .cc-primary {
+      font-family: 'Oxanium', sans-serif;
+      font-weight: 600;
+      color: var(--cc-text-primary);
+      line-height: 1.2;
+    }
+
+    .cc-secondary {
+      font-family: 'Oxanium', sans-serif;
+      font-weight: 600;
+      color: var(--cc-text-secondary);
+      line-height: 1;
+    }
+
+    /* ImplicitEx wordmark SVG inline with "Verified by" — scales with parent em */
+    img.cc-wordmark-inline {
+      display: inline-block;
+      height: 0.78em;    /* slightly larger — wordmark is identity, not motif */
+      width: auto;
+      vertical-align: -0.07em; /* optical baseline alignment */
+      margin-left: 0.1em;
+      opacity: 1; /* inline wordmark is proof, not decoration */
+    }
+
+    .cc-micro {
+      font-family: 'IBM Plex Mono', monospace;
+      font-weight: 500;
+      color: var(--cc-text-label); /* 0.72 — functional network/token copy */
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+    }
+
+    /* Badge face — recipient identity line (Variant 1 only) */
+    .cc-recipient-name {
+      font-family: 'Oxanium', sans-serif;
+      font-weight: 500;
+      font-size: 13px;
+      color: var(--cc-text-secondary); /* 0.92 — below headline, above micro */
+      line-height: 1.2;
+    }
+
+    /* Badge face — quiet attribution at bottom of copy block */
+    .cc-attribution {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: auto; /* pushes to bottom of copy column when copy has height */
+    }
+
+    .cc-attribution .cc-poweredby-label,
+    .cc-attribution .cc-poweredby-name {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 8px;
+      letter-spacing: 0.08em;
+      color: rgba(255, 255, 255, 0.42);
+      white-space: nowrap;
+    }
+
+
+    /* ─── HOVER HINT ─────────────────────────────────────────────── */
+
+    .cc-hint {
+      position: absolute;
+      bottom: 9px;
+      left: 20px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 7.5px;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+      color: rgba(242, 242, 240, 0.24);
+      opacity: 0;
+      pointer-events: none;
+      z-index: 2;
+      transition: opacity 0.18s ease 0.4s;
+    }
+
+    .cc-badge--interactive:hover .cc-hint { opacity: 1; }
+    .cc-wrapper.is-open .cc-hint { opacity: 0; transition: none; }
+
+
+    /* ─── LETTERMARK ─────────────────────────────────────────────── */
+
+    .cc-mark-wrap {
+      position: absolute;
+      right: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      overflow: hidden;
+      z-index: 1;
+      flex-shrink: 0;
+    }
+
+    .cc-mark-img { display: block; }
+
+
+    /* ─── AMBIENT GLOW ──────────────────────────────────────────── */
+    /*
+      Radial glow contained within the lettermark clip (overflow:hidden on wrap).
+      Breathes in and out — signals life, not decoration.
+      No sweep, no direction — just quiet luminance rising and falling.
+    */
+
+    /* Base: hidden by default. Only shown when mask-image is supported.
+       Prevents rectangular glow fallback on browsers that don't support CSS masks. */
+    .cc-mark-wrap::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 2;
+      display: none;
+    }
+
+    @supports ((-webkit-mask-image: linear-gradient(#000, #000)) or (mask-image: linear-gradient(#000, #000))) {
+      .cc-mark-wrap::after {
+        display: block;
+        background: radial-gradient(
+          ellipse at 52% 46%,
+          rgba(255, 255, 255, 0.22) 0%,
+          rgba(255, 255, 255, 0.08) 42%,
+          transparent 72%
+        );
+        -webkit-mask-image: url('/components/images/lettermark-white.svg');
+                mask-image: url('/components/images/lettermark-white.svg');
+        -webkit-mask-repeat: no-repeat;
+                mask-repeat: no-repeat;
+        -webkit-mask-size: contain;
+                mask-size: contain;
+        -webkit-mask-position: center;
+                mask-position: center;
+      }
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      .cc-mark-wrap::after {
+        animation: cc-ambient-glow var(--glow-period, 16s) ease-in-out infinite;
+        animation-delay: var(--glow-delay, 0s);
+      }
+    }
+
+    @keyframes cc-ambient-glow {
+      0%, 100% { opacity: 0.18; }  /* dim — grey-feeling resting state */
+      50%      { opacity: 1.00; }  /* peak — full white */
+    }
+
+
+    /* ─── PANEL EXPAND (0fr → 1fr) ───────────────────────────────── */
+
+    .cc-inspect-panel {
+      display: grid;
+      grid-template-rows: 0fr;
+      transition: grid-template-rows 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .cc-wrapper.is-open .cc-inspect-panel {
+      grid-template-rows: 1fr;
+    }
+
+    .cc-inspect-inner {
+      min-height: 0;
+      overflow: hidden;
+      background: #0c0c0a;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-top: none;
+      border-radius: 0 0 var(--cc-card-radius) var(--cc-card-radius);
+    }
+
+
+    /* ─── COMPACT STRIP (TRANSACT state only) ────────────────────── */
+    /*
+      The verified-destination anchor when TRANSACT is open.
+      Full inspection rows collapse to this strip.
+      "credential details" toggle re-expands full rows above controls.
+      Rule: TRANSACT may compress INSPECT, but may not erase it.
+    */
+
+    .cc-compact-strip {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 20px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    /* Hidden in INSPECT, shown in TRANSACT and SETTLE */
+    .cc-wrapper:not(.is-transact):not(.is-settle) .cc-compact-strip { display: none; }
+
+    .cc-compact-credential {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .cc-compact-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .cc-compact-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #D4A017;
+      flex-shrink: 0;
+    }
+
+    .cc-compact-verified-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.72);
+    }
+
+    .cc-compact-name {
+      font-family: 'Oxanium', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.94);
+    }
+
+    .cc-compact-meta {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9.5px;
+      letter-spacing: 0.04em;
+      color: rgba(255, 255, 255, 0.72);
+    }
+
+    .cc-details-toggle {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 8.5px;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.62);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      white-space: nowrap;
+      flex-shrink: 0;
+      margin-top: 2px;
+      transition: color 0.15s ease;
+    }
+
+    .cc-details-toggle:hover { color: rgba(255, 255, 255, 0.88); }
+
+
+    /* ─── FULL ROWS (INSPECT + TRANSACT+details) ─────────────────── */
+
+    .cc-full-rows {
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    /* In TRANSACT, full rows are hidden unless details are open. In SETTLE, always hidden. */
+    .cc-wrapper.is-transact .cc-full-rows { display: none; }
+    .cc-wrapper.is-transact.is-details-open .cc-full-rows { display: block; }
+    .cc-wrapper.is-settle .cc-full-rows { display: none; }
+
+    /* In TRANSACT+details, no extra top border — compact strip is above */
+    .cc-wrapper.is-transact.is-details-open .cc-full-rows {
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .cc-inspect-rows { padding: 4px 0 6px; }
+
+    .cc-inspect-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 20px;
+      gap: 16px;
+    }
+
+    .cc-inspect-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.11em;
+      text-transform: uppercase;
+      color: var(--cc-text-meta);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .cc-inspect-value {
+      font-family: 'Oxanium', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--cc-text-secondary);
+      text-align: right;
+    }
+
+    .cc-inspect-value--mono {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10.5px;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      color: var(--cc-text-secondary);
+    }
+
+    /* VERIFIED — amber dot. Accent = state only. VERIFIED is a state. */
+    .cc-inspect-value--verified {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .cc-verify-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #D4A017;
+      flex-shrink: 0;
+    }
+
+    /* REVOKED — red. Critical: do not route value here. */
+    .cc-inspect-value--revoked {
+      font-family: 'Oxanium', sans-serif;
+      font-size: 10px;
+      font-weight: 600;
+      color: rgba(210, 70, 55, 0.90);
+      text-align: right;
+    }
+
+    /* UNAVAILABLE — gray. Registry unreachable or manifest invalid. */
+    .cc-inspect-value--unavailable {
+      font-family: 'Oxanium', sans-serif;
+      font-size: 10px;
+      font-weight: 500;
+      color: rgba(242, 242, 240, 0.30);
+      text-align: right;
+    }
+
+    /* Footer: proceed button right-aligned */
+    .cc-inspect-footer {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding: 6px 20px 10px;
+      border-top: 1px solid rgba(255, 255, 255, 0.04);
+      margin-top: 2px;
+    }
+
+    /* Badge COIN CARD logo — sits below "USDC accepted here" in the badge copy block.
+       Links to coincard.implicitex.com. Hover fades logo out, URL text in.
+       CSS grid single-cell stacking: both children share one layout area.
+       Container sized by the larger element. No display swap — no reflow ever.
+       stopPropagation in JS prevents click from also opening INSPECT. */
+    .cc-badge-coincard {
+      display: inline-grid;  /* single-cell grid stacks both children in same area */
+      align-items: center;
+      text-decoration: none;
+      margin-top: 1px;
+    }
+    .cc-badge-coincard > * { grid-area: 1 / 1; } /* logo and CTA occupy same cell */
+
+    .cc-badge-coincard-logo {
+      display: block;
+      height: 12px; /* compact/feature default */
+      width: auto;
+      filter: brightness(0) invert(1);
+      opacity: 0.75;
+      transition: opacity 150ms ease;
+    }
+    /* Larger in the main decal badge where there is space */
+    .cc-badge--decal .cc-badge-coincard-logo { height: 20px; opacity: 0.82; }
+
+    .cc-badge-coincard-cta {
+      opacity: 0;  /* invisible by default — in flow, space reserved, no reflow */
+      transition: opacity 150ms ease;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      color: var(--cc-text-secondary);
+      white-space: nowrap;
+    }
+
+    /* Attribution: right zone always visible; left badge "Powered by" collapsed only */
+    .cc-badge-coincard:hover       .cc-badge-coincard-logo { opacity: 0; }
+    .cc-badge-coincard:focus-visible .cc-badge-coincard-logo { opacity: 0; }
+    .cc-badge-coincard:hover       .cc-badge-coincard-cta { opacity: 1; }
+    .cc-badge-coincard:focus-visible .cc-badge-coincard-cta { opacity: 1; }
+
+    /* Proceed: visible only when manifest VERIFIED, hidden otherwise */
+    .cc-proceed-btn {
+      font-family: 'Oxanium', sans-serif;
+      font-size: 8.5px;
+      font-weight: 600;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      color: rgba(242, 242, 240, 0.52);
+      background: none;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 4px;
+      padding: 5px 10px;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+    }
+
+    .cc-proceed-btn:hover {
+      color: rgba(242, 242, 240, 0.82);
+      border-color: rgba(255, 255, 255, 0.30);
+    }
+
+    /* In TRANSACT+details or SETTLE, the proceed button is not shown */
+    .cc-wrapper.is-transact .cc-proceed-btn { display: none; }
+    .cc-wrapper.is-settle .cc-proceed-btn { display: none; }
+
+
+    /* ─── TRANSACT SECTION ───────────────────────────────────────── */
+    /*
+      Visible only in TRANSACT mode.
+      Contains: amount / fee / total rows + wallet/send buttons.
+      Gated: never rendered if manifest is not VERIFIED.
+    */
+
+    .cc-transact-section {
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    /* Hidden until TRANSACT state */
+    .cc-wrapper:not(.is-transact) .cc-transact-section { display: none; }
+
+    .cc-transact-rows { padding: 6px 0 4px; }
+
+    .cc-transact-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 5px 20px;
+      gap: 12px;
+    }
+
+    .cc-transact-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+      color: var(--cc-text-meta);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    /* Amount input row */
+    .cc-amount-wrap {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .cc-amount-input {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 14px;
+      font-weight: 500;
+      color: rgba(242, 242, 240, 0.90);
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 4px;
+      padding: 4px 8px;
+      width: 96px;
+      text-align: right;
+      outline: none;
+      transition: border-color 0.15s, background 0.15s;
+      -moz-appearance: textfield;
+    }
+
+    .cc-amount-input:focus {
+      border-color: rgba(255, 255, 255, 0.28);
+      background: rgba(255, 255, 255, 0.09);
+    }
+
+    .cc-amount-input::-webkit-outer-spin-button,
+    .cc-amount-input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    .cc-amount-unit {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.06em;
+      color: rgba(255, 255, 255, 0.72);
+    }
+
+    /* Fee and total values */
+    .cc-transact-value {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      color: var(--cc-text-secondary);
+      text-align: right;
+    }
+
+    .cc-transact-value--total {
+      color: var(--cc-text-primary);
+      font-weight: 600;
+      font-size: 13px;
+    }
+
+    /* Action row */
+    .cc-action-row {
+      display: flex;
+      gap: 8px;
+      padding: 8px 20px 12px;
+      border-top: 1px solid rgba(255, 255, 255, 0.04);
+      margin-top: 4px;
+    }
+
+    .cc-wallet-btn {
+      flex: 1;
+      font-family: 'Oxanium', sans-serif;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.80);
+      background: none;
+      border: 1px solid rgba(255, 255, 255, 0.24);
+      border-radius: 4px;
+      padding: 10px 0;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+    }
+
+    .cc-wallet-btn:hover:not(:disabled) {
+      color: rgba(255, 255, 255, 0.97);
+      border-color: rgba(255, 255, 255, 0.50);
+    }
+
+    .cc-wallet-btn:disabled {
+      color: rgba(255, 255, 255, 0.28);
+      border-color: rgba(255, 255, 255, 0.08);
+      cursor: default;
+    }
+
+    .cc-send-btn {
+      flex: 1;
+      font-family: 'Oxanium', sans-serif;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #0c0c0a;
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid transparent;
+      border-radius: 4px;
+      padding: 10px 0;
+      cursor: pointer;
+      transition: background 0.18s;
+    }
+
+    .cc-send-btn:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 1);
+    }
+
+    /* Disabled — awaiting wallet connection */
+    .cc-send-btn:disabled {
+      color: rgba(255, 255, 255, 0.22);
+      background: rgba(255, 255, 255, 0.07);
+      border-color: rgba(255, 255, 255, 0.08);
+      cursor: not-allowed;
+    }
+
+
+    /* ─── SETTLE SECTION ───────────────────────────────────────── */
+    /*
+      Proof state. Replaces TRANSACT controls.
+      Compact strip remains — SETTLE confirms what TRANSACT declared.
+      Rule: SETTLE proves. It does not celebrate.
+    */
+
+    /* Hidden until SETTLE state */
+    .cc-wrapper:not(.is-settle) .cc-settle-section { display: none; }
+
+    .cc-settle-section {
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      padding: 14px 20px 16px;
+    }
+
+    .cc-settle-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+
+    .cc-settle-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #D4A017;
+      flex-shrink: 0;
+    }
+
+    .cc-settle-confirmed-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.72);
+    }
+
+    .cc-settle-amount {
+      font-family: 'Oxanium', sans-serif;
+      font-size: 30px;
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.97);
+      line-height: 1.1;
+      margin-bottom: 6px;
+    }
+
+    .cc-settle-meta {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9.5px;
+      letter-spacing: 0.04em;
+      color: rgba(255, 255, 255, 0.72);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .cc-settle-sep {
+      color: rgba(242, 242, 240, 0.16);
+    }
+
+    .cc-settle-detail-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 0;
+      border-top: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .cc-settle-detail-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+      color: var(--cc-text-meta);
+    }
+
+    .cc-settle-detail-value {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      color: var(--cc-text-secondary);
+    }
+
+    .cc-settle-link-row {
+      margin-top: 10px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .cc-settle-link {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 8px;
+      letter-spacing: 0.07em;
+      color: var(--cc-text-muted); /* 0.58 */
+      text-decoration: none;
+      transition: color 0.15s;
+      pointer-events: none; /* disabled until real tx hash wired */
+    }
+
+
+    /* ─── PREFLIGHT STATUS ──────────────────────────────────────────
+       Operational copy between totals and action row.
+       One failing gate shown at a time, priority order:
+         no_provider → no_wallet → wrong_network → no_amount
+           → insufficient_balance → ready
+    ─────────────────────────────────────────────────────────────── */
+
+    .cc-preflight-row {
+      padding: 7px 20px;
+      border-top: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .cc-preflight-head {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      color: var(--cc-text-label);
+      display: block;
+    }
+
+    .cc-preflight-sub {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 8.5px;
+      letter-spacing: 0.04em;
+      color: rgba(255, 255, 255, 0.78);
+      display: block;
+      margin-top: 3px;
+    }
+
+    /* READY — amber: verified state condition */
+    .cc-preflight-row--ready .cc-preflight-head { color: #D4A017; }
+
+
+    /* ─── VARIANT 1: HORIZONTAL DECAL ────────────────────────────── */
+
+    .cc-badge--decal {
+      width: 460px;
+      min-height: 137px;
+      padding: 20px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 116px;
+      column-gap: 16px;
+      align-items: stretch;
+    }
+
+    .cc-badge--decal .cc-copy {
+      min-width: 0;
+      height: 97px;   /* inner card height: 137 - 2×20 */
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .cc-badge--decal .cc-primary        { font-size: 18px; line-height: 1.1; }
+    .cc-badge--decal .cc-recipient-name { font-size: 13px; line-height: 1.15; }
+    .cc-badge--decal .cc-micro          { font-size: 9px;  margin-top: 2px; }
+    .cc-badge--decal .cc-attribution    { margin-top: auto; }
+
+    /* ─── RIGHT AUTHORITY LANE ───────────────────────────────────────
+       Dedicated upper-right lettermark lane. Ambient glow remains on the mark.
+       No absolute positioning. No drift.
+    ──────────────────────────────────────────────────────────────── */
+    .cc-authority-square {
+      width: 116px;
+      height: 97px;
+      position: relative;
+      z-index: 2;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 2px;
+      pointer-events: none;
+    }
+
+    .cc-authority-lockup {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+    }
+
+    .cc-authority-square .cc-mark-wrap {
+      position: relative;
+      width: 34px;
+      height: 34px;
+      transform: none;
+      overflow: visible; /* bloom extends slightly beyond mark bounds */
+    }
+
+    /* Lettermark — upper-right credential stamp */
+    .cc-mark-wrap--decal {
+      position: relative;
+      transform: none;
+      width: 34px;
+      height: 34px;
+      overflow: visible;  /* bloom, not clip */
+      flex-shrink: 0;
+      pointer-events: none;
+    }
+
+    /* Override global masked glow — decal uses soft radial bloom instead */
+    .cc-mark-wrap--decal::after {
+      content: '';
+      position: absolute;
+      inset: -10px;
+      background: radial-gradient(
+        circle,
+        rgba(255, 255, 255, 0.18) 0%,
+        rgba(255, 255, 255, 0.08) 38%,
+        rgba(255, 255, 255, 0)    72%
+      );
+      filter: blur(6px);
+      opacity: 0.7;
+      z-index: 0;
+      display: block; /* override global display:none */
+      animation: none; /* no breathe on the bloom — static presence */
+      -webkit-mask-image: none; /* cancel global mask-image override */
+              mask-image: none;
+    }
+
+    .cc-mark-wrap--decal .cc-mark-img {
+      position: relative;
+      z-index: 1;       /* mark sits above bloom */
+      width: 34px;
+      height: 34px;
+      opacity: 0.30;
+    }
+
+    /* "Powered by [wordmark]" in badge left column — collapsed state only */
+    .cc-badge-poweredby {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .cc-wrapper.is-open .cc-badge-poweredby { display: none; }
+
+    .cc-poweredby-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 8px;
+      letter-spacing: 0.08em;
+      color: rgba(255, 255, 255, 0.55);
+      white-space: nowrap;
+    }
+
+    .cc-poweredby-wordmark {
+      display: inline-block;
+      height: 10px;
+      width: auto;
+      filter: brightness(0) invert(1);
+      opacity: 0.58;
+      vertical-align: middle;
+    }
+
+    .cc-right-poweredby {
+      margin-top: 7px;  /* gap1: lettermark → Powered by */
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 6px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.42);
+      white-space: nowrap;
+    }
+
+    .cc-right-wordmark {
+      margin-top: 5px;    /* gap2: Powered by → IMPLICITEX */
+      max-width: 90px;    /* hard cap — wordmark cannot exit authority square */
+      font-family: 'Oxanium', sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.04em;  /* reduced from 0.10em — fits within 90px constraint */
+      color: rgba(255, 255, 255, 0.65);
+      text-align: center;
+      white-space: nowrap;
+    }
+
+
+    /* ─── VARIANT 2: COMPACT PAYMENT MARK ────────────────────────── */
+
+    .cc-badge--compact {
+      width: 216px;
+      height: 44px;
+      padding-left: 13px;
+    }
+
+    .cc-badge--compact .cc-copy { gap: 3px; }
+    .cc-badge--compact .cc-primary   { font-size: 12px; }
+    .cc-badge--compact .cc-secondary { font-size: 8px; }
+    .cc-badge--compact .cc-micro     { font-size: 7.5px; margin-top: 2px; }
+
+    .cc-badge--compact .cc-mark-wrap { width: 44px; height: 44px; right: 10px; top: 50%; transform: translateY(-50%); }
+    .cc-badge--compact .cc-mark-img  { width: 44px; height: 44px; opacity: 0.45; }
+
+
+    /* ─── VARIANT 3: FEATURE CARD ────────────────────────────────── */
+
+    .cc-badge--feature {
+      width: 380px;
+      height: 188px;
+      padding: 28px 0 28px 28px;
+      align-items: flex-start;
+    }
+
+    .cc-badge--feature .cc-copy    { gap: 10px; max-width: 200px; }
+    .cc-badge--feature .cc-primary   { font-size: 26px; line-height: 1.15; }
+    .cc-badge--feature .cc-secondary { font-size: 13px; }
+    .cc-badge--feature .cc-micro     { font-size: 10px; margin-top: 4px; }
+
+    .cc-badge--feature .cc-mark-wrap { width: 160px; height: 160px; right: 20px; top: 50%; transform: translateY(-50%); }
+    .cc-badge--feature .cc-mark-img  { width: 160px; height: 160px; opacity: 0.45; }
+
+
+    /* ─── REFERENCE BLOCK ────────────────────────────────────────── */
+
+    .badge-rules {
+      margin-top: 3.5rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid rgba(0, 0, 0, 0.09);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem 2rem;
+    }
+
+    .badge-rule {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9.5px;
+      line-height: 1.65;
+      color: rgba(0, 0, 0, 0.36);
+    }
+
+    .badge-rule strong {
+      display: block;
+      color: rgba(0, 0, 0, 0.52);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-size: 8px;
+      margin-bottom: 5px;
+    }
+
+
+    /* ─── RESPONSIVE ─────────────────────────────────────────────── */
+
+    @media (max-width: 560px) {
+      .cc-wrapper,
+      .cc-badge--decal,
+      .cc-badge--feature { width: 100%; max-width: 340px; }
+      .variant-stage { padding: 1.75rem 1.25rem; justify-content: center; }
+      .badge-rules { grid-template-columns: 1fr; }
+    }
+
+  </style>
+</head>
+<body>
+
+  <div class="artifact-shell">
+
+    <div class="artifact-header">
+      <p class="artifact-eyebrow">Coin Card · Lane A · Acceptance Mark Artifact · 2026-06-27</p>
+      <p class="artifact-test">BADGE → INSPECT → TRANSACT → SETTLE. Click the Decal to inspect. "Enter amount →" to proceed. Connect Wallet → enter amount → Send USDC → SETTLE. "credential details" re-expands full rows in TRANSACT.</p>
+    </div>
+
+
+    <!-- ═══ VARIANT 1: HORIZONTAL DECAL — BADGE + INSPECT + TRANSACT ══ -->
+
+    <div class="variant">
+      <p class="variant-label">Variant 1 — Horizontal Decal · full state sequence</p>
+      <div class="variant-stage">
+
+        <div class="cc-wrapper" id="decal-wrapper">
+
+          <!-- BADGE -->
+          <div class="cc-badge cc-badge--decal cc-badge--interactive"
+               id="decal-badge"
+               role="button"
+               tabindex="0"
+               aria-expanded="false"
+               aria-controls="decal-panel"
+               aria-label="USDC accepted here. Activate to inspect route details.">
+            <div class="cc-copy" aria-hidden="true">
+              <span class="cc-primary">USDC accepted here</span>
+              <span class="cc-recipient-name" id="badge-recipient">—</span>
+              <span class="cc-micro">POLYGON · USDC</span>
+              <div class="cc-attribution">
+                <span class="cc-poweredby-label">Powered by</span>
+                <span class="cc-poweredby-name">ImplicitEx</span>
+              </div>
+            </div>
+            <span class="cc-hint" aria-hidden="true">credential details</span>
+            <div class="cc-authority-square" aria-hidden="true">
+              <div class="cc-authority-lockup">
+                <div class="cc-mark-wrap cc-mark-wrap--decal" id="mark-decal">
+                  <img class="cc-mark-img" src="/components/images/lettermark-white.svg" alt="">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- PANEL -->
+          <div class="cc-inspect-panel"
+               id="decal-panel"
+               role="region"
+               aria-label="Payment credential"
+               aria-hidden="true">
+
+            <div class="cc-inspect-inner">
+
+              <!--
+                DOM ORDER:  compact-strip → full-rows → transact-section
+                INSPECT:    compact-strip hidden / full-rows shown / transact hidden
+                TRANSACT:   compact-strip shown / full-rows hidden / transact shown
+                TRANSACT+d: compact-strip shown / full-rows shown  / transact shown
+              -->
+
+              <!-- COMPACT STRIP — TRANSACT anchor -->
+              <div class="cc-compact-strip">
+                <div class="cc-compact-credential">
+                  <div class="cc-compact-status">
+                    <span class="cc-compact-dot" aria-hidden="true"></span>
+                    <span class="cc-compact-verified-label">ROUTE ACTIVE</span>
+                    <span class="cc-compact-name" id="compact-name">—</span>
+                  </div>
+                  <div class="cc-compact-meta" id="compact-meta">—</div>
+                </div>
+                <button class="cc-details-toggle"
+                        id="details-toggle"
+                        aria-expanded="false"
+                        aria-controls="decal-full-rows">
+                  credential details
+                </button>
+              </div>
+
+              <!-- FULL ROWS — INSPECT view + TRANSACT details expansion -->
+              <div class="cc-full-rows" id="decal-full-rows">
+
+                <div class="cc-inspect-rows">
+
+                  <div class="cc-inspect-row" id="irow-recipient">
+                    <span class="cc-inspect-label">Recipient</span>
+                    <span class="cc-inspect-value" id="ival-recipient">—</span>
+                  </div>
+
+                  <div class="cc-inspect-row" id="irow-registry">
+                    <span class="cc-inspect-label">Route</span>
+                    <span class="cc-inspect-value cc-inspect-value--verified" id="ival-registry">
+                      <span class="cc-verify-dot" id="imark-dot" aria-hidden="true"></span>
+                      <span id="ival-registry-text">—</span>
+                    </span>
+                  </div>
+
+
+                  <div class="cc-inspect-row" id="irow-destination">
+                    <span class="cc-inspect-label">Destination</span>
+                    <span class="cc-inspect-value cc-inspect-value--mono" id="ival-destination">—</span>
+                  </div>
+
+                </div>
+
+                <div class="cc-inspect-footer">
+                  <!-- Proceed: only rendered after manifest VERIFIED -->
+                  <button class="cc-proceed-btn" id="proceed-btn" hidden>
+                    Enter amount →
+                  </button>
+                </div>
+
+              </div><!-- /.cc-full-rows -->
+
+              <!-- SETTLE SECTION — proof state, post-send -->
+              <div class="cc-settle-section">
+                <div class="cc-settle-header">
+                  <span class="cc-settle-dot" aria-hidden="true"></span>
+                  <span class="cc-settle-confirmed-label">Transfer Confirmed</span>
+                </div>
+                <div class="cc-settle-amount" id="settle-amount">—</div>
+                <div class="cc-settle-meta">
+                  <span id="settle-recipient">—</span>
+                  <span class="cc-settle-sep" aria-hidden="true">·</span>
+                  <span id="settle-network-token">—</span>
+                  <span class="cc-settle-sep" aria-hidden="true">·</span>
+                  <span id="settle-dest">—</span>
+                </div>
+                <div class="cc-settle-detail-row">
+                  <span class="cc-settle-detail-label">Fee</span>
+                  <span class="cc-settle-detail-value" id="settle-fee">—</span>
+                </div>
+                <div class="cc-settle-detail-row">
+                  <span class="cc-settle-detail-label">Total sent</span>
+                  <span class="cc-settle-detail-value" id="settle-total">—</span>
+                </div>
+                <div class="cc-settle-link-row">
+                  <a class="cc-settle-link" id="settle-polygonscan" href="#" target="_blank" rel="noopener noreferrer">
+                    View on PolygonScan ↗
+                  </a>
+                </div>
+              </div><!-- /.cc-settle-section -->
+
+              <!-- TRANSACT SECTION — manifest-gated -->
+              <div class="cc-transact-section">
+
+                <div class="cc-transact-rows">
+
+                  <div class="cc-transact-row">
+                    <label class="cc-transact-label" for="cc-amount">Amount</label>
+                    <div class="cc-amount-wrap">
+                      <input class="cc-amount-input"
+                             id="cc-amount"
+                             type="number"
+                             min="0"
+                             step="0.01"
+                             placeholder="0.00"
+                             inputmode="decimal"
+                             aria-label="Transfer amount in USDC">
+                      <span class="cc-amount-unit" aria-hidden="true">USDC</span>
+                    </div>
+                  </div>
+
+                  <div class="cc-transact-row">
+                    <span class="cc-transact-label">Fee</span>
+                    <span class="cc-transact-value" id="fee-display">2.5% · — USDC</span>
+                  </div>
+
+                  <div class="cc-transact-row">
+                    <span class="cc-transact-label">Total</span>
+                    <span class="cc-transact-value cc-transact-value--total" id="total-display">— USDC</span>
+                  </div>
+
+                </div>
+
+                <!-- PREFLIGHT STATUS — one failing gate condition at a time -->
+                <div class="cc-preflight-row" id="cc-preflight">
+                  <span class="cc-preflight-head" id="preflight-head">No wallet connected</span>
+                  <span class="cc-preflight-sub"  id="preflight-sub">Connect wallet to continue.</span>
+                </div>
+
+                <div class="cc-action-row">
+                  <button class="cc-wallet-btn" id="wallet-btn">
+                    Connect Wallet
+                  </button>
+                  <button class="cc-send-btn" id="send-btn" disabled aria-disabled="true">
+                    Send USDC →
+                  </button>
+                </div>
+
+              </div><!-- /.cc-transact-section -->
+
+            </div><!-- /.cc-inspect-inner -->
+          </div><!-- /.cc-inspect-panel -->
+
+        </div><!-- /.cc-wrapper -->
+      </div>
+    </div>
+
+
+    <!-- ═══ VARIANT 2: COMPACT — STATIC BADGE ══════════════════════ -->
+
+    <div class="variant">
+      <p class="variant-label">Variant 2 — Compact Payment Mark · static</p>
+      <div class="variant-stage">
+        <div class="cc-badge cc-badge--compact" role="img"
+             aria-label="USDC accepted here. Coin Card. Powered by ImplicitEx. Polygon · USDC.">
+          <div class="cc-copy" aria-hidden="true">
+            <span class="cc-primary">USDC accepted here</span>
+            <img class="cc-badge-coincard-logo"
+                 src="/components/images/coincard-logo.svg"
+                 alt=""
+                 aria-hidden="true"
+                 style="margin-top:2px;">
+            <span class="cc-secondary">Powered by <img class="cc-wordmark-inline" src="/components/images/wordmark-white.svg" alt="" aria-hidden="true"></span>
+            <span class="cc-micro">POLYGON · USDC</span>
+          </div>
+          <div class="cc-mark-wrap" id="mark-compact">
+            <img class="cc-mark-img" src="/components/images/lettermark-white.svg" alt="" aria-hidden="true">
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ═══ VARIANT 3: FEATURE CARD — STATIC BADGE ═════════════════ -->
+
+    <div class="variant">
+      <p class="variant-label">Variant 3 — Feature Card · static</p>
+      <div class="variant-stage variant-stage--center">
+        <div class="cc-badge cc-badge--feature" role="img"
+             aria-label="USDC accepted here. Coin Card. Powered by ImplicitEx. Polygon USDC.">
+          <div class="cc-copy" aria-hidden="true">
+            <span class="cc-primary">USDC accepted here</span>
+            <img class="cc-badge-coincard-logo"
+                 src="/components/images/coincard-logo.svg"
+                 alt=""
+                 aria-hidden="true"
+                 style="margin-top:2px;">
+            <span class="cc-secondary" style="margin-top:2px;">Powered by <img class="cc-wordmark-inline" src="/components/images/wordmark-white.svg" alt="" aria-hidden="true"></span>
+            <span class="cc-micro">POLYGON · USDC</span>
+          </div>
+          <div class="cc-mark-wrap" id="mark-feature">
+            <img class="cc-mark-img" src="/components/images/lettermark-white.svg" alt="" aria-hidden="true">
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ═══ STATE REFERENCE ══════════════════════════════════════════ -->
+
+    <div class="badge-rules">
+      <div class="badge-rule">
+        <strong>BADGE / INSPECT</strong>
+        BADGE static at rest. INSPECT reveals credential facts from live manifest. No routing rows in REVOKED or UNAVAILABLE states.
+      </div>
+      <div class="badge-rule">
+        <strong>TRANSACT gate</strong>
+        "Enter amount" appears only when manifest is VERIFIED. REVOKED and UNAVAILABLE never expose TRANSACT. The verified manifest is the gate, not the UI.
+      </div>
+      <div class="badge-rule">
+        <strong>TRANSACT compression rule</strong>
+        Full rows collapse to compact verified-destination strip. "credential details" toggle re-expands them. TRANSACT may compress INSPECT, but may not erase it.
+      </div>
+      <div class="badge-rule">
+        <strong>SETTLE</strong>
+        Transfer confirmed · amount · recipient · Polygon tx hash link. The card becomes a proof object. Connect Wallet → amount → Send USDC → SETTLE.
+      </div>
+    </div>
+
+  </div>
+
+
+  <script>
+    // ── Ambient glow stagger ──────────────────────────────────────────
+
+    [{ id: 'mark-decal', period: 17 },
+     { id: 'mark-compact', period: 15 },
+     { id: 'mark-feature', period: 19 }]
+    .forEach(({ id, period }) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const delay = -(Math.random() * period).toFixed(2);
+      el.style.setProperty('--glow-period', period + 's');
+      el.style.setProperty('--glow-delay',  delay  + 's');
+    });
+
+
+    // ── State machine ─────────────────────────────────────────────────
+
+    const wrapper      = document.getElementById('decal-wrapper');
+    const badge        = document.getElementById('decal-badge');
+    const panel        = document.getElementById('decal-panel');
+    const proceedBtn   = document.getElementById('proceed-btn');
+    const detailsToggle= document.getElementById('details-toggle');
+    const compactName  = document.getElementById('compact-name');
+    const compactMeta  = document.getElementById('compact-meta');
+
+    function setPanelOpen(open) {
+      badge.setAttribute('aria-expanded', String(open));
+      panel.setAttribute('aria-hidden',   String(!open));
+    }
+
+    function toInspect() {
+      wrapper.classList.add('is-open');
+      wrapper.classList.remove('is-transact', 'is-details-open', 'is-settle');
+      setPanelOpen(true);
+    }
+
+    function toTransact() {
+      wrapper.classList.add('is-open', 'is-transact');
+      wrapper.classList.remove('is-details-open', 'is-settle');
+      setPanelOpen(true);
+    }
+
+    function closeAll() {
+      wrapper.classList.remove('is-open', 'is-transact', 'is-details-open', 'is-settle');
+      setPanelOpen(false);
+      detailsToggle.setAttribute('aria-expanded', 'false');
+    }
+
+    const isOpen     = () => wrapper.classList.contains('is-open');
+    const isTransact = () => wrapper.classList.contains('is-transact');
+
+    // COIN CARD logo link in badge — stop propagation so clicking it
+    // navigates to coincard.implicitex.com without also toggling INSPECT.
+    const badgeCoincard = badge.querySelector('.cc-badge-coincard');
+    if (badgeCoincard) badgeCoincard.addEventListener('click', e => e.stopPropagation());
+
+    // Badge click: toggle inspect / close
+    badge.addEventListener('click', () => { isOpen() ? closeAll() : toInspect(); });
+    badge.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); badge.click(); }
+    });
+
+    // Proceed: INSPECT → TRANSACT (gated by verifiedManifest)
+    proceedBtn.addEventListener('click', () => {
+      if (verifiedManifest) toTransact();
+    });
+
+    // Details toggle: expand/collapse full rows within TRANSACT
+    detailsToggle.addEventListener('click', () => {
+      const open = wrapper.classList.toggle('is-details-open');
+      detailsToggle.setAttribute('aria-expanded', String(open));
+    });
+
+    // Escape: close from anywhere
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && isOpen()) { closeAll(); badge.focus(); }
+    });
+
+    // Click outside: close
+    document.addEventListener('click', e => {
+      if (isOpen() && !wrapper.contains(e.target)) closeAll();
+    });
+
+
+    // ── Amount → live fee / total ─────────────────────────────────────
+
+    let feeBps = 250; // overridden from manifest
+
+    const amountInput  = document.getElementById('cc-amount');
+    const feeDisplay   = document.getElementById('fee-display');
+    const totalDisplay = document.getElementById('total-display');
+
+    // BigInt-native USDC math — mirrors execution path exactly.
+    // No float rounding. USDC has 6 decimals; all math in integer units.
+
+    function parseUsdcUnits(value) {
+      const raw = String(value || '').trim();
+      if (!raw || Number(raw) <= 0) return 0n;
+      try { return ethers.parseUnits(raw, 6); } catch { return 0n; }
+    }
+
+    function calcFeeWei(amountWei) {
+      return amountWei * BigInt(feeBps) / 10000n;
+    }
+
+    // Trim trailing zeros beyond two decimal places; always show at least two.
+    // 0.105 → "0.105" | 0.10 → "0.10" | 1.00 → "1.00"
+    function formatUsdcExact(units) {
+      return CoinCardDisplay.formatUsdcUnits(units, { decimals: 6 });
+    }
+
+    function updateTotals() {
+      const amountWei = parseUsdcUnits(amountInput.value);
+      const pct = (feeBps / 100).toFixed(1);
+      if (amountWei > 0n) {
+        const feeWei   = calcFeeWei(amountWei);
+        const debitWei = amountWei + feeWei;
+        feeDisplay.textContent   = pct + '% · ' + formatUsdcExact(feeWei)   + ' USDC';
+        totalDisplay.textContent = formatUsdcExact(debitWei) + ' USDC';
+      } else {
+        feeDisplay.textContent   = pct + '% · — USDC';
+        totalDisplay.textContent = '— USDC';
+      }
+    }
+
+    amountInput.addEventListener('input', () => { updateTotals(); updatePreflight(); });
+
+
+    // ── Execution preflight — Slice 1 ────────────────────────────────
+    //
+    // Real wallet connect. Real chain detection. Real USDC balance.
+    // No transfer execution yet — that is Slice 2.
+    //
+    // Gate: manifest VERIFIED
+    //   AND wallet connected
+    //   AND chain === Polygon 137 (0x89)
+    //   AND amount > 0
+    //   AND USDC balance >= amount
+    //
+    // All five must pass before Send enables.
+
+    const POLYGON_CHAIN_HEX  = '0x89'; // chainId 137
+    const USDC_CONTRACT      = '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359'; // Circle native USDC, Polygon mainnet
+    const TRANSFER_CONTRACT  = '0x5015841D6E665e63Ea174aD6b8FeF854026dE0C0'; // ImplicitExTransfer, Polygon mainnet
+
+    // Minimal ABIs — only the calls this artifact makes.
+    const USDC_ABI = [
+      'function balanceOf(address owner) view returns (uint256)',
+      'function allowance(address owner, address spender) view returns (uint256)',
+      'function approve(address spender, uint256 amount) returns (bool)',
+    ];
+
+    const TRANSFER_ABI = [
+      'function transferWithFee(address recipient, uint256 amount, bool feeOnTop) returns (bytes32)',
+      'event TransferExecuted(address indexed sender, address indexed recipient, uint256 amount, uint256 fee, bytes32 indexed transferId)',
+    ];
+
+    const walletBtn = document.getElementById('wallet-btn');
+    const sendBtn   = document.getElementById('send-btn');
+
+    let connectedAccount = null;
+    let walletChainId    = null;
+    let usdcBalance      = 0;
+
+    // ── Preflight copy map ────────────────────────────────────────────
+
+    const PREFLIGHT_COPY = {
+      // Pre-conditions — must be resolved before Send can enable
+      no_provider:           { head: 'No wallet detected',        sub: 'Install MetaMask to continue.' },
+      no_wallet:             { head: 'No wallet connected',       sub: 'Connect wallet to continue.' },
+      wallet_pending:        { head: 'Connecting',                sub: 'Approve the connection request.' },
+      wrong_network:         { head: 'Wrong network',             sub: 'Switch to Polygon to continue.' },
+      no_amount:             { head: 'Enter amount',              sub: 'Amount must be greater than 0.' },
+      insufficient_balance:  { head: 'Insufficient USDC balance', sub: 'Reduce amount or fund wallet.' },
+      // Gate cleared
+      ready:                 { head: 'Ready',                     sub: 'Valid destination. Wallet connected. Amount valid.' },
+      // Execution states — Slice 2
+      approval_pending:      { head: 'Approval pending',          sub: 'Approve USDC in your wallet.' },
+      approval_confirming:   { head: 'Approval confirming',       sub: 'Waiting for Polygon confirmation.' },
+      approval_rejected:     { head: 'Approval rejected',         sub: 'No transfer was submitted.' },
+      credential_changed:    { head: 'Credential changed',        sub: 'Reopen credential details before sending.' },
+      credential_unavailable:{ head: 'Credential unavailable',    sub: 'This card cannot send until verification is restored.' },
+      transfer_pending:      { head: 'Transfer pending',          sub: 'Sign the transfer in your wallet.' },
+      transfer_unconfirmed:  { head: 'Transfer submitted',        sub: 'Waiting for Polygon confirmation.' },
+      transfer_rejected:     { head: 'Transfer rejected',         sub: 'No funds were moved.' },
+      transfer_failed:       { head: 'Transfer failed',           sub: 'Check wallet and try again.' },
+    };
+
+    // States where Send is enabled (READY + retryable failures)
+    const SEND_ENABLED_STATES = new Set([
+      'ready', 'approval_rejected', 'transfer_rejected', 'transfer_failed',
+    ]);
+
+    const preflightRow  = document.getElementById('cc-preflight');
+    const preflightHead = document.getElementById('preflight-head');
+    const preflightSub  = document.getElementById('preflight-sub');
+
+    function setPreflight(state) {
+      const copy = PREFLIGHT_COPY[state] || PREFLIGHT_COPY.no_wallet;
+      if (preflightHead) preflightHead.textContent = copy.head;
+      if (preflightSub)  preflightSub.textContent  = copy.sub;
+      if (preflightRow) {
+        preflightRow.className = 'cc-preflight-row'
+          + (state === 'ready' ? ' cc-preflight-row--ready' : '');
+      }
+      const canSend = SEND_ENABLED_STATES.has(state);
+      sendBtn.disabled = !canSend;
+      sendBtn.setAttribute('aria-disabled', String(!canSend));
+    }
+
+    function updatePreflight() {
+      if (!window.ethereum)    { setPreflight('no_provider');          return; }
+      if (!connectedAccount)   { setPreflight('no_wallet');            return; }
+      if (walletChainId !== POLYGON_CHAIN_HEX) { setPreflight('wrong_network'); return; }
+      const amt = parseFloat(amountInput.value) || 0;
+      if (amt <= 0)            { setPreflight('no_amount');            return; }
+      if (amt > usdcBalance)   { setPreflight('insufficient_balance'); return; }
+      setPreflight('ready');
+    }
+
+    // ── USDC balance fetch (raw eth_call, no ethers.js dependency) ───
+
+    async function fetchUsdcBalance() {
+      if (!connectedAccount || !window.ethereum) { usdcBalance = 0; return; }
+      try {
+        // balanceOf(address) selector: keccak256 first 4 bytes = 0x70a08231
+        const calldata = '0x70a08231'
+          + connectedAccount.replace('0x', '').toLowerCase().padStart(64, '0');
+        const result = await window.ethereum.request({
+          method: 'eth_call',
+          params: [{ to: USDC_CONTRACT, data: calldata }, 'latest'],
+        });
+        // Result is 32-byte hex uint256; USDC has 6 decimals
+        usdcBalance = (result && result !== '0x')
+          ? Number(BigInt(result)) / 1e6
+          : 0;
+      } catch {
+        usdcBalance = 0;
+      }
+    }
+
+    // ── Wallet connect ────────────────────────────────────────────────
+
+    async function connectWallet() {
+      if (!window.ethereum) { setPreflight('no_provider'); return; }
+
+      setPreflight('wallet_pending');
+      walletBtn.disabled    = true;
+      walletBtn.textContent = 'Connecting…';
+
+      try {
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        connectedAccount = (accounts && accounts[0]) || null;
+
+        if (!connectedAccount) {
+          walletBtn.disabled    = false;
+          walletBtn.textContent = 'Connect Wallet';
+          setPreflight('no_wallet');
+          return;
+        }
+
+        walletBtn.textContent = 'Connected · ' + abbrev(connectedAccount);
+
+        // Chain check
+        const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+        walletChainId = chainId;
+
+        // Balance fetch if on correct chain
+        if (chainId === POLYGON_CHAIN_HEX) await fetchUsdcBalance();
+
+        updatePreflight();
+      } catch (err) {
+        // User rejected connection or other error
+        connectedAccount      = null;
+        walletBtn.disabled    = false;
+        walletBtn.textContent = 'Connect Wallet';
+        setPreflight('no_wallet');
+      }
+    }
+
+    walletBtn.addEventListener('click', connectWallet);
+
+    // ── Chain + account change listeners ─────────────────────────────
+
+    if (window.ethereum) {
+      window.ethereum.on('chainChanged', async chainId => {
+        walletChainId = chainId;
+        usdcBalance   = 0;
+        if (chainId === POLYGON_CHAIN_HEX && connectedAccount) await fetchUsdcBalance();
+        updatePreflight();
+      });
+
+      window.ethereum.on('accountsChanged', async accounts => {
+        connectedAccount = (accounts && accounts[0]) || null;
+        usdcBalance      = 0;
+        if (!connectedAccount) {
+          walletBtn.disabled    = false;
+          walletBtn.textContent = 'Connect Wallet';
+          setPreflight('no_wallet');
+        } else {
+          walletBtn.textContent = 'Connected · ' + abbrev(connectedAccount);
+          if (walletChainId === POLYGON_CHAIN_HEX) await fetchUsdcBalance();
+          updatePreflight();
+        }
+      });
+    }
+
+
+    // ── SETTLE state ──────────────────────────────────────────────────
+    //
+    // Artifact tx hash — simulates confirmed Polygon transaction.
+    // In production, this hash comes from the chain event after transfer execution.
+
+    // amountWei: BigInt in USDC units (6 decimals) — must match the approved/transferred amount.
+    function toSettle(amountWei, manifest, txHash) {
+      const feeWei   = calcFeeWei(amountWei);
+      const debitWei = amountWei + feeWei;
+
+      wrapper.classList.add('is-open', 'is-settle');
+      wrapper.classList.remove('is-transact', 'is-details-open');
+      setPanelOpen(true);
+
+      const chain = manifest.chainName
+        || CHAIN_NAMES_MAP[String(manifest.chainId)]
+        || 'Chain ' + manifest.chainId;
+
+      const settleRecipient = $('settle-recipient');
+      $('settle-amount').textContent        = formatUsdcExact(amountWei)  + ' USDC';
+      settleRecipient.textContent           = manifest.displayName || abbrev(manifest.recipient);
+      if (manifest.recipient) {
+        settleRecipient.title = manifest.recipient;
+        settleRecipient.setAttribute('aria-label', manifest.recipient);
+      } else {
+        settleRecipient.removeAttribute('title');
+        settleRecipient.removeAttribute('aria-label');
+      }
+      $('settle-network-token').textContent = chain + ' · ' + (manifest.token || '').toUpperCase();
+      $('settle-dest').textContent          = abbrev(manifest.recipient);
+      $('settle-fee').textContent           = formatUsdcExact(feeWei)     + ' USDC';
+      $('settle-total').textContent         = formatUsdcExact(debitWei)   + ' USDC';
+
+      const polyLink = $('settle-polygonscan');
+      if (txHash) {
+        const abbrevHash = txHash.slice(0, 10) + '\u2026' + txHash.slice(-6);
+        polyLink.textContent         = 'View on PolygonScan · ' + abbrevHash + ' \u2197';
+        polyLink.href                = 'https://polygonscan.com/tx/' + txHash;
+        polyLink.style.pointerEvents = 'auto';
+        polyLink.removeAttribute('aria-disabled');
+      } else {
+        polyLink.textContent = 'PolygonScan proof link · tx-not-wired · artifact';
+        polyLink.href        = '#';
+        // CSS pointer-events: none applies
+      }
+    }
+
+
+    // ── Send handler — Slice 2 execution ──────────────────────────────
+    //
+    // SETTLE is only reachable from a confirmed receipt + real tx.hash.
+    // Every failure path stays in TRANSACT with operational copy.
+    // All wallet rejection, approval rejection, transfer rejection,
+    // and unconfirmed paths remain in TRANSACT.
+
+    sendBtn.addEventListener('click', async () => {
+      if (sendBtn.disabled || !verifiedManifest) return;
+
+      // ── JIT revalidation — wallet, chain, balance, AND manifest ──────
+      // Do not trust any stale state: card may have been revoked or changed
+      // between when TRANSACT opened and when Send is clicked.
+
+      const freshChainId = await window.ethereum.request({ method: 'eth_chainId' });
+      walletChainId = freshChainId;
+      await fetchUsdcBalance();
+
+      const amt = parseFloat(amountInput.value) || 0;
+      if (!connectedAccount || freshChainId !== POLYGON_CHAIN_HEX || amt <= 0 || amt > usdcBalance) {
+        updatePreflight();
+        return;
+      }
+
+      // Refetch and re-validate the registry manifest
+      let freshManifest;
+      try {
+        const res = await fetch('/registry/coincards/' + CARD_ID + '.json');
+        if (!res.ok) throw new Error('fetch-failed');
+        freshManifest = await res.json();
+      } catch {
+        setPreflight('credential_unavailable');
+        return;
+      }
+
+      // Validate: same schema, same card, still active, fields intact, recipient/chain/token unchanged
+      const invalid =
+        freshManifest._notFound
+        || freshManifest.schema    !== 'implicitex.coincard.v1'
+        || freshManifest.cardId    !== CARD_ID
+        || freshManifest.status    === 'revoked'
+        || freshManifest.status    !== 'active'
+        || !freshManifest.recipient || !freshManifest.chainId || !freshManifest.token;
+
+      if (invalid) {
+        setPreflight('credential_unavailable');
+        return;
+      }
+
+      // Confirm destination, chain, and token still match what was verified
+      const unchanged =
+        freshManifest.recipient.toLowerCase() === verifiedManifest.recipient.toLowerCase()
+        && String(freshManifest.chainId) === String(verifiedManifest.chainId)
+        && freshManifest.token.toUpperCase() === verifiedManifest.token.toUpperCase();
+
+      if (!unchanged) {
+        setPreflight('credential_changed');
+        return;
+      }
+
+      // Update verifiedManifest to the freshly confirmed state
+      verifiedManifest = freshManifest;
+
+      // ── BigInt-native debit math ──────────────────────────────────────
+      // Approval and transfer use exact integer arithmetic — no float rounding.
+      // Display (fee/total rows) keeps formatted values; execution uses wei.
+      const amountWei = ethers.parseUnits(amountInput.value.trim() || '0', 6);
+      const feeWei    = amountWei * BigInt(feeBps) / 10000n;
+      const debitWei  = amountWei + feeWei; // full sender debit for approve()
+
+      let provider, signer, usdc, transfer;
+      try {
+        provider = new ethers.BrowserProvider(window.ethereum);
+        signer   = await provider.getSigner();
+        usdc     = new ethers.Contract(USDC_CONTRACT,    USDC_ABI,     signer);
+        transfer = new ethers.Contract(TRANSFER_CONTRACT, TRANSFER_ABI, signer);
+      } catch {
+        setPreflight('transfer_failed');
+        return;
+      }
+
+      // ── Allowance check ───────────────────────────────────────────
+      let allowance;
+      try {
+        allowance = await usdc.allowance(connectedAccount, TRANSFER_CONTRACT);
+      } catch {
+        setPreflight('transfer_failed');
+        return;
+      }
+
+      // ── Approval (if needed) ──────────────────────────────────────
+      if (allowance < debitWei) {
+        setPreflight('approval_pending');
+        let approveTx;
+        try {
+          approveTx = await usdc.approve(TRANSFER_CONTRACT, debitWei);
+        } catch {
+          setPreflight('approval_rejected');
+          return;
+        }
+        setPreflight('approval_confirming');
+        try {
+          await approveTx.wait();
+        } catch {
+          setPreflight('approval_rejected');
+          return;
+        }
+      }
+
+      // ── Transfer ──────────────────────────────────────────────────
+      setPreflight('transfer_pending');
+      let tx;
+      try {
+        tx = await transfer.transferWithFee(
+          verifiedManifest.recipient,
+          amountWei,
+          true, // feeOnTop — sender pays fee above recipient amount
+        );
+      } catch {
+        setPreflight('transfer_rejected');
+        return;
+      }
+
+      setPreflight('transfer_unconfirmed');
+      let receipt;
+      try {
+        receipt = await tx.wait();
+      } catch {
+        setPreflight('transfer_failed');
+        return;
+      }
+
+      // ── SETTLE — only from confirmed receipt + real tx hash ───────
+      if (receipt && receipt.status === 1 && receipt.hash) {
+        toSettle(amountWei, verifiedManifest, receipt.hash);
+      } else {
+        setPreflight('transfer_failed');
+      }
+    });
+
+
+    // ── Registry fetch ────────────────────────────────────────────────
+    //
+    // Mirrors coincard.js validation contract.
+    // Degraded state: routing rows hidden, proceed button hidden.
+    // REVOKED → red status. UNAVAILABLE → gray status.
+
+    const CARD_ID = 'cc_demo_implicitex';
+
+    const CHAIN_NAMES_MAP = {
+      '137': 'Polygon', '80002': 'Polygon Amoy', '1': 'Ethereum',
+    };
+
+    const $ = id => document.getElementById(id);
+
+    let verifiedManifest = null;
+
+    function abbrev(addr) {
+      if (!addr) return addr;
+      return CoinCardDisplay.middleTruncate(addr, 6, 4, {
+        marker: '\u2026',
+        truncateAtLength: 11,
+      });
+    }
+
+    function setRegistryValue(text, cssClass) {
+      const el    = $('ival-registry');
+      const dot   = $('imark-dot');
+      const label = $('ival-registry-text');
+      if (el)    el.className = 'cc-inspect-value cc-inspect-value--' + cssClass;
+      if (dot)   dot.style.display = (cssClass === 'verified') ? '' : 'none';
+      if (label) label.textContent = text;
+    }
+
+    function hideRoutingRows() {
+      ['irow-recipient', 'irow-destination']
+        .forEach(id => { const r = $(id); if (r) r.hidden = true; });
+    }
+
+    function applyVerified(manifest) {
+      verifiedManifest = manifest;
+      feeBps = manifest.feeBps || 250;
+
+      // Badge face — recipient identity (visible without opening INSPECT)
+      const badgeRecipient = $('badge-recipient');
+      if (badgeRecipient) {
+        badgeRecipient.textContent = manifest.displayName || abbrev(manifest.recipient);
+      }
+
+      // Full rows
+      $('ival-recipient').textContent = manifest.displayName || abbrev(manifest.recipient);
+      setRegistryValue('ROUTE ACTIVE', 'verified');
+
+      const chain = manifest.chainName
+        || CHAIN_NAMES_MAP[String(manifest.chainId)]
+        || 'Chain ' + manifest.chainId;
+
+      const destEl = $('ival-destination');
+      destEl.textContent = abbrev(manifest.recipient);
+      destEl.title       = manifest.recipient;
+
+      ['irow-recipient', 'irow-destination']
+        .forEach(id => { const r = $(id); if (r) r.hidden = false; });
+
+      // Show proceed button (INSPECT → TRANSACT gate)
+      proceedBtn.hidden = false;
+
+      // Compact strip
+      compactName.textContent = manifest.displayName || abbrev(manifest.recipient);
+      compactMeta.textContent = chain + ' · '
+        + (manifest.token || '').toUpperCase() + ' · '
+        + abbrev(manifest.recipient);
+
+      // Update live fee label
+      updateTotals();
+    }
+
+    function applyDegraded(statusText, cssClass) {
+      verifiedManifest = null;
+      hideRoutingRows();
+      setRegistryValue(statusText, cssClass);
+      proceedBtn.hidden = true;
+    }
+
+    function validateManifest(m) {
+      if (m.schema !== 'implicitex.coincard.v1')          return 'schema-mismatch';
+      if (m.cardId !== CARD_ID)                            return 'card-id-mismatch';
+      if (!m.recipient || !m.chainId || !m.token)          return 'missing-fields';
+      if (m.owner != null) {
+        if (typeof m.owner !== 'object' || !m.owner.name) return 'owner-malformed';
+      }
+      return null;
+    }
+
+    fetch('/registry/coincards/' + CARD_ID + '.json')
+      .then(res => {
+        if (res.status === 404) return { _notFound: true };
+        if (!res.ok) throw new Error('http-' + res.status);
+        return res.json();
+      })
+      .then(m => {
+        if (m._notFound)                         { applyDegraded('UNAVAILABLE', 'unavailable'); return; }
+        if (m.status === 'revoked')               { applyDegraded('REVOKED',     'revoked');     return; }
+        if (validateManifest(m))                  { applyDegraded('UNAVAILABLE', 'unavailable'); return; }
+        if (m.status !== 'active')                { applyDegraded('UNAVAILABLE', 'unavailable'); return; }
+        applyVerified(m);
+      })
+      .catch(() => applyDegraded('UNAVAILABLE', 'unavailable'));
+
+    // Initialize preflight display (panel hidden until TRANSACT, but state set)
+    updatePreflight();
+
+  </script>
+
+</body>
+</html>

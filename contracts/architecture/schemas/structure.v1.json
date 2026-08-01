@@ -1,0 +1,66 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "implicitex.architecture.structure.v1",
+  "title": "Architecture Structure Contract V1",
+  "type": "object",
+  "required": ["schema", "name", "status", "artifactContract", "implementedEdges"],
+  "additionalProperties": true,
+  "properties": {
+    "schema": { "type": "string", "minLength": 1 },
+    "name": { "type": "string", "minLength": 1 },
+    "status": { "type": "string", "minLength": 1 },
+    "artifactContract": { "type": "string", "minLength": 1 },
+    "nodeMapping": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "implementedEdges": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/edge" }
+    },
+    "regions": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/region" }
+    },
+    "states": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/state" }
+    }
+  },
+  "$defs": {
+    "edge": {
+      "type": "object",
+      "required": ["from", "to", "relationship"],
+      "additionalProperties": true,
+      "properties": {
+        "from": { "type": "string", "minLength": 1 },
+        "to": { "type": "string", "minLength": 1 },
+        "relationship": { "type": "string", "minLength": 1 }
+      }
+    },
+    "region": {
+      "type": "object",
+      "required": ["id", "artifactNode"],
+      "additionalProperties": true,
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "artifactNode": { "type": "string", "minLength": 1 },
+        "artifactRole": { "type": "string" },
+        "selector": { "type": "string" },
+        "stateControlled": { "type": "boolean" }
+      }
+    },
+    "state": {
+      "type": "object",
+      "required": ["id"],
+      "additionalProperties": true,
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "lifecycle": { "type": "string" }
+      }
+    }
+  }
+}

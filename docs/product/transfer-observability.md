@@ -39,6 +39,33 @@ other:
 
 Provenance explains facts; it does not strengthen or weaken them.
 
+## Evidence Supremacy
+
+When evidence sources disagree, the most objective and transaction-proximate
+evidence controls.
+
+Conflict order:
+
+```text
+Blockchain evidence
+        ↓
+Recorded Coin Card evidence at transaction time
+        ↓
+Current host manifest or registry record
+        ↓
+Human testimony
+```
+
+Operational consequences:
+
+- A confirmed on-chain transaction controls settlement truth.
+- Recorded Coin Card evidence controls what ImplicitEx presented and executed
+  at transaction time.
+- A current host manifest or registry record cannot rewrite a historical
+  transaction-time receipt.
+- Human testimony can explain intent, but it cannot override recorded evidence
+  or blockchain settlement.
+
 ## State Vocabulary
 
 Canonical state values live in
@@ -95,6 +122,7 @@ totalDebit
 chainId
 network
 contractAddress
+coinCard
 approvalHash
 transferHash
 hash
@@ -121,6 +149,12 @@ Missing fields are normalized by the schema layer. Legacy hash-only and
 transferHash-only records are reconciled so both aliases preserve the same
 transaction hash.
 
+`coinCard` is optional context for transfers initiated through Coin Card. It may
+include manifest URL, manifest hash, manifest schema/version, host-declared
+created/updated timestamps, route validation result, and recipient source. This
+context explains what was presented and executed. It must not be used to imply
+recipient identity verification for Free Coin Cards.
+
 ## Proof Packet Schema
 
 Proof packets use `proof-packet.v1`, defined by
@@ -128,8 +162,8 @@ Proof packets use `proof-packet.v1`, defined by
 
 Proof packets export stored facts from a migrated receipt. They include the
 transaction hash, network, sender, recipient, amount, fee, status, explorer URL,
-local metadata, observation source, and observation timestamp. They do not invent
-missing chain data.
+local metadata, Coin Card context when present, observation source, and
+observation timestamp. They do not invent missing chain data.
 
 ## Provenance
 

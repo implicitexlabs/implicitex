@@ -1,0 +1,22 @@
+<svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"
+     shape-rendering="crispEdges" aria-label="Key" role="img">
+  <mask id="key-horizontal-inverse-mask">
+    <rect x="0" y="0" width="16" height="16" fill="#fff"/>
+    <path fill="#000" d="
+      M 1,5 H 7 V 6 H 1 Z
+      M 1,6 H 7 V 7 H 1 Z
+      M 1,7 H 3 V 8 H 1 Z
+      M 5,7 H 14 V 8 H 5 Z
+      M 1,8 H 3 V 9 H 1 Z
+      M 5,8 H 14 V 9 H 5 Z
+      M 1,9 H 7 V 10 H 1 Z
+      M 10,9 H 11 V 10 H 10 Z
+      M 12,9 H 13 V 10 H 12 Z
+      M 1,10 H 7 V 11 H 1 Z
+      M 10,10 H 11 V 11 H 10 Z
+      M 12,10 H 13 V 11 H 12 Z
+      M 12,11 H 13 V 12 H 12 Z
+    "/>
+  </mask>
+  <rect x="0" y="0" width="16" height="16" fill="currentColor" mask="url(#key-horizontal-inverse-mask)"/>
+</svg>

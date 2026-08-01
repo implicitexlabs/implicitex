@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Coin Card State Review</title>
+  <meta name="robots" content="noindex">
+  <link rel="stylesheet" href="state-review-tokens.generated.css">
+  <link rel="stylesheet" href="state-review.css">
+</head>
+<body>
+  <main class="review-shell">
+    <aside class="review-panel" aria-label="State fixtures">
+      <h1>Coin Card State Review</h1>
+      <p class="review-note">Deterministic fixture renderer. No wallet, RPC, registry, analytics, storage, or contract calls.</p>
+      <div class="fixture-list" id="fixtureList" role="list"></div>
+      <pre class="fixture-json" id="fixtureJson" aria-label="Current fixture JSON"></pre>
+    </aside>
+
+    <section class="review-stage" aria-label="Rendered Coin Card">
+      <div class="review-result" id="reviewResult" role="status" aria-live="polite"></div>
+      <div class="coin-card-review" id="coinCardReview"></div>
+      <div class="review-result" id="actionDiagnostic" role="status" aria-live="polite">No review action requested.</div>
+    </section>
+  </main>
+
+  <script src="coin-card-display.js"></script>
+  <script src="state-review-contract.generated.js"></script>
+  <script src="state-review-core.js"></script>
+  <script src="state-review.js"></script>
+</body>
+</html>

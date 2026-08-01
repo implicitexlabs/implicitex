@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Coin Card — Host Context Preview</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500&family=Orbitron:wght@600;700&family=Oxanium:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ---- Host page — dark creator/article theme ---- */
+    :root {
+      --host-bg:      #111113;
+      --host-surface: #18181b;
+      --host-border:  rgba(255, 255, 255, 0.07);
+      --host-text:    rgba(242, 242, 240, 0.58);
+      --host-dim:     rgba(242, 242, 240, 0.30);
+      --host-muted:   rgba(242, 242, 240, 0.16);
+    }
+
+    body {
+      background: var(--host-bg);
+      color: var(--host-text);
+      font-family: 'Inter', sans-serif;
+      font-size: 14.5px;
+      line-height: 1.7;
+    }
+
+    /* ---- Evaluation header ---- */
+    .eval-bar {
+      border-bottom: 1px solid var(--host-border);
+      padding: 0.75rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 2rem;
+    }
+
+    .eval-bar-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9.5px;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+      color: var(--host-muted);
+    }
+
+    .eval-bar-checks {
+      display: flex;
+      gap: 1.5rem;
+    }
+
+    .eval-check {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.09em;
+      color: var(--host-muted);
+    }
+
+    /* ---- Page layout ---- */
+    .page {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 0 2rem 6rem;
+    }
+
+    /* Context label between sections */
+    .context-label {
+      margin: 3.5rem 0 1.25rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--host-border);
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+    }
+
+    .context-label-name {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--host-muted);
+    }
+
+    .context-label-dim {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      color: var(--host-muted);
+      opacity: 0.55;
+    }
+
+    /* ---- Fake YouTube embed ---- */
+    .yt-embed {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: #0a0a0c;
+      border: 1px solid var(--host-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      margin-bottom: 0.85rem;
+    }
+
+    .yt-play {
+      width: 52px;
+      height: 52px;
+      border: 1.5px solid rgba(255, 255, 255, 0.14);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .yt-play svg {
+      width: 18px;
+      height: 18px;
+      fill: rgba(255, 255, 255, 0.20);
+      margin-left: 2px;
+    }
+
+    .yt-caption {
+      position: absolute;
+      bottom: 10px;
+      left: 12px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.10em;
+      color: rgba(255, 255, 255, 0.12);
+      text-transform: uppercase;
+    }
+
+    /* Video title block */
+    .video-meta {
+      margin-bottom: 1.25rem;
+    }
+
+    .video-title {
+      font-family: 'Inter', sans-serif;
+      font-size: 17px;
+      font-weight: 500;
+      color: rgba(242, 242, 240, 0.80);
+      line-height: 1.35;
+      margin-bottom: 0.35rem;
+    }
+
+    .video-sub {
+      font-size: 12.5px;
+      color: var(--host-dim);
+    }
+
+    /* ---- Article body ---- */
+    .article-body p {
+      margin-bottom: 1rem;
+      color: var(--host-text);
+    }
+
+    .article-body p:last-child { margin-bottom: 0; }
+
+    .clearfix::after { content: ""; display: table; clear: both; }
+
+    /* Float wrapper for compact card */
+    .card-float {
+      float: right;
+      margin: 0.15rem 0 1.25rem 1.75rem;
+    }
+
+    .card-float-hint {
+      margin-top: 0.45rem;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 8.5px;
+      letter-spacing: 0.11em;
+      text-transform: uppercase;
+      color: var(--host-muted);
+      text-align: right;
+      opacity: 0.65;
+    }
+
+    /* Below-video placement for wide card */
+    .card-below-video {
+      margin-bottom: 1.25rem;
+    }
+
+    .card-below-hint {
+      margin-top: 0.45rem;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 8.5px;
+      letter-spacing: 0.11em;
+      text-transform: uppercase;
+      color: var(--host-muted);
+      opacity: 0.65;
+    }
+
+    /* ---- Divider between contexts ---- */
+    .eval-divider {
+      margin: 4rem 0 0;
+      border: none;
+      border-top: 1px solid var(--host-border);
+    }
+
+
+    /* ================================================================
+       COIN CARD WIDGET — self-contained, no host-page variable deps
+       ================================================================ */
+
+    /* Shared properties for both sizes */
+    .cc-widget {
+      position: relative;
+      background: #0c0c0a;
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      border-radius: 2px;
+      overflow: hidden;
+      cursor: default;
+      transition:
+        border-color 0.22s ease,
+        background   0.22s ease,
+        box-shadow   0.22s ease;
+      box-shadow:
+        0 4px 24px rgba(0, 0, 0, 0.50),
+        0 1px 4px  rgba(0, 0, 0, 0.28);
+    }
+
+    .cc-widget:hover {
+      border-color: rgba(255, 255, 255, 0.24);
+      background: #0e0e0c;
+      box-shadow:
+        0 6px 32px rgba(0, 0, 0, 0.58),
+        0 2px 6px  rgba(0, 0, 0, 0.32);
+    }
+
+    /* Breathing edge */
+    .cc-widget::after {
+      content: "";
+      position: absolute;
+      right: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 1px;
+      background: rgba(242, 242, 240, 1);
+      opacity: 0.18;
+      pointer-events: none;
+    }
+
+    /* Block field */
+    .cc-blocks {
+      position: absolute;
+      top: 13px;
+      left: 13px;
+      display: grid;
+      gap: 2.5px;
+      pointer-events: none;
+    }
+
+    .cc-block {
+      width: 7px;
+      height: 7px;
+      background: rgba(242, 242, 240, 1);
+      transition: opacity var(--block-dur, 1.7s) ease;
+    }
+
+    /* Footer */
+    .cc-footer {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 13px;
+      transition: border-color 0.22s ease;
+    }
+
+    .cc-widget:hover .cc-footer {
+      border-top-color: rgba(255, 255, 255, 0.11);
+    }
+
+    .cc-mark {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 8.5px;
+      font-weight: 700;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: rgba(242, 242, 240, 0.50);
+    }
+
+    .cc-attr {
+      font-family: 'Inter', sans-serif;
+      font-size: 8px;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      color: rgba(242, 242, 240, 0.20);
+    }
+
+    /* Primary copy */
+    .cc-primary {
+      font-family: 'Oxanium', sans-serif;
+      font-weight: 600;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      color: rgba(242, 242, 240, 0.88);
+      line-height: 1.25;
+      text-align: right;
+      transition: opacity 0.5s ease;
+    }
+
+    /* Affordance — 500ms delay */
+    .cc-affordance {
+      font-family: 'Oxanium', sans-serif;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      color: rgba(242, 242, 240, 0.42);
+      text-align: right;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.28s ease 0.5s;
+      line-height: 1;
+    }
+
+    .cc-widget:hover .cc-affordance { opacity: 1; }
+
+
+    /* ================================================================
+       COMPACT VARIANT — 286 × 172 — article / sidebar embed
+       ================================================================ */
+
+    .cc-widget--compact {
+      width: 286px;
+      height: 172px;
+    }
+
+    .cc-widget--compact::after {
+      height: 26px;
+      animation: cc-breathe-compact 11.5s ease-in-out infinite;
+    }
+
+    @keyframes cc-breathe-compact {
+      0%, 38%, 100% { width: 1px; height: 26px; opacity: 0.18; }
+      48%            { width: 2px; height: 30px; opacity: 0.42; }
+      58%            { width: 1px; height: 26px; opacity: 0.18; }
+    }
+
+    .cc-widget--compact .cc-blocks {
+      grid-template-columns: repeat(4, 7px);
+      grid-template-rows: repeat(6, 7px);
+    }
+
+    .cc-widget--compact .cc-body {
+      position: absolute;
+      top: 0;
+      right: 14px;
+      bottom: 38px;
+      left: 60px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: flex-end;
+      gap: 7px;
+    }
+
+    .cc-widget--compact .cc-primary { font-size: 11px; }
+    .cc-widget--compact .cc-affordance { font-size: 9.5px; }
+
+    .cc-widget--compact .cc-footer { height: 34px; }
+
+
+    /* ================================================================
+       WIDE VARIANT — 100% × 110px — below-video companion
+       ================================================================ */
+
+    .cc-widget--wide {
+      width: 100%;
+      height: 110px;
+    }
+
+    .cc-widget--wide::after {
+      height: 22px;
+      animation: cc-breathe-wide 11.5s ease-in-out 3s infinite;
+    }
+
+    @keyframes cc-breathe-wide {
+      0%, 38%, 100% { width: 1px; height: 22px; opacity: 0.18; }
+      48%            { width: 2px; height: 26px; opacity: 0.42; }
+      58%            { width: 1px; height: 22px; opacity: 0.18; }
+    }
+
+    /* Wide: 6 cols × 4 rows = 24 blocks */
+    .cc-widget--wide .cc-blocks {
+      top: 12px;
+      grid-template-columns: repeat(6, 7px);
+      grid-template-rows: repeat(4, 7px);
+    }
+
+    .cc-widget--wide .cc-body {
+      position: absolute;
+      top: 0;
+      right: 16px;
+      bottom: 30px;
+      left: 82px; /* clear of 6-col block field */
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: flex-end;
+      gap: 5px;
+    }
+
+    .cc-widget--wide .cc-primary { font-size: 12px; }
+    .cc-widget--wide .cc-affordance { font-size: 9.5px; }
+
+    .cc-widget--wide .cc-footer { height: 28px; }
+    .cc-widget--wide .cc-mark { font-size: 8px; }
+    .cc-widget--wide .cc-attr { font-size: 7.5px; }
+
+  </style>
+</head>
+<body>
+
+  <!-- Evaluation bar -->
+  <div class="eval-bar">
+    <span class="eval-bar-label">Coin Card — Host Context Preview</span>
+    <div class="eval-bar-checks">
+      <span class="eval-check">Guest vs. hero?</span>
+      <span class="eval-check">Breathing edge — responds or solicits?</span>
+      <span class="eval-check">Footer hierarchy correct?</span>
+      <span class="eval-check">Wide vs. compact?</span>
+    </div>
+  </div>
+
+  <div class="page">
+
+    <!-- ============================================================
+         CONTEXT A — Compact card, floated in article below video
+         ============================================================ -->
+    <div class="context-label">
+      <span class="context-label-name">Context A — Compact, article float</span>
+      <span class="context-label-dim">286 × 172</span>
+    </div>
+
+    <!-- Video placeholder -->
+    <div class="yt-embed">
+      <div class="yt-play">
+        <svg viewBox="0 0 10 12"><polygon points="1,1 9,6 1,11"/></svg>
+      </div>
+      <span class="yt-caption">640 × 360 — simulated embed</span>
+    </div>
+
+    <!-- Video title + meta -->
+    <div class="video-meta">
+      <p class="video-title">How Direct USDC Transfers Work — No Exchange Required</p>
+      <p class="video-sub">14,802 views · 3 days ago · Creator Channel</p>
+    </div>
+
+    <!-- Article with compact card floated right -->
+    <div class="article-body clearfix">
+
+      <div class="card-float">
+        <div class="cc-widget cc-widget--compact" role="region" aria-label="Coin Card">
+          <div class="cc-blocks" data-blocks="compact" aria-hidden="true"></div>
+          <div class="cc-body">
+            <p class="cc-primary" data-copy>USDC ACCEPTED HERE</p>
+            <p class="cc-affordance" aria-hidden="true">USDC transfers &rarr;</p>
+          </div>
+          <div class="cc-footer">
+            <span class="cc-mark">&#162;OIN CARD</span>
+            <span class="cc-attr">Powered by ImplicitEx</span>
+          </div>
+        </div>
+        <p class="card-float-hint">Hover the card</p>
+      </div>
+
+      <p>This transfer required no exchange, no conversion, and no custodial account. The sender held USDC on Polygon, the recipient published a verified Coin Card, and the transfer settled directly between wallets in a single transaction.</p>
+      <p>The on-chain record is permanent and independently verifiable. No fee was collected by any exchange. The only cost was the 1% ImplicitEx protocol fee and a negligible Polygon gas amount — typically under one cent.</p>
+      <p>Anyone can verify the recipient address on the ImplicitEx registry before initiating a transfer. The Coin Card is a signed record, not a request. It confirms the destination. The sender decides whether to act.</p>
+      <p>Further transfers to the same recipient can be initiated at any time without re-entering the address. The Coin Card persists until revoked by the card holder through the ImplicitEx registry.</p>
+
+    </div>
+
+
+    <hr class="eval-divider">
+
+
+    <!-- ============================================================
+         CONTEXT B — Wide card, directly below video
+         ============================================================ -->
+    <div class="context-label">
+      <span class="context-label-name">Context B — Wide, below-video companion</span>
+      <span class="context-label-dim">100% × 110</span>
+    </div>
+
+    <!-- Video placeholder -->
+    <div class="yt-embed">
+      <div class="yt-play">
+        <svg viewBox="0 0 10 12"><polygon points="1,1 9,6 1,11"/></svg>
+      </div>
+      <span class="yt-caption">640 × 360 — simulated embed</span>
+    </div>
+
+    <!-- Wide card directly below video, before title -->
+    <div class="card-below-video">
+      <div class="cc-widget cc-widget--wide" role="region" aria-label="Coin Card">
+        <div class="cc-blocks" data-blocks="wide" aria-hidden="true"></div>
+        <div class="cc-body">
+          <p class="cc-primary" data-copy>USDC ACCEPTED HERE</p>
+          <p class="cc-affordance" aria-hidden="true">USDC transfers &rarr;</p>
+        </div>
+        <div class="cc-footer">
+          <span class="cc-mark">&#162;OIN CARD</span>
+          <span class="cc-attr">Powered by ImplicitEx</span>
+        </div>
+      </div>
+      <p class="card-below-hint">Hover the card</p>
+    </div>
+
+    <!-- Video title + meta below card -->
+    <div class="video-meta">
+      <p class="video-title">How Direct USDC Transfers Work — No Exchange Required</p>
+      <p class="video-sub">14,802 views · 3 days ago · Creator Channel</p>
+    </div>
+
+    <div class="article-body">
+      <p>This transfer required no exchange, no conversion, and no custodial account. The sender held USDC on Polygon, the recipient published a verified Coin Card, and the transfer settled directly between wallets in a single transaction.</p>
+      <p>The on-chain record is permanent and independently verifiable. No fee was collected by any exchange. The only cost was the 1% ImplicitEx protocol fee and a negligible Polygon gas amount — typically under one cent.</p>
+    </div>
+
+    <hr class="eval-divider">
+
+
+    <!-- ============================================================
+         CONTEXT C — Wide card, after content completes its thought
+         Expected winner: host content finishes first, card discovered second
+         Sequence: video → title → description → Coin Card
+         ============================================================ -->
+    <div class="context-label">
+      <span class="context-label-name">Context C — Wide, below title + description</span>
+      <span class="context-label-dim">Expected winner</span>
+    </div>
+
+    <!-- Video placeholder -->
+    <div class="yt-embed">
+      <div class="yt-play">
+        <svg viewBox="0 0 10 12"><polygon points="1,1 9,6 1,11"/></svg>
+      </div>
+      <span class="yt-caption">640 × 360 — simulated embed</span>
+    </div>
+
+    <!-- Title + description complete their thought first -->
+    <div class="video-meta">
+      <p class="video-title">How Direct USDC Transfers Work — No Exchange Required</p>
+      <p class="video-sub">14,802 views · 3 days ago · Creator Channel</p>
+    </div>
+
+    <div class="article-body" style="margin-bottom: 1.25rem;">
+      <p>This transfer required no exchange, no conversion, and no custodial account. The sender held USDC on Polygon, the recipient published a verified Coin Card, and the transfer settled directly between wallets in a single transaction.</p>
+      <p>The on-chain record is permanent and independently verifiable. No fee was collected by any exchange. The only cost was the 1% ImplicitEx protocol fee and a negligible Polygon gas amount — typically under one cent.</p>
+    </div>
+
+    <!-- Card appears after content has finished -->
+    <div class="card-below-video">
+      <div class="cc-widget cc-widget--wide" role="region" aria-label="Coin Card">
+        <div class="cc-blocks" data-blocks="wide-c" aria-hidden="true"></div>
+        <div class="cc-body">
+          <p class="cc-primary" data-copy>USDC ACCEPTED HERE</p>
+          <p class="cc-affordance" aria-hidden="true">USDC transfers &rarr;</p>
+        </div>
+        <div class="cc-footer">
+          <span class="cc-mark">&#162;OIN CARD</span>
+          <span class="cc-attr">Powered by ImplicitEx</span>
+        </div>
+      </div>
+      <p class="card-below-hint">Hover the card</p>
+    </div>
+
+  </div><!-- /page -->
+
+  <script>
+    // ---- Block field — shared animation logic ----
+    // Spec: 24 blocks, 3–8s randomized, 1–3 simultaneous, 1.5–2.0s transition
+
+    function initBlocks(container, cols, rows) {
+      const total = cols * rows; // should be 24
+      const els = [];
+
+      for (let i = 0; i < total; i++) {
+        const b = document.createElement('div');
+        b.className = 'cc-block';
+        b.style.opacity = (0.07 + Math.random() * 0.58).toFixed(2);
+        container.appendChild(b);
+        els.push(b);
+      }
+
+      function pulse() {
+        const n = 1 + Math.floor(Math.random() * 3);
+        const chosen = new Set();
+        while (chosen.size < n) chosen.add(Math.floor(Math.random() * total));
+        chosen.forEach(i => {
+          const dur = (1.5 + Math.random() * 0.5).toFixed(2) + 's';
+          els[i].style.setProperty('--block-dur', dur);
+          els[i].style.opacity = (0.06 + Math.random() * 0.62).toFixed(2);
+        });
+        setTimeout(pulse, 3000 + Math.random() * 5000);
+      }
+
+      setTimeout(pulse, 600 + Math.random() * 2000);
+    }
+
+    // Init all block fields — staggered so they're never synchronized
+    initBlocks(document.querySelector('[data-blocks="compact"]'), 4, 6);
+    setTimeout(() => {
+      initBlocks(document.querySelector('[data-blocks="wide"]'), 6, 4);
+    }, 1100);
+    setTimeout(() => {
+      initBlocks(document.querySelector('[data-blocks="wide-c"]'), 6, 4);
+    }, 2300);
+
+    // ---- Copy rotation — shared ----
+    // Both cards rotate independently, staggered
+    const STATES = ['USDC ACCEPTED HERE', 'VERIFIED RECIPIENT'];
+
+    function initRotation(el, offset) {
+      let idx = 0;
+      setTimeout(function rotate() {
+        el.style.opacity = '0';
+        setTimeout(() => {
+          idx = (idx + 1) % STATES.length;
+          el.textContent = STATES[idx];
+          el.style.opacity = '';
+        }, 500);
+        setTimeout(rotate, 9000);
+      }, offset);
+    }
+
+    const copyEls = document.querySelectorAll('[data-copy]');
+    initRotation(copyEls[0], 9000);           // compact — first rotation at 9s
+    initRotation(copyEls[1], 9000 + 3700);    // wide B — staggered
+    initRotation(copyEls[2], 9000 + 6100);    // wide C — further staggered
+  </script>
+
+</body>
+</html>

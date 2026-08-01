@@ -1,0 +1,57 @@
+
+=== Production Portal Acceptance — Geometry Report (desktop light, 1365px) ===
+  URL: https://portal.implicitex.com
+
+CONTAINMENT
+  #modules.contains(transferMod)     : true
+  #modules.contains(networkMod)      : true
+  #modules.contains(verificationMod) : true
+  #modules.contains(telemetry)       : true
+  #modules.contains(statusSurface)   : true
+
+GRID
+  gridTemplateColumns  : 637.5px 637.5px
+  column count         : 2
+  transfer ≠ network x : true
+
+SHELL BOUNDS (px)
+  .transfer-portal     : top=53.1 left=42.5 right=1322.5 bottom=2413.2
+
+MODULE RECTS (px)
+  transferMod          : top=119.1 bottom=1455.6 left=44.5 right=682.0
+  networkMod           : top=1456.6 bottom=1897.1 left=683.0 right=1320.5
+  verificationMod      : top=1898.1 bottom=2342.2 left=683.0 right=1320.5
+
+INSTALL STRIP
+  strip top            : 2472.1
+  portal shell bottom  : 2413.2
+  strip below portal   : true
+
+VISUAL INVARIANTS
+  brackets el present  : true
+  footer group count   : 4
+  footer groups visible: true
+  header title text    : "Transfer Portal"
+  header title display : block
+
+MODULE WITHIN SHELL
+  transferMod          : true
+  networkMod           : true
+  verificationMod      : true
+
+=== END REPORT ===
+
+=== DEPLOYMENT RECORD ===
+
+  Firebase site     : implicitex-portal
+  Deploy target     : hosting:portal --project production
+  Git commits       : 0e087ef (containment fix + palette)
+                      8075160 (regression test)
+  Deploy time       : 2026-07-20 ~18:27 MDT
+  Production ETag   : b866384b8840cb4c1f25055fd14910f8c6038808991f1573b5cd6e0d2b9f1eb0
+  Last-Modified     : Tue, 21 Jul 2026 00:28:31 GMT
+  Production URL    : https://portal.implicitex.com
+  Acceptance run    : PASS — 20/20 assertions, 4 viewports × 2 themes
+  Evidence path     : docs/evidence/portal-containment-2026-07-20/
+
+=== END DEPLOYMENT RECORD ===
