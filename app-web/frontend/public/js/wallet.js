@@ -845,8 +845,8 @@
       'right:0',
       'max-height:55vh',
       'overflow-y:auto',
-      'background:#1a0000',
-      'border-top:3px solid #f33',
+      'background:#060B0D',
+      'border-top:3px solid #B83F3A',
       'z-index:2147483647',
       'padding:0.75rem 1rem 1rem',
       'box-sizing:border-box',
@@ -856,12 +856,12 @@
     header.style.cssText = 'display:flex;gap:0.5rem;margin-bottom:0.5rem;align-items:center;flex-wrap:wrap;';
 
     var label = document.createElement('span');
-    label.style.cssText = 'color:#f77;font-size:11px;font-weight:bold;flex:1 1 auto;';
+    label.style.cssText = 'color:#FFFFFF;font-size:11px;font-weight:bold;flex:1 1 auto;';
     label.textContent = 'QA WALLET DIAGNOSTIC (persisted)';
 
     var copyBtn = document.createElement('button');
     copyBtn.textContent = 'Copy';
-    copyBtn.style.cssText = 'font-size:10px;padding:2px 8px;background:#333;color:#f77;border:1px solid #f33;border-radius:3px;cursor:pointer;flex-shrink:0;';
+    copyBtn.style.cssText = 'font-size:10px;padding:2px 8px;background:#23363D;color:#FFFFFF;border:1px solid #B83F3A;border-radius:3px;cursor:pointer;flex-shrink:0;';
     copyBtn.addEventListener('click', function () {
       try {
         navigator.clipboard.writeText(raw).then(function () {
@@ -873,7 +873,7 @@
 
     var clearBtn = document.createElement('button');
     clearBtn.textContent = 'Clear';
-    clearBtn.style.cssText = 'font-size:10px;padding:2px 8px;background:#333;color:#aaa;border:1px solid #555;border-radius:3px;cursor:pointer;flex-shrink:0;';
+    clearBtn.style.cssText = 'font-size:10px;padding:2px 8px;background:#23363D;color:#A6B7BB;border:1px solid #33474D;border-radius:3px;cursor:pointer;flex-shrink:0;';
     clearBtn.addEventListener('click', function () {
       try { localStorage.removeItem(IX_QA_LS_KEY); } catch (_) {}
       overlay.remove();
@@ -884,7 +884,7 @@
     header.appendChild(clearBtn);
 
     var pre = document.createElement('pre');
-    pre.style.cssText = 'white-space:pre-wrap;word-break:break-all;font-size:10px;line-height:1.4;color:#f77;margin:0;';
+    pre.style.cssText = 'white-space:pre-wrap;word-break:break-all;font-size:10px;line-height:1.4;color:#FFFFFF;margin:0;';
     pre.textContent = raw;
 
     overlay.appendChild(header);

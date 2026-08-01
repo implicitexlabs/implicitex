@@ -11,7 +11,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="ImplicitEx">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="theme-color" content="#080808">
+  <meta name="theme-color" content="#060B0D">
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -455,7 +455,7 @@
       position: fixed;
       inset: 0;
       z-index: 9000;
-      background: #080808;
+      background: #060B0D;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -490,7 +490,7 @@
     .ix-launch-mark {
       width: 25px;
       height: 25px;
-      color: #f4f6f5;
+      color: #FFFFFF;
       animation:
         ix-mark-emerge  600ms cubic-bezier(0.22, 1, 0.36, 1) both,
         ix-mark-breathe 1600ms ease-in-out 700ms infinite;
@@ -527,17 +527,17 @@
     /* Approved modern interface direction: clean structure, confident dark
        surfaces, soft-tech controls, and restrained teal system signaling. */
     body[data-portal-shell="direct"] {
-      --ix-page: #eef1f1;
+      --ix-page: #F3F6F6;
       --ix-shell: #ffffff;
-      --ix-surface: #ffffff;
-      --ix-surface-raised: #f7f9f9;
-      --ix-surface-muted: #e7ebeb;
-      --ix-text: #202629;
-      --ix-text-secondary: #5d686c;
-      --ix-text-muted: #899397;
-      --ix-border: #d3d9da;
-      --ix-border-strong: #b8c1c3;
-      --ix-graphite: #202629;
+      --ix-surface: #D9E1E2;
+      --ix-surface-raised: #C8D3D5;
+      --ix-surface-muted: #E7ECEC;
+      --ix-text: #000000;
+      --ix-text-secondary: #5F767D;
+      --ix-text-muted: #5F767D;
+      --ix-border: #B8C5C7;
+      --ix-border-strong: #8FA1A6;
+      --ix-graphite: #3A4C51;
       /* Portal accent aliases: consume canonical Tourmaline tokens from main.css.
          --ix-teal and --ix-teal-strong are kept as aliases so portal selectors
          below need no changes. Both map to --accent; the teal/teal-strong
@@ -562,17 +562,17 @@
     }
 
     [data-theme="dark"] body[data-portal-shell="direct"] {
-      --ix-page: #202323;
-      --ix-shell: #262a29;
-      --ix-surface: #292d2c;
-      --ix-surface-raised: #333837;
-      --ix-surface-muted: #232626;
-      --ix-text: #f4f6f5;
-      --ix-text-secondary: #c6cdcb;
-      --ix-text-muted: #929a98;
-      --ix-border: #444b4a;
-      --ix-border-strong: #687270;
-      --ix-graphite: #202629;
+      --ix-page: #121C20;
+      --ix-shell: #17242A;
+      --ix-surface: #1B2A30;
+      --ix-surface-raised: #23363D;
+      --ix-surface-muted: #17242A;
+      --ix-text: #FFFFFF;
+      --ix-text-secondary: #A6B7BB;
+      --ix-text-muted: #A6B7BB;
+      --ix-border: #33474D;
+      --ix-border-strong: #4F6B73;
+      --ix-graphite: #121C20;
       /* Focus halo — dark-mode variant; derived from Tourmaline dark #6F8B95. */
       --control-focus:  rgba(111, 139, 149, 0.38);
       /* --ix-teal and --ix-teal-strong inherit the var(--accent) alias from the
@@ -927,7 +927,7 @@
       #portalWalletRail.is-connected .rail-connected { display: flex; }
       /* Wrong-network amber state */
       #portalWalletRail.is-wrong-network .rail-connected {
-        border-color: var(--ix-amber, #b8860b);
+        border-color: var(--ix-amber, #F0B44D);
         color: var(--ix-text);
       }
       /* Account menu below the rail, full-width */
@@ -955,7 +955,7 @@
       font-weight: var(--weight-semibold);
       letter-spacing: 0.07em;
       text-transform: uppercase;
-      color: var(--ix-amber, #b8860b);
+      color: var(--ix-amber, #F0B44D);
       flex-shrink: 0;
     }
     #portalWalletRail.is-wrong-network .rail-network-badge { display: flex; }
@@ -967,7 +967,7 @@
       gap: 8px;
       padding: 10px 16px 14px;
       border-bottom: 1px solid var(--ix-border);
-      background: color-mix(in srgb, #b8860b 8%, transparent);
+      background: color-mix(in srgb, #F0B44D 8%, transparent);
     }
     @media (max-width: 600px) {
       body[data-portal-shell="direct"] #portalNetworkNotice:not([hidden]) {
@@ -983,10 +983,10 @@
     .network-notice-btn {
       align-self: flex-start;
       padding: 6px 14px;
-      border: 1px solid var(--ix-amber, #b8860b);
+      border: 1px solid var(--ix-amber, #F0B44D);
       border-radius: var(--ix-radius-sm);
       background: transparent;
-      color: var(--ix-amber, #b8860b);
+      color: var(--ix-amber, #F0B44D);
       font-family: var(--font-ui);
       font-size: var(--text-11);
       font-weight: var(--weight-semibold);
@@ -1203,13 +1203,13 @@
   <div id="fatalError" style="
     display:none;position:fixed;inset:0;z-index:9999;
     align-items:center;justify-content:center;
-    background:var(--bg,#0a0a0a);color:var(--white,#f5f5f5);
+    background:var(--bg,#060B0D);color:var(--white,#FFFFFF);
     font-family:monospace;font-size:13px;padding:2rem;text-align:center;
   ">
     <div>
-      <p style="margin:0 0 0.5rem;font-size:11px;letter-spacing:0.1em;color:#888;">INITIALIZATION ERROR</p>
+      <p style="margin:0 0 0.5rem;font-size:11px;letter-spacing:0.1em;color:#A6B7BB;">INITIALIZATION ERROR</p>
       <p id="fatalErrorMessage" style="margin:0;max-width:480px;line-height:1.6;"></p>
-      <p style="margin:1rem 0 0;font-size:11px;color:#666;">Open DevTools console for the full stack trace.</p>
+      <p style="margin:1rem 0 0;font-size:11px;color:#A6B7BB;">Open DevTools console for the full stack trace.</p>
     </div>
   </div>
 

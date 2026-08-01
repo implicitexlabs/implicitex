@@ -1325,7 +1325,7 @@
     QRCode.toCanvas(canvas, url, {
       width: 200,
       margin: 2,
-      color: { dark: '#0c0c0a', light: '#ffffff' }
+      color: { dark: '#000000', light: '#ffffff' }
     }, function (err) {
       if (err) console.warn('[IX] QR generation error', err);
     });
