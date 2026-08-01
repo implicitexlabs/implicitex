@@ -86,7 +86,9 @@ async function verifyCard(browser, baseUrl, card) {
     waitUntil: 'domcontentloaded',
     timeout: 30000,
   });
-  await page.waitForSelector('#ccFrame[data-state="VERIFIED"]', { timeout: 15000 });
+  // card.js transitions to CONFIGURE after verification passes (HEAD state machine);
+  // promotedPresentationReady requires the async lifecycle pipeline to complete.
+  await page.waitForSelector('#ccFrame[data-state="CONFIGURE"]', { timeout: 15000 });
   await page.waitForFunction(() => (
     window.IX_COIN_CARD_RUNTIME_PREREQUISITES
     && window.IX_COIN_CARD_RUNTIME_PREREQUISITES.getStateSnapshot().promotedPresentationReady
@@ -106,8 +108,8 @@ async function verifyCard(browser, baseUrl, card) {
   assert.equal(observed.cardId, card.cardId);
   assert.equal(observed.cardName, card.displayName, card.cardId);
   assert.equal(observed.recipient, card.recipient, card.cardId);
-  assert.equal(observed.state, 'VERIFIED', card.cardId);
-  assert.equal(observed.statusLabel, 'Route Verified', card.cardId);
+  assert.equal(observed.state, 'CONFIGURE', card.cardId);
+  assert.equal(observed.statusLabel, 'Verified', card.cardId);
   assert.equal(observed.transferDisabled, true, `${card.cardId}: empty-amount transfer must stay disabled`);
   assert.equal(observed.lifecycleReady, true, card.cardId);
   assert.deepEqual(pageErrors, [], `${card.cardId}: browser page errors`);

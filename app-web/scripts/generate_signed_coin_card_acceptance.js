@@ -1091,7 +1091,7 @@ async function main() {
     }, testFailValidationStage);
     records.push(record);
   }
-  if (!DRY_RUN) fs.writeFileSync(BUNDLE_OUT, renderLifecycleBundle(records, now), 'utf8');
+  const lifecycleBundle = renderLifecycleBundle(records, now);
 
   if (testMutateSourceBeforePromote === 'trusted-keys-output') {
     fs.appendFileSync(trustedKeysOut, '\n/* simulated concurrent mutation */\n');

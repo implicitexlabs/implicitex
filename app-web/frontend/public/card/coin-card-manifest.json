@@ -61,14 +61,19 @@
       "sha256": "sha256:ac20bace012ddf724eda6d53c775a44efd4bb865d845fdf1351b9146e24b96b7"
     },
     {
-      "bytes": 30579,
+      "bytes": 31234,
       "path": "card/coin-card-verification.js",
-      "sha256": "sha256:fd3320bfa7fd9b08e22332fb07e07079b3d097500064121a59bfa4eb35b6ccad"
+      "sha256": "sha256:ef9b25c0c19102fc29b776d2739a03065d8320c3f76ff3e25c6e10b075ce4868"
     },
     {
-      "bytes": 52007,
+      "bytes": 9662,
+      "path": "card/index.html",
+      "sha256": "sha256:d61ea52da8036683a9307875870832a83ad277996b3b59e8cf6132b1c4cf0f0d"
+    },
+    {
+      "bytes": 52317,
       "path": "js/ix-execution.js",
-      "sha256": "sha256:07ec93462a848dc88ddf37811e9fd088ed3640e15284aa1ec4a6aabc0785c17e"
+      "sha256": "sha256:d210d92b3c885fa5d120d9e43b129226575c4e848d432fc947a068f5ce685e27"
     },
     {
       "bytes": 24303,
@@ -76,7 +81,7 @@
       "sha256": "sha256:d59af15f40bc321f78871fe9d892d1dbbf05e35e20ad22aa51203c68185b58b6"
     }
   ],
-  "buildVersion": "coin-card-visible-review-runtime-v3-20260719",
+  "buildVersion": "e167331",
   "coinCardVersion": "coin-card.v1",
   "environment": "production",
   "issuerId": "implicitex",
@@ -84,18 +89,18 @@
   "layoutVersion": "coin-card-layout.v1",
   "schemaVersion": "coin-card-manifest.v1",
   "scope": "coin-card-runtime-package",
-  "signedAt": "2026-07-19T08:22:48.679Z",
+  "signedAt": "2026-08-01T18:41:19.552Z",
   "signature": {
     "mode": "signed-p256-v1",
     "algorithm": "ECDSA_P256_SHA256",
     "keyId": "ix-coin-card-manifest-v2",
     "issuerId": "implicitex",
     "environment": "production",
-    "signedAt": "2026-07-19T08:22:48.679Z",
+    "signedAt": "2026-08-01T18:41:19.552Z",
     "signatureEncoding": "ieee-p1363",
     "signatureLengthBytes": 64,
     "signatureValueEncoding": "base64url-unpadded",
-    "value": "W9w8YWLoh-Ghveho7eh9kd3nyxJMkbklvHXwLJ3Yk8krQhzObT1IA3984Y80sIfQsjWT8prcH6XvgTiCEj5sgw"
+    "value": "k-AL5EOtFqtSzEiUb1GdoEpaLdUYZQimkU0tml1ou3WPtOZwbEoQ42QT838Yk_wVGHLkJ8R10gW98qJJ7eDQEQ"
   },
-  "manifestHash": "sha256:d62fab4d1d6ac07c4ba04f0b2e3eca21665a2fd797e517350e7a75fa4c20ea79"
+  "manifestHash": "sha256:37c2fe0456434d728dcb9580d27a8c96aba6b7ef1304f57947c48e2da93c5c52"
 }

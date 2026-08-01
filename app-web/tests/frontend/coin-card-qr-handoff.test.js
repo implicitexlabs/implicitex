@@ -424,19 +424,25 @@ test('loadQrLibrary call site attaches .catch() to suppress unhandled rejection'
   );
 });
 
-test('loadQrLibrary is called after transition(VERIFIED) — not before', () => {
-  /* The QR library must be loaded only after the UI has transitioned to VERIFIED.
-   * Loading before VERIFIED would mean the library executes during a state where
-   * the card surface has not yet confirmed asset integrity. */
-  const verifiedPos = cardJsSource.indexOf("transition('VERIFIED')");
-  const loadQrPos   = cardJsSource.indexOf(
-    "loadQrLibrary(state.qrLibraryAttestation).catch(function () {})",
-    verifiedPos,
+test('loadQrLibrary is called after canExecuteTransfer guard — not before', () => {
+  /* The QR library must be loaded only after the UI has confirmed asset integrity.
+   * card.js gates execution on canExecuteTransfer() (which requires VERIFIED state
+   * from the verifier) and transitions to CONFIGURE before loading the QR library.
+   * Loading before this guard would mean the library executes without integrity proof. */
+  const guardPos = cardJsSource.indexOf('canExecuteTransfer(state.integrityManifestVerificationState)');
+  const configurePos = cardJsSource.indexOf(
+    "transition('CONFIGURE')",
+    guardPos,
   );
-  assert.ok(verifiedPos !== -1, "transition('VERIFIED') must appear in card.js");
+  const loadQrPos = cardJsSource.indexOf(
+    "loadQrLibrary(state.qrLibraryAttestation).catch(function () {})",
+    guardPos,
+  );
+  assert.ok(guardPos !== -1, 'canExecuteTransfer guard must appear in card.js');
+  assert.ok(configurePos > guardPos, "transition('CONFIGURE') must appear after the canExecuteTransfer guard");
   assert.ok(
-    loadQrPos > verifiedPos,
-    'loadQrLibrary() call must appear after transition(VERIFIED) in card.js source order'
+    loadQrPos > configurePos,
+    'loadQrLibrary() call must appear after transition(CONFIGURE) in card.js source order'
   );
 });
 

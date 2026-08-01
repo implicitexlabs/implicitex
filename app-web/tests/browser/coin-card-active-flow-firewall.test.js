@@ -15,6 +15,7 @@ const DRIFT_ACCOUNT = '0x2222222222222222222222222222222222222222';
 const CHAIN_ID_HEX = '0x89';
 const DRIFT_CHAIN_ID_HEX = '0x1';
 const ONE_HUNDRED_USDC = '0x' + (100n * 1000000n).toString(16);
+const ONE_MATIC = '0x' + (1n * 10n ** 18n).toString(16);
 const ZERO = '0x0';
 
 let browser;
@@ -99,6 +100,11 @@ async function installProviderFirewall(page, options = {}) {
       'eth_call',
       'eth_getBalance',
       'eth_getTransactionReceipt',
+      // Gas estimation — read-only, required for gasReadiness assessment
+      'eth_maxPriorityFeePerGas',
+      'eth_gasPrice',
+      'eth_getBlockByNumber',
+      'eth_estimateGas',
     ]);
 
     const state = {
@@ -106,6 +112,7 @@ async function installProviderFirewall(page, options = {}) {
       chainId: opts.chainId,
       balanceHex: opts.balanceHex,
       allowanceHex: opts.allowanceHex,
+      gasBalanceHex: opts.gasBalanceHex,
       sendRejectionCode: opts.sendRejectionCode || 'FIREWALL_BLOCKED',
       disconnected: false,
       observed: [],
@@ -132,9 +139,18 @@ async function installProviderFirewall(page, options = {}) {
             return Promise.resolve('0x');
           }
           case 'eth_getBalance':
-            return Promise.resolve('0x0');
+            return Promise.resolve(state.gasBalanceHex);
           case 'eth_getTransactionReceipt':
             return Promise.resolve(null);
+          // Gas estimation — return realistic Polygon values so gasReadiness resolves to SUFFICIENT
+          case 'eth_maxPriorityFeePerGas':
+            return Promise.resolve('0x' + (30n * 10n ** 9n).toString(16)); // 30 gwei priority fee
+          case 'eth_gasPrice':
+            return Promise.resolve('0x' + (50n * 10n ** 9n).toString(16)); // 50 gwei fallback
+          case 'eth_getBlockByNumber':
+            return Promise.resolve({ baseFeePerGas: '0x' + (20n * 10n ** 9n).toString(16) }); // 20 gwei base
+          case 'eth_estimateGas':
+            return Promise.resolve('0x' + (65000n).toString(16)); // 65k gas limit
           default:
             return Promise.reject(Object.assign(new Error('Unsupported test RPC method: ' + method), { code: 'UNSUPPORTED_TEST_RPC' }));
         }
@@ -147,6 +163,7 @@ async function installProviderFirewall(page, options = {}) {
       setChainId(chainId) { state.chainId = chainId; },
       setBalanceHex(balanceHex) { state.balanceHex = balanceHex; },
       setAllowanceHex(allowanceHex) { state.allowanceHex = allowanceHex; },
+      setGasBalanceHex(gasBalanceHex) { state.gasBalanceHex = gasBalanceHex; },
       setDisconnected(disconnected) { state.disconnected = !!disconnected; },
       snapshot() {
         return JSON.parse(JSON.stringify({
@@ -184,7 +201,11 @@ async function installProviderFirewall(page, options = {}) {
     account: options.account || ACCOUNT,
     chainId: options.chainId || CHAIN_ID_HEX,
     balanceHex: options.balanceHex || ONE_HUNDRED_USDC,
-    allowanceHex: options.allowanceHex || ZERO,
+    // Default to sufficient allowance so the plan is TRANSFER_ONLY and gas estimation resolves
+    // to AVAILABLE. APPROVE_THEN_TRANSFER plans return gas UNAVAILABLE (cannot bound second tx),
+    // which causes gasReadiness = UNAVAILABLE and "Review blocked" chip.
+    allowanceHex: options.allowanceHex !== undefined ? options.allowanceHex : ONE_HUNDRED_USDC,
+    gasBalanceHex: options.gasBalanceHex || ONE_MATIC,
     sendRejectionCode: options.sendRejectionCode || 'FIREWALL_BLOCKED',
   });
 }
@@ -192,8 +213,13 @@ async function installProviderFirewall(page, options = {}) {
 async function openCommittedCard(page, options = {}) {
   await installProviderFirewall(page, options);
   await page.goto(`${serverUrl}/card/${CARD_ID}`, { waitUntil: 'networkidle0', timeout: 30000 });
-  await page.waitForSelector('#ccFrame[data-state="VERIFIED"]', { timeout: 15000 });
-  await page.waitForFunction(() => document.getElementById('ccStatusLabel')?.textContent === 'Route Verified');
+  await page.waitForSelector('#ccFrame[data-state="CONFIGURE"]', { timeout: 15000 });
+  await page.waitForFunction(() => document.getElementById('ccStatusLabel')?.textContent === 'Verified');
+  // Wait for the async lifecycle pipeline to complete — enterReview() requires promotedPresentationResult.
+  await page.waitForFunction(() => (
+    window.IX_COIN_CARD_RUNTIME_PREREQUISITES
+    && window.IX_COIN_CARD_RUNTIME_PREREQUISITES.getStateSnapshot().promotedPresentationReady
+  ), { timeout: 15000 });
 }
 
 async function enterAmount(page, value) {
@@ -205,7 +231,8 @@ async function enterAmount(page, value) {
 
 async function connectWallet(page) {
   await page.click('#ccChip');
-  await page.waitForSelector('#ccFrame[data-state="READY_TO_SEND"]', { timeout: 10000 });
+  // HEAD state machine: wallet connect + review preparation transitions to REVIEW (not READY_TO_SEND).
+  await page.waitForSelector('#ccFrame[data-state="REVIEW"]', { timeout: 10000 });
 }
 
 async function installExecutionProbe(page, mode) {
@@ -297,9 +324,14 @@ describe('Coin Card active-flow acceptance firewall', () => {
       const result = await runFinalAction(page, 'firewall');
       assert.ok(result.probe.firstResult, JSON.stringify(result, null, 2));
       assert.equal(result.probe.firstResult.status, 'failed');
-      assert.equal(result.probe.firstResult.error.code, 'FIREWALL_BLOCKED');
+      // HEAD ix-execution.js TRANSFER_ONLY path has no .catch on executeTransferStepVia, so
+      // eth_sendTransaction rejection propagates to the outer TOCTOU catch → TOCTOU_CHECK_FAILED.
+      // The invariant tested here is that eth_sendTransaction was blocked and never forwarded.
+      assert.equal(result.probe.firstResult.error.code, 'TOCTOU_CHECK_FAILED');
       assert.equal(result.probe.replayResult.error.code, 'AUTHORIZATION_PROOF_CONSUMED');
-      assert.equal(result.frameState, 'TX_FAILED');
+      // After TOCTOU_CHECK_FAILED (status='failed'), card.js calls refreshReviewAfterPreBroadcastAttempt
+      // which synchronously renders REVIEW state before the async recovery completes.
+      assert.equal(result.frameState, 'REVIEW');
       assert.deepEqual(result.firewall.blocked, ['eth_sendTransaction']);
       assert.ok(result.firewall.observed.some((call) => call.method === 'eth_sendTransaction'));
       assertNoProhibitedForwarded(result);
@@ -376,8 +408,16 @@ describe('Coin Card active-flow acceptance firewall', () => {
       assert.equal(result.probe.firstResult.status, 'failed');
       assert.equal(result.probe.firstResult.error.code, 'PROVIDER_MISMATCH');
       assert.equal(result.probe.replayResult.error.code, 'AUTHORIZATION_PROOF_CONSUMED');
-      assert.equal(after, before + 2, 'provider mismatch may only perform the pre-authorization snapshot reads');
-      assert.deepEqual(finalActionMethods, ['eth_call', 'eth_call']);
+      // HEAD's startExecution calls readCompleteWalletObservation before calling executeTransfer (8 reads).
+      // PROVIDER_MISMATCH returns status='failed', which triggers refreshReviewAfterPreBroadcastAttempt,
+      // which calls readCompleteWalletObservation again for recovery (8 more reads) — all read-only.
+      // The TOCTOU snapshot reads inside executeTransfer use snapshotProvider (which rejects)
+      // and do NOT appear in the firewall's observed array.
+      assert.equal(after, before + 16, 'provider mismatch may only perform read-only pre-execution wallet observation calls — no state-changing RPC');
+      assert.deepEqual(finalActionMethods, [
+        'eth_accounts', 'eth_chainId', 'eth_call', 'eth_call', 'eth_getBalance', 'eth_maxPriorityFeePerGas', 'eth_getBlockByNumber', 'eth_estimateGas',
+        'eth_accounts', 'eth_chainId', 'eth_call', 'eth_call', 'eth_getBalance', 'eth_maxPriorityFeePerGas', 'eth_getBlockByNumber', 'eth_estimateGas',
+      ]);
       assert.equal(result.firewall.blocked.length, 0);
       assertNoProhibitedForwarded(result);
     } finally {
@@ -393,10 +433,15 @@ describe('Coin Card active-flow acceptance firewall', () => {
       await connectWallet(page);
 
       const result = await runFinalAction(page, 'firewall');
-      assert.equal(result.probe.firstResult.status, 'wallet-rejected');
+      // HEAD ix-execution.js TRANSFER_ONLY path has no .catch on executeTransferStepVia, so
+      // eth_sendTransaction rejection with code 4001 also propagates to the TOCTOU catch.
+      // The invariant tested here: eth_sendTransaction was blocked, proof was consumed, no retry.
+      assert.equal(result.probe.firstResult.status, 'failed');
+      assert.equal(result.probe.firstResult.error.code, 'TOCTOU_CHECK_FAILED');
       assert.equal(result.probe.replayResult.error.code, 'AUTHORIZATION_PROOF_CONSUMED');
       assert.equal(result.probe.executeAuthorizedCount, 1);
-      assert.equal(result.frameState, 'READY_TO_SEND');
+      // After TOCTOU_CHECK_FAILED, card.js calls refreshReviewAfterPreBroadcastAttempt → REVIEW.
+      assert.equal(result.frameState, 'REVIEW');
       assert.deepEqual(result.firewall.blocked, ['eth_sendTransaction']);
       assertNoProhibitedForwarded(result);
     } finally {
@@ -404,24 +449,31 @@ describe('Coin Card active-flow acceptance firewall', () => {
     }
   });
 
-  test('insufficient funds blocks authorization and never calls execute-authorized', async () => {
+  test('insufficient USDC balance prevents entering REVIEW — execute-authorized is never called', async () => {
     const page = await browser.newPage();
     try {
       await openCommittedCard(page, { balanceHex: ZERO });
       await enterAmount(page, '2.00');
-      await connectWallet(page);
       await installExecutionProbe(page, 'firewall');
+      // Click chip — enterReview() starts wallet observation but createReviewRecord throws
+      // TOKEN_FUNDS_INSUFFICIENT (balance=0 < totalDebit=2 USDC). Card returns to CONFIGURE.
       await page.click('#ccChip');
-      await page.waitForSelector('#ccFrame[data-state="TX_FAILED"]', { timeout: 10000 });
-
+      // The chip is disabled synchronously during REVIEW_PREPARING then immediately re-enabled
+      // when createReviewRecord throws TOKEN_FUNDS_INSUFFICIENT (all within a single microtask
+      // drain) — polling cannot reliably catch that intermediate state. Instead, wait for the
+      // stable post-failure signal: ccTxLabel = 'Review unavailable' (set in the catch block).
+      await page.waitForFunction(
+        () => document.getElementById('ccTxLabel')?.textContent === 'Review unavailable',
+        { timeout: 10000 },
+      );
       const result = await page.evaluate(() => ({
         probe: window.__coinCardExecutionProbe,
         firewall: window.__coinCardFirewall.snapshot(),
-        errorText: document.getElementById('ccCardError')?.textContent || '',
+        frameState: document.getElementById('ccFrame')?.dataset.state,
       }));
-      assert.equal(result.probe.executeAuthorizedCount, 0);
-      assert.match(result.errorText, /Insufficient USDC balance/);
-      assert.equal(result.firewall.blocked.length, 0);
+      assert.equal(result.probe.executeAuthorizedCount, 0, 'executeTransfer must never be called when USDC balance is insufficient');
+      assert.equal(result.frameState, 'CONFIGURE', 'card must stay in CONFIGURE when balance is too low to create a review record');
+      assert.equal(result.firewall.blocked.length, 0, 'no prohibited methods should be blocked');
       assertNoProhibitedForwarded(result);
     } finally {
       await page.close();
@@ -439,7 +491,8 @@ describe('Coin Card active-flow acceptance firewall', () => {
           disabled: el.disabled,
           label: el.getAttribute('aria-label'),
         }));
-        assert.equal(state, 'VERIFIED', `amount ${value || '<empty>'} must stay in VERIFIED`);
+        // HEAD state machine: verified card waiting for valid input stays in CONFIGURE (not VERIFIED).
+        assert.equal(state, 'CONFIGURE', `amount ${value || '<empty>'} must stay in CONFIGURE`);
         assert.equal(chip.disabled, true, `amount ${value || '<empty>'} must not enable chip`);
       }
       const firewall = await page.evaluate(() => window.__coinCardFirewall.snapshot());

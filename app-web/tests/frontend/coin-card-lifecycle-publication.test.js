@@ -1245,3 +1245,4 @@ test('real production bundle authenticates and promotes every active registry ca
     assert.equal(promoted.presentationEligible, true, cardId);
     assert.equal(presentationApi.isPromotedPresentationResult(promoted), true, cardId);
   }
+});
