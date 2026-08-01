@@ -3,6 +3,7 @@
 **Status:** Governing — implementation defers to this document  
 **Pilot scope:** Controlled pilot; renewal mechanics are manual  
 **Supersedes:** Informal entitlement notes in memory index  
+**Amended:** 2026-08-01 — suspension period (§6) and provisioning SLA (§4) ratified  
 
 ---
 
@@ -108,9 +109,12 @@ provisioning succeeds. The customer is not charged for provisioning delay.
 - Signed lifecycle bundle generation and publication
 - Card page availability at the public URL
 
-**Provisioning failure:** If provisioning cannot be completed within a
-reasonable period (exact SLA to be defined before pilot launch), the customer
-is entitled to a full refund regardless of the 30-day refund window.
+**Provisioning SLA:** The first valid signed card package must be published
+within **24 hours** of confirmed payment. If provisioning is not completed
+within 24 hours, ImplicitEx must either obtain the customer's explicit
+agreement to an extension or initiate a full refund. The customer is not
+required to request the refund — ImplicitEx knows whether provisioning
+succeeded and bears the obligation to act.
 
 ---
 
@@ -173,11 +177,24 @@ independent security review.
 
 Suspension is operator-initiated and temporary. Grounds include security
 investigation, suspected acceptable-use violation under review, or platform
-integrity concern. A suspended card is non-executable. The customer is
-notified of the suspension and its stated reason. Suspension must be resolved
-within a defined review period (to be specified before pilot launch); if the
-review concludes without grounds for revocation, the card is restored to
-`ACTIVE`.
+integrity concern. A suspended card is non-executable and publicly identifiable
+as `SUSPENDED`. The customer is notified of the suspension and its stated
+reason at the time of suspension.
+
+**Seven-day review rule:** A suspension must be resolved within **seven
+calendar days** of initiation. Resolution means one of:
+
+- **Restoration** — review concluded without grounds for action; card returns
+  to `ACTIVE`.
+- **Revocation** — review confirmed a violation; card transitions to `REVOKED`.
+- **Expiration** — term ended during the suspension period.
+- **Documented extension** — review requires additional time; an extension
+  must record the reason in the lifecycle record and deliver notice to the
+  customer. A single extension may not exceed seven additional calendar days.
+
+Suspension may not continue indefinitely. A suspension that passes fourteen
+calendar days without a recorded resolution or extension is a process failure
+and must be escalated and resolved immediately.
 
 ### Revocation
 
