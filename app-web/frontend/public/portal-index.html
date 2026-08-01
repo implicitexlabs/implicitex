@@ -11,7 +11,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="ImplicitEx">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="theme-color" content="#060B0D">
+  <meta name="theme-color" content="#0D0D0D">
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -455,7 +455,7 @@
       position: fixed;
       inset: 0;
       z-index: 9000;
-      background: #060B0D;
+      background: #0D0D0D;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -527,17 +527,17 @@
     /* Approved modern interface direction: clean structure, confident dark
        surfaces, soft-tech controls, and restrained teal system signaling. */
     body[data-portal-shell="direct"] {
-      --ix-page: #F3F6F6;
-      --ix-shell: #ffffff;
-      --ix-surface: #D9E1E2;
-      --ix-surface-raised: #C8D3D5;
-      --ix-surface-muted: #E7ECEC;
-      --ix-text: #000000;
-      --ix-text-secondary: #5F767D;
-      --ix-text-muted: #5F767D;
-      --ix-border: #B8C5C7;
-      --ix-border-strong: #8FA1A6;
-      --ix-graphite: #3A4C51;
+      --ix-page: #F2F2F2;
+      --ix-shell: #FFFFFF;
+      --ix-surface: #DBDBDB;
+      --ix-surface-raised: #C4C4C4;
+      --ix-surface-muted: #F2F2F2;
+      --ix-text: #0D0D0D;
+      --ix-text-secondary: #696969;
+      --ix-text-muted: #696969;
+      --ix-border: #C4C4C4;
+      --ix-border-strong: #ADADAD;
+      --ix-graphite: #525252;
       /* Portal accent aliases: consume canonical Tourmaline tokens from main.css.
          --ix-teal and --ix-teal-strong are kept as aliases so portal selectors
          below need no changes. Both map to --accent; the teal/teal-strong
@@ -545,7 +545,7 @@
       --ix-teal:        var(--accent);
       --ix-teal-strong: var(--accent);
       /* Focus halo — translucent overlay; derived from Tourmaline light #35454A. */
-      --control-focus:  rgba(53, 69, 74, 0.32);
+      --control-focus:  rgba(82, 82, 82, 0.32);
       --ix-radius-sm: 6px;
       --ix-radius-md: 8px;
       --ix-radius-lg: 12px;
@@ -562,19 +562,18 @@
     }
 
     [data-theme="dark"] body[data-portal-shell="direct"] {
-      --ix-page: #121C20;
-      --ix-shell: #17242A;
-      --ix-surface: #1B2A30;
-      --ix-surface-raised: #23363D;
-      --ix-surface-muted: #17242A;
+      --ix-page: #0D0D0D;
+      --ix-shell: #242424;
+      --ix-surface: #242424;
+      --ix-surface-raised: #3B3B3B;
+      --ix-surface-muted: #242424;
       --ix-text: #FFFFFF;
-      --ix-text-secondary: #A6B7BB;
-      --ix-text-muted: #A6B7BB;
-      --ix-border: #33474D;
-      --ix-border-strong: #4F6B73;
-      --ix-graphite: #121C20;
-      /* Focus halo — dark-mode variant; derived from Tourmaline dark #6F8B95. */
-      --control-focus:  rgba(111, 139, 149, 0.38);
+      --ix-text-secondary: #ADADAD;
+      --ix-text-muted: #ADADAD;
+      --ix-border: #525252;
+      --ix-border-strong: #696969;
+      --ix-graphite: #0D0D0D;
+      --control-focus:  rgba(105, 105, 105, 0.38);
       /* --ix-teal and --ix-teal-strong inherit the var(--accent) alias from the
          light-mode block above; --accent resolves to #6F8B95 in dark mode via
          main.css :root, so no override is needed here. */
@@ -1203,13 +1202,13 @@
   <div id="fatalError" style="
     display:none;position:fixed;inset:0;z-index:9999;
     align-items:center;justify-content:center;
-    background:var(--bg,#060B0D);color:var(--white,#FFFFFF);
+    background:var(--bg,#0D0D0D);color:var(--white,#FFFFFF);
     font-family:monospace;font-size:13px;padding:2rem;text-align:center;
   ">
     <div>
-      <p style="margin:0 0 0.5rem;font-size:11px;letter-spacing:0.1em;color:#A6B7BB;">INITIALIZATION ERROR</p>
+      <p style="margin:0 0 0.5rem;font-size:11px;letter-spacing:0.1em;color:#ADADAD;">INITIALIZATION ERROR</p>
       <p id="fatalErrorMessage" style="margin:0;max-width:480px;line-height:1.6;"></p>
-      <p style="margin:1rem 0 0;font-size:11px;color:#A6B7BB;">Open DevTools console for the full stack trace.</p>
+      <p style="margin:1rem 0 0;font-size:11px;color:#ADADAD;">Open DevTools console for the full stack trace.</p>
     </div>
   </div>
 

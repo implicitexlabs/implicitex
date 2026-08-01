@@ -845,7 +845,7 @@
       'right:0',
       'max-height:55vh',
       'overflow-y:auto',
-      'background:#060B0D',
+      'background:#0D0D0D',
       'border-top:3px solid #B83F3A',
       'z-index:2147483647',
       'padding:0.75rem 1rem 1rem',
@@ -861,7 +861,7 @@
 
     var copyBtn = document.createElement('button');
     copyBtn.textContent = 'Copy';
-    copyBtn.style.cssText = 'font-size:10px;padding:2px 8px;background:#23363D;color:#FFFFFF;border:1px solid #B83F3A;border-radius:3px;cursor:pointer;flex-shrink:0;';
+    copyBtn.style.cssText = 'font-size:10px;padding:2px 8px;background:#3B3B3B;color:#FFFFFF;border:1px solid #B83F3A;border-radius:3px;cursor:pointer;flex-shrink:0;';
     copyBtn.addEventListener('click', function () {
       try {
         navigator.clipboard.writeText(raw).then(function () {
@@ -873,7 +873,7 @@
 
     var clearBtn = document.createElement('button');
     clearBtn.textContent = 'Clear';
-    clearBtn.style.cssText = 'font-size:10px;padding:2px 8px;background:#23363D;color:#A6B7BB;border:1px solid #33474D;border-radius:3px;cursor:pointer;flex-shrink:0;';
+    clearBtn.style.cssText = 'font-size:10px;padding:2px 8px;background:#3B3B3B;color:#ADADAD;border:1px solid #525252;border-radius:3px;cursor:pointer;flex-shrink:0;';
     clearBtn.addEventListener('click', function () {
       try { localStorage.removeItem(IX_QA_LS_KEY); } catch (_) {}
       overlay.remove();

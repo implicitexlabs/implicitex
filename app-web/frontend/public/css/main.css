@@ -47,21 +47,21 @@
 
 /* ---- Tokens ---- */
 :root {
-  --bg:         #121C20;   /* ix-canvas — deep carbon with mineral undertone   */
-  --surface:    #1B2A30;   /* ix-surface — primary panels                      */
-  --surface-2:  #23363D;   /* ix-surface-raised — cards, elevated sections     */
-  --surface-3:  #23363D;   /* ix-surface-elevated — modals, active modules     */
+  --bg:         #0D0D0D;   /* ix-canvas                                        */
+  --surface:    #242424;   /* ix-surface — primary panels                      */
+  --surface-2:  #3B3B3B;   /* ix-surface-raised — cards, elevated sections     */
+  --surface-3:  #3B3B3B;   /* ix-surface-elevated — modals, active modules     */
   --white:      #FFFFFF;   /* ix-text-primary — headlines, values, primary copy */
-  --dim:        #A6B7BB;   /* ix-text-secondary — supporting copy              */
-  --muted:      #A6B7BB;   /* ix-text-muted — metadata and quiet labels        */
-  --border:     #33474D;   /* ix-border-subtle — standard boundaries           */
-  --border-2:   #4F6B73;   /* ix-border-strong — active, focused               */
-  --nav-bg:     rgba(32, 35, 35, 0.95);
-  --button-hover: #7D9DA3; /* ix-brand-hover                                   */
-  --status-ok:  rgba(244, 246, 245, 0.7);
+  --dim:        #ADADAD;   /* ix-text-secondary — supporting copy              */
+  --muted:      #ADADAD;   /* ix-text-muted — metadata and quiet labels        */
+  --border:     #525252;   /* ix-border-subtle — standard boundaries           */
+  --border-2:   #696969;   /* ix-border-strong — active, focused               */
+  --nav-bg:     rgba(13, 13, 13, 0.95);
+  --button-hover: #969696; /* ix-brand-hover                                   */
+  --status-ok:  rgba(255, 255, 255, 0.7);
   --warn:       #B83F3A;   /* ix-danger                                        */
   --warn-border: rgba(240, 110, 104, 0.7);
-  --control-focus: rgba(244, 246, 245, 0.84);
+  --control-focus: rgba(255, 255, 255, 0.84);
   --telemetry-amber:     #f0b44d;   /* ix-warning                              */
   --telemetry-amber-dim: rgba(240, 180, 77, 0.82);
   --telemetry-amber-border: rgba(240, 180, 77, 0.28);
@@ -69,13 +69,13 @@
   /* Mineral reference. Cinereous (#A98E86) is the named source color for the
      light-mode telemetry amber palette. The amber values below are hardcoded,
      not CSS-derived from this token. Reserved: do not use in selectors. */
-  --mineral-warm: #A98E86;
+  --mineral-warm: #ADADAD;
   /* Accent — active/live/verified/selected/focus states.
-     Tourmaline per Alloy discipline. Not for decoration.
+     Not for decoration.
      Amber signaling lives in --telemetry-amber / --warn only. */
-  --accent:        #4F6B73;
-  --accent-dim:    rgba(111, 139, 149, 0.80);
-  --accent-border: rgba(111, 139, 149, 0.30);
+  --accent:        #696969;
+  --accent-dim:    rgba(105, 105, 105, 0.80);
+  --accent-border: rgba(105, 105, 105, 0.30);
   --logo-pixel: #FFFFFF;
 
   /* ---- Typefaces ---- */
@@ -170,23 +170,23 @@
 }
 
 [data-theme="light"] {
-  --bg:         #F3F6F6;   /* ix-canvas — machined pale metal                  */
-  --surface:    #D9E1E2;   /* ix-surface — standard panels                     */
-  --surface-2:  #C8D3D5;   /* ix-surface-raised — cards, important modules     */
-  --surface-3:  #E7ECEC;   /* ix-surface-inset — inputs, recessed areas        */
-  --white:      #000000;   /* ix-text-primary — headlines, values              */
-  --dim:        #5F767D;   /* ix-text-secondary — labels and explanatory text  */
-  --muted:      #5F767D;   /* ix-text-muted — metadata, timestamps             */
-  --border:     #B8C5C7;   /* ix-border-subtle                                 */
-  --border-2:   #8FA1A6;   /* ix-border-strong                                 */
-  --nav-bg:     rgba(217, 221, 220, 0.96);
-  --button-hover: #5F767D; /* ix-brand-hover                                   */
-  --status-ok:  #000000;
+  --bg:         #F2F2F2;   /* ix-canvas                                        */
+  --surface:    #DBDBDB;   /* ix-surface — standard panels                     */
+  --surface-2:  #C4C4C4;   /* ix-surface-raised — cards, important modules     */
+  --surface-3:  #F2F2F2;   /* ix-surface-inset — inputs, recessed areas        */
+  --white:      #0D0D0D;   /* ix-text-primary — headlines, values              */
+  --dim:        #696969;   /* ix-text-secondary — labels and explanatory text  */
+  --muted:      #696969;   /* ix-text-muted — metadata, timestamps             */
+  --border:     #C4C4C4;   /* ix-border-subtle                                 */
+  --border-2:   #ADADAD;   /* ix-border-strong                                 */
+  --nav-bg:     rgba(219, 219, 219, 0.96);
+  --button-hover: #696969; /* ix-brand-hover                                   */
+  --status-ok:  #0D0D0D;
   --warn:       #B83F3A;   /* ix-danger light                                  */
   --warn-border: rgba(184, 63, 58, 0.7);
-  --control-focus: #000000;
+  --control-focus: #0D0D0D;
   --telemetry-amber:     #F0B44D;   /* ix-warning light — see --mineral-warm (#A98E86) */
-  --telemetry-amber-bg:  #F2EEED;  /* badge/bar background in elevated state, light only */
+  --telemetry-amber-bg:  #F2F2F2;  /* badge/bar background in elevated state, light only */
   --telemetry-amber-dim: rgba(148, 79, 56, 0.82);
   --telemetry-amber-border: rgba(148, 79, 56, 0.28);
   /* Canvas-safe text variant. --telemetry-amber (#944F38) only clears AA
@@ -196,15 +196,14 @@
   --telemetry-amber-text: #F0B44D;
   /* Accent — active/live/verified/selected/focus states.
      Tourmaline per Alloy discipline. Not for decoration. */
-  --accent:        #7D9DA3;
-  --accent-dim:    rgba(53, 69, 74, 0.75);
-  --accent-border: rgba(53, 69, 74, 0.30);
-  --logo-pixel: #000000;
+  --accent:        #969696;
+  --accent-dim:    rgba(150, 150, 150, 0.75);
+  --accent-border: rgba(150, 150, 150, 0.30);
+  --logo-pixel: #0D0D0D;
 
-  /* Coin Card surface tokens — light-mode overrides.
-     Alloy mineral neutral; independent from Portal slate palette. */
-  --cc-card-bg:     #D9E1E2;
-  --cc-card-border: rgba(35, 38, 37, 0.20);
+  /* Coin Card surface tokens — light-mode overrides. */
+  --cc-card-bg:     #DBDBDB;
+  --cc-card-border: rgba(13, 13, 13, 0.20);
 }
 
 /* ---- Light-theme input overrides ----
@@ -215,7 +214,7 @@
 [data-theme="light"] .tx-field,
 [data-theme="light"] .tx-field--primary {
   background: #FFFFFF;   /* ix-surface-raised — floats above #F3F6F6 canvas */
-  border-color: rgba(30, 45, 60, 0.22);
+  border-color: rgba(13, 13, 13, 0.22);
 }
 
 [data-theme="light"] .tx-field--primary:disabled {
@@ -341,7 +340,7 @@ code, kbd, pre,
 [data-theme="light"] .wordmark path,
 [data-theme="light"] .wordmark polygon,
 [data-theme="light"] .wordmark rect {
-  fill: #000000;
+  fill: #0D0D0D;
 }
 
 [data-theme="light"] img.wordmark,
@@ -603,7 +602,7 @@ code, kbd, pre,
   text-transform: none;
   color: var(--bg);
   background: var(--white);
-  border: 1px solid #e0e0e0;
+  border: 1px solid #C4C4C4;
   border-radius: 4px;
   padding: var(--sp-2) var(--sp-4);
   cursor: pointer;
@@ -1559,7 +1558,7 @@ body.portal-active #nav {
   width: 68px;
   height: 68px;
   flex-shrink: 0;
-  background: #000;
+  background: #0D0D0D;
   object-fit: cover;
 }
 
@@ -2130,10 +2129,10 @@ body.portal-active #nav {
 /* Light theme: dark collapsed rail */
 [data-theme="light"] .transfer-portal.is-minimized {
   border-color: rgba(0, 0, 0, 0.18);
-  background: #0A1115;
+  background: #0D0D0D;
 }
 [data-theme="light"] .transfer-portal.is-minimized .portal-header {
-  background: #0A1115;
+  background: #0D0D0D;
   border-bottom-color: rgba(255, 255, 255, 0.10);
 }
 [data-theme="light"] .transfer-portal.is-minimized .portal-header-title {
@@ -2151,22 +2150,22 @@ body.portal-active #nav {
 /* Dark theme: light collapsed rail */
 [data-theme="dark"] .transfer-portal.is-minimized {
   border-color: rgba(255, 255, 255, 0.14);
-  background: #F3F6F6;
+  background: #F2F2F2;
 }
 [data-theme="dark"] .transfer-portal.is-minimized .portal-header {
-  background: #F3F6F6;
+  background: #F2F2F2;
   border-bottom-color: rgba(0, 0, 0, 0.10);
 }
 [data-theme="dark"] .transfer-portal.is-minimized .portal-header-title {
-  color: #000000;
+  color: #0D0D0D;
 }
 [data-theme="dark"] .transfer-portal.is-minimized .portal-ctrl-btn {
   border-color: rgba(0, 0, 0, 0.20);
-  color: rgba(26, 25, 23, 0.55);
+  color: rgba(13, 13, 13, 0.55);
 }
 [data-theme="dark"] .transfer-portal.is-minimized .portal-ctrl-btn:hover {
-  border-color: #000000;
-  color: #000000;
+  border-color: #0D0D0D;
+  color: #0D0D0D;
 }
 
 /* Collapsed portal: brand contrast preservation
@@ -2186,13 +2185,13 @@ body.portal-active #nav {
   fill: #FFFFFF;
 }
 [data-theme="dark"] .transfer-portal.is-minimized .portal-header-brand {
-  color: #000000;
+  color: #0D0D0D;
 }
 [data-theme="dark"] .transfer-portal.is-minimized img.wordmark {
   filter: invert(1);
 }
 [data-theme="dark"] .transfer-portal.is-minimized .brandmark path {
-  fill: #000000;
+  fill: #0D0D0D;
 }
 /* Collapsed mobile: the row-separator border-top on .portal-header-right uses
    var(--border) which is near-invisible on the inverted collapsed card.
@@ -2450,7 +2449,7 @@ body.portal-active #nav {
   text-transform: none;
   color: var(--bg);
   background: var(--white);
-  border: 1px solid #e0e0e0;
+  border: 1px solid #C4C4C4;
   border-radius: 2px;
   padding: 0 var(--sp-4);
   width: auto;
@@ -6137,14 +6136,14 @@ input[type="number"] {
 }
 
 [data-theme="light"] .consent-btn--accept {
-  background: #5F767D;
+  background: #696969;
   color: #FFFFFF;
-  border-color: #5F767D;
+  border-color: #696969;
 }
 
 [data-theme="light"] .consent-btn--accept:hover {
-  background: #5F767D;
-  border-color: #5F767D;
+  background: #525252;
+  border-color: #525252;
 }
 
 @media (max-width: 640px) {
@@ -6641,7 +6640,7 @@ input[type="number"] {
 
   /* Coin Card surface tokens — independent from Portal --surface-2/--border-2.
      Changes to the Portal palette must not silently alter card.html appearance. */
-  --cc-card-bg:     #0A1115;
+  --cc-card-bg:     #0D0D0D;
   --cc-card-border: rgba(255, 255, 255, 0.18);
 }
 
@@ -7024,10 +7023,10 @@ input[type="number"] {
   --cc-card-ratio-portrait:        5398 / 8560;
 
   /* Light surface palette */
-  --cc-card-light-bg:              #F3F6F6;
-  --cc-card-light-fg:              #000000;
-  --cc-card-light-dim:             #5F767D;
-  --cc-card-light-muted:           #5F767D;
+  --cc-card-light-bg:              #F2F2F2;
+  --cc-card-light-fg:              #0D0D0D;
+  --cc-card-light-dim:             #696969;
+  --cc-card-light-muted:           #696969;
   --cc-card-light-verified-dot:    #1A6E3F;
 }
 
@@ -7101,10 +7100,10 @@ input[type="number"] {
 /* Mirrors dark-mode :root values as fixed tokens so the card stays dark
    regardless of whether the page is in light or dark theme.             */
 :root {
-  --cc-card-dark-bg:            #0A1115;
+  --cc-card-dark-bg:            #0D0D0D;
   --cc-card-dark-fg:            #FFFFFF;
-  --cc-card-dark-dim:           rgba(242, 242, 240, 0.58);
-  --cc-card-dark-muted:         rgba(242, 242, 240, 0.30);
+  --cc-card-dark-dim:           rgba(255, 255, 255, 0.58);
+  --cc-card-dark-muted:         rgba(255, 255, 255, 0.30);
   --cc-card-dark-border:        rgba(255, 255, 255, 0.18);
   --cc-card-dark-verified-dot:  #FFFFFF;
 }
@@ -7523,7 +7522,7 @@ input[type="number"] {
   position: relative;
   margin-block-start: clamp(2rem, 5vw, 3.5rem);
   overflow: hidden;
-  mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #0D0D0D 12%, #0D0D0D 88%, transparent);
 }
 
 .audience-rail__track {
