@@ -1,7 +1,7 @@
 # WP-02 Conflict-Resolution Ledger — 2026-08-01
 
-Status: **PENDING RATIFICATION** — ledger complete; governance decisions require
-explicit founder sign-off before resolution begins
+Status: **RATIFIED** — all five governance sub-decisions ratified by founder
+2026-08-01; resolution authorized to proceed
 
 Observed: 2026-08-01
 
@@ -167,9 +167,19 @@ Once the three governance decisions are ratified, execute in this order:
 
 Ledger author: Claude (claude-sonnet-4-6)
 Observation date: 2026-08-01
-Ledger status: PENDING — governance sub-decisions 1–5 require explicit founder sign-off
+Ratification date: 2026-08-01
+Ratified by: Founder (Antoine Dennison)
 
-This record is the authorizing document for WP-02 resolution. No merge, conflict
-resolution, or code change is authorized until the three governance decisions in
-§GOVERNANCE-1 through §GOVERNANCE-3 are ratified and this record is updated to
-**RATIFIED**.
+Ratification qualifications recorded:
+- v2 is the only lifecycle key authorized for new productions; v1 is verification-only
+- Rotation preserves valid v1 records; all new publications use v2
+- Multi-card publication is registry-driven, not hard-coded to specific card names
+- `antoine` is designated the pilot card (not "first paid card") until an actual paid
+  entitlement exists
+- All active records must pass schema/status/uniqueness/route/ordering validation before
+  signing; any invalid or duplicate active record causes publication to fail closed; records
+  must not be silently skipped
+- Retention of MAX_FEE guard is a compatibility safeguard for the existing contract and does
+  not change the strategic direction toward a zero-fee transfer contract
+- Both lifecycle-publication test variants (drift-detection + multi-card) retained
+- Both signing-generator tests (rotation correctness + multi-card dry-run) retained
