@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="A visual inventory of hexadecimal colors used across the ImplicitEx website.">
+  <title>ImplicitEx Hex Color Inventory</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    :root {
+      color-scheme: light;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      background: rgb(238, 241, 240);
+      color: rgb(32, 35, 35);
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    .page-shell {
+      width: min(1440px, 100%);
+      margin: 0 auto;
+      padding: clamp(24px, 4vw, 64px);
+    }
+
+    .page-header {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 24px;
+      align-items: end;
+      padding-bottom: 32px;
+      border-bottom: 1px solid rgba(32, 35, 35, 0.18);
+    }
+
+    .eyebrow {
+      margin: 0 0 10px;
+      color: rgb(93, 104, 108);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      max-width: 900px;
+      margin: 0;
+      font-size: clamp(2rem, 5vw, 4.5rem);
+      font-weight: 750;
+      letter-spacing: -0.055em;
+      line-height: 0.96;
+    }
+
+    .intro {
+      max-width: 720px;
+      margin: 18px 0 0;
+      color: rgb(79, 87, 85);
+      font-size: clamp(15px, 1.5vw, 18px);
+      line-height: 1.6;
+    }
+
+    .count {
+      min-width: 128px;
+      padding: 16px 18px;
+      border: 1px solid rgba(32, 35, 35, 0.2);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.55);
+      text-align: right;
+    }
+
+    .count strong,
+    .count span {
+      display: block;
+    }
+
+    .count strong {
+      font-size: 28px;
+      line-height: 1;
+    }
+
+    .count span {
+      margin-top: 6px;
+      color: rgb(93, 104, 108);
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+      margin: 24px 0;
+    }
+
+    .search {
+      width: min(360px, 100%);
+      padding: 12px 14px;
+      border: 1px solid rgba(32, 35, 35, 0.25);
+      border-radius: 10px;
+      outline: none;
+      background: white;
+      color: inherit;
+    }
+
+    .search:focus {
+      border-color: rgb(53, 69, 74);
+      box-shadow: 0 0 0 3px rgba(53, 69, 74, 0.13);
+    }
+
+    .hint {
+      margin: 0;
+      color: rgb(93, 104, 108);
+      font-size: 13px;
+    }
+
+    .swatch-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 14px;
+    }
+
+    .swatch {
+      position: relative;
+      display: flex;
+      min-height: 180px;
+      padding: 16px;
+      overflow: hidden;
+      align-items: flex-end;
+      border: 0;
+      border-radius: 16px;
+      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12), 0 6px 20px rgba(32, 35, 35, 0.06);
+      cursor: pointer;
+      text-align: left;
+      transition: transform 140ms ease, box-shadow 140ms ease;
+    }
+
+    .swatch:hover {
+      transform: translateY(-3px);
+      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.16), 0 12px 28px rgba(32, 35, 35, 0.14);
+    }
+
+    .swatch:focus-visible {
+      outline: 3px solid rgb(32, 35, 35);
+      outline-offset: 3px;
+    }
+
+    .swatch-code {
+      display: inline-flex;
+      padding: 7px 9px;
+      border: 1px solid currentColor;
+      border-radius: 8px;
+      background: rgba(127, 127, 127, 0.08);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: 0.035em;
+    }
+
+    .empty-state {
+      grid-column: 1 / -1;
+      padding: 48px 24px;
+      border: 1px dashed rgba(32, 35, 35, 0.25);
+      border-radius: 16px;
+      color: rgb(93, 104, 108);
+      text-align: center;
+    }
+
+    .toast {
+      position: fixed;
+      right: 20px;
+      bottom: 20px;
+      z-index: 10;
+      padding: 12px 16px;
+      border-radius: 10px;
+      background: rgb(32, 35, 35);
+      color: white;
+      font-size: 14px;
+      font-weight: 700;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(8px);
+      transition: opacity 160ms ease, transform 160ms ease;
+    }
+
+    .toast.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (max-width: 680px) {
+      .page-header {
+        grid-template-columns: 1fr;
+      }
+
+      .count {
+        width: 100%;
+        text-align: left;
+      }
+
+      .toolbar {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .search {
+        width: 100%;
+      }
+
+      .swatch-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .swatch {
+        min-height: 140px;
+      }
+    }
+
+    @media (max-width: 420px) {
+      .swatch-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .swatch,
+      .toast {
+        transition: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page-shell">
+    <header class="page-header">
+      <div>
+        <p class="eyebrow">ImplicitEx · Color audit</p>
+        <h1>Hex color inventory</h1>
+        <p class="intro">Every unique hexadecimal color found across the public ImplicitEx pages and their first-party assets, normalized to six-digit notation.</p>
+      </div>
+      <div class="count" aria-live="polite">
+        <strong id="visibleCount">63</strong>
+        <span>colors shown</span>
+      </div>
+    </header>
+
+    <div class="toolbar">
+      <label>
+        <span class="eyebrow">Filter values</span>
+        <input class="search" id="colorSearch" type="search" placeholder="Try 6F8B95 or F2F2F0" autocomplete="off">
+      </label>
+      <p class="hint">Select a swatch to copy its value.</p>
+    </div>
+
+    <section class="swatch-grid" id="swatchGrid" aria-label="ImplicitEx hexadecimal color swatches"></section>
+  </main>
+
+  <div class="toast" id="copyToast" role="status" aria-live="polite"></div>
+
+  <script>
+    const colors = [
+      '#000000', '#080808', '#111111', '#1A0000', '#1A1917', '#1A1A1A',
+      '#1A6E3F', '#202323', '#222222', '#232625', '#292D2C', '#333333',
+      '#333837', '#344C4B', '#35454A', '#3D4342', '#444444', '#444B4A',
+      '#4A4844', '#4F5755', '#555555', '#666666', '#687270', '#6F8B95',
+      '#717A78', '#7D8785', '#7E4530', '#888888', '#8A8580', '#929A98',
+      '#944F38', '#A98E86', '#AAAAAA', '#B2C2BF', '#B83F3A', '#BBBBBB',
+      '#BCC3C1', '#C0392B', '#C6CDCB', '#C8CECC', '#CCCCCC', '#D0D8D5',
+      '#D9DDDC', '#DDDDDD', '#E0E0E0', '#E8E8E8', '#E9ECEB', '#EBEBEB',
+      '#F06E68', '#F0B44D', '#F0EDE8', '#F0F0F0', '#F2EEED', '#F2F2F0',
+      '#F4F6F5', '#F5F5F5', '#F5F6F5', '#F6F6F6', '#F7F7F7', '#F8F8F8',
+      '#FF3333', '#FF7777', '#FFFFFF'
+    ];
+
+    const grid = document.getElementById('swatchGrid');
+    const search = document.getElementById('colorSearch');
+    const count = document.getElementById('visibleCount');
+    const toast = document.getElementById('copyToast');
+    let toastTimer;
+
+    function readableText(hex) {
+      const channels = [1, 3, 5].map((index) => parseInt(hex.slice(index, index + 2), 16) / 255);
+      const linear = channels.map((channel) => channel <= 0.04045
+        ? channel / 12.92
+        : ((channel + 0.055) / 1.055) ** 2.4);
+      const luminance = (0.2126 * linear[0]) + (0.7152 * linear[1]) + (0.0722 * linear[2]);
+      const whiteContrast = 1.05 / (luminance + 0.05);
+      const blackContrast = (luminance + 0.05) / 0.05;
+      return whiteContrast >= blackContrast ? 'white' : 'black';
+    }
+
+    function showToast(message) {
+      window.clearTimeout(toastTimer);
+      toast.textContent = message;
+      toast.classList.add('is-visible');
+      toastTimer = window.setTimeout(() => toast.classList.remove('is-visible'), 1600);
+    }
+
+    async function copyColor(color) {
+      try {
+        await navigator.clipboard.writeText(color);
+        showToast(`${color} copied`);
+      } catch (error) {
+        showToast(`Copy unavailable · ${color}`);
+      }
+    }
+
+    function render(query = '') {
+      const normalizedQuery = query.trim().replace(/^#/, '').toUpperCase();
+      const visibleColors = colors.filter((color) => color.slice(1).includes(normalizedQuery));
+
+      grid.replaceChildren();
+      count.textContent = String(visibleColors.length);
+
+      if (!visibleColors.length) {
+        const empty = document.createElement('p');
+        empty.className = 'empty-state';
+        empty.textContent = 'No hexadecimal values match that filter.';
+        grid.append(empty);
+        return;
+      }
+
+      const fragment = document.createDocumentFragment();
+      for (const color of visibleColors) {
+        const swatch = document.createElement('button');
+        swatch.className = 'swatch';
+        swatch.type = 'button';
+        swatch.style.backgroundColor = color;
+        swatch.style.color = readableText(color);
+        swatch.setAttribute('aria-label', `Copy ${color}`);
+
+        const code = document.createElement('span');
+        code.className = 'swatch-code';
+        code.textContent = color;
+        swatch.append(code);
+        swatch.addEventListener('click', () => copyColor(color));
+        fragment.append(swatch);
+      }
+      grid.append(fragment);
+    }
+
+    search.addEventListener('input', () => render(search.value));
+    render();
+  </script>
+</body>
+</html>
