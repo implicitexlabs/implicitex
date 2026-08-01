@@ -6,7 +6,8 @@
       "predeploy": [
         "npm --prefix app-web run predeploy:coin-card",
         "node docs/blockaid-review-packet/build-public-page.js",
-        "git diff --exit-code app-web/frontend/public/architecture-and-security.html"
+        "git diff --exit-code app-web/frontend/public/architecture-and-security.html",
+        "npm --prefix app-web run guard:production"
       ],
       "ignore": [
         "firebase.json",
