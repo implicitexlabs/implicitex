@@ -30,16 +30,16 @@
   --cc-card-max-w:  440px;
 
   /* Dark surface palette — fixed hex, independent of page theme */
-  --cc-dark-bg:       #0A1115;
-  --cc-dark-fg:       #FFFFFF;
+  --cc-dark-bg:       #1a1a1a;
+  --cc-dark-fg:       #f2f2f0;
   --cc-dark-dim:      rgba(242, 242, 240, 0.58);
   --cc-dark-muted:    rgba(242, 242, 240, 0.30);
   --cc-dark-border:   rgba(255, 255, 255, 0.18);
-  --cc-dark-verified: #FFFFFF;
+  --cc-dark-verified: #f2f2f0;
 
   /* Semantic */
-  --cc-amber: #F0B44D;
-  --cc-red:   #B83F3A;
+  --cc-amber: #b87a1e;
+  --cc-red:   #c0392b;
 
   /* Typography */
   --cc-mono: 'IBM Plex Mono', monospace;
@@ -54,7 +54,7 @@
 
 html, body {
   height: 100%;
-  background: #060B0D;
+  background: #0c0c0a;
   color: var(--cc-dark-fg);
   font-family: var(--cc-ui);
   font-size: 13px;
