@@ -2,6 +2,7 @@
 
 **Status:** Governing — implementation defers to this document  
 **Governing entitlement specification:** `COIN_CARD_ENTITLEMENT_SPECIFICATION_V1.md` at `67f4755`  
+**Amended:** 2026-08-02 — eight corrections applied; see amendment log at end of document  
 **Scope:** Record definitions, state machines, invariants, field classifications,
 retention rules, and entitlement-to-record mapping. Does not cover application
 code, migrations, checkout UI, or workflow specifications.
@@ -28,8 +29,14 @@ and this document must be corrected.
 | Handle (public card slug) | 3–30 chars, `[a-z0-9-]`, no leading/trailing hyphen | `alice` |
 | Polygon address | EIP-55 mixed-case checksum (42 chars, `0x`-prefixed) | `0xAbCd…` |
 | Timestamps | ISO 8601 UTC, microsecond precision | `2026-08-01T14:00:00.000000Z` |
-| Monetary amounts | Integer cents (USD) | `1000` = $10.00 |
-| Signing input serialization | Canonical JSON, alphabetical key order, no trailing whitespace | — |
+| Payment amounts | Atomic integer in the asset's base units; see §5 Payment | `1000` = $10.00 USD; `10000000` = 10.00 USDC |
+| Signing input serialization | `coin-card-canonical-json.v1` as defined in `COIN_CARD_LIFECYCLE_RECORD_AUTHENTICATION_AND_CANONICALIZATION_CONTRACT_V1.md` | — |
+
+Signing input serialization must use the `coin-card-canonical-json.v1` algorithm
+exactly. This specifies UTF-8 encoding, no insignificant whitespace, object keys
+sorted by Unicode code point, NFC string normalization, and domain-separated
+SHA-256 hashing. An independent "alphabetical key order" convention must not be
+introduced; all implementations share the same canonical algorithm.
 
 All internal identifiers are prefixed with a short record-type label separated
 by an underscore. The prefix is a human-readability aid, not a type system.
@@ -141,6 +148,23 @@ The derived status must match the most recently published signed registry
 record. A mismatch is a process failure requiring immediate publication of an
 updated signed record (see §7 Evidence Publication).
 
+### Execution eligibility (derived; never stored)
+
+Execution eligibility governs whether the card may authorize a payment transfer.
+It is derived and never stored on any record:
+
+```
+execution_eligible = (Entitlement.status = 'active')
+                   AND (no open SuspensionCase for this card)
+```
+
+An `EXPIRED` card is **not execution-eligible**, regardless of whether the
+30-day grace period is still active. The grace period reserves the card
+identifier and configuration for renewal. It does not grant any additional
+period of payment execution. A route associated with an expired entitlement
+is retained as historical information only and must not be presented as an
+active, executable route.
+
 ### Invariants
 
 - `handle` is set once at creation. It is never updated, transferred, or
@@ -175,6 +199,11 @@ Coin Card identity does not change on a route change.
 
 - Exactly one WalletRoute per card has `status = 'active'` at any moment
   when the card has an active entitlement.
+- The most recently active WalletRoute remains `status = 'active'` after
+  entitlement expiration. The `active` status reflects designation ("this was
+  the last-configured route"), not execution eligibility. Execution eligibility
+  is governed by the entitlement, not the route status. A route associated
+  with an expired or revoked entitlement must not be treated as executable.
 - Multiple WalletRoutes may exist per card (historical record of all routes).
 - A route is created for the initial activation and for each subsequent
   route change.
@@ -280,16 +309,34 @@ prerequisite for activation, not synonymous with it.
 | `payment_id` | UUID | ✓ | — | Primary key |
 | `account_id` | UUID | ✓ | — | FK → Account |
 | `entitlement_id` | UUID\|null | — | — | FK → Entitlement; set when entitlement is created |
-| `amount_cents` | integer | ✓ | — | 1000 for $10.00 |
-| `currency` | string | ✓ | — | `USD` in V1 |
-| `provider` | enum | ✓ | — | `stripe` (V1); extensible |
-| `provider_payment_id` | string | ✓ | — | External reference (Stripe charge ID, etc.) |
+| `payment_asset` | enum | ✓ | — | `USD` or `USDC`; governs interpretation of `amount_atomic` |
+| `amount_atomic` | integer | ✓ | — | Amount in asset base units; 1000 for $10.00 USD; 10000000 for 10.00 USDC |
+| `asset_decimals` | integer | ✓ | — | 2 for USD; 6 for USDC |
+| `payment_rail` | enum | ✓ | — | `stripe_usd`, `polygon_usdc`; governs what `provider_payment_id` means |
+| `network_chain_id` | integer\|null | ✓ | — | Null for `stripe_usd`; 137 for Polygon mainnet; 80002 for Amoy testnet |
+| `network_tx_hash` | string\|null | ✓ | — | Null for `stripe_usd`; on-chain transaction hash for `polygon_usdc` |
+| `provider_payment_id` | string | ✓ | ✓ | External reference: Stripe charge ID for `stripe_usd`; transaction hash or receipt ID for `polygon_usdc` |
 | `status` | enum | — | — | `pending`, `confirmed`, `refunded`, `failed` |
 | `created_at` | timestamp | ✓ | — | Payment record created |
 | `confirmed_at` | timestamp\|null | — | — | Set on payment confirmation; starts provisioning clock |
 | `refunded_at` | timestamp\|null | — | — | Set when refund is confirmed |
 | `refund_reason` | enum\|null | — | — | `provisioning_sla_breach`, `customer_request`, `operator_initiated` |
 | `refund_initiated_at` | timestamp\|null | — | — | When ImplicitEx initiated the refund process |
+
+### Amount representation
+
+The `payment_asset` + `amount_atomic` + `asset_decimals` triplet represents the
+payment amount exactly without conflating wire formats:
+
+| payment_asset | amount_atomic | asset_decimals | Human value |
+|---|---|---|---|
+| `USD` | 1000 | 2 | $10.00 USD |
+| `USDC` | 10000000 | 6 | 10.000000 USDC |
+
+Both represent the expected $10 pilot price. `amount_atomic` is always a safe
+integer. Floating-point representations are prohibited. The `asset_decimals`
+field is recorded at payment time and must not be derived later from the asset
+name alone, because future asset versions may differ.
 
 ### State-transition table
 
@@ -313,6 +360,9 @@ prerequisite for activation, not synonymous with it.
 
 - A Payment is never deleted.
 - `confirmed_at` is set exactly once.
+- `payment_asset`, `amount_atomic`, `asset_decimals`, `payment_rail`, and
+  `network_chain_id` are immutable once set. Corrections require creating a new
+  Payment record linked by a lifecycle event, not mutating the existing record.
 - A Payment with `status = 'confirmed'` and no associated Entitlement within
   24 hours of `confirmed_at` is an SLA breach requiring operator action.
 
@@ -354,7 +404,9 @@ are never updated or deleted.
 | `route_changed` | New WalletRoute activated | `route_id`, `route_sequence`, `recipient_address` |
 | `suspended` | SuspensionCase opened | `case_id`, `reason`, `deadline` |
 | `suspension_extended` | SuspensionCase extended | `case_id`, `extension_deadline`, `extension_reason` |
+| `suspension_deadline_breached` | Effective deadline passed without resolution | `case_id`, `deadline_breached_at`, `process_failure_code` |
 | `restored` | SuspensionCase resolved: restoration | `case_id` |
+| `publication_abandoned` | EvidencePublication abandoned before activation | `publication_id`, `publication_stage_at_abandonment`, `reason` |
 | `grace_period_started` | 30-day grace begins after expiration | `grace_period_ends_at` |
 | `grace_period_ended` | 30-day grace expires | — |
 | `payment_confirmed` | Payment.confirmed_at set | `payment_id`, `confirmed_at` |
@@ -381,6 +433,30 @@ are never updated or deleted.
 cryptographically verifiable card artifact. The chain of Evidence Publications
 is the signed audit trail required by §9 of the entitlement specification.
 
+### Publication state sequence
+
+Each EvidencePublication progresses through four stages before it becomes
+authoritative. The stage is tracked in `publication_stage`:
+
+```
+PREPARED → SIGNED → PUBLISHED → ACTIVATED
+```
+
+| Stage | Meaning | Rollback possible |
+|---|---|---|
+| `prepared` | Signing input set assembled; not yet signed | Yes — abandon without trace |
+| `signed` | Signature computed; artifact not yet externally published | Yes — abandon; signed bytes not yet public |
+| `published` | Artifact delivered to public storage; not yet activating state change | No — compensating publication required |
+| `activated` | Corresponding state change committed; this publication is authoritative | No |
+| `abandoned` | Superseded before activation; never became authoritative | Terminal; recorded for audit |
+
+A signed artifact that has not yet been published may be abandoned — it has
+no external existence and requires no compensating action. A published artifact
+that fails to activate (e.g., state change commit fails after publication)
+must receive a compensating lifecycle publication explicitly marking it as
+non-authoritative, or the activation must be retried. It cannot be treated as
+though it never existed because external parties may have retrieved it.
+
 ### Fields
 
 | Field | Type | Immutable | Public | Signing input | Notes |
@@ -390,7 +466,9 @@ is the signed audit trail required by §9 of the entitlement specification.
 | `entitlement_id` | UUID | ✓ | — | ✓ | FK → Entitlement |
 | `route_id` | UUID | ✓ | — | ✓ | FK → WalletRoute; route in effect at publication |
 | `publication_type` | enum | ✓ | — | ✓ | `initial_activation`, `route_change`, `renewal`, `expiration`, `suspension`, `restoration`, `revocation` |
-| `published_at` | timestamp | ✓ | ✓ | ✓ | When the signed package was published |
+| `publication_stage` | enum | — | — | — | `prepared`, `signed`, `published`, `activated`, `abandoned`; not in signing input |
+| `published_at` | timestamp\|null | — | ✓ | ✓ | Set when stage reaches `published`; in signing input once set |
+| `activated_at` | timestamp\|null | — | — | — | Set when stage reaches `activated`; operational metadata |
 | `manifest_version` | string | ✓ | ✓ | ✓ | Version of the signing schema used |
 | `signing_key_id` | string | ✓ | ✓ | — | Identifies the public key used; not the key itself |
 | `asset_hashes` | JSON | ✓ | ✓ | ✓ | SHA-256 hashes of each signed asset file |
@@ -402,10 +480,12 @@ is the signed audit trail required by §9 of the entitlement specification.
 
 ### Signing input set
 
-The fields marked `Signing input = ✓` above are serialized as canonical JSON
-(alphabetical key order, no trailing whitespace) and signed. The signature
-covers the complete serialized object. Any field not in the signing input set
-is operational metadata only and does not affect verifiability.
+The fields marked `Signing input = ✓` above are serialized using
+`coin-card-canonical-json.v1` (see Identifier conventions) and signed. The
+signature covers the complete serialized object. Any field not in the signing
+input set is operational metadata only and does not affect verifiability.
+`publication_stage` and `activated_at` are operational metadata and are
+not part of the signing input.
 
 ### Publication triggers
 
@@ -424,15 +504,22 @@ signed state changes:
 
 ### Invariants
 
-- EvidencePublication records are never updated or deleted.
+- EvidencePublication records are never updated or deleted. Once written, only
+  `publication_stage`, `published_at`, and `activated_at` may advance (forward
+  only); all other fields are immutable.
 - `prior_publication_id` creates a linked chain. The first publication for a
   card has `prior_publication_id = null`. Every subsequent publication chains
   to the immediately prior one.
-- The most recent EvidencePublication is the authoritative signed state. The
-  derived card status must match `card_status_at_publication` of the most
-  recent publication. A mismatch triggers immediate re-publication.
-- Publication must complete before the corresponding LifecycleEvent is written.
-  If publication fails, the state transition does not proceed.
+- The most recent EvidencePublication with `publication_stage = 'activated'` is
+  the authoritative signed state. The derived card status must match
+  `card_status_at_publication` of that record. A mismatch triggers immediate
+  re-publication.
+- A state change that requires a new EvidencePublication (see §Transactional
+  invariants) may not commit until that publication has reached the `published`
+  stage. The state change is committed when, and only when, the publication
+  reaches `activated`.
+- An `abandoned` publication must have a lifecycle event recording the
+  abandonment reason.
 
 ---
 
@@ -449,7 +536,7 @@ records the reason, deadline, customer notices, and resolution.
 | `case_id` | UUID | ✓ | Primary key |
 | `card_id` | UUID | ✓ | FK → CoinCard |
 | `entitlement_id` | UUID | ✓ | FK → Entitlement active at time of suspension |
-| `status` | enum | — | `open`, `resolved_restored`, `resolved_revoked`, `resolved_expired`, `resolved_extended`, `process_failure` |
+| `status` | enum | — | `open`, `resolved_restored`, `resolved_revoked`, `resolved_expired`, `resolved_extended` |
 | `initiated_at` | timestamp | ✓ | Suspension begins |
 | `initiated_by` | string | ✓ | Operator ID |
 | `reason` | string | ✓ | Stated reason for suspension |
@@ -459,8 +546,11 @@ records the reason, deadline, customer notices, and resolution.
 | `extension_deadline` | timestamp\|null | — | `deadline + 7 calendar days`; null until extended |
 | `extension_reason` | string\|null | — | Required if extended |
 | `extension_notice_sent_at` | timestamp\|null | — | Set when extension notice is delivered |
-| `resolution` | enum\|null | — | `restored`, `revoked`, `expired`, `extended` |
-| `resolved_at` | timestamp\|null | — | Set when case is closed |
+| `deadline_breached_at` | timestamp\|null | — | Set when effective deadline passes with no resolution; the card remains suspended |
+| `escalated_at` | timestamp\|null | — | Set when the breach is recorded as an escalation requiring immediate operator action |
+| `process_failure_code` | string\|null | — | Machine-readable code written at escalation (e.g., `deadline_7d_no_action`, `deadline_14d_no_action`) |
+| `resolution` | enum\|null | — | `restored`, `revoked`, `expired` |
+| `resolved_at` | timestamp\|null | — | Set when case receives a valid customer disposition |
 | `resolved_by` | string\|null | — | Operator ID |
 | `resolution_notes` | string\|null | — | Operator notes on resolution decision |
 
@@ -468,13 +558,22 @@ records the reason, deadline, customer notices, and resolution.
 
 | From | To | Trigger | Constraint |
 |---|---|---|---|
-| `open` | `resolved_restored` | Operator restores card | `resolved_at ≤ deadline` or `resolved_at ≤ extension_deadline` |
-| `open` | `resolved_revoked` | Operator revokes card | `resolved_at ≤ deadline` or `resolved_at ≤ extension_deadline` |
+| `open` | `resolved_restored` | Operator restores card | `resolved_at` may be after deadline; escalation fields record the breach |
+| `open` | `resolved_revoked` | Operator revokes card | `resolved_at` may be after deadline; escalation fields record the breach |
 | `open` | `resolved_expired` | Entitlement expires during suspension | Entitlement.expired_at occurs while case is open |
-| `open` | `resolved_extended` | Extension recorded | `NOW() < deadline`; extension_deadline set; notice sent to customer |
-| `resolved_extended` | `resolved_restored` | Operator restores after extension | `resolved_at ≤ extension_deadline` |
-| `resolved_extended` | `resolved_revoked` | Operator revokes after extension | `resolved_at ≤ extension_deadline` |
-| `open` or `resolved_extended` | `process_failure` | `NOW() > extension_deadline` (or `deadline` if not extended) with no resolution | Process failure requiring escalation |
+| `open` | `resolved_extended` | Extension recorded | `extension_deadline` set; notice sent to customer; at most once |
+| `resolved_extended` | `resolved_restored` | Operator restores after extension | `resolved_at` may be after extension_deadline; escalation fields record any breach |
+| `resolved_extended` | `resolved_revoked` | Operator revokes after extension | As above |
+| `resolved_extended` | `resolved_expired` | Entitlement expires during extended suspension | Entitlement.expired_at occurs while case is resolved_extended |
+
+A case that has passed its effective deadline (`deadline` if not extended;
+`extension_deadline` if extended) without resolution does **not** transition to a
+new status. The case retains its current unresolved status (`open` or
+`resolved_extended`). The breach is recorded by setting `deadline_breached_at`,
+`escalated_at`, and `process_failure_code` — and by writing a
+`suspension_deadline_breached` lifecycle event — without changing the case status.
+The card remains `SUSPENDED`. The case must ultimately receive a valid customer
+disposition: restoration, revocation, or expiration.
 
 ### Cardinality
 
@@ -485,13 +584,20 @@ records the reason, deadline, customer notices, and resolution.
 
 ### Fourteen-day absolute ceiling
 
-The `process_failure` transition is automatic: when a monitoring process
-detects that a case has passed its resolution deadline (the later of `deadline`
-or `extension_deadline`) without resolution, it transitions the case to
-`process_failure` and writes a `suspension_process_failure` lifecycle event.
-This state does not automatically restore or revoke the card — it signals
-that operator intervention is required. The card remains `SUSPENDED` until
-an operator resolves the underlying case.
+A monitoring process detects when a case has passed its effective deadline
+(the later of `deadline` or `extension_deadline`) without a valid resolution.
+When detected, the monitor:
+
+1. Sets `deadline_breached_at` and `escalated_at`.
+2. Sets `process_failure_code` (e.g., `deadline_7d_no_action`, `deadline_14d_no_action`).
+3. Writes a `suspension_deadline_breached` lifecycle event.
+
+The case status does **not** change. The card remains `SUSPENDED`. This is an
+operational escalation condition requiring immediate operator action, not a
+valid disposition of the customer's card. The case must still receive one of the
+valid terminal resolutions (`resolved_restored`, `resolved_revoked`,
+`resolved_expired`). The breach record is evidence that the process failed; it
+does not substitute for the missing resolution.
 
 ### Invariants
 
@@ -499,11 +605,15 @@ an operator resolves the underlying case.
 - `deadline = initiated_at + 7 calendar days` (exact); immutable.
 - `extension_deadline = deadline + 7 calendar days` (exact) when set; immutable.
 - `extension_reason` must be non-null and non-empty before `extension_deadline`
-  is set.
+  is set. Extension is permitted at most once.
 - `customer_notice_sent_at` must be set within the same transaction that
   opens the case. A suspension without customer notice is incomplete.
 - `resolution_notes` is required for `resolved_revoked`; recommended for all
   resolutions.
+- `deadline_breached_at` and `escalated_at` may be set on an unresolved case
+  without changing its status.
+- `resolution` values are `restored`, `revoked`, `expired` only. `extended` is
+  a case status, not a terminal resolution.
 
 ---
 
@@ -540,13 +650,27 @@ active ──(new route activated on same card)──► superseded
 
 A route can only be superseded, never reactivated.
 
+### Derived card status during grace period
+
+```
+Entitlement.status = 'expired' AND NOW() ≤ grace_period_ends_at  → EXPIRED (non-executable)
+Entitlement.status = 'expired' AND NOW() > grace_period_ends_at  → EXPIRED (non-executable)
+```
+
+The grace period does not change the derived status or restore execution.
+`EXPIRED` is `EXPIRED` throughout and after the grace period. Execution requires
+`Entitlement.status = 'active'`.
+
 ### SuspensionCase status (see §8 for full table)
 
 ```
 open ──(7 days, resolved)──► resolved_restored | resolved_revoked | resolved_expired
-open ──(extension recorded)──► resolved_extended ──(7 more days, resolved)──► ...
-open or resolved_extended ──(deadline passed, unresolved)──► process_failure
+open ──(extension recorded)──► resolved_extended ──(7 more days, resolved)──► resolved_restored | resolved_revoked | resolved_expired
+open or resolved_extended ──(deadline passed, unresolved)──► [same status; deadline_breached_at + escalated_at set; escalation event written]
 ```
+
+A breach does not produce a new status. The case remains `open` or `resolved_extended`
+until a valid terminal resolution is recorded.
 
 ---
 
@@ -563,9 +687,16 @@ than mutating the existing field.
 `route.entitlement_id`, `entitlement_id`, `entitlement.card_id`,
 `entitlement.account_id`, `entitlement.payment_id`, `entitlement.term_months`,
 `entitlement.route_changes_allowed`, `entitlement.provisioning_deadline`,
-`payment_id`, `payment.amount_cents`, `payment.currency`, `payment.provider`,
-`payment.provider_payment_id`, `payment.confirmed_at`, `event_id`, all
-LifecycleEvent fields, `publication_id`, all EvidencePublication fields,
+`payment_id`, `payment.payment_asset`, `payment.amount_atomic`,
+`payment.asset_decimals`, `payment.payment_rail`, `payment.network_chain_id`,
+`payment.network_tx_hash`, `payment.provider_payment_id`,
+`payment.confirmed_at`, `event_id`, all LifecycleEvent fields,
+`publication_id`, `publication.card_id`, `publication.entitlement_id`,
+`publication.route_id`, `publication.publication_type`,
+`publication.manifest_version`, `publication.signing_key_id`,
+`publication.asset_hashes`, `publication.lifecycle_bundle_hash`,
+`publication.registry_record_hash`, `publication.card_status_at_publication`,
+`publication.signature`, `publication.prior_publication_id`,
 `case_id`, `case.initiated_at`, `case.initiated_by`, `case.reason`,
 `case.deadline`
 
@@ -596,16 +727,23 @@ LifecycleEvent fields, `publication_id`, all EvidencePublication fields,
 | `case.resolved_at` | Set once |
 | `case.resolved_by` | Set once |
 | `case.resolution_notes` | Set once |
+| `case.deadline_breached_at` | Set once; set when deadline passes without resolution |
+| `case.escalated_at` | Set once |
+| `case.process_failure_code` | Set once |
+| `publication.publication_stage` | Forward only: prepared → signed → published → activated (or abandoned) |
+| `publication.published_at` | Set once when stage reaches `published` |
+| `publication.activated_at` | Set once when stage reaches `activated` |
 | `account.status` | Operator-controlled |
 | `account.email_verified_at` | Set once |
 
 ### Derived fields (never stored on primary records)
 
 - Derived card status (computed from Entitlement + SuspensionCase)
+- Execution eligibility: `Entitlement.status = 'active'` AND no open SuspensionCase
 - Provisioning SLA breach flag (`NOW() > entitlement.provisioning_deadline` without activation)
-- Grace period active flag (`entitlement.expires_at ≤ NOW() ≤ entitlement.grace_period_ends_at`)
+- Grace period active flag (`entitlement.expires_at ≤ NOW() ≤ entitlement.grace_period_ends_at`); grace period activity does not affect execution eligibility
 - Renewal notice due flag (`NOW() ≥ entitlement.expires_at - 30 days` and notice not yet sent)
-- Suspension process failure flag (`NOW() > effective case deadline` with no resolution)
+- Suspension deadline breach flag (`NOW() > effective case deadline` with no resolution and `deadline_breached_at` not yet set)
 - `route_changes_remaining = route_changes_allowed - route_changes_used`
 
 ### Sensitive fields (access-controlled; not logged in plaintext)
@@ -642,15 +780,32 @@ any invariant must be rolled back.
    are a single atomic operation.
 
 3. **Exactly-one-active-entitlement:** At most one Entitlement per card may
-   have `status = 'active'`. (Pilot enforcement.)
+   have `status = 'active'` at any time. This invariant may not rely solely on
+   ordinary application logic. Activation must occur within a transaction that
+   atomically reads and updates a canonical active-entitlement guard: either a
+   dedicated lock record or an equivalent compare-and-swap. Two concurrent
+   activation attempts must not produce two active entitlements; one must fail
+   and roll back.
 
 4. **Provisioning-before-activation:** `Entitlement.activated_at` may not be
    set unless the corresponding EvidencePublication of type `initial_activation`
-   has been successfully written first.
+   has reached `publication_stage = 'published'` first.
 
-5. **Publication-before-transition:** A state change that requires a new
-   EvidencePublication (see §7) must complete the publication before committing
-   the state change. If publication fails, the state change is not committed.
+5. **Publication-stage-before-state-change:** A state change that requires a
+   new EvidencePublication (see §7) may not be committed until the publication
+   has reached `publication_stage = 'published'`. The state change and the
+   `publication_stage` advance to `activated` are a single atomic commit.
+   Failure modes:
+   - Signing fails (`prepared` → `signed` fails): abandon the publication
+     record; state change does not proceed; retry from `prepared`.
+   - Publication fails (`signed` → `published` fails): the signed bytes have
+     not been externally delivered; abandon the record; retry from `prepared`.
+   - Activation commit fails after publication (`published` → `activated` fails
+     or state change commit fails): the artifact is externally visible.
+     Retry the activation commit. If retry is not possible, write a
+     `publication_abandoned` lifecycle event and issue a compensating
+     publication that explicitly marks the prior artifact as non-authoritative
+     before proceeding.
 
 6. **Suspension-with-notice:** A SuspensionCase cannot be created without
    simultaneously recording `customer_notice_sent_at`. Notice and suspension
@@ -678,7 +833,9 @@ any invariant must be rolled back.
 |---|---|
 | Payment provider confirms payment but entitlement creation fails | Payment record exists with `status = 'confirmed'`; retry creates entitlement; idempotency on `provider_payment_id` |
 | Provisioning pipeline fails after entitlement created | `pending_activation` remains; SLA clock runs; operator retries or initiates refund before deadline |
-| EvidencePublication signing fails during route change | Route change rolls back; prior route remains active; `route_changes_used` not incremented; lifecycle event not written |
+| EvidencePublication signing fails during route change (`prepared`→`signed`) | Abandon publication record; route change rolls back; prior route remains active; `route_changes_used` not incremented; lifecycle event not written |
+| EvidencePublication publish fails during route change (`signed`→`published`) | Signed bytes not yet externally delivered; abandon record; retry from `prepared` |
+| EvidencePublication activation commit fails after publication (`published`→`activated`) | Artifact is externally visible; retry activation commit; if retry impossible, write `publication_abandoned` event and issue compensating publication |
 | SuspensionCase creation fails after card marked suspended in UI | Suspension is not complete; rollback UI state; no customer notice sent; retry cleanly |
 | Process monitors fail to fire deadline checks | Manual operator sweep is the fallback; deadlines are stored in records and queryable independently of monitors |
 
@@ -688,21 +845,44 @@ any invariant must be rolled back.
 
 No record in V1 is hard-deleted. The following rules apply:
 
-| Record | Tombstone mechanism | Minimum retention |
+| Record | Tombstone mechanism | Retention category |
 |---|---|---|
-| Account | `status = 'closed'`; sensitive fields zeroed after legal period | Legal minimum (jurisdiction-dependent; at least 7 years for financial records) |
-| CoinCard | No deletion; post-expiration records remain for historical traceability | Permanent |
-| WalletRoute | No deletion; `superseded` routes are historical evidence | Permanent |
-| Entitlement | No deletion; terminal status is the tombstone | Permanent |
-| Payment | No deletion; financial record | At least 7 years (legal minimum) |
-| LifecycleEvent | No deletion, no mutation | Permanent |
-| EvidencePublication | No deletion | Permanent |
-| SuspensionCase | No deletion; `process_failure` is a system-generated tombstone status | Permanent |
+| Account | `status = 'closed'`; sensitive fields subject to policy redaction | See retention policy note below |
+| CoinCard | No deletion; `handle`, `card_id`, `public_url`, `created_at` are permanent | Permanent (identity fields); operational fields subject to policy |
+| WalletRoute | No deletion; `superseded` routes are historical evidence | Permanent (addresses and sequences as cryptographic evidence) |
+| Entitlement | No deletion; terminal status is the tombstone | Permanent (governs term rights and audit) |
+| Payment | No deletion; financial record | Subject to retention policy (see note) |
+| LifecycleEvent | No deletion, no mutation | Permanent (event type, timestamps, and non-sensitive metadata are permanent evidence) |
+| EvidencePublication | No deletion; `publication_stage`, `published_at`, `activated_at` may advance | Permanent (all signing inputs and hashes are permanent evidence) |
+| SuspensionCase | No deletion; case ID, timestamps, and resolution are permanent | Permanent (identifiers, deadlines, breach timestamps, and resolution); sensitive notes subject to policy |
+
+### What "permanent" means
+
+"Permanent" applies to immutable cryptographic artifacts, lifecycle identifiers,
+state-change timestamps, hashes, signatures, publication references, and other
+evidence required to preserve historical truth and verify signed artifacts.
+These may never be deleted or redacted.
+
+"Permanent" does not automatically extend to every field on every record.
+Sensitive operational content — including email addresses, support correspondence,
+notice bodies, and resolution notes — may be redacted or deleted under a
+policy-governed retention schedule, provided the non-sensitive audit markers
+(IDs, timestamps, event types, hashes) are preserved.
+
+### Retention policy note
+
+Specific retention periods for Account sensitive fields and Payment records
+(e.g., a 7-year financial record minimum) require separate founder ratification
+and a documented policy basis reflecting applicable jurisdiction. This data model
+establishes the structural categories; it does not ratify specific minimum
+periods. Until ratification, the operating default is: retain all records
+without deletion; do not zero sensitive fields without explicit policy
+authorization.
 
 "Zeroing" sensitive fields on account closure means replacing their values with
 a structured null marker (`[REDACTED_AT: <timestamp>]`) rather than SQL NULL,
 so the field's prior existence is preserved for audit without retaining personal
-data beyond the legal period.
+data beyond an approved retention period.
 
 ---
 
@@ -713,7 +893,7 @@ data beyond the legal period.
 The following are accessible by any party given the card's public URL or handle:
 
 - `CoinCard.handle`, `CoinCard.public_url`
-- `WalletRoute.recipient_address` (active route only)
+- `WalletRoute.recipient_address` (only when card is `ACTIVE`; historical address shown as non-executable when card is `EXPIRED` or `SUSPENDED`; not presented when card is `REVOKED`)
 - Derived card status (`ACTIVE`, `EXPIRED`, `REVOKED`, `SUSPENDED`)
 - `EvidencePublication`: `published_at`, `manifest_version`, `asset_hashes`,
   `signature`, `signing_key_id`, `card_status_at_publication`
@@ -723,7 +903,7 @@ The following are accessible by any party given the card's public URL or handle:
 - All public fields for the customer's own card
 - `Entitlement`: `status`, `activated_at`, `expires_at`, `route_changes_used`,
   `route_changes_allowed`, `grace_period_ends_at`
-- `Payment`: `amount_cents`, `currency`, `status`, `confirmed_at`
+- `Payment`: `payment_asset`, `amount_atomic`, `asset_decimals`, `payment_rail`, `status`, `confirmed_at`
 - Historical WalletRoute records for the customer's own card
 - LifecycleEvents for the customer's own card (excluding operator metadata)
 - `SuspensionCase`: `reason`, `deadline`, `status`, `resolution` (for the
@@ -743,7 +923,8 @@ The following are accessible by any party given the card's public URL or handle:
 
 | Entitlement requirement | Implementing record(s) and fields |
 |---|---|
-| $10 for the first year | `Payment.amount_cents = 1000`, `Payment.currency = 'USD'` |
+| $10 for the first year (USD) | `Payment.payment_asset = 'USD'`, `Payment.amount_atomic = 1000`, `Payment.asset_decimals = 2`, `Payment.payment_rail = 'stripe_usd'` |
+| $10 equivalent via USDC | `Payment.payment_asset = 'USDC'`, `Payment.amount_atomic = 10000000`, `Payment.asset_decimals = 6`, `Payment.payment_rail = 'polygon_usdc'` |
 | One card per customer (pilot) | Application constraint: one `active` Entitlement per Account |
 | Unique handle | `CoinCard.handle`; uniqueness constraint at storage layer |
 | Public URL | `CoinCard.public_url` = `https://coincard.click/{handle}` |
@@ -762,11 +943,11 @@ The following are accessible by any party given the card's public URL or handle:
 | Provisioning extension with customer agreement | `Entitlement.provisioning_extension_agreed_at`; `provisioning_extension_agreed` lifecycle event |
 | Renewal notice 30 days before expiration | `renewal_notice_sent` lifecycle event; `Entitlement.expires_at - 30 days` derivation |
 | No automatic renewal (pilot) | No auto-renewal field or trigger exists in V1 schema |
-| 30-day grace period after expiration | `Entitlement.grace_period_ends_at = expires_at + 30 days`; `grace_period_started` and `grace_period_ended` lifecycle events |
+| 30-day grace period after expiration | `Entitlement.grace_period_ends_at = expires_at + 30 days`; `grace_period_started` and `grace_period_ended` lifecycle events; card remains `EXPIRED` and non-executable throughout grace; grace reserves the identifier for renewal only |
 | Slug not immediately reassigned | `CoinCard.handle` is immutable and bound to `card_id` permanently; no reassignment mechanism in V1 |
 | 7-day suspension review | `SuspensionCase.deadline = initiated_at + 7 days` |
 | Single 7-day extension maximum | `SuspensionCase.extension_deadline = deadline + 7 days`; set at most once |
-| 14-day absolute suspension ceiling | `process_failure` status when `NOW() > extension_deadline` (or deadline if no extension) without resolution |
+| 14-day absolute suspension ceiling | `SuspensionCase.deadline_breached_at`, `escalated_at`, `process_failure_code`; `suspension_deadline_breached` lifecycle event; case status does not change; card remains `SUSPENDED`; breach is an escalation condition requiring operator action, not a valid customer disposition |
 | Customer notice on suspension | `SuspensionCase.customer_notice_sent_at`; atomic with case creation |
 | Extension notice to customer | `SuspensionCase.extension_notice_sent_at` |
 | Suspension publicly visible | Derived card status = `SUSPENDED` when open SuspensionCase exists; included in signed registry record |
@@ -775,3 +956,73 @@ The following are accessible by any party given the card's public URL or handle:
 | SIWE + email + 8 recovery codes | `AccountCredential` records (wallet, email); `AccountRecoveryCode` (8 records per activation) |
 | Pilot success criteria — customer notices | `renewal_notice_sent`, `customer_notice_sent` lifecycle events; auditable |
 | Evidence independent of ImplicitEx availability | `EvidencePublication.signature` + `asset_hashes` verifiable with public key; no ImplicitEx runtime dependency |
+
+---
+
+## Amendment log
+
+### 2026-08-02 — Eight corrections applied
+
+**A1 — Expiration grace correction (material policy)**
+The original document incorrectly stated that routes continue to resolve as
+active executable routes during the 30-day grace period. Corrected to match the
+governing entitlement specification: execution is disabled at expiration; the
+grace period reserves the card identifier and configuration for renewal only. A
+new `execution_eligible` derived field documents the rule explicitly. WalletRoute
+cardinality note updated to distinguish designation from execution eligibility.
+Public boundary updated to reflect non-executable historical display during grace.
+Mapping table corrected.
+
+**A2 — Payment amount model generalized (two rails)**
+Replaced `amount_cents` (USD-only integer cents) and `currency` with a five-field
+asset representation: `payment_asset`, `amount_atomic`, `asset_decimals`,
+`payment_rail`, `network_chain_id`, `network_tx_hash`. Supports both Stripe USD
+(`stripe_usd`) and native USDC (`polygon_usdc`) without conflating wire formats.
+Mapping table updated with both rail representations.
+
+**A3 — Active entitlement invariant strengthened (concurrency)**
+Invariant 3 (exactly-one-active-entitlement) previously said "pilot enforcement"
+without specifying mechanism. Strengthened to require transactional enforcement
+via a canonical active-entitlement guard record or compare-and-swap. Two
+concurrent activation attempts must not succeed.
+
+**A4 — Publication state sequence added**
+Added explicit `PREPARED → SIGNED → PUBLISHED → ACTIVATED` stage model to
+EvidencePublication. Added `publication_stage`, `published_at`, and `activated_at`
+fields. Invariant 5 rewritten to distinguish the three failure modes: signing
+failure (safe to abandon), publish failure (safe to abandon before delivery),
+and activation failure after public delivery (requires retry or compensating
+publication). `publication_abandoned` lifecycle event added.
+
+**A5 — process_failure removed as terminal case status**
+`process_failure` removed from the SuspensionCase `status` enum. A deadline
+breach is an operational escalation condition, not a valid customer disposition.
+Added `deadline_breached_at`, `escalated_at`, and `process_failure_code` fields
+to record the breach without changing the case status. `suspension_deadline_breached`
+lifecycle event added. The case must still receive a valid resolution.
+Mapping table corrected.
+
+**A6 — Retention scope narrowed**
+"Permanent" is now defined to cover immutable cryptographic evidence, identifiers,
+timestamps, hashes, and signatures. Sensitive operational content (email, notice
+bodies, support notes) is permitted to be policy-governed with selective redaction,
+provided non-sensitive audit markers are preserved. Specific retention periods
+(e.g., 7-year financial minimum) removed — these require separate founder
+ratification and documented policy basis. Operating default: retain without
+deletion until policy is ratified.
+
+**A7 — Signing primitive references canonical algorithm**
+The identifier convention for signing input serialization now references
+`coin-card-canonical-json.v1` as defined in
+`COIN_CARD_LIFECYCLE_RECORD_AUTHENTICATION_AND_CANONICALIZATION_CONTRACT_V1.md`.
+The informal "alphabetical key order, no trailing whitespace" description is
+replaced with the complete canonical algorithm specification. EvidencePublication
+signing input section updated to match.
+
+**A8 — Documentation path confirmed**
+Both the entitlement specification and the data model are in
+`app-web/docs/product/coin-card/`. The `docs/product/coin-card/` tree contains
+implementation contracts (lifecycle, signing, verification) but not the
+governing product specifications. The two trees are structurally distinct and
+no duplication exists. Both governing documents are in the same canonical
+location.
