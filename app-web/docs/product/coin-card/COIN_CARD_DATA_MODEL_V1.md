@@ -1,8 +1,9 @@
 # Coin Card Data Model V1
 
-**Status:** Governing — implementation defers to this document  
+**Status:** Ratified and closed — implementation defers to this document  
 **Governing entitlement specification:** `COIN_CARD_ENTITLEMENT_SPECIFICATION_V1.md` at `67f4755`  
-**Amended:** 2026-08-02 — eight corrections applied; see amendment log at end of document  
+**Amended:** 2026-08-02 — eight corrections applied; two internal-consistency corrections applied; see amendment log at end of document  
+**Ratified:** 2026-08-02  
 **Scope:** Record definitions, state machines, invariants, field classifications,
 retention rules, and entitlement-to-record mapping. Does not cover application
 code, migrations, checkout UI, or workflow specifications.
@@ -123,6 +124,8 @@ required — it is not deleted when the entitlement expires.
 | `public_url` | string | ✓ | ✓ | ✓ | `https://coincard.click/<handle>` |
 | `created_at` | timestamp | ✓ | — | ✓ | Card identity created |
 | `first_activated_at` | timestamp\|null | — | — | — | Set when first entitlement activates |
+| `active_entitlement_id` | UUID\|null | — | — | — | Concurrency guard: FK → active Entitlement; null when no entitlement is active |
+| `active_entitlement_version` | integer | — | — | — | Concurrency guard: monotonically incrementing version; used for compare-and-swap on activation |
 
 ### What is NOT on this record
 
@@ -130,6 +133,7 @@ required — it is not deleted when the entitlement expires.
 - **Recipient address** — belongs to WalletRoute
 - **Term dates** — belong to Entitlement
 - **Payment reference** — belongs to Entitlement → Payment
+- **Active entitlement pointer** is a private operational concurrency guard, not a stored status and not a signing input. Derived card status is still computed from Entitlement and SuspensionCase records, not from this pointer.
 
 ### Derived status
 
@@ -165,6 +169,51 @@ period of payment execution. A route associated with an expired entitlement
 is retained as historical information only and must not be presented as an
 active, executable route.
 
+### Concurrency guard: active_entitlement_id and active_entitlement_version
+
+`active_entitlement_id` and `active_entitlement_version` are the canonical
+implementation of the exactly-one-active-entitlement invariant (see
+Transactional invariants §3).
+
+**Activation transaction sequence:**
+
+1. Read the CoinCard; capture `active_entitlement_version` as `expected_version`.
+2. Verify `active_entitlement_id` is null or references an Entitlement in a
+   terminal status (`expired`, `revoked`, `cancelled`).
+3. Activate the new Entitlement (set `status = 'active'`, `activated_at`).
+4. Set `CoinCard.active_entitlement_id` to the new entitlement's ID.
+5. Increment `CoinCard.active_entitlement_version` (expected_version + 1).
+6. Advance the corresponding EvidencePublication to `activated`.
+7. Write the `entitlement_activated` LifecycleEvent.
+8. Commit atomically. If `active_entitlement_version` does not match
+   `expected_version` at commit time, the transaction must fail and roll back.
+   A concurrent activation will have already incremented the version; the
+   second attempt detects the mismatch and fails cleanly.
+
+**Termination transaction** (expiration, revocation, cancellation):
+
+1. Clear `active_entitlement_id` to null.
+2. Increment `active_entitlement_version`.
+3. Set the Entitlement to its terminal status.
+4. Write the corresponding LifecycleEvent and EvidencePublication in the
+   same atomic commit.
+
+**Renewal:**
+
+The termination sequence for the expiring Entitlement and the activation
+sequence for the renewing Entitlement may be chained, but must both complete
+atomically. The Coin Card identity (`card_id`, `handle`) does not change.
+`active_entitlement_version` is incremented at least once for the termination
+and once for the activation (or twice in a combined transaction — the exact
+increment count is an implementation detail; monotonic increase is the invariant).
+
+**Scope:**
+
+`active_entitlement_id` and `active_entitlement_version` are private operational
+fields. They are not public, not signing inputs, and not part of the derived
+card status. If the pointer is inconsistent with the authoritative Entitlement
+records, the Entitlement records govern.
+
 ### Invariants
 
 - `handle` is set once at creation. It is never updated, transferred, or
@@ -172,6 +221,11 @@ active, executable route.
 - `account_id` is set once. Ownership does not transfer.
 - A CoinCard record is never deleted. After expiration or revocation, it
   transitions to a non-executable state but remains historically identifiable.
+- `active_entitlement_id`, when non-null, must reference an Entitlement
+  belonging to the same Coin Card with `status = 'active'`. A non-null pointer
+  to a non-active Entitlement is a data integrity violation.
+- `active_entitlement_version` starts at 0 and increments only; it is never
+  decremented or reset.
 
 ---
 
@@ -442,20 +496,27 @@ authoritative. The stage is tracked in `publication_stage`:
 PREPARED → SIGNED → PUBLISHED → ACTIVATED
 ```
 
-| Stage | Meaning | Rollback possible |
-|---|---|---|
-| `prepared` | Signing input set assembled; not yet signed | Yes — abandon without trace |
-| `signed` | Signature computed; artifact not yet externally published | Yes — abandon; signed bytes not yet public |
-| `published` | Artifact delivered to public storage; not yet activating state change | No — compensating publication required |
-| `activated` | Corresponding state change committed; this publication is authoritative | No |
-| `abandoned` | Superseded before activation; never became authoritative | Terminal; recorded for audit |
+| Stage | Meaning | External compensation required | Internal audit trace required |
+|---|---|---|---|
+| `prepared` | Signing input set assembled; not yet signed | No — artifact not externally delivered | Yes — record retained; `publication_abandoned` event written |
+| `signed` | Signature computed; artifact not yet externally published | No — signed bytes not publicly delivered | Yes — record retained; `publication_abandoned` event written |
+| `published` | Artifact delivered to public storage; not yet activating state change | Yes — compensating public publication required | Yes |
+| `activated` | Corresponding state change committed; this publication is authoritative | No | — |
+| `abandoned` | Transitioned from `prepared` or `signed` before publication | No external compensation | Yes — EvidencePublication record retained permanently; `publication_abandoned` lifecycle event records publication ID, stage at abandonment, timestamp, and reason |
 
-A signed artifact that has not yet been published may be abandoned — it has
-no external existence and requires no compensating action. A published artifact
-that fails to activate (e.g., state change commit fails after publication)
-must receive a compensating lifecycle publication explicitly marking it as
-non-authoritative, or the activation must be retried. It cannot be treated as
-though it never existed because external parties may have retrieved it.
+A `prepared` or `signed` publication may transition to `abandoned` without
+issuing a compensating public publication, because no artifact was externally
+delivered and no external party can have retrieved it. However, the
+EvidencePublication record is not deleted and a `publication_abandoned`
+lifecycle event is required in both cases. The absence of external compensation
+does not mean the absence of an internal audit record.
+
+A `published` artifact that fails to activate (e.g., state change commit fails
+after the artifact has been delivered to public storage) must be treated
+differently: external parties may have already retrieved it. The activation
+must be retried. If retry is not possible, a compensating public publication
+explicitly marking the prior artifact as non-authoritative must be issued
+before any other state transition proceeds. The abandoned record is retained.
 
 ### Fields
 
@@ -704,6 +765,8 @@ than mutating the existing field.
 
 | Field | Permitted mutations |
 |---|---|
+| `card.active_entitlement_id` | Set to entitlement ID on activation; cleared to null on termination |
+| `card.active_entitlement_version` | Increment only; never decremented |
 | `entitlement.status` | Forward state transitions only (no rollback) |
 | `entitlement.route_changes_used` | Increment only |
 | `entitlement.activated_at` | Set once (null → timestamp) |
@@ -780,12 +843,13 @@ any invariant must be rolled back.
    are a single atomic operation.
 
 3. **Exactly-one-active-entitlement:** At most one Entitlement per card may
-   have `status = 'active'` at any time. This invariant may not rely solely on
-   ordinary application logic. Activation must occur within a transaction that
-   atomically reads and updates a canonical active-entitlement guard: either a
-   dedicated lock record or an equivalent compare-and-swap. Two concurrent
-   activation attempts must not produce two active entitlements; one must fail
-   and roll back.
+   have `status = 'active'` at any time. This invariant is enforced by the
+   `CoinCard.active_entitlement_version` compare-and-swap (see §2 Coin Card,
+   Concurrency guard). Activation reads the current version, proceeds only if
+   it matches the expected value, and increments the version in the same atomic
+   commit. Two concurrent activation attempts using the same expected version
+   will produce exactly one successful commit; the other will detect a version
+   mismatch and roll back.
 
 4. **Provisioning-before-activation:** `Entitlement.activated_at` may not be
    set unless the corresponding EvidencePublication of type `initial_activation`
@@ -796,16 +860,19 @@ any invariant must be rolled back.
    has reached `publication_stage = 'published'`. The state change and the
    `publication_stage` advance to `activated` are a single atomic commit.
    Failure modes:
-   - Signing fails (`prepared` → `signed` fails): abandon the publication
-     record; state change does not proceed; retry from `prepared`.
-   - Publication fails (`signed` → `published` fails): the signed bytes have
-     not been externally delivered; abandon the record; retry from `prepared`.
+   - Signing fails (`prepared` → `signed` fails): transition publication to
+     `abandoned`; write `publication_abandoned` event; state change does not
+     proceed; no public compensation required; retry from `prepared`.
+   - Publication fails (`signed` → `published` fails): signed bytes not yet
+     externally delivered; transition publication to `abandoned`; write
+     `publication_abandoned` event; no public compensation required; retry
+     from `prepared`.
    - Activation commit fails after publication (`published` → `activated` fails
-     or state change commit fails): the artifact is externally visible.
-     Retry the activation commit. If retry is not possible, write a
-     `publication_abandoned` lifecycle event and issue a compensating
-     publication that explicitly marks the prior artifact as non-authoritative
-     before proceeding.
+     or state change commit fails): artifact is externally visible and may have
+     been retrieved. Retry the activation commit. If retry is not possible,
+     issue a compensating public publication marking the prior artifact as
+     non-authoritative, then write `publication_abandoned` event, before any
+     other state transition proceeds.
 
 6. **Suspension-with-notice:** A SuspensionCase cannot be created without
    simultaneously recording `customer_notice_sent_at`. Notice and suspension
@@ -833,8 +900,8 @@ any invariant must be rolled back.
 |---|---|
 | Payment provider confirms payment but entitlement creation fails | Payment record exists with `status = 'confirmed'`; retry creates entitlement; idempotency on `provider_payment_id` |
 | Provisioning pipeline fails after entitlement created | `pending_activation` remains; SLA clock runs; operator retries or initiates refund before deadline |
-| EvidencePublication signing fails during route change (`prepared`→`signed`) | Abandon publication record; route change rolls back; prior route remains active; `route_changes_used` not incremented; lifecycle event not written |
-| EvidencePublication publish fails during route change (`signed`→`published`) | Signed bytes not yet externally delivered; abandon record; retry from `prepared` |
+| EvidencePublication signing fails during route change (`prepared`→`signed`) | Transition record to `abandoned`; write `publication_abandoned` event; route change rolls back; prior route remains active; `route_changes_used` not incremented; no public compensation required |
+| EvidencePublication publish fails during route change (`signed`→`published`) | Signed bytes not yet externally delivered; transition record to `abandoned`; write `publication_abandoned` event; no public compensation required; retry from `prepared` |
 | EvidencePublication activation commit fails after publication (`published`→`activated`) | Artifact is externally visible; retry activation commit; if retry impossible, write `publication_abandoned` event and issue compensating publication |
 | SuspensionCase creation fails after card marked suspended in UI | Suspension is not complete; rollback UI state; no customer notice sent; retry cleanly |
 | Process monitors fail to fire deadline checks | Manual operator sweep is the fallback; deadlines are stored in records and queryable independently of monitors |
@@ -1026,3 +1093,25 @@ implementation contracts (lifecycle, signing, verification) but not the
 governing product specifications. The two trees are structurally distinct and
 no duplication exists. Both governing documents are in the same canonical
 location.
+
+### 2026-08-02 — Two internal-consistency corrections (ratification commit)
+
+**A9 — Canonical active-entitlement guard defined on CoinCard**
+Invariant 3 previously named the mechanism ("dedicated lock record or
+compare-and-swap") without identifying a concrete data-model element. Added
+`active_entitlement_id` (UUID|null) and `active_entitlement_version` (integer)
+as mutable operational fields on CoinCard. Added full activation, termination,
+and renewal transaction sequences. Added CoinCard invariants for the guard.
+Updated transactional invariant 3 to reference these fields by name. Updated
+the mutable field classification. These are private operational fields: not
+public, not signing inputs, not part of derived card status.
+
+**A10 — "Abandon without trace" corrected**
+The publication stage table incorrectly stated that a `prepared` publication
+could be abandoned "without trace." Corrected: `prepared` and `signed`
+publications may be abandoned without a compensating *public* publication
+(no external artifact was delivered), but they require an internal audit trace:
+the EvidencePublication record is retained permanently and a
+`publication_abandoned` lifecycle event is written in both cases. Updated the
+stage table, surrounding prose, transactional invariant 5 failure modes, and
+the failure-and-rollback behavior table to state the distinction consistently.
