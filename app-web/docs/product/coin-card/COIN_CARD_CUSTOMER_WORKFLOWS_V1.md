@@ -3,7 +3,7 @@
 **Status:** Ratified and closed  
 **Governing documents:**
 - `COIN_CARD_ENTITLEMENT_SPECIFICATION_V1.md` at `b3bdc08` (ratified)
-- `COIN_CARD_DATA_MODEL_V1.md` at `d0b5a8b` (ratified and closed)  
+- `COIN_CARD_DATA_MODEL_V1.md` at `193dcfa` (ratified and closed)  
 **Ratified:** 2026-08-02
 
 **Scope:** Five end-to-end customer workflows as observable experiences. Defines
@@ -1202,21 +1202,31 @@ the terms, pricing, or configuration of the prior entitlement.
 
 **Records created:** `pay` (new), `ent` (new), `route` (new — fresh address required)  
 **Records mutated:** `ent` (prior, status already `expired`), `card.active_entitlement_id`, `card.active_entitlement_version`  
-**Lifecycle events:** `entitlement_activated`  
-**Evidence publications:** `pub` (renewal type, activated) [pub]
+**Lifecycle events:** `entitlement_reactivated`  
+**Evidence publications:** `pub` (`reactivation` type, activated) [pub]
 
-**Note on publication type:** Post-grace reactivation uses `publication_type = 'renewal'`
-because it re-establishes an ACTIVE state on the same card identity. The
-distinction from within-term renewal is recorded in the lifecycle event
-metadata (`activation_after_grace = true`), not in the publication type.
+**Reactivation publication signing inputs:** The activated EvidencePublication
+must carry `publication_type = 'reactivation'` and the following signing
+inputs (per `COIN_CARD_DATA_MODEL_V1.md` EvidencePublication table):
+
+- `reactivation_prior_entitlement_id` — UUID of the most recently expired entitlement
+- `reactivation_prior_publication_id` — UUID of the last activated publication of the prior term
+- `reactivation_effective_at` — timestamp at which the reactivation entitlement activates
+
+These fields are signing inputs and appear in the canonical payload. A verifier
+can distinguish a reactivation from a renewal without ImplicitEx being
+operational. Do not use `publication_type = 'renewal'` for post-grace
+reactivation; that type is reserved for within-term or grace-period renewal.
 
 **Provisioning SLA:** The 24-hour SLA applies from `pay.confirmed_at`. If
 provisioning fails, the refund and extension rules from Entitlement
 Specification §4 apply.
 
-**Security:** Reactivation is subject to acceptable-use review at ImplicitEx's
-discretion. The operator may decline reactivation for a card with a history of
-violations without triggering a refund obligation.
+**Acceptable-use review and refund rule:** Reactivation is subject to
+acceptable-use review at ImplicitEx's discretion. If the operator declines
+reactivation after payment has been confirmed, ImplicitEx must initiate a
+full refund automatically. The customer is not required to request the refund.
+No partial refund or credit is substituted for a full refund in this case.
 
 **Non-recoverable:** If the customer cannot supply a valid recipient address
 within the provisioning window, the reactivation is cancelled and the
@@ -1529,3 +1539,16 @@ updated. GD-3 resolved.
 §1.4 rewritten with explicit permitted/prohibited operation list, required
 email challenge, session termination on credential restoration. §5.11
 updated. W5 security boundaries updated. GD-4 resolved.
+
+### 2026-08-02 — Post-ratification correction (data model alignment)
+
+**Amendment E — Reactivation publication type and refund rule**
+§5.5a corrected. `publication_type = 'renewal'` replaced with
+`publication_type = 'reactivation'`. Lifecycle event corrected from
+`entitlement_activated` to `entitlement_reactivated`. Reactivation signing
+inputs (`reactivation_prior_entitlement_id`, `reactivation_prior_publication_id`,
+`reactivation_effective_at`) documented as required canonical payload fields.
+Unauthorized no-refund statement for operator-declined reactivation removed;
+governing rule added: operator refusal after confirmed payment requires
+automatic full refund; customer need not request it. Governing data model
+reference updated from `d0b5a8b` to `193dcfa`.
