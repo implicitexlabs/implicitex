@@ -2,7 +2,7 @@
 
 **Status:** Ratified and closed — implementation defers to this document  
 **Governing entitlement specification:** `COIN_CARD_ENTITLEMENT_SPECIFICATION_V1.md` at `67f4755`  
-**Amended:** 2026-08-02 — eight corrections applied; two internal-consistency corrections applied; see amendment log at end of document  
+**Amended:** 2026-08-02 — eight corrections; two internal-consistency corrections; `cancellation` publication type added; see amendment log  
 **Ratified:** 2026-08-02  
 **Scope:** Record definitions, state machines, invariants, field classifications,
 retention rules, and entitlement-to-record mapping. Does not cover application
@@ -316,7 +316,7 @@ creates a new Entitlement record; it does not update an existing one.
 | `pending_activation` | `cancelled` | Refund initiated (SLA breach or customer request within 30 days) | `entitlement_cancelled` |
 | `active` | `expired` | `NOW() >= expires_at` | `entitlement_expired` |
 | `active` | `revoked` | Operator action following suspension resolution | `entitlement_revoked` |
-| `active` | `cancelled` | Customer cancellation request | `entitlement_cancelled` |
+| `active` | `cancelled` | Customer cancellation request | `entitlement_cancelled`; EvidencePublication type `cancellation` |
 | `expired` | `active` | Renewal (new Entitlement; NOT a transition on this record) | — |
 
 Note: Suspension does not change Entitlement status. Suspension is represented
@@ -526,7 +526,7 @@ before any other state transition proceeds. The abandoned record is retained.
 | `card_id` | UUID | ✓ | — | ✓ | FK → CoinCard |
 | `entitlement_id` | UUID | ✓ | — | ✓ | FK → Entitlement |
 | `route_id` | UUID | ✓ | — | ✓ | FK → WalletRoute; route in effect at publication |
-| `publication_type` | enum | ✓ | — | ✓ | `initial_activation`, `route_change`, `renewal`, `expiration`, `suspension`, `restoration`, `revocation` |
+| `publication_type` | enum | ✓ | — | ✓ | `initial_activation`, `route_change`, `renewal`, `expiration`, `cancellation`, `suspension`, `restoration`, `revocation` |
 | `publication_stage` | enum | — | — | — | `prepared`, `signed`, `published`, `activated`, `abandoned`; not in signing input |
 | `published_at` | timestamp\|null | — | ✓ | ✓ | Set when stage reaches `published`; in signing input once set |
 | `activated_at` | timestamp\|null | — | — | — | Set when stage reaches `activated`; operational metadata |
@@ -536,6 +536,8 @@ before any other state transition proceeds. The abandoned record is retained.
 | `lifecycle_bundle_hash` | string | ✓ | ✓ | ✓ | Hash of the published lifecycle bundle |
 | `registry_record_hash` | string | ✓ | ✓ | ✓ | Hash of the published registry record |
 | `card_status_at_publication` | enum | ✓ | ✓ | ✓ | Derived card status at the moment of signing |
+| `cancellation_reason` | enum\|null | ✓ | ✓ | ✓ | `customer_requested` when `publication_type = 'cancellation'`; null otherwise |
+| `cancellation_effective_at` | timestamp\|null | ✓ | ✓ | ✓ | Set when `publication_type = 'cancellation'`; null otherwise |
 | `signature` | string | ✓ | ✓ | — | Signature over the canonical signing input set |
 | `prior_publication_id` | UUID\|null | ✓ | ✓ | ✓ | FK → prior EvidencePublication; forms a chain |
 
@@ -558,10 +560,22 @@ signed state changes:
 | First provisioning complete | `initial_activation` |
 | Route change activated | `route_change` |
 | Entitlement renewal activates | `renewal` |
-| Entitlement expires | `expiration` |
+| Entitlement expires (natural) | `expiration` |
+| Customer-requested cancellation | `cancellation` |
 | Suspension case opened | `suspension` |
 | Suspension resolved (restored) | `restoration` |
 | Entitlement revoked | `revocation` |
+
+**`cancellation` vs `expiration`:** A customer-requested cancellation must use
+`publication_type = 'cancellation'`, not `expiration`, even though the resulting
+`card_status_at_publication` is `EXPIRED` in both cases. This preserves cause
+distinguishability in the signed evidence chain. The signing input set includes
+the `publication_type` field; a verifier can distinguish cancellation from
+natural expiration without any runtime dependency on ImplicitEx.
+
+The `cancellation` publication's signing input set must also include:
+- `cancellation_reason`: `customer_requested` (the only valid value in V1)
+- `cancellation_effective_at`: the timestamp the cancellation took effect
 
 ### Invariants
 
@@ -757,6 +771,7 @@ than mutating the existing field.
 `publication.manifest_version`, `publication.signing_key_id`,
 `publication.asset_hashes`, `publication.lifecycle_bundle_hash`,
 `publication.registry_record_hash`, `publication.card_status_at_publication`,
+`publication.cancellation_reason`, `publication.cancellation_effective_at`,
 `publication.signature`, `publication.prior_publication_id`,
 `case_id`, `case.initiated_at`, `case.initiated_by`, `case.reason`,
 `case.deadline`
@@ -1010,7 +1025,8 @@ The following are accessible by any party given the card's public URL or handle:
 | Provisioning extension with customer agreement | `Entitlement.provisioning_extension_agreed_at`; `provisioning_extension_agreed` lifecycle event |
 | Renewal notice 30 days before expiration | `renewal_notice_sent` lifecycle event; `Entitlement.expires_at - 30 days` derivation |
 | No automatic renewal (pilot) | No auto-renewal field or trigger exists in V1 schema |
-| 30-day grace period after expiration | `Entitlement.grace_period_ends_at = expires_at + 30 days`; `grace_period_started` and `grace_period_ended` lifecycle events; card remains `EXPIRED` and non-executable throughout grace; grace reserves the identifier for renewal only |
+| 30-day grace period after expiration | `Entitlement.grace_period_ends_at = expires_at + 30 days`; `grace_period_started` and `grace_period_ended` lifecycle events; card remains `EXPIRED` and non-executable; grace reserves the identifier for renewal; post-grace reactivation also preserves the identity (see entitlement spec §6 and §8) |
+| Customer-requested cancellation | `Entitlement.status = 'cancelled'`; `EvidencePublication.publication_type = 'cancellation'`; `cancellation_reason = 'customer_requested'`; `cancellation_effective_at` in signing input; distinct from natural expiration in signed evidence |
 | Slug not immediately reassigned | `CoinCard.handle` is immutable and bound to `card_id` permanently; no reassignment mechanism in V1 |
 | 7-day suspension review | `SuspensionCase.deadline = initiated_at + 7 days` |
 | Single 7-day extension maximum | `SuspensionCase.extension_deadline = deadline + 7 days`; set at most once |
@@ -1105,6 +1121,17 @@ and renewal transaction sequences. Added CoinCard invariants for the guard.
 Updated transactional invariant 3 to reference these fields by name. Updated
 the mutable field classification. These are private operational fields: not
 public, not signing inputs, not part of derived card status.
+
+**A11 — `cancellation` publication type added**
+Customer-requested cancellation must not masquerade as natural expiration in
+the signed evidence chain. Added `cancellation` to `EvidencePublication.publication_type`
+enum. A cancellation publication produces `card_status_at_publication = EXPIRED`
+but carries `cancellation_reason = 'customer_requested'` and
+`cancellation_effective_at` as signing inputs. These fields are null for all
+other publication types. Updated: field table, signing input notes, publication
+trigger table (with distinguishability rationale), entitlement state-transition
+table, immutable field list, and entitlement-to-record mapping. Resolves GD-2
+from `COIN_CARD_CUSTOMER_WORKFLOWS_V1.md`.
 
 **A10 — "Abandon without trace" corrected**
 The publication stage table incorrectly stated that a `prepared` publication
