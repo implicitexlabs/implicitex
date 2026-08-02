@@ -4,6 +4,7 @@
 **Pilot scope:** Controlled pilot; renewal mechanics are manual  
 **Supersedes:** Informal entitlement notes in memory index  
 **Amended:** 2026-08-01 — suspension period (§6) and provisioning SLA (§4) ratified  
+**Amended:** 2026-08-02 — post-grace reactivation distinguished from renewal (§6, §8)  
 
 ---
 
@@ -165,13 +166,31 @@ registered contact.
 remains accessible and shows the expired status.
 
 **30-day grace period:** The slug and configuration are reserved for the
-customer. The card is non-executable. The customer may renew during this
-window to restore `ACTIVE` status without losing their handle.
+customer. The card is non-executable. The customer may **renew** during this
+window to restore `ACTIVE` status without losing their handle. Renewal during
+grace creates a new entitlement; the card identity is preserved; the standard
+activation process and 24-hour provisioning SLA apply.
 
 **After grace period:** The card remains `EXPIRED` and non-executable. The
-slug is not immediately reassigned. Slug reuse creates impersonation and
-payment-routing risk; no reassignment policy will be established without
-independent security review.
+slug is not immediately reassigned. The customer may **reactivate** the same
+permanently reserved Coin Card identity. Reactivation is distinct from renewal:
+
+- Reactivation creates a new entitlement under the price and terms then in
+  effect. It does not restore old pricing.
+- Reactivation requires fresh route validation: the customer must supply a
+  current Polygon USDC address. Obsolete configuration is not automatically
+  restored.
+- The standard activation process applies: payment confirmation, provisioning,
+  signed publication, and the 24-hour provisioning SLA.
+- The card remains `EXPIRED` and non-executable until activation succeeds.
+- Historical card identity and all prior signed evidence are preserved regardless
+  of how long the card has been in the `EXPIRED` state.
+- Reactivation is subject to acceptable-use review.
+
+Slug reuse creates impersonation and payment-routing risk; no reassignment
+policy will be established without independent security review. The permanent
+reservation of the card identity means the slug is always reserved for the
+original card holder.
 
 ### Suspension
 
@@ -242,12 +261,14 @@ Support does not include:
 
 ---
 
-## 8. Renewal and cancellation
+## 8. Renewal, reactivation, and cancellation
 
-### Renewal
+### Renewal (during active term or grace period)
 
 During the pilot, renewal is **manual and non-automatic**.
 
+- Renewal is available while the entitlement is `ACTIVE` or during the
+  30-day grace period.
 - Renewal notice is sent 30 days before expiration.
 - The customer must actively choose to renew.
 - Renewal pricing will be disclosed before the notice is sent.
@@ -257,6 +278,24 @@ During the pilot, renewal is **manual and non-automatic**.
 - A renewed entitlement resets the term to 12 months from the renewal date.
   It does not extend from the original activation date.
 - Renewal restores the route-change allowance to 4.
+
+### Reactivation (after grace period)
+
+After the grace period, the customer may reactivate the same permanently
+reserved Coin Card identity.
+
+- Reactivation creates a new entitlement under the price and terms then in
+  effect. It is not a continuation of the prior entitlement.
+- The customer must supply a current, valid Polygon USDC recipient address.
+  Obsolete configuration is not automatically restored.
+- The standard provisioning process applies. The card remains `EXPIRED` and
+  non-executable until provisioning and activation succeed.
+- The 24-hour provisioning SLA applies from confirmed payment.
+- The card's historical identity, handle, public URL, and all prior signed
+  evidence are preserved.
+- Reactivation is subject to acceptable-use review at ImplicitEx's discretion.
+- Reactivation does not guarantee the same price as the original or renewal
+  purchase; pricing in effect at time of reactivation applies.
 
 ### Cancellation
 
