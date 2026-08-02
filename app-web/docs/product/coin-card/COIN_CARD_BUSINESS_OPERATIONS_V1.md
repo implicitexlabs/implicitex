@@ -1,12 +1,13 @@
 # Coin Card Business Operations V1
 
-**Status:** Governing — operator-facing  
+**Status:** Ratified and closed  
 **Governing documents:**
 - `COIN_CARD_ENTITLEMENT_SPECIFICATION_V1.md` at `b3bdc08` (ratified)
 - `COIN_CARD_DATA_MODEL_V1.md` at `193dcfa` (ratified and closed)
 - `COIN_CARD_CUSTOMER_WORKFLOWS_V1.md` at `39ecd95` (ratified and closed)
 
-**Issued:** 2026-08-02
+**Issued:** 2026-08-02  
+**Ratified:** 2026-08-02
 
 **Scope:** Two operator-facing business-operation workflows. Defines operator
 responsibilities, authority, evidence requirements, deadline monitoring,
@@ -35,11 +36,12 @@ action commits. An action without operator attribution is a process failure.
 ### Administration evidence
 
 Privileged actions (suspension, restoration, revocation, refund initiation,
-signing-key distrust, deadline extension) must create an administration
-evidence record before the action takes effect. The evidence record is
-canonicalized using `coin-card-canonical-json.v1` and its domain-separated
-SHA-256 hash is stored in the lifecycle registry record referencing that
-action (see Canonicalization Contract §Administration Evidence Hash).
+signing-key distrust, deadline extension, application decline) must create an
+administration evidence record before the action takes effect. The evidence
+record is canonicalized using `coin-card-canonical-json.v1` and its
+domain-separated SHA-256 hash is stored in the lifecycle registry record
+referencing that action (see Canonicalization Contract §Administration
+Evidence Hash).
 
 Administration evidence fields follow the canonical schema (Canonicalization
 Contract §Administration Evidence Action Schema):
@@ -51,6 +53,13 @@ Contract §Administration Evidence Action Schema):
 Records and lifecycle events are append-only. No historical entry may be
 modified or deleted by any operator. Correction of an erroneous record
 requires a compensating operation with its own administration evidence.
+
+### Card status is derived
+
+`CoinCard` has no stored `status` field. Card status is derived from the
+active entitlement, open `SuspensionCase`, and the presence of a `revocation`
+publication. No operator action may write a stored `card.status`. References
+to card status in this document always mean the derived status.
 
 ### Event-first rule (inherited)
 
@@ -77,6 +86,9 @@ See Customer Workflows V1 shared conventions.
 
 Record abbreviations follow Data Model V1 record catalog:
 `acct`, `card`, `route`, `ent`, `pay`, `evt`, `pub`, `case`.
+
+EvidencePublication stage field: `publication_stage`.
+Stages: `PREPARED → SIGNED → PUBLISHED → ACTIVATED`.
 
 ---
 
@@ -159,7 +171,7 @@ or `FDR` for AUP decline decisions.
 
 | Action | Minimum authority |
 |---|---|
-| Pre-payment AUP decline | `PSO` |
+| Pre-payment eligibility or AUP decline | `PSO` |
 | Post-payment AUP decline + refund trigger | `PSO` |
 | Manual refund initiation | `OPR` |
 | Provisioning SLA extension (with customer agreement) | `OPR` |
@@ -188,11 +200,11 @@ or `FDR` for AUP decline decisions.
    - **Initial activation:** handle must not be reserved, active, expired, or
      revoked for any other customer. Handle format must satisfy the 3–30
      character alphanumeric-plus-hyphen lowercase constraint.
-   - **Renewal:** handle must already be owned by this customer with status
-     `active` or `expired` (within grace period).
+   - **Renewal:** handle must already be owned by this customer with derived
+     status `ACTIVE` or `EXPIRED` (within grace period).
    - **Post-grace reactivation:** handle must be permanently reserved for
-     this customer (`card` record exists with this customer as owner, status
-     `expired`, and `NOW() > ent.grace_period_ends_at`).
+     this customer (`card` record exists with this customer as owner, derived
+     status `EXPIRED`, and `NOW() > ent.grace_period_ends_at`).
 
 3. Validate product scope:
    - One active card per customer during the V1 pilot.
@@ -200,24 +212,30 @@ or `FDR` for AUP decline decisions.
      activation for any other handle.
    - Renewal and reactivation are scoped to the customer's own card.
 
-4. Perform acceptable-use review (`[aud]` if a decision record is created):
+4. Perform eligibility and acceptable-use screening (`[aud]` if a decision
+   record is created):
    - Review occurs before payment whenever reasonably possible. In the pilot,
      "reasonably possible" means: at the time the purchase request is received
      and before the checkout flow presents payment collection to the customer.
    - For post-grace reactivation, the review also considers the card's prior
      suspension or revocation history (Entitlement Specification §8).
+   - Decisions use the reason codes defined in §GD-1 (see Governance decisions).
    - If the review concludes the request should be declined:
      - No payment is collected.
      - No entitlement is created.
-     - `[aud]` Administration evidence record created with
-       `action = DECLINE_APPLICATION`, `reasonCode`, `authorityId`, `nonce`.
+     - `[aud]` Administration evidence created with
+       `action = APPLICATION_DECLINED`, `reasonCode` (from §GD-1),
+       `authorityId`, `nonce`, `decline_phase = 'pre_payment'`,
+       `acct_id` if one exists, `card_id` if one already exists,
+       `evidence_references`, `customer_notice_timestamp`.
      - The customer is notified that the application was not accepted. The
        notice states the reason at the level of detail the operator is
-       authorized to disclose; internal AUP criteria are not exposed.
-     - Record the minimum operational evidence necessary to explain the
-       decision. Do not record internal abuse-detection signals in a customer-
-       accessible field.
-     - AUP decline authority: `PSO` or `FDR`.
+       authorized to disclose; internal detection methods are not exposed.
+     - The high-level customer-facing decline categories must be disclosed in
+       purchase terms before pilot launch (Entitlement Specification §8).
+     - AUP or eligibility decline authority: `PSO` or `FDR`.
+     - A pilot-capacity or product-fit decision must never later be
+       represented as customer misconduct.
    - If the review concludes the request is eligible, proceed to Phase 2.
    - If the review cannot be completed before payment (insufficient signal,
      system unavailability), a post-payment review is scheduled (Phase 3).
@@ -256,12 +274,33 @@ or `FDR` for AUP decline decisions.
      been advanced.
 
 9. Await payment confirmation:
-   - **stripe_usd:** payment confirmed when Stripe reports `payment_intent.succeeded`
-     (or equivalent settled status) and funds are not in dispute.
-   - **polygon_usdc:** payment confirmed when the on-chain USDC transfer
-     transaction reaches the required block confirmation threshold (threshold
-     is an operational parameter; see GD-4). `pay.confirmed_at` is set at
-     confirmation, not at submission.
+   - **stripe_usd:** payment confirmed when Stripe reports
+     `payment_intent.succeeded` (or equivalent settled status) and funds are
+     not in dispute. `[evt]` `payment_confirmed`.
+   - **polygon_usdc:** payment confirmed only after all of the following
+     conditions are simultaneously true:
+     1. `network_chain_id` is Polygon mainnet `137`.
+     2. Transaction receipt exists for `network_tx_hash`.
+     3. Receipt status indicates success.
+     4. The expected native-USDC token contract emitted the expected transfer
+        event (sender, recipient, and `amount_atomic` match the pending purchase).
+     5. `network_tx_hash` has not previously been consumed for another `pay`
+        record.
+     6. The transaction's block number is less than or equal to the block
+        number returned by `eth_getBlockByNumber('finalized')` on the
+        configured RPC provider.
+     7. If the configured RPC does not support the `finalized` tag, the payment
+        remains `pending` and the fallback provider is queried. Payments must
+        not be provisionally confirmed absent `finalized` support.
+     8. If providers disagree about the transaction, receipt, or finalized
+        height, the payment remains `pending` and is escalated for
+        reconciliation. It must not be treated as confirmed.
+     - The `polygon_usdc` payment rail must remain disabled until the finality
+       check, transfer verification, and transaction-consumption protection
+       described above have passed integration testing on Amoy and
+       mainnet-compatible reads.
+     - `pay.confirmed_at` is set at confirmation, not at submission.
+       `[evt]` `payment_confirmed`.
    - `[sla]` Set provisioning deadline: `pay.confirmed_at + 24h`.
 
 10. On payment failure:
@@ -269,6 +308,8 @@ or `FDR` for AUP decline decisions.
     - Handle reservation released.
     - No entitlement created.
     - Customer notified of payment failure.
+    - No `LifecycleEvent` is written for payment failure; the `Payment` record
+      status is the authoritative record.
 
 11. On payment duplication (duplicate signal for a payment already confirmed):
     - Idempotency gate prevents a second `pay` record.
@@ -293,19 +334,23 @@ or `FDR` for AUP decline decisions.
 
     d. Re-confirm that the purchase type is still valid (e.g., renewal
        confirmed while entitlement is still active; reactivation confirmed
-       while card is still `expired`).
+       while card is still `EXPIRED`).
 
     e. Repeat acceptable-use review when new information has arrived since
        Phase 1 (new report, prior undisclosed suspension history, or Phase 1
-       was deferred). "New information" means a material signal that was not
-       available or considered at Phase 1.
+       was deferred). "New information" means a material signal not available
+       or considered at Phase 1.
 
 13. If any Phase 3 re-verification fails due to an operator decision to decline:
     - Automatic full refund initiation. The customer is not required to request
       the refund.
-    - `[aud]` Administration evidence: `action = DECLINE_POST_PAYMENT`,
-      `reasonCode`, `authorityId`, `nonce`, `paymentId`.
-    - No entitlement created.
+    - `[aud]` Administration evidence: `action = APPLICATION_DECLINED`,
+      `reasonCode` (from §GD-1), `authorityId`, `nonce`,
+      `decline_phase = 'post_payment'`, `payment_id`.
+    - If a `pending_activation` entitlement was created before the decline,
+      terminate it using the governing entitlement-cancellation operation.
+      `[evt]` `entitlement_cancelled`.
+    - `[evt]` `refund_initiated`.
     - Customer notified: purchase declined, full refund initiated, timeline.
     - Distinguish operator-caused refund from customer-caused provisioning
       failure in the audit record. These are not the same event.
@@ -320,7 +365,8 @@ or `FDR` for AUP decline decisions.
 
 16. Card identity:
     - **Initial activation:** create `card` record with `handle`, `card_id`,
-      `public_url`, `owner_customer_id`, `status = pending_activation`.
+      `public_url`, `owner_customer_id`. Card status is derived; no stored
+      status field.
     - **Renewal:** reuse existing `card` record; do not create a new one.
     - **Post-grace reactivation:** reuse existing `card` record; verify `card_id`,
       handle, public URL, and full signed evidence chain are preserved.
@@ -340,9 +386,10 @@ or `FDR` for AUP decline decisions.
 
 19. Recovery-code generation (initial activation only):
     - Generate 8 one-time recovery codes.
-    - Store bcrypt-hashed values in the `acct` record.
+    - Create 8 separate `AccountRecoveryCode` records; store the bcrypt-hashed
+      value in each record. Do not store hashes on the `Account` record.
     - Plain-text codes are delivered to the customer exactly once after
-      activation (see step 28). They are not stored in plain text.
+      activation (see step 26). They are not stored in plain text anywhere.
     - Operators may not view or regenerate recovery codes. `CST` only.
 
 20. Canonical artifact assembly:
@@ -352,7 +399,7 @@ or `FDR` for AUP decline decisions.
         NFC-normalized strings.
     - Compute domain-separated SHA-256 payload hash
       (Canonicalization Contract §Payload Hash Vector).
-    - EvidencePublication created: `pub.stage = PREPARED`.
+    - EvidencePublication created: `pub.publication_stage = PREPARED`.
 
 21. Signing:
     - Resolve the active `coin-card-registry-publication` signing key
@@ -360,13 +407,12 @@ or `FDR` for AUP decline decisions.
     - Sign the canonical lifecycle registry record per the lifecycle record
       signature schema (Canonicalization Contract §Lifecycle Record Signature
       Schema). IEEE P1363 ECDSA encoding; 86 unpadded base64url characters.
-    - `pub.stage → SIGNED`.
+    - `pub.publication_stage → SIGNED`.
 
 22. Publication:
     - Publish signed card package to the registry.
     - Card page becomes accessible at `coincard.click/<handle>`.
-    - `pub.stage → PUBLISHED`.
-    - `pub.published_at` set.
+    - `pub.publication_stage → PUBLISHED`, `pub.published_at` set.
     - This step must succeed before entitlement activation. If publication
       fails after SIGNED, retry before activating. Do not activate on an
       unpublished package.
@@ -375,58 +421,60 @@ or `FDR` for AUP decline decisions.
     - In a single atomic transaction:
       a. Read `card.active_entitlement_version` (current value: `v`).
       b. Set `ent.status → active`, `ent.activated_at`, `ent.expires_at`
-         (12 calendar months from `ent.activated_at`), `ent.grace_period_ends_at`
-         (`ent.expires_at + 30 days`), `ent.route_changes_remaining = 4`.
+         (12 calendar months from `ent.activated_at`),
+         `ent.grace_period_ends_at` (`ent.expires_at + 30 days`),
+         `ent.route_changes_allowed = 4`, `ent.route_changes_used = 0`.
+         (`route_changes_remaining` is derived; do not store it.)
       c. Set `card.active_entitlement_id = ent.id`,
          `card.active_entitlement_version = v + 1`.
-      d. Write `pub.stage → ACTIVATED`, `pub.activated_at`.
+      d. Write `pub.publication_stage → ACTIVATED`, `pub.activated_at`.
       e. Write `[evt]`:
          - Initial activation: `entitlement_activated`
            with `activated_at`, `expires_at`.
-         - Renewal: `entitlement_renewed`
+         - Renewal: `entitlement_activated`
            with `activated_at`, `expires_at`, `prior_entitlement_id`.
+           Publication type `renewal` distinguishes this from initial activation.
          - Post-grace reactivation: `entitlement_reactivated`
            with `activated_at`, `expires_at`, `prior_entitlement_id`,
            `prior_publication_id`.
       f. If the compare-and-swap fails (another process changed
          `active_entitlement_version` between read and write), abort and
          create a reconciliation case. Do not activate.
-    - `[sla]` Provisioning SLA satisfied if `pub.published_at ≤ pay.confirmed_at + 24h`.
+    - `[sla]` Provisioning SLA satisfied if
+      `pub.published_at ≤ pay.confirmed_at + 24h`.
 
-24. Card status update:
-    - `card.status → active`.
-
-25. Activation publication fields for reactivation:
+24. Activation publication fields for reactivation:
     - `pub.publication_type = 'reactivation'`
     - Signing inputs include:
       `reactivation_prior_entitlement_id`, `reactivation_prior_publication_id`,
       `reactivation_effective_at`.
     - See Data Model V1 EvidencePublication table.
 
-26. Customer activation notice:
+25. Customer activation notice:
     - Deliver activation confirmation including:
       - Handle and public URL
       - Activation date and expiration date
-      - Route-change allowance
+      - Route-change allowance (`route_changes_allowed`)
       - Recovery-code delivery (initial activation: one-time plain-text
         delivery with instruction to store securely)
       - Renewal-notice schedule (first notice 30 days before expiration)
 
 #### Phase 5 — SLA monitoring
 
-27. Before 18 hours from `pay.confirmed_at`:
-    - `AUTO` checks whether `pub.stage` has reached `PUBLISHED`.
+26. Before 18 hours from `pay.confirmed_at`:
+    - `AUTO` checks whether `pub.publication_stage` has reached `PUBLISHED`.
     - If not, alert `OPR` and `PSO`.
 
-28. Before 22 hours from `pay.confirmed_at`:
-    - If `pub.stage` has not reached `PUBLISHED`, escalate to `FDR`.
+27. Before 22 hours from `pay.confirmed_at`:
+    - If `pub.publication_stage` has not reached `PUBLISHED`, escalate to `FDR`.
     - Operator must determine whether to obtain the customer's explicit
       agreement to an extension or to initiate an automatic refund.
 
-29. At `pay.confirmed_at + 24h` (SLA deadline):
-    - If `pub.stage` has not reached `PUBLISHED`:
-      - `[evt]` Write `provisioning_sla_breach` evidence record with
-        `deadline`, `breach_detected_at`, `operator_id`.
+28. At `pay.confirmed_at + 24h` (SLA deadline):
+    - If `pub.publication_stage` has not reached `PUBLISHED`:
+      - `[evt]` Write `provisioning_sla_breach` with canonical payload fields
+        `provisioning_deadline` and `elapsed_seconds`.
+      - `[evt]` `refund_initiated`.
       - Automatic refund initiation begins (see Recoverable Exception R-1).
       - Escalate to `FDR` immediately.
       - The customer is not required to request the refund.
@@ -439,22 +487,29 @@ or `FDR` for AUP decline decisions.
 |---|---|---|
 | `pay` | Phase 2 | `status`, `payment_rail`, `payment_asset`, `amount_atomic`, `asset_decimals`, `provider_payment_id`, `network_chain_id`, `network_tx_hash`, `created_at`, `confirmed_at` or `failed_at` |
 | `acct` | Phase 4 | Created or verified |
-| `card` | Phase 4 | Created (initial) or mutated (`status`, `active_entitlement_id`, `active_entitlement_version`) |
+| `card` | Phase 4 | Created (initial): `handle`, `card_id`, `public_url`, `owner_customer_id`. Mutated (all): `active_entitlement_id`, `active_entitlement_version`. No stored `status` field. |
+| `AccountRecoveryCode` × 8 | Phase 4, initial activation only | Bcrypt hash; linked to `acct`; `used_at` null |
 | `route` | Phase 4 | Created |
-| `ent` | Phase 4 | Created; `status → pending_activation → active`; `activated_at`, `expires_at`, `grace_period_ends_at`, `route_changes_remaining` |
-| `pub` | Phase 4 | `stage: PREPARED → SIGNED → PUBLISHED → ACTIVATED`; all stage timestamps |
+| `ent` | Phase 4 | Created; `status → pending_activation → active`; `activated_at`, `expires_at`, `grace_period_ends_at`, `route_changes_allowed = 4`, `route_changes_used = 0` |
+| `pub` | Phase 4 | `publication_stage: PREPARED → SIGNED → PUBLISHED → ACTIVATED`; all stage timestamps |
 
 ### Lifecycle events written
 
 | Event | Trigger |
 |---|---|
-| `entitlement_activated` | Initial activation |
-| `entitlement_renewed` | Renewal |
-| `entitlement_reactivated` | Post-grace reactivation |
-| `provisioning_sla_breach` | 24-hour deadline missed (see GD-2) |
-| `payment_failed` | Step 10 |
-| `application_declined` | Phase 1 or Phase 3 decline (see GD-3) |
-| `publication_abandoned` | Any publication abandoned after PREPARED; internal audit only |
+| `payment_confirmed` | Step 9 — payment confirmed |
+| `entitlement_activated` | Step 23 — initial activation or renewal |
+| `entitlement_reactivated` | Step 23 — post-grace reactivation |
+| `entitlement_cancelled` | Step 13 — if pending entitlement terminated post-payment decline |
+| `provisioning_sla_breach` | Step 28 — 24-hour deadline missed |
+| `refund_initiated` | Step 13 or 28 — refund triggered |
+| `refund_confirmed` | When provider confirms refund |
+| `publication_abandoned` | Any publication abandoned after `PREPARED`; internal audit only |
+
+No `LifecycleEvent` is written for payment failure, application decline, or
+recovery-code consumption. Payment failure is recorded as `Payment.status`.
+Application decline is recorded as administration evidence. Recovery-code
+consumption is recorded as `AccountRecoveryCode.used_at`.
 
 ### Evidence publications created
 
@@ -468,10 +523,10 @@ or `FDR` for AUP decline decisions.
 
 | Notice | Timing | Required content |
 |---|---|---|
-| Eligibility decline (pre-payment) | Phase 1 | Decision and reason at permitted disclosure level |
+| Eligibility or AUP decline (pre-payment) | Phase 1 | Decision and reason at permitted disclosure level |
 | Payment failure | Phase 2, step 10 | Failure reason; no charge |
 | Post-payment decline | Phase 3, step 13 | Decision, refund initiated, timeline |
-| Activation confirmation | Phase 4, step 26 | Handle, URL, dates, route allowance, recovery codes (initial only) |
+| Activation confirmation | Phase 4, step 25 | Handle, URL, dates, route allowance, recovery codes (initial only) |
 | Renewal notice | 30 days before `ent.expires_at` | Upcoming expiration, renewal instructions, pricing |
 | Provisioning SLA extension request | Before 24h deadline if extending | Extension request, new deadline, explicit agreement required |
 | SLA breach refund initiation | At or immediately after breach | Breach, automatic refund initiated, timeline |
@@ -488,10 +543,10 @@ or `FDR` for AUP decline decisions.
 ### Queue and escalation behavior
 
 - Active provisioning orders are tracked in the operator queue.
-- Any order not at `pub.stage = ACTIVATED` 18 hours after `pay.confirmed_at`
-  generates an alert to `OPR` and `PSO`.
-- Any order not at `pub.stage = ACTIVATED` 22 hours after `pay.confirmed_at`
-  escalates to `FDR`.
+- Any order not at `pub.publication_stage = ACTIVATED` 18 hours after
+  `pay.confirmed_at` generates an alert to `OPR` and `PSO`.
+- Any order not at `pub.publication_stage = ACTIVATED` 22 hours after
+  `pay.confirmed_at` escalates to `FDR`.
 - Refund orders not confirmed by the payment provider within 24 hours of
   initiation generate a reconciliation alert.
 
@@ -525,11 +580,11 @@ Daily reconciliation compares:
 
 | Orphan state | Corrective action |
 |---|---|
-| Confirmed payment (`pay.status = confirmed`) with no `ent` record | Create reconciliation case; escalate to `OPR`; do not provision without operator review |
-| `ent` record with `status = active` but no corresponding confirmed `pay` | Immediate escalation to `PSO`; treat as integrity failure until explained |
-| `pub.stage = PUBLISHED` but no `pub.stage = ACTIVATED` (>2h) | Escalate to `OPR`; retry activation or issue compensating publication |
-| `card.active_entitlement_id` set but corresponding `ent.status ≠ active` | Immediate escalation to `PSO`; pointer mismatch is an integrity failure |
-| Refund initiated but no provider confirmation (>24h) | Alert `OPR`; follow up with provider; do not re-initiate without confirming non-duplication |
+| Confirmed `pay` with no `ent` record | Create reconciliation case; escalate to `OPR`; do not provision without operator review |
+| `ent.status = active` but no corresponding confirmed `pay` | Immediate escalation to `PSO`; treat as integrity failure until explained |
+| `pub.publication_stage = PUBLISHED` but no `ACTIVATED` > 2h | Escalate to `OPR`; retry activation or issue compensating publication |
+| `card.active_entitlement_id` set but `ent.status ≠ active` | Immediate escalation to `PSO`; pointer mismatch is an integrity failure |
+| Refund initiated but no provider confirmation > 24h | Alert `OPR`; follow up with provider; do not re-initiate without confirming non-duplication |
 | Two `pay` records sharing `provider_payment_id` or `network_tx_hash` | Immediate escalation; idempotency failure; one record must be marked `duplicate` with explanation |
 | `card.active_entitlement_version` gap (non-sequential) | Escalate to `PSO`; audit the gap |
 
@@ -540,7 +595,7 @@ compensating operations with administration evidence and operator attribution.
 
 | Exception | Condition | Response |
 |---|---|---|
-| R-1: Provisioning failure before deadline | `pub.stage < PUBLISHED` and time < `pay.confirmed_at + 24h` | Retry provisioning; keep order active; alert `OPR` per SLA schedule |
+| R-1: Provisioning failure before deadline | `pub.publication_stage < PUBLISHED` and time < `pay.confirmed_at + 24h` | Retry provisioning; keep order active; alert `OPR` per SLA schedule |
 | R-2: Signing unavailable | Signing key not importable or service unavailable | Halt provisioning; alert `OPR`; do not sign with unverified key; retry when key is available |
 | R-3: Publication delivery failure | Registry unavailable during PUBLISHED step | Retry publication; do not activate on unconfirmed publication |
 | R-4: Customer-caused provisioning failure | Customer cannot supply a valid recipient address within the provisioning window | Cancel provisioning; apply refund rules per Entitlement Specification §8; no operator penalty |
@@ -551,8 +606,8 @@ compensating operations with administration evidence and operator attribution.
 
 | Exception | Condition | Response |
 |---|---|---|
-| N-1: SLA breach without extension agreement | `pay.confirmed_at + 24h` reached without `pub.stage = PUBLISHED` and no customer extension agreement | Automatic full refund; `provisioning_sla_breach` event; no residual obligation to provision |
-| N-2: Post-payment AUP decline | Operator declines after confirmed payment | Automatic full refund; `application_declined` evidence; no entitlement |
+| N-1: SLA breach without extension agreement | `pay.confirmed_at + 24h` reached without `pub.publication_stage = PUBLISHED` and no customer extension agreement | Automatic full refund; `provisioning_sla_breach` event; no residual obligation to provision |
+| N-2: Post-payment eligibility or AUP decline | Operator declines after confirmed payment | Automatic full refund; administration evidence with reason code; `[evt]` `refund_initiated`; no entitlement activated |
 | N-3: Compare-and-swap race (unresolved) | Two concurrent activations both attempted on the same card | Reconciliation case; one activation wins; the other is refunded; no double-entitlement |
 | N-4: Signing-key integrity failure | Trusted key cannot be imported or is distrust-listed | Halt all provisioning; escalate to `FDR`; do not proceed until resolution |
 
@@ -561,20 +616,20 @@ compensating operations with administration evidence and operator attribution.
 Every completed purchase-and-provisioning operation must preserve:
 
 1. Purchase request record with timestamp and operator attribution.
-2. AUP review decision record (Phase 1 and Phase 3) with `[aud]`.
+2. Administration evidence for every eligibility or AUP decline (`[aud]`).
 3. `pay` record with all payment fields.
 4. `ent` record with all lifecycle fields.
-5. `pub` record with all stage timestamps.
+5. `pub` record with all `publication_stage` timestamps.
 6. `[evt]` for all lifecycle events written.
 7. Customer notice delivery records.
 8. Any refund initiation and confirmation records.
 
 ### Completion conditions
 
-**Successful completion:** `pub.stage = ACTIVATED`, `ent.status = active`,
-`card.active_entitlement_id = ent.id`, `card.status = active`, customer
+**Successful completion:** `pub.publication_stage = ACTIVATED`,
+`ent.status = active`, `card.active_entitlement_id = ent.id`, customer
 activation notice delivered, and (for initial activation) recovery codes
-delivered exactly once.
+delivered exactly once via 8 `AccountRecoveryCode` records.
 
 **Refund completion:** `pay.status = refunded`, `pay.refunded_at` set,
 provider refund confirmed, no `ent` in `active` status, customer notified.
@@ -585,7 +640,7 @@ provider refund confirmed, no `ent` in `active` status, customer notified.
 |---|---|---|
 | Provisioning SLA queue — any order > 18h since `pay.confirmed_at` without `ACTIVATED` | Every 4 hours | `AUTO` → alert `OPR` |
 | Pending `pay` records with no confirmation > 24h | Daily | `AUTO` → alert `OPR` |
-| `pub.stage = PUBLISHED` without `ACTIVATED` > 2h | Daily | `AUTO` → alert `OPR` |
+| `pub.publication_stage = PUBLISHED` without `ACTIVATED` > 2h | Daily | `AUTO` → alert `OPR` |
 | Orphan state reconciliation | Daily | `AUTO` report → `OPR` review |
 | Pending refunds unconfirmed > 24h | Daily | `OPR` |
 | Failed customer notice delivery | Daily | `OPR` |
@@ -654,7 +709,7 @@ affecting more than one customer.
 ### Records and evidence read
 
 - `acct` — account and credential status
-- `card` — card status, `active_entitlement_id`, current publication
+- `card` — `active_entitlement_id`, current publication (derived status only)
 - `ent` — entitlement status and term
 - `pub` — publication chain for integrity verification
 - `case` — open SuspensionCases
@@ -754,27 +809,37 @@ affecting more than one customer.
 
 #### Sub-operation 2.3 — Suspension review
 
+Card status `SUSPENDED` is derived from an open, unresolved `SuspensionCase`.
+There is no stored status field on `CoinCard`. `Entitlement.status` ordinarily
+remains `active` during suspension; the card is non-executable because
+execution eligibility is derived from the absence of an open suspension case.
+
 8. Suspension initiation:
    - Authority: `PSO` or `FDR`.
-   - `[aud]` Administration evidence: `action = SUSPEND_CARD`, `reasonCode`,
-     `authorityId`, `cardId`, `effectiveFrom`, `nonce`.
+   - `[aud]` Administration evidence: `action = SUSPEND_CARD`, `reasonCode`
+     (from §GD-1 acceptable-use grounds), `authorityId`, `cardId`,
+     `effectiveFrom`, `nonce`.
+   - Create `case` record with fields from Data Model V1:
+     - `initiated_at` (not `opened_at`)
+     - `initiated_by` (operator ID)
+     - `reason` (references the reasonCode from administration evidence)
+     - `deadline = initiated_at + 7 calendar days`
+     - `customer_notice_sent_at` (set after notice delivery)
    - `[pub]` EvidencePublication: `publication_type = 'suspension'`,
-     `pub.stage → PREPARED → SIGNED → PUBLISHED → ACTIVATED`.
-   - `[evt]` `entitlement_suspended`: `suspended_at`, `reason`, `operator_id`.
-   - `card.status → suspended`. `ent.status → suspended`.
-   - Card is non-executable. Card page shows `SUSPENDED` status publicly.
-   - `[sla]` Set `case.review_deadline = suspension_initiated_at + 7 calendar days`.
-   - Create `case` record: `case_id`, `card_id`, `ent_id`, `opened_at`,
-     `reason`, `status = open`, `operator_id`, `review_deadline`.
-   - **Customer notice:** delivered at the time of suspension. Must include:
-     stated reason at permitted disclosure level; the existence of the
-     review process; contact information for the operator.
+     `pub.publication_stage → PREPARED → SIGNED → PUBLISHED → ACTIVATED`.
+   - `[evt]` `suspended`: `suspended_at`, `initiated_by`, `reason`.
+   - `ent.status` remains `active`. Execution is disabled through the open
+     `SuspensionCase`, not through a stored card or entitlement status.
+   - Card page shows derived `SUSPENDED` status publicly.
+   - **Customer notice:** delivered at the time of suspension; `case.customer_notice_sent_at` set.
+     Must include: stated reason at permitted disclosure level; the existence
+     of the review process; contact information.
 
 9. Suspension review period:
    - `PSO` or `FDR` collects evidence. All operator notes and evidence
      references are recorded in the `case` record with timestamps and
-     operator IDs.
-   - The case must resolve within 7 calendar days of initiation.
+     `initiated_by` / `resolved_by` attributions.
+   - The case must resolve within 7 calendar days of `case.initiated_at`.
 
 10. Suspension deadline extension (if required):
     - A single extension of up to 7 calendar days is permitted.
@@ -782,61 +847,67 @@ affecting more than one customer.
     - `[aud]` Administration evidence: `action = EXTEND_SUSPENSION`,
       `reasonCode`, `authorityId`, `cardId`, `nonce`.
     - `case.extension_reason` recorded.
-    - `case.extended_at` set.
-    - `case.extension_deadline = case.review_deadline + N days` (≤ 7).
-    - **Customer notice:** reason for extension and new deadline.
+    - `case.extension_deadline = case.deadline + N days` (≤ 7).
+    - `case.extension_notice_sent_at` set after notice delivery.
+    - `case.status → resolved_extended`.
+    - `[evt]` `suspension_extended`: `extended_at`, `new_deadline`,
+      `initiated_by`, `extension_reason`.
+    - **Customer notice:** reason for extension and new deadline;
+      `case.extension_notice_sent_at` set.
     - One extension only. A second extension is not permitted.
 
 11. Suspension deadline breach (14-calendar-day absolute ceiling):
     - If the case is unresolved at `case.extension_deadline`
-      (or at `case.review_deadline` if no extension was granted):
+      (or at `case.deadline` if no extension was granted):
       - `case.deadline_breached_at` set.
       - `case.escalated_at` set.
       - `case.process_failure_code` recorded.
+      - `[evt]` `suspension_deadline_breached`: `breached_at`, `case_id`.
       - Escalate immediately to `FDR`.
       - Breach is an operational escalation, not a customer disposition.
-        The card remains `suspended` until a valid disposition is reached.
+        The case remains open until a valid disposition is reached.
     - A suspension that passes 14 calendar days without a recorded resolution
       or documented extension must be escalated and resolved immediately.
 
-12. Suspension case resolution — three valid dispositions:
-    - **Restoration:** review concluded without grounds for action. Proceed
-      to Sub-operation 2.4.
-    - **Revocation:** review confirmed a violation. Proceed to Sub-operation 2.5.
-    - **Expiration during suspension:** entitlement term ended during the
-      suspension period. `ent.status → expired`. Card non-executable by
-      expiration rather than suspension. Suspension case is closed with
-      `disposition = expired`. `[pub]` expiration publication if not
-      already published. `[evt]` `entitlement_expired`.
+12. Suspension case resolution — four valid terminal states:
+    - **`resolved_restored`:** review concluded without grounds for action.
+      Proceed to Sub-operation 2.4.
+    - **`resolved_revoked`:** review confirmed a violation.
+      Proceed to Sub-operation 2.5.
+    - **`resolved_expired`:** entitlement term ended during suspension.
+      `ent.status → expired`. Card derives `EXPIRED` status; non-executable
+      by expiration rather than suspension. `[pub]` expiration publication.
+      `[evt]` `entitlement_expired`. `case.resolved_at`, `case.resolved_by`,
+      `case.resolution_notes`.
+    - **`resolved_extended`:** (intermediate, not terminal — see step 10).
 
 ---
 
 #### Sub-operation 2.4 — Restoration
 
 13. Restoration preconditions:
-    - Review concluded without grounds for action, or
-    - Underlying integrity issue has been resolved.
-    - If the restoration follows a suspension, the suspension case must be
-      in the review phase (not expired, not already revoked).
+    - Review concluded without grounds for action, or underlying integrity
+      issue has been resolved.
+    - The open `SuspensionCase` must be in an active review state (`open` or
+      `resolved_extended`).
     - Verify that `ent.status` is not `expired` or `revoked`. If the
-      entitlement expired during suspension, execution is not restored
-      (card remains non-executable due to expiration, not suspension).
+      entitlement expired during suspension, execution is not restored through
+      this operation (card derives non-executable status from expiration).
 
 14. Restoration execution:
-    - Authority: `PSO` with evidence (for suspension-originated restoration).
+    - Authority: `PSO` with evidence.
     - `[aud]` Administration evidence: `action = RESTORE_CARD`, `reasonCode`,
       `authorityId`, `cardId`, `effectiveFrom`, `nonce`.
     - `[pub]` EvidencePublication: `publication_type = 'restoration'`,
-      `pub.stage → PREPARED → SIGNED → PUBLISHED → ACTIVATED`.
-    - `[evt]` `entitlement_restored`: `restored_at`, `operator_id`,
-      `resolution_summary` (at permitted disclosure level).
-    - `ent.status → active`. `card.status → active`.
+      `pub.publication_stage → PREPARED → SIGNED → PUBLISHED → ACTIVATED`.
+    - `[evt]` `restored`: `restored_at`, `resolved_by`, `resolution_notes`.
+    - `ent.status` remains `active` (it was not changed during suspension).
+    - `case.status → resolved_restored`. `case.resolved_at`, `case.resolved_by`,
+      `case.resolution_notes`.
     - Verify that `card.active_entitlement_id` still points to `ent.id`.
-    - Card returns to executable status only if `ent.status = active`.
-      If the entitlement expired during suspension, the card does not
-      return to executable status.
-    - If a SuspensionCase is open: `case.status → closed`,
-      `case.resolved_at`, `case.resolution = restored`.
+    - Card derives `ACTIVE` status once the case is `resolved_restored` and
+      `ent.status = active`. No stored card status is written.
+    - Card execution is re-enabled by the resolution of the SuspensionCase.
     - **Customer notice:** restoration confirmed; card is executable;
       reason for original suspension at permitted disclosure level.
 
@@ -847,21 +918,27 @@ affecting more than one customer.
 15. Revocation preconditions:
     - Confirmed grounds: acceptable-use violation, fraud, court order, or
       other documented grounds per Entitlement Specification §6.
+      Use reason codes from §GD-1 acceptable-use grounds.
     - Authority: `FDR` only. Revocation requires final review authority.
-    - Evidence basis must be recorded before the revocation action.
+    - Evidence basis must be recorded in administration evidence before the
+      revocation action.
 
 16. Revocation execution:
     - `[aud]` Administration evidence: `action = REVOKE_CARD`, `reasonCode`,
       `authorityId`, `cardId`, `effectiveFrom`, `nonce`, `evidenceSummaryHash`.
     - `[pub]` EvidencePublication: `publication_type = 'revocation'`,
-      `pub.stage → PREPARED → SIGNED → PUBLISHED → ACTIVATED`.
-    - `[evt]` `entitlement_revoked`: `revoked_at`, `operator_id`,
+      `pub.publication_stage → PREPARED → SIGNED → PUBLISHED → ACTIVATED`.
+    - `[evt]` `entitlement_revoked`: `revoked_at`, `resolved_by`,
       `grounds_code`.
-    - `ent.status → revoked`. `card.status → revoked`.
-    - Card is permanently non-executable. Card page shows `REVOKED` status
-      publicly.
-    - If a SuspensionCase is open: `case.status → closed`,
-      `case.resolved_at`, `case.resolution = revoked`.
+    - `ent.status → revoked`.
+    - Clear `card.active_entitlement_id` (set to null) transactionally with
+      the revocation, as the active-entitlement pointer must not refer to a
+      revoked entitlement.
+    - If a SuspensionCase is open: `case.status → resolved_revoked`,
+      `case.resolved_at`, `case.resolved_by`, `case.resolution_notes`.
+    - Card derives `REVOKED` status from the `revocation` publication.
+      No stored card status is written.
+    - Card is permanently non-executable.
     - **Customer notice:** revocation confirmed; reason at permitted disclosure
       level; no refund for the remaining term when revocation is for cause
       (Entitlement Specification §6).
@@ -877,8 +954,8 @@ affecting more than one customer.
 
 17. Operator scope:
     - Operators may communicate the recovery process to the customer.
-    - Operators may verify whether a recovery code has been used (used or
-      unused; not the code value).
+    - Operators may verify whether a given `AccountRecoveryCode` record has
+      been used (by checking `used_at`; not by reading the code value).
     - Operators may confirm whether a primary or secondary credential
       is on record.
     - Operators must not view, disclose, or generate recovery codes.
@@ -890,7 +967,9 @@ affecting more than one customer.
     - Customer presents an unused recovery code and completes the verified-
       email challenge (see Customer Workflows V1 §1.4).
     - The recovery session may only restore a primary credential.
-    - Recovery code is marked used immediately upon session initiation.
+    - `AccountRecoveryCode.used_at` is set immediately upon session initiation.
+      Recovery-code consumption is recorded on the `AccountRecoveryCode` record;
+      no Coin Card `LifecycleEvent` is written.
     - Operator may support by confirming process steps; may not perform
       the recovery action on the customer's behalf.
 
@@ -911,8 +990,8 @@ affecting more than one customer.
 
 21. Permanent credential loss:
     - If the customer has no accessible primary credential, no accessible
-      secondary credential, and no unused recovery codes, account access
-      cannot be restored by operator action.
+      secondary credential, and no unused `AccountRecoveryCode` records,
+      account access cannot be restored by operator action.
     - The customer's funds are not affected: the recipient address on-chain
       is not controlled by ImplicitEx.
     - `OPR` must communicate this boundary clearly and without implication
@@ -962,7 +1041,8 @@ affecting more than one customer.
     - Notification threshold: any card in the affected publication range
       that is or was `active` during the incident window.
     - Notification content: that a signing infrastructure event occurred;
-      the card's current status; what action (if any) the customer should take.
+      the card's current derived status; what action (if any) the customer
+      should take.
 
 28. Fail-closed behavior:
     - While the incident is unresolved, all new publications halt until
@@ -989,7 +1069,7 @@ affecting more than one customer.
 
 | Check | Frequency | Responsible | Escalation |
 |---|---|---|---|
-| Open SuspensionCases — deadline proximity | Daily | `AUTO` → `PSO` | 24h before deadline: alert `PSO`; breach: immediate `FDR` |
+| Open SuspensionCases — deadline proximity | Daily | `AUTO` → `PSO` | 24h before `case.deadline` (or `extension_deadline` if set): alert `PSO`; breach: immediate `FDR` |
 | SuspensionCase deadline breach monitoring | Every 4 hours | `AUTO` | Breach: immediate `FDR` escalation |
 | Published-but-not-activated artifacts | Daily | `AUTO` → `OPR` | > 2h: alert `OPR` |
 | Active-entitlement pointer consistency | Daily | `AUTO` → `PSO` | Mismatch: immediate `PSO` escalation |
@@ -1007,21 +1087,27 @@ affecting more than one customer.
 | Record | When | Fields set |
 |---|---|---|
 | Incident record | Intake | `signal_type`, `severity`, `scope`, `evidence_confidence`, `operator_id`, `created_at` |
-| `case` | Suspension | All `SuspensionCase` fields; `deadline_breached_at` / `escalated_at` if applicable |
-| `ent` | Suspension / restoration / revocation | `status` transition |
-| `card` | Suspension / restoration / revocation | `status` transition |
-| `pub` | Suspension, restoration, revocation, compensating publication | `publication_type`, all stage timestamps |
+| `case` | Suspension | `initiated_at`, `initiated_by`, `reason`, `deadline`, `customer_notice_sent_at`; `extension_*` fields if extended; `deadline_breached_at`, `escalated_at`, `process_failure_code` if breached; `resolved_at`, `resolved_by`, `resolution_notes` on close |
+| `ent` | Revocation | `status → revoked` |
+| `pub` | Suspension, restoration, revocation, compensating | `publication_type`, all `publication_stage` timestamps |
 | Administration evidence | Every privileged action | Per canonicalization contract |
+
+`ent.status` is NOT mutated during suspension or restoration. Card status is
+derived; no `card.status` field is written by any BO2 operation.
 
 ### Lifecycle events written
 
 | Event | Sub-operation |
 |---|---|
-| `entitlement_suspended` | 2.3 |
-| `entitlement_restored` | 2.4 |
-| `entitlement_revoked` | 2.5 |
-| `entitlement_expired` (if during suspension) | 2.3 |
-| `recovery_code_used` | 2.6 |
+| `suspended` | 2.3 — suspension initiation |
+| `suspension_extended` | 2.3 — deadline extension |
+| `suspension_deadline_breached` | 2.3 — breach |
+| `restored` | 2.4 — restoration |
+| `entitlement_revoked` | 2.5 — revocation |
+| `entitlement_expired` | 2.3 — expiration during suspension |
+
+Recovery-code consumption is recorded as `AccountRecoveryCode.used_at`; no
+Coin Card `LifecycleEvent` is written.
 
 ### Evidence publications created
 
@@ -1047,16 +1133,17 @@ affecting more than one customer.
 
 | Deadline | Window | Consequence |
 |---|---|---|
-| Suspension initial review | 7 calendar days from `case.opened_at` | Escalate to `FDR`; must resolve |
-| Suspension extension | ≤ 7 calendar days from extension | Breach; immediate `FDR` escalation |
-| Suspension absolute ceiling | 14 calendar days from `case.opened_at` | Process failure; immediate `FDR` escalation |
+| Suspension initial review | 7 calendar days from `case.initiated_at` | Escalate to `FDR`; must resolve |
+| Suspension extension | `case.extension_deadline` ≤ `case.deadline + 7 days` | Breach; immediate `FDR` escalation |
+| Suspension absolute ceiling | 14 calendar days from `case.initiated_at` | Process failure; immediate `FDR` escalation |
 | Signing-key incident response | No fixed window; fail-closed until resolved | Publications halted; affected customers notified |
 
 ### Queue and escalation behavior
 
 - All open `SuspensionCase` records are in the operator queue.
 - `AUTO` checks case deadlines every 4 hours.
-- 24 hours before `case.review_deadline`: alert `PSO`.
+- 24 hours before `case.deadline` (or `case.extension_deadline` if set):
+  alert `PSO`.
 - At or after breach: immediate `FDR` escalation with `case.deadline_breached_at`.
 - Signing-key incidents bypass queue; notify `FDR` immediately.
 
@@ -1072,10 +1159,10 @@ affecting more than one customer.
 
 | Check | Expected state | Action if mismatch |
 |---|---|---|
-| `card.status = suspended` | Open `case` exists | Escalate to `PSO`; do not restore without case review |
-| `ent.status = suspended` | Corresponding `pub` with `suspension` type | Create compensating publication if pub missing |
-| `case.status = closed` | `card.status` is `active` or `revoked` | Reconcile; pointer inconsistency is integrity failure |
-| No open `case` | No card with `status = suspended` | Alert `PSO` if suspended card has no case |
+| Open `SuspensionCase` exists for `card_id` | `ent.status = active` for that card; card derives `SUSPENDED` | If `ent.status = revoked` or `expired`, close case with appropriate terminal state |
+| `suspension` publication exists | Corresponding open or resolved `case` | Escalate to `PSO`; missing case is integrity failure |
+| `case.status = resolved_restored` or `resolved_revoked` | Corresponding terminal `pub` exists | Create compensating publication if missing |
+| No open `case` for a card | Card does not derive `SUSPENDED` status | If card is unexpectedly non-executable, escalate to `PSO` |
 
 ### Recoverable exceptions
 
@@ -1083,7 +1170,7 @@ affecting more than one customer.
 |---|---|---|
 | R-1: Signing unavailable during suspension | Key not importable | Halt suspension publication; containment via execution block; escalate to `FDR` |
 | R-2: Customer report with insufficient evidence | Signal received, evidence insufficient for action | Log; monitor; request additional information; no suspension without evidence basis |
-| R-3: Case deadline approaching with review incomplete | < 24h to deadline | Alert `PSO`; accelerate review; extension if genuinely required |
+| R-3: Case deadline approaching with review incomplete | < 24h to `case.deadline` | Alert `PSO`; accelerate review; extension if genuinely required |
 
 ### Non-recoverable exceptions
 
@@ -1092,7 +1179,7 @@ affecting more than one customer.
 | N-1: Suspension deadline breach | 14 calendar days without resolution | Immediate `FDR` escalation; process failure |
 | N-2: Signing-key exposure confirmed | Key material externally disclosed | Distrust immediately; compensating publications for all affected cards |
 | N-3: Evidence chain break | Historical records found modified or deleted | Security incident; `FDR` involvement; forensic preservation |
-| N-4: Irrecoverable credential loss | No primary, secondary, or recovery codes | Cannot restore access by operator action; communicate to customer clearly |
+| N-4: Irrecoverable credential loss | No primary, secondary, or unused `AccountRecoveryCode` records | Cannot restore access by operator action; communicate to customer clearly |
 
 ### Audit evidence
 
@@ -1100,24 +1187,25 @@ Every protection-and-recovery operation must preserve:
 
 1. Incident record with intake classification, operator attribution, timestamp.
 2. `[aud]` Administration evidence for every privileged action.
-3. `case` record with complete timeline (opened, extended, resolved).
-4. All `[pub]` records with stage timestamps.
+3. `case` record with complete timeline (`initiated_at`, extensions, resolution).
+4. All `[pub]` records with `publication_stage` timestamps.
 5. All `[evt]` lifecycle events.
 6. Customer notice delivery records.
 7. Signing-key status records at time of incident and at resolution.
 
 ### Completion conditions
 
-**Suspension restored:** `case.status = closed`, `case.resolution = restored`,
-`ent.status = active`, `card.status = active`, restoration publication `ACTIVATED`,
-customer notified.
+**Suspension restored:** `case.status = resolved_restored`, `ent.status = active`,
+`case.resolved_at` set, restoration publication `ACTIVATED`, customer notified.
+Card derives `ACTIVE` from the resolved case and active entitlement.
 
-**Suspension revoked:** `case.status = closed`, `case.resolution = revoked`,
-`ent.status = revoked`, `card.status = revoked`, revocation publication `ACTIVATED`,
-customer notified.
+**Suspension revoked:** `case.status = resolved_revoked`, `ent.status = revoked`,
+`card.active_entitlement_id = null`, revocation publication `ACTIVATED`,
+customer notified. Card derives `REVOKED` from the revocation publication.
 
-**Suspension expired:** `case.status = closed`, `case.resolution = expired`,
+**Suspension expired:** `case.status = resolved_expired`,
 `ent.status = expired`, expiration publication `ACTIVATED`.
+Card derives `EXPIRED` from the expired entitlement.
 
 **Recovery support:** customer has been informed of all available options and
 all operator-prohibited actions. No management operation has been performed
@@ -1144,6 +1232,9 @@ evidence preserved.
   or administration evidence record.
 - Reassigning a revoked card's handle without an independent security review.
 - Signing any new card package while a signing-key incident is unresolved.
+- Writing a stored `status` field on `CoinCard` for any purpose.
+- Mutating `ent.status` to `suspended` for any reason; suspension is expressed
+  through the open `SuspensionCase`, not through the entitlement status.
 
 ---
 
@@ -1171,62 +1262,143 @@ operator action, system configuration, or exceptional circumstance:
 
 | Operation | Customer workflow | Records | Lifecycle events | Publication types | Customer notice | Deadline | Authority |
 |---|---|---|---|---|---|---|---|
-| Initial activation | W2 §2.1–2.6 | `pay`, `ent`, `card`, `route`, `pub` | `entitlement_activated` | `initial_activation` | Activation confirmation | 24h from `pay.confirmed_at` | `AUTO` |
-| Renewal | W5 §5.5 | `pay`, `ent`, `pub` | `entitlement_renewed` | `renewal` | Activation confirmation | 24h from `pay.confirmed_at` | `AUTO` |
-| Post-grace reactivation | W5 §5.5a | `pay`, `ent`, `card`, `route`, `pub` | `entitlement_reactivated` | `reactivation` | Activation confirmation | 24h from `pay.confirmed_at` | `AUTO` |
-| Pre-payment AUP decline | (not in customer workflows; BO1 only) | Application record | `application_declined` | — | Decline notice | Before payment collection | `PSO` / `FDR` |
-| Post-payment AUP decline + refund | W5 §5.5a | `pay` (refunded) | `application_declined` | — | Decline + refund notice | Immediate | `PSO` / `FDR` |
-| Provisioning SLA breach | (BO1 only) | `evt` | `provisioning_sla_breach` | — | Refund initiated | At 24h | `AUTO` + `FDR` escalation |
-| Suspension | W4 §4.x (operator side) | `case`, `ent`, `card`, `pub` | `entitlement_suspended` | `suspension` | Suspension notice | 7-day review | `PSO` |
-| Restoration | W4 §4.x (operator side) | `case`, `ent`, `card`, `pub` | `entitlement_restored` | `restoration` | Restoration notice | At resolution (≤ 14 days) | `PSO` |
-| Revocation | W4 §4.x (operator side) | `case`, `ent`, `card`, `pub` | `entitlement_revoked` | `revocation` | Revocation notice | At decision | `FDR` |
-| Recovery support | W1 §1.4 | `acct` (read) | `recovery_code_used` | — | Process communication | None (customer-driven) | `OPR` (communication only) |
+| Initial activation | W2 §2.1–2.6 | `pay`, `ent`, `card`, `route`, `pub`, `AccountRecoveryCode` × 8 | `payment_confirmed`, `entitlement_activated` | `initial_activation` | Activation confirmation | 24h from `pay.confirmed_at` | `AUTO` |
+| Renewal | W5 §5.5 | `pay`, `ent`, `pub` | `payment_confirmed`, `entitlement_activated` | `renewal` | Activation confirmation | 24h from `pay.confirmed_at` | `AUTO` |
+| Post-grace reactivation | W5 §5.5a | `pay`, `ent`, `card`, `route`, `pub` | `payment_confirmed`, `entitlement_reactivated` | `reactivation` | Activation confirmation | 24h from `pay.confirmed_at` | `AUTO` |
+| Pre-payment eligibility or AUP decline | (not in customer workflows; BO1 only) | Administration evidence only | — | — | Decline notice | Before payment collection | `PSO` / `FDR` |
+| Post-payment AUP decline + refund | W5 §5.5a | `pay`, administration evidence | `refund_initiated`, `refund_confirmed` | — | Decline + refund notice | Immediate | `PSO` / `FDR` |
+| Provisioning SLA breach | (BO1 only) | `evt` | `provisioning_sla_breach`, `refund_initiated` | — | Refund initiated | At 24h | `AUTO` + `FDR` escalation |
+| Suspension | W4 §4.x (operator side) | `case`, `pub` | `suspended` | `suspension` | Suspension notice | 7-day review from `case.initiated_at` | `PSO` |
+| Restoration | W4 §4.x (operator side) | `case`, `pub` | `restored` | `restoration` | Restoration notice | At resolution (≤ 14 days) | `PSO` |
+| Revocation | W4 §4.x (operator side) | `case`, `ent`, `pub` | `entitlement_revoked` | `revocation` | Revocation notice | At decision | `FDR` |
+| Recovery support | W1 §1.4 | `acct`, `AccountRecoveryCode` (read + `used_at`) | — | — | Process communication | None (customer-driven) | `OPR` (communication only) |
 | Signing-key incident | (BO2 only) | Key registry, `pub` | — | Compensating pubs | If threshold reached | None fixed; fail-closed | `FDR` |
 
 ---
 
 ## Governance decisions
 
-The following decisions were surfaced during specification. All are genuine
-gaps not derivable from the governing documents.
+All four governance decisions from the initial issue are now resolved.
 
-**GD-1 — Acceptable-use review criteria are not defined**
+---
 
-The Entitlement Specification (§6, §8) states that acceptable-use review
-exists and may decline applications, renewals, and reactivations. It does
-not define what constitutes a violation or what criteria the review applies.
+**GD-1 — Pilot eligibility and acceptable-use standard (resolved)**
 
-*Required before pilot:* `FDR` must define and document the AUP criteria
-against which applications are reviewed. The criteria must be on record
-before any application is declined on AUP grounds. The criteria themselves
-need not be publicly disclosed, but the existence of a review and the
-reason code for a decline must be attributable.
+*Prior state:* AUP criteria undefined; operator discretion unconstrained.
 
-**GD-2 — `provisioning_sla_breach` is not in Data Model V1**
+*Resolution:* Two categories of decline are defined. High-level categories
+must be disclosed in purchase terms before pilot launch. Internal detection
+methods need not be publicly disclosed. An "unlimited operator discretion"
+category is not permitted.
 
-This operation prescribes `provisioning_sla_breach` as an operational
-evidence record. Data Model V1 at `193dcfa` does not include this event.
-A data model amendment is required before implementation. The event schema
-must include `deadline`, `breach_detected_at`, `pay_id`, `ent_id` (if
-created), and `operator_id`.
+### Category 1 — Pilot or product eligibility decline
 
-**GD-3 — `application_declined` is not in Data Model V1**
+These are not accusations of misconduct. They decline a request because
+ImplicitEx cannot safely or appropriately fulfill it under current conditions.
 
-This operation prescribes `application_declined` as an operational evidence
-event for both pre-payment and post-payment declines. Data Model V1 does not
-include this event. A data model amendment is required. The event schema must
-include `decline_phase` (`pre_payment` / `post_payment`), `reason_code`,
-`authority_id`, `pay_id` (null if pre-payment), and `operator_id`.
+| Reason code | Meaning |
+|---|---|
+| `PILOT_CAPACITY` | Pilot capacity is unavailable |
+| `UNSUPPORTED_REQUEST` | Request is outside supported V1 product scope |
+| `HANDLE_UNAVAILABLE` | Requested handle is unavailable |
+| `AUTHORITY_NOT_ESTABLISHED` | Required authority or route information cannot be established |
+| `PROVISIONING_NOT_SUPPORTED` | ImplicitEx cannot safely provision the request |
 
-**GD-4 — Block confirmation threshold for Polygon USDC is not defined**
+### Category 2 — Acceptable-use decline, suspension, or revocation grounds
 
-The Payment model supports `polygon_usdc` as a payment rail. Confirmed
-payment means the on-chain transaction has reached finality, but the number
-of block confirmations required before `pay.confirmed_at` is set is not
-specified in any governing document. This threshold must be defined and
-documented before the Polygon USDC payment rail accepts customer payments.
-The threshold must balance fraud risk (chain reorganization) against
-provisioning latency.
+These represent affirmative concerns about conduct or intent. A stronger
+evidence basis is required than for a Category 1 eligibility decision.
+
+| Reason code | Meaning |
+|---|---|
+| `IMPERSONATION` | Credible impersonation or deceptive handle use |
+| `FRAUD_OR_DECEPTION` | Credible fraud, scam, phishing, or malicious-payment activity |
+| `SECURITY_COMPROMISE` | Known credential or card compromise that cannot be safely resolved |
+| `LEGAL_PROHIBITION` | Specific documented legal prohibition |
+| `PLATFORM_INTEGRITY_ABUSE` | Deliberate interference with platform integrity or signed evidence |
+| `MATERIAL_MISREPRESENTATION` | Materially false information supplied to obtain or control a Coin Card |
+
+### Operating rules
+
+- Every decision must cite a reason code, evidence basis, authority ID,
+  operator ID, and timestamp.
+- A Category 1 decision must never later be represented as customer misconduct.
+- Pre-payment eligibility decisions may be made without collecting payment.
+- Post-payment operator refusal requires automatic full refund.
+- Category 2 suspension or revocation requires a stronger recorded evidence
+  basis than a Category 1 eligibility decline.
+- High-level customer-facing decline categories must be disclosed in purchase
+  terms before pilot launch.
+- Internal detection rules, security signals, and investigation methods need
+  not be publicly disclosed.
+
+---
+
+**GD-2 — `provisioning_sla_breach` already in Data Model V1 (resolved)**
+
+*Prior state (stale read):* The initial issue incorrectly stated that
+`provisioning_sla_breach` was missing from Data Model V1.
+
+*Resolution:* `provisioning_sla_breach` exists in the canonical
+`LifecycleEvent` catalog at Data Model V1 `193dcfa`. No data model amendment
+is needed. Its canonical payload fields are `provisioning_deadline` and
+`elapsed_seconds`. Use these exact field names; do not invent alternatives.
+
+---
+
+**GD-3 — Application declines are administration evidence, not LifecycleEvents (resolved)**
+
+*Prior state:* The initial issue proposed an `application_declined`
+LifecycleEvent for both pre- and post-payment declines.
+
+*Resolution:* Application declines are immutable administration evidence.
+No Coin Card `LifecycleEvent` named `application_declined` is created.
+
+**Pre-payment decline:** Create administration evidence with:
+- `action = APPLICATION_DECLINED`
+- `acct_id` if one exists; `card_id` if one already exists
+- `decline_phase = 'pre_payment'`
+- `reasonCode` (from §GD-1)
+- `authorityId`, `operatorId`, decision timestamp
+- Evidence references and `customer_notice_timestamp`
+
+No Payment, Entitlement, or Coin Card record is required when none exists
+for the request.
+
+**Post-payment decline:** Create the same administration evidence with:
+- `decline_phase = 'post_payment'`
+- `paymentId` referencing the confirmed Payment
+
+Then use existing LifecycleEvents:
+- `[evt]` `refund_initiated`
+- `[evt]` `refund_confirmed` (when provider confirms)
+- `[evt]` `entitlement_cancelled` if a `pending_activation` entitlement was
+  created and must be terminated
+
+---
+
+**GD-4 — Polygon USDC finality via `finalized` tag (resolved)**
+
+*Prior state:* Finality was described as "a block confirmation threshold"
+without specifying what that threshold is.
+
+*Resolution:* Do not use a fixed block count. Set `Payment.status = 'confirmed'`
+and `pay.confirmed_at` only after all seven conditions in step 9 (polygon_usdc
+subsection) are simultaneously true:
+
+1. `network_chain_id` is Polygon mainnet `137`.
+2. Transaction receipt exists for `network_tx_hash`.
+3. Receipt status indicates success.
+4. Expected native-USDC token contract emitted the expected transfer (sender,
+   recipient, `amount_atomic` match the pending purchase).
+5. `network_tx_hash` has not previously been consumed for another `pay` record.
+6. Transaction block number ≤ block number from `eth_getBlockByNumber('finalized')`.
+7. Configured RPC supports `finalized` tag; otherwise payment stays `pending`
+   and fallback provider is queried.
+
+Provider disagreement leaves the payment `pending` pending reconciliation.
+The `polygon_usdc` rail must remain disabled until these checks pass
+integration testing on Amoy and mainnet-compatible reads.
 
 ---
 
@@ -1239,3 +1411,54 @@ Two workflows: Purchase and Provisioning (BO1, six sub-operations) and
 Protection and Recovery (BO2, eight sub-operations). Four governance decisions
 surfaced: GD-1 (AUP criteria), GD-2 (provisioning_sla_breach event),
 GD-3 (application_declined event), GD-4 (block confirmation threshold).
+
+### 2026-08-02 — Ratification corrections applied
+
+**Correction 1 — Data-model vocabulary**
+Card status is derived and never stored. All references to setting or reading
+`card.status` removed. `publication_stage` used as the canonical field name.
+
+**Correction 2 — Suspension state model**
+Suspension state corrected: `Entitlement.status` remains `active` during
+suspension. Card derives `SUSPENDED` from an open `SuspensionCase`. Canonical
+SuspensionCase field names aligned with Data Model V1: `initiated_at`,
+`initiated_by`, `deadline`, `extension_deadline`, `extension_reason`,
+`extension_notice_sent_at`, `resolved_by`, `resolution_notes`. Canonical
+case statuses: `open`, `resolved_extended`, `resolved_restored`,
+`resolved_revoked`, `resolved_expired`.
+
+**Correction 3 — Lifecycle-event catalog**
+`entitlement_renewed` removed; both initial activation and renewal use
+`entitlement_activated` (distinguished by `publication_type`).
+`entitlement_suspended` replaced with `suspended`.
+`entitlement_restored` replaced with `restored`.
+`suspension_extended` and `suspension_deadline_breached` added.
+`payment_failed`, `recovery_code_used`, and `application_declined` removed
+as LifecycleEvents; their evidence is recorded through Payment record
+mutations, AccountRecoveryCode record mutations, and administration evidence
+respectively.
+
+**Correction 4 — Recovery-code and route-quota fields**
+Recovery codes stored as 8 separate `AccountRecoveryCode` records, not as
+hashes on the `Account` record. `route_changes_remaining` removed;
+`route_changes_allowed = 4` and `route_changes_used = 0` set at activation.
+
+**Correction 5 — GD-1 AUP standard**
+Two-category eligibility and acceptable-use reason-code system defined.
+Unlimited operator discretion prohibited. Pre-pilot disclosure requirement set.
+
+**Correction 6 — GD-2 stale-read correction**
+`provisioning_sla_breach` confirmed present in Data Model V1. Stale amendment
+request removed. Canonical payload fields `provisioning_deadline` and
+`elapsed_seconds` adopted.
+
+**Correction 7 — GD-3 administrative-audit resolution**
+Application declines are administration evidence, not LifecycleEvents.
+Pre- and post-payment decline evidence schema defined. Existing `refund_initiated`,
+`refund_confirmed`, and `entitlement_cancelled` events used for post-payment
+path.
+
+**Correction 8 — GD-4 finalized-block resolution**
+Polygon USDC finality defined via `eth_getBlockByNumber('finalized')` tag with
+seven required conditions. Fixed block count approach replaced. `polygon_usdc`
+rail gated on Amoy and mainnet-compatible integration testing.
