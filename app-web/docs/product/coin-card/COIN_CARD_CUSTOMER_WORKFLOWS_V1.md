@@ -1,9 +1,10 @@
 # Coin Card Customer Workflows V1
 
-**Status:** Governing workflow specification  
+**Status:** Ratified and closed  
 **Governing documents:**
-- `COIN_CARD_ENTITLEMENT_SPECIFICATION_V1.md` (ratified)
-- `COIN_CARD_DATA_MODEL_V1.md` at `ee354fe` (ratified and closed)
+- `COIN_CARD_ENTITLEMENT_SPECIFICATION_V1.md` at `b3bdc08` (ratified)
+- `COIN_CARD_DATA_MODEL_V1.md` at `d0b5a8b` (ratified and closed)  
+**Ratified:** 2026-08-02
 
 **Scope:** Five end-to-end customer workflows as observable experiences. Defines
 customer-visible states, required authority, record changes, lifecycle events,
@@ -205,24 +206,57 @@ recovery codes were generated at card activation.
 1. Customer provides one recovery code.
 2. Server finds matching `AccountRecoveryCode` by bcrypt comparison.
 3. Code is marked `used_at = NOW()`.
-4. Session established with recovery-credential flag.
-5. Customer is prompted to re-establish a primary or secondary credential.
+4. Customer completes a challenge through their account's verified email
+   address (OTP or magic link). The email challenge is required in addition
+   to the recovery code; the code alone is insufficient.
+5. Recovery-code session established with `session_type = 'recovery'`.
+6. Customer registers or restores a primary authentication credential
+   (new SIWE wallet address).
+7. On successful primary-credential restoration, the recovery session
+   terminates.
+8. Customer begins a new fully authenticated session (primary credential)
+   for all subsequent management operations.
 
-**Records read:** `acct`, `AccountRecoveryCode` (all unhashed-matching)  
-**Records mutated:** `AccountRecoveryCode.used_at` set.  
-**Lifecycle events:** None (session establishment is not a state change;
-code consumption is private operational metadata).
+**Recovery-code session authority:**
+
+A recovery-code session may only:
+- Verify the single consumed recovery code.
+- Complete the required email challenge.
+- Register or restore a primary authentication credential.
+- View masked account information necessary to confirm account identity.
+
+A recovery-code session must not permit:
+- Wallet route changes.
+- Entitlement cancellation, renewal, or reactivation.
+- Account closure.
+- Email ownership changes (changing the registered email address).
+- Generation of replacement recovery codes.
+- Access to complete payment details (provider IDs, full amounts).
+- Any other economically consequential management operation.
+
+**Records read:** `acct`, `AccountRecoveryCode`  
+**Records mutated:** `AccountRecoveryCode.used_at` set; `AccountCredential` created on primary credential restoration.  
+**Lifecycle events:** None for session establishment; code consumption is private operational metadata.
 
 **Non-recoverable failures:** All 8 codes consumed with no accessible primary
-or secondary credential: account access is permanently lost. The customer's
-funds are not affected — the recipient address on-chain is not controlled by
-ImplicitEx. The card identity and evidence remain on record.
+or secondary credential, or email challenge cannot be completed: account access
+is permanently lost. The customer's funds are not affected — the recipient
+address on-chain is not controlled by ImplicitEx. The card identity and
+evidence remain on record.
 
-**Security boundaries:** Codes are never retrievable after initial display.
-Plaintext is shown once at generation (activation event) and discarded.
-Used codes are not deleted; they are marked consumed for audit.
+**Security boundaries:** 
+- Codes are never retrievable after initial display. Plaintext is shown once
+  at generation and discarded.
+- Used codes are not deleted; they are marked consumed for audit.
+- The recovery session terminates as soon as the primary credential is
+  restored. It cannot be extended or reused.
+- The email challenge is mandatory; a recovery code without a passing email
+  challenge does not establish a session.
+- Session type `recovery` is distinct from `primary` and `secondary` at the
+  application layer.
 
-**Out of scope:** Code regeneration, cross-device sync, hardware key binding.
+**Out of scope:** Code regeneration, cross-device sync, hardware key binding,
+SMS or TOTP as recovery mechanisms.
 
 ---
 
@@ -744,29 +778,69 @@ behalf.
 displayed as "Failed" or "Cancelled" until on-chain evidence confirms failure
 or the visitor explicitly confirms they do not wish to continue waiting.
 
+**Provisional evidence artifact:** When the transaction has been broadcast but
+not confirmed, a provisional evidence artifact may be generated containing:
+- Transaction hash
+- Submission timestamp
+- Chain ID
+- Recipient address
+- Amount
+- `confirmation_status: 'pending'` (explicit; does not claim success or failure)
+- Explorer link
+
+The provisional artifact must not claim success or failure. If confirmation
+is later established, the visitor should obtain the confirmed artifact (§3.18).
+
 ---
 
 ### 3.18 Confirmed transaction evidence
 
 The transaction has been confirmed on-chain (finality per Polygon consensus).
 
-**On-chain evidence available:**
-- Transaction hash
-- Block number and timestamp
-- Emitted Transfer event: `from`, `to`, `amount`
-- Gas used
-
 **Customer display:** "Transfer confirmed. X USDC sent to [recipient address]."
-Transaction hash and block explorer link are shown.
+
+A **transaction evidence artifact** must be generated and presented to the
+visitor. This artifact is governed by the existing transaction-evidence
+contract. It may be generated client-side. The visitor may download or copy
+it. ImplicitEx does not promise permanent server-side storage of individual
+transfer receipts in V1.
+
+The transaction evidence artifact must include:
+
+| Field | Source |
+|---|---|
+| Transaction hash | Blockchain RPC |
+| Approval transaction hash (if applicable) | Blockchain RPC |
+| Chain ID | Wallet connection |
+| Block number | Blockchain RPC |
+| Confirmation status | `confirmed` |
+| Sender address | Wallet connection |
+| Recipient address | Active WalletRoute at time of transfer |
+| USDC token contract address | Chain configuration |
+| Recipient amount (atomic) | Transfer event log |
+| Broadcast timestamp | Local time at broadcast |
+| Confirmation timestamp | Block timestamp |
+| Explorer link | Chain configuration + transaction hash |
+| Coin Card ID | `card.card_id` |
+| WalletRoute ID | `route.route_id` |
+| Activated EvidencePublication reference | `pub.publication_id` + `pub.signature` |
+| Evidence schema / version | e.g., `coin-card-transfer-evidence.v1` |
 
 **Data model:** No data model record is created by ImplicitEx for the
-visitor's transfer. The blockchain itself is the authoritative record.
+visitor's transfer. The blockchain is the authoritative record. The evidence
+artifact is a workflow output, not a persistent data model record.
 
-**Receipt architecture note:** A future receipt storage implementation may
-create an internal evidence record linking the transaction hash to the card
-and the signed card state at time of transfer. That is out of scope for V1.
-When implemented, it will reference the existing on-chain evidence rather than
-duplicate it.
+**Relationship to evidence contracts:** The evidence artifact references the
+existing activated EvidencePublication, linking the transfer to the signed
+card state at time of transfer. It does not duplicate the card's signed
+evidence; it points to it.
+
+**Pre-broadcast validation failure:** A failure before broadcast (insufficient
+balance, wallet rejection, chain validation failure) produces no transaction
+evidence and no claim of submission.
+
+**Wallet rejection:** No blockchain receipt. No evidence artifact asserting
+submission.
 
 ---
 
@@ -791,9 +865,14 @@ card holder's account state.
 ### W3 Audit evidence
 
 On-chain: blockchain transaction, Transfer event, block explorer.
-ImplicitEx: no data model record created. The most recently activated
-EvidencePublication records the card state at the time the card was last
-signed — not at the time of each individual transfer.
+ImplicitEx: no data model record created per transfer. The most recently
+activated EvidencePublication records the card state at the time the card
+was last signed, not at the time of each individual transfer.
+
+Visitor-facing: transaction evidence artifact (§3.18) linking on-chain
+evidence to the card's signed state at time of transfer. Generated
+client-side; the visitor is responsible for retaining it. A provisional
+artifact (§3.17) is available for submitted-but-unconfirmed transactions.
 
 ### W3 Exit conditions
 
@@ -1086,20 +1165,62 @@ not set by this document).
 ### 5.5 Renewal during grace
 
 **Entry condition:** Card is EXPIRED; grace period is active
-(NOW() ≤ grace_period_ends_at). Card identity and last route configuration
-are preserved. Execution is disabled.
+(`NOW() ≤ ent.grace_period_ends_at`). Execution is disabled.
 
-**Happy path:** Identical to §5.4. The new Entitlement re-activates the
-same Coin Card identity. The card's handle and public URL are unchanged.
+**Happy path:** Identical to §5.4. The prior entitlement is already `expired`
+before the renewal purchase. The renewal creates a new entitlement, activates
+it, and re-establishes a signed ACTIVE state on the same Coin Card identity.
+The card's handle and public URL are unchanged.
 
-**Distinction from §5.4:** The prior entitlement is already in `expired`
-status before the renewal purchase. The renewal creates a new term and a
-new signed ACTIVE state on the same card.
+---
 
-**After grace expires:** Renewal remains possible (the data model has no
-mechanism to block it after grace), but the slug is not reassigned. The
-policy for post-grace renewal is: permitted; the card was never reassigned.
-This is a governance clarification (see §Governance decisions).
+### 5.5a Post-grace reactivation
+
+**Entry condition:** Card is EXPIRED; grace period has ended
+(`NOW() > ent.grace_period_ends_at`). The card identity is permanently
+reserved and has not been reassigned. Execution is disabled.
+
+**Distinction from renewal (§5.4, §5.5):** Reactivation is not renewal.
+It creates a new entitlement after an indefinite gap. It does not restore
+the terms, pricing, or configuration of the prior entitlement.
+
+**Required authority:** Primary credential (SIWE wallet signature).
+
+**Happy path:**
+
+1. Customer initiates reactivation (via checkout, at then-current pricing).
+2. A new Payment record created; enters `pending` status.
+3. Payment confirmed (`pay.confirmed_at` set; provisioning deadline = `confirmed_at + 24h`).
+4. Customer supplies a current, valid Polygon USDC recipient address.
+   Obsolete route configuration is not automatically restored; the prior
+   `superseded` routes remain on record but a new route is required.
+5. Provisioning completes (signed package published for the new term).
+6. New Entitlement activates atomically — identical to §5.4 steps 6–8.
+7. Card's handle, public URL, `card_id`, and full signed evidence chain
+   are preserved. Card identity is continuous; no identity gap.
+8. Card transitions from EXPIRED to ACTIVE.
+
+**Records created:** `pay` (new), `ent` (new), `route` (new — fresh address required)  
+**Records mutated:** `ent` (prior, status already `expired`), `card.active_entitlement_id`, `card.active_entitlement_version`  
+**Lifecycle events:** `entitlement_activated`  
+**Evidence publications:** `pub` (renewal type, activated) [pub]
+
+**Note on publication type:** Post-grace reactivation uses `publication_type = 'renewal'`
+because it re-establishes an ACTIVE state on the same card identity. The
+distinction from within-term renewal is recorded in the lifecycle event
+metadata (`activation_after_grace = true`), not in the publication type.
+
+**Provisioning SLA:** The 24-hour SLA applies from `pay.confirmed_at`. If
+provisioning fails, the refund and extension rules from Entitlement
+Specification §4 apply.
+
+**Security:** Reactivation is subject to acceptable-use review at ImplicitEx's
+discretion. The operator may decline reactivation for a card with a history of
+violations without triggering a refund obligation.
+
+**Non-recoverable:** If the customer cannot supply a valid recipient address
+within the provisioning window, the reactivation is cancelled and the
+applicable refund rules apply.
 
 ---
 
@@ -1125,13 +1246,17 @@ any non-terminal status.
 5. `ent.status → 'cancelled'`, `ent.cancelled_at` set.
 6. `CoinCard.active_entitlement_id → null`.
 7. `CoinCard.active_entitlement_version` incremented.
-8. EvidencePublication type `expiration` activated (cancellation produces an
-   EXPIRED/non-executable signed state; see §Governance decisions).
+8. EvidencePublication type `cancellation` activated:
+   - `card_status_at_publication = EXPIRED`
+   - `cancellation_reason = 'customer_requested'`
+   - `cancellation_effective_at = ent.cancelled_at`
+   The public derived status is EXPIRED, but the signed evidence identifies
+   customer-requested cancellation, not natural expiration.
 9. LifecycleEvent `entitlement_cancelled` written.
 
 **Records mutated:** `ent.status`, `ent.cancelled_at`, `pay.refund_initiated_at`, `pay.refund_reason`, `pay.status`, `pay.refunded_at`, `card.active_entitlement_id`, `card.active_entitlement_version`  
 **Lifecycle events:** `cancellation_requested`, `refund_initiated` (if applicable), `refund_confirmed` (if applicable), `entitlement_cancelled`  
-**Evidence publications:** `pub` (expiration, activated) [pub]
+**Evidence publications:** `pub` (cancellation, activated; signed with `cancellation_reason` and `cancellation_effective_at`) [pub]
 
 **Non-recoverable:** Cancellation cannot be undone. A new entitlement requires
 a new purchase.
@@ -1272,12 +1397,17 @@ option presented if card holder is authenticated. Slug not reassigned.
 
 ### 5.11 Recovery of account access
 
-Covered in §1.4 (recovery codes). Management-specific note: after account
-access is recovered via recovery codes, the customer should update their
-primary or secondary credential before performing any card management operation.
-A recovery-code session flag may restrict management operations until a
-credential is re-established; the exact restriction policy is an implementation
-decision.
+See §1.4 for the full recovery-code session workflow.
+
+**Management restriction during recovery session:** A recovery-code session
+must not permit any card management operation (route changes, cancellation,
+renewal, reactivation, account closure, recovery code regeneration, email
+changes, or access to complete payment details). All management operations
+require a fresh session authenticated at primary or secondary credential level.
+
+After the recovery session completes and a primary credential is restored,
+the customer must initiate a new sign-in (§1.2) before performing management
+operations. The recovery session does not carry over into a full session.
 
 ---
 
@@ -1285,8 +1415,10 @@ decision.
 
 - Route changes require primary-credential authentication.
 - Cancellation requires primary or secondary credential.
-- Renewal purchase requires authentication sufficient for checkout
-  (checkout flow is out of scope for this document).
+- Renewal and reactivation purchases require authentication sufficient for
+  checkout (checkout flow is out of scope for this document).
+- A recovery-code session must not permit any management operation; it
+  is limited to primary-credential restoration only (see §1.4).
 - Suspension is operator-initiated; the customer cannot initiate or end
   a suspension unilaterally.
 - Revocation is operator-initiated and permanent.
@@ -1331,48 +1463,69 @@ workflows, admin account management, third-party abuse reporting.
 
 ---
 
-## Governance decisions not derivable from entitlement and data-model specifications
+## Governance decision log
 
-The following decisions required during workflow definition are not directly
-specified in the governing documents. Each is recorded here for founder review.
+The following four governance decisions were surfaced during initial workflow
+definition. All four are now resolved and incorporated.
 
-**GD-1 — Post-grace renewal remains permitted**
+**GD-1 — Post-grace reactivation (resolved)**
+*Original:* Treated post-grace renewal as permitted with deferred policy.
+*Resolution:* Post-grace reactivation is distinct from renewal. It creates a
+new entitlement at then-current pricing, requires fresh route validation,
+and is subject to acceptable-use review. Permanent card identity is preserved.
+The entitlement specification (§6, §8) now defines the distinction.
+Workflow §5.5a implements reactivation.
 
-The entitlement specification describes the 30-day grace period as the
-window for renewal without losing the handle. After grace expires, the
-specification says the slug is not immediately reassigned; it does not
-say renewal is blocked. This workflow treats post-grace renewal as
-permitted (the same card identity; no reassignment mechanism exists in V1).
-If the policy intent is to block post-grace renewal, the entitlement
-specification must say so.
+**GD-2 — Cancellation publication type (resolved)**
+*Original:* Cancellation incorrectly used the `expiration` publication type.
+*Resolution:* `cancellation` added as a distinct `EvidencePublication.publication_type`
+in Data Model V1. Cancellation and natural expiration both produce
+`card_status_at_publication = EXPIRED` but the cause is signed into the
+evidence record. Workflow §5.6 updated.
 
-**GD-2 — Cancellation produces an `expiration`-type EvidencePublication**
+**GD-3 — No backend record for individual transfers (resolved)**
+*Original:* Noted individual transfers produce no data model record; deferred receipt architecture.
+*Resolution:* Confirmed. V1 creates no backend record per transfer. The
+blockchain is authoritative. A transaction evidence artifact is generated
+client-side after confirmation (§3.18) and linked to the card's signed state.
+V1 does not promise server storage. Provisional artifact available for
+pending transactions (§3.17).
 
-The publication type `expiration` is used when a card transitions to a
-non-executable state by means other than revocation. Cancellation produces
-a non-executable card state. This workflow maps cancellation to an `expiration`
-publication rather than inventing a new `cancellation` publication type.
-If a distinct `cancellation` publication type is required for audit
-distinguishability, the EvidencePublication record must add it.
-
-**GD-3 — Payment execution creates no data model record for individual transfers**
-
-The ratified data model covers subscription/entitlement lifecycle. Individual
-USDC transfers made via the card are on-chain events; ImplicitEx does not
-create a data model record per transfer. This is a clarification of scope,
-not a contradiction. When a receipt storage system is implemented, it will
-require a new record type that is out of scope for Data Model V1.
-
-**GD-4 — Recovery-code session restrictions on management operations**
-
-The data model and entitlement specification do not define which management
-operations are permitted in a recovery-code session. This workflow notes that
-a restriction policy should exist but defers the specific rules to implementation.
+**GD-4 — Recovery-code session authority (resolved)**
+*Original:* Deferred restriction policy to implementation.
+*Resolution:* A recovery-code session is recovery-limited: it may only
+restore a primary credential after passing a required email challenge. It
+must not permit any economically consequential operation. Explicit prohibited
+and permitted operation lists are now governing. See §1.4 and §5.11.
 
 ---
 
 ## Contradictions found
 
-None. All five workflows are consistent with the entitlement specification
-and the ratified data model. The governance decisions above are clarifications
-and boundary extensions, not contradictions.
+None. All five workflows are consistent with the ratified entitlement
+specification and the ratified data model. The four governance decisions
+above were clarifications and boundary extensions that have been incorporated.
+
+---
+
+## Amendment log
+
+### 2026-08-02 — Four amendments applied at ratification
+
+**Amendment A — Post-grace reactivation**
+§5.5a added. §5.5 clarified as grace-period renewal only. GD-1 resolved.
+
+**Amendment B — Cancellation publication type**
+§5.6 updated to use `publication_type = 'cancellation'` with
+`cancellation_reason` and `cancellation_effective_at` signing inputs. GD-2 resolved.
+
+**Amendment C — Transaction evidence artifact**
+§3.17 provisional artifact added. §3.18 rewritten with full evidence field
+list, client-side generation policy, V1 storage disclaimer, and no-evidence
+rules for wallet rejection and pre-broadcast failures. W3 audit evidence
+updated. GD-3 resolved.
+
+**Amendment D — Recovery-code session authority**
+§1.4 rewritten with explicit permitted/prohibited operation list, required
+email challenge, session termination on credential restoration. §5.11
+updated. W5 security boundaries updated. GD-4 resolved.
