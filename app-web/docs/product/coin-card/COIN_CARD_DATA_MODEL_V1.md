@@ -318,10 +318,10 @@ creates a new Entitlement record; it does not update an existing one.
 | From | To | Trigger | Creates lifecycle event |
 |---|---|---|---|
 | `pending_activation` | `active` | Provisioning complete (first signed package published) | `entitlement_activated` |
-| `pending_activation` | `cancelled` | Refund initiated (SLA breach or customer request within 30 days) | `entitlement_cancelled` |
+| `pending_activation` | `cancelled` | Any of: customer request; provisioning SLA breach; post-payment operator decline; post-payment predicate failure; customer provisioning failure | `entitlement_cancelled` (no cancellation EvidencePublication — see §EvidencePublication boundary) |
 | `active` | `expired` | `NOW() >= expires_at` | `entitlement_expired` |
 | `active` | `revoked` | Operator action following suspension resolution | `entitlement_revoked` |
-| `active` | `cancelled` | Customer cancellation request | `entitlement_cancelled`; EvidencePublication type `cancellation` |
+| `active` | `cancelled` | Customer cancellation request; `cancellation_reason = 'customer_requested'` | `entitlement_cancelled`; EvidencePublication type `cancellation` |
 | `expired` | `active` | Renewal (new Entitlement; NOT a transition on this record) | — |
 
 Note: Suspension does not change Entitlement status. Suspension is represented
@@ -378,9 +378,7 @@ prerequisite for activation, not synonymous with it.
 | `status` | enum | — | — | `pending`, `confirmed`, `refunded`, `failed` |
 | `created_at` | timestamp | ✓ | — | Payment record created |
 | `confirmed_at` | timestamp\|null | — | — | Set on payment confirmation; starts provisioning clock |
-| `refunded_at` | timestamp\|null | — | — | Set when refund is confirmed |
-| `refund_reason` | enum\|null | — | — | `provisioning_sla_breach`, `customer_request`, `operator_initiated` |
-| `refund_initiated_at` | timestamp\|null | — | — | When ImplicitEx initiated the refund process |
+| `refunded_at` | timestamp\|null | — | — | Set when cumulative succeeded PaymentRefund amounts equal `amount_atomic` |
 
 ### Amount representation
 
@@ -411,9 +409,7 @@ name alone, because future asset versions may differ.
   Entitlement.
 - `Payment.confirmed_at` is the reference point for the 24-hour provisioning
   SLA. `Entitlement.provisioning_deadline = Payment.confirmed_at + 24h`.
-- `refund_initiated_at` is recorded when ImplicitEx acts — before the refund
-  is confirmed by the payment provider. This documents that ImplicitEx
-  discharged its proactive obligation.
+- Each refund operation records its initiation in `PaymentRefund.initiated_at`. The corresponding `refund_initiated` LifecycleEvent is the immutable evidence that ImplicitEx discharged its proactive obligation for that operation.
 
 ### Invariants
 
@@ -460,7 +456,7 @@ are never updated or deleted.
 | `entitlement_reactivated` | Post-grace reactivation activates | `activated_at`, `expires_at`, `prior_entitlement_id`, `prior_publication_id` |
 | `entitlement_expired` | Entitlement transitions to `expired` | `expired_at`, `grace_period_ends_at` |
 | `entitlement_revoked` | Entitlement transitions to `revoked` | `case_id`, `reason` |
-| `entitlement_cancelled` | Entitlement transitions to `cancelled` | `cancellation_reason`, `refund_initiated` |
+| `entitlement_cancelled` | Entitlement transitions to `cancelled` | `cancellation_reason`, `payment_refund_id` |
 | `route_changed` | New WalletRoute activated | `route_id`, `route_sequence`, `recipient_address` |
 | `suspended` | SuspensionCase opened | `case_id`, `reason`, `deadline` |
 | `suspension_extended` | SuspensionCase extended | `case_id`, `extension_deadline`, `extension_reason` |
@@ -470,7 +466,7 @@ are never updated or deleted.
 | `grace_period_started` | 30-day grace begins after expiration | `grace_period_ends_at` |
 | `grace_period_ended` | 30-day grace expires | — |
 | `payment_confirmed` | Payment.confirmed_at set | `payment_id`, `confirmed_at` |
-| `refund_initiated` | ImplicitEx initiates refund | `payment_id`, `payment_refund_id`, `refund_reason` |
+| `refund_initiated` | ImplicitEx initiates refund | `payment_id`, `payment_refund_id`, `refund_reason` — copied from `PaymentRefund.reason_code` for the PaymentRefund identified by `payment_refund_id`; immutable snapshot of that operation's ground |
 | `refund_confirmed` | Payment provider confirms refund (one per succeeded PaymentRefund) | `payment_id`, `payment_refund_id`, `refunded_at` |
 | `renewal_notice_sent` | 30-day renewal notice delivered | `expires_at`, `notice_channel` |
 | `customer_notice_sent` | Customer notified of suspension | `case_id`, `notice_channel` |
@@ -495,6 +491,79 @@ are never updated or deleted.
   `entitlement_activated`) is independently required.
 - `occurred_at` is the authoritative record of when a Coin Card lifecycle event
   happened. Application timestamps are secondary.
+
+### `entitlement_cancelled` payload specification
+
+`cancellation_reason` is required; its value must come from the Entitlement-cancellation reason catalog below.
+
+`payment_refund_id` is a nullable FK to the specific PaymentRefund associated with this cancellation.
+
+**Nullability rule:** `payment_refund_id` is null only when the governing cancellation operation determines that **no refund is due** for this cancellation. It is not null because a refund has not yet been initiated, because the provider has not yet confirmed, or because operator action is pending. The immutable `entitlement_cancelled` event must carry the final value at write time; no backfill or mutation is permitted.
+
+When a refund is required by the governing cancellation ground:
+
+- The PaymentRefund must be created before or atomically with the `entitlement_cancelled` LifecycleEvent.
+- `payment_refund_id` must reference that specific PaymentRefund at event creation.
+- The corresponding `refund_initiated` LifecycleEvent must already exist or be committed atomically in the same cancellation operation.
+- Provider submission and provider confirmation are not prerequisites for populating this field. Creation of the canonical PaymentRefund is the prerequisite.
+
+When non-null:
+- The referenced PaymentRefund must belong to the Payment associated with this Entitlement.
+- Its `reason_code` must be compatible with the cancellation ground (see compatibility table below).
+
+The following are **not** valid null cases: refund is due but awaiting operator action; refund is expected later; provider submission has not occurred; provider confirmation is pending.
+
+The explicit V1 null case: customer-requested cancellation (`cancellation_reason = 'customer_requested'`) that occurs outside the applicable refund window — no refund is due, so `payment_refund_id = null`.
+
+Do not add a replacement boolean such as `has_refund`, `refund_required`, or `refund_pending`. The nullable canonical FK expresses the relationship.
+
+**Refund-link requirement by cancellation ground:**
+
+This table governs the Entitlement-cancellation operation only. It does not mean that every occurrence of a similarly named business failure necessarily has an Entitlement to cancel.
+
+| `cancellation_reason` | `payment_refund_id` in V1 |
+|---|---|
+| `customer_requested` | Non-null when the applicable refund policy grants a refund; null when no refund is due (e.g., cancellation outside the 30-day refund window) |
+| `provisioning_sla_breach` | Required, non-null |
+| `post_payment_operator_decline` | Required, non-null |
+| `post_payment_predicate_failure` | Required, non-null when a paid operation created an Entitlement that is being cancelled |
+| `customer_provisioning_failure` | Required, non-null |
+
+**No-placeholder-Entitlement invariant:**
+
+`entitlement_cancelled` is written only when an Entitlement record already exists and actually transitions from `pending_activation` or `active` to `cancelled`. A post-payment failure detected before an Entitlement is created follows its refund and reconciliation path without creating a placeholder Entitlement. The system must never create a `pending_activation` Entitlement solely to transition it immediately to `cancelled` or to produce the `entitlement_cancelled` event. The five pending-activation grounds in the state-transition table describe allowed causes of that transition when a `pending_activation` Entitlement already exists; they do not require Entitlement creation.
+
+`entitlement_cancelled` is **not** written for:
+- Natural expiration — uses `entitlement_expired`
+- Revocation for cause — uses `entitlement_revoked`
+- Duplicate-payment refund where the valid Entitlement is unaffected
+- Payment confirmed after an already-expired PurchaseAttempt where no Entitlement was created
+- Post-payment failure detected before an Entitlement was created in provisioning Phase 4
+- Provider refund success by itself
+
+### Entitlement-cancellation reason catalog
+
+`cancellation_reason` must be a value from this ratified catalog. These values are distinct from `PaymentRefund.reason_code`; do not copy values between catalogs.
+
+| `cancellation_reason` | Governing ground |
+|---|---|
+| `customer_requested` | The customer requested cancellation of an active or pending-activation Entitlement |
+| `provisioning_sla_breach` | The provisioning deadline elapsed without successful activation |
+| `post_payment_operator_decline` | An authorized post-payment AUP or operator decision declined the purchase or provisioning operation |
+| `post_payment_predicate_failure` | A required post-payment purchase or provisioning predicate failed |
+| `customer_provisioning_failure` | The customer did not provide a required valid provisioning prerequisite within the governing window |
+
+### Entitlement-cancellation reason and PaymentRefund compatibility
+
+These catalogs are related but not identical. The Entitlement cancellation reason describes why the Entitlement was cancelled. The PaymentRefund reason describes why that financial operation exists. `PaymentRefund.initiated_by` identifies the system or operator that created the PaymentRefund.
+
+| `entitlement_cancelled.cancellation_reason` | Compatible `PaymentRefund.reason_code` |
+|---|---|
+| `customer_requested` | `customer_request` |
+| `provisioning_sla_breach` | `provisioning_sla_breach` |
+| `post_payment_operator_decline` | `operator_initiated` |
+| `post_payment_predicate_failure` | `post_payment_predicate_failure` |
+| `customer_provisioning_failure` | `customer_provisioning_failure` |
 
 ---
 
@@ -582,7 +651,7 @@ signed state changes:
 | Entitlement renewal activates (active term or grace period) | `renewal` |
 | Post-grace reactivation activates | `reactivation` |
 | Entitlement expires (natural) | `expiration` |
-| Customer-requested cancellation | `cancellation` |
+| Customer-requested cancellation of an **active** Entitlement | `cancellation` |
 | Suspension case opened | `suspension` |
 | Suspension resolved (restored) | `restoration` |
 | Entitlement revoked | `revocation` |
@@ -606,6 +675,12 @@ natural expiration without any runtime dependency on ImplicitEx.
 The `cancellation` publication's signing input set must also include:
 - `cancellation_reason`: `customer_requested` (the only valid value in V1)
 - `cancellation_effective_at`: the timestamp the cancellation took effect
+
+**EvidencePublication boundary — cancellation:**
+
+- **Active customer cancellation** (`active → cancelled`): Create and activate `EvidencePublication.publication_type = 'cancellation'`. Signing fields: `cancellation_reason = 'customer_requested'`; `cancellation_effective_at = Entitlement.cancelled_at`. This signed publication rule is independent of whether a refund was issued.
+
+- **Pending-activation cancellation** (`pending_activation → cancelled`): Do not create or activate a cancellation EvidencePublication. The Entitlement never reached active public status; no authoritative signed state change exists for the card. Any existing `PREPARED` or `SIGNED` but unactivated EvidencePublication follows the existing `abandoned` audit rules. Operational cancellation is preserved by `Entitlement.status = 'cancelled'` and the `entitlement_cancelled` LifecycleEvent only. `EvidencePublication.cancellation_reason = 'customer_requested'` remains its sole V1 signed value and is not broadened to cover operational grounds.
 
 ### Invariants
 
@@ -820,8 +895,7 @@ If a payment confirmation arrives after `reserved_until` has elapsed:
 - `failure_code` is set to `PAYMENT_CONFIRMED_AFTER_EXPIRY`.
 - The payment is linked to the expired attempt via `payment_id`.
 - Provisioning does not proceed automatically.
-- The Stripe Checkout specification governs the reconciliation and refund
-  operation in this scenario.
+- The late-payment handler must place the Payment into the established reconciliation and refund path. The ratified PaymentRefund reason code for this ground is `payment_confirmed_after_expiry` (see PaymentRefund `### Reason-code catalog`).
 
 ### Cardinality
 
@@ -873,7 +947,7 @@ refund amount equals the full `Payment.amount_atomic`.
 | `amount_atomic` | integer | ✓ | — | Refund amount in same units as `Payment.amount_atomic`; must be positive |
 | `asset` | enum | ✓ | — | Must match parent `Payment.payment_asset` |
 | `asset_decimals` | integer | ✓ | — | Must match parent `Payment.asset_decimals` |
-| `reason_code` | string | ✓ | — | Reason for this refund; supports all ratified business-operations grounds including `provisioning_sla_breach`, `customer_request`, `operator_initiated`, `duplicate_payment`, and other documented grounds |
+| `reason_code` | string | ✓ | — | Substantive ground for this refund; must be a value from the ratified reason-code catalog (see `### Reason-code catalog` below) |
 | `status` | enum | — | — | `requested`, `pending`, `requires_action`, `succeeded`, `failed`, `cancelled` |
 | `initiated_at` | timestamp | ✓ | — | When ImplicitEx initiated or first recorded the refund |
 | `provider_created_at` | timestamp\|null | — | — | Timestamp from the provider when the refund object was created; set on provider acknowledgement |
@@ -913,6 +987,53 @@ rather than rewriting the failed record.
 One-to-many with Payment. A Payment may have multiple PaymentRefund records
 (partial or sequential refunds, or a retry after failure). `provider + provider_refund_id`
 is unique when `provider_refund_id` is non-null.
+
+### Reason-code catalog
+
+`reason_code` is a required immutable string. Its value must come from this
+ratified catalog. Arbitrary strings are not permitted; grounds not represented
+here require a Data Model amendment before implementation.
+
+| `reason_code` | Governing ground |
+|---|---|
+| `provisioning_sla_breach` | The provisioning deadline elapsed without successful activation and the governing SLA requires a refund |
+| `customer_request` | The customer requested a refund or cancellation under an applicable refund policy |
+| `operator_initiated` | An authorized operator exercised discretion to initiate a refund for a documented ground not represented by another specific catalog value |
+| `duplicate_payment` | A duplicate successful customer payment requires reversal |
+| `post_payment_predicate_failure` | After payment confirmation, a required purchase or provisioning predicate failed, including account-state change, handle race, price discrepancy, invalid purchase type, or compare-and-swap conflict |
+| `customer_provisioning_failure` | The customer did not supply a valid required provisioning prerequisite within the governing window and policy requires or permits cancellation and refund |
+| `payment_confirmed_after_expiry` | The payment provider confirmed customer funds after the associated PurchaseAttempt had irreversibly expired, the reservation had been released, and automatic provisioning was no longer permitted |
+
+#### `post_payment_predicate_failure`
+
+- Applies to system-detected or operationally verified predicate failures after payment confirmation.
+- Covers BO1 steps 12a–12d, R-6, and N-3: account-state change, handle race, price discrepancy, invalid purchase type, and compare-and-swap conflict.
+- The specific failed predicate must be preserved in the operational or reconciliation evidence for the order.
+- `initiated_by = 'system'` when the automatic process creates the PaymentRefund.
+- If an operator performs the authorized creation after reconciliation, `initiated_by` is that operator's ID.
+- Do not change the code to `operator_initiated` merely because an operator executed the operation; the substantive ground is the failed predicate, not the operator's discretion.
+- Post-payment AUP refusal supported by `APPLICATION_DECLINED` administration evidence uses `operator_initiated`, not this code.
+
+#### `customer_provisioning_failure`
+
+- Applies to BO1 R-4: the customer did not provide a valid required provisioning prerequisite within the allowed window.
+- Distinct from `customer_request`: failure to complete provisioning is not itself a refund request.
+- Distinct from `provisioning_sla_breach`: the cause is an unmet customer prerequisite, not ImplicitEx missing its provisioning deadline.
+- Distinct from `operator_initiated`: operator execution does not change the substantive ground.
+- `initiated_by` records the actual authorized operator ID unless a separately ratified automatic process initiates the PaymentRefund.
+- The refund must satisfy the governing policy and the BO1 prohibition against using refunds as a substitute for completing provisioning prematurely.
+
+#### `payment_confirmed_after_expiry`
+
+- Applies only when the associated PurchaseAttempt is already `expired` under the server-authoritative reservation deadline before payment confirmation is durably processed.
+- The PurchaseAttempt remains `expired`. Its reservation is not restored. It must not reopen, become `payment_confirmed`, or proceed to `completed`.
+- The Payment is recorded canonically as confirmed provider truth. `PurchaseAttempt.payment_id` is linked write-once to that Payment. `PurchaseAttempt.failure_code = 'PAYMENT_CONFIRMED_AFTER_EXPIRY'` (uppercase; the PurchaseAttempt operational field, distinct from this `reason_code`).
+- No entitlement, Coin Card, WalletRoute, or provisioning operation is created or activated from that expired attempt.
+- The refund ground for returning that Payment is `PaymentRefund.reason_code = 'payment_confirmed_after_expiry'`.
+- The late-payment handler must place the Payment into the established reconciliation and refund path. Creation of the PaymentRefund must occur through an authorized system or operator action under the governing operations policy. If an automatic operation initiates it, `initiated_by = 'system'`; if an operator creates it after reconciliation, `initiated_by` is that operator's ID. The reason remains `payment_confirmed_after_expiry` regardless of who executes the action.
+- The same confirmed Payment must not be retained indefinitely without either provisioning under a separately valid operation or an authorized refund resolution.
+- The PaymentRefund follows the normal canonical refund lifecycle and exactly-once event rules. A PaymentRefund created for this ground writes `refund_initiated.refund_reason = 'payment_confirmed_after_expiry'`, copied from `PaymentRefund.reason_code`.
+- `Payment.status` remains `confirmed` at refund initiation and becomes `refunded` only after cumulative succeeded refunds equal the full `Payment.amount_atomic`.
 
 ### Invariants
 
@@ -1275,8 +1396,6 @@ Immutable list above because they are not non-null at record creation.
 | `entitlement.provisioning_extension_agreed_at` | Set once |
 | `payment.status` | Forward state transitions only |
 | `payment.refunded_at` | Set once |
-| `payment.refund_reason` | Set once |
-| `payment.refund_initiated_at` | Set once |
 | `route.status` | `active` → `superseded` only |
 | `route.superseded_at` | Set once |
 | `case.status` | Forward state transitions only |
@@ -1497,7 +1616,7 @@ The following are accessible by any party given the card's public URL or handle:
   customer's own card)
 - `PurchaseAttempt`: `status`, `handle`, `reserved_until`, `created_at`,
   `completed_at`, `expired_at` (for the customer's own attempts; `checkout_session_id` excluded)
-- `PaymentRefund`: `status`, `amount_atomic`, `refund_reason`, `succeeded_at` (for the customer's own payments)
+- `PaymentRefund`: `status`, `amount_atomic`, `reason_code`, `confirmed_at` (for the customer's own payments)
 - `PaymentDispute`: `status`, `dispute_amount_atomic`, `received_at` (for the customer's own payments; `operator_notes` excluded)
 
 ### Operator-accessible only
@@ -1526,11 +1645,11 @@ The following are accessible by any party given the card's public URL or handle:
 | Customer-controlled route updates | `WalletRoute` (new record per change); authenticated by Account credentials |
 | 4 route changes per term | `Entitlement.route_changes_allowed = 4`, `route_changes_used` incremented; `WalletRoute.route_sequence ≤ 4` |
 | Term begins at activation | `Entitlement.activated_at`; set only when provisioning complete |
-| 24-hour provisioning SLA | `Entitlement.provisioning_deadline = Payment.confirmed_at + 24h`; `provisioning_sla_breach` lifecycle event; `refund_initiated_at` on Payment |
+| 24-hour provisioning SLA | `Entitlement.provisioning_deadline = Payment.confirmed_at + 24h`; `provisioning_sla_breach` lifecycle event; `PaymentRefund` created with `PaymentRefund.initiated_at`; `refund_initiated` lifecycle event |
 | Non-transferable | `CoinCard.account_id` immutable |
 | No custody | Schema non-custody assertion (invariant 10) |
-| 30-day refund window | `Payment.confirmed_at + 30 days`; `refund_reason = 'customer_request'` |
-| Proactive refund on SLA breach | `Payment.refund_initiated_at` set by system; customer not required to request |
+| 30-day refund window | `Payment.confirmed_at + 30 days`; `PaymentRefund.reason_code = 'customer_request'` |
+| Proactive refund on SLA breach | `PaymentRefund` created by system with `reason_code = 'provisioning_sla_breach'`; `refund_initiated` lifecycle event written; customer not required to request |
 | Provisioning extension with customer agreement | `Entitlement.provisioning_extension_agreed_at`; `provisioning_extension_agreed` lifecycle event |
 | Renewal notice 30 days before expiration | `renewal_notice_sent` lifecycle event; `Entitlement.expires_at - 30 days` derivation |
 | No automatic renewal (pilot) | No auto-renewal field or trigger exists in V1 schema |
@@ -1554,7 +1673,7 @@ The following are accessible by any party given the card's public URL or handle:
 | Quoted payment terms | `PurchaseAttempt.quoted_asset`, `quoted_amount_atomic`, `quoted_asset_decimals`; immutable at attempt creation; must equal the eventual Payment fields |
 | Checkout-to-Payment correlation | `PurchaseAttempt.checkout_session_id` (write-once; one session per attempt), `payment_id` (write-once; set when Payment is created); `purchase_type` distinguishes initial, renewal, and reactivation flows |
 | Provisioning handoff | `PurchaseAttempt.status = 'payment_confirmed'` signals provisioning start; provisioning pipeline writes the appropriate LifecycleEvent (`entitlement_activated` or `entitlement_reactivated`); `PurchaseAttempt.status` transitions to `completed` after observing the activated result |
-| Late-payment-after-expiry reconciliation | `PurchaseAttempt.payment_id` linked even when `status = 'expired'`; `failure_code = 'PAYMENT_CONFIRMED_AFTER_EXPIRY'`; provisioning does not proceed; Stripe Checkout specification governs the refund operation |
+| Late-payment-after-expiry reconciliation | `PurchaseAttempt.payment_id` linked even when `status = 'expired'`; `failure_code = 'PAYMENT_CONFIRMED_AFTER_EXPIRY'`; provisioning does not proceed; refund ground is `PaymentRefund.reason_code = 'payment_confirmed_after_expiry'`; PaymentRefund created through authorized system or operator action |
 | Automatic refund initiation | `PaymentRefund` created for each automatic-refund ground (provisioning SLA breach, post-payment operator refusal, duplicate successful payment, or other ratified automatic ground); `initiated_by` records the system or operator that initiates the operation; customer-requested refunds (`reason_code = 'customer_request'`) are not automatic and remain distinguishable; `refund_initiated` lifecycle event written with `payment_refund_id` |
 | Provider refund tracking | `PaymentRefund.status` tracks provider acknowledgement through to `succeeded` or `failed`; write-once `provider_refund_id` set on provider acknowledgement; `idempotency_key` prevents duplicate submissions |
 | Partial and cumulative refund accounting | One-to-many PaymentRefund per Payment; partial succeeded refunds leave `Payment.status = 'confirmed'`; `Payment.status` becomes `'refunded'` only when cumulative succeeded refund amounts equal `Payment.amount_atomic`; cumulative succeeded refunds cannot exceed the payment amount |
@@ -1757,3 +1876,45 @@ no statutory duration is asserted.
 - Route-change allowance (4 per term)
 - Customer workflows or business-operation deadlines (24h provisioning SLA; 7/14-day suspension rules)
 - Public signed Coin Card evidence semantics (EvidencePublication, signing inputs, registry record, lifecycle bundle)
+
+---
+
+### Amendment 2026-08-03 — Remove Payment.refund_reason; canonicalize refund ground to PaymentRefund.reason_code
+
+**Problem:** `Payment.refund_reason` was a single enum field on the Payment record. A Payment may have multiple PaymentRefund records with different substantive grounds (e.g., a partial SLA-breach refund followed by a customer-request cancellation refund). A single Payment-level reason field cannot truthfully represent the ground for each of potentially several refund operations.
+
+**Changes:**
+
+- `Payment.refund_reason` removed from the Payment fields table (§5). The field is eliminated; it is not replaced by another Payment-level reason field.
+- `payment.refund_reason | Set once` removed from the write-once field classification table (§Field classifications). `payment.refunded_at` remains.
+- `Payment.refund_initiated_at` removed for the same one-Payment-to-many-PaymentRefund cardinality reason: a Payment may have multiple PaymentRefund records, each with its own `PaymentRefund.initiated_at`. A single Payment-level initiation timestamp cannot represent multiple operations. `payment.refund_initiated_at | Set once` removed from the write-once field classification table. The Payment fields table, Relationship-to-Entitlement prose, and design-decision rows updated accordingly.
+- `PaymentRefund.initiated_at` is the canonical per-operation initiation timestamp (§10, immutable).
+- `refund_initiated` LifecycleEvent is the immutable lifecycle evidence of each initiated refund operation; it is not a field on Payment.
+- Customer-accessible field list (§14): stale reference `PaymentRefund.succeeded_at` corrected to `PaymentRefund.confirmed_at`, which is the canonical successful-refund timestamp defined in §10.
+- `PaymentRefund.reason_code` remains the sole canonical field for the substantive ground of each refund operation. It is immutable once set (§10 invariants unchanged).
+- `refund_initiated` LifecycleEvent catalog row (§6): `refund_reason` payload field retained. Clarified that its value is copied from `PaymentRefund.reason_code` for the PaymentRefund identified by `payment_refund_id`. The event payload is an immutable snapshot of that operation's ground; it is not a field stored on Payment.
+- Customer-accessible field list (§14): `PaymentRefund` entry corrected from `refund_reason` to `reason_code`.
+- Design-decision table (§15): `30-day refund window` row corrected from `refund_reason = 'customer_request'` to `PaymentRefund.reason_code = 'customer_request'`.
+- `Payment.status` semantics are unchanged: `confirmed` while cumulative succeeded refunds are below the full amount; `refunded` when cumulative succeeded refunds equal `Payment.amount_atomic`.
+
+**Reason-code gaps resolved in this amendment:**
+
+- `post_payment_predicate_failure` ratified: covers system-detected or operationally verified post-payment predicate failures (BO1 steps 12a–12d, R-6, N-3). Previously marked `DATA_MODEL_REASON_CODE_GAP`.
+- `customer_provisioning_failure` ratified: covers BO1 R-4 refunds where the customer did not supply a valid required provisioning prerequisite. Previously marked `DATA_MODEL_REASON_CODE_GAP`.
+- `Payment.refund_reason` previously had three values; `duplicate_payment` was absent. With `Payment.refund_reason` removed, this asymmetry is resolved: `PaymentRefund.reason_code = 'duplicate_payment'` is already ratified.
+- Full reason-code catalog (`### Reason-code catalog`) added to §10; `PaymentRefund.reason_code` field note updated to reference the catalog; open-ended "other documented grounds" wording removed.
+
+- `payment_confirmed_after_expiry` ratified: covers the ground where a payment provider confirms customer funds after the associated PurchaseAttempt has irreversibly expired. The PurchaseAttempt operational field `failure_code = 'PAYMENT_CONFIRMED_AFTER_EXPIRY'` (uppercase) remains distinct from this lowercase `reason_code`. The existing late-payment section in PurchaseAttempt (§9) updated to reference the ratified code. Design-decision row corrected to remove the delegation to the Stripe Checkout specification and state the canonical refund ground. Previously marked as deferred.
+
+- `entitlement_cancelled` LifecycleEvent gap closed: five-value Entitlement-cancellation reason catalog ratified (`customer_requested`, `provisioning_sla_breach`, `post_payment_operator_decline`, `post_payment_predicate_failure`, `customer_provisioning_failure`). The ambiguous `refund_initiated` boolean payload field replaced with nullable `payment_refund_id` (FK to the specific PaymentRefund for this cancellation; null when no refund was created). `pending_activation → cancelled` state-machine trigger description expanded to cover all five operational grounds. Cancellation EvidencePublication limited to `active → cancelled` (customer-requested cancellation of an active Entitlement only); operational `pending_activation → cancelled` produces no public EvidencePublication. `EvidencePublication.cancellation_reason = 'customer_requested'` remains its sole V1 signed value. Previously marked as deferred.
+
+**No refund/cancellation gaps from this amendment group remain deferred.**
+
+- `payment_refund_id` nullability tightened: null means no refund is due, not that a refund has not yet been initiated. The immutable `entitlement_cancelled` event must carry the final value at write time; no backfill is permitted. When any cancellation ground requires a refund, the PaymentRefund must be created before or atomically with the event, and `payment_refund_id` must reference it at event creation. Provider submission and provider confirmation are not prerequisites. The following are not valid null cases: refund awaiting operator action; refund expected later; provider submission not yet submitted; provider confirmation pending. Explicit V1 null case: `customer_requested` cancellation outside the applicable refund window.
+- Refund-link requirement table added to `### entitlement_cancelled payload specification`: enumerates `payment_refund_id` nullability obligation for each of the five `cancellation_reason` values. All grounds except `customer_requested` require non-null; `customer_requested` is conditional on whether refund policy grants a refund.
+- No-placeholder-Entitlement invariant added: `entitlement_cancelled` is written only when an Entitlement record already exists and transitions. The system must never create a `pending_activation` Entitlement solely to cancel it or to produce this event. Post-payment failure detected before Entitlement creation follows the refund/reconciliation path without manufacturing a placeholder Entitlement.
+
+**Follow-up document alignment required (separate passes):**
+
+- Business Operations V1 §Lifecycle events written (step 28): `entitlement_cancelled` is missing from the SLA breach event sequence. Requires BO1 correction.
+- Customer Workflows V1 §5.6: References stale `pay.refund_initiated_at` and `pay.refund_reason` fields removed from Payment in this amendment group. Requires CW1 correction.
