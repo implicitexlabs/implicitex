@@ -3,6 +3,7 @@
 **Status:** Ratified and closed — implementation defers to this document  
 **Governing entitlement specification:** `COIN_CARD_ENTITLEMENT_SPECIFICATION_V1.md` at `b3bdc08`  
 **Amended:** 2026-08-02 — eight corrections; two internal-consistency corrections; `cancellation` publication type added; `reactivation` publication type added; entitlement ref updated to `b3bdc08`; see amendment log  
+**Amended:** 2026-08-02 — four new records added (PurchaseAttempt, PaymentRefund, PaymentDispute, ExternalEventReceipt); payment-provider identifier mapping and purchase-flow audit support; meta-section numbering corrected to avoid collision with record sections; see amendment log
 **Ratified:** 2026-08-02  
 **Scope:** Record definitions, state machines, invariants, field classifications,
 retention rules, and entitlement-to-record mapping. Does not cover application
@@ -53,13 +54,17 @@ Storage engines treat them as opaque strings.
 | 2 | Coin Card | `card` | Permanent (historical identity must be preserved) |
 | 3 | Wallet Route | `route` | Permanent (historical routes must be preserved) |
 | 4 | Entitlement | `ent` | Permanent (governs term rights; evidence for audits) |
-| 5 | Payment | `pay` | Permanent (financial record; legal retention applies) |
+| 5 | Payment | `pay` | Permanent (financial record; operational retention policy applies — see §13) |
 | 6 | Lifecycle Event | `evt` | Permanent and immutable (append-only audit log) |
 | 7 | Evidence Publication | `pub` | Permanent (cryptographic artifact chain) |
 | 8 | Suspension/Review Case | `case` | Permanent (suspension is auditable) |
+| 9 | Purchase Attempt | `attempt` | Permanent (purchase-flow audit; idempotency anchor) |
+| 10 | Payment Refund | `refund` | Permanent (financial record; retention policy applies — see §13) |
+| 11 | Payment Dispute | `dispute` | Permanent (provider dispute record; retention policy applies — see §13) |
+| 12 | External Event Receipt | `receipt` | Permanent (webhook idempotency and audit) |
 
 No record in this model is ever hard-deleted in production. Soft-delete via
-tombstone status is the maximum permitted operation. See §8 (Retention).
+tombstone status is the maximum permitted operation. See §13 (Retention).
 
 ---
 
@@ -369,7 +374,7 @@ prerequisite for activation, not synonymous with it.
 | `payment_rail` | enum | ✓ | — | `stripe_usd`, `polygon_usdc`; governs what `provider_payment_id` means |
 | `network_chain_id` | integer\|null | ✓ | — | Null for `stripe_usd`; 137 for Polygon mainnet; 80002 for Amoy testnet |
 | `network_tx_hash` | string\|null | ✓ | — | Null for `stripe_usd`; on-chain transaction hash for `polygon_usdc` |
-| `provider_payment_id` | string | ✓ | ✓ | External reference: Stripe charge ID for `stripe_usd`; transaction hash or receipt ID for `polygon_usdc` |
+| `provider_payment_id` | string | ✓ | ✓ | External reference: Stripe PaymentIntent ID for `stripe_usd`; transaction hash or receipt ID for `polygon_usdc` |
 | `status` | enum | — | — | `pending`, `confirmed`, `refunded`, `failed` |
 | `created_at` | timestamp | ✓ | — | Payment record created |
 | `confirmed_at` | timestamp\|null | — | — | Set on payment confirmation; starts provisioning clock |
@@ -465,8 +470,8 @@ are never updated or deleted.
 | `grace_period_started` | 30-day grace begins after expiration | `grace_period_ends_at` |
 | `grace_period_ended` | 30-day grace expires | — |
 | `payment_confirmed` | Payment.confirmed_at set | `payment_id`, `confirmed_at` |
-| `refund_initiated` | ImplicitEx initiates refund | `payment_id`, `refund_reason` |
-| `refund_confirmed` | Payment provider confirms refund | `payment_id`, `refunded_at` |
+| `refund_initiated` | ImplicitEx initiates refund | `payment_id`, `payment_refund_id`, `refund_reason` |
+| `refund_confirmed` | Payment provider confirms refund (one per succeeded PaymentRefund) | `payment_id`, `payment_refund_id`, `refunded_at` |
 | `renewal_notice_sent` | 30-day renewal notice delivered | `expires_at`, `notice_channel` |
 | `customer_notice_sent` | Customer notified of suspension | `case_id`, `notice_channel` |
 | `cancellation_requested` | Customer requests deactivation | — |
@@ -474,11 +479,22 @@ are never updated or deleted.
 ### Invariants
 
 - LifecycleEvent records are never updated or deleted.
-- Every state change on Account, CoinCard, Entitlement, Payment, WalletRoute,
-  and SuspensionCase must produce a LifecycleEvent before the change is committed.
-  (Event-first: write the event, then the state change, in the same transaction.)
-- `occurred_at` is the authoritative record of when something happened.
-  Application timestamps are secondary.
+- Coin Card lifecycle mutations — state changes on CoinCard, Entitlement,
+  WalletRoute, and SuspensionCase — must produce a LifecycleEvent in the same
+  transaction as the change. (Event-first: write the event, then the state
+  change, atomically.)
+- Payment produces `payment_confirmed` on confirmation. PaymentRefund produces
+  `refund_initiated` when ImplicitEx initiates a refund and `refund_confirmed`
+  exactly once when that refund succeeds. Intermediate provider status updates
+  on PaymentRefund (e.g., `pending` → `requires_action`) do not produce
+  additional LifecycleEvents.
+- PurchaseAttempt, PaymentDispute, and ExternalEventReceipt are operational
+  audit records. Their own immutable identifiers, timestamps, and provider
+  references preserve their history. They do not produce LifecycleEvents except
+  where a Coin Card lifecycle event (e.g., `payment_confirmed`, `refund_initiated`,
+  `entitlement_activated`) is independently required.
+- `occurred_at` is the authoritative record of when a Coin Card lifecycle event
+  happened. Application timestamps are secondary.
 
 ---
 
@@ -706,6 +722,395 @@ does not substitute for the missing resolution.
 
 ---
 
+## 9. Purchase Attempt
+
+**Purpose:** Records the full lifecycle of a customer's attempt to acquire a
+Coin Card entitlement, from eligibility screening through checkout completion.
+PurchaseAttempt is the authoritative purchase-flow audit record. It reserves the
+requested handle for the duration of the checkout window and serves as the
+idempotency anchor for the checkout-to-payment pipeline.
+
+### Fields
+
+| Field | Type | Immutable | Sensitive | Notes |
+|---|---|---|---|---|
+| `purchase_attempt_id` | UUID | ✓ | — | Primary key |
+| `account_id` | UUID | ✓ | — | FK → Account |
+| `card_id` | UUID\|null | — | — | FK → CoinCard; write-once: null for initial purchases until provisioning creates and sets the CoinCard; must be non-null at creation for renewal and reactivation; immutable once set |
+| `prior_entitlement_id` | UUID\|null | ✓ | — | FK → Entitlement; null for initial purchases; identifies the prior entitlement for renewal and reactivation |
+| `purchase_type` | enum | ✓ | — | `initial_activation`, `active_term_renewal`, `grace_period_renewal`, `post_grace_reactivation` |
+| `payment_rail` | enum | ✓ | — | `stripe_usd`, `polygon_usdc`; governs checkout flow |
+| `quoted_asset` | enum | ✓ | — | `USD` or `USDC`; must equal the eventual `Payment.payment_asset` |
+| `quoted_amount_atomic` | integer | ✓ | — | Quoted price in asset base units; must equal the eventual `Payment.amount_atomic` |
+| `quoted_asset_decimals` | integer | ✓ | — | Must equal the eventual `Payment.asset_decimals` |
+| `handle` | string | ✓ | — | The requested handle; immutable once set; for initial purchases the CoinCard does not yet exist when this is set |
+| `status` | enum | — | — | `screening`, `eligible`, `checkout_created`, `payment_pending`, `payment_confirmed`, `expired`, `cancelled`, `declined`, `completed` |
+| `reserved_at` | timestamp\|null | — | — | Server-authoritative timestamp when the handle reservation was established |
+| `reserved_until` | timestamp\|null | — | — | Server-authoritative handle reservation expiry; set when checkout is created; not controlled by webhook delivery |
+| `checkout_session_id` | string\|null | — | ✓ | Payment provider checkout session ID; set at most once; immutable once set; one PurchaseAttempt owns at most one checkout session; a replacement session requires a new PurchaseAttempt |
+| `payment_id` | UUID\|null | — | — | FK → Payment; set when the Payment record is created; not updated thereafter |
+| `livemode` | boolean | ✓ | — | True for production provider sessions; false for test mode |
+| `created_at` | timestamp | ✓ | — | Attempt record created |
+| `completed_at` | timestamp\|null | — | — | Set when the entitlement is provisioned and activated; PurchaseAttempt observes the provisioning result |
+| `expired_at` | timestamp\|null | — | — | Set when `reserved_until` elapses without payment confirmation |
+| `cancelled_at` | timestamp\|null | — | — | Set when attempt is cancelled |
+| `failure_code` | string\|null | — | — | Machine-readable reason when status is `declined` or `expired` with a notable condition; see failure codes below |
+
+### Status definitions
+
+| Status | Meaning |
+|---|---|
+| `screening` | Eligibility check in progress |
+| `eligible` | Screening passed; customer may proceed to checkout |
+| `checkout_created` | Checkout session created; handle reserved until `reserved_until` |
+| `payment_pending` | Payment being processed by provider |
+| `payment_confirmed` | Payment confirmed; provisioning underway |
+| `expired` | Reservation window elapsed; handle released from active reservation |
+| `cancelled` | Customer abandoned checkout or operator cancelled |
+| `declined` | Eligibility screening failed; entitlement denied; immutable administration evidence |
+| `completed` | Provisioning complete; PurchaseAttempt observes the final activated state |
+
+### State-transition table
+
+| From | To | Trigger | Creates Coin Card LifecycleEvent |
+|---|---|---|---|
+| `screening` | `eligible` | Eligibility check passes | — |
+| `screening` | `declined` | Eligibility screening fails | — |
+| `eligible` | `checkout_created` | Checkout session created | — |
+| `eligible` | `cancelled` | Customer abandons or operator cancels | — |
+| `checkout_created` | `payment_pending` | Provider acknowledges payment intent | — |
+| `checkout_created` | `expired` | `NOW() > reserved_until` | — |
+| `checkout_created` | `cancelled` | Customer abandons or operator cancels | — |
+| `payment_pending` | `checkout_created` | Provider payment attempt fails; Checkout Session and reservation remain active | — |
+| `payment_pending` | `payment_confirmed` | Provider confirms payment | `payment_confirmed` |
+| `payment_pending` | `expired` | `NOW() > reserved_until` | — |
+| `payment_confirmed` | `completed` | Provisioning pipeline completes; see provisioning events below | — |
+
+A pre-payment eligibility decline is immutable administration evidence recorded
+in PurchaseAttempt. It is not a Coin Card LifecycleEvent. PurchaseAttempt
+expiration is recorded by PurchaseAttempt field state; it is not a Coin Card
+LifecycleEvent.
+
+**Payment failure within an active session:** A provider payment failure event
+(e.g., `payment_intent.payment_failed`) within an active checkout session is not
+a terminal failure for the PurchaseAttempt. The attempt transitions from
+`payment_pending` back to `checkout_created`. The Checkout Session and handle
+reservation remain active and the customer may provide another payment method
+or retry. The attempt moves to `expired` only when `reserved_until` elapses.
+This transition produces no Coin Card LifecycleEvent.
+
+**Provisioning events (written by provisioning pipeline, not by PurchaseAttempt):**
+Provisioning writes the appropriate existing Coin Card LifecycleEvent:
+
+| purchase_type | Provisioning LifecycleEvent |
+|---|---|
+| `initial_activation` | `entitlement_activated` |
+| `active_term_renewal` | `entitlement_activated` |
+| `grace_period_renewal` | `entitlement_activated` |
+| `post_grace_reactivation` | `entitlement_reactivated` |
+
+PurchaseAttempt observes the completed provisioning result and then transitions
+to `completed`. PurchaseAttempt completion does not itself emit a LifecycleEvent.
+
+### Payment confirmed after reservation expiry
+
+If a payment confirmation arrives after `reserved_until` has elapsed:
+
+- The attempt remains `expired`. The reservation is not silently recreated.
+- `failure_code` is set to `PAYMENT_CONFIRMED_AFTER_EXPIRY`.
+- The payment is linked to the expired attempt via `payment_id`.
+- Provisioning does not proceed automatically.
+- The Stripe Checkout specification governs the reconciliation and refund
+  operation in this scenario.
+
+### Cardinality
+
+- `card_id` is null for `purchase_type = 'initial_activation'` until the
+  CoinCard is created by provisioning.
+- For renewal and reactivation, `card_id` and `prior_entitlement_id` must be
+  non-null and must identify the existing card and prior entitlement.
+- At most one non-terminal PurchaseAttempt may reserve the same handle at any
+  time. This includes attempts where `card_id` is null. Concurrency safety is
+  enforced by a normalized handle uniqueness constraint on active reservations.
+- For renewal and reactivation, at most one non-terminal PurchaseAttempt may
+  exist per `card_id` at any time.
+- Multiple historical (terminal) attempts per card are preserved.
+
+### Invariants
+
+- PurchaseAttempt records are never deleted.
+- `handle`, `purchase_type`, `payment_rail`, `quoted_asset`,
+  `quoted_amount_atomic`, `quoted_asset_decimals`, `livemode`, and `created_at`
+  are immutable once set.
+- `card_id` is immutable once set. For initial purchases, it remains null until
+  set by provisioning; once set, it does not change.
+- `checkout_session_id` is immutable once set. A replacement session requires a
+  new PurchaseAttempt.
+- `reserved_at` and `reserved_until` are server-authoritative; both are immutable
+  once set.
+- `payment_id` is set once and not updated.
+- Quoted asset fields must equal the corresponding fields on the eventual Payment.
+- `failure_code` is set once.
+
+---
+
+## 10. Payment Refund
+
+**Purpose:** Records each refund operation against a confirmed Payment. A single
+Payment may produce multiple PaymentRefund records (partial refunds are possible).
+PaymentRefund is the canonical record for tracking provider refund status.
+`Payment.status` transitions to `'refunded'` only when the cumulative succeeded
+refund amount equals the full `Payment.amount_atomic`.
+
+### Fields
+
+| Field | Type | Immutable | Sensitive | Notes |
+|---|---|---|---|---|
+| `payment_refund_id` | UUID | ✓ | — | Primary key |
+| `payment_id` | UUID | ✓ | — | FK → Payment; the payment being refunded |
+| `provider` | enum | ✓ | — | `stripe`, `polygon_usdc`; must match parent Payment's rail |
+| `provider_refund_id` | string\|null | — | ✓ | External refund identifier; null until the provider acknowledges and assigns an ID; immutable once set |
+| `amount_atomic` | integer | ✓ | — | Refund amount in same units as `Payment.amount_atomic`; must be positive |
+| `asset` | enum | ✓ | — | Must match parent `Payment.payment_asset` |
+| `asset_decimals` | integer | ✓ | — | Must match parent `Payment.asset_decimals` |
+| `reason_code` | string | ✓ | — | Reason for this refund; supports all ratified business-operations grounds including `provisioning_sla_breach`, `customer_request`, `operator_initiated`, `duplicate_payment`, and other documented grounds |
+| `status` | enum | — | — | `requested`, `pending`, `requires_action`, `succeeded`, `failed`, `cancelled` |
+| `initiated_at` | timestamp | ✓ | — | When ImplicitEx initiated or first recorded the refund |
+| `provider_created_at` | timestamp\|null | — | — | Timestamp from the provider when the refund object was created; set on provider acknowledgement |
+| `updated_at` | timestamp\|null | — | — | Last time this record was updated from a provider event |
+| `confirmed_at` | timestamp\|null | — | — | Set when `status` transitions to `succeeded` |
+| `failed_at` | timestamp\|null | — | — | Set when `status` transitions to `failed` |
+| `failure_code` | string\|null | — | — | Provider failure code when `status = 'failed'` |
+| `initiated_by` | string | ✓ | — | `system`, or operator ID; documents who initiated the refund |
+| `idempotency_key` | string | ✓ | — | Unique within the provider/refund operation boundary; prevents duplicate refund submissions |
+| `livemode` | boolean | ✓ | — | True for production provider sessions; false for test mode |
+
+### Status definitions
+
+| Status | Meaning |
+|---|---|
+| `requested` | ImplicitEx has initiated the refund; provider acknowledgement not yet received |
+| `pending` | Provider acknowledged; funds not yet returned to customer |
+| `requires_action` | Provider requires additional action to proceed |
+| `succeeded` | Provider confirms funds returned; `confirmed_at` set |
+| `failed` | Provider declined this refund operation; terminal for this record |
+| `cancelled` | Refund cancelled before processing |
+
+### State-transition table
+
+| From | To |
+|---|---|
+| `requested` | `pending`, `requires_action`, `succeeded`, `failed`, `cancelled` |
+| `pending` | `succeeded`, `failed`, `cancelled` |
+| `requires_action` | `pending`, `succeeded`, `failed`, `cancelled` |
+
+`succeeded`, `failed`, and `cancelled` are terminal. A failed refund is terminal
+for that PaymentRefund record. A retry creates a new PaymentRefund operation
+rather than rewriting the failed record.
+
+### Cardinality
+
+One-to-many with Payment. A Payment may have multiple PaymentRefund records
+(partial or sequential refunds, or a retry after failure). `provider + provider_refund_id`
+is unique when `provider_refund_id` is non-null.
+
+### Invariants
+
+- PaymentRefund records are never deleted.
+- `payment_id`, `provider`, `amount_atomic`, `asset`, `asset_decimals`,
+  `reason_code`, `initiated_at`, `initiated_by`, `idempotency_key`, and
+  `livemode` are immutable once set.
+- `provider_refund_id` is null until the provider acknowledges; immutable once set.
+- `idempotency_key` is unique within the provider and operation boundary.
+- `amount_atomic` must be positive. Cumulative succeeded refunds must not exceed
+  `Payment.amount_atomic`.
+- Partial successful refunds leave `Payment.status = 'confirmed'`.
+  `Payment.status` becomes `'refunded'` only when cumulative succeeded refund
+  amounts equal `Payment.amount_atomic` in full.
+- `refund_confirmed` LifecycleEvent is written exactly once per PaymentRefund
+  that reaches `succeeded`.
+
+---
+
+## 11. Payment Dispute
+
+**Purpose:** Records a payment dispute (chargeback) filed by the customer with
+their payment provider. A dispute is a provider-level event; it does not
+automatically trigger an ImplicitEx refund and does not rewrite the confirmed
+Payment record. A provider chargeback is not an ImplicitEx refund — the two are
+independent operations. Each dispute against a Payment produces a separate
+PaymentDispute record.
+
+### Fields
+
+| Field | Type | Immutable | Sensitive | Notes |
+|---|---|---|---|---|
+| `payment_dispute_id` | UUID | ✓ | — | Primary key |
+| `payment_id` | UUID | ✓ | — | FK → Payment; the disputed payment |
+| `provider` | enum | ✓ | — | `stripe`, `polygon_usdc`; must match parent Payment's rail |
+| `provider_dispute_id` | string | ✓ | ✓ | External dispute identifier (e.g., Stripe dispute ID); unique within `provider` |
+| `provider_charge_id` | string\|null | ✓ | ✓ | Provider charge identifier associated with the dispute; provider-specific |
+| `amount_atomic` | integer | ✓ | — | Disputed amount in same units as `Payment.amount_atomic` |
+| `asset` | enum | ✓ | — | Must match parent `Payment.payment_asset` |
+| `reason` | string\|null | ✓ | — | Provider-supplied dispute reason code |
+| `status` | enum | — | — | `open`, `under_review`, `closed` |
+| `provider_status` | string\|null | — | — | Raw status string from the payment provider; copied verbatim at each update |
+| `outcome` | enum\|null | — | — | Terminal result: `won`, `lost`, `accepted`; null while `status` is not `closed` |
+| `evidence_due_at` | timestamp\|null | ✓ | — | Provider deadline for submitting dispute evidence; null if not applicable |
+| `livemode` | boolean | ✓ | — | True for production provider sessions; false for test mode |
+| `created_at` | timestamp | ✓ | — | When ImplicitEx first recorded the dispute |
+| `updated_at` | timestamp\|null | — | — | Last time this record was updated from a provider event |
+| `closed_at` | timestamp\|null | — | — | Set when `status` transitions to `closed` |
+| `suspension_case_id` | UUID\|null | — | — | FK → SuspensionCase; set only if an independent AUP ground leads to suspension; null otherwise |
+| `operator_notes` | string\|null | — | ✓ | Operator notes on the dispute; sensitive; operator-only |
+
+### Status and outcome
+
+Internal status tracks the lifecycle of the dispute record:
+
+| Status | Meaning |
+|---|---|
+| `open` | Dispute received and recorded; initial operator review |
+| `under_review` | Submitted to provider's formal dispute resolution process |
+| `closed` | Dispute resolved; `outcome` records the terminal result |
+
+`outcome` is set when `status` transitions to `closed`:
+
+| Outcome | Meaning |
+|---|---|
+| `won` | ImplicitEx prevailed; no funds returned via chargeback |
+| `lost` | Customer prevailed; funds returned via chargeback mechanism |
+| `accepted` | ImplicitEx accepted the dispute without contesting |
+
+Internal status and provider outcome are separate fields. `provider_status`
+records the raw provider state verbatim; `outcome` records the final ImplicitEx
+classification.
+
+### Cardinality
+
+One-to-many with Payment. A Payment may have multiple PaymentDispute records.
+`provider + provider_dispute_id` is unique.
+
+### Constraints
+
+- A dispute does **not** automatically trigger suspension, revocation, or any
+  status change on the Coin Card, Entitlement, or Account. These require an
+  independent AUP ground established and ratified separately from the dispute.
+- A provider chargeback does **not** create a PaymentRefund. A PaymentRefund is
+  created only if ImplicitEx independently decides to issue one. An independent
+  refund and a provider chargeback must remain distinguishable in the record model.
+- The confirmed Payment record is **not** rewritten when a dispute is received.
+  The dispute is recorded in PaymentDispute; the Payment remains `confirmed`.
+- `suspension_case_id` may only be set after an independently supported and
+  ratified protection ground is established. The dispute event itself is not
+  a sufficient ground.
+- A dispute does not create a Coin Card LifecycleEvent unless an independent
+  ratified suspension, restoration, revocation, or expiration operation occurs
+  as a consequence.
+
+### Invariants
+
+- PaymentDispute records are never deleted.
+- `payment_dispute_id`, `payment_id`, `provider`, `provider_dispute_id`,
+  `amount_atomic`, `asset`, `livemode`, and `created_at` are immutable once set.
+- `provider_charge_id`, `reason`, `evidence_due_at` are immutable once set.
+- `provider_status` is updated each time the provider reports a status change;
+  it is not immutable.
+- `outcome` is set once when `status` transitions to `closed`.
+- A `closed` dispute does not reopen.
+
+---
+
+## 12. External Event Receipt
+
+**Purpose:** Records each webhook event received from an external payment
+provider. ExternalEventReceipt provides first-layer idempotency for webhook
+processing: an event that has already been received is identified by its unique
+`(provider, provider_event_id)` before domain transitions are attempted. This
+is the first of two idempotency layers; the second is domain-transition
+idempotency on Payment, PaymentRefund, and PaymentDispute records.
+
+### Fields
+
+| Field | Type | Immutable | Sensitive | Notes |
+|---|---|---|---|---|
+| `external_event_receipt_id` | UUID | ✓ | — | Primary key |
+| `provider` | enum | ✓ | — | `stripe`, `polygon_usdc`; identifies the event source |
+| `provider_event_id` | string | ✓ | ✓ | Provider's unique event identifier (e.g., Stripe Event ID `evt_…`); unique within `provider` |
+| `event_type` | string | ✓ | — | Provider's event type string (e.g., `checkout.session.completed`) |
+| `provider_object_id` | string\|null | ✓ | — | ID of the provider object the event describes (e.g., a Session ID or PaymentIntent ID); aids correlation |
+| `api_version` | string | ✓ | — | Provider API version in effect when this event was generated |
+| `livemode` | boolean | ✓ | — | True for production provider events; false for test mode |
+| `received_at` | timestamp | ✓ | — | When ImplicitEx received the webhook |
+| `payload_hash` | string | ✓ | — | SHA-256 hash of the raw webhook payload; used for integrity verification without retaining the full payload |
+| `processing_status` | enum | — | — | `received`, `processing`, `processed`, `failed`, `skipped` |
+| `processing_started_at` | timestamp\|null | — | — | Set when `processing_status` transitions to `processing` |
+| `processed_at` | timestamp\|null | — | — | Set when `processing_status` reaches `processed` or `skipped` |
+| `attempt_count` | integer | — | — | Count of processing attempts; initial value 0; incremented atomically on every valid transition into `processing`, including the first attempt; therefore the first processing attempt sets it to 1; duplicate delivery does not increment it; acknowledgement without processing does not increment it |
+| `last_error_code` | string\|null | — | — | Machine-readable error code from the most recent failed attempt; cleared on success |
+
+### Processing status definitions
+
+| Status | Meaning |
+|---|---|
+| `received` | Event received and stored; not yet processed |
+| `processing` | Processing underway; domain transitions in progress |
+| `processed` | Domain transitions completed successfully |
+| `failed` | Most recent processing attempt failed; eligible for retry |
+| `skipped` | Event was deliberately non-actionable (e.g., event type not handled); no domain transitions performed |
+
+### Idempotency design
+
+**Layer 1 — ExternalEventReceipt deduplication by provider event identity:**
+Before processing any provider event, the server attempts to insert an
+ExternalEventReceipt row using the unique `(provider, provider_event_id)` pair.
+If a row with that pair already exists, the incoming delivery is a duplicate.
+The server returns the existing receipt's processing result to the provider.
+The original receipt record is **not** modified; its status is not changed to
+`skipped`. `skipped` is reserved for a newly accepted but deliberately
+non-actionable event (e.g., an unhandled event type), not for duplicate delivery.
+
+**Layer 2 — Domain-transition idempotency:**
+Even if a duplicate event reaches domain logic (e.g., due to a race between
+two concurrent webhook deliveries of the same Event ID), domain transitions are
+independently idempotent. A record that has already reached the target state
+will not be transitioned again. Two distinct provider Event IDs that describe
+the same logical provider-object state are each deduplicated independently;
+domain transitions must tolerate this case without double-applying effects.
+
+Both layers must be operative. Layer 1 alone is insufficient because webhook
+delivery may race with in-progress processing of the same event.
+
+**No single linked record:** One webhook may update PurchaseAttempt, Payment,
+LifecycleEvent, and customer-notice state in the same operation. A single
+`linked_record_id` cannot reliably represent the full processing result.
+Correlation is achieved via `provider_object_id` and domain record timestamps.
+
+### Retry behavior
+
+A `failed` ExternalEventReceipt is not terminal. On a controlled retry, the
+following occur atomically:
+
+1. `processing_status` transitions from `failed` back to `processing`.
+2. `attempt_count` is incremented (same mechanism as the first attempt).
+3. `processing_started_at` is updated to the retry start time.
+4. Domain transitions are retried. Layer 2 idempotency ensures they are safe.
+5. On success, `processing_status` transitions to `processed`.
+
+### Invariants
+
+- ExternalEventReceipt records are never deleted.
+- `(provider, provider_event_id)` is unique. Duplicate event deliveries are
+  identified by this constraint and handled without modifying the original record.
+- `external_event_receipt_id`, `provider`, `provider_event_id`, `event_type`,
+  `provider_object_id`, `api_version`, `livemode`, `received_at`, and
+  `payload_hash` are immutable once set.
+- `processing_status` may transition `failed → processing` on retry.
+  Once `processed` or `skipped`, no further transitions.
+- `attempt_count` is monotonically non-decreasing.
+
+---
+
 ## State-transition summary
 
 ### Entitlement status
@@ -750,7 +1155,26 @@ The grace period does not change the derived status or restore execution.
 `EXPIRED` is `EXPIRED` throughout and after the grace period. Execution requires
 `Entitlement.status = 'active'`.
 
-### SuspensionCase status (see §8 for full table)
+### PurchaseAttempt status
+
+```
+screening ──(pass)──► eligible ──(checkout)──► checkout_created ──(intent)──► payment_pending
+    │                    │               │                                           │     │
+    │(fail)              │(cancel)       │(cancel / expired)               (failed) │     │(confirmed)
+    ▼                    ▼               ▼                                           ▼     ▼
+ declined            cancelled        expired                          checkout_created  payment_confirmed
+                                                                                              │
+                                                                             (provisioned)    │
+                                                                                              ▼
+                                                                                         completed
+```
+
+`declined`, `cancelled`, `expired`, and `completed` are terminal.
+`payment_pending → checkout_created` is the recoverable payment-failure transition;
+the reservation and Checkout Session remain active. `payment_id` is linked on a
+late payment confirmation even when the attempt has already transitioned to `expired`.
+
+### SuspensionCase status (see §8 SuspensionCase for full table)
 
 ```
 open ──(7 days, resolved)──► resolved_restored | resolved_revoked | resolved_expired
@@ -790,7 +1214,50 @@ than mutating the existing field.
 `publication.reactivation_prior_publication_id`,
 `publication.signature`, `publication.prior_publication_id`,
 `case_id`, `case.initiated_at`, `case.initiated_by`, `case.reason`,
-`case.deadline`
+`case.deadline`,
+`attempt.purchase_attempt_id`, `attempt.account_id`, `attempt.prior_entitlement_id`,
+`attempt.purchase_type`, `attempt.payment_rail`, `attempt.quoted_asset`,
+`attempt.quoted_amount_atomic`, `attempt.quoted_asset_decimals`,
+`attempt.handle`, `attempt.livemode`, `attempt.created_at`,
+`refund.payment_refund_id`, `refund.payment_id`, `refund.provider`,
+`refund.amount_atomic`, `refund.asset`, `refund.asset_decimals`,
+`refund.reason_code`, `refund.initiated_at`, `refund.initiated_by`,
+`refund.idempotency_key`, `refund.livemode`,
+`dispute.payment_dispute_id`, `dispute.payment_id`, `dispute.provider`,
+`dispute.provider_dispute_id`, `dispute.provider_charge_id`,
+`dispute.amount_atomic`, `dispute.asset`, `dispute.reason`,
+`dispute.evidence_due_at`, `dispute.livemode`, `dispute.created_at`,
+`receipt.external_event_receipt_id`, `receipt.provider`,
+`receipt.provider_event_id`, `receipt.event_type`, `receipt.provider_object_id`,
+`receipt.api_version`, `receipt.livemode`, `receipt.received_at`,
+`receipt.payload_hash`
+
+### Write-once fields
+
+Fields that begin null and may be populated with exactly one value after record
+creation. Once set, these fields are immutable. They must not appear in the
+Immutable list above because they are not non-null at record creation.
+
+| Field | Populated when |
+|---|---|
+| `attempt.card_id` | Provisioning creates the CoinCard (initial_activation only); or set at attempt creation for renewal and reactivation |
+| `attempt.checkout_session_id` | Checkout session is created |
+| `attempt.reserved_at` | Checkout session is created |
+| `attempt.reserved_until` | Checkout session is created |
+| `attempt.payment_id` | Payment record is created |
+| `attempt.completed_at` | Provisioning confirms activation; PurchaseAttempt observes the result |
+| `attempt.expired_at` | `reserved_until` elapses |
+| `attempt.cancelled_at` | Attempt is cancelled |
+| `attempt.failure_code` | Attempt reaches `declined` or `expired` with a notable condition |
+| `refund.provider_refund_id` | Provider acknowledges the refund and assigns an ID |
+| `refund.provider_created_at` | Provider acknowledges the refund |
+| `refund.confirmed_at` | Refund status reaches `succeeded` |
+| `refund.failed_at` | Refund status reaches `failed` |
+| `refund.failure_code` | Refund status reaches `failed` |
+| `dispute.suspension_case_id` | An independently ratified AUP ground leads to suspension |
+| `dispute.outcome` | Dispute status transitions to `closed` |
+| `dispute.closed_at` | Dispute status transitions to `closed` |
+| `receipt.processed_at` | Processing status reaches `processed` or `skipped` |
 
 ### Mutable fields
 
@@ -829,6 +1296,17 @@ than mutating the existing field.
 | `publication.activated_at` | Set once when stage reaches `activated` |
 | `account.status` | Operator-controlled |
 | `account.email_verified_at` | Set once |
+| `attempt.status` | Forward state transitions; `payment_pending → checkout_created` allowed for recoverable payment failure |
+| `refund.status` | Forward state transitions; `succeeded`, `failed`, `cancelled` are terminal |
+| `refund.updated_at` | Updated on each provider event |
+| `dispute.status` | Forward state transitions: `open → under_review → closed` |
+| `dispute.provider_status` | Updated verbatim on each provider event; not forward-only |
+| `dispute.updated_at` | Updated on each provider event |
+| `dispute.operator_notes` | Set or updated by operator; sensitive |
+| `receipt.processing_status` | `received → processing`; processing → `processed`, `failed`, or `skipped`; `failed → processing` on controlled retry |
+| `receipt.processing_started_at` | Set and updated on every transition to `processing`, including retries |
+| `receipt.attempt_count` | Incremented on every transition to `processing`; monotonically non-decreasing |
+| `receipt.last_error_code` | Set on failure; cleared on successful retry |
 
 ### Derived fields (never stored on primary records)
 
@@ -845,7 +1323,11 @@ than mutating the existing field.
 `account.email`, `AccountCredential.wallet_address` (pseudonymous but linked to
 identity), `AccountRecoveryCode.code_hash`, `case.resolution_notes` (may contain
 security investigation details), `Payment.provider_payment_id` (external reference
-that enables financial lookups)
+that enables financial lookups), `PurchaseAttempt.checkout_session_id` (provider
+session reference), `PaymentRefund.provider_refund_id` (enables financial lookups),
+`PaymentDispute.provider_dispute_id` (enables financial lookups),
+`PaymentDispute.operator_notes` (may contain security or legal details),
+`ExternalEventReceipt.provider_event_id` (provider-system reference)
 
 ### Public fields (accessible without authentication)
 
@@ -867,7 +1349,10 @@ The following invariants must hold atomically. A partial write that violates
 any invariant must be rolled back.
 
 1. **Event-first:** A LifecycleEvent record must be written in the same
-   transaction as the state change it records. No state change without an event.
+   transaction as the Coin Card lifecycle state change it records (see §6
+   LifecycleEvent invariants for the full scope). Operational audit records
+   (PurchaseAttempt, PaymentDispute, ExternalEventReceipt) are exempt from
+   this invariant; their own field-level audit properties govern.
 
 2. **Exactly-one-active-route:** At most one WalletRoute per card may have
    `status = 'active'`. Activating a new route and superseding the prior route
@@ -939,7 +1424,7 @@ any invariant must be rolled back.
 
 ---
 
-## 8. Retention and tombstone rules
+## 13. Retention and tombstone rules
 
 No record in V1 is hard-deleted. The following rules apply:
 
@@ -953,6 +1438,10 @@ No record in V1 is hard-deleted. The following rules apply:
 | LifecycleEvent | No deletion, no mutation | Permanent (event type, timestamps, and non-sensitive metadata are permanent evidence) |
 | EvidencePublication | No deletion; `publication_stage`, `published_at`, `activated_at` may advance | Permanent (all signing inputs and hashes are permanent evidence) |
 | SuspensionCase | No deletion; case ID, timestamps, and resolution are permanent | Permanent (identifiers, deadlines, breach timestamps, and resolution); sensitive notes subject to policy |
+| PurchaseAttempt | No deletion; `purchase_attempt_id`, `handle`, `status`, `reserved_until`, `checkout_session_id`, `payment_id` retained | Core identifiers, amounts, and timestamps are permanent; `checkout_session_id` is sensitive; see sensitive fields |
+| PaymentRefund | No deletion; `payment_refund_id`, `payment_id`, `provider`, `provider_refund_id`, `amount_atomic`, `asset`, `reason_code`, `status`, `initiated_at`, `confirmed_at` retained | Core financial identifiers, amounts, provider references, and statuses retained under operational retention policy; `provider_refund_id` is sensitive; see retention policy note |
+| PaymentDispute | No deletion; `payment_dispute_id`, `payment_id`, `provider`, `provider_dispute_id`, `amount_atomic`, `status`, `outcome`, `created_at` retained | Core identifiers, amounts, provider references, and outcomes retained under operational retention policy; `provider_dispute_id` and `operator_notes` are sensitive; sensitive notes subject to policy-governed redaction |
+| ExternalEventReceipt | No deletion; `external_event_receipt_id`, `provider`, `provider_event_id`, `event_type`, `payload_hash`, `processing_status`, `received_at` retained | Idempotency and audit identifiers are permanent; raw payload is not retained — `payload_hash` is retained; `provider_event_id` is sensitive |
 
 ### What "permanent" means
 
@@ -984,7 +1473,7 @@ data beyond an approved retention period.
 
 ---
 
-## 9. Public-record versus private operational-data boundaries
+## 14. Public-record versus private operational-data boundaries
 
 ### Public (no authentication required)
 
@@ -1006,6 +1495,10 @@ The following are accessible by any party given the card's public URL or handle:
 - LifecycleEvents for the customer's own card (excluding operator metadata)
 - `SuspensionCase`: `reason`, `deadline`, `status`, `resolution` (for the
   customer's own card)
+- `PurchaseAttempt`: `status`, `handle`, `reserved_until`, `created_at`,
+  `completed_at`, `expired_at` (for the customer's own attempts; `checkout_session_id` excluded)
+- `PaymentRefund`: `status`, `amount_atomic`, `refund_reason`, `succeeded_at` (for the customer's own payments)
+- `PaymentDispute`: `status`, `dispute_amount_atomic`, `received_at` (for the customer's own payments; `operator_notes` excluded)
 
 ### Operator-accessible only
 
@@ -1017,7 +1510,7 @@ The following are accessible by any party given the card's public URL or handle:
 
 ---
 
-## 10. Entitlement specification to record mapping
+## 15. Entitlement specification to record mapping
 
 | Entitlement requirement | Implementing record(s) and fields |
 |---|---|
@@ -1056,6 +1549,24 @@ The following are accessible by any party given the card's public URL or handle:
 | SIWE + email + 8 recovery codes | `AccountCredential` records (wallet, email); `AccountRecoveryCode` (8 records per activation) |
 | Pilot success criteria — customer notices | `renewal_notice_sent`, `customer_notice_sent` lifecycle events; auditable |
 | Evidence independent of ImplicitEx availability | `EvidencePublication.signature` + `asset_hashes` verifiable with public key; no ImplicitEx runtime dependency |
+| Purchase screening and eligibility evidence | `PurchaseAttempt.status` (`screening` → `eligible` or `declined`); `failure_code` for AUP Category 1 reason codes; immutable administration evidence not part of the signed Coin Card chain |
+| Handle reservation | `PurchaseAttempt.handle`, `reserved_at`, `reserved_until`; server-authoritative; concurrency-safe uniqueness constraint on active reservations by normalized handle; reservation independent of webhook delivery timing |
+| Quoted payment terms | `PurchaseAttempt.quoted_asset`, `quoted_amount_atomic`, `quoted_asset_decimals`; immutable at attempt creation; must equal the eventual Payment fields |
+| Checkout-to-Payment correlation | `PurchaseAttempt.checkout_session_id` (write-once; one session per attempt), `payment_id` (write-once; set when Payment is created); `purchase_type` distinguishes initial, renewal, and reactivation flows |
+| Provisioning handoff | `PurchaseAttempt.status = 'payment_confirmed'` signals provisioning start; provisioning pipeline writes the appropriate LifecycleEvent (`entitlement_activated` or `entitlement_reactivated`); `PurchaseAttempt.status` transitions to `completed` after observing the activated result |
+| Late-payment-after-expiry reconciliation | `PurchaseAttempt.payment_id` linked even when `status = 'expired'`; `failure_code = 'PAYMENT_CONFIRMED_AFTER_EXPIRY'`; provisioning does not proceed; Stripe Checkout specification governs the refund operation |
+| Automatic refund initiation | `PaymentRefund` created for each automatic-refund ground (provisioning SLA breach, post-payment operator refusal, duplicate successful payment, or other ratified automatic ground); `initiated_by` records the system or operator that initiates the operation; customer-requested refunds (`reason_code = 'customer_request'`) are not automatic and remain distinguishable; `refund_initiated` lifecycle event written with `payment_refund_id` |
+| Provider refund tracking | `PaymentRefund.status` tracks provider acknowledgement through to `succeeded` or `failed`; write-once `provider_refund_id` set on provider acknowledgement; `idempotency_key` prevents duplicate submissions |
+| Partial and cumulative refund accounting | One-to-many PaymentRefund per Payment; partial succeeded refunds leave `Payment.status = 'confirmed'`; `Payment.status` becomes `'refunded'` only when cumulative succeeded refund amounts equal `Payment.amount_atomic`; cumulative succeeded refunds cannot exceed the payment amount |
+| Refund lifecycle events | `refund_initiated` written when ImplicitEx initiates a refund; `refund_confirmed` written exactly once per PaymentRefund that reaches `succeeded`; both carry `payment_id` and `payment_refund_id` |
+| Provider dispute and chargeback tracking | `PaymentDispute` created on provider dispute event; `provider_dispute_id` unique within provider; internal `status` (`open`, `under_review`, `closed`) and `outcome` (`won`, `lost`, `accepted`) are separate from raw `provider_status` |
+| Historically confirmed Payment preserved | A provider chargeback does not rewrite the confirmed Payment record; the Payment remains `confirmed`; the dispute is recorded in PaymentDispute only |
+| Disputes separated from refunds | A chargeback does not create a PaymentRefund; an independently decided ImplicitEx refund and a provider chargeback remain distinguishable in the record model |
+| Optional link to independently justified SuspensionCase | `PaymentDispute.suspension_case_id` may be set only after an independently ratified AUP ground is established; the dispute event itself is not a sufficient ground; no automatic entitlement action |
+| Provider-webhook acceptance and Event-ID deduplication | Every inbound provider webhook is resolved to an `ExternalEventReceipt`; the server attempts insertion using `(provider, provider_event_id)`; a new receipt is created only for a previously unseen Event ID; duplicate delivery returns the existing receipt without creating or mutating another record |
+| Webhook processing retries | `ExternalEventReceipt.processing_status` supports `failed → processing` transition; `attempt_count` incremented on every transition to `processing`; `last_error_code` updated on failure and cleared on success |
+| Payload-integrity hash | `ExternalEventReceipt.payload_hash` (SHA-256 of raw payload) retained; complete raw payload is not required to be stored indefinitely |
+| Domain-transition idempotency support | `ExternalEventReceipt` deduplication is layer 1; domain records (Payment, PaymentRefund, PaymentDispute) apply independent state-transition idempotency as layer 2; both layers must be operative |
 
 ---
 
@@ -1171,3 +1682,78 @@ the EvidencePublication record is retained permanently and a
 `publication_abandoned` lifecycle event is written in both cases. Updated the
 stage table, surrounding prose, transactional invariant 5 failure modes, and
 the failure-and-rollback behavior table to state the distinction consistently.
+
+### 2026-08-03 — Four new operational records added (purchase-flow and provider-event support)
+
+**A13 — PurchaseAttempt, PaymentRefund, PaymentDispute, ExternalEventReceipt added**
+
+Added four new operational records to support the purchase pipeline, provider
+payment events, and webhook idempotency. These are private operational records.
+They are not part of the public signed Coin Card evidence chain.
+
+*PurchaseAttempt (§9):* Records the full lifecycle of a purchase attempt from
+eligibility screening through provisioning handoff. Reserves the requested handle
+server-authoritatively via `reserved_at` / `reserved_until`, independent of
+webhook delivery. Supports four `purchase_type` values (`initial_activation`,
+`active_term_renewal`, `grace_period_renewal`, `post_grace_reactivation`).
+`card_id` is write-once: null for initial purchases until provisioning creates
+the CoinCard. A failed payment attempt within an active session transitions
+`payment_pending → checkout_created` without expiring the attempt. A late
+confirmed payment after `reserved_until` is linked via `payment_id` and held for
+reconciliation with `failure_code = 'PAYMENT_CONFIRMED_AFTER_EXPIRY'`; provisioning
+does not proceed automatically.
+
+*PaymentRefund (§10):* Records each refund operation against a confirmed Payment.
+One-to-many with Payment, supporting partial and sequential refunds. `provider_refund_id`
+is write-once: null until the provider acknowledges and assigns an ID. `idempotency_key`
+prevents duplicate refund submissions. Partial succeeded refunds leave
+`Payment.status = 'confirmed'`; `Payment.status` becomes `'refunded'` only when
+cumulative succeeded refund amounts equal `Payment.amount_atomic`. A failed refund
+is terminal for that record; a retry creates a new PaymentRefund. `refund_initiated`
+and `refund_confirmed` lifecycle events updated to carry `payment_refund_id`.
+
+*PaymentDispute (§11):* Records provider dispute (chargeback) events. A provider
+chargeback does not rewrite the historically confirmed Payment, does not create a
+PaymentRefund, and does not automatically trigger any entitlement action. Internal
+`status` (`open`, `under_review`, `closed`) and terminal `outcome` (`won`, `lost`,
+`accepted`) are separate from raw `provider_status`. `suspension_case_id` is
+write-once and may only be set after an independently ratified AUP ground is
+established.
+
+*ExternalEventReceipt (§12):* Records every inbound provider webhook event.
+`(provider, provider_event_id)` is unique; duplicate delivery returns the existing
+receipt without mutating it. `skipped` is reserved for a newly accepted but
+deliberately non-actionable event — not for duplicate delivery. `failed → processing`
+is permitted on controlled retry; `attempt_count` increments on every transition
+into `processing` including the first, so the first processing attempt sets it
+to `1`. Complete raw payload is not stored; `payload_hash` is retained.
+
+*Write-once field classification (§ Field classifications):* Added a new
+Write-once subsection covering 18 fields across the four new records. Write-once
+fields begin null and may be populated exactly once; they are immutable thereafter
+but must not be listed as immutable from record creation.
+
+*Lifecycle-event scope clarified:* Pre-payment eligibility declines, PurchaseAttempt
+expirations, and provider dispute events are operational-record transitions that
+do not produce Coin Card LifecycleEvents. `refund_initiated` and `refund_confirmed`
+produce LifecycleEvents as before, now carrying `payment_refund_id`.
+Transactional invariant 1 (event-first) scoped explicitly to Coin Card lifecycle
+mutations.
+
+*Retention-section numbering corrected:* Retention (§8), Public boundary (§9),
+and Mapping (§10) were renumbered to §13, §14, §15 to avoid collision with the
+record sections 1–12. A stale retention cross-reference was corrected to §13.
+Retention language for the new records uses operational retention policy language;
+no statutory duration is asserted.
+
+*Payment.provider_payment_id note corrected:* Updated from "Stripe charge ID" to
+"Stripe PaymentIntent ID" to match the actual identifier used for fulfillment.
+
+**This amendment does not change:**
+
+- The $10 entitlement price
+- Entitlement duration (12 months)
+- Renewal or reactivation policy or grace period
+- Route-change allowance (4 per term)
+- Customer workflows or business-operation deadlines (24h provisioning SLA; 7/14-day suspension rules)
+- Public signed Coin Card evidence semantics (EvidencePublication, signing inputs, registry record, lifecycle bundle)
