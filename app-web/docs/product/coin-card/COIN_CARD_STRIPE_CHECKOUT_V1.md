@@ -1,6 +1,6 @@
 # Coin Card Stripe Checkout V1
 
-**Status:** Governing checkout specification — draft for ratification  
+**Status:** Governing checkout specification — ratified for implementation; GD-1 through GD-4 remain required before live Stripe payments
 **Governing documents:**
 - `COIN_CARD_ENTITLEMENT_SPECIFICATION_V1.md` at `b3bdc08`
 - `COIN_CARD_DATA_MODEL_V1.md` at `f93bc04`
@@ -1659,3 +1659,15 @@ observations, and performs correlation-gated provider retrieval through the
 canonical reducer. Stripe-to-internal reconciliation terminology and the
 refund-scenarios testing table were aligned to canonical internal fields and
 lifecycle boundaries. Nine governing-document commit citations were refreshed.
+
+### 2026-08-05 — Ratified for implementation
+
+Stripe Checkout V1 is ratified against Entitlement Specification `b3bdc08`,
+Data Model `f93bc04`, Customer Workflows `7a9032c`, Business Operations
+`4352081`, and minimum Stripe API version `2024-10-28.acacia`.
+
+This ratification authorizes implementation and testing within the stated Coin
+Card pilot scope. It does not authorize live Stripe payments until GD-1 through
+GD-4 are resolved and their decisions are recorded. Native-USDC checkout,
+future Stripe Customer objects, optional unratified Data Model fields, and all
+other explicitly excluded operations remain outside this specification.
