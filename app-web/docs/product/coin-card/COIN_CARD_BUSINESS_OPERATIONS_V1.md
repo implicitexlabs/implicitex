@@ -113,8 +113,15 @@ A role assignment must be on record before any privileged action is taken.
 | Action | AUTO | OPR | PSO | FDR | CST |
 |---|---|---|---|---|---|
 | Accept payment / confirm payment | ✓ | — | — | — | — |
-| Initiate refund (automated SLA) | ✓ | — | — | — | — |
-| Initiate refund (manual) | — | ✓ | ✓ | ✓ | — |
+| Create PaymentRefund automatically (authorized AUP decline, SLA breach, or predicate race) | ✓ | — | — | — | — |
+| Cancel existing `pending_activation` Entitlement automatically after PaymentRefund creation (authorized AUP decline, SLA breach, or predicate race) | ✓ | — | — | — | — |
+| Create PaymentRefund manually (authorized post-payment AUP decline) | — | — | ✓ | ✓ | — |
+| Cancel existing `pending_activation` Entitlement manually after PaymentRefund creation (authorized post-payment AUP decline) | — | — | ✓ | ✓ | — |
+| Create PaymentRefund manually (customer provisioning failure) | — | ✓ | — | — | — |
+| Cancel existing `pending_activation` Entitlement manually after PaymentRefund creation (customer provisioning failure) | — | ✓ | — | — | — |
+| Submit PaymentRefund to provider automatically | ✓ | — | — | — | — |
+| Process provider PaymentRefund events and write `refund_confirmed` on success | ✓ | — | — | — | — |
+| Reconcile pending, failed, or contradictory PaymentRefund outcomes (AUTO alert, OPR review, FDR escalation) | ✓ | ✓ | — | ✓ | — |
 | Decline application before payment | — | — | ✓ | ✓ | — |
 | Decline reactivation after payment | — | — | ✓ | ✓ | — |
 | Create entitlement / provisioning | ✓ | — | — | — | — |
@@ -342,18 +349,37 @@ or `FDR` for AUP decline decisions.
        or considered at Phase 1.
 
 13. If any Phase 3 re-verification fails due to an operator decision to decline:
-    - Automatic full refund initiation. The customer is not required to request
-      the refund.
-    - `[aud]` Administration evidence: `action = APPLICATION_DECLINED`,
-      `reasonCode` (from §GD-1), `authorityId`, `nonce`,
-      `decline_phase = 'post_payment'`, `payment_id`.
-    - If a `pending_activation` entitlement was created before the decline,
-      terminate it using the governing entitlement-cancellation operation.
-      `[evt]` `entitlement_cancelled`.
-    - `[evt]` `refund_initiated`.
-    - Customer notified: purchase declined, full refund initiated, timeline.
-    - Distinguish operator-caused refund from customer-caused provisioning
+
+    * Write `[aud]` Administration evidence with `action = APPLICATION_DECLINED`,
+      `reasonCode` from §GD-1, `authorityId`, `nonce`,
+      `decline_phase = 'post_payment'`, and the confirmed `payment_id`.
+    * Initiate the required full refund by creating one canonical PaymentRefund:
+
+      * `PaymentRefund.payment_id` references the confirmed Payment.
+      * `PaymentRefund.amount_atomic = Payment.amount_atomic`.
+      * `PaymentRefund.reason_code = 'operator_initiated'`.
+      * `PaymentRefund.initiated_by = 'system'` when the authorized automatic
+        process creates the record; otherwise it is the actual authorized
+        operator ID.
+      * Creating the PaymentRefund does not change `Payment.status` to
+        `refunded`.
+    * Write `[evt]` `refund_initiated` with `payment_id`,
+      `payment_refund_id`, and `refund_reason = 'operator_initiated'`.
+    * If an existing Entitlement is in `pending_activation`:
+
+      * Transition that Entitlement to `cancelled`.
+      * Write `[evt]` `entitlement_cancelled` with
+        `cancellation_reason = 'post_payment_operator_decline'` and
+        `payment_refund_id` equal to the PaymentRefund created above.
+    * If no Entitlement exists, do not create a placeholder Entitlement and do
+      not write `entitlement_cancelled`.
+    * Notify the customer that the purchase was declined and a full refund was
+      initiated; provider confirmation remains pending under the normal refund
+      lifecycle.
+    * Distinguish the operator-decline ground from customer-caused provisioning
       failure in the audit record. These are not the same event.
+    * Do not write `refund_confirmed` in this step. That event is written later
+      only when the provider confirms the refund.
 
 14. If Phase 3 re-verification passes, proceed to Phase 4.
 
@@ -471,13 +497,37 @@ or `FDR` for AUP decline decisions.
       agreement to an extension or to initiate an automatic refund.
 
 28. At `pay.confirmed_at + 24h` (SLA deadline):
-    - If `pub.publication_stage` has not reached `PUBLISHED`:
-      - `[evt]` Write `provisioning_sla_breach` with canonical payload fields
-        `provisioning_deadline` and `elapsed_seconds`.
-      - `[evt]` `refund_initiated`.
-      - Automatic refund initiation begins (see Recoverable Exception R-1).
-      - Escalate to `FDR` immediately.
-      - The customer is not required to request the refund.
+    - If `pub.publication_stage` has not reached `PUBLISHED` and no valid
+      customer-agreed provisioning extension prevents the breach:
+
+      * Write `[evt]` `provisioning_sla_breach` with `provisioning_deadline`
+        and `elapsed_seconds`.
+      * Create one canonical full-amount PaymentRefund:
+
+        * `PaymentRefund.payment_id` references the confirmed Payment.
+        * `PaymentRefund.amount_atomic = Payment.amount_atomic`.
+        * `PaymentRefund.reason_code = 'provisioning_sla_breach'`.
+        * `PaymentRefund.initiated_by = 'system'`.
+        * Creating the PaymentRefund does not change `Payment.status` to
+          `refunded`.
+      * Write `[evt]` `refund_initiated` with `payment_id`,
+        `payment_refund_id`, and `refund_reason = 'provisioning_sla_breach'`.
+      * If an existing Entitlement is in `pending_activation`:
+
+        * Transition that Entitlement to `cancelled`.
+        * Write `[evt]` `entitlement_cancelled` with
+          `cancellation_reason = 'provisioning_sla_breach'` and
+          `payment_refund_id` equal to the PaymentRefund created above.
+      * If no Entitlement exists, do not create a placeholder Entitlement and
+        do not write `entitlement_cancelled`.
+      * No residual obligation to provision remains after this operation.
+      * Do not write `refund_confirmed` in this step. That event is written
+        later only when the provider confirms the refund.
+      * Escalate to `FDR` immediately.
+      * Notify the customer that the provisioning deadline was missed, a full
+        refund was initiated automatically, and provider confirmation remains
+        pending under the normal refund lifecycle. The customer is not required
+        to request the refund.
 
 ---
 
@@ -500,10 +550,10 @@ or `FDR` for AUP decline decisions.
 | `payment_confirmed` | Step 9 — payment confirmed |
 | `entitlement_activated` | Step 23 — initial activation or renewal |
 | `entitlement_reactivated` | Step 23 — post-grace reactivation |
-| `entitlement_cancelled` | Step 13 — if pending entitlement terminated post-payment decline |
-| `provisioning_sla_breach` | Step 28 — 24-hour deadline missed |
-| `refund_initiated` | Step 13 or 28 — refund triggered |
-| `refund_confirmed` | When provider confirms refund |
+| `entitlement_cancelled` | Conditional on an existing `pending_activation` Entitlement actually transitioning to `cancelled`; no placeholder Entitlement is created. Payload carries `cancellation_reason` and non-null `payment_refund_id`. Four BO1 paths: Step 13 (`cancellation_reason = 'post_payment_operator_decline'`); Step 28 / N-1 (`cancellation_reason = 'provisioning_sla_breach'`); R-4 (`cancellation_reason = 'customer_provisioning_failure'`); R-6 / N-3 — losing operation in a handle or compare-and-swap race (`cancellation_reason = 'post_payment_predicate_failure'`) |
+| `provisioning_sla_breach` | Step 28 / N-1 — 24-hour deadline missed without a valid customer-agreed extension |
+| `refund_initiated` | Written when the canonical PaymentRefund is created, not when the provider confirms success. Four BO1 paths: Step 13 (`PaymentRefund.reason_code = 'operator_initiated'`); Step 28 / N-1 (`PaymentRefund.reason_code = 'provisioning_sla_breach'`); R-4 (`PaymentRefund.reason_code = 'customer_provisioning_failure'`); R-6 / N-3 — losing operation in a handle or compare-and-swap race (`PaymentRefund.reason_code = 'post_payment_predicate_failure'`) |
+| `refund_confirmed` | When the provider confirms the refund — asynchronous and independent of Entitlement cancellation |
 | `publication_abandoned` | Any publication abandoned after `PREPARED`; internal audit only |
 
 No `LifecycleEvent` is written for payment failure, application decline, or
@@ -598,17 +648,53 @@ compensating operations with administration evidence and operator attribution.
 | R-1: Provisioning failure before deadline | `pub.publication_stage < PUBLISHED` and time < `pay.confirmed_at + 24h` | Retry provisioning; keep order active; alert `OPR` per SLA schedule |
 | R-2: Signing unavailable | Signing key not importable or service unavailable | Halt provisioning; alert `OPR`; do not sign with unverified key; retry when key is available |
 | R-3: Publication delivery failure | Registry unavailable during PUBLISHED step | Retry publication; do not activate on unconfirmed publication |
-| R-4: Customer-caused provisioning failure | Customer cannot supply a valid recipient address within the provisioning window | Cancel provisioning; apply refund rules per Entitlement Specification §8; no operator penalty |
+
+**R-4: Customer-caused provisioning failure**
+
+*Condition:* Customer cannot supply a valid recipient address or other valid provisioning prerequisite within the governing provisioning window.
+
+*Response:*
+
+1. Cancel the provisioning operation under the governing Entitlement rules.
+2. Create the canonical PaymentRefund required for this paid provisioning failure:
+
+   * `PaymentRefund.payment_id` references the confirmed Payment.
+   * `PaymentRefund.amount_atomic = Payment.amount_atomic`.
+   * `PaymentRefund.reason_code = 'customer_provisioning_failure'`.
+   * `PaymentRefund.initiated_by` is the actual authorized operator ID.
+   * Creating the PaymentRefund does not change `Payment.status` to `refunded`.
+3. Write `[evt]` `refund_initiated` with `payment_id`, `payment_refund_id`, and
+   `refund_reason = 'customer_provisioning_failure'`.
+4. If an existing Entitlement is in `pending_activation`:
+
+   * Transition it to `cancelled`.
+   * Write `[evt]` `entitlement_cancelled` with
+     `cancellation_reason = 'customer_provisioning_failure'` and
+     `payment_refund_id` equal to the PaymentRefund created above.
+5. If no Entitlement exists, do not create a placeholder Entitlement and do not
+   write `entitlement_cancelled`.
+6. Do not create a cancellation EvidencePublication for this pending-activation path.
+7. Do not write `refund_confirmed` in this path. That event is written later only
+   when the provider confirms the refund.
+8. Notify the customer that provisioning was cancelled because the required valid
+   prerequisite was not completed, a refund was initiated, and provider confirmation
+   remains pending under the normal refund lifecycle.
+9. No operator penalty applies. This ground is distinct from `customer_request`
+   (the customer did not request a refund) and distinct from `provisioning_sla_breach`
+   (the SLA deadline did not drive this cancellation).
+
+| Exception | Condition | Response |
+|---|---|---|
 | R-5: Payment provider webhook delay | Stripe or on-chain confirmation delayed | Wait; do not activate on pending payment; alert if delay exceeds operational threshold |
-| R-6: Handle race condition | Handle claimed by another order between reservation and activation | Refund the losing order automatically; preserve handle for winner |
+| R-6: Handle race condition | Handle claimed by another order between reservation and activation | Preserve the authoritative winning handle claim; the losing PurchaseAttempt cannot continue provisioning with that handle; create canonical full-amount PaymentRefund for the losing Payment (`reason_code = 'post_payment_predicate_failure'`, `initiated_by = 'system'`); preserve the handle-race subtype in operational or reconciliation evidence; write `[evt]` `refund_initiated`; if an existing Entitlement for the losing operation is in `pending_activation` transition it to `cancelled` and write `[evt]` `entitlement_cancelled` (`cancellation_reason = 'post_payment_predicate_failure'`, `payment_refund_id` references that PaymentRefund); if no Entitlement exists do not create a placeholder and do not write `entitlement_cancelled`; no Entitlement for the losing operation reaches `active`; no cancellation EvidencePublication; notify losing customer that handle became unavailable and full refund was initiated; route any ambiguous ownership result to reconciliation |
 
 ### Non-recoverable exceptions
 
 | Exception | Condition | Response |
 |---|---|---|
-| N-1: SLA breach without extension agreement | `pay.confirmed_at + 24h` reached without `pub.publication_stage = PUBLISHED` and no customer extension agreement | Automatic full refund; `provisioning_sla_breach` event; no residual obligation to provision |
-| N-2: Post-payment eligibility or AUP decline | Operator declines after confirmed payment | Automatic full refund; administration evidence with reason code; `[evt]` `refund_initiated`; no entitlement activated |
-| N-3: Compare-and-swap race (unresolved) | Two concurrent activations both attempted on the same card | Reconciliation case; one activation wins; the other is refunded; no double-entitlement |
+| N-1: SLA breach without extension agreement | `Payment.confirmed_at + 24h` reached without `pub.publication_stage = PUBLISHED` and no valid customer-agreed extension | Per Step 28: write `[evt]` `provisioning_sla_breach`; create canonical full-amount PaymentRefund (`reason_code = 'provisioning_sla_breach'`, `initiated_by = 'system'`); write `[evt]` `refund_initiated`; if an existing Entitlement is in `pending_activation` transition it to `cancelled` and write `[evt]` `entitlement_cancelled` (`cancellation_reason = 'provisioning_sla_breach'`, `payment_refund_id` references that PaymentRefund); if no Entitlement exists do not create a placeholder and do not write `entitlement_cancelled`; no Entitlement reaches `active`; no cancellation EvidencePublication; no residual obligation to provision; escalate immediately to `FDR`; notify customer that deadline was missed and full refund was initiated automatically |
+| N-2: Post-payment eligibility or AUP decline | Operator declines after confirmed payment | Per Step 13: write canonical `APPLICATION_DECLINED` Administration evidence; create canonical full-amount PaymentRefund (`reason_code = 'operator_initiated'`, `initiated_by = 'system'` when the authorized automatic process creates it, otherwise the actual authorized operator ID); write `[evt]` `refund_initiated`; if an existing Entitlement is in `pending_activation` transition it to `cancelled` and write `[evt]` `entitlement_cancelled` (`cancellation_reason = 'post_payment_operator_decline'`, `payment_refund_id` references that PaymentRefund); if no Entitlement exists do not create a placeholder and do not write `entitlement_cancelled`; no Entitlement reaches `active`; no cancellation EvidencePublication; notify customer that purchase was declined and full refund was initiated; this ground is distinct from customer provisioning failure |
+| N-3: Compare-and-swap race | Two competing operations attempted the same authoritative activation or handle claim; exactly one may win; no double Entitlement or double authoritative claim is permitted | Resolve the authoritative winner through the governing compare-and-swap and reconciliation evidence; preserve the winning operation and its valid handle claim; the losing paid operation follows R-6: create canonical full-amount PaymentRefund (`reason_code = 'post_payment_predicate_failure'`, `initiated_by = 'system'`), preserve the compare-and-swap or handle-race predicate in operational or reconciliation evidence, write `[evt]` `refund_initiated`; if an existing Entitlement for the losing operation is in `pending_activation` transition it to `cancelled` and write `[evt]` `entitlement_cancelled` (`cancellation_reason = 'post_payment_predicate_failure'`, `payment_refund_id` references that PaymentRefund); if no losing Entitlement exists do not create a placeholder and do not write `entitlement_cancelled`; no losing Entitlement reaches `active`; no cancellation EvidencePublication; no double Entitlement or double handle claim survives; notify losing customer that the conflicting operation could not be completed and full refund was initiated; contradictory evidence routes to reconciliation |
 | N-4: Signing-key integrity failure | Trusted key cannot be imported or is distrust-listed | Halt all provisioning; escalate to `FDR`; do not proceed until resolution |
 
 ### Audit evidence
@@ -1266,8 +1352,10 @@ operator action, system configuration, or exceptional circumstance:
 | Renewal | W5 §5.5 | `pay`, `ent`, `pub` | `payment_confirmed`, `entitlement_activated` | `renewal` | Activation confirmation | 24h from `pay.confirmed_at` | `AUTO` |
 | Post-grace reactivation | W5 §5.5a | `pay`, `ent`, `card`, `route`, `pub` | `payment_confirmed`, `entitlement_reactivated` | `reactivation` | Activation confirmation | 24h from `pay.confirmed_at` | `AUTO` |
 | Pre-payment eligibility or AUP decline | (not in customer workflows; BO1 only) | Administration evidence only | — | — | Decline notice | Before payment collection | `PSO` / `FDR` |
-| Post-payment AUP decline + refund | W5 §5.5a | `pay`, administration evidence | `refund_initiated`, `refund_confirmed` | — | Decline + refund notice | Immediate | `PSO` / `FDR` |
-| Provisioning SLA breach | (BO1 only) | `evt` | `provisioning_sla_breach`, `refund_initiated` | — | Refund initiated | At 24h | `AUTO` + `FDR` escalation |
+| Post-payment AUP decline + refund | W5 §5.5a | `pay`, Administration evidence, `PaymentRefund` (`reason_code = 'operator_initiated'`), conditional `ent` (no placeholder) | `refund_initiated` (`refund_reason = 'operator_initiated'`); conditional `entitlement_cancelled` (`cancellation_reason = 'post_payment_operator_decline'`; same `payment_refund_id`); later: `refund_confirmed` on provider confirmation | — | Decline + refund notice | Immediate | `PSO` / `FDR` |
+| Provisioning SLA breach | (BO1 only) | `pay`, `PaymentRefund` (`reason_code = 'provisioning_sla_breach'`), conditional `ent` (no placeholder) | `provisioning_sla_breach`; `refund_initiated` (`refund_reason = 'provisioning_sla_breach'`); conditional `entitlement_cancelled` (`cancellation_reason = 'provisioning_sla_breach'`; same `payment_refund_id`); later: `refund_confirmed` on provider confirmation | — | Refund initiated | At 24h | `AUTO` + `FDR` escalation |
+| Customer provisioning failure | (BO1 only; R-4) | `pay`, `PaymentRefund` (`reason_code = 'customer_provisioning_failure'`), conditional `ent` (no placeholder) | `refund_initiated` (`refund_reason = 'customer_provisioning_failure'`); conditional `entitlement_cancelled` (`cancellation_reason = 'customer_provisioning_failure'`; same `payment_refund_id`); later: `refund_confirmed` on provider confirmation | — | Provisioning cancellation + refund notice | Immediate on failure determination | `OPR` |
+| Handle / compare-and-swap predicate failure | (BO1 only; R-6 / N-3) | losing `pay`, `PaymentRefund` (`reason_code = 'post_payment_predicate_failure'`), operational/reconciliation evidence, conditional losing `ent` (no placeholder) | `refund_initiated` (`refund_reason = 'post_payment_predicate_failure'`); conditional `entitlement_cancelled` (`cancellation_reason = 'post_payment_predicate_failure'`; same `payment_refund_id`); later: `refund_confirmed` on provider confirmation | — | Conflict resolution + refund notice to losing customer | Immediate on authoritative race resolution | `AUTO` |
 | Suspension | W4 §4.x (operator side) | `case`, `pub` | `suspended` | `suspension` | Suspension notice | 7-day review from `case.initiated_at` | `PSO` |
 | Restoration | W4 §4.x (operator side) | `case`, `pub` | `restored` | `restoration` | Restoration notice | At resolution (≤ 14 days) | `PSO` |
 | Revocation | W4 §4.x (operator side) | `case`, `ent`, `pub` | `entitlement_revoked` | `revocation` | Revocation notice | At decision | `FDR` |
@@ -1369,11 +1457,29 @@ for the request.
 - `decline_phase = 'post_payment'`
 - `paymentId` referencing the confirmed Payment
 
-Then use existing LifecycleEvents:
-- `[evt]` `refund_initiated`
-- `[evt]` `refund_confirmed` (when provider confirms)
-- `[evt]` `entitlement_cancelled` if a `pending_activation` entitlement was
-  created and must be terminated
+Then execute the canonical refund and cancellation operation (see Step 13 for
+the complete sequence):
+
+1. Create the canonical full-amount PaymentRefund:
+   - `PaymentRefund.reason_code = 'operator_initiated'`
+   - `PaymentRefund.initiated_by = 'system'` when the authorized automatic
+     process creates the record; otherwise the actual authorized operator ID
+2. Write `[evt]` `refund_initiated` with `payment_id`, `payment_refund_id`,
+   and `refund_reason = 'operator_initiated'`.
+3. If an existing Entitlement is in `pending_activation`:
+   - Transition it to `cancelled`.
+   - Write `[evt]` `entitlement_cancelled` with
+     `cancellation_reason = 'post_payment_operator_decline'` and
+     `payment_refund_id` referencing the same PaymentRefund.
+4. If no Entitlement exists, do not create a placeholder Entitlement and do
+   not write `entitlement_cancelled`.
+
+**Provider-asynchronous event:** `[evt]` `refund_confirmed` is written later
+only when the provider confirms that specific PaymentRefund. It is not a
+prerequisite for cancelling an existing `pending_activation` Entitlement or
+for writing `entitlement_cancelled`. Provider submission or confirmation is
+not required before the Entitlement cancellation operation commits. Do not
+list `refund_confirmed` between `refund_initiated` and `entitlement_cancelled`.
 
 ---
 
@@ -1462,3 +1568,50 @@ path.
 Polygon USDC finality defined via `eth_getBlockByNumber('finalized')` tag with
 seven required conditions. Fixed block count approach replaced. `polygon_usdc`
 rail gated on Amoy and mainnet-compatible integration testing.
+
+### 2026-08-05 — Refund and cancellation canonicalization (aligned with Data Model f93bc04)
+
+Aligned post-payment refund and `pending_activation` Entitlement-cancellation
+operations with Data Model commit `f93bc04 — docs(coin-card): canonicalize
+refund and cancellation records`.
+
+**Four BO1 refund paths canonicalized:**
+
+- Post-payment operator/AUP decline (`PaymentRefund.reason_code = 'operator_initiated'`;
+  `cancellation_reason = 'post_payment_operator_decline'`)
+- Provisioning SLA breach (`reason_code = 'provisioning_sla_breach'`;
+  `cancellation_reason = 'provisioning_sla_breach'`)
+- Customer provisioning failure (`reason_code = 'customer_provisioning_failure'`;
+  `cancellation_reason = 'customer_provisioning_failure'`)
+- Handle / compare-and-swap predicate failure (`reason_code = 'post_payment_predicate_failure'`;
+  `cancellation_reason = 'post_payment_predicate_failure'`)
+
+**Canonical operation order established for all four paths:**
+PaymentRefund creation → `refund_initiated` → conditional `entitlement_cancelled`
+→ provider-triggered `refund_confirmed` (later, asynchronous).
+
+**Invariants enforced:**
+
+- `payment_refund_id` must be non-null on all applicable `entitlement_cancelled`
+  events; null is valid only when no refund is due.
+- No placeholder Entitlement: `entitlement_cancelled` is written only when a
+  `pending_activation` Entitlement already exists and transitions.
+- No cancellation EvidencePublication for `pending_activation` cancellations.
+- Provider confirmation (`refund_confirmed`) is not a prerequisite for
+  Entitlement cancellation.
+- PaymentRefund creation does not set `Payment.status = 'refunded'`.
+
+**Surfaces corrected or expanded:** Step 13, Step 28, R-4, R-6, N-1, N-2,
+N-3, lifecycle-events table, operation crosswalk, GD-3.
+
+**Responsibility matrix refined** to distinguish eight separate concerns:
+decision authority; automatic PaymentRefund creation; manual PaymentRefund
+creation; automatic Entitlement cancellation; manual Entitlement cancellation;
+provider submission; provider-event processing (`refund_confirmed`); and
+reconciliation of pending, failed, or contradictory PaymentRefund outcomes.
+
+**Out of scope for this entry:** Customer-requested cancellation of an
+already-`active` Entitlement is not a BO1 path and is not amended here.
+Stale refund-field references in Customer Workflows V1 (`pay.refund_initiated_at`,
+`pay.refund_reason`) are a separate correction and are not resolved in this
+amendment.
