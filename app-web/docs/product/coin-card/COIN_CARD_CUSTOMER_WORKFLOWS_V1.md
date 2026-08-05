@@ -1248,11 +1248,38 @@ any non-terminal status.
 3. Refund eligibility determined: full refund if within 30 days of
    `ent.activated_at`; no refund after 30 days.
 4. If refund due:
-   - `pay.refund_initiated_at` set.
-   - `pay.refund_reason = 'customer_request'`.
-   - Refund processed with payment provider.
-   - On confirmation: `pay.status → 'refunded'`, `pay.refunded_at` set.
-   - LifecycleEvent `refund_initiated` and `refund_confirmed` written.
+   - Create one canonical PaymentRefund for the refund amount due under
+     the governing customer-cancellation refund policy:
+     - `PaymentRefund.payment_id` references the confirmed Payment.
+     - `PaymentRefund.amount_atomic` equals the policy-determined refund
+       amount (greater than zero; no greater than the remaining refundable
+       amount for the Payment).
+     - `PaymentRefund.reason_code = 'customer_request'`.
+     - `PaymentRefund.initiated_by` identifies the actual authorized system
+       or operator that creates the record. It is not the customer ID merely
+       because the customer requested cancellation.
+     - Creating the PaymentRefund does not change `Payment.status` to
+       `refunded`.
+   - Write LifecycleEvent `refund_initiated` with `payment_id`,
+     `payment_refund_id`, and `refund_reason = 'customer_request'`.
+     This event is written when the PaymentRefund is created.
+   - Submit the PaymentRefund to the applicable payment provider.
+     Provider acknowledgement and confirmation are asynchronous. Provider
+     submission or success does not gate the Entitlement-cancellation
+     operation in the steps that follow.
+   - The PaymentRefund follows the canonical provider-state reducer. When
+     that specific PaymentRefund reaches `succeeded`: set
+     `PaymentRefund.confirmed_at`; write LifecycleEvent `refund_confirmed`
+     exactly once with `payment_id`, `payment_refund_id`, and
+     `refunded_at = PaymentRefund.confirmed_at`. For failed or cancelled
+     provider outcomes: do not write `refund_confirmed`; do not set
+     `Payment.status = 'refunded'`.
+   - Aggregate Payment semantics: if cumulative succeeded PaymentRefund
+     amounts remain less than `Payment.amount_atomic`, `Payment.status`
+     remains `confirmed` and `Payment.refunded_at` remains unset. Only
+     when cumulative succeeded PaymentRefund amounts equal
+     `Payment.amount_atomic`: `Payment.status → 'refunded'` and
+     `Payment.refunded_at` is set to the aggregate full-refund moment.
 5. `ent.status → 'cancelled'`, `ent.cancelled_at` set.
 6. `CoinCard.active_entitlement_id → null`.
 7. `CoinCard.active_entitlement_version` incremented.
@@ -1262,9 +1289,22 @@ any non-terminal status.
    - `cancellation_effective_at = ent.cancelled_at`
    The public derived status is EXPIRED, but the signed evidence identifies
    customer-requested cancellation, not natural expiration.
-9. LifecycleEvent `entitlement_cancelled` written.
+9. Write LifecycleEvent `entitlement_cancelled` after the existing active
+   Entitlement transitions to `cancelled`, with
+   `cancellation_reason = 'customer_requested'` and:
+   - non-null `payment_refund_id` referencing the PaymentRefund created in
+     step 4 when a refund is due; or
+   - `payment_refund_id = null` when the governing policy determines that no
+     refund is due.
+   The event carries its final `payment_refund_id` when written; it is not
+   backfilled after provider submission or confirmation.
 
-**Records mutated:** `ent.status`, `ent.cancelled_at`, `pay.refund_initiated_at`, `pay.refund_reason`, `pay.status`, `pay.refunded_at`, `card.active_entitlement_id`, `card.active_entitlement_version`  
+**Records created or mutated:** `ent.status`, `ent.cancelled_at`,
+`card.active_entitlement_id`, `card.active_entitlement_version`; if a refund is
+due, one `PaymentRefund` is created and subsequently updated through provider
+processing. `pay.status` and `pay.refunded_at` mutate only when cumulative
+succeeded PaymentRefund amounts equal `pay.amount_atomic`; otherwise
+`pay.status` remains `confirmed` and `pay.refunded_at` remains unset.
 **Lifecycle events:** `cancellation_requested`, `refund_initiated` (if applicable), `refund_confirmed` (if applicable), `entitlement_cancelled`  
 **Evidence publications:** `pub` (cancellation, activated; signed with `cancellation_reason` and `cancellation_effective_at`) [pub]
 
@@ -1552,3 +1592,76 @@ Unauthorized no-refund statement for operator-declined reactivation removed;
 governing rule added: operator refusal after confirmed payment requires
 automatic full refund; customer need not request it. Governing data model
 reference updated from `d0b5a8b` to `193dcfa`.
+
+### 2026-08-05 — Customer-cancellation refund-record canonicalization
+
+**Governing authorities:** Data Model `f93bc04 — docs(coin-card): canonicalize
+refund and cancellation records`; Business Operations `4352081 —
+docs(coin-card): align BO1 refund and cancellation operations`.
+
+**Amendment F — §5.6 refund-record alignment**
+
+§5.6 corrected to remove the retired Payment-level refund fields
+`pay.refund_initiated_at` and `pay.refund_reason` and replace the stale
+Payment-field operation with the canonical PaymentRefund model.
+
+**Refund-operation changes:**
+
+- Each refund operation is now represented as a canonical `PaymentRefund`.
+- `PaymentRefund.reason_code = 'customer_request'` identifies the refund
+  ground.
+- `PaymentRefund.initiated_by` identifies the actual authorized system or
+  operator that creates the record. It is never the customer ID merely
+  because the customer requested cancellation.
+- `refund_initiated` is written when the PaymentRefund is created, with
+  `payment_id`, `payment_refund_id`, and `refund_reason = 'customer_request'`.
+- `refund_confirmed` is written exactly once only when that specific
+  PaymentRefund reaches provider-confirmed `succeeded`. Provider submission
+  and provider confirmation are asynchronous and do not gate Entitlement
+  cancellation.
+- PaymentRefund creation, provider submission, and provider confirmation are
+  now distinct steps.
+
+**Aggregate Payment semantics preserved:**
+
+- A partial cumulative succeeded refund leaves `Payment.status = 'confirmed'`
+  and `Payment.refunded_at` unset.
+- `Payment.status = 'refunded'` and `Payment.refunded_at` are set only when
+  cumulative succeeded PaymentRefund amounts equal the full Payment amount.
+
+**`entitlement_cancelled` corrected:**
+
+- `cancellation_reason = 'customer_requested'` (corrected from implicit absence).
+- `payment_refund_id` is non-null and references the exact PaymentRefund
+  created in step 4 when a refund is due.
+- `payment_refund_id = null` only when the governing policy determines no
+  refund is due.
+- The event is written with its final identifier and is not backfilled after
+  provider submission or confirmation.
+
+**EvidencePublication preserved unchanged:**
+
+The active-Entitlement cancellation EvidencePublication (`publication_type =
+'cancellation'`, `cancellation_reason = 'customer_requested'`,
+`cancellation_effective_at = ent.cancelled_at`) is independent of whether a
+refund is due and was not altered in this amendment.
+
+**Records summary updated:**
+
+`pay.refund_initiated_at` and `pay.refund_reason` removed from the records
+summary. `PaymentRefund` is now identified as the refund-operation record.
+Label renamed from `Records mutated` to `Records created or mutated`.
+
+**Policy boundary:**
+
+The governing §5.6 refund policy — full refund within 30 days of
+`ent.activated_at`; no refund after 30 days — was not changed. Step 4 defers
+to step 3 as the policy authority rather than hardcoding a full-refund amount.
+The general PaymentRefund model supports partial refunds, but this amendment
+does not introduce a partial-refund path into §5.6.
+
+**Not amended:**
+
+The pre-existing entry-condition wording — "Entitlement may be in any
+non-terminal status" — was not corrected in this pass. That wording is a
+separate workflow-scope issue and remains open.
