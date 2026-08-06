@@ -378,6 +378,7 @@ prerequisite for activation, not synonymous with it.
 | `status` | enum | — | — | `pending`, `confirmed`, `refunded`, `failed` |
 | `created_at` | timestamp | ✓ | — | Payment record created |
 | `confirmed_at` | timestamp\|null | — | — | Set on payment confirmation; starts provisioning clock |
+| `failed_at` | timestamp\|null | — | — | Null until `Payment.status` reaches `failed`; set exactly once on `pending → failed`; immutable once set; not used for refund failure (`PaymentRefund.failed_at` is separate) |
 | `refunded_at` | timestamp\|null | — | — | Set when cumulative succeeded PaymentRefund amounts equal `amount_atomic` |
 
 ### Amount representation
@@ -415,6 +416,8 @@ name alone, because future asset versions may differ.
 
 - A Payment is never deleted.
 - `confirmed_at` is set exactly once.
+- `failed_at` is set exactly once when `Payment.status` transitions to `failed`.
+  It is immutable once set.
 - `payment_asset`, `amount_atomic`, `asset_decimals`, `payment_rail`, and
   `network_chain_id` are immutable once set. Corrections require creating a new
   Payment record linked by a lifecycle event, not mutating the existing record.
@@ -822,7 +825,10 @@ idempotency anchor for the checkout-to-payment pipeline.
 | `status` | enum | — | — | `screening`, `eligible`, `checkout_created`, `payment_pending`, `payment_confirmed`, `expired`, `cancelled`, `declined`, `completed` |
 | `reserved_at` | timestamp\|null | — | — | Server-authoritative timestamp when the handle reservation was established |
 | `reserved_until` | timestamp\|null | — | — | Server-authoritative handle reservation expiry; set when checkout is created; not controlled by webhook delivery |
-| `checkout_session_id` | string\|null | — | ✓ | Payment provider checkout session ID; set at most once; immutable once set; one PurchaseAttempt owns at most one checkout session; a replacement session requires a new PurchaseAttempt |
+| `checkout_session_id` | string\|null | — | ✓ | Payment provider checkout session ID; set at most once; immutable once set; one PurchaseAttempt owns at most one checkout session; a replacement session requires a new PurchaseAttempt; null for `polygon_usdc` |
+| `expected_sender_address` | string\|null | ✓ | ✓ | Null for `stripe_usd`; required before `checkout_created` for `polygon_usdc`; the Polygon wallet address (EIP-55) authorized as the expected source of the purchase transfer; server-authoritative; must be compared using canonical normalized-address rules; must not be inferred from transient browser or wallet session state |
+| `expected_recipient_address` | string\|null | ✓ | — | Null for `stripe_usd`; required before `checkout_created` for `polygon_usdc`; immutable snapshot of the ImplicitEx payment-collection address (EIP-55) presented for this attempt; a later system payment-address rotation does not change an existing attempt; must not refer to `WalletRoute.recipient_address` |
+| `expected_token_address` | string\|null | ✓ | — | Null for `stripe_usd`; required before `checkout_created` for `polygon_usdc`; immutable snapshot of the exact Polygon-native USDC token contract address (EIP-55) accepted for this attempt; `quoted_asset = 'USDC'` does not replace verification of this exact contract address; bridged or otherwise noncanonical USDC token contracts do not satisfy the attempt |
 | `payment_id` | UUID\|null | — | — | FK → Payment; set when the Payment record is created; not updated thereafter |
 | `livemode` | boolean | ✓ | — | True for production provider sessions; false for test mode |
 | `created_at` | timestamp | ✓ | — | Attempt record created |
@@ -887,6 +893,66 @@ Provisioning writes the appropriate existing Coin Card LifecycleEvent:
 PurchaseAttempt observes the completed provisioning result and then transitions
 to `completed`. PurchaseAttempt completion does not itself emit a LifecycleEvent.
 
+### Polygon-USDC checkout anchor
+
+For `payment_rail = 'polygon_usdc'`:
+
+- `checkout_session_id` remains null. No provider-managed checkout session is
+  created. The PurchaseAttempt itself is the checkout intent and reservation
+  anchor.
+- No transaction hash is stored on the PurchaseAttempt. The hash is stored on
+  Payment at submission time.
+- The state-transition table entry "Provider acknowledges payment intent"
+  (`checkout_created → payment_pending`) applies to `stripe_usd`. For
+  `polygon_usdc`, the equivalent trigger is the customer submitting a transaction
+  hash. The server resolves the submission through exactly one of the following
+  two branches:
+
+  **Branch 1 — `PurchaseAttempt.payment_id` is non-null:**
+
+  1. Load the Payment referenced by `PurchaseAttempt.payment_id`.
+  2. If the submitted `network_tx_hash` and `network_chain_id` exactly match
+     that linked Payment, return the linked Payment idempotently. Do not create
+     or mutate any record. Do not repeat the transition to `payment_pending`.
+  3. If the submitted hash or chain differs from the linked Payment: do not
+     create another standard fulfillment Payment; do not replace
+     `PurchaseAttempt.payment_id`; do not overwrite either Payment identifier.
+     Route the submission to reconciliation as a possible duplicate or unrelated
+     payment. Do not confirm the PurchaseAttempt automatically.
+
+  **Branch 2 — `PurchaseAttempt.payment_id` is null:**
+
+  1. The pair `(Payment.network_tx_hash, Payment.network_chain_id)` is a
+     concurrency-safe unique constraint enforced at the canonical storage level.
+     It is not an application read-then-check. The storage layer permits at most
+     one Payment record for any given non-null `(network_tx_hash,
+     network_chain_id)` pair; a concurrent attempt to create a second Payment
+     with the same key fails at the storage level regardless of application
+     timing.
+  2. If a Payment already exists for that key, or if the storage-level
+     uniqueness constraint rejects a concurrent creation attempt: do not bind
+     that existing Payment to this PurchaseAttempt; do not create another
+     Payment; route the collision to reconciliation; do not transition this
+     PurchaseAttempt to `payment_pending`.
+  3. If no Payment exists for that key and the storage constraint is
+     satisfied: create exactly one pending Payment, setting
+     `Payment.account_id = PurchaseAttempt.account_id`, `network_tx_hash`,
+     `provider_payment_id`, `network_chain_id`, `payment_rail`, and all other
+     required canonical Payment fields. Set `PurchaseAttempt.payment_id` to the
+     new Payment. Transition the PurchaseAttempt to `payment_pending`.
+
+  The uniqueness check, Payment creation, `payment_id` assignment, and status
+  transition in Branch 2 step 3 must execute as one atomic operation. No partial
+  binding state is permitted. Only a newly created Payment may be assigned to a
+  PurchaseAttempt whose `payment_id` is null.
+
+- The "Payment failure within an active session" note above describes Stripe
+  `payment_intent.payment_failed` behavior, in which the attempt reverts to
+  `checkout_created`. For `polygon_usdc`, a terminal payment failure transitions
+  `Payment.status` to `failed` and sets `Payment.failed_at`; the PurchaseAttempt
+  does not revert to `checkout_created`. See "Dropped or replaced transaction"
+  below.
+
 ### Payment confirmed after reservation expiry
 
 If a payment confirmation arrives after `reserved_until` has elapsed:
@@ -896,6 +962,23 @@ If a payment confirmation arrives after `reserved_until` has elapsed:
 - The payment is linked to the expired attempt via `payment_id`.
 - Provisioning does not proceed automatically.
 - The late-payment handler must place the Payment into the established reconciliation and refund path. The ratified PaymentRefund reason code for this ground is `payment_confirmed_after_expiry` (see PaymentRefund `### Reason-code catalog`).
+
+### Dropped or replaced transaction
+
+If a submitted Polygon transaction is dropped, replaced, permanently reverted,
+or otherwise reaches a terminal failure:
+
+- Its pending Payment transitions to `failed` and `Payment.failed_at` is set.
+- The PurchaseAttempt does not accept a replacement transaction hash.
+  `PurchaseAttempt.payment_id`, `Payment.network_tx_hash`, and
+  `Payment.provider_payment_id` are immutable once set.
+- A replacement payment attempt requires a new PurchaseAttempt, which creates a
+  new handle reservation subject to availability.
+- A transaction from the failed attempt that later confirms is handled through
+  the existing late-payment/reconciliation path (`failure_code =
+  'PAYMENT_CONFIRMED_AFTER_EXPIRY'` if the attempt has expired; operator
+  reconciliation otherwise). It does not reactivate or rewrite the failed attempt
+  automatically.
 
 ### Cardinality
 
@@ -909,6 +992,17 @@ If a payment confirmation arrives after `reserved_until` has elapsed:
 - For renewal and reactivation, at most one non-terminal PurchaseAttempt may
   exist per `card_id` at any time.
 - Multiple historical (terminal) attempts per card are preserved.
+- A PurchaseAttempt has at most one standard fulfillment Payment. `payment_id`
+  is write-once; once non-null it may not be replaced.
+- Re-submission of the same transaction hash after `payment_id` is set returns
+  the existing Payment idempotently without mutation.
+- A different transaction hash submitted after `payment_id` is already non-null
+  must not create a second Payment or overwrite `payment_id`. It is routed to
+  reconciliation as a possible duplicate or unrelated payment and must not
+  confirm the attempt automatically.
+- A Payment already bound to another PurchaseAttempt must never be rebound. A
+  transaction hash already consumed by an existing Payment record cannot satisfy
+  a second PurchaseAttempt; it is routed to reconciliation.
 
 ### Invariants
 
@@ -923,8 +1017,15 @@ If a payment confirmation arrives after `reserved_until` has elapsed:
 - `reserved_at` and `reserved_until` are server-authoritative; both are immutable
   once set.
 - `payment_id` is set once and not updated.
+- Non-null `PurchaseAttempt.payment_id` is unique across all PurchaseAttempt
+  records. A Payment may be referenced by at most one PurchaseAttempt. This
+  uniqueness is enforced at the canonical storage level.
 - Quoted asset fields must equal the corresponding fields on the eventual Payment.
 - `failure_code` is set once.
+- `expected_sender_address`, `expected_recipient_address`, and
+  `expected_token_address` are immutable once set. For `polygon_usdc`, all three
+  must be non-null before the attempt transitions to `checkout_created`. For
+  `stripe_usd`, all three must be null.
 
 ---
 
@@ -1217,6 +1318,28 @@ following occur atomically:
 3. `processing_started_at` is updated to the retry start time.
 4. Domain transitions are retried. Layer 2 idempotency ensures they are safe.
 5. On success, `processing_status` transitions to `processed`.
+
+### V1 scope boundary
+
+Application-initiated Polygon RPC reads, receipt polling, and finalized-block
+verification do not create `ExternalEventReceipt` records in V1. The record is
+a receipt for externally delivered provider events, not for server-initiated
+chain queries.
+
+The inclusion of `polygon_usdc` in the `provider` enum does not authorize
+inventing values for `provider_event_id`, `event_type`, or `api_version` for
+blockchain polling operations. No such conventions are defined in V1.
+
+Polygon payment confirmation idempotency for the first cohort is grounded in:
+
+- Unique `Payment.network_tx_hash` combined with `Payment.network_chain_id`
+- Atomic PurchaseAttempt-to-Payment binding (see §9 Polygon-USDC checkout anchor)
+- Idempotent Payment state transitions
+
+Any future provider-pushed Polygon event or chain-indexer webhook that arrives
+as an external delivery requires a separately ratified convention for
+`provider_event_id`, `event_type`, and `api_version` before
+`ExternalEventReceipt` may be used for that purpose.
 
 ### Invariants
 
@@ -1918,3 +2041,69 @@ no statutory duration is asserted.
 
 - Business Operations V1 §Lifecycle events written (step 28): `entitlement_cancelled` is missing from the SLA breach event sequence. Requires BO1 correction.
 - Customer Workflows V1 §5.6: References stale `pay.refund_initiated_at` and `pay.refund_reason` fields removed from Payment in this amendment group. Requires CW1 correction.
+
+---
+
+### 2026-08-05 — Gate 6 Data Model amendment: Polygon-USDC checkout canonical records
+
+**A14 — PurchaseAttempt polygon_usdc fields and Payment.failed_at; ExternalEventReceipt V1 scope boundary**
+
+Added three immutable Polygon-USDC fields to PurchaseAttempt:
+`expected_sender_address` (sensitive; the EIP-55 Polygon wallet address authorized
+as the expected source of the purchase transfer), `expected_recipient_address`
+(the EIP-55 ImplicitEx payment-collection address snapshot for this attempt; must
+not refer to `WalletRoute.recipient_address`), and `expected_token_address` (the
+EIP-55 Polygon-native USDC token contract address snapshot; `quoted_asset = 'USDC'`
+does not replace verification of this exact address). All three are required before
+a `polygon_usdc` PurchaseAttempt transitions to `checkout_created`; all three must
+be null for `stripe_usd`. All three are server-authoritative and immutable once set.
+
+Established atomic transaction-hash-to-Payment binding: when a customer submits
+a transaction hash on the `polygon_usdc` rail, Payment creation, hash uniqueness
+check, `PurchaseAttempt.payment_id` assignment, and `payment_pending` status
+transition execute as one atomic operation. `checkout_session_id` remains null
+for `polygon_usdc`; no provider-managed checkout session is created.
+
+Limited to one standard fulfillment Payment per PurchaseAttempt: `payment_id`
+is write-once; a second submitted transaction hash after `payment_id` is non-null
+is routed to reconciliation and must not replace `payment_id` or confirm the
+attempt automatically. Re-submission of the same hash returns the existing Payment
+idempotently.
+
+Required a new PurchaseAttempt after a terminal dropped, replaced, or reverted
+`polygon_usdc` transaction: `payment_id`, `Payment.network_tx_hash`, and
+`Payment.provider_payment_id` are immutable once set; no replacement hash is
+accepted on an existing attempt. A transaction from the failed attempt that later
+confirms follows the late-payment/reconciliation path.
+
+Added `Payment.failed_at` (timestamp; set exactly once on `pending → failed`;
+immutable once set; separate from `PaymentRefund.failed_at`), resolving a
+discrepancy where BO1 step 10 referenced this field but it was absent from the
+Payment field table.
+
+Excluded application-initiated Polygon RPC polling, receipt queries, and
+finalized-block verification from `ExternalEventReceipt` V1 semantics: these
+are server-initiated chain reads, not externally delivered provider events.
+The `polygon_usdc` provider enum value is retained; its use requires a separately
+ratified convention for `provider_event_id`, `event_type`, and `api_version`
+before `ExternalEventReceipt` may be used for any Polygon event.
+
+**This amendment does not change:**
+
+- Stripe checkout semantics or any existing Stripe field
+- Entitlement price, duration, renewal policy, or grace period
+- Route-change allowance or WalletRoute semantics
+- The public signed Coin Card evidence chain
+- Customer workflows or business-operation deadlines
+- Any existing PaymentRefund, PaymentDispute, or ExternalEventReceipt behavior
+
+**Follow-up alignment required (separate passes):**
+
+- Business Operations V1: amend step 9 `polygon_usdc` condition 4 to specify
+  `expected_sender_address`, `expected_recipient_address`, and
+  `expected_token_address` as the canonical sources for the sender, recipient,
+  and token contract checks. Resolve atomic binding sequence and dropped-tx
+  recovery in the BO1 workflow.
+- Customer Workflows V1: ratify the `polygon_usdc` Coin Card purchase flow,
+  including the transaction-submission step and the replacement-PurchaseAttempt
+  path.
