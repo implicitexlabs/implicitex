@@ -1,0 +1,192 @@
+/*
+ * Coin Card claim skin.
+ *
+ * This layer changes presentation only. The progressive-disclosure IDs,
+ * wallet verification paths, payload fields, and Firestore behavior remain
+ * owned by claim.js and are intentionally untouched.
+ */
+
+:root {
+  --bg: #fffaf5;
+  --surface: #fffefd;
+  --surface-2: #fff3e7;
+  --white: #17191d;
+  --dim: #4d4f55;
+  --muted: #74767d;
+  --border: rgba(93, 58, 34, 0.10);
+  --border-2: rgba(93, 58, 34, 0.18);
+  --accent: #ff6500;
+  --warn: #b42318;
+  --font-ui: var(--cc-font);
+  --font-display: var(--cc-font);
+  --font-mono: var(--cc-mono);
+}
+
+body {
+  background:
+    radial-gradient(circle at 78% 8%, rgba(255, 170, 91, 0.15), transparent 26rem),
+    linear-gradient(180deg, #fffdf9, #fff8f1);
+  color: var(--white);
+}
+
+.cc-claim-wrap {
+  max-width: 700px;
+  padding: 64px 20px 90px;
+}
+
+.cc-claim-back {
+  margin-bottom: 30px;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.cc-claim-back:hover { color: var(--accent); }
+
+.cc-claim-wrap > .eyebrow { margin-bottom: 10px; }
+
+.cc-claim-heading {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: clamp(38px, 7vw, 62px);
+  font-weight: 600;
+  letter-spacing: -0.055em;
+  line-height: 1.03;
+}
+
+.cc-claim-sub {
+  max-width: 570px;
+  margin: 18px 0 34px;
+  color: var(--dim);
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+.cc-section {
+  gap: 19px;
+  padding: 28px;
+  background: rgba(255, 254, 253, 0.82);
+  border: 1px solid var(--cc-line);
+  border-radius: 22px;
+  box-shadow: 0 12px 34px rgba(84, 43, 14, 0.06);
+}
+
+.cc-reveal {
+  margin-top: 16px;
+  padding-top: 28px;
+  border-top: 1px solid var(--cc-line);
+}
+
+.cc-section-heading {
+  color: var(--white);
+  font-size: 18px;
+  letter-spacing: -0.02em;
+}
+
+.cc-wallet-connect-btn,
+.cc-input,
+.cc-input-prefix-wrap,
+.cc-tier-radio-label,
+.cc-review-table,
+.cc-confirm-preview {
+  background: #fff;
+  border-color: var(--cc-line-strong);
+  border-radius: 13px;
+}
+
+.cc-wallet-connect-btn {
+  color: var(--white);
+  box-shadow: 0 7px 20px rgba(84, 43, 14, 0.04);
+}
+
+.cc-wallet-connect-btn:hover:not(:disabled) {
+  background: #fff8f1;
+  border-color: var(--cc-orange-soft);
+}
+
+.cc-wallet-connect-badge {
+  color: var(--accent);
+  background: #fff3e7;
+  border-color: rgba(255, 101, 0, 0.28);
+  border-radius: 999px;
+}
+
+.cc-input,
+.cc-input-inline,
+.cc-input-prefix-wrap,
+.cc-label,
+.cc-review-val,
+.cc-confirm-url-slug,
+.cc-wallet-state-addr { color: var(--white); }
+
+.cc-input:focus,
+.cc-input-prefix-wrap:focus-within { border-color: var(--accent); }
+
+.cc-input::placeholder,
+.cc-input-inline::placeholder { color: #aaa3a0; }
+
+select.cc-input {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2374767d'/%3E%3C/svg%3E");
+}
+
+select.cc-input option { background: #fff; color: var(--white); }
+
+.cc-tier-radio input:checked + .cc-tier-radio-label {
+  background: #fff8f1;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(255, 101, 0, 0.08);
+}
+
+.cc-tier-radio-price { color: var(--accent); }
+
+.cc-submit,
+.cc-step-next {
+  min-height: 50px;
+  background: linear-gradient(135deg, #ff7200, var(--accent));
+  color: #fff;
+  border-radius: 13px;
+  box-shadow: 0 12px 24px rgba(255, 101, 0, 0.17);
+}
+
+.cc-submit:hover:not(:disabled),
+.cc-step-next:hover:not(:disabled) { background: linear-gradient(135deg, #ff7b0e, #df5300); }
+
+.cc-step-back {
+  background: #fff;
+  border-color: var(--cc-line-strong);
+  border-radius: 13px;
+}
+
+.cc-step-back:hover { color: var(--accent); border-color: var(--cc-orange-soft); }
+
+.cc-wallet-state { border-radius: 14px; }
+
+.cc-wallet-state-verified {
+  background: #fff4e8;
+  border-color: rgba(255, 101, 0, 0.28);
+}
+
+.cc-wallet-state-verified .cc-wallet-state-icon,
+.cc-wallet-state-verified .cc-wallet-state-label { color: var(--accent); }
+
+.cc-wallet-state-unverified {
+  background: #fff3f1;
+  border-color: rgba(180, 35, 24, 0.22);
+}
+
+.cc-field-disclosure {
+  background: #fff5ec;
+  border-left-color: var(--cc-orange-soft);
+}
+
+.cc-review-row { border-bottom-color: var(--cc-line); }
+
+.cc-confirm-status-dot { background: var(--accent); }
+.cc-confirm-status-text { color: var(--accent); }
+
+.cc-footer { display: none; }
+
+@media (max-width: 680px) {
+  .cc-claim-wrap { padding-top: 42px; }
+  .cc-section { padding: 21px 18px; border-radius: 18px; }
+  .cc-tier-radios { grid-template-columns: 1fr; }
+}

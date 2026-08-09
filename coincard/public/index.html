@@ -1,249 +1,233 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Get paid with one link — Coin Card by ImplicitEx</title>
-  <meta name="description" content="Your payment identity. One link. Put it in your bio. Anyone clicks it and sends you USDC directly. No website needed. Coin Card by ImplicitEx.">
-  <meta property="og:title" content="Get paid with one link — Coin Card">
-  <meta property="og:description" content="Your payment identity. One link. Put it in your bio. Anyone clicks it and sends you USDC directly. No website needed.">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Coin Card — One card. Any platform. Direct payment.</title>
+  <meta name="description" content="A persistent payment identity for receiving USDC on Polygon directly to your wallet. Share one Coin Card link or QR code anywhere.">
+  <meta property="og:title" content="Coin Card — Your payment identity, anywhere">
+  <meta property="og:description" content="Share one link. Receive Polygon USDC directly to your configured wallet.">
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://coincard.click">
-  <link rel="canonical" href="https://coincard.click">
-  <link rel="stylesheet" href="/css/coincard.css">
+  <meta property="og:url" content="https://coincard.click/">
+  <meta name="theme-color" content="#fffaf5">
+  <link rel="canonical" href="https://coincard.click/">
+  <link rel="icon" href="/components/images/coincard-mark.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/site.css">
 </head>
 <body>
+  <a class="skip-link" href="#main">Skip to content</a>
 
-<nav class="cc-nav">
-  <div class="cc-nav-inner">
-    <a href="/" class="cc-nav-logo" aria-label="Coin Card home">
-      <img class="cc-nav-coincard-logo" src="/components/images/coincard-logo.svg" alt="COIN CARD">
-      <span class="cc-nav-powered">Powered by ImplicitEx</span>
-    </a>
-  </div>
-</nav>
-
-<main>
-
-  <!-- Hero — lead with the benefit, not the product description -->
-  <section class="cc-hero">
-    <div class="cc-site-wrap">
-      <span class="cc-hero-eyebrow">ImplicitEx Coin Card</span>
-      <h1 class="cc-hero-heading">Get paid with one link.</h1>
-      <p class="cc-hero-tagline">Your persistent payment identity.</p>
-      <p class="cc-hero-sub">
-        One link. Put it in your bio. Anyone clicks it,
-        connects their wallet, and sends you USDC directly.
-        No website. No coding. No wallet address to memorize.
-      </p>
-      <a href="/claim/" class="cc-hero-cta">
-        Get started
-        <span class="cc-hero-cta-arrow" aria-hidden="true">→</span>
+  <header class="site-header" data-site-header>
+    <div class="site-shell site-nav">
+      <a class="brand-lockup" href="/" aria-label="Coin Card home">
+        <img src="/components/images/coincard-mark.svg" alt="" width="42" height="42">
+        <span>coincard.click</span>
       </a>
-      <p class="cc-hero-note">Payments go directly to your wallet &middot; $10/yr Creator &nbsp;&bull;&nbsp; $25/yr Business</p>
+
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="primary-nav" data-nav-toggle>
+        <span class="sr-only">Open navigation</span>
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+      </button>
+
+      <nav class="nav-links" id="primary-nav" aria-label="Primary navigation" data-nav-links>
+        <a href="#features">Features</a>
+        <a href="#how-it-works">How it works</a>
+        <a href="#trust">Trust model</a>
+        <a href="/example/">View example</a>
+      </nav>
+
+      <a class="button button-secondary nav-cta" href="#early-access">Early access</a>
     </div>
-  </section>
+  </header>
 
-  <!-- URL preview — right after the hook, show the product in one line -->
-  <section class="cc-url-preview">
-    <div class="cc-site-wrap">
-      <div class="cc-url-display" aria-label="Example Coin Card URL: coincard.click/yourname">
-        <span class="cc-url-base">coincard.click</span>
-        <span class="cc-url-slash">/</span>
-        <span class="cc-url-name">yourname</span>
-      </div>
-      <p class="cc-url-note">That's your payment identity. Share it anywhere. Keep the same link when your wallet changes.</p>
-    </div>
-  </section>
+  <main id="main">
+    <section class="hero section-pad">
+      <div class="site-shell hero-grid">
+        <div class="hero-copy">
+          <p class="eyebrow">Your payment identity. Anywhere.</p>
+          <h1>One Card.<br>Any Platform.<br><span>Direct payment.</span></h1>
+          <p class="hero-lede">Coin Card is an early-access payment identity for receiving USDC on Polygon directly to a configured wallet.</p>
 
-  <!-- How it works — after they're intrigued, explain the mechanics -->
-  <section class="cc-how">
-    <div class="cc-site-wrap">
-      <p class="cc-section-label">How it works</p>
-      <div class="cc-steps">
-        <div class="cc-step">
-          <p class="cc-step-num">01</p>
-          <h3 class="cc-step-title">Claim your address</h3>
-          <p class="cc-step-body">
-            Choose a name. Connect your crypto wallet.
-            Your Coin Card is live at <strong>coincard.click/yourname</strong>.
-          </p>
-        </div>
-        <div class="cc-step">
-          <p class="cc-step-num">02</p>
-          <h3 class="cc-step-title">Share the link</h3>
-          <p class="cc-step-body">
-            Put it in your TikTok bio, YouTube description,
-            Instagram profile, or anywhere you share your presence.
-          </p>
-        </div>
-        <div class="cc-step">
-          <p class="cc-step-num">03</p>
-          <h3 class="cc-step-title">Receive USDC</h3>
-          <p class="cc-step-body">
-            Supporters connect their wallet and send directly to you.
-            Funds arrive in your wallet. We never hold your money.
-          </p>
-        </div>
-        <div class="cc-step">
-          <p class="cc-step-num">04</p>
-          <h3 class="cc-step-title">Keep your address</h3>
-          <p class="cc-step-body">
-            Changed wallets? Update your Coin Card.
-            Your URL stays the same. No one has to find you again.
-          </p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Plans — after they understand, let them choose -->
-  <section class="cc-tiers" id="plans">
-    <div class="cc-site-wrap">
-      <h2 class="cc-tiers-heading">Which best describes you?</h2>
-      <p class="cc-tiers-sub">Same Coin Card. Two audiences. Choose the one that fits.</p>
-      <div class="cc-tiers-grid">
-
-        <div class="cc-tier">
-          <p class="cc-tier-name">Coin Card</p>
-          <h3 class="cc-tier-title">Creator</h3>
-          <p class="cc-tier-desc">Share your Coin Card anywhere.</p>
-          <div class="cc-tier-context">
-            <span class="cc-tier-context-label">Perfect for</span>
-            <span class="cc-tier-context-items">TikTok &middot; Instagram &middot; YouTube &middot; X &middot; Podcasts</span>
+          <div class="hero-actions">
+            <a class="button button-primary" href="/example/">View the example <span aria-hidden="true">→</span></a>
+            <a class="button button-secondary" href="#how-it-works">See how it works <span class="play-icon" aria-hidden="true">▶</span></a>
           </div>
-          <p class="cc-tier-price">$10 / year</p>
-          <ul class="cc-tier-features">
-            <li>Hosted page at coincard.click/yourname</li>
-            <li>QR code you can print or share</li>
-            <li>Wallet management &mdash; update anytime</li>
-            <li>Personal message to your supporters</li>
-            <li>Magic-link account recovery</li>
-            <li>250 USDC per transaction</li>
+
+          <ul class="assurance-row" aria-label="Coin Card fundamentals">
+            <li><span class="mini-icon" aria-hidden="true">◇</span> Non-custodial</li>
+            <li><span class="mini-icon" aria-hidden="true">◎</span> Polygon USDC</li>
+            <li><span class="mini-icon" aria-hidden="true">⌁</span> Shareable anywhere</li>
           </ul>
-          <a href="/claim/?tier=creator" class="cc-tier-cta">Claim Creator</a>
         </div>
 
-        <div class="cc-tier">
-          <p class="cc-tier-name">Coin Card</p>
-          <h3 class="cc-tier-title">Business</h3>
-          <p class="cc-tier-desc">Accept USDC without sending visitors away from your website.</p>
-          <div class="cc-tier-context">
-            <span class="cc-tier-context-label">Perfect for</span>
-            <span class="cc-tier-context-items">Websites &middot; Stores &middot; Organizations</span>
+        <div class="hero-product" aria-label="Example Coin Card">
+          <div class="hero-glow" aria-hidden="true"></div>
+          <article class="coin-card coin-card-hero">
+            <div class="coin-card-topline">
+              <span class="coin-card-brand">coincard.click</span>
+              <span class="status-pill status-pill-neutral">Example card</span>
+            </div>
+
+            <div class="coin-card-identity">
+              <p class="coin-card-handle"><span>@</span>yourname</p>
+              <p class="coin-card-url">coincard.click/<strong>yourname</strong></p>
+            </div>
+
+            <div class="coin-card-route">
+              <div>
+                <span class="route-label">Receives</span>
+                <strong><span class="token-dot">$</span> USDC</strong>
+              </div>
+              <div>
+                <span class="route-label">Network</span>
+                <strong><span class="polygon-mark" aria-hidden="true">∞</span> Polygon</strong>
+              </div>
+              <div class="decorative-qr" aria-label="QR code included with each Coin Card">
+                <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+              </div>
+            </div>
+
+            <div class="coin-card-footer">
+              <span>Portable. Verifiable. Yours.</span>
+              <img src="/components/images/coincard-mark.svg" alt="" width="38" height="38">
+            </div>
+          </article>
+
+          <div class="hero-proof-card">
+            <div class="proof-avatars" aria-hidden="true"><span>AR</span><span>KM</span><span>MJ</span></div>
+            <p><strong>Built for real relationships.</strong><br>Creators, freelancers, teams, and communities.</p>
           </div>
-          <p class="cc-tier-price">$25 / year</p>
-          <ul class="cc-tier-features">
-            <li>Everything in Creator</li>
-            <li>Embeddable component for your website</li>
-            <li>Collapses and expands on your page</li>
-            <li>Priority support</li>
-            <li>Business verification <span style="color:var(--muted)">(coming)</span></li>
-            <li>Analytics <span style="color:var(--muted)">(coming)</span></li>
-          </ul>
-          <a href="/claim/?tier=business" class="cc-tier-cta">Claim Business</a>
         </div>
-
       </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- FAQ — after they've decided they're interested -->
-  <section class="cc-faq">
-    <div class="cc-site-wrap">
-      <p class="cc-section-label">Questions</p>
-      <div class="cc-faq-list">
-
-        <div>
-          <p class="cc-faq-q">Do I need a website?</p>
-          <p class="cc-faq-a">
-            No. Your Coin Card lives at coincard.click/yourname. Share that URL
-            in your bio, your emails, your livestream description &mdash; anywhere.
-          </p>
+    <section class="feature-band section-pad" id="features">
+      <div class="site-shell feature-panel">
+        <div class="section-heading centered-heading">
+          <p class="eyebrow">Designed to travel. Built to last.</p>
+          <h2>Everything you need.<br class="mobile-break"> Nothing you don’t.</h2>
         </div>
 
-        <div>
-          <p class="cc-faq-q">What does the person sending me money need?</p>
-          <p class="cc-faq-a">
-            A crypto wallet that supports Polygon. MetaMask works. Coinbase Wallet works.
-            Most modern wallets work. They don't need to know your wallet address &mdash;
-            that's what the Coin Card handles.
-          </p>
+        <div class="feature-grid">
+          <article class="feature-item">
+            <span class="feature-icon" aria-hidden="true">●</span>
+            <h3>Your identity</h3>
+            <p>A named payment identity that stays recognizable when you share it.</p>
+          </article>
+          <article class="feature-item">
+            <span class="feature-icon" aria-hidden="true">$</span>
+            <h3>Receive USDC</h3>
+            <p>Support routes to the wallet configured for your active Coin Card.</p>
+          </article>
+          <article class="feature-item">
+            <span class="feature-icon" aria-hidden="true">✓</span>
+            <h3>Visible evidence</h3>
+            <p>Show the route, network, token, and evidence class before wallet approval.</p>
+          </article>
+          <article class="feature-item">
+            <span class="feature-icon" aria-hidden="true">⌘</span>
+            <h3>You stay in control</h3>
+            <p>The sender approves the transfer. ImplicitEx never holds the funds.</p>
+          </article>
+          <article class="feature-item">
+            <span class="feature-icon" aria-hidden="true">↗</span>
+            <h3>Works anywhere</h3>
+            <p>Use your URL or QR code in a bio, site, stream, invoice, or profile.</p>
+          </article>
         </div>
-
-        <div>
-          <p class="cc-faq-q">What is USDC?</p>
-          <p class="cc-faq-a">
-            USDC is a digital dollar. One USDC equals one US dollar. It moves on the
-            Polygon network, which keeps fees very low &mdash; usually a fraction of a cent.
-          </p>
-        </div>
-
-        <div>
-          <p class="cc-faq-q">What fee do you charge?</p>
-          <p class="cc-faq-a">
-            ImplicitEx charges 1% on each transfer. Coin Card transactions are capped at
-            250 USDC, so the maximum fee per transaction is $2.50. Your annual Coin Card
-            fee covers hosting, wallet management, and support &mdash; it's separate from
-            the transfer fee.
-          </p>
-        </div>
-
-        <div>
-          <p class="cc-faq-q">Do you hold my money?</p>
-          <p class="cc-faq-a">
-            No. Funds go directly from the sender's wallet to yours.
-            ImplicitEx never holds, stores, or has access to your USDC.
-            We are non-custodial by design.
-          </p>
-        </div>
-
-        <div>
-          <p class="cc-faq-q">What if I change my wallet?</p>
-          <p class="cc-faq-a">
-            Sign in to your account and update your wallet address. Your Coin Card URL
-            stays the same. Everyone who has your link will automatically send to your
-            new wallet.
-          </p>
-        </div>
-
-        <div>
-          <p class="cc-faq-q">What if I stop using it?</p>
-          <p class="cc-faq-a">
-            If you don't renew at the end of the year, your Coin Card is deactivated after
-            a grace period and your username becomes available again. You can always renew
-            before that happens to keep your address.
-          </p>
-        </div>
-
-        <div>
-          <p class="cc-faq-q">Who makes Coin Card?</p>
-          <p class="cc-faq-a">
-            Coin Card is an ImplicitEx product.
-            <a href="https://implicitex.com" target="_blank" rel="noopener">ImplicitEx</a>
-            builds non-custodial USDC transfer infrastructure on Polygon.
-          </p>
-        </div>
-
       </div>
+    </section>
+
+    <section class="share-section section-pad" id="how-it-works">
+      <div class="site-shell share-panel">
+        <div class="device-composition" aria-hidden="true">
+          <div class="browser-frame">
+            <div class="browser-bar"><i></i><i></i><i></i><span>coincard.click/yourname</span></div>
+            <div class="mini-card">
+              <p>coincard.click</p>
+              <strong><span>@</span>yourname</strong>
+              <div><span>USDC</span><span>Polygon</span></div>
+            </div>
+          </div>
+          <div class="phone-frame">
+            <span class="phone-speaker"></span>
+            <small>coincard.click/yourname</small>
+            <strong>@yourname</strong>
+            <div class="phone-qr">QR</div>
+          </div>
+        </div>
+
+        <div class="share-copy">
+          <p class="eyebrow">Share it. Open it. Get paid.</p>
+          <h2>Your card.<br>Your way.</h2>
+          <p>Add your Coin Card link to the places people already find you. The card resolves the current route, presents the payment facts, and hands execution to the sender’s wallet.</p>
+
+          <ol class="flow-list">
+            <li><span>1</span><div><strong>Share one address</strong><p>Your handle stays simple and memorable.</p></div></li>
+            <li><span>2</span><div><strong>Let the sender inspect</strong><p>Recipient, token, network, and route state appear before approval.</p></div></li>
+            <li><span>3</span><div><strong>Receive directly</strong><p>Approved transfers settle wallet to wallet on Polygon.</p></div></li>
+          </ol>
+
+          <a class="text-link" href="/example/">View the non-transactional example <span aria-hidden="true">→</span></a>
+        </div>
+      </div>
+    </section>
+
+    <section class="trust-section section-pad" id="trust">
+      <div class="site-shell trust-grid">
+        <div class="section-heading">
+          <p class="eyebrow">Evidence, not blanket trust.</p>
+          <h2>Know what the card proves.</h2>
+          <p>Coin Card verification language follows the evidence attached to each card. Stronger claims only appear when the corresponding evidence exists and is current.</p>
+        </div>
+
+        <div class="trust-facts">
+          <article>
+            <span class="fact-mark" aria-hidden="true">✓</span>
+            <div><h3>Safe generic facts</h3><p>Route status, configured wallet, USDC on Polygon, and review-before-approval guidance.</p></div>
+          </article>
+          <article>
+            <span class="fact-mark" aria-hidden="true">≠</span>
+            <div><h3>No invented endorsement</h3><p>A Coin Card does not automatically mean a recipient is safe, trusted, insured, or approved.</p></div>
+          </article>
+          <article>
+            <span class="fact-mark" aria-hidden="true">↳</span>
+            <div><h3>Direct settlement</h3><p>Coin Card supplies routing evidence; the sender’s wallet remains the execution authority.</p></div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="cta-section section-pad-sm" id="early-access">
+      <div class="site-shell cta-panel">
+        <div>
+          <p class="eyebrow">Early access</p>
+          <h2>Coin Card is being prepared for launch.</h2>
+          <p>Public claiming is not open yet. We are finishing the identity, lifecycle, and production-hosting gates before activation.</p>
+        </div>
+        <a class="button button-primary" href="/example/">View the example <span aria-hidden="true">→</span></a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-shell footer-grid">
+      <div class="footer-brand">
+        <a class="brand-lockup" href="/">
+          <img src="/components/images/coincard-mark.svg" alt="" width="36" height="36">
+          <span>coincard.click</span>
+        </a>
+        <p>A portable payment identity for direct digital settlement.</p>
+        <p class="footer-powered">A product of <a href="https://implicitex.com" rel="noopener">ImplicitEx</a>.</p>
+      </div>
+      <nav aria-label="Product links"><h2>Product</h2><a href="/example/">View example</a><a href="#how-it-works">How it works</a><a href="#trust">Trust model</a><a href="#early-access">Early access</a></nav>
+      <nav aria-label="Resource links"><h2>Resources</h2><a href="https://implicitex.com/security.html">Security</a><a href="https://implicitex.com/fee-disclosure.html">Fees</a><a href="https://implicitex.com/status.html">Status</a></nav>
+      <nav aria-label="Company links"><h2>Company</h2><a href="https://implicitex.com/about.html">About</a><a href="https://implicitex.com/privacy.html">Privacy</a><a href="https://implicitex.com/terms.html">Terms</a></nav>
     </div>
-  </section>
+    <div class="site-shell footer-bottom"><span>© 2026 Coin Card</span><span>Polygon · USDC · Non-custodial</span></div>
+  </footer>
 
-</main>
-
-<footer class="cc-footer">
-  <div class="cc-site-wrap" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;width:100%">
-    <p class="cc-footer-brand">
-      &copy; 2026 <a href="https://implicitex.com" target="_blank" rel="noopener">ImplicitEx</a>
-      &middot; Coin Card
-    </p>
-    <nav class="cc-footer-links" aria-label="Footer links">
-      <a href="https://implicitex.com/privacy.html" target="_blank" rel="noopener">Privacy</a>
-      <a href="https://implicitex.com/terms.html" target="_blank" rel="noopener">Terms</a>
-      <a href="https://implicitex.com" target="_blank" rel="noopener">ImplicitEx.com</a>
-    </nav>
-  </div>
-</footer>
-
+  <script src="/js/site.js" defer></script>
 </body>
 </html>

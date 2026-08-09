@@ -115,6 +115,7 @@
     'admin','support','api','login','register','verify','wallet',
     'about','privacy','terms','help','docs','claim',
     'create','settings','dashboard','account','billing','status',
+    'example','demo',
     'coincard','coin-card','implicitex',
   ]);
 

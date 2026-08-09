@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>@maria — Example Coin Card</title>
+  <meta name="description" content="A non-transactional example of the public Coin Card holder experience.">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#fffaf5">
+  <link rel="canonical" href="https://coincard.click/example/">
+  <link rel="icon" href="/components/images/coincard-mark.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/site.css">
+</head>
+<body>
+  <div class="demo-notice">Example Coin Card · Demonstration only · Transfer execution is disabled</div>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header" data-site-header>
+    <div class="site-shell site-nav">
+      <a class="brand-lockup" href="/" aria-label="Coin Card home">
+        <img src="/components/images/coincard-mark.svg" alt="" width="42" height="42">
+        <span>coincard.click</span>
+      </a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="primary-nav" data-nav-toggle>
+        <span class="sr-only">Open navigation</span><span aria-hidden="true"></span><span aria-hidden="true"></span>
+      </button>
+      <nav class="nav-links" id="primary-nav" aria-label="Primary navigation" data-nav-links>
+        <a href="/">Product home</a>
+        <a href="/#how-it-works">How Coin Card works</a>
+        <a href="/#trust">Trust model</a>
+      </nav>
+      <a class="button button-secondary nav-cta" href="/#early-access">Early access</a>
+    </div>
+  </header>
+
+  <main id="main" class="profile-shell">
+    <div class="site-shell">
+      <section class="profile-hero" aria-labelledby="profile-name">
+        <div class="profile-copy">
+          <div class="profile-avatar" aria-hidden="true">ME</div>
+          <h1 class="profile-name" id="profile-name"><span>@</span>maria</h1>
+          <p class="profile-role">Musician · Content creator · Example profile</p>
+          <p class="profile-bio">This page demonstrates how a creator can present a recognizable identity and a reviewable payment route without broad or unsupported trust claims.</p>
+        </div>
+        <div class="profile-art" role="img" aria-label="Abstract warm stage artwork for the Maria example"></div>
+      </section>
+
+      <section class="profile-route-bar" aria-label="Example payment route">
+        <div><span>Receives</span><strong><i class="token-dot" aria-hidden="true">$</i> USDC</strong></div>
+        <div><span>Network</span><strong><i class="polygon-mark" aria-hidden="true">∞</i> Polygon</strong></div>
+        <div><span>Route status</span><strong>Example · not executable</strong></div>
+      </section>
+
+      <div class="send-area">
+        <section class="send-box" aria-labelledby="send-heading">
+          <h2 id="send-heading">Support Maria</h2>
+          <p>Choose an example amount to preview the interaction. This demonstration does not connect a wallet or create a transaction.</p>
+
+          <div class="amount-field">
+            <label for="amount">Example amount</label>
+            <div class="amount-field-row"><input id="amount" type="number" min="1" step="1" value="25" inputmode="decimal" data-amount-input><strong>USDC</strong></div>
+          </div>
+          <div class="amount-chips" aria-label="Example amounts">
+            <button type="button" data-amount="5">5 USDC</button>
+            <button type="button" data-amount="10">10 USDC</button>
+            <button class="is-active" type="button" data-amount="25">25 USDC</button>
+            <button type="button" data-amount="50">50 USDC</button>
+            <button type="button" data-amount="100">100 USDC</button>
+          </div>
+          <button class="button button-primary disabled-send" type="button" disabled>Sending disabled in example</button>
+          <p class="send-disclosure"><span aria-hidden="true">◇</span> A live card must pass the production execution-authorization gate.</p>
+        </section>
+
+        <aside class="why-box" aria-labelledby="evidence-heading">
+          <h2 id="evidence-heading">What this page shows</h2>
+          <p>Generic route facts are separated from stronger evidence claims.</p>
+          <div class="evidence-list">
+            <article><span class="fact-mark" aria-hidden="true">✓</span><div><h3>Configured route</h3><p>A live card identifies its destination, token, and network.</p></div></article>
+            <article><span class="fact-mark" aria-hidden="true">◎</span><div><h3>Evidence-specific status</h3><p>Verification language appears only when that card’s evidence authorizes it.</p></div></article>
+            <article><span class="fact-mark" aria-hidden="true">◇</span><div><h3>Wallet-controlled execution</h3><p>The production transfer flow remains separate and fail-closed.</p></div></article>
+            <article><span class="fact-mark" aria-hidden="true">!</span><div><h3>Irreversible transfer warning</h3><p>The sender must review wallet approval details before sending.</p></div></article>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-shell footer-bottom" style="margin-top:0;border-top:0">
+      <span>© 2026 Coin Card · Example page</span>
+      <span><a href="/">Product home</a> · <a href="/#early-access">Early access</a></span>
+    </div>
+  </footer>
+
+  <script src="/js/site.js" defer></script>
+</body>
+</html>

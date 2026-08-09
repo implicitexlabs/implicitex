@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Open a Coin Card — Send Polygon USDC</title>
+  <meta name="description" content="Open a Coin Card by handle, review its payment route, and continue with a compatible wallet.">
+  <meta name="theme-color" content="#fffaf5">
+  <link rel="canonical" href="https://coincard.click/send/">
+  <link rel="icon" href="/components/images/coincard-mark.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/site.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header" data-site-header>
+    <div class="site-shell site-nav">
+      <a class="brand-lockup" href="/" aria-label="Coin Card home">
+        <img src="/components/images/coincard-mark.svg" alt="" width="42" height="42">
+        <span>coincard.click</span>
+      </a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="primary-nav" data-nav-toggle>
+        <span class="sr-only">Open navigation</span><span aria-hidden="true"></span><span aria-hidden="true"></span>
+      </button>
+      <nav class="nav-links" id="primary-nav" aria-label="Primary navigation" data-nav-links>
+        <a href="/#how-it-works">How it works</a>
+        <a href="/#trust">Trust model</a>
+        <a href="/send/" aria-current="page">Open a card</a>
+      </nav>
+      <a class="button button-primary nav-cta" href="/claim/">Claim your card</a>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="support-hero">
+      <div class="site-shell">
+        <p class="eyebrow">For supporters, clients, and communities.</p>
+        <h1>Support anyone.<br>Anywhere. <span>In USDC.</span></h1>
+        <p>Enter a Coin Card handle to open its current payment route. Review the recipient, token, network, and evidence before your wallet asks for approval.</p>
+
+        <form class="handle-search" data-handle-form novalidate>
+          <label class="sr-only" for="handle">Coin Card handle</label>
+          <div class="handle-input-wrap">
+            <span class="handle-prefix" aria-hidden="true">coincard.click/</span>
+            <input id="handle" name="handle" type="text" inputmode="text" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="handle" maxlength="32" data-handle-input aria-describedby="handle-error">
+          </div>
+          <button class="button button-primary" type="submit">Open card <span aria-hidden="true">→</span></button>
+        </form>
+        <p class="handle-error" id="handle-error" data-handle-error role="alert" aria-live="polite"></p>
+        <p class="support-demo-link">Want to see the visual example? <a href="/maria/">Open @maria</a>.</p>
+      </div>
+    </section>
+
+    <section class="section-pad-sm">
+      <div class="site-shell how-strip" aria-label="How sending works">
+        <article><span class="step-orb" aria-hidden="true">⌕</span><div><h2>1. Open</h2><p>Use the exact Coin Card link shared by the recipient.</p></div></article>
+        <article><span class="step-orb" aria-hidden="true">✓</span><div><h2>2. Review</h2><p>Inspect recipient, route status, token, network, amount, and fee.</p></div></article>
+        <article><span class="step-orb" aria-hidden="true">↗</span><div><h2>3. Approve</h2><p>Your compatible wallet remains the authority that approves the transfer.</p></div></article>
+      </div>
+    </section>
+
+    <section class="section-pad">
+      <div class="site-shell support-grid">
+        <article class="support-panel">
+          <p class="eyebrow">Before you send.</p>
+          <h2>Read the route, not just the handle.</h2>
+          <p>A familiar name is not enough. Coin Card is designed to make the actual payment facts visible before execution.</p>
+          <div class="route-checks">
+            <article><span class="fact-mark" aria-hidden="true">1</span><div><h3>Confirm the recipient identity shown</h3><p>Make sure the card is the one the recipient shared with you.</p></div></article>
+            <article><span class="fact-mark" aria-hidden="true">2</span><div><h3>Inspect route and evidence state</h3><p>Check the configured destination, network, token, and any evidence-specific status.</p></div></article>
+            <article><span class="fact-mark" aria-hidden="true">3</span><div><h3>Verify the amount in your wallet</h3><p>Your wallet confirmation is the final authority. Do not approve unexpected details.</p></div></article>
+          </div>
+        </article>
+
+        <aside class="support-panel">
+          <p class="eyebrow">Current launch path.</p>
+          <h2>Wallet to wallet.</h2>
+          <p>The current experience assumes the sender already has a compatible wallet and Polygon USDC.</p>
+          <div class="route-checks">
+            <article><span class="fact-mark" aria-hidden="true">$</span><div><h3>USDC</h3><p>The card specifies the supported token before the transfer begins.</p></div></article>
+            <article><span class="fact-mark" aria-hidden="true">∞</span><div><h3>Polygon</h3><p>The sender verifies the active network in the wallet approval screen.</p></div></article>
+            <article><span class="fact-mark" aria-hidden="true">◇</span><div><h3>Non-custodial</h3><p>ImplicitEx does not receive or control the sender’s or recipient’s funds.</p></div></article>
+          </div>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-shell footer-grid">
+      <div class="footer-brand">
+        <a class="brand-lockup" href="/"><img src="/components/images/coincard-mark.svg" alt="" width="36" height="36"><span>coincard.click</span></a>
+        <p>A portable payment identity for direct digital settlement.</p>
+        <p class="footer-powered">A product of <a href="https://implicitex.com" rel="noopener">ImplicitEx</a>.</p>
+      </div>
+      <nav aria-label="Product links"><h2>Product</h2><a href="/send/">Open a card</a><a href="/#how-it-works">How it works</a><a href="/claim/">Claim a card</a></nav>
+      <nav aria-label="Resource links"><h2>Resources</h2><a href="https://implicitex.com/security.html">Security</a><a href="https://implicitex.com/fee-disclosure.html">Fees</a><a href="https://implicitex.com/status.html">Status</a></nav>
+      <nav aria-label="Company links"><h2>Company</h2><a href="https://implicitex.com/privacy.html">Privacy</a><a href="https://implicitex.com/terms.html">Terms</a></nav>
+    </div>
+    <div class="site-shell footer-bottom"><span>© 2026 Coin Card</span><span>Review every transfer before approval.</span></div>
+  </footer>
+
+  <script src="/js/site.js" defer></script>
+</body>
+</html>

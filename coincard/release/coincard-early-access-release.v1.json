@@ -1,0 +1,68 @@
+{
+  "schemaVersion": "implicitex-coincard-public-release.v1",
+  "releaseId": "coincard-early-access-2026-08-09",
+  "status": "PREPARED_NOT_DEPLOYED",
+  "preparedAt": "2026-08-09T19:26:28Z",
+  "environment": "production",
+  "projectId": "implicitex",
+  "hostingSiteId": "implicitex-coincard",
+  "hostingTarget": "coincard",
+  "hostingConfigSha256": "sha256:17187c42a671051a7a817eb7c06c70a0e2ad874dcc90a03fe655de3431adeae2",
+  "artifactSha256": "sha256:8ad65524f3b900744510170f901c66dfad43baa9963cd64cd7d6a2e1ffa9d720",
+  "files": [
+    {
+      "path": "components/images/coincard-mark.svg",
+      "sha256": "sha256:7d1d9e530ef687e62f8d491d9e93f2444816b0082f189ecdea39c1f8b9206e75"
+    },
+    {
+      "path": "css/site.css",
+      "sha256": "sha256:4a8e5250b7cc45cefb06e849c814d52f54b045f6c114439bcf96510bf0a3ffbc"
+    },
+    {
+      "path": "example/index.html",
+      "sha256": "sha256:0cc729edb1ba99600a5679ef1d541c6a4001f215b5f6a62a3aa6783d1a3e060e"
+    },
+    {
+      "path": "index.html",
+      "sha256": "sha256:fc27c3ea9455b09e051729e55c5b6cb7d89907c56b3fbb7d72a31e51f2b5fb41"
+    },
+    {
+      "path": "js/site.js",
+      "sha256": "sha256:fbebc75cc7aa47805642b153afac0637bc61d0f85862878a34ef12654d2ef65f"
+    }
+  ],
+  "excludedSourceFiles": [
+    "claim/index.html",
+    "components/images/coincard-logo.svg",
+    "components/images/lettermark-white.svg",
+    "components/images/wordmark-white.svg",
+    "css/claim-theme.css",
+    "css/coincard.css",
+    "js/claim.js",
+    "send/index.html"
+  ],
+  "routePolicy": {
+    "landing": "/",
+    "example": "/example/",
+    "exampleRouteClass": "RESERVED_PRODUCT_ROUTE",
+    "claim": "TEMPORARY_302_TO_ROOT",
+    "send": "TEMPORARY_302_TO_ROOT",
+    "currentHead": "ABSENT_FAIL_CLOSED",
+    "snapshotDirectory": "ABSENT_FAIL_CLOSED"
+  },
+  "authorityDeclarations": {
+    "signedAuthorityArtifact": false,
+    "usernameRegistryAuthority": false,
+    "lifecycleAuthority": false,
+    "executionAuthority": false,
+    "currentHeadAuthority": false
+  },
+  "externalState": {
+    "firebaseAuthenticated": false,
+    "firebaseResourceChanged": false,
+    "deployed": false,
+    "dnsChanged": false,
+    "currentHeadChanged": false,
+    "signingKeyUsed": false
+  }
+}
