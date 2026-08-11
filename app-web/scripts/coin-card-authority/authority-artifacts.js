@@ -2,6 +2,7 @@
 
 const { createHash } = require('node:crypto');
 const canonicalJsonApi = require('../../frontend/public/card/coin-card-canonical-json-v1.js');
+const { ROLES, assertRoleBoundSigner } = require('./authority-roles');
 
 const DOMAINS = Object.freeze({
   usernameSnapshotSignature: 'ImplicitEx.CoinCard.PublicUsernameRegistry.v1',
@@ -71,10 +72,8 @@ function signatureMetadata(kind, fields, signer) {
   return metadata;
 }
 
-async function signArtifact({ fields, signer, signatureDomain, envelopeKind }) {
-  if (!signer || typeof signer.signCanonicalPayload !== 'function' || !signer.keyId) {
-    throw new TypeError('private-material-free signer interface is required');
-  }
+async function signArtifact({ fields, signer, expectedRole, signatureDomain, envelopeKind }) {
+  assertRoleBoundSigner(signer, expectedRole);
   const facts = clonePlain(fields);
   if (Object.prototype.hasOwnProperty.call(facts, 'signature')) {
     throw new TypeError('publisher constructs the signature envelope');
@@ -97,15 +96,15 @@ async function signArtifact({ fields, signer, signatureDomain, envelopeKind }) {
   return deepFreeze({ ...facts, signature: { ...signature, value: signed.value } });
 }
 
-function createAuthorityArtifactFactory({ signer }) {
-  if (!signer || typeof signer.signCanonicalPayload !== 'function') {
-    throw new TypeError('signer is required');
-  }
+function createAuthorityArtifactFactory({ registryPublicationSigner, executableCurrentHeadSigner }) {
+  assertRoleBoundSigner(registryPublicationSigner, ROLES.REGISTRY_PUBLICATION);
+  assertRoleBoundSigner(executableCurrentHeadSigner, ROLES.EXECUTABLE_CURRENT_HEAD);
   return Object.freeze({
     signUsernameSnapshot(fields) {
       return signArtifact({
         fields,
-        signer,
+        signer: registryPublicationSigner,
+        expectedRole: ROLES.REGISTRY_PUBLICATION,
         signatureDomain: DOMAINS.usernameSnapshotSignature,
         envelopeKind: ENVELOPE_KINDS.USERNAME,
       });
@@ -113,7 +112,8 @@ function createAuthorityArtifactFactory({ signer }) {
     signUsernameHead(fields) {
       return signArtifact({
         fields,
-        signer,
+        signer: registryPublicationSigner,
+        expectedRole: ROLES.REGISTRY_PUBLICATION,
         signatureDomain: DOMAINS.usernameHeadSignature,
         envelopeKind: ENVELOPE_KINDS.USERNAME,
       });
@@ -121,7 +121,8 @@ function createAuthorityArtifactFactory({ signer }) {
     signLifecycleRecord(fields) {
       return signArtifact({
         fields,
-        signer,
+        signer: registryPublicationSigner,
+        expectedRole: ROLES.REGISTRY_PUBLICATION,
         signatureDomain: DOMAINS.lifecycleRecordSignature,
         envelopeKind: ENVELOPE_KINDS.LIFECYCLE,
       });
@@ -129,7 +130,8 @@ function createAuthorityArtifactFactory({ signer }) {
     signExecutableHead(fields) {
       return signArtifact({
         fields,
-        signer,
+        signer: executableCurrentHeadSigner,
+        expectedRole: ROLES.EXECUTABLE_CURRENT_HEAD,
         signatureDomain: DOMAINS.executableHeadSignature,
         envelopeKind: ENVELOPE_KINDS.EXECUTABLE_HEAD,
       });

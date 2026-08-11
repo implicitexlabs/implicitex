@@ -16,12 +16,21 @@ const FORBIDDEN_CONTENT_MARKERS = Object.freeze([
   'coin-card-readonly-non-production-fixtures',
   'coin-card-readonly-vertical-slice',
   'coin-card-production-shaped-authority',
+  'NON_PUBLISHED_KMS_SMOKE',
+  'kms-nonpublishing-smoke',
+  'smoke-report.json',
+  '-----BEGIN PRIVATE KEY-----',
+  '-----BEGIN EC PRIVATE KEY-----',
+  'COIN_CARD_MANIFEST_PRIVATE_KEY_B64',
+  'COIN_CARD_LIFECYCLE_PRIVATE_KEY_B64',
 ]);
 
 const FORBIDDEN_PATH_MARKERS = Object.freeze([
   'coin-card-readonly-non-production-fixtures',
   'coin-card-readonly-vertical-slice',
   'coin-card-production-shaped-authority',
+  'kms-nonpublishing-smoke',
+  'smoke-report.json',
 ]);
 
 function walkFiles(root, relative = '') {

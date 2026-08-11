@@ -11,7 +11,7 @@ function immutableKey(kind, hash) {
   return `${kind}/sha256/${hash.slice(7)}.json`;
 }
 
-function createAuthorityPublisher({ artifacts, store, verify }) {
+function createAuthorityPublisher({ artifacts, transactionEvidence = null, store, verify }) {
   if (!artifacts || !store || !verify) throw new TypeError('artifacts, store, and verifiers are required');
   const requiredStoreMethods = [
     'putImmutable', 'readImmutable', 'compareAndSwapCurrent',
@@ -137,6 +137,21 @@ function createAuthorityPublisher({ artifacts, store, verify }) {
         (prior, next) => prior === null || BigInt(next.headSequence) > BigInt(prior.headSequence)
       );
       return Object.freeze({ record: storedRecord, head: storedHead, current, scope });
+    },
+
+    async publishTransactionEvidence({ inputs }) {
+      if (!transactionEvidence || typeof transactionEvidence.sign !== 'function'
+        || typeof transactionEvidence.hash !== 'function'
+        || typeof verify.transactionEvidence !== 'function') {
+        throw new Error('Transaction Evidence authority is unavailable');
+      }
+      const envelope = await transactionEvidence.sign(inputs);
+      const hash = transactionEvidence.hash(envelope);
+      return persistAndVerify(
+        'transaction-evidence', envelope, hash,
+        async (value, expectedHash) => transactionEvidence.hash(value) === expectedHash
+          && verify.transactionEvidence(value, inputs),
+      );
     },
   });
 }

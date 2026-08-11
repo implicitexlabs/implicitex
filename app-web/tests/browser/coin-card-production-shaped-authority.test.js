@@ -13,6 +13,7 @@ const { KMS_ALGORITHM, createKmsCompatibleP256Signer } = require('../../scripts/
 const { DOMAINS, createAuthorityArtifactFactory, hashArtifact } = require('../../scripts/coin-card-authority/authority-artifacts');
 const { createLocalAtomicArtifactStore } = require('../../scripts/coin-card-authority/local-atomic-artifact-store');
 const { createAuthorityPublisher } = require('../../scripts/coin-card-authority/authority-publisher');
+const { ROLES, createRoleBoundSigner } = require('../../scripts/coin-card-authority/authority-roles');
 
 const repoRoot = path.resolve(__dirname, '../../..');
 const fixturePath = '/app-web/tests/browser/fixtures/coin-card-production-shaped-authority.html';
@@ -53,6 +54,11 @@ async function buildAuthorityData() {
   });
   const signer = Object.freeze({
     keyId: kmsSigner.keyId,
+    keyVersionName: kmsSigner.keyVersionName,
+    async signMessage(message) {
+      pendingMessage = Buffer.from(message);
+      return kmsSigner.signMessage(message);
+    },
     async signCanonicalPayload(domain, canonical) {
       pendingMessage = Buffer.concat([
         Buffer.from(domain, 'utf8'), Buffer.from([0]), Buffer.from(canonical, 'utf8'),
@@ -60,7 +66,10 @@ async function buildAuthorityData() {
       return kmsSigner.signCanonicalPayload(domain, canonical);
     },
   });
-  const artifacts = createAuthorityArtifactFactory({ signer });
+  const artifacts = createAuthorityArtifactFactory({
+    registryPublicationSigner: createRoleBoundSigner({ role: ROLES.REGISTRY_PUBLICATION, signer }),
+    executableCurrentHeadSigner: createRoleBoundSigner({ role: ROLES.EXECUTABLE_CURRENT_HEAD, signer }),
+  });
   async function signatureValid(value, domain) {
     const payload = JSON.parse(JSON.stringify(value));
     const signature = Buffer.from(payload.signature.value, 'base64url');

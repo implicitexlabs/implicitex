@@ -9,6 +9,7 @@ const { createKmsCompatibleP256Signer, KMS_ALGORITHM } = require('../../scripts/
 const { createAuthorityArtifactFactory, hashArtifact, DOMAINS } = require('../../scripts/coin-card-authority/authority-artifacts');
 const { createLocalAtomicArtifactStore } = require('../../scripts/coin-card-authority/local-atomic-artifact-store');
 const { createAuthorityPublisher } = require('../../scripts/coin-card-authority/authority-publisher');
+const { ROLES, createRoleBoundSigner } = require('../../scripts/coin-card-authority/authority-roles');
 
 const KEY_ID = 'non-production-authority-publication-test-key';
 const CARD_ID = 'cc_01KZJTH0XZ1QJG9A1K9T5GJAWE';
@@ -53,6 +54,11 @@ async function harness() {
   const originalSign = signer.signCanonicalPayload;
   const interfaceSigner = Object.freeze({
     keyId: signer.keyId,
+    keyVersionName: signer.keyVersionName,
+    async signMessage(message) {
+      harness.pendingMessage = Buffer.from(message);
+      return signer.signMessage(message);
+    },
     async signCanonicalPayload(domain, canonical) {
       harness.pendingMessage = Buffer.concat([
         Buffer.from(domain, 'utf8'), Buffer.from([0]), Buffer.from(canonical, 'utf8'),
@@ -60,7 +66,14 @@ async function harness() {
       return originalSign(domain, canonical);
     },
   });
-  const artifacts = createAuthorityArtifactFactory({ signer: interfaceSigner });
+  const artifacts = createAuthorityArtifactFactory({
+    registryPublicationSigner: createRoleBoundSigner({
+      role: ROLES.REGISTRY_PUBLICATION, signer: interfaceSigner,
+    }),
+    executableCurrentHeadSigner: createRoleBoundSigner({
+      role: ROLES.EXECUTABLE_CURRENT_HEAD, signer: interfaceSigner,
+    }),
+  });
 
   async function verifySignature(artifact, domain) {
     const payload = JSON.parse(JSON.stringify(artifact));
