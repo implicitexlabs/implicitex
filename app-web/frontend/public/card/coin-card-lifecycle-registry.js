@@ -134,106 +134,12 @@
     return leftPoints.length - rightPoints.length;
   }
 
-  function isNormalizedNfc(value) {
-    return typeof value.normalize === 'function' && value.normalize('NFC') === value;
-  }
-
-  function containsOnlyUnicodeScalars(value) {
-    for (var i = 0; i < value.length; i++) {
-      var code = value.charCodeAt(i);
-      if (code >= 0xd800 && code <= 0xdbff) {
-        if (i + 1 >= value.length) return false;
-        var next = value.charCodeAt(i + 1);
-        if (next < 0xdc00 || next > 0xdfff) return false;
-        i += 1;
-      } else if (code >= 0xdc00 && code <= 0xdfff) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  function isCanonicalString(value) {
-    return containsOnlyUnicodeScalars(value) && isNormalizedNfc(value);
-  }
-
-  function escapeCanonicalString(value) {
-    var result = '"';
-    for (var i = 0; i < value.length; i++) {
-      var code = value.charCodeAt(i);
-      if (code === 0x22) {
-        result += '\\"';
-      } else if (code === 0x5c) {
-        result += '\\\\';
-      } else if (code === 0x08) {
-        result += '\\b';
-      } else if (code === 0x09) {
-        result += '\\t';
-      } else if (code === 0x0a) {
-        result += '\\n';
-      } else if (code === 0x0c) {
-        result += '\\f';
-      } else if (code === 0x0d) {
-        result += '\\r';
-      } else if (code >= 0 && code <= 0x1f) {
-        result += '\\u00' + code.toString(16).padStart(2, '0');
-      } else {
-        result += value.charAt(i);
-      }
-    }
-    return result + '"';
-  }
-
-  function canonicalizeNumber(value) {
-    if (!Number.isSafeInteger(value) || Object.is(value, -0)) return null;
-    return String(value);
-  }
-
-  function canonicalizeJsonValue(value, seen) {
-    if (value === null) return 'null';
-    if (typeof value === 'string') {
-      return isCanonicalString(value) ? escapeCanonicalString(value) : null;
-    }
-    if (typeof value === 'boolean') return value ? 'true' : 'false';
-    if (typeof value === 'number') return canonicalizeNumber(value);
-    if (typeof value === 'undefined' || typeof value === 'function' || typeof value === 'symbol') return null;
-    if (!value || typeof value !== 'object') return null;
-    if (!isPlainDataContainer(value)) return null;
-    var ownPropertyNames = getOwnDataPropertyNames(value);
-    if (!ownPropertyNames) return null;
-
-    var visited = seen || [];
-    if (visited.indexOf(value) !== -1) return null;
-    visited.push(value);
-
-    if (Array.isArray(value)) {
-      var items = [];
-      for (var i = 0; i < value.length; i++) {
-        var item = canonicalizeJsonValue(value[i], visited);
-        if (item === null) return null;
-        items.push(item);
-      }
-      visited.pop();
-      return '[' + items.join(',') + ']';
-    }
-
-    var keys = ownPropertyNames.sort(compareCodePoints);
-    var properties = [];
-    for (var j = 0; j < keys.length; j++) {
-      var key = keys[j];
-      if (!isCanonicalString(key)) return null;
-      var descriptor = Object.getOwnPropertyDescriptor(value, key);
-      var serialized = canonicalizeJsonValue(descriptor.value, visited);
-      if (serialized === null) return null;
-      properties.push(escapeCanonicalString(key) + ':' + serialized);
-    }
-    visited.pop();
-    return '{' + properties.join(',') + '}';
-  }
-
-  function canonicalizeJson(value) {
-    return canonicalizeJsonValue(value, []);
-  }
+  /* canonicalizeJson is the coin-card-canonical-json.v1 protocol primitive.
+   * The single implementation lives in coin-card-canonical-json-v1.js, which
+   * must be loaded before this module.  We capture it here at module init time
+   * so internal callers (hashCanonicalPayload) and the public API surface both
+   * use the same function reference. */
+  var canonicalizeJson = window.IX_COIN_CARD_CANONICAL_JSON_V1.canonicalizeJson;
 
   function getCryptoSubtle() {
     return window.crypto && window.crypto.subtle && typeof window.crypto.subtle.digest === 'function'

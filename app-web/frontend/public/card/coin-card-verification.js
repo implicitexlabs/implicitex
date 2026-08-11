@@ -62,6 +62,7 @@
     'js/vendor/qrcode.min.js',
     'card/coin-card-trusted-keys.js',
     'card/coin-card-trusted-key-resolution.js',
+    'card/coin-card-canonical-json-v1.js',
     'card/coin-card-lifecycle-registry.js',
     'card/coin-card-lifecycle-record-verification.js',
     'card/coin-card-lifecycle-bundle-verification.js',

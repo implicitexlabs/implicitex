@@ -10,6 +10,10 @@ const registryRuntimePath = path.join(
   repoRoot,
   'app-web/frontend/public/card/coin-card-lifecycle-registry.js',
 );
+const canonicalJsonRuntimePath = path.join(
+  repoRoot,
+  'app-web/frontend/public/card/coin-card-canonical-json-v1.js',
+);
 const verifierRuntimePath = path.join(
   repoRoot,
   'app-web/frontend/public/card/coin-card-transaction-evidence-content-verification.js',
@@ -20,6 +24,7 @@ const fixturePath = path.join(
 );
 
 const registryRuntimeSource = fs.readFileSync(registryRuntimePath, 'utf8');
+const canonicalJsonRuntimeSource = fs.readFileSync(canonicalJsonRuntimePath, 'utf8');
 const verifierRuntimeSource = fs.readFileSync(verifierRuntimePath, 'utf8');
 const fixture = JSON.parse(fs.readFileSync(fixturePath, 'utf8'));
 
@@ -98,6 +103,7 @@ function loadRuntime(options = {}) {
       },
     });
   } else if (!options.canonicalizerUnavailable) {
+    vm.runInNewContext(canonicalJsonRuntimeSource, context, { filename: canonicalJsonRuntimePath });
     vm.runInNewContext(registryRuntimeSource, context, { filename: registryRuntimePath });
   }
 

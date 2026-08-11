@@ -92,16 +92,22 @@ Generate:
 python tools/coin-card-integrity/generate_manifest.py \
   --root app-web/frontend/public \
   --asset js/ix-execution.js \
+  --asset js/vendor/qrcode.min.js \
   --asset card/coin-card-trusted-keys.js \
   --asset card/coin-card-trusted-key-resolution.js \
+  --asset card/coin-card-canonical-json-v1.js \
   --asset card/coin-card-lifecycle-registry.js \
   --asset card/coin-card-lifecycle-record-verification.js \
   --asset card/coin-card-lifecycle-bundle-verification.js \
   --asset card/coin-card-lifecycle-record-selection.js \
   --asset card/coin-card-lifecycle-resolution.js \
+  --asset card/coin-card-lifecycle-presentation.js \
+  --asset card/coin-card-execution-authorization.js \
+  --asset card/coin-card-review-projection-contract.js \
   --asset card/coin-card-verification.js \
   --asset card/card.js \
   --asset card/card.css \
+  --asset card/index.html \
   --out /tmp/coin-card-manifest.json \
   --card-id cc_demo_implicitex \
   --recipient 0x0000000000000000000000000000000000000000 \

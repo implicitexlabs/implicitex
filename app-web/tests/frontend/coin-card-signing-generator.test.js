@@ -13,6 +13,7 @@ const generatorPath = path.join(appRoot, 'scripts/generate_signed_coin_card_acce
 const trustedKeyResolutionPath = path.join(appRoot, 'frontend/public/card/coin-card-trusted-key-resolution.js');
 const verificationPath = path.join(appRoot, 'frontend/public/card/coin-card-verification.js');
 const lifecycleRegistryPath = path.join(appRoot, 'frontend/public/card/coin-card-lifecycle-registry.js');
+const canonicalJsonPath = lifecycleRegistryPath.replace('coin-card-lifecycle-registry.js', 'coin-card-canonical-json-v1.js');
 const lifecycleRecordVerificationPath = path.join(appRoot, 'frontend/public/card/coin-card-lifecycle-record-verification.js');
 const lifecycleBundleVerificationPath = path.join(appRoot, 'frontend/public/card/coin-card-lifecycle-bundle-verification.js');
 const lifecycleSelectionPath = path.join(appRoot, 'frontend/public/card/coin-card-lifecycle-record-selection.js');
@@ -26,6 +27,7 @@ const generatedArtifactPaths = [
 ];
 const verificationSource = fs.readFileSync(verificationPath, 'utf8');
 const lifecycleRegistrySource = fs.readFileSync(lifecycleRegistryPath, 'utf8');
+const canonicalJsonSource = fs.readFileSync(canonicalJsonPath, 'utf8');
 const lifecycleRecordVerificationSource = fs.readFileSync(lifecycleRecordVerificationPath, 'utf8');
 const lifecycleBundleVerificationSource = fs.readFileSync(lifecycleBundleVerificationPath, 'utf8');
 const lifecycleSelectionSource = fs.readFileSync(lifecycleSelectionPath, 'utf8');
@@ -91,6 +93,7 @@ function runIsolatedGenerator(dir, options) {
     '--lifecycle-bundle-out',
     lifecycleOut,
   ];
+  if (options.signedAt) args.push('--signed-at', options.signedAt);
   if (options.manifestKeyFile) args.push('--manifest-key-file', options.manifestKeyFile);
   if (options.lifecycleKeyFile) args.push('--lifecycle-key-file', options.lifecycleKeyFile);
   if (options.manifestKeyEnv) args.push('--manifest-key-env', options.manifestKeyEnv);
@@ -196,6 +199,7 @@ async function verifyGeneratedManifest(manifestFile, trustedKeysFile, assetOverr
 
 async function verifyGeneratedLifecycle(lifecycleFile, trustedKeysFile) {
   const context = loadBrowserContext(trustedKeysFile);
+  vm.runInContext(canonicalJsonSource, context, { filename: canonicalJsonPath });
   vm.runInContext(lifecycleRegistrySource, context, { filename: lifecycleRegistryPath });
   vm.runInContext(lifecycleRecordVerificationSource, context, { filename: lifecycleRecordVerificationPath });
   vm.runInContext(lifecycleBundleVerificationSource, context, { filename: lifecycleBundleVerificationPath });
@@ -214,6 +218,7 @@ async function verifyGeneratedLifecycle(lifecycleFile, trustedKeysFile) {
 
 function loadGeneratedLifecycleRuntime(trustedKeysFile) {
   const context = loadBrowserContext(trustedKeysFile);
+  vm.runInContext(canonicalJsonSource, context, { filename: canonicalJsonPath });
   vm.runInContext(lifecycleRegistrySource, context, { filename: lifecycleRegistryPath });
   vm.runInContext(lifecycleRecordVerificationSource, context, { filename: lifecycleRecordVerificationPath });
   vm.runInContext(lifecycleBundleVerificationSource, context, { filename: lifecycleBundleVerificationPath });
@@ -301,6 +306,20 @@ test('signing generator rejects placeholder build identity before signing', () =
   assert.doesNotMatch(output, /MIGH|BEGIN PRIVATE/);
 });
 
+test('signing generator rejects a non-canonical ceremony timestamp before signing', () => {
+  const result = runGenerator([
+    '--build-version',
+    'acceptance-test',
+    '--signed-at',
+    '2026-08-10T23:00:00+00:00',
+  ]);
+  const output = result.stdout + result.stderr;
+
+  assert.notEqual(result.status, 0);
+  assert.match(output, /--signed-at must be an exact UTC ISO-8601 timestamp/);
+  assert.doesNotMatch(output, /MIGH|BEGIN PRIVATE/);
+});
+
 test('generated signing artifacts contain no private key material', () => {
   for (const artifactPath of generatedArtifactPaths) {
     const source = fs.readFileSync(artifactPath, 'utf8');
@@ -337,6 +356,7 @@ test('rotation generator preserves v1 records and appends distinct v2 signer IDs
       lifecycleKeyId: 'ix-lifecycle-pub-v2-test',
       preserveTrustedKeysFrom: v1.trustedKeysOut,
       buildVersion: 'rotation-v2',
+      signedAt: '2026-08-10T23:15:00.000Z',
       manifestName: 'v2-manifest.json',
       trustedName: 'transition-trusted.js',
       lifecycleName: 'v2-lifecycle.js',
@@ -358,6 +378,12 @@ test('rotation generator preserves v1 records and appends distinct v2 signer IDs
   const manifest = JSON.parse(fs.readFileSync(v2.manifestOut, 'utf8'));
   const bundle = loadLifecycleBundle(v2.lifecycleOut);
   assert.equal(manifest.keyId, 'ix-coin-card-manifest-v2-test');
+  assert.equal(manifest.signedAt, '2026-08-10T23:15:00.000Z');
+  assert.equal(manifest.signature.signedAt, '2026-08-10T23:15:00.000Z');
+  assert.equal(bundle.generatedAt, '2026-08-10T23:15:00.000Z');
+  assert.equal(bundle.entries[0].publishedAt, '2026-08-10T23:15:00.000Z');
+  assert.equal(bundle.entries[0].effectiveFrom, '2026-08-10T23:15:00.000Z');
+  assert.equal(bundle.entries[0].signature.signedAt, '2026-08-10T23:15:00.000Z');
   assert.equal(manifest.signature.keyId, 'ix-coin-card-manifest-v2-test');
   assert.equal(bundle.entries[0].signature.keyId, 'ix-lifecycle-pub-v2-test');
   assert.equal(bundle.entries[0].manifestId, manifest.manifestHash);

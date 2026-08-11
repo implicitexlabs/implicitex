@@ -14,6 +14,10 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
+const {
+  canonicalizeJson: canonicalizeJsonOrNull,
+} = require('../frontend/public/card/coin-card-canonical-json-v1.js');
+
 const subtle = webcrypto.subtle;
 const ROOT = path.resolve(__dirname, '..');
 const PUBLIC_ROOT = path.join(ROOT, 'frontend/public');
@@ -42,6 +46,7 @@ const PROTECTED_ASSETS = Object.freeze([
   'js/vendor/qrcode.min.js',
   'card/coin-card-trusted-keys.js',
   'card/coin-card-trusted-key-resolution.js',
+  'card/coin-card-canonical-json-v1.js',
   'card/coin-card-lifecycle-registry.js',
   'card/coin-card-lifecycle-record-verification.js',
   'card/coin-card-lifecycle-bundle-verification.js',
@@ -76,38 +81,10 @@ function compareCodePoints(a, b) {
   return aPoints.length - bPoints.length;
 }
 
-function escapeString(value) {
-  let result = '"';
-  for (let i = 0; i < value.length; i++) {
-    const code = value.charCodeAt(i);
-    if (code === 0x22) result += '\\"';
-    else if (code === 0x5c) result += '\\\\';
-    else if (code === 0x08) result += '\\b';
-    else if (code === 0x09) result += '\\t';
-    else if (code === 0x0a) result += '\\n';
-    else if (code === 0x0c) result += '\\f';
-    else if (code === 0x0d) result += '\\r';
-    else if (code >= 0 && code <= 0x1f) result += '\\u00' + code.toString(16).padStart(2, '0');
-    else result += value[i];
-  }
-  return result + '"';
-}
-
 function canonicalizeJson(value) {
-  if (value === null) return 'null';
-  if (typeof value === 'boolean') return value ? 'true' : 'false';
-  if (typeof value === 'number') {
-    if (!Number.isSafeInteger(value) || Object.is(value, -0)) throw new Error(`Non-canonical number: ${value}`);
-    return String(value);
-  }
-  if (typeof value === 'string') return escapeString(value);
-  if (Array.isArray(value)) return '[' + value.map(canonicalizeJson).join(',') + ']';
-  if (value && typeof value === 'object') {
-    return '{' + Object.keys(value).sort(compareCodePoints).map((key) => (
-      escapeString(key) + ':' + canonicalizeJson(value[key])
-    )).join(',') + '}';
-  }
-  throw new Error(`Cannot canonicalize: ${typeof value}`);
+  const canonical = canonicalizeJsonOrNull(value);
+  if (canonical === null) throw new Error('Cannot canonicalize non-canonical JSON value');
+  return canonical;
 }
 
 function canonicalizeIntegrityManifestPayload(manifest) {
@@ -265,6 +242,25 @@ function getBuildVersion() {
     throw new Error('A non-placeholder --build-version or COIN_CARD_ACCEPTANCE_BUILD_VERSION is required');
   }
   return buildVersion;
+}
+
+function getSignedAt() {
+  const supplied = readArgValue('--signed-at');
+  const signedAt = supplied || new Date().toISOString();
+  const parsed = Date.parse(signedAt);
+  if (!Number.isFinite(parsed) || new Date(parsed).toISOString() !== signedAt) {
+    throw new Error('--signed-at must be an exact UTC ISO-8601 timestamp');
+  }
+  return signedAt;
+}
+
+function getExpectedSha256Arg(name) {
+  const value = readArgValue(name);
+  if (!value) return null;
+  if (!/^sha256:[0-9a-f]{64}$/.test(value)) {
+    throw new Error(`${name} must be a lowercase sha256 digest`);
+  }
+  return value;
 }
 
 function samePublicJwk(left, right) {
@@ -666,7 +662,7 @@ ${entries},
 `;
 }
 
-async function buildManifest(manifestKey, buildVersion, manifestKeyId, assetOverrides) {
+async function buildManifestCandidate(buildVersion, manifestKeyId, assetOverrides, signedAt) {
   const assets = [];
   for (const assetPath of PROTECTED_ASSETS.slice().sort()) {
     const override = assetOverrides && Object.prototype.hasOwnProperty.call(assetOverrides, assetPath)
@@ -679,7 +675,6 @@ async function buildManifest(manifestKey, buildVersion, manifestKeyId, assetOver
     });
   }
 
-  const signedAt = new Date().toISOString();
   const manifest = {
     assets,
     buildVersion,
@@ -704,6 +699,10 @@ async function buildManifest(manifestKey, buildVersion, manifestKeyId, assetOver
       value: '',
     },
   };
+  return manifest;
+}
+
+async function signManifest(manifestKey, manifest) {
   const canonicalPayload = canonicalizeIntegrityManifestPayload(manifest);
   const sig = await subtle.sign(
     { name: 'ECDSA', hash: { name: 'SHA-256' } },
@@ -712,7 +711,13 @@ async function buildManifest(manifestKey, buildVersion, manifestKeyId, assetOver
   );
   manifest.signature.value = toBase64Url(sig);
   manifest.manifestHash = await sha256Hex(Buffer.from(canonicalizeJson(manifest), 'utf8'));
-  return manifest;
+}
+
+async function protectedAssetSetDigest(assets) {
+  return sha256Hex(Buffer.from(canonicalizeJson({
+    assetCount: assets.length,
+    assets,
+  }), 'utf8'));
 }
 
 async function signLifecycleRecord(lifecycleKey, record) {
@@ -988,6 +993,9 @@ function writePackageOutputs(outputs, options = {}) {
 
 async function main() {
   const buildVersion = getBuildVersion();
+  const signedAt = getSignedAt();
+  const expectedAssetSetDigest = getExpectedSha256Arg('--expected-asset-set-digest');
+  const expectedSignaturePayloadDigest = getExpectedSha256Arg('--expected-signature-payload-sha256');
   const manifestKeyId = assertNonemptyString(readArgValue('--manifest-key-id') || DEFAULT_MANIFEST_KEY_ID, 'manifest key ID');
   const lifecycleKeyId = assertNonemptyString(readArgValue('--lifecycle-key-id') || DEFAULT_LIFECYCLE_KEY_ID, 'lifecycle key ID');
   if (manifestKeyId === lifecycleKeyId) throw new Error('manifest and lifecycle key IDs must be distinct');
@@ -1021,6 +1029,7 @@ async function main() {
     trustedKeysOut,
     lifecycleBundleOut,
     ...trustedSourcePaths,
+    ...PROTECTED_ASSETS.map((assetPath) => path.join(PUBLIC_ROOT, assetPath)),
   ]);
   const manifestKey = await getKey(
     'manifest',
@@ -1052,15 +1061,24 @@ async function main() {
   assertNoIncompatiblePublicIdentityReuse(trustedRecords);
   const trustedKeys = renderTrustedKeys(trustedRecords);
 
-  const manifest = await buildManifest(manifestKey, buildVersion, manifestKeyId, {
+  const manifest = await buildManifestCandidate(buildVersion, manifestKeyId, {
     'card/coin-card-trusted-keys.js': trustedKeys,
-  });
+  }, signedAt);
+  const assetSetDigest = await protectedAssetSetDigest(manifest.assets);
+  if (expectedAssetSetDigest && assetSetDigest !== expectedAssetSetDigest) {
+    throw new Error(`protected asset-set digest mismatch: expected ${expectedAssetSetDigest}, got ${assetSetDigest}`);
+  }
   const manifestPayload = Buffer.from(canonicalizeIntegrityManifestPayload(manifest), 'utf8');
+  const signaturePayloadDigest = await sha256Hex(manifestPayload);
+  if (expectedSignaturePayloadDigest && signaturePayloadDigest !== expectedSignaturePayloadDigest) {
+    throw new Error(`manifest signature-payload digest mismatch: expected ${expectedSignaturePayloadDigest}, got ${signaturePayloadDigest}`);
+  }
+  await signManifest(manifestKey, manifest);
   if (!await verifySignature(manifestKey.publicJwk, manifest.signature.value, manifestPayload)) {
     throw new Error('manifest signature self-verification failed');
   }
 
-  const now = new Date().toISOString();
+  const now = signedAt;
   const cards = loadActiveRegistryCards();
   const records = [];
   for (let index = 0; index < cards.length; index++) {
@@ -1119,6 +1137,8 @@ async function main() {
   console.log(`lifecycle key: ${lifecycleKeyId}`);
   console.log(`lifecycle public fingerprint: ${lifecycleKey.fingerprint}`);
   console.log(`buildVersion: ${buildVersion}`);
+  console.log(`protected asset-set digest: ${assetSetDigest}`);
+  console.log(`manifest signature-payload digest: ${signaturePayloadDigest}`);
   console.log(`manifestHash: ${manifest.manifestHash}`);
   console.log(`lifecycle records: ${records.length}`);
   console.log(`cardIds: ${records.map((record) => record.cardId).join(', ')}`);

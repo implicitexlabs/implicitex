@@ -13,6 +13,7 @@ const trustedKeyResolutionPath = path.join(publicRoot, 'card/coin-card-trusted-k
 const verificationPath = path.join(publicRoot, 'card/coin-card-verification.js');
 const lifecycleBundlePath = path.join(publicRoot, 'card/coin-card-lifecycle-bundle.js');
 const lifecycleRegistryPath = path.join(publicRoot, 'card/coin-card-lifecycle-registry.js');
+const canonicalJsonPath = lifecycleRegistryPath.replace('coin-card-lifecycle-registry.js', 'coin-card-canonical-json-v1.js');
 const lifecycleRecordVerificationPath = path.join(publicRoot, 'card/coin-card-lifecycle-record-verification.js');
 const lifecycleBundleVerificationPath = path.join(publicRoot, 'card/coin-card-lifecycle-bundle-verification.js');
 const lifecycleSelectionPath = path.join(publicRoot, 'card/coin-card-lifecycle-record-selection.js');
@@ -25,6 +26,7 @@ const trustedKeyResolutionSource = fs.readFileSync(trustedKeyResolutionPath, 'ut
 const verificationSource = fs.readFileSync(verificationPath, 'utf8');
 const lifecycleBundleSource = fs.readFileSync(lifecycleBundlePath, 'utf8');
 const lifecycleRegistrySource = fs.readFileSync(lifecycleRegistryPath, 'utf8');
+const canonicalJsonSource = fs.readFileSync(canonicalJsonPath, 'utf8');
 const lifecycleRecordVerificationSource = fs.readFileSync(lifecycleRecordVerificationPath, 'utf8');
 const lifecycleBundleVerificationSource = fs.readFileSync(lifecycleBundleVerificationPath, 'utf8');
 const lifecycleSelectionSource = fs.readFileSync(lifecycleSelectionPath, 'utf8');
@@ -179,6 +181,7 @@ function makeContext(options = {}) {
   vm.runInNewContext(trustedKeyResolutionSource, context, { filename: trustedKeyResolutionPath });
   vm.runInNewContext(verificationSource, context, { filename: verificationPath });
   vm.runInNewContext(options.lifecycleBundleSource || lifecycleBundleSource, context, { filename: lifecycleBundlePath });
+  vm.runInNewContext(canonicalJsonSource, context, { filename: canonicalJsonPath });
   vm.runInNewContext(lifecycleRegistrySource, context, { filename: lifecycleRegistryPath });
   vm.runInNewContext(lifecycleRecordVerificationSource, context, { filename: lifecycleRecordVerificationPath });
   vm.runInNewContext(lifecycleBundleVerificationSource, context, { filename: lifecycleBundleVerificationPath });
@@ -420,7 +423,8 @@ test('unsigned-dev manifest with ACTIVE lifecycle does not authorize', async () 
 test('invalid signature with ACTIVE lifecycle does not authorize', async () => {
   const context = makeContext();
   const manifest = readManifest();
-  manifest.signature.value = manifest.signature.value.replace(/.$/, manifest.signature.value.endsWith('A') ? 'B' : 'A');
+  manifest.signature.value = (manifest.signature.value.startsWith('A') ? 'B' : 'A')
+    + manifest.signature.value.slice(1);
 
   const verification = await runVerification(context, manifest);
   assert.equal(verification.state, 'INTEGRITY_FAILED');

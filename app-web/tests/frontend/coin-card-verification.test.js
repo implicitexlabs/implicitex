@@ -20,6 +20,7 @@ const REQUIRED_ASSET_BODIES = {
   'js/vendor/qrcode.min.js': 'qrcode vendor asset body',
   'card/coin-card-trusted-keys.js': 'coin-card-trusted-keys asset body',
   'card/coin-card-trusted-key-resolution.js': 'coin-card-trusted-key-resolution asset body',
+  'card/coin-card-canonical-json-v1.js': 'coin-card-canonical-json-v1 asset body',
   'card/coin-card-lifecycle-registry.js': 'coin-card-lifecycle-registry asset body',
   'card/coin-card-lifecycle-record-verification.js': 'coin-card-lifecycle-record-verification asset body',
   'card/coin-card-lifecycle-bundle-verification.js': 'coin-card-lifecycle-bundle-verification asset body',
@@ -227,6 +228,7 @@ const requiredAssetPaths = [
   'js/vendor/qrcode.min.js',
   'card/coin-card-trusted-keys.js',
   'card/coin-card-trusted-key-resolution.js',
+  'card/coin-card-canonical-json-v1.js',
   'card/coin-card-lifecycle-registry.js',
   'card/coin-card-lifecycle-record-verification.js',
   'card/coin-card-lifecycle-bundle-verification.js',
@@ -1888,6 +1890,13 @@ test('card/index.html is a required protected asset', () => {
   const paths = verification.getRequiredAssetPaths();
   assert.ok(paths.includes('card/index.html'),
     'card/index.html must be in REQUIRED_ASSET_PATHS');
+});
+
+test('card/coin-card-canonical-json-v1.js is a required protected asset', () => {
+  const verification = loadVerification();
+  const paths = verification.getRequiredAssetPaths();
+  assert.ok(paths.includes('card/coin-card-canonical-json-v1.js'),
+    'coin-card-canonical-json-v1.js must be in REQUIRED_ASSET_PATHS');
 });
 
 test('omitting qrcode.min.js from manifest becomes VERIFICATION_UNAVAILABLE', async () => {

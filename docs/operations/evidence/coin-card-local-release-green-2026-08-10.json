@@ -1,0 +1,129 @@
+{
+  "schemaVersion": "implicitex-coin-card-local-release-green.v1",
+  "status": "LOCAL_RELEASE_GATE_GREEN",
+  "recordedAtUtc": "2026-08-11T00:36:36Z",
+  "ceremonyLocalDate": "2026-08-10",
+  "ceremonyTimezone": "America/Denver",
+  "sourceHead": "cf3b7cd1e38fee4e5445055b9868594036b090b8",
+  "worktree": {
+    "state": "DIRTY_PRESERVED",
+    "preexistingTrackedAndUntrackedChangesPreserved": true,
+    "unrelatedChangesReverted": false,
+    "commitCreated": false,
+    "signedArtifactsRemainUncommitted": true
+  },
+  "preSignAuthority": {
+    "freezeEvidence": "docs/operations/evidence/coin-card-local-release-presign-freeze-2026-08-10.json",
+    "manifestCandidateEvidence": "docs/operations/evidence/coin-card-production-manifest-candidate-2026-08-10.json",
+    "protectedAssetCount": 17,
+    "protectedAssetSetDigest": "sha256:6621a2e535a84ce7eba8e52dac570bba9eaeb916c4a5a91f25dead67ee49e0f6",
+    "manifestSignaturePayloadSha256": "sha256:9f0a51b3ed6b95b008b2fa633420c63058d4fd3865f8447c90593d459bbef11d",
+    "manifestSignaturePayloadBytes": 2742,
+    "membershipByteCountsIndividualHashesAndAggregateDigestMatchedFreeze": true,
+    "candidateInspectedBeforeSignature": true
+  },
+  "signedManifest": {
+    "path": "app-web/frontend/public/card/coin-card-manifest.json",
+    "fileSha256": "sha256:e3377a9e39859901bd494440d3f71bcaa1fe135b36443e1fac3c9ce35b09e064",
+    "manifestHash": "sha256:fc4d5bbfe85ae197ef3f1a2c85c10d82df0b1d4f1c09e317bd28ccb78fb29da8",
+    "buildVersion": "coin-card-canonical-runtime-v4-20260810",
+    "signedAt": "2026-08-10T23:44:53.000Z",
+    "schemaVersion": "coin-card-manifest.v1",
+    "scope": "coin-card-runtime-package",
+    "environment": "production",
+    "keyId": "ix-coin-card-manifest-v2",
+    "publicKeyFingerprint": "JSDPJ1Uswec6WebK4SUmqqOIVsatE_ScgosFAk5xy5I",
+    "signatureAlgorithm": "ECDSA_P256_SHA256",
+    "signatureEncoding": "ieee-p1363",
+    "signatureLengthBytes": 64,
+    "selfVerification": "PASS"
+  },
+  "signedLifecyclePackage": {
+    "path": "app-web/frontend/public/card/coin-card-lifecycle-bundle.js",
+    "fileSha256": "sha256:0f2d723f6a10677936ef8166f8018177f69b0bd6c2d955b4142bda8916ff4d17",
+    "generatedAt": "2026-08-10T23:44:53.000Z",
+    "keyId": "ix-lifecycle-pub-v2",
+    "publicKeyFingerprint": "j7VW9paMH3fu_bZ-a3WMVcg4a54W3bXitLjE6Eoqy84",
+    "signatureAlgorithm": "ECDSA_P256_SHA256",
+    "recordCount": 2,
+    "cardIds": [
+      "antoine",
+      "cc_demo_implicitex"
+    ],
+    "boundManifestHash": "sha256:fc4d5bbfe85ae197ef3f1a2c85c10d82df0b1d4f1c09e317bd28ccb78fb29da8",
+    "allRecordsBoundToExactManifestHash": true,
+    "allRecordSignaturesVerified": true
+  },
+  "trustedKeyBootstrap": {
+    "path": "app-web/frontend/public/card/coin-card-trusted-keys.js",
+    "fileSha256": "sha256:ac20bace012ddf724eda6d53c775a44efd4bb865d845fdf1351b9146e24b96b7",
+    "byteIdenticalToPreSignFreeze": true,
+    "signerIdentitiesChanged": false,
+    "modificationRequired": false
+  },
+  "testResults": {
+    "releaseVerifier": {
+      "command": "npm run verify:coin-card-release",
+      "result": "PASS",
+      "exitCode": 0,
+      "protectedAssets": 17,
+      "activeCards": [
+        "antoine",
+        "cc_demo_implicitex"
+      ]
+    },
+    "aggregateReleaseSuite": {
+      "command": "npm run test:coin-card-release",
+      "result": "PASS",
+      "exitCode": 0
+    },
+    "focused": {
+      "integrityProofTooling": "PASS",
+      "canonicalJson": "58/58 PASS",
+      "manifestVerification": "67/67 PASS",
+      "runtimeTrustConjunction": "11/11 PASS",
+      "lifecycleRegistry": "8/8 PASS",
+      "lifecyclePublication": "30/30 PASS",
+      "signingGeneratorDisposableKeys": "17/17 PASS",
+      "executableRegistryContent": "11/11 PASS",
+      "transactionEvidenceContent": "14/14 PASS",
+      "qrBrowser": "19/19 PASS",
+      "geometryBrowser": "10/10 PASS",
+      "activeFlowFirewall": "8/8 PASS",
+      "productionArtifactBrowserSmoke": "PASS",
+      "diffCheck": "PASS"
+    }
+  },
+  "testHarnessReconciliation": {
+    "protectedRuntimeBytesChangedAfterFreeze": false,
+    "productionResigningRequired": false,
+    "changes": [
+      "The invalid-signature test now mutates the first base64url character so decoded signature bytes necessarily change.",
+      "Executable-registry and transaction-evidence harnesses now load the shared canonicalizer before the lifecycle registry.",
+      "QR and geometry browser fixture manifests now use the exact 17-asset protected policy."
+    ]
+  },
+  "ceremonySafeguards": {
+    "generatorRequiredFrozenAssetSetDigest": true,
+    "generatorRequiredInspectedSignaturePayloadDigest": true,
+    "generatorGuardedProtectedSourcesUntilAtomicPromotion": true,
+    "existingManifestSignerOnly": true,
+    "existingLifecycleSignerOnly": true,
+    "replacementKeyGenerated": false,
+    "privateKeyMaterialDisplayed": false,
+    "privateKeyMaterialExported": false,
+    "privateKeyMaterialCopiedIntoRepository": false,
+    "productionPrivateKeyEnvironmentVariablesUsed": false,
+    "trustedKeyBootstrapChanged": false
+  },
+  "externalStateBoundary": {
+    "dnsChanged": false,
+    "firebaseHostingChanged": false,
+    "tlsChanged": false,
+    "currentHeadChanged": false,
+    "usernamePublicationChanged": false,
+    "deploymentPerformed": false,
+    "networkTransactionPerformed": false
+  },
+  "nextBoundary": "Coin Card-controlled hosting, DNS, and TLS; requires separate authorization."
+}

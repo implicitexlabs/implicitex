@@ -91,21 +91,27 @@ js/ix-execution.js
 js/vendor/qrcode.min.js
 card/coin-card-trusted-keys.js
 card/coin-card-trusted-key-resolution.js
+card/coin-card-canonical-json-v1.js
 card/coin-card-lifecycle-registry.js
 card/coin-card-lifecycle-record-verification.js
 card/coin-card-lifecycle-bundle-verification.js
 card/coin-card-lifecycle-record-selection.js
 card/coin-card-lifecycle-resolution.js
+card/coin-card-lifecycle-presentation.js
+card/coin-card-execution-authorization.js
+card/coin-card-review-projection-contract.js
 card/coin-card-verification.js
 card/card.js
 card/card.css
+card/index.html
 ```
 
 These are protected because they control the rendered Coin Card surface, the
-visible trust and interaction layer, the trusted key source, the lifecycle
-registry source, lifecycle record authentication, atomic lifecycle bundle
-authentication, the runtime verification gate, and the shared transaction
-execution boundary.
+visible trust and interaction layer, the trusted key source, the canonical JSON
+protocol primitive, the lifecycle registry source, lifecycle record
+authentication, atomic lifecycle bundle authentication, presentation and
+execution authorization, the runtime verification gate, and the shared
+transaction execution boundary.
 
 Future versions may add protected images, SVGs, generated artifacts, token CSS,
 or receipt/proof wiring. Adding protected assets is a schema-compatible policy

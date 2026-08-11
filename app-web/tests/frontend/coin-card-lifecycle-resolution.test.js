@@ -8,12 +8,14 @@ const vm = require('node:vm');
 const repoRoot = path.resolve(__dirname, '../../..');
 const trustedKeyResolutionPath = path.join(repoRoot, 'app-web/frontend/public/card/coin-card-trusted-key-resolution.js');
 const lifecycleRegistryPath = path.join(repoRoot, 'app-web/frontend/public/card/coin-card-lifecycle-registry.js');
+const canonicalJsonPath = lifecycleRegistryPath.replace('coin-card-lifecycle-registry.js', 'coin-card-canonical-json-v1.js');
 const lifecycleRecordVerificationPath = path.join(repoRoot, 'app-web/frontend/public/card/coin-card-lifecycle-record-verification.js');
 const lifecycleBundleVerificationPath = path.join(repoRoot, 'app-web/frontend/public/card/coin-card-lifecycle-bundle-verification.js');
 const lifecycleSelectionPath = path.join(repoRoot, 'app-web/frontend/public/card/coin-card-lifecycle-record-selection.js');
 const lifecycleResolutionPath = path.join(repoRoot, 'app-web/frontend/public/card/coin-card-lifecycle-resolution.js');
 const trustedKeyResolutionSource = fs.readFileSync(trustedKeyResolutionPath, 'utf8');
 const lifecycleRegistrySource = fs.readFileSync(lifecycleRegistryPath, 'utf8');
+const canonicalJsonSource = fs.readFileSync(canonicalJsonPath, 'utf8');
 const lifecycleRecordVerificationSource = fs.readFileSync(lifecycleRecordVerificationPath, 'utf8');
 const lifecycleBundleVerificationSource = fs.readFileSync(lifecycleBundleVerificationPath, 'utf8');
 const lifecycleSelectionSource = fs.readFileSync(lifecycleSelectionPath, 'utf8');
@@ -218,6 +220,7 @@ function makeResolutionContext(options = {}) {
   }
 
   vm.runInNewContext(trustedKeyResolutionSource, context, { filename: trustedKeyResolutionPath });
+  vm.runInNewContext(canonicalJsonSource, context, { filename: canonicalJsonPath });
   vm.runInNewContext(lifecycleRegistrySource, context, { filename: lifecycleRegistryPath });
 
   if (options.includeRecordVerifier !== false) {

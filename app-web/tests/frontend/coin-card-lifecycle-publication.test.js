@@ -47,6 +47,7 @@ const vm = require('node:vm');
 const repoRoot = path.resolve(__dirname, '../../..');
 const trustedKeyResolutionPath    = path.join(repoRoot, 'app-web/frontend/public/card/coin-card-trusted-key-resolution.js');
 const lifecycleRegistryPath       = path.join(repoRoot, 'app-web/frontend/public/card/coin-card-lifecycle-registry.js');
+const canonicalJsonPath = lifecycleRegistryPath.replace('coin-card-lifecycle-registry.js', 'coin-card-canonical-json-v1.js');
 const lifecycleRecordVerifPath    = path.join(repoRoot, 'app-web/frontend/public/card/coin-card-lifecycle-record-verification.js');
 const lifecycleBundleVerifPath    = path.join(repoRoot, 'app-web/frontend/public/card/coin-card-lifecycle-bundle-verification.js');
 const lifecycleSelectionPath      = path.join(repoRoot, 'app-web/frontend/public/card/coin-card-lifecycle-record-selection.js');
@@ -58,6 +59,7 @@ const lifecycleBundlePath         = path.join(repoRoot, 'app-web/frontend/public
 
 const trustedKeyResolutionSource  = fs.readFileSync(trustedKeyResolutionPath, 'utf8');
 const lifecycleRegistrySource     = fs.readFileSync(lifecycleRegistryPath, 'utf8');
+const canonicalJsonSource = fs.readFileSync(canonicalJsonPath, 'utf8');
 const lifecycleRecordVerifSource  = fs.readFileSync(lifecycleRecordVerifPath, 'utf8');
 const lifecycleBundleVerifSource  = fs.readFileSync(lifecycleBundleVerifPath, 'utf8');
 const lifecycleSelectionSource    = fs.readFileSync(lifecycleSelectionPath, 'utf8');
@@ -234,6 +236,7 @@ function makeContext(options = {}) {
   }
 
   vm.runInNewContext(trustedKeyResolutionSource, context, { filename: trustedKeyResolutionPath });
+  vm.runInNewContext(canonicalJsonSource, context, { filename: canonicalJsonPath });
   vm.runInNewContext(lifecycleRegistrySource, context, { filename: lifecycleRegistryPath });
   vm.runInNewContext(lifecycleRecordVerifSource, context, { filename: lifecycleRecordVerifPath });
   vm.runInNewContext(lifecycleBundleVerifSource, context, { filename: lifecycleBundleVerifPath });
@@ -1105,6 +1108,7 @@ test('real production bundle file authenticates and promotes cc_demo_implicitex'
   vm.runInNewContext(trustedKeysSource, context, { filename: trustedKeysPath });
   vm.runInNewContext(trustedKeyResolutionSource, context, { filename: trustedKeyResolutionPath });
   vm.runInNewContext(lifecycleBundleSource, context, { filename: lifecycleBundlePath });
+  vm.runInNewContext(canonicalJsonSource, context, { filename: canonicalJsonPath });
   vm.runInNewContext(lifecycleRegistrySource, context, { filename: lifecycleRegistryPath });
   vm.runInNewContext(lifecycleRecordVerifSource, context, { filename: lifecycleRecordVerifPath });
   vm.runInNewContext(lifecycleBundleVerifSource, context, { filename: lifecycleBundleVerifPath });
@@ -1205,6 +1209,7 @@ test('real production bundle authenticates and promotes every active registry ca
   vm.runInNewContext(trustedKeysSource, context, { filename: trustedKeysPath });
   vm.runInNewContext(trustedKeyResolutionSource, context, { filename: trustedKeyResolutionPath });
   vm.runInNewContext(lifecycleBundleSource, context, { filename: lifecycleBundlePath });
+  vm.runInNewContext(canonicalJsonSource, context, { filename: canonicalJsonPath });
   vm.runInNewContext(lifecycleRegistrySource, context, { filename: lifecycleRegistryPath });
   vm.runInNewContext(lifecycleRecordVerifSource, context, { filename: lifecycleRecordVerifPath });
   vm.runInNewContext(lifecycleBundleVerifSource, context, { filename: lifecycleBundleVerifPath });

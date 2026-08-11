@@ -25,6 +25,7 @@ const RUNTIME_MODULES = Object.freeze([
   'coin-card-trusted-key-resolution.js',
   'coin-card-verification.js',
   'coin-card-lifecycle-bundle.js',
+  'coin-card-canonical-json-v1.js',
   'coin-card-lifecycle-registry.js',
   'coin-card-lifecycle-record-verification.js',
   'coin-card-lifecycle-bundle-verification.js',

@@ -6,6 +6,8 @@ const test = require('node:test');
 const vm = require('node:vm');
 
 const repoRoot = path.resolve(__dirname, '../../..');
+const canonicalJsonPath = path.join(repoRoot, 'app-web/frontend/public/card/coin-card-canonical-json-v1.js');
+const canonicalJsonSource = fs.readFileSync(canonicalJsonPath, 'utf8');
 const lifecyclePath = path.join(repoRoot, 'app-web/frontend/public/card/coin-card-lifecycle-registry.js');
 const lifecycleSource = fs.readFileSync(lifecyclePath, 'utf8');
 
@@ -40,6 +42,10 @@ function loadLifecycle(options = {}) {
   if (options.bundle) {
     context.window.IX_COIN_CARD_LIFECYCLE_REGISTRY_BUNDLE = options.bundle;
   }
+  // coin-card-canonical-json-v1.js must be loaded into the same vm context
+  // before the lifecycle registry so that window.IX_COIN_CARD_CANONICAL_JSON_V1
+  // is available when the registry IIFE runs.
+  vm.runInNewContext(canonicalJsonSource, context, { filename: canonicalJsonPath });
   vm.runInNewContext(lifecycleSource, context, { filename: lifecyclePath });
   return {
     registry: context.window.IX_COIN_CARD_LIFECYCLE_REGISTRY,
