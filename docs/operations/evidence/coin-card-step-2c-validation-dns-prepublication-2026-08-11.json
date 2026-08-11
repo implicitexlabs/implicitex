@@ -19,12 +19,20 @@
       "8.8.8.8"
     ]
   },
+  "ttlNormalization": {
+    "requestedTtlSeconds": 300,
+    "providerEffectiveTtlSeconds": 14400,
+    "providerUiDisplay": "4 hrs",
+    "status": "OWNER_ACCEPTED_PROVIDER_NORMALIZATION",
+    "securityOrRoutingEffect": "NONE",
+    "rule": "Names, types, and values remain exact. Squarespace's effective four-hour TTL is accepted for these new validation-only records."
+  },
   "authorizedValidationOnlyAdditions": [
     {
       "providerUiName": "@",
       "fqdn": "coincard.click.",
       "type": "TXT",
-      "ttl": 300,
+      "ttl": 14400,
       "value": "hosting-site=coincard-prod",
       "purpose": "Firebase root-domain ownership",
       "routingEffect": "NONE",
@@ -34,7 +42,7 @@
       "providerUiName": "_acme-challenge",
       "fqdn": "_acme-challenge.coincard.click.",
       "type": "TXT",
-      "ttl": 300,
+      "ttl": 14400,
       "value": "ZDW1FEfMH_rk70GzpFMEZHErzBFzVMsMCqj5TujHhjo",
       "purpose": "Firebase root-domain ACME validation",
       "routingEffect": "NONE"
@@ -43,7 +51,7 @@
       "providerUiName": "_acme-challenge.app",
       "fqdn": "_acme-challenge.app.coincard.click.",
       "type": "TXT",
-      "ttl": 300,
+      "ttl": 14400,
       "value": "DvxsO3soVxnHG_izrE9yg1Rt56cwmGVsCxfsdZ8a1r4",
       "purpose": "Firebase app-domain ACME validation",
       "routingEffect": "NONE"
@@ -52,7 +60,7 @@
       "providerUiName": "_acme-challenge_gy2mupcijdyt3tw5",
       "fqdn": "_acme-challenge_gy2mupcijdyt3tw5.coincard.click.",
       "type": "CNAME",
-      "ttl": 300,
+      "ttl": 14400,
       "value": "ff358a09-90d6-4591-897b-85f639df88fa.3.authorize.certificatemanager.goog.",
       "purpose": "Certificate Manager PER_PROJECT_RECORD wildcard authorization",
       "routingEffect": "NONE"
