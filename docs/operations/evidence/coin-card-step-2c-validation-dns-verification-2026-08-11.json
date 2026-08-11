@@ -1,0 +1,268 @@
+{
+  "schemaVersion": "implicitex-coin-card-step-2c-validation-dns-verification.v1",
+  "recordedAt": "2026-08-11T08:59:53Z",
+  "status": "PARTIAL_PASS_OWNER_CORRECTION_REQUIRED",
+  "source": {
+    "repositoryCommitAtVerificationStart": "5f086fbc5c098d74db82e2e8d95ea1b094476d71",
+    "step2bFreezeCommit": "f5029e228c32816b764ba299a20f7e38cd8a8478",
+    "step2cHandoffCommit": "74bae73f600c4e0f6fe1759361a4212ff04f7ce7",
+    "step2cTtlAcceptanceCommit": "5f086fbc5c098d74db82e2e8d95ea1b094476d71",
+    "step2bFreeze": "docs/operations/evidence/coin-card-step-2b-generated-value-freeze-2026-08-11.json",
+    "step2cHandoff": "docs/operations/evidence/coin-card-step-2c-validation-dns-prepublication-2026-08-11.json",
+    "targetZoneDigest": "sha256:40adb943cb605737fa1c97bd26e7c4ddf57a68b1e4a50175c9a7a8a682eb6600"
+  },
+  "verificationBoundary": {
+    "mode": "READ_ONLY",
+    "dnsMutationPerformed": false,
+    "cloudMutationPerformed": false,
+    "routingDnsChanged": false,
+    "registrarDelegationChanged": false,
+    "dnssecChanged": false,
+    "currentHeadChanged": false,
+    "usernamePublicationChanged": false,
+    "lifecycleIdentityChanged": false
+  },
+  "publicDns": {
+    "authoritativeNameServersQueried": [
+      "nsd1.squarespacedns.com.",
+      "nsd2.squarespacedns.com.",
+      "nsd3.squarespacedns.com.",
+      "nsd4.squarespacedns.com."
+    ],
+    "publicResolversQueried": [
+      "1.1.1.1",
+      "8.8.8.8"
+    ],
+    "validationRecords": [
+      {
+        "name": "coincard.click.",
+        "type": "TXT",
+        "expectedValue": "hosting-site=coincard-prod",
+        "authoritativeState": "PRESENT_EXACT",
+        "authoritativeTtlSeconds": 14400,
+        "resolverState": {
+          "1.1.1.1": "PRESENT_EXACT",
+          "8.8.8.8": "CACHED_PRIOR_RRSET_NOT_YET_PRESENT"
+        },
+        "result": "PROPAGATING"
+      },
+      {
+        "name": "_acme-challenge.coincard.click.",
+        "type": "TXT",
+        "expectedValue": "ZDW1FEfMH_rk70GzpFMEZHErzBFzVMsMCqj5TujHhjo",
+        "authoritativeState": "ABSENT_ON_ALL_FOUR_NAMESERVERS",
+        "resolverState": {
+          "1.1.1.1": "ABSENT",
+          "8.8.8.8": "ABSENT"
+        },
+        "alternateNameChecks": [
+          "_acme-challenge.coincard.click.coincard.click.",
+          "_acme-challenge.coinkard.click.",
+          "_acme-challenge.www.coincard.click."
+        ],
+        "alternateNameState": "ABSENT",
+        "result": "FAIL_MISSING"
+      },
+      {
+        "name": "_acme-challenge.app.coincard.click.",
+        "type": "TXT",
+        "expectedValue": "DvxsO3soVxnHG_izrE9yg1Rt56cwmGVsCxfsdZ8a1r4",
+        "authoritativeState": "PRESENT_EXACT",
+        "authoritativeTtlSeconds": 300,
+        "resolverState": {
+          "1.1.1.1": "PRESENT_EXACT",
+          "8.8.8.8": "PRESENT_EXACT"
+        },
+        "result": "PASS"
+      },
+      {
+        "name": "_acme-challenge_gy2mupcijdyt3tw5.coincard.click.",
+        "type": "CNAME",
+        "expectedValue": "ff358a09-90d6-4591-897b-85f639df88fa.3.authorize.certificatemanager.goog.",
+        "authoritativeState": "PRESENT_EXACT",
+        "authoritativeTtlSeconds": 300,
+        "resolverState": {
+          "1.1.1.1": "PRESENT_EXACT",
+          "8.8.8.8": "PRESENT_EXACT"
+        },
+        "result": "PASS"
+      }
+    ],
+    "preservedRecords": {
+      "apexSpfTxt": "v=spf1 -all",
+      "dmarcTxt": "v=DMARC1; p=reject; sp=reject; adkim=s; aspf=s",
+      "domainkeyTxt": "v=DKIM1; p=",
+      "nameServers": [
+        "nsd1.squarespacedns.com.",
+        "nsd2.squarespacedns.com.",
+        "nsd3.squarespacedns.com.",
+        "nsd4.squarespacedns.com."
+      ],
+      "apexA": [
+        "198.185.159.144",
+        "198.185.159.145",
+        "198.49.23.144",
+        "198.49.23.145"
+      ],
+      "appRoutingCnamePresent": false,
+      "wildcardRoutingARecordPresent": false,
+      "parentDsPresent": false
+    }
+  },
+  "certificateManager": {
+    "certificateResource": "projects/coincard-prod/locations/global/certificates/coincard-wildcard-cert",
+    "certificateState": "ACTIVE",
+    "authorizationDomain": "*.coincard.click",
+    "authorizationState": "AUTHORIZED",
+    "authorizationAttemptTime": "2026-08-11T07:58:12.334130489Z",
+    "certificateUpdateTime": "2026-08-11T07:59:18.867844988Z",
+    "notBefore": "2026-08-11T07:28:52Z",
+    "notAfter": "2026-11-09T07:58:10Z",
+    "issuer": "C=US, O=Google Trust Services, CN=WR3",
+    "subject": "CN=*.coincard.click",
+    "sanDnsNames": [
+      "*.coincard.click"
+    ],
+    "leafSha256Fingerprint": "7B:DB:46:56:3E:86:4B:3E:EE:29:52:40:53:C8:69:A1:98:25:E8:1F:50:30:AC:05:88:84:A8:6E:EA:65:54:13",
+    "certificateMapEntry": "projects/coincard-prod/locations/global/certificateMaps/coincard-edge-cert-map/certificateMapEntries/coincard-wildcard-entry",
+    "certificateMapEntryState": "ACTIVE"
+  },
+  "firebaseHosting": {
+    "rootCustomDomain": {
+      "resource": "projects/coincard-prod/sites/coincard-prod/customDomains/coincard.click",
+      "hostState": "HOST_MISMATCH",
+      "ownershipState": "OWNERSHIP_ACTIVE",
+      "certificateState": "CERT_VALIDATING",
+      "requiredOwnershipTxtObserved": true,
+      "requiredAcmeTxtObserved": false,
+      "routingAIntentionallyWithheld": true,
+      "lastCheckTime": "2026-08-11T08:50:59.449541214Z",
+      "currentIssue": "Firebase still requests the frozen root ACME TXT; HTTP ACME checks reach the preserved Squarespace apex and return 403 as expected before routing cutover."
+    },
+    "appCustomDomain": {
+      "resource": "projects/coincard-prod/sites/coincard-app/customDomains/app.coincard.click",
+      "hostState": "HOST_UNHOSTED",
+      "ownershipState": "OWNERSHIP_MISSING",
+      "certificateState": "CERT_PROPAGATING",
+      "requiredAcmeTxtObserved": true,
+      "routingCnameIntentionallyWithheld": true,
+      "certificateCreateTime": "2026-08-11T07:30:34Z",
+      "certificateExpireTime": "2026-11-09T07:18:15Z",
+      "lastDnsCheckTime": "2026-08-11T08:30:27.640820876Z",
+      "shortPoll": {
+        "firstObservedAt": "2026-08-11T08:56:45Z",
+        "lastObservedAt": "2026-08-11T08:59:17Z",
+        "attempts": 6,
+        "intervalSeconds": 30,
+        "stateThroughout": "CERT_PROPAGATING"
+      }
+    }
+  },
+  "loadBalancerLiveBinding": {
+    "edgeIpv4": "8.233.95.58",
+    "httpsPort": 443,
+    "httpPort": 80,
+    "httpsProxy": "coincard-wildcard-https-proxy",
+    "certificateMap": "coincard-edge-cert-map",
+    "tlsPolicy": {
+      "name": "coincard-edge-tls-policy",
+      "profile": "MODERN",
+      "minimumTlsVersion": "TLS_1_2",
+      "tlsEarlyData": "DISABLED"
+    },
+    "backend": {
+      "name": "coincard-firebase-origin-backend",
+      "protocol": "HTTPS",
+      "originHostOverride": "coincard-prod.web.app",
+      "cloudCdnEnabled": false,
+      "timeoutSeconds": 30
+    }
+  },
+  "strictForcedHostVerification": {
+    "hostname": "antoinedennison.coincard.click",
+    "forcedIpv4": "8.233.95.58",
+    "publicWildcardDnsPublished": false,
+    "httpRedirect": {
+      "request": "http://antoinedennison.coincard.click/test-path?edge=1",
+      "status": 301,
+      "location": "https://antoinedennison.coincard.click:443/test-path?edge=1",
+      "hostPathQueryPreserved": true,
+      "result": "PASS"
+    },
+    "httpsRoot": {
+      "request": "https://antoinedennison.coincard.click/",
+      "status": 200,
+      "httpVersion": "HTTP/2",
+      "responseBytes": 11531,
+      "bodySha256": "sha256:fc27c3ea9455b09e051729e55c5b6cb7d89907c56b3fbb7d72a31e51f2b5fb41",
+      "exactBodyMatchWithFirebaseDefaultUrl": true,
+      "strictTransportSecurityPresent": true,
+      "backendRoutingResult": "PASS"
+    },
+    "httpsPathQuery": {
+      "request": "https://antoinedennison.coincard.click/test-path?edge=1",
+      "status": 404,
+      "httpVersion": "HTTP/2",
+      "responseBytes": 21376,
+      "bodySha256": "sha256:a5209717d04e1213c517d38211b545d82963a4880c6524eb29713b8c4972df36",
+      "firebaseResponseObserved": true,
+      "result": "PASS"
+    },
+    "wwwHttpsRedirect": {
+      "request": "https://www.coincard.click/step2c/path?alpha=1&beta=2",
+      "status": 301,
+      "location": "https://coincard.click:443/step2c/path?alpha=1&beta=2",
+      "pathQueryPreserved": true,
+      "result": "PASS"
+    },
+    "tls": {
+      "strictChainVerification": "PASS",
+      "hostnameVerification": "PASS",
+      "verifiedPeerName": "*.coincard.click",
+      "tls12": {
+        "result": "PASS",
+        "cipher": "ECDHE-RSA-CHACHA20-POLY1305"
+      },
+      "tls13": {
+        "result": "PASS",
+        "cipher": "TLS_AES_256_GCM_SHA384"
+      },
+      "tls11": {
+        "result": "EXPECTED_REJECT",
+        "serverAlert": "protocol version",
+        "alertNumber": 70
+      }
+    }
+  },
+  "blockingFinding": {
+    "name": "_acme-challenge.coincard.click.",
+    "type": "TXT",
+    "requiredValue": "ZDW1FEfMH_rk70GzpFMEZHErzBFzVMsMCqj5TujHhjo",
+    "providerUiName": "_acme-challenge",
+    "routingEffect": "NONE",
+    "finding": "The record is absent from every Squarespace authoritative nameserver despite appearing in the owner-reviewed dashboard state.",
+    "requiredOwnerAction": "Open the Squarespace record, verify the complete TXT value, and save or recreate exactly this one validation-only record. Do not change any routing, NS, or DS record."
+  },
+  "completionState": {
+    "step2cComplete": false,
+    "passed": [
+      "Certificate Manager authorization and wildcard certificate ACTIVE",
+      "Certificate map entry ACTIVE",
+      "Strict wildcard hostname and chain verification",
+      "TLS 1.2 minimum enforced",
+      "HTTP to HTTPS redirect with host, path, and query preservation",
+      "HTTPS backend routing returns the exact frozen Firebase root artifact",
+      "Firebase root ownership ACTIVE",
+      "Firebase app ACME TXT accepted and certificate propagating",
+      "Public traffic routing, delegation, and DNSSEC unchanged"
+    ],
+    "remaining": [
+      "Publish the missing Firebase root ACME TXT through Squarespace",
+      "Verify the exact TXT from all authoritative nameservers and multiple public resolvers",
+      "Observe Firebase root certificate validation advance",
+      "Observe Firebase app certificate finish propagation",
+      "Record Step 2C completion evidence"
+    ],
+    "stopBoundaryHonored": true
+  }
+}
