@@ -1,0 +1,392 @@
+{
+  "schemaVersion": "implicitex-coin-card-step-2a-topology-freeze.v1",
+  "recordedAt": "2026-08-11T04:46:29Z",
+  "localDate": "2026-08-10",
+  "status": "TOPOLOGY_FROZEN_NO_INFRASTRUCTURE_MUTATION",
+  "supersedesTopologyRecommendationIn": "docs/operations/evidence/coin-card-infrastructure-prechange-audit-2026-08-10.json",
+  "frozenReleaseBaseline": {
+    "sourceCommit": "f7c6e50631c372561f1e4dc5ed76459d3e2a4cb8",
+    "manifestHash": "sha256:fc4d5bbfe85ae197ef3f1a2c85c10d82df0b1d4f1c09e317bd28ccb78fb29da8",
+    "changed": false
+  },
+  "access": {
+    "status": "EXISTING_ACCESS_VERIFIED_NO_GRANT_CREATED",
+    "gcloudDefaultAccountHasCoinCardProjectAccess": false,
+    "existingStoredAccountHasCoinCardProjectAccess": true,
+    "existingStoredAccountRole": "roles/owner",
+    "accountIdentifiersOmittedFromEvidence": true,
+    "globalGcloudAccountActivationChanged": false,
+    "iamPolicyChanged": false,
+    "ambientAdcTestedPermissions": {
+      "allRequestedDnsComputeAndServiceUsagePermissionsGranted": true,
+      "requestedPermissionCount": 21,
+      "certificateManagerPermissionTestDeferredUntilApiEnablement": true
+    },
+    "futureExecutionRule": "Use an explicit existing authorized account and --project=coincard-prod on every command; do not change the global gcloud default and do not create an IAM grant in Step 2."
+  },
+  "projectBoundary": {
+    "targetProjectId": "coincard-prod",
+    "targetProjectNumber": "194920757523",
+    "targetProjectDisplayName": "Coin Card",
+    "targetProjectCreatedAt": "2026-08-09T20:30:36.911Z",
+    "implicitExProjectId": "implicitex",
+    "decision": "All final DNS, wildcard ingress, certificate, and Firebase Hosting resources belong to coincard-prod. The existing implicitex Cloud DNS zone is transitional evidence and record baseline only."
+  },
+  "serviceState": {
+    "firebasehosting.googleapis.com": "ENABLED",
+    "dns.googleapis.com": "DISABLED",
+    "compute.googleapis.com": "DISABLED",
+    "certificatemanager.googleapis.com": "DISABLED",
+    "serviceEnablementPerformed": false
+  },
+  "transitionalZone": {
+    "projectId": "implicitex",
+    "managedZoneName": "coincard-click-production",
+    "managedZoneId": "1807976465084526734",
+    "dnsName": "coincard.click.",
+    "description": "Coin Card production public DNS parallel migration zone",
+    "createdAt": "2026-08-10T07:43:40.394Z",
+    "visibility": "public",
+    "dnssecState": "off",
+    "nameServers": [
+      "ns-cloud-b1.googledomains.com.",
+      "ns-cloud-b2.googledomains.com.",
+      "ns-cloud-b3.googledomains.com.",
+      "ns-cloud-b4.googledomains.com."
+    ],
+    "recordSetCount": 9,
+    "canonicalRecordSetDigest": "sha256:9d23bc90f2319cd7c768d4eab0d427cafaa7540b7c5b5376f22fdb8e08ec5bdb",
+    "canonicalRecordSetByteCount": 1163,
+    "publicParityVerified": true,
+    "records": [
+      {
+        "name": "coincard.click.",
+        "type": "A",
+        "ttl": 14400,
+        "rrdatas": [
+          "198.185.159.144",
+          "198.185.159.145",
+          "198.49.23.144",
+          "198.49.23.145"
+        ]
+      },
+      {
+        "name": "coincard.click.",
+        "type": "HTTPS",
+        "ttl": 14400,
+        "rrdatas": [
+          "1 . alpn=\"h2,http/1.1\" ipv4hint=\"198.185.159.144,198.185.159.145,198.49.23.144,198.49.23.145\""
+        ]
+      },
+      {
+        "name": "coincard.click.",
+        "type": "TXT",
+        "ttl": 14400,
+        "rrdatas": [
+          "v=spf1 -all"
+        ]
+      },
+      {
+        "name": "_dmarc.coincard.click.",
+        "type": "TXT",
+        "ttl": 14400,
+        "rrdatas": [
+          "v=DMARC1; p=reject; sp=reject; adkim=s; aspf=s"
+        ]
+      },
+      {
+        "name": "_domainconnect.coincard.click.",
+        "type": "CNAME",
+        "ttl": 3600,
+        "rrdatas": [
+          "_domainconnect.domains.squarespace.com."
+        ]
+      },
+      {
+        "name": "_domainkey.coincard.click.",
+        "type": "TXT",
+        "ttl": 14400,
+        "rrdatas": [
+          "v=DKIM1; p="
+        ]
+      },
+      {
+        "name": "www.coincard.click.",
+        "type": "CNAME",
+        "ttl": 14400,
+        "rrdatas": [
+          "ext-sq.squarespace.com."
+        ]
+      }
+    ],
+    "providerManagedRecordsOmittedFromRecordsArray": [
+      "NS",
+      "SOA"
+    ],
+    "role": "TRANSITIONAL_SOURCE_ONLY",
+    "mutationAuthorizedInStep2A": false,
+    "decommissionRule": "Do not delete or alter this zone until the coincard-prod zone is delegated, globally stable, and its rollback observation window has closed."
+  },
+  "publicAuthorityAtFreeze": {
+    "provider": "Squarespace DNS",
+    "nameServers": [
+      "nsd1.squarespacedns.com.",
+      "nsd2.squarespacedns.com.",
+      "nsd3.squarespacedns.com.",
+      "nsd4.squarespacedns.com."
+    ],
+    "parentDsRecords": [],
+    "dnssecEnabled": false,
+    "delegationChanged": false
+  },
+  "targetResourceGraph": {
+    "projectId": "coincard-prod",
+    "labels": {
+      "product": "coincard",
+      "environment": "production",
+      "managed_by": "reviewed_cli"
+    },
+    "firebaseHosting": {
+      "rootSite": {
+        "resource": "projects/coincard-prod/sites/coincard-prod",
+        "state": "EXISTING_UNDEPLOYED",
+        "defaultUrl": "https://coincard-prod.web.app",
+        "repositoryTarget": "coincard",
+        "customDomain": "coincard.click"
+      },
+      "holderAppSite": {
+        "resource": "projects/coincard-prod/sites/coincard-app",
+        "state": "VALIDATE_ONLY_AVAILABLE_NOT_CREATED",
+        "defaultUrl": "https://coincard-app.web.app",
+        "deploymentPolicy": "CREATE_SITE_AND_BIND_APP_DOMAIN_WITHOUT_INVENTING_OR_DEPLOYING_A_HOLDER_APPLICATION",
+        "customDomain": "app.coincard.click"
+      }
+    },
+    "cloudDns": {
+      "managedZoneName": "coincard-click-authoritative",
+      "dnsName": "coincard.click.",
+      "visibility": "public",
+      "dnssecState": "off"
+    },
+    "certificateManager": {
+      "dnsAuthorizationName": "coincard-click-per-project-auth",
+      "dnsAuthorizationDomain": "coincard.click",
+      "dnsAuthorizationType": "PER_PROJECT_RECORD",
+      "certificateName": "coincard-wildcard-cert",
+      "certificateDomains": [
+        "*.coincard.click"
+      ],
+      "certificateMapName": "coincard-edge-cert-map",
+      "certificateMapEntryName": "coincard-wildcard-entry",
+      "certificateMapEntryHostname": "*.coincard.click",
+      "reasonForPerProjectRecord": "Avoid collision between Certificate Manager wildcard authorization and Firebase Hosting exact-domain ACME or ownership records."
+    },
+    "loadBalancer": {
+      "mode": "GLOBAL_EXTERNAL_APPLICATION_LOAD_BALANCER",
+      "loadBalancingScheme": "EXTERNAL_MANAGED",
+      "networkTier": "PREMIUM",
+      "globalIpv4AddressName": "coincard-wildcard-ipv4",
+      "internetNegName": "coincard-firebase-origin-neg",
+      "internetNegType": "INTERNET_FQDN_PORT",
+      "internetNegEndpoint": {
+        "fqdn": "coincard-prod.web.app",
+        "port": 443
+      },
+      "backendServiceName": "coincard-firebase-origin-backend",
+      "backendProtocol": "HTTPS",
+      "originHostOverride": "coincard-prod.web.app",
+      "cloudCdnEnabled": false,
+      "cloudCdnReason": "Firebase Hosting is already the caching origin and authority endpoints must preserve origin cache policy.",
+      "httpsUrlMapName": "coincard-wildcard-https-map",
+      "httpsDefaultBackend": "coincard-firebase-origin-backend",
+      "wwwBehavior": "HTTP_301_TO_HTTPS_COINCARD_CLICK_PRESERVE_PATH_AND_QUERY",
+      "httpRedirectUrlMapName": "coincard-wildcard-http-redirect",
+      "httpRedirectBehavior": "HTTPS_REDIRECT_PRESERVE_HOST_PATH_AND_QUERY",
+      "sslPolicyName": "coincard-edge-tls-policy",
+      "sslPolicyProfile": "MODERN",
+      "sslPolicyMinimumTlsVersion": "TLS_1_2",
+      "httpsProxyName": "coincard-wildcard-https-proxy",
+      "httpProxyName": "coincard-wildcard-http-proxy",
+      "httpsForwardingRuleName": "coincard-wildcard-https-forwarding-rule",
+      "httpsPort": 443,
+      "httpForwardingRuleName": "coincard-wildcard-http-forwarding-rule",
+      "httpPort": 80
+    },
+    "edges": [
+      "coincard.click -> Firebase Hosting custom domain -> coincard-prod site",
+      "*.coincard.click -> Cloud DNS wildcard A -> global IPv4 address -> HTTPS proxy -> certificate map -> URL map -> backend service -> internet NEG -> coincard-prod.web.app",
+      "app.coincard.click -> exact Cloud DNS record overrides wildcard -> Firebase Hosting custom domain -> coincard-app site",
+      "www.coincard.click -> wildcard edge -> URL-map 301 redirect -> coincard.click"
+    ]
+  },
+  "targetDnsRecordPolicy": {
+    "providerManaged": [
+      {
+        "name": "coincard.click.",
+        "type": "NS",
+        "source": "coincard-click-authoritative managed-zone creation output"
+      },
+      {
+        "name": "coincard.click.",
+        "type": "SOA",
+        "source": "coincard-click-authoritative managed-zone creation output"
+      }
+    ],
+    "preserve": [
+      {
+        "name": "_dmarc.coincard.click.",
+        "type": "TXT",
+        "ttl": 14400,
+        "rrdatas": [
+          "v=DMARC1; p=reject; sp=reject; adkim=s; aspf=s"
+        ]
+      },
+      {
+        "name": "_domainkey.coincard.click.",
+        "type": "TXT",
+        "ttl": 14400,
+        "rrdatas": [
+          "v=DKIM1; p="
+        ]
+      }
+    ],
+    "replace": [
+      {
+        "name": "coincard.click.",
+        "type": "A",
+        "ttl": 300,
+        "remove": [
+          "198.185.159.144",
+          "198.185.159.145",
+          "198.49.23.144",
+          "198.49.23.145"
+        ],
+        "addFrom": "Firebase Hosting custom-domain requiredDnsUpdates for projects/coincard-prod/sites/coincard-prod/customDomains/coincard.click"
+      },
+      {
+        "name": "coincard.click.",
+        "type": "TXT",
+        "ttl": 300,
+        "requiredStaticRrdatas": [
+          "v=spf1 -all"
+        ],
+        "mergeFrom": "Firebase Hosting custom-domain requiredDnsUpdates for coincard.click"
+      }
+    ],
+    "add": [
+      {
+        "name": "*.coincard.click.",
+        "type": "A",
+        "ttl": 300,
+        "rrdatasFrom": "reserved global IPv4 address coincard-wildcard-ipv4"
+      },
+      {
+        "nameFrom": "Certificate Manager projects/coincard-prod/locations/global/dnsAuthorizations/coincard-click-per-project-auth.dnsResourceRecord.name",
+        "type": "CNAME",
+        "ttl": 300,
+        "rrdatasFrom": "Certificate Manager dnsResourceRecord.data",
+        "publicationRule": "Publish first in the current Squarespace authority for certificate pre-provisioning and include identically in the target Cloud DNS zone."
+      },
+      {
+        "name": "app.coincard.click.",
+        "typeFrom": "Firebase Hosting requiredDnsUpdates",
+        "ttl": 300,
+        "rrdatasFrom": "Firebase Hosting requiredDnsUpdates for projects/coincard-prod/sites/coincard-app/customDomains/app.coincard.click"
+      },
+      {
+        "nameFrom": "Any Firebase app-domain ownership or ACME record returned by requiredDnsUpdates",
+        "typeFrom": "Firebase Hosting requiredDnsUpdates",
+        "ttl": 300,
+        "rrdatasFrom": "Firebase Hosting requiredDnsUpdates",
+        "publicationRule": "Publish first in the current Squarespace authority when required for pre-provisioning and include identically in the target zone."
+      }
+    ],
+    "omit": [
+      {
+        "name": "coincard.click.",
+        "type": "HTTPS",
+        "reason": "Contains obsolete Squarespace IPv4 hints."
+      },
+      {
+        "name": "_domainconnect.coincard.click.",
+        "type": "CNAME",
+        "reason": "Squarespace-specific authority integration is not part of the final architecture."
+      },
+      {
+        "name": "www.coincard.click.",
+        "type": "CNAME",
+        "reason": "Do not copy the Squarespace CNAME; the wildcard edge handles www and redirects it to the apex."
+      }
+    ],
+    "intentionallyAbsent": [
+      "AAAA",
+      "MX",
+      "CAA",
+      "DS"
+    ],
+    "dnssec": {
+      "managedZoneStateDuringCutover": "off",
+      "registrarDsDuringCutover": "absent",
+      "activationGate": "SEPARATE_STEP_2E_AFTER_GLOBAL_DELEGATION_STABILITY"
+    },
+    "generatedValueFreezeRule": "Before any DNS mutation, capture the exact target nameservers, load-balancer IP, Certificate Manager per-project CNAME, and Firebase requiredDnsUpdates in a second reviewed evidence artifact. No placeholder may be applied to DNS."
+  },
+  "futureExecutionOrder": [
+    "Correct the coin-card-prod typo to coincard-prod in the six dirty Step-2 proposal surfaces and bind hosting:coincard only to projects/coincard-prod/sites/coincard-prod.",
+    "Use the existing authorized stored account explicitly with --project=coincard-prod; do not change global account defaults or IAM.",
+    "Enable dns.googleapis.com, compute.googleapis.com, and certificatemanager.googleapis.com, then re-inventory for unexpected resources before creation.",
+    "Create coincard-click-authoritative with DNSSEC off and seed only approved baseline records.",
+    "Deploy the authorized Coin Card root package to the existing coincard-prod Hosting site; create coincard-app without deploying holder-app content.",
+    "Create the exact Firebase custom-domain resources and capture their requiredDnsUpdates without applying delegation changes.",
+    "Create PER_PROJECT_RECORD DNS authorization, publish its generated CNAME to the current public authority and target zone, and wait for wildcard certificate readiness.",
+    "Create and verify the global external Application Load Balancer through its reserved IP and explicit Host probes before publishing wildcard DNS.",
+    "Freeze every generated DNS value and the complete target-zone digest for review.",
+    "Change registrar nameserver delegation from Squarespace to the coincard-prod Cloud DNS nameservers with DS absent and DNSSEC off.",
+    "Verify global NS, apex, wildcard, app, TLS, HTTP redirects, authority-path fail-closed behavior, headers, and absence of Squarespace responses.",
+    "Do not activate DNSSEC until the separate Step 2E gate."
+  ],
+  "repositoryCorrectionsDeferredToStep2B": {
+    "wrong": "coin-card-prod",
+    "right": "coincard-prod",
+    "dirtyProposalFiles": [
+      ".firebaserc",
+      "app-web/scripts/deploy_coincard_production.js",
+      "app-web/scripts/verify_coincard_public_release.js",
+      "app-web/tests/frontend/coincard-public-release-preparation.test.js",
+      "coincard/README.md",
+      "coincard/release/coincard-early-access-release.v1.json"
+    ],
+    "changedInStep2A": false
+  },
+  "authorityBoundary": {
+    "currentHeadChanged": false,
+    "usernameSnapshotPublished": false,
+    "antoineIdentityPublished": false,
+    "lifecycleIdentityChanged": false,
+    "holderAppImplemented": false,
+    "billingImplemented": false
+  },
+  "externalMutationBoundary": {
+    "iamChanged": false,
+    "apiEnabled": false,
+    "cloudDnsZoneCreated": false,
+    "cloudDnsZoneChanged": false,
+    "firebaseHostingSiteCreated": false,
+    "firebaseDeploymentPerformed": false,
+    "customDomainCreated": false,
+    "certificateResourceCreated": false,
+    "loadBalancerResourceCreated": false,
+    "squarespaceDnsChanged": false,
+    "registrarDelegationChanged": false,
+    "dnssecChanged": false
+  },
+  "officialReferences": [
+    "https://firebase.google.com/docs/hosting/custom-domain",
+    "https://cloud.google.com/dns/docs/records-overview",
+    "https://cloud.google.com/certificate-manager/docs/domain-authorization",
+    "https://cloud.google.com/certificate-manager/docs/dns-authorizations",
+    "https://cloud.google.com/load-balancing/docs/https/setup-global-ext-https-external-backend",
+    "https://cloud.google.com/load-balancing/docs/https/custom-headers-global",
+    "https://cloud.google.com/dns/docs/dnssec-migrate"
+  ]
+}

@@ -1,0 +1,147 @@
+{
+  "schemaVersion": "implicitex-coin-card-infrastructure-prechange-audit.v1",
+  "auditedAt": "2026-08-11T04:23:08Z",
+  "localDate": "2026-08-10",
+  "status": "AUDIT_COMPLETE_TOPOLOGY_DECISION_REQUIRED",
+  "frozenBaseline": {
+    "sourceCommit": "f7c6e50631c372561f1e4dc5ed76459d3e2a4cb8",
+    "manifestHash": "sha256:fc4d5bbfe85ae197ef3f1a2c85c10d82df0b1d4f1c09e317bd28ccb78fb29da8",
+    "manifestHashVerifiedAtAuditEnd": true
+  },
+  "firebase": {
+    "actualProjectId": "coincard-prod",
+    "dirtyProposalProjectId": "coin-card-prod",
+    "dirtyProposalProjectIdValid": false,
+    "hostingSite": {
+      "siteId": "coincard-prod",
+      "type": "DEFAULT_SITE",
+      "defaultUrl": "https://coincard-prod.web.app",
+      "liveChannelCreatedAt": "2026-08-09T20:31:46.727461516Z",
+      "deployedContentStatus": "SITE_NOT_FOUND_404",
+      "firebaseApps": []
+    },
+    "implicitExIsolation": {
+      "projectId": "implicitex-236f2",
+      "sites": [
+        "implicitex-236f2",
+        "implicitex-portal"
+      ],
+      "changed": false
+    },
+    "customDomains": [],
+    "validateOnlyResults": {
+      "coincard.click": "ACCEPTED",
+      "app.coincard.click": "ACCEPTED",
+      "*.coincard.click": "REJECTED_INVALID_CUSTOM_DOMAIN_ID"
+    }
+  },
+  "dns": {
+    "authoritativeProvider": "Squarespace DNS",
+    "nameServers": [
+      "nsd1.squarespacedns.com.",
+      "nsd2.squarespacedns.com.",
+      "nsd3.squarespacedns.com.",
+      "nsd4.squarespacedns.com."
+    ],
+    "apexA": [
+      "198.49.23.144",
+      "198.49.23.145",
+      "198.185.159.144",
+      "198.185.159.145"
+    ],
+    "apexTxt": [
+      "v=spf1 -all"
+    ],
+    "wwwCname": "ext-sq.squarespace.com.",
+    "apexAaaa": [],
+    "mx": [],
+    "caa": [],
+    "ds": [],
+    "dnskey": [],
+    "dnssecEnabled": false,
+    "app": "NXDOMAIN",
+    "antoinedennison": "NXDOMAIN",
+    "randomWildcardProbe": "NXDOMAIN",
+    "changed": false
+  },
+  "transport": {
+    "https://coincard.click/": {
+      "status": 200,
+      "server": "Squarespace",
+      "title": "Coming Soon",
+      "bodySha256": "sha256:f3a85ee6055fb33dcfddecdf0b4af2092978998d322ee8546c21b34766673675"
+    },
+    "http://coincard.click/": {
+      "status": 301,
+      "location": "https://coincard.click/",
+      "server": "Squarespace"
+    },
+    "wellKnownCurrentHead": {
+      "status": 200,
+      "contentType": "text/html;charset=utf-8",
+      "bodyEqualsApexLanding": true,
+      "authorityPublished": false
+    },
+    "app.coincard.click": "ENOTFOUND",
+    "antoinedennison.coincard.click": "ENOTFOUND",
+    "randomWildcardProbe": "ENOTFOUND",
+    "coincard-prod.web.app": {
+      "status": 404,
+      "title": "Site Not Found"
+    },
+    "currentApexCertificate": {
+      "subjectCn": "coincard.click",
+      "subjectAltNames": [
+        "coincard.click"
+      ],
+      "validFrom": "2026-07-20T17:24:44Z",
+      "validTo": "2026-10-18T17:24:43Z"
+    },
+    "changed": false
+  },
+  "requestedTopology": {
+    "coincard.click": "platform root and well-known authority transport",
+    "*.coincard.click": "canonical public Coin Card addresses",
+    "app.coincard.click": "reserved holder-application origin"
+  },
+  "topologyFinding": {
+    "firebaseOnlyFeasible": false,
+    "reason": "Firebase Hosting rejects wildcard custom-domain identifiers and provisions certificates per registered exact domain.",
+    "firebaseExactDomainLimitPerApex": 20,
+    "recommendedEdge": {
+      "provider": "Google Cloud",
+      "service": "Global external Application Load Balancer",
+      "certificate": "Certificate Manager DNS-authorized *.coincard.click certificate",
+      "origin": "coincard-prod.web.app through an internet NEG",
+      "originHostOverride": "coincard-prod.web.app",
+      "dnsAuthorityChangeRequired": false,
+      "dnsPattern": "wildcard A record to a reserved global load-balancer address"
+    },
+    "decisionRequiredBeforeMutation": true
+  },
+  "officialReferences": [
+    "https://firebase.google.com/docs/hosting/custom-domain",
+    "https://firebase.google.com/docs/reference/hosting/rest/v1beta1/projects.sites.customDomains/create",
+    "https://cloud.google.com/certificate-manager/docs/domain-authorization",
+    "https://cloud.google.com/load-balancing/docs/https/setup-global-ext-https-external-backend",
+    "https://cloud.google.com/load-balancing/docs/https/custom-headers-global"
+  ],
+  "boundary": {
+    "repositoryConfigurationChanged": false,
+    "firebaseResourceChanged": false,
+    "firebaseDeploymentPerformed": false,
+    "customDomainCreated": false,
+    "loadBalancerCreated": false,
+    "certificateRequested": false,
+    "dnsChanged": false,
+    "tlsChanged": false,
+    "currentHeadChanged": false,
+    "usernamePublicationChanged": false,
+    "identityLifecycleChanged": false
+  },
+  "worktree": {
+    "preexistingDirtyWorktreePreserved": true,
+    "unrelatedChangesModified": false,
+    "auditEvidenceAdded": true
+  }
+}

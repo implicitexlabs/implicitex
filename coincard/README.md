@@ -2,6 +2,16 @@
 
 This directory is the Firebase Hosting source for `coincard.click`.
 
+## Firebase project binding
+
+The repository-level Firebase alias `coincard` resolves only to
+`coincard-prod`. Coin Card release commands must use that explicit alias;
+they must not use the repository's `default` or `production` aliases.
+
+The `coincard` target is bound only to the existing `coincard-prod` default
+Hosting site. Coin Card release commands must remain target-locked so they
+cannot deploy an ImplicitEx site or another Coin Card site accidentally.
+
 ## Brand direction
 
 The public visual system is derived from the three orange/cream Coin Card

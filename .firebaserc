@@ -1,15 +1,20 @@
 {
   "projects": {
     "default": "implicitex-236f2",
-    "production": "implicitex"
+    "production": "implicitex",
+    "coincard": "coincard-prod"
   },
   "targets": {
+    "coincard-prod": {
+      "hosting": {
+        "coincard": [
+          "coincard-prod"
+        ]
+      }
+    },
     "implicitex-236f2": {
       "hosting": {
         "main": [
-          "implicitex-236f2"
-        ],
-        "coincard": [
           "implicitex-236f2"
         ],
         "portal": [
@@ -24,9 +29,6 @@
         ],
         "portal": [
           "implicitex-portal"
-        ],
-        "coincard": [
-          "implicitex-coincard"
         ]
       }
     }

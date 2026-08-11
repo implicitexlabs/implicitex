@@ -4,11 +4,11 @@
   "status": "PREPARED_NOT_DEPLOYED",
   "preparedAt": "2026-08-09T19:26:28Z",
   "environment": "production",
-  "projectId": "implicitex",
-  "hostingSiteId": "implicitex-coincard",
+  "projectId": "coincard-prod",
+  "hostingSiteId": "coincard-prod",
   "hostingTarget": "coincard",
   "hostingConfigSha256": "sha256:17187c42a671051a7a817eb7c06c70a0e2ad874dcc90a03fe655de3431adeae2",
-  "artifactSha256": "sha256:8ad65524f3b900744510170f901c66dfad43baa9963cd64cd7d6a2e1ffa9d720",
+  "artifactSha256": "sha256:5ea0b8865063041e18408567590029758f493781a2140d90ae31c302aa437db2",
   "files": [
     {
       "path": "components/images/coincard-mark.svg",

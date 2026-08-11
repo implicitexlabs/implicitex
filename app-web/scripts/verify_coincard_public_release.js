@@ -90,22 +90,28 @@ function verify() {
   }
 
   assert.equal(firebaseRc.projects.production, 'implicitex', 'production project alias drift');
+  assert.equal(firebaseRc.projects.coincard, 'coincard-prod', 'Coin Card project alias drift');
   assert.deepEqual(
-    firebaseRc.targets?.implicitex?.hosting?.coincard,
-    ['implicitex-coincard'],
-    'production Coin Card target binding drift',
+    firebaseRc.targets?.['coincard-prod']?.hosting?.coincard,
+    ['coincard-prod'],
+    'Coin Card production target binding drift',
   );
   assert.equal(
-    firebaseRc.targets?.['implicitex-236f2']?.hosting?.coincard?.includes('implicitex-coincard'),
-    false,
-    'production Coin Card site must not be bound to the default project',
+    firebaseRc.targets?.implicitex?.hosting?.coincard,
+    undefined,
+    'legacy production Coin Card target must remain detached',
+  );
+  assert.equal(
+    firebaseRc.targets?.['implicitex-236f2']?.hosting?.coincard,
+    undefined,
+    'legacy default-project Coin Card target must remain detached',
   );
 
   assert.equal(manifest.schemaVersion, 'implicitex-coincard-public-release.v1');
   assert.equal(manifest.status, 'PREPARED_NOT_DEPLOYED');
   assert.equal(manifest.environment, 'production');
-  assert.equal(manifest.projectId, 'implicitex');
-  assert.equal(manifest.hostingSiteId, 'implicitex-coincard');
+  assert.equal(manifest.projectId, 'coincard-prod');
+  assert.equal(manifest.hostingSiteId, 'coincard-prod');
   assert.equal(manifest.hostingTarget, 'coincard');
   assert.equal(manifest.externalState.firebaseAuthenticated, false);
   assert.equal(manifest.externalState.firebaseResourceChanged, false);

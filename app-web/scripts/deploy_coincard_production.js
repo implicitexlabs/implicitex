@@ -19,7 +19,7 @@ const FIREBASE_ARGS = Object.freeze([
   '--only',
   'hosting:coincard',
   '--project',
-  'production',
+  'coincard',
 ]);
 
 function run(command, args, options = {}) {
@@ -60,8 +60,8 @@ function main(argv) {
 
   verifyLocalRelease();
   console.log(`Locked command: firebase ${FIREBASE_ARGS.join(' ')}`);
-  console.log('Locked project: implicitex');
-  console.log('Hosting site: implicitex-coincard');
+  console.log('Locked project: coincard-prod');
+  console.log('Hosting site: coincard-prod');
 
   if (argv[0] === '--review') {
     console.log('Review mode: no authentication, Firebase request, or deployment performed.');

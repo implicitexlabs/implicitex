@@ -67,7 +67,7 @@ test('deployment wrapper hard-locks the production project and Coin Card target'
     '--only',
     'hosting:coincard',
     '--project',
-    'production',
+    'coincard',
   ]);
   assert.equal(deployer.EXECUTE_ARGUMENT, '--execute-production-coincard');
 });
@@ -78,9 +78,9 @@ test('review mode performs local verification without invoking Firebase', () => 
     '--review',
   ], { cwd: repoRoot, encoding: 'utf8' });
   assert.equal(result.status, 0, result.stderr);
-  assert.match(result.stdout, /Locked command: firebase deploy --only hosting:coincard --project production/);
-  assert.match(result.stdout, /Locked project: implicitex/);
-  assert.match(result.stdout, /Hosting site: implicitex-coincard/);
+  assert.match(result.stdout, /Locked command: firebase deploy --only hosting:coincard --project coincard/);
+  assert.match(result.stdout, /Locked project: coincard-prod/);
+  assert.match(result.stdout, /Hosting site: coincard-prod/);
   assert.match(result.stdout, /no authentication, Firebase request, or deployment performed/);
 });
 
