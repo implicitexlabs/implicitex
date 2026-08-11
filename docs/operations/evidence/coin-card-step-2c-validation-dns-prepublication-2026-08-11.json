@@ -1,0 +1,136 @@
+{
+  "schemaVersion": "implicitex-coin-card-step-2c-validation-dns-prepublication.v1",
+  "recordedAt": "2026-08-11T07:56:39Z",
+  "status": "READY_FOR_OWNER_SQUARESPACE_PUBLICATION",
+  "source": {
+    "repositoryCommit": "f5029e228c32816b764ba299a20f7e38cd8a8478",
+    "step2bFreeze": "docs/operations/evidence/coin-card-step-2b-generated-value-freeze-2026-08-11.json",
+    "targetZoneDigest": "sha256:40adb943cb605737fa1c97bd26e7c4ddf57a68b1e4a50175c9a7a8a682eb6600",
+    "manifestHash": "sha256:fc4d5bbfe85ae197ef3f1a2c85c10d82df0b1d4f1c09e317bd28ccb78fb29da8"
+  },
+  "preMutationRevalidation": {
+    "firebaseRootRequiredDnsUpdatesReread": true,
+    "firebaseAppRequiredDnsUpdatesReread": true,
+    "certificateManagerDnsAuthorizationReread": true,
+    "exactEqualityWithStep2bFreeze": true,
+    "generatedValueDrift": false,
+    "publicResolverChecks": [
+      "1.1.1.1",
+      "8.8.8.8"
+    ]
+  },
+  "authorizedValidationOnlyAdditions": [
+    {
+      "providerUiName": "@",
+      "fqdn": "coincard.click.",
+      "type": "TXT",
+      "ttl": 300,
+      "value": "hosting-site=coincard-prod",
+      "purpose": "Firebase root-domain ownership",
+      "routingEffect": "NONE",
+      "preservationRule": "Keep the existing v=spf1 -all TXT value."
+    },
+    {
+      "providerUiName": "_acme-challenge",
+      "fqdn": "_acme-challenge.coincard.click.",
+      "type": "TXT",
+      "ttl": 300,
+      "value": "ZDW1FEfMH_rk70GzpFMEZHErzBFzVMsMCqj5TujHhjo",
+      "purpose": "Firebase root-domain ACME validation",
+      "routingEffect": "NONE"
+    },
+    {
+      "providerUiName": "_acme-challenge.app",
+      "fqdn": "_acme-challenge.app.coincard.click.",
+      "type": "TXT",
+      "ttl": 300,
+      "value": "DvxsO3soVxnHG_izrE9yg1Rt56cwmGVsCxfsdZ8a1r4",
+      "purpose": "Firebase app-domain ACME validation",
+      "routingEffect": "NONE"
+    },
+    {
+      "providerUiName": "_acme-challenge_gy2mupcijdyt3tw5",
+      "fqdn": "_acme-challenge_gy2mupcijdyt3tw5.coincard.click.",
+      "type": "CNAME",
+      "ttl": 300,
+      "value": "ff358a09-90d6-4591-897b-85f639df88fa.3.authorize.certificatemanager.goog.",
+      "purpose": "Certificate Manager PER_PROJECT_RECORD wildcard authorization",
+      "routingEffect": "NONE"
+    }
+  ],
+  "explicitlyForbiddenPublicRecords": [
+    {
+      "name": "coincard.click.",
+      "type": "A",
+      "value": "199.36.158.100"
+    },
+    {
+      "name": "*.coincard.click.",
+      "type": "A",
+      "value": "8.233.95.58"
+    },
+    {
+      "name": "app.coincard.click.",
+      "type": "CNAME",
+      "value": "coincard-app.web.app."
+    },
+    {
+      "name": "coincard.click.",
+      "type": "NS",
+      "value": "Any Cloud DNS nameserver"
+    },
+    {
+      "name": "coincard.click.",
+      "type": "DS",
+      "value": "Any DNSSEC delegation signer"
+    }
+  ],
+  "publicStateBeforeOwnerAction": {
+    "authoritativeProvider": "Squarespace DNS",
+    "nameServers": [
+      "nsd1.squarespacedns.com.",
+      "nsd2.squarespacedns.com.",
+      "nsd3.squarespacedns.com.",
+      "nsd4.squarespacedns.com."
+    ],
+    "apexA": [
+      "198.185.159.144",
+      "198.185.159.145",
+      "198.49.23.144",
+      "198.49.23.145"
+    ],
+    "apexTxt": [
+      "v=spf1 -all"
+    ],
+    "firebaseRootAcmeTxtPresent": false,
+    "firebaseAppAcmeTxtPresent": false,
+    "certificateManagerAuthorizationCnamePresent": false,
+    "appRoutingRecordPresent": false,
+    "wildcardRoutingRecordPresent": false,
+    "parentDsPresent": false
+  },
+  "executionBoundary": {
+    "squarespaceApiConnected": false,
+    "authenticatedSquarespaceBrowserControlAvailable": false,
+    "providerRequiresOwnerPasswordOrTwoFactorReauthentication": true,
+    "codexPublicDnsMutationPerformed": false,
+    "ownerUiActionRequired": true
+  },
+  "postOwnerActionVerification": {
+    "required": true,
+    "verifyFromMultiplePublicResolvers": true,
+    "waitForCertificateManagerActive": true,
+    "waitForFirebaseValidationAdvance": true,
+    "strictForcedHostTlsProbeRequired": true,
+    "stopBeforeTrafficRoutingDns": true,
+    "stopBeforeRegistrarDelegation": true
+  },
+  "authorityBoundary": {
+    "routingDnsChanged": false,
+    "registrarDelegationChanged": false,
+    "dnssecChanged": false,
+    "currentHeadChanged": false,
+    "usernamePublicationChanged": false,
+    "lifecycleIdentityChanged": false
+  }
+}
