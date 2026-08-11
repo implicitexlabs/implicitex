@@ -15,7 +15,6 @@
   'use strict';
 
   var PUBLIC_DOMAIN = 'coincard.click';
-  var HANDLE_RE = /^[a-z0-9][a-z0-9-]{1,28}[a-z0-9]$/;
   var ACCOUNT_ID_RE = /^acct_[0-9A-HJKMNP-TV-Z]{26}$/;
   var CARD_ID_RE = /^cc_[0-9A-HJKMNP-TV-Z]{26}$/;
 
@@ -67,6 +66,10 @@
     return match ? match[1] : null;
   }
 
+  function getUsernameApi() {
+    return window.IX_COIN_CARD_CANONICAL_USERNAME || null;
+  }
+
   function makeCanonicalization(ok, username, canonicalUrl, redirectUrl, error) {
     return Object.freeze({
       ok: ok,
@@ -105,18 +108,23 @@
       return makeCanonicalization(false, null, null, null, 'PUBLIC_ROUTE_UNSUPPORTED');
     }
 
+    var usernameApi = getUsernameApi();
+    if (!usernameApi || typeof usernameApi.canonicalizePublicRouteUsername !== 'function') {
+      return makeCanonicalization(false, null, null, null, 'PUBLIC_URL_AUTHORITY_UNAVAILABLE');
+    }
+
     var hostname = parsed.hostname.toLowerCase();
     var username = null;
     var subdomainSuffix = '.' + PUBLIC_DOMAIN;
     var isBaseHost = hostname === PUBLIC_DOMAIN || hostname === 'www.' + PUBLIC_DOMAIN;
 
     if (isBaseHost) {
-      var pathMatch = parsed.pathname.match(/^\/([A-Za-z0-9][A-Za-z0-9-]{1,28}[A-Za-z0-9])\/?$/);
+      var pathMatch = parsed.pathname.match(/^\/([^/]+)\/?$/);
       if (!pathMatch) {
         return makeCanonicalization(false, null, null, null, 'PUBLIC_HANDLE_INVALID');
       }
-      username = pathMatch[1].toLowerCase();
-      if (!HANDLE_RE.test(username)) {
+      username = usernameApi.canonicalizePublicRouteUsername(pathMatch[1]);
+      if (!username) {
         return makeCanonicalization(false, null, null, null, 'PUBLIC_HANDLE_INVALID');
       }
     } else if (hostname.endsWith(subdomainSuffix)) {
@@ -124,13 +132,13 @@
       if (!label || label.indexOf('.') !== -1) {
         return makeCanonicalization(false, null, null, null, 'PUBLIC_ROUTE_UNSUPPORTED');
       }
-      if (!HANDLE_RE.test(label)) {
+      username = usernameApi.canonicalizePublicRouteUsername(label);
+      if (!username) {
         return makeCanonicalization(false, null, null, null, 'PUBLIC_HANDLE_INVALID');
       }
       if (parsed.pathname !== '/' && parsed.pathname !== '/index.html') {
         return makeCanonicalization(false, null, null, null, 'PUBLIC_ROUTE_UNSUPPORTED');
       }
-      username = label;
     } else {
       return makeCanonicalization(false, null, null, null, 'PUBLIC_ROUTE_UNSUPPORTED');
     }

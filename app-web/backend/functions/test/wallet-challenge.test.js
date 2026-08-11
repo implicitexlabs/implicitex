@@ -174,7 +174,7 @@ test('server issues 32 random nonce bytes and binds the canonical account operat
   const wallet = Wallet.createRandom();
   const { db, service } = makeEnvironment();
   const challenge = await service.issueChallenge(actor(), issueInput(wallet, {
-    handle: 'Alice',
+    handle: 'alice',
     nonce: 'client-controlled-nonce-must-be-ignored',
   }));
 
@@ -196,6 +196,43 @@ test('server issues 32 random nonce bytes and binds the canonical account operat
   assert.match(challenge.message, /^request_id: [0-9a-f-]{36}$/m);
   assert.equal(db.read(`walletChallenges/${challenge.challengeId}`).status, 'ISSUED');
   assert.equal(db.list('auditEvents')[0].eventType, 'WALLET_CHALLENGE_ISSUED');
+});
+
+test('wallet evidence uses the canonical 4–32 hostname-compatible username policy', async () => {
+  const wallet = Wallet.createRandom();
+  const accepted = [
+    'abcd',
+    'a1-b',
+    'a--b',
+    'a'.repeat(30),
+    'a'.repeat(31),
+    'a'.repeat(32),
+  ];
+  for (const handle of accepted) {
+    const { service } = makeEnvironment();
+    const challenge = await service.issueChallenge(actor(), issueInput(wallet, { handle }));
+    assert.equal(challenge.bindings.handle, handle);
+  }
+
+  const rejected = [
+    'abc',
+    'a'.repeat(33),
+    'Alice',
+    ' alice',
+    'alice ',
+    'alice_name',
+    '-alice',
+    'alice-',
+    'alïce',
+    'ali.ce',
+  ];
+  for (const handle of rejected) {
+    const { service } = makeEnvironment();
+    await expectCode(
+      service.issueChallenge(actor(), issueInput(wallet, { handle })),
+      'HANDLE_INVALID',
+    );
+  }
 });
 
 test('valid EIP-191 signature atomically creates one immutable wallet proof', async () => {

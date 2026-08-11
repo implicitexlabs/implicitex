@@ -162,7 +162,7 @@
 
   function makeSnapshot(status) {
     return {
-      registrySchemaVersion: 'coin-card-public-username-registry.v1',
+      registrySchemaVersion: 'coin-card-public-username-registry.v2',
       registryId: 'implicitex-public-usernames',
       environment: 'production',
       registryRevision: 7,
@@ -482,12 +482,12 @@
     var snapshotStatus = scenario === 'tombstoned' ? 'TOMBSTONED' : 'ACTIVE';
     var snapshot = makeSnapshot(snapshotStatus);
     if (scenario === 'malformed-snapshot') snapshot.unexpectedField = true;
-    await signArtifact(privateKey, 'ImplicitEx.CoinCard.PublicUsernameRegistry.v1', snapshot);
+    await signArtifact(privateKey, 'ImplicitEx.CoinCard.PublicUsernameRegistry.v2', snapshot);
     if (scenario === 'snapshot-signature-failure') {
       snapshot.signature.value = flipSignature(snapshot.signature.value);
     }
     var snapshotHash = await domainHash(
-      'ImplicitEx.CoinCard.PublicUsernameRegistryArtifact.v1',
+      'ImplicitEx.CoinCard.PublicUsernameRegistryArtifact.v2',
       snapshot
     );
     var headSnapshotHash = scenario === 'snapshot-hash-failure'

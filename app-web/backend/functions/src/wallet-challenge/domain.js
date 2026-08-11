@@ -9,6 +9,7 @@
 
 const crypto = require('node:crypto');
 const { getAddress, verifyMessage } = require('ethers');
+const canonicalUsername = require('../shared/coin-card-canonical-username');
 
 const SCHEMA_VERSION = 'implicitex.coincard.wallet-challenge.v1';
 const PROOF_SCHEMA_VERSION = 'implicitex.coincard.wallet-proof.v1';
@@ -20,7 +21,6 @@ const CHAIN_ID = 137;
 const CHALLENGE_TTL_MS = 10 * 60 * 1000;
 const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
 const RATE_LIMIT_MAX_ISSUES = 5;
-const HANDLE_RE = /^[a-z0-9][a-z0-9_-]{1,30}[a-z0-9]$/;
 const CHALLENGE_ID_RE = /^[A-Za-z0-9_-]{32}$/;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 
@@ -56,11 +56,15 @@ function normalizeActor(actor) {
 
 function normalizeHandle(value) {
   if (typeof value !== 'string') fail('HANDLE_INVALID', 'handle must be a string.');
-  const handle = value.trim().toLowerCase();
-  if (!HANDLE_RE.test(handle)) {
-    fail('HANDLE_INVALID', 'handle must be 3–32 lowercase letters, digits, hyphens, or underscores.');
+  const validation = canonicalUsername.validateCurrentUsername(value);
+  if (!validation.valid) {
+    fail(
+      'HANDLE_INVALID',
+      'handle must be 4–32 lowercase ASCII letters, digits, or hyphens without a leading or trailing hyphen.',
+      { usernameValidationCode: validation.code },
+    );
   }
-  return handle;
+  return validation.username;
 }
 
 function normalizeWalletAddress(value) {

@@ -101,7 +101,7 @@ async function buildAuthorityData() {
   });
   const username = await publisher.publishUsernameAuthority({
     snapshotFields: {
-      registrySchemaVersion: 'coin-card-public-username-registry.v1',
+      registrySchemaVersion: 'coin-card-public-username-registry.v2',
       registryId: 'implicitex-public-usernames', environment: 'production', registryRevision: 1,
       issuedAt: '2026-08-11T11:50:00.000Z', expiresAt: '2026-08-12T11:49:00.000Z',
       authorityId: 'implicitex-registry',

@@ -13,17 +13,26 @@
 (function () {
   'use strict';
 
-  var REGISTRY_SCHEMA_VERSION = 'coin-card-public-username-registry.v1';
+  var REGISTRY_SCHEMA_VERSION_V1 = 'coin-card-public-username-registry.v1';
+  var REGISTRY_SCHEMA_VERSION_V2 = 'coin-card-public-username-registry.v2';
+  var CURRENT_REGISTRY_SCHEMA_VERSION = REGISTRY_SCHEMA_VERSION_V2;
   var REGISTRY_ID = 'implicitex-public-usernames';
   var REGISTRY_ENVIRONMENT = 'production';
   var REGISTRY_AUTHORITY_ID = 'implicitex-registry';
-  var REGISTRY_SIGNATURE_DOMAIN = 'ImplicitEx.CoinCard.PublicUsernameRegistry.v1';
-  var REGISTRY_ARTIFACT_HASH_DOMAIN = 'ImplicitEx.CoinCard.PublicUsernameRegistryArtifact.v1';
+  var REGISTRY_DOMAINS = Object.freeze({
+    [REGISTRY_SCHEMA_VERSION_V1]: Object.freeze({
+      signature: 'ImplicitEx.CoinCard.PublicUsernameRegistry.v1',
+      artifact: 'ImplicitEx.CoinCard.PublicUsernameRegistryArtifact.v1',
+    }),
+    [REGISTRY_SCHEMA_VERSION_V2]: Object.freeze({
+      signature: 'ImplicitEx.CoinCard.PublicUsernameRegistry.v2',
+      artifact: 'ImplicitEx.CoinCard.PublicUsernameRegistryArtifact.v2',
+    }),
+  });
   var TRUSTED_KEY_USAGE = 'coin-card-registry-publication';
   var CLOCK_SKEW_MS = 5 * 60 * 1000;
   var MAX_VALIDITY_MS = 24 * 60 * 60 * 1000;
 
-  var USERNAME_RE = /^[a-z0-9][a-z0-9-]{1,28}[a-z0-9]$/;
   var ACCOUNT_ID_RE = /^acct_[0-9A-HJKMNP-TV-Z]{26}$/;
   var CARD_ID_RE = /^cc_[0-9A-HJKMNP-TV-Z]{26}$/;
   var IDENTIFIER_RE = /^[a-z0-9][a-z0-9-]{2,79}$/;
@@ -221,10 +230,14 @@
     );
   }
 
-  function validateEntry(entry) {
+  function validateEntry(entry, registrySchemaVersion, usernameApi) {
     if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return false;
     if (!hasExactFields(entry, ENTRY_FIELDS)) return false;
-    if (!USERNAME_RE.test(entry.username)) return false;
+    if (
+      !usernameApi
+      || typeof usernameApi.validateRegistryUsername !== 'function'
+      || usernameApi.validateRegistryUsername(entry.username, registrySchemaVersion).valid !== true
+    ) return false;
     if (!Object.prototype.hasOwnProperty.call(USERNAME_STATUSES, entry.status)) return false;
 
     var accountIdValid = entry.accountId === null
@@ -239,10 +252,12 @@
     return typeof entry.accountId === 'string' && typeof entry.cardId === 'string';
   }
 
-  function validateSnapshot(snapshot) {
+  function validateSnapshot(snapshot, usernameApi) {
     if (!snapshot || typeof snapshot !== 'object' || Array.isArray(snapshot)) return 'snapshot-schema-invalid';
     if (!hasExactFields(snapshot, SNAPSHOT_FIELDS)) return 'snapshot-schema-invalid';
-    if (snapshot.registrySchemaVersion !== REGISTRY_SCHEMA_VERSION) return 'snapshot-schema-invalid';
+    if (!Object.prototype.hasOwnProperty.call(REGISTRY_DOMAINS, snapshot.registrySchemaVersion)) {
+      return 'snapshot-schema-invalid';
+    }
     if (!IDENTIFIER_RE.test(snapshot.registryId) || snapshot.registryId !== REGISTRY_ID) {
       return 'snapshot-registry-id-invalid';
     }
@@ -273,7 +288,9 @@
     var previousUsername = null;
     for (var i = 0; i < snapshot.entries.length; i++) {
       var entry = snapshot.entries[i];
-      if (!validateEntry(entry)) return 'snapshot-entry-invalid';
+      if (!validateEntry(entry, snapshot.registrySchemaVersion, usernameApi)) {
+        return 'snapshot-entry-invalid';
+      }
       if (previousUsername !== null && entry.username <= previousUsername) {
         return 'snapshot-entry-order-or-username-conflict';
       }
@@ -314,6 +331,10 @@
   function getCanonicalizer() {
     var api = window.IX_COIN_CARD_CANONICAL_JSON_V1;
     return api && typeof api.canonicalizeJson === 'function' ? api.canonicalizeJson : null;
+  }
+
+  function getUsernameApi() {
+    return window.IX_COIN_CARD_CANONICAL_USERNAME || null;
   }
 
   function getTrustedKeyApi() {
@@ -551,9 +572,16 @@
     }
 
     var canonicalize = getCanonicalizer();
+    var usernameApi = getUsernameApi();
     var trustedKeyApi = getTrustedKeyApi();
     var subtle = getCryptoSubtle();
-    if (!canonicalize || !trustedKeyApi || typeof trustedKeyApi.resolveTrustedKeyRecord !== 'function') {
+    if (
+      !canonicalize
+      || !usernameApi
+      || typeof usernameApi.validateRegistryUsername !== 'function'
+      || !trustedKeyApi
+      || typeof trustedKeyApi.resolveTrustedKeyRecord !== 'function'
+    ) {
       return failure(OUTCOMES.USERNAME_REGISTRY_AUTHORITY_UNAVAILABLE, 'username-registry-trust-authority-unavailable');
     }
     if (!subtle) {
@@ -566,7 +594,7 @@
     } catch (error) {
       snapshot = undefined;
     }
-    var shapeReason = snapshot ? validateSnapshot(snapshot) : 'snapshot-schema-invalid';
+    var shapeReason = snapshot ? validateSnapshot(snapshot, usernameApi) : 'snapshot-schema-invalid';
     if (shapeReason) {
       return failure(OUTCOMES.USERNAME_REGISTRY_VERIFICATION_FAILED, shapeReason);
     }
@@ -577,8 +605,9 @@
 
     var payload = buildSignaturePayload(snapshot);
     var canonicalPayload = payload ? canonicalize(payload) : null;
-    var signedBytes = canonicalPayload
-      ? concatDomainPayload(REGISTRY_SIGNATURE_DOMAIN, canonicalPayload)
+    var registryDomains = REGISTRY_DOMAINS[snapshot.registrySchemaVersion];
+    var signedBytes = canonicalPayload && registryDomains
+      ? concatDomainPayload(registryDomains.signature, canonicalPayload)
       : null;
     var signatureBytes = decodeBase64Url(snapshot.signature.value);
     if (!canonicalPayload || !signedBytes || !signatureBytes) {
@@ -630,8 +659,8 @@
     }
 
     var exactCanonical = canonicalize(snapshot);
-    var hashBytes = exactCanonical
-      ? concatDomainPayload(REGISTRY_ARTIFACT_HASH_DOMAIN, exactCanonical)
+    var hashBytes = exactCanonical && registryDomains
+      ? concatDomainPayload(registryDomains.artifact, exactCanonical)
       : null;
     var hashValue;
     try {
@@ -672,6 +701,7 @@
 
   function lookupMetadata(state) {
     return {
+      registrySchemaVersion: state.snapshot.registrySchemaVersion,
       registryId: state.snapshot.registryId,
       registryRevision: state.snapshot.registryRevision,
       issuedAt: state.snapshot.issuedAt,
@@ -694,7 +724,10 @@
     var state = await authenticateCurrentSource();
     if (!state || !state.snapshot) return state;
 
-    var entry = typeof username === 'string' && USERNAME_RE.test(username)
+    var usernameApi = getUsernameApi();
+    var entry = usernameApi
+      && typeof usernameApi.validateRegistryUsername === 'function'
+      && usernameApi.validateRegistryUsername(username, state.snapshot.registrySchemaVersion).valid === true
       ? state.entriesByUsername[username] || null
       : null;
     if (!entry) {
@@ -746,12 +779,13 @@
 
   Object.defineProperty(window, 'IX_COIN_CARD_PUBLIC_HANDLE_REGISTRY', {
     value: Object.freeze({
-      REGISTRY_SCHEMA_VERSION: REGISTRY_SCHEMA_VERSION,
+      REGISTRY_SCHEMA_VERSION: CURRENT_REGISTRY_SCHEMA_VERSION,
+      REGISTRY_SCHEMA_VERSION_V1: REGISTRY_SCHEMA_VERSION_V1,
+      REGISTRY_SCHEMA_VERSION_V2: REGISTRY_SCHEMA_VERSION_V2,
       REGISTRY_ID: REGISTRY_ID,
       REGISTRY_ENVIRONMENT: REGISTRY_ENVIRONMENT,
       REGISTRY_AUTHORITY_ID: REGISTRY_AUTHORITY_ID,
-      REGISTRY_SIGNATURE_DOMAIN: REGISTRY_SIGNATURE_DOMAIN,
-      REGISTRY_ARTIFACT_HASH_DOMAIN: REGISTRY_ARTIFACT_HASH_DOMAIN,
+      REGISTRY_DOMAINS: REGISTRY_DOMAINS,
       USERNAME_STATUSES: USERNAME_STATUSES,
       OUTCOMES: OUTCOMES,
       lookupHandle: lookupHandle,

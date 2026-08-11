@@ -9,6 +9,7 @@ const vm = require('node:vm');
 
 const repoRoot = path.resolve(__dirname, '../../..');
 const cardRoot = path.join(repoRoot, 'app-web/frontend/public/card');
+const canonicalUsernamePath = path.join(cardRoot, 'coin-card-canonical-username.js');
 const canonicalJsonPath = path.join(cardRoot, 'coin-card-canonical-json-v1.js');
 const trustedKeyResolutionPath = path.join(cardRoot, 'coin-card-trusted-key-resolution.js');
 const currentHeadSourcePath = path.join(
@@ -25,6 +26,7 @@ const snapshotSourcePath = path.join(
 );
 const usernameRegistryPath = path.join(cardRoot, 'coin-card-public-username-registry.js');
 const publicResolutionPath = path.join(cardRoot, 'coin-card-public-resolution.js');
+const canonicalUsernameSource = fs.readFileSync(canonicalUsernamePath, 'utf8');
 const canonicalJsonSource = fs.readFileSync(canonicalJsonPath, 'utf8');
 const trustedKeyResolutionSource = fs.readFileSync(trustedKeyResolutionPath, 'utf8');
 const currentHeadSourceSource = fs.readFileSync(currentHeadSourcePath, 'utf8');
@@ -33,6 +35,11 @@ const snapshotSourceSource = fs.readFileSync(snapshotSourcePath, 'utf8');
 const usernameRegistrySource = fs.readFileSync(usernameRegistryPath, 'utf8');
 const publicResolutionSource = fs.readFileSync(publicResolutionPath, 'utf8');
 const canonicalJson = require(canonicalJsonPath);
+const sharedUsernamePath = path.join(repoRoot, 'app-web/shared/coin-card-canonical-username.js');
+const functionsUsernamePath = path.join(
+  repoRoot,
+  'app-web/backend/functions/src/shared/coin-card-canonical-username.js',
+);
 
 const FIXED_NOW = '2026-08-09T12:00:00.000Z';
 const ACCOUNT_ID = 'acct_01JFXTST0000000000000000AA';
@@ -40,6 +47,24 @@ const OTHER_ACCOUNT_ID = 'acct_01JFXTST0000000000000000BB';
 const CARD_ID = 'cc_01JFXTST0000000000000000AB';
 const OTHER_CARD_ID = 'cc_01JFXTST0000000000000000CD';
 const KEY_ID = 'username-registry-test-key';
+const SCHEMA_V1 = 'coin-card-public-username-registry.v1';
+const SCHEMA_V2 = 'coin-card-public-username-registry.v2';
+
+function usernameDomains(schemaVersion) {
+  if (schemaVersion === SCHEMA_V1) {
+    return {
+      signature: 'ImplicitEx.CoinCard.PublicUsernameRegistry.v1',
+      artifact: 'ImplicitEx.CoinCard.PublicUsernameRegistryArtifact.v1',
+    };
+  }
+  if (schemaVersion === SCHEMA_V2) {
+    return {
+      signature: 'ImplicitEx.CoinCard.PublicUsernameRegistry.v2',
+      artifact: 'ImplicitEx.CoinCard.PublicUsernameRegistryArtifact.v2',
+    };
+  }
+  throw new TypeError(`unsupported username registry schema: ${schemaVersion}`);
+}
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
@@ -89,7 +114,7 @@ function defaultEntry(overrides = {}) {
 
 function unsignedSnapshot(overrides = {}) {
   const snapshot = {
-    registrySchemaVersion: 'coin-card-public-username-registry.v1',
+    registrySchemaVersion: SCHEMA_V2,
     registryId: 'implicitex-public-usernames',
     environment: 'production',
     registryRevision: 1,
@@ -137,8 +162,9 @@ async function signSnapshot(keyPair, overrides = {}) {
   const snapshot = unsignedSnapshot(overrides);
   const canonical = canonicalJson.canonicalizeJson(signaturePayload(snapshot));
   assert.equal(typeof canonical, 'string');
+  const domains = usernameDomains(snapshot.registrySchemaVersion);
   const bytes = Buffer.concat([
-    Buffer.from('ImplicitEx.CoinCard.PublicUsernameRegistry.v1', 'utf8'),
+    Buffer.from(domains.signature, 'utf8'),
     Buffer.from([0]),
     Buffer.from(canonical, 'utf8'),
   ]);
@@ -155,8 +181,9 @@ async function signSnapshot(keyPair, overrides = {}) {
 function snapshotArtifactHash(snapshot) {
   const canonical = canonicalJson.canonicalizeJson(snapshot);
   assert.equal(typeof canonical, 'string');
+  const domains = usernameDomains(snapshot.registrySchemaVersion);
   return 'sha256:' + createHash('sha256')
-    .update('ImplicitEx.CoinCard.PublicUsernameRegistryArtifact.v1', 'utf8')
+    .update(domains.artifact, 'utf8')
     .update(Buffer.from([0]))
     .update(canonical, 'utf8')
     .digest('hex');
@@ -373,6 +400,9 @@ function loadRuntime(options) {
     installJsonValue(context, 'IX_COIN_CARD_TRUSTED_PUBLIC_KEYS', options.trustedPublicKeys);
     runSource(context, trustedKeyResolutionSource, trustedKeyResolutionPath);
   }
+  if (!options.omitUsernamePolicy) {
+    runSource(context, canonicalUsernameSource, canonicalUsernamePath);
+  }
   if (!options.omitCanonicalizer) runSource(context, canonicalJsonSource, canonicalJsonPath);
   if (!options.omitHeadAuthority) {
     runSource(context, currentHeadVerificationSource, currentHeadVerificationPath);
@@ -464,6 +494,8 @@ test('signed snapshot authenticates one exact username to opaque account and car
   assert.equal(result.accountId, ACCOUNT_ID);
   assert.equal(result.cardId, CARD_ID);
   assert.equal(result.status, 'ACTIVE');
+  assert.equal(result.registrySchemaVersion, SCHEMA_V2);
+  assert.equal(api.REGISTRY_SCHEMA_VERSION, SCHEMA_V2);
   assert.equal(result.registryRevision, 1);
   assert.match(result.snapshotHash, /^sha256:[0-9a-f]{64}$/);
   assert.equal(result.authenticated, true);
@@ -476,6 +508,66 @@ test('signed snapshot authenticates one exact username to opaque account and car
   assert.equal(Object.isFrozen(result), true);
   assert.equal(api.isAuthoritativeHandleResult(result), true);
   assert.equal(api.isAuthoritativeHandleResult({ ...result }), false);
+});
+
+test('all packaged username validators remain generated from the canonical source', () => {
+  const generatedHeader = '/* GENERATED from app-web/shared/coin-card-canonical-username.js. Do not edit this copy. */\n';
+  const expected = generatedHeader + fs.readFileSync(sharedUsernamePath, 'utf8');
+  for (const runtimePath of [canonicalUsernamePath, functionsUsernamePath]) {
+    assert.equal(fs.readFileSync(runtimePath, 'utf8'), expected, runtimePath);
+  }
+});
+
+test('v2 snapshot verification enforces the current 4–32 username grammar', async () => {
+  const fixture = await makeFixture();
+  for (const username of ['abcd', 'a'.repeat(30), 'a'.repeat(31), 'a'.repeat(32), 'a--b']) {
+    const snapshot = await signSnapshot(fixture.keyPair, {
+      entries: [defaultEntry({ username })],
+    });
+    const matching = await fixtureForSnapshot(fixture, snapshot);
+    const result = await loadRuntime(matching).api.lookupHandle(username);
+    assert.equal(result.outcome, 'USERNAME_REGISTRY_RECORD_AUTHENTICATED', username);
+    assert.equal(result.registrySchemaVersion, SCHEMA_V2, username);
+  }
+
+  for (const username of [
+    'abc',
+    'a'.repeat(33),
+    'Alice',
+    'alice_name',
+    '-alice',
+    'alice-',
+    'alïce',
+    'alice name',
+  ]) {
+    const snapshot = await signSnapshot(fixture.keyPair, {
+      entries: [defaultEntry({ username })],
+    });
+    const matching = await fixtureForSnapshot(fixture, snapshot);
+    const result = await loadRuntime(matching).api.lookupHandle(username);
+    assert.equal(result.outcome, 'USERNAME_REGISTRY_VERIFICATION_FAILED', username);
+    assert.equal(result.reason, 'snapshot-entry-invalid', username);
+  }
+});
+
+test('historical v1 username signatures remain interpretable but do not define current route eligibility', async () => {
+  const fixture = await makeFixture();
+  const snapshot = await signSnapshot(fixture.keyPair, {
+    registrySchemaVersion: SCHEMA_V1,
+    entries: [defaultEntry({ username: 'abc' })],
+  });
+  const matching = await fixtureForSnapshot(fixture, snapshot);
+  const runtime = loadRuntime(matching);
+  const historical = await runtime.api.lookupHandle('abc');
+  assert.equal(historical.outcome, 'USERNAME_REGISTRY_RECORD_AUTHENTICATED');
+  assert.equal(historical.registrySchemaVersion, SCHEMA_V1);
+
+  installLifecyclePresentationStubs(runtime.context);
+  runSource(runtime.context, publicResolutionSource, publicResolutionPath);
+  const publicResult = await runtime.context.window.IX_COIN_CARD_PUBLIC_RESOLUTION
+    .resolvePublicCard('https://coincard.click/abc');
+  assert.equal(publicResult.outcome, 'PUBLIC_RESOLUTION_HANDLE_NOT_FOUND');
+  assert.equal(publicResult.executionEligible, false);
 });
 
 test('antoine and mixed-case inputs are exact not-found results, never aliases', async () => {

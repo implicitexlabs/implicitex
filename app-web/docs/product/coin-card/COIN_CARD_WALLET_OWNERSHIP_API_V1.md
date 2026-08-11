@@ -29,9 +29,12 @@ Input:
 }
 ```
 
-The server normalizes the handle and wallet, generates a 32-byte random nonce, a
-random challenge ID, and a UUID request ID, then stores the challenge and issuance
-audit event in one Firestore transaction. Challenges expire after ten minutes.
+The server requires an already-canonical Coin Card username under the current
+4–32 lowercase ASCII alphanumeric-plus-hyphen policy. It does not trim,
+lowercase, or accept underscores. The wallet is normalized independently. The
+server then generates a 32-byte random nonce, a random challenge ID, and a UUID
+request ID, and stores the challenge and issuance audit event in one Firestore
+transaction. Challenges expire after ten minutes.
 
 Output:
 

@@ -11,6 +11,7 @@ const repoRoot = path.resolve(__dirname, '../../..');
 const cardRoot = path.join(repoRoot, 'app-web/frontend/public/card');
 
 const runtimeFiles = [
+  'coin-card-canonical-username.js',
   'coin-card-trusted-keys.js',
   'coin-card-trusted-key-resolution.js',
   'coin-card-lifecycle-bundle.js',
@@ -136,6 +137,7 @@ function loadStubRuntime(options = {}) {
     antoinedennison: { status: 'ACTIVE', cardId: OPAQUE_CARD_ID },
   });
   const context = baseContext(handleRegistry);
+  runFile(context, 'coin-card-canonical-username.js');
 
   const authenticatedProofs = new WeakSet();
   const proof = Object.freeze({ outcome: 'AUTHENTICATED' });
@@ -216,6 +218,35 @@ test('canonical subdomain is stable and mixed-case/legacy forms redirect', () =>
     assert.equal(result.ok, true, input);
     assert.equal(result.username, 'antoinedennison', input);
     assert.equal(result.redirectUrl, 'https://antoinedennison.coincard.click/', input);
+  }
+});
+
+test('canonical URL and path alias share the exact current 4–32 username boundary', () => {
+  const api = apiFrom(loadStubRuntime());
+  for (const username of ['abcd', 'a'.repeat(30), 'a'.repeat(31), 'a'.repeat(32), 'a--b']) {
+    const subdomain = api.canonicalizePublicUrl(`https://${username}.coincard.click/`);
+    const alias = api.canonicalizePublicUrl(`https://coincard.click/${username}`);
+    assert.equal(subdomain.ok, true, username);
+    assert.equal(alias.ok, true, username);
+    assert.equal(subdomain.username, username);
+    assert.equal(alias.username, username);
+    assert.equal(alias.canonicalUrl, subdomain.canonicalUrl);
+  }
+
+  for (const username of [
+    'abc',
+    'a'.repeat(33),
+    'alice_name',
+    '-alice',
+    'alice-',
+    'al%C3%AFce',
+    'ali.ce',
+  ]) {
+    assert.equal(
+      api.canonicalizePublicUrl(`https://coincard.click/${username}`).ok,
+      false,
+      username,
+    );
   }
 });
 
@@ -365,6 +396,7 @@ test('missing registry authority and registry outage fail closed', async () => {
   delete noRegistry.window.IX_COIN_CARD_PUBLIC_HANDLE_REGISTRY;
   // Reload in a fresh realm because the public API captures authorities per call.
   const missingContext = baseContext(null);
+  runFile(missingContext, 'coin-card-canonical-username.js');
   vm.runInContext(publicResolutionSource, missingContext, {
     filename: publicResolutionPath,
     timeout: 2000,

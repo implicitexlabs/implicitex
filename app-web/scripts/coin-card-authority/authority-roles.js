@@ -19,6 +19,7 @@ const ROLE_PROFILES = Object.freeze({
     usage: USAGES.REGISTRY_PUBLICATION,
     domains: Object.freeze([
       'ImplicitEx.CoinCard.PublicUsernameRegistry.v1',
+      'ImplicitEx.CoinCard.PublicUsernameRegistry.v2',
       'ImplicitEx.CoinCard.PublicUsernameRegistryHead.v1',
       'ImplicitEx Coin Card Lifecycle Registry Record v1',
     ]),

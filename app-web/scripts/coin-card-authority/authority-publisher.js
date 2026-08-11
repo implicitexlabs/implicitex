@@ -1,5 +1,7 @@
 'use strict';
 
+const canonicalUsername = require('../../shared/coin-card-canonical-username');
+
 function requireVerified(result, label) {
   if (result !== true) throw new Error(`${label} independent verification failed`);
 }
@@ -54,6 +56,20 @@ function createAuthorityPublisher({ artifacts, transactionEvidence = null, store
 
   return Object.freeze({
     async publishUsernameAuthority({ snapshotFields, headFields, expectedCurrentHeadHash = null }) {
+      if (!snapshotFields || !Array.isArray(snapshotFields.entries)) {
+        throw new TypeError('username snapshot entries are required');
+      }
+      if (
+        snapshotFields.registrySchemaVersion
+        !== canonicalUsername.CURRENT_POLICY.registrySchemaVersion
+      ) {
+        throw new Error('current username publication requires the current registry schema');
+      }
+      for (const entry of snapshotFields.entries) {
+        if (!entry || canonicalUsername.validateCurrentUsername(entry.username).valid !== true) {
+          throw new Error('current username publication rejected by canonical 4–32 policy');
+        }
+      }
       const snapshot = await artifacts.signUsernameSnapshot(snapshotFields);
       const snapshotHash = artifacts.hashUsernameSnapshot(snapshot);
       const storedSnapshot = await persistAndVerify(

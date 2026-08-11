@@ -2,11 +2,16 @@
 
 const { createHash } = require('node:crypto');
 const canonicalJsonApi = require('../../frontend/public/card/coin-card-canonical-json-v1.js');
+const canonicalUsername = require('../../shared/coin-card-canonical-username');
 const { ROLES, assertRoleBoundSigner } = require('./authority-roles');
 
 const DOMAINS = Object.freeze({
-  usernameSnapshotSignature: 'ImplicitEx.CoinCard.PublicUsernameRegistry.v1',
-  usernameSnapshotArtifact: 'ImplicitEx.CoinCard.PublicUsernameRegistryArtifact.v1',
+  usernameSnapshotSignature: 'ImplicitEx.CoinCard.PublicUsernameRegistry.v2',
+  usernameSnapshotArtifact: 'ImplicitEx.CoinCard.PublicUsernameRegistryArtifact.v2',
+  usernameSnapshotSignatureV1: 'ImplicitEx.CoinCard.PublicUsernameRegistry.v1',
+  usernameSnapshotArtifactV1: 'ImplicitEx.CoinCard.PublicUsernameRegistryArtifact.v1',
+  usernameSnapshotSignatureV2: 'ImplicitEx.CoinCard.PublicUsernameRegistry.v2',
+  usernameSnapshotArtifactV2: 'ImplicitEx.CoinCard.PublicUsernameRegistryArtifact.v2',
   usernameHeadSignature: 'ImplicitEx.CoinCard.PublicUsernameRegistryHead.v1',
   usernameHeadArtifact: 'ImplicitEx.CoinCard.PublicUsernameRegistryHeadArtifact.v1',
   lifecycleRecordSignature: 'ImplicitEx Coin Card Lifecycle Registry Record v1',
@@ -14,6 +19,17 @@ const DOMAINS = Object.freeze({
   executableRecordArtifact: 'ImplicitEx.CoinCard.ExecutableRegistryRecord.v2',
   executableHeadSignature: 'ImplicitEx.CoinCard.ExecutableRegistryHead.v1',
   executableHeadArtifact: 'ImplicitEx.CoinCard.ExecutableRegistryHeadArtifact.v1',
+});
+
+const USERNAME_DOMAINS_BY_SCHEMA = Object.freeze({
+  [canonicalUsername.REGISTRY_SCHEMA_V1]: Object.freeze({
+    signature: DOMAINS.usernameSnapshotSignatureV1,
+    artifact: DOMAINS.usernameSnapshotArtifactV1,
+  }),
+  [canonicalUsername.REGISTRY_SCHEMA_V2]: Object.freeze({
+    signature: DOMAINS.usernameSnapshotSignatureV2,
+    artifact: DOMAINS.usernameSnapshotArtifactV2,
+  }),
 });
 
 const ENVELOPE_KINDS = Object.freeze({
@@ -44,6 +60,30 @@ function hashArtifact(domain, artifact) {
   const canonical = canonicalJsonApi.canonicalizeJson(artifact);
   if (canonical === null) throw new TypeError('artifact is not canonicalizable');
   return `sha256:${createHash('sha256').update(domainSeparatedBytes(domain, canonical)).digest('hex')}`;
+}
+
+function usernameDomainsForSchema(schemaVersion) {
+  const domains = USERNAME_DOMAINS_BY_SCHEMA[schemaVersion];
+  if (!domains) throw new TypeError('username registry schema is unsupported');
+  return domains;
+}
+
+function assertUsernameSnapshotFields(fields) {
+  if (!fields || !Array.isArray(fields.entries)) {
+    throw new TypeError('username snapshot entries are required');
+  }
+  usernameDomainsForSchema(fields.registrySchemaVersion);
+  for (const entry of fields.entries) {
+    if (
+      !entry
+      || canonicalUsername.validateRegistryUsername(
+        entry.username,
+        fields.registrySchemaVersion,
+      ).valid !== true
+    ) {
+      throw new TypeError('username snapshot contains an invalid schema-bound username');
+    }
+  }
 }
 
 function signatureMetadata(kind, fields, signer) {
@@ -101,11 +141,13 @@ function createAuthorityArtifactFactory({ registryPublicationSigner, executableC
   assertRoleBoundSigner(executableCurrentHeadSigner, ROLES.EXECUTABLE_CURRENT_HEAD);
   return Object.freeze({
     signUsernameSnapshot(fields) {
+      assertUsernameSnapshotFields(fields);
+      const domains = usernameDomainsForSchema(fields.registrySchemaVersion);
       return signArtifact({
         fields,
         signer: registryPublicationSigner,
         expectedRole: ROLES.REGISTRY_PUBLICATION,
-        signatureDomain: DOMAINS.usernameSnapshotSignature,
+        signatureDomain: domains.signature,
         envelopeKind: ENVELOPE_KINDS.USERNAME,
       });
     },
@@ -139,7 +181,12 @@ function createAuthorityArtifactFactory({ registryPublicationSigner, executableC
     buildLifecycleBundle(fields) {
       return deepFreeze(clonePlain(fields));
     },
-    hashUsernameSnapshot(value) { return hashArtifact(DOMAINS.usernameSnapshotArtifact, value); },
+    hashUsernameSnapshot(value) {
+      return hashArtifact(
+        usernameDomainsForSchema(value.registrySchemaVersion).artifact,
+        value,
+      );
+    },
     hashUsernameHead(value) { return hashArtifact(DOMAINS.usernameHeadArtifact, value); },
     hashLifecycleRecord(value) { return hashArtifact(DOMAINS.lifecycleRecordArtifact, value); },
     hashExecutableRecord(value) { return hashArtifact(DOMAINS.executableRecordArtifact, value); },
@@ -150,6 +197,8 @@ function createAuthorityArtifactFactory({ registryPublicationSigner, executableC
 module.exports = Object.freeze({
   DOMAINS,
   ENVELOPE_KINDS,
+  USERNAME_DOMAINS_BY_SCHEMA,
   createAuthorityArtifactFactory,
   hashArtifact,
+  usernameDomainsForSchema,
 });

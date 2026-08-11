@@ -93,7 +93,7 @@ async function harness() {
 
 function usernameSnapshotFields(revision = 1) {
   return {
-    registrySchemaVersion: 'coin-card-public-username-registry.v1',
+    registrySchemaVersion: 'coin-card-public-username-registry.v2',
     registryId: 'implicitex-public-usernames',
     environment: 'production',
     registryRevision: revision,
@@ -265,4 +265,57 @@ test('publisher rejects non-increasing username revisions before replacing Curre
     expectedCurrentHeadHash: first.head.hash,
   }), /monotonic order rejected/);
   assert.deepEqual(await store.readCurrent('public-username-current-head'), first.current);
+});
+
+test('historical v1 signing remains available while current publication enforces 4–32', async () => {
+  const { artifacts, verifySignature } = await harness();
+  const historicalFields = {
+    ...usernameSnapshotFields(),
+    registrySchemaVersion: 'coin-card-public-username-registry.v1',
+    entries: [{
+      username: 'abc', status: 'ACTIVE', accountId: ACCOUNT_ID, cardId: CARD_ID,
+    }],
+  };
+  const historical = await artifacts.signUsernameSnapshot(historicalFields);
+  assert.equal(
+    await verifySignature(historical, DOMAINS.usernameSnapshotSignatureV1),
+    true,
+  );
+
+  const publisher = createAuthorityPublisher({
+    artifacts,
+    store: createLocalAtomicArtifactStore(),
+    verify: {},
+  });
+  await assert.rejects(
+    publisher.publishUsernameAuthority({
+      snapshotFields: historicalFields,
+      headFields: usernameHeadFields(),
+    }),
+    /current registry schema/,
+  );
+  await assert.rejects(
+    publisher.publishUsernameAuthority({
+      snapshotFields: {
+        ...historicalFields,
+        entries: [{
+          username: 'abcd', status: 'ACTIVE', accountId: ACCOUNT_ID, cardId: CARD_ID,
+        }],
+      },
+      headFields: usernameHeadFields(),
+    }),
+    /current registry schema/,
+  );
+  await assert.rejects(
+    publisher.publishUsernameAuthority({
+      snapshotFields: {
+        ...usernameSnapshotFields(),
+        entries: [{
+          username: 'alice_name', status: 'ACTIVE', accountId: ACCOUNT_ID, cardId: CARD_ID,
+        }],
+      },
+      headFields: usernameHeadFields(),
+    }),
+    /canonical 4–32 policy/,
+  );
 });

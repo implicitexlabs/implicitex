@@ -141,7 +141,7 @@ test('two-release bridge and KMS activation preserve overlap and prove the compl
   }, signerSet[ROLES.MANIFEST]);
   const lifecycle = await activationArtifacts.signLifecycleRecord(lifecycleFields(activationManifest.manifestHash));
   const snapshot = await activationArtifacts.signUsernameSnapshot({
-    registrySchemaVersion: 'coin-card-public-username-registry.v1', registryId: 'implicitex-public-usernames',
+    registrySchemaVersion: 'coin-card-public-username-registry.v2', registryId: 'implicitex-public-usernames',
     environment: 'production', registryRevision: 1, issuedAt: NOW,
     expiresAt: '2026-08-12T11:59:00.000Z', authorityId: 'implicitex-registry',
     entries: [{ username: 'antoinedennison', status: 'ACTIVE', accountId: 'acct_transition', cardId: CARD_ID }],
