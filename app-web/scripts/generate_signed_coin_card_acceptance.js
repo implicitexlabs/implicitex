@@ -40,6 +40,26 @@ const MANIFEST_ISSUER_ID = 'implicitex';
 const ENVIRONMENT = 'production';
 const VALID_FROM = '2026-07-15T00:00:00.000Z';
 const LIFECYCLE_DOMAIN = 'ImplicitEx Coin Card Lifecycle Registry Record v1';
+const TRUSTED_KEY_USAGES_BY_SCHEMA = Object.freeze({
+  'coin-card-trusted-key-record.v1': Object.freeze([
+    'coin-card-manifest-signing',
+    'coin-card-lifecycle-administration',
+    'coin-card-registry-publication',
+  ]),
+  'coin-card-trusted-key-record.v2': Object.freeze([
+    'coin-card-manifest-signing',
+    'coin-card-lifecycle-administration',
+    'coin-card-registry-publication',
+    'coin-card-transaction-evidence',
+  ]),
+  'coin-card-trusted-key-record.v3': Object.freeze([
+    'coin-card-manifest-signing',
+    'coin-card-lifecycle-administration',
+    'coin-card-registry-publication',
+    'coin-card-executable-registry-head',
+    'coin-card-transaction-evidence',
+  ]),
+});
 
 const PROTECTED_ASSETS = Object.freeze([
   'js/ix-execution.js',
@@ -375,7 +395,8 @@ function validateTrustedRecord(record, expectedKeyId) {
   for (const key of Object.getOwnPropertyNames(record)) {
     if (!required.includes(key)) throw new Error(`trusted key record has unsupported field ${key}`);
   }
-  if (record.schemaVersion !== 'coin-card-trusted-key-record.v1') throw new Error('trusted key record schema unsupported');
+  const allowedUsages = TRUSTED_KEY_USAGES_BY_SCHEMA[record.schemaVersion];
+  if (!allowedUsages) throw new Error('trusted key record schema unsupported');
   if (!assertNonemptyString(record.keyId, 'trusted key ID')) throw new Error('trusted key ID invalid');
   if (expectedKeyId && record.keyId !== expectedKeyId) throw new Error(`trusted key source key mismatch: ${expectedKeyId}`);
   if (record.algorithm !== 'ECDSA_P256_SHA256') throw new Error(`trusted key ${record.keyId} algorithm unsupported`);
@@ -384,7 +405,7 @@ function validateTrustedRecord(record, expectedKeyId) {
   const usages = new Set(record.usage);
   if (usages.size !== record.usage.length) throw new Error(`trusted key ${record.keyId} usage duplicate`);
   for (const usage of record.usage) {
-    if (!['coin-card-manifest-signing', 'coin-card-registry-publication'].includes(usage)) {
+    if (!allowedUsages.includes(usage)) {
       throw new Error(`trusted key ${record.keyId} usage unsupported`);
     }
   }
@@ -444,6 +465,9 @@ function mergeTrustedRecords(existingRecords, newRecords) {
       }
       if (existing.algorithm !== normalized.algorithm) {
         throw new Error(`trusted key ID already bound to different algorithm: ${normalized.keyId}`);
+      }
+      if (existing.schemaVersion !== normalized.schemaVersion) {
+        throw new Error(`trusted key ID already bound to different schema: ${normalized.keyId}`);
       }
       if (existing.issuerId !== normalized.issuerId || existing.environment !== normalized.environment) {
         throw new Error(`trusted key ID already bound to different issuer/environment: ${normalized.keyId}`);
@@ -596,9 +620,9 @@ function assertPathSafety(paths) {
   }
 }
 
-function trustedKeyRecord(keyId, publicJwk, issuerId, usage) {
+function trustedKeyRecord(keyId, publicJwk, issuerId, usage, schemaVersion = 'coin-card-trusted-key-record.v1') {
   return {
-    schemaVersion: 'coin-card-trusted-key-record.v1',
+    schemaVersion,
     keyId,
     algorithm: 'ECDSA_P256_SHA256',
     publicKey: publicJwk,
@@ -1054,9 +1078,18 @@ async function main() {
     initializeNewTrustSet,
   );
   const existingRecords = loadMergedTrustedRecords(trustedSourcePaths);
+  const existingById = new Map(existingRecords.map((record) => [record.keyId, record]));
   const trustedRecords = mergeTrustedRecords(existingRecords, [
-    trustedKeyRecord(manifestKeyId, manifestKey.publicJwk, MANIFEST_ISSUER_ID, ['coin-card-manifest-signing']),
-    trustedKeyRecord(lifecycleKeyId, lifecycleKey.publicJwk, AUTHORITY_ID, ['coin-card-registry-publication']),
+    trustedKeyRecord(
+      manifestKeyId, manifestKey.publicJwk, MANIFEST_ISSUER_ID,
+      ['coin-card-manifest-signing'],
+      existingById.get(manifestKeyId) && existingById.get(manifestKeyId).schemaVersion,
+    ),
+    trustedKeyRecord(
+      lifecycleKeyId, lifecycleKey.publicJwk, AUTHORITY_ID,
+      ['coin-card-registry-publication'],
+      existingById.get(lifecycleKeyId) && existingById.get(lifecycleKeyId).schemaVersion,
+    ),
   ]);
   assertNoIncompatiblePublicIdentityReuse(trustedRecords);
   const trustedKeys = renderTrustedKeys(trustedRecords);

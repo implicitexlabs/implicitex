@@ -1,0 +1,75 @@
+{
+  "schemaVersion": "coin-card-trusted-key-record-fixtures.v3",
+  "positiveRecords": [
+    {
+      "schemaVersion": "coin-card-trusted-key-record.v1",
+      "keyId": "fixture-legacy-manifest-v1",
+      "algorithm": "ECDSA_P256_SHA256",
+      "publicKey": { "kty": "EC", "crv": "P-256", "x": "CoyTysmiq6P7pSkGU1xYo5i-M7TqLq245DJuQmPvx8Y", "y": "NGJLY_rAi_9MvaP3KlvR80WxKOUv-GqRtZqajvH6E8k", "key_ops": ["verify"], "ext": true },
+      "issuerId": "implicitex",
+      "usage": ["coin-card-manifest-signing"],
+      "status": "ACTIVE",
+      "validFrom": "2026-07-15T00:00:00.000Z",
+      "validUntil": null,
+      "revokedAt": null,
+      "revocationReason": null,
+      "revocationPolicy": null,
+      "successorKeyId": null,
+      "environment": "production"
+    },
+    {
+      "schemaVersion": "coin-card-trusted-key-record.v2",
+      "keyId": "fixture-transaction-evidence-v2",
+      "algorithm": "ECDSA_P256_SHA256",
+      "publicKey": { "kty": "EC", "crv": "P-256", "x": "SeI4_e8DjctwdRMg1-QA6tqf2wxbC3GRzWZUEHuADDI", "y": "AewuMGywrNfpMMIPlysBdxl_0UOy-5GX_zwc0tRtFdA", "key_ops": ["verify"], "ext": true },
+      "issuerId": "implicitex-transaction-evidence",
+      "usage": ["coin-card-transaction-evidence"],
+      "status": "ACTIVE",
+      "validFrom": "2026-07-20T12:04:00.000Z",
+      "validUntil": null,
+      "revokedAt": null,
+      "revocationReason": null,
+      "revocationPolicy": null,
+      "successorKeyId": null,
+      "environment": "production"
+    },
+    {
+      "schemaVersion": "coin-card-trusted-key-record.v3",
+      "keyId": "fixture-executable-head-v3",
+      "algorithm": "ECDSA_P256_SHA256",
+      "publicKey": { "kty": "EC", "crv": "P-256", "x": "Mwab07cytYUbpfiYKgaXdxGie_yvvQcwTsgwhUXgEA8", "y": "6UrRJewADZeCmL6r4I5FkCFtusI65izk-Sniyk0-peM", "key_ops": ["verify"], "ext": true },
+      "issuerId": "implicitex-executable-registry",
+      "usage": ["coin-card-executable-registry-head"],
+      "status": "ACTIVE",
+      "validFrom": "2026-08-11T00:00:00.000Z",
+      "validUntil": null,
+      "revokedAt": null,
+      "revocationReason": null,
+      "revocationPolicy": null,
+      "successorKeyId": null,
+      "environment": "production"
+    },
+    {
+      "schemaVersion": "coin-card-trusted-key-record.v3",
+      "keyId": "fixture-transaction-evidence-v3",
+      "algorithm": "ECDSA_P256_SHA256",
+      "publicKey": { "kty": "EC", "crv": "P-256", "x": "qI_P5d0eh5SfnmJ9x1BSx6Y5idtRGKhOGoTiAasvgJY", "y": "7er2F411R9bOeB7kpZVvhI0PYoJyyC7WM1HxUvsHXZw", "key_ops": ["verify"], "ext": true },
+      "issuerId": "implicitex-transaction-evidence",
+      "usage": ["coin-card-transaction-evidence"],
+      "status": "ACTIVE",
+      "validFrom": "2026-08-11T00:00:00.000Z",
+      "validUntil": null,
+      "revokedAt": null,
+      "revocationReason": null,
+      "revocationPolicy": null,
+      "successorKeyId": null,
+      "environment": "production"
+    }
+  ],
+  "negativeUsageVectors": [
+    { "id": "v1-denies-executable-head", "sourceRecordIndex": 0, "replacementUsage": ["coin-card-executable-registry-head"] },
+    { "id": "v2-denies-executable-head", "sourceRecordIndex": 1, "replacementUsage": ["coin-card-executable-registry-head"] },
+    { "id": "v3-denies-unknown-usage", "sourceRecordIndex": 2, "replacementUsage": ["coin-card-unrecognized-authority"] },
+    { "id": "v3-denies-duplicate-usage", "sourceRecordIndex": 3, "replacementUsage": ["coin-card-transaction-evidence", "coin-card-transaction-evidence"] }
+  ]
+}
