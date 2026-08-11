@@ -11,6 +11,9 @@ const assert = require('node:assert/strict');
 const crypto = require('node:crypto');
 const fs = require('node:fs');
 const path = require('node:path');
+const {
+  assertNoNonProductionAuthorityMaterial,
+} = require('./coin-card-release-leakage-guard');
 
 const REPO_ROOT = path.resolve(__dirname, '../..');
 const PUBLIC_ROOT = path.join(REPO_ROOT, 'coincard/public');
@@ -73,6 +76,7 @@ function releaseDescriptor(manifest) {
 }
 
 function verify() {
+  assertNoNonProductionAuthorityMaterial(PUBLIC_ROOT, 'coincard public hosting root');
   const firebase = JSON.parse(fs.readFileSync(FIREBASE_PATH, 'utf8'));
   const firebaseRc = JSON.parse(fs.readFileSync(FIREBASE_RC_PATH, 'utf8'));
   const manifest = JSON.parse(fs.readFileSync(MANIFEST_PATH, 'utf8'));

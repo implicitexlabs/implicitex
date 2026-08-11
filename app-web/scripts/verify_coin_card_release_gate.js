@@ -13,6 +13,9 @@ const { webcrypto } = require('node:crypto');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
+const {
+  assertNoNonProductionAuthorityMaterial,
+} = require('./coin-card-release-leakage-guard');
 
 const APP_ROOT = path.resolve(__dirname, '..');
 const PUBLIC_ROOT = path.join(APP_ROOT, 'frontend/public');
@@ -191,6 +194,7 @@ async function verifyLifecycle(runtime, manifest, activeCards) {
 }
 
 async function main() {
+  assertNoNonProductionAuthorityMaterial(PUBLIC_ROOT, 'app-web Coin Card hosting root');
   const manifest = JSON.parse(fs.readFileSync(MANIFEST_PATH, 'utf8'));
   const runtime = loadRuntime();
   const activeCards = readActiveRegistryCards();
