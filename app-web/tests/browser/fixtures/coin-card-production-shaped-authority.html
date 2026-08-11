@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Coin Card production-shaped authority replacement test</title>
+  <link rel="stylesheet" href="/app-web/frontend/public/card/card.css">
+</head>
+<body data-authority-boundary="NON_PRODUCTION_TEST_FIXTURE">
+  <main>
+    <section id="coinCardReadonly" data-state="BOOT" data-execution-eligible="false" data-payment-control-enabled="false">
+      <article class="cc-card cc-card--dark">
+        <span id="coinCardState">Checking</span>
+        <h1 id="coinCardTitle">Checking</h1>
+        <p id="coinCardMessage"></p>
+        <p id="coinCardCanonical"></p>
+        <p id="coinCardRoute"></p>
+        <p id="coinCardTrust"></p>
+        <p id="coinCardPayment"></p>
+        <button data-coin-card-payment-action>Pay</button>
+      </article>
+    </section>
+  </main>
+  <script src="/app-web/frontend/public/card/coin-card-canonical-json-v1.js"></script>
+  <script>
+    window.__PRODUCTION_SHAPED_LIFECYCLE_BUNDLE = null;
+    Object.defineProperty(window, 'IX_COIN_CARD_LIFECYCLE_REGISTRY_BUNDLE', {
+      get: function () { return window.__PRODUCTION_SHAPED_LIFECYCLE_BUNDLE; },
+      enumerable: true,
+      configurable: false
+    });
+  </script>
+  <script src="/app-web/frontend/public/card/coin-card-lifecycle-registry.js"></script>
+  <script src="/app-web/frontend/public/card/coin-card-lifecycle-record-verification.js"></script>
+  <script src="/app-web/frontend/public/card/coin-card-lifecycle-bundle-verification.js"></script>
+  <script src="/app-web/frontend/public/card/coin-card-lifecycle-record-selection.js"></script>
+  <script src="/app-web/frontend/public/card/coin-card-lifecycle-resolution.js"></script>
+  <script src="/app-web/frontend/public/card/coin-card-lifecycle-presentation.js"></script>
+  <script src="/app-web/frontend/public/card/coin-card-executable-registry-record-verification.js"></script>
+  <script src="/app-web/frontend/public/card/coin-card-executable-registry-head-verification.js"></script>
+  <script src="/app-web/frontend/public/card/coin-card-executable-registry-current-source.js"></script>
+  <script src="/app-web/frontend/public/card/coin-card-public-username-registry-head-verification.js"></script>
+  <script src="/app-web/frontend/public/card/coin-card-public-username-registry.js"></script>
+  <script src="/app-web/frontend/public/card/coin-card-public-resolution.js"></script>
+  <script src="/app-web/frontend/public/card/coin-card-readonly-browser.js"></script>
+  <script src="coin-card-production-shaped-authority.js"></script>
+</body>
+</html>

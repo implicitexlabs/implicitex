@@ -8,14 +8,20 @@ const FORBIDDEN_CONTENT_MARKERS = Object.freeze([
   'NON_PRODUCTION_TEST_FIXTURE',
   'coin-card-readonly-non-production-test-key',
   'non-production-kms-compatible-test-key',
+  'non-production-authority-publication-test-key',
+  'non-production-production-shaped-authority-key',
   'PRIVATE_JWK',
+  'privateJwk',
+  'privateKeyJwk',
   'coin-card-readonly-non-production-fixtures',
   'coin-card-readonly-vertical-slice',
+  'coin-card-production-shaped-authority',
 ]);
 
 const FORBIDDEN_PATH_MARKERS = Object.freeze([
   'coin-card-readonly-non-production-fixtures',
   'coin-card-readonly-vertical-slice',
+  'coin-card-production-shaped-authority',
 ]);
 
 function walkFiles(root, relative = '') {
