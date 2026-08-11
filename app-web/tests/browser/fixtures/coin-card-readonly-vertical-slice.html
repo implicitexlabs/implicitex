@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Coin Card read-only vertical slice — non-production fixture</title>
+  <link rel="stylesheet" href="/app-web/frontend/public/card/card.css">
+  <style>
+    body {
+      min-height: 100vh;
+      margin: 0;
+      display: grid;
+      place-items: center;
+      background: #f4efe5;
+      color: #171717;
+      font-family: Inter, system-ui, sans-serif;
+    }
+    .readonly-wrap { width: min(92vw, 680px); }
+    .readonly-fixture-label {
+      margin: 0 0 12px;
+      font: 600 12px/1.4 "IBM Plex Mono", monospace;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+    .readonly-card { display: block; padding: 32px; }
+    .readonly-card h1 { margin: 36px 0 12px; font-size: clamp(30px, 6vw, 54px); line-height: 1; }
+    .readonly-card p { max-width: 56ch; }
+    .readonly-meta { margin-top: 28px; font: 500 12px/1.65 "IBM Plex Mono", monospace; opacity: .78; }
+    .readonly-payment { margin-top: 32px; padding-top: 20px; border-top: 1px solid currentColor; }
+    [data-state="REVOKED"], [data-state="INVALID"] { --cc-dark-verified: #ff6464; }
+    [data-state="EXPIRED"], [data-state="AUTHORITY_UNAVAILABLE"] { --cc-dark-verified: #ffbd45; }
+  </style>
+</head>
+<body data-fixture-trust-boundary="NON_PRODUCTION_TEST_FIXTURE">
+  <main class="readonly-wrap">
+    <p class="readonly-fixture-label">Non-production signed fixture · read-only</p>
+    <section
+      class="cc-frame"
+      id="coinCardReadonly"
+      data-state="BOOT"
+      data-execution-eligible="false"
+      data-payment-control-enabled="false"
+      aria-labelledby="coinCardTitle"
+    >
+      <article class="cc-card cc-card--dark readonly-card">
+        <div class="cc-card-top">
+          <div class="cc-card-issuer"><span class="cc-issuer-fallback">COIN CARD</span></div>
+          <span class="cc-card-status cc-card-status--verified">
+            <span class="cc-card-status-dot cc-card-status-dot--verified" aria-hidden="true"></span>
+            <span id="coinCardState">Checking</span>
+          </span>
+        </div>
+        <h1 id="coinCardTitle">Checking Coin Card</h1>
+        <p id="coinCardMessage">Loading authenticated state…</p>
+        <div class="readonly-meta">
+          <p id="coinCardCanonical">No canonical identity established</p>
+          <p id="coinCardRoute">No executable route is exposed</p>
+          <p id="coinCardTrust">Non-production fixture</p>
+        </div>
+        <p class="readonly-payment" id="coinCardPayment">Payment execution unavailable</p>
+      </article>
+    </section>
+  </main>
+
+  <script src="/app-web/frontend/public/card/coin-card-canonical-json-v1.js"></script>
+  <script src="/app-web/frontend/public/card/coin-card-trusted-key-resolution.js"></script>
+  <script>
+    /* Test-only late-bound bundle slot. The lifecycle registry deliberately
+       permits a source loaded before its own foundation module. */
+    window.__COIN_CARD_NON_PRODUCTION_LIFECYCLE_BUNDLE = null;
+    Object.defineProperty(window, 'IX_COIN_CARD_LIFECYCLE_REGISTRY_BUNDLE', {
+      get: function () { return window.__COIN_CARD_NON_PRODUCTION_LIFECYCLE_BUNDLE; },
+      enumerable: true,
+      configurable: false
+    });
+  </script>
+  <script src="/app-web/frontend/public/card/coin-card-lifecycle-registry.js"></script>
+  <script src="/app-web/frontend/public/card/coin-card-lifecycle-record-verification.js"></script>
+  <script src="/app-web/frontend/public/card/coin-card-lifecycle-bundle-verification.js"></script>
+  <script src="/app-web/frontend/public/card/coin-card-lifecycle-record-selection.js"></script>
+  <script src="/app-web/frontend/public/card/coin-card-lifecycle-resolution.js"></script>
+  <script src="/app-web/frontend/public/card/coin-card-lifecycle-presentation.js"></script>
+  <script src="/app-web/frontend/public/card/coin-card-executable-registry-record-verification.js"></script>
+  <script src="/app-web/frontend/public/card/coin-card-public-username-registry-head-source.js"></script>
+  <script src="/app-web/frontend/public/card/coin-card-public-username-registry-head-verification.js"></script>
+  <script src="/app-web/frontend/public/card/coin-card-public-username-registry-snapshot-source.js"></script>
+  <script src="/app-web/frontend/public/card/coin-card-public-username-registry.js"></script>
+  <script src="/app-web/frontend/public/card/coin-card-public-resolution.js"></script>
+  <script src="/app-web/frontend/public/card/coin-card-readonly-browser.js"></script>
+  <script src="coin-card-readonly-non-production-fixtures.js"></script>
+</body>
+</html>
