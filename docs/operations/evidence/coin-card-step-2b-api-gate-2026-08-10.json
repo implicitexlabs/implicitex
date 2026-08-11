@@ -1,0 +1,56 @@
+{
+  "schemaVersion": "implicitex-coin-card-step-2b-api-gate.v1",
+  "recordedAt": "2026-08-11T04:57:50Z",
+  "localDate": "2026-08-10",
+  "status": "BLOCKED_BILLING_REQUIRED_NO_INFRASTRUCTURE_CREATED",
+  "frozenReleaseBaseline": {
+    "localReleaseCommit": "f7c6e50631c372561f1e4dc5ed76459d3e2a4cb8",
+    "topologyCommit": "34260026a7de2366c07b6e92d263eb5491582dfc",
+    "manifestHash": "sha256:fc4d5bbfe85ae197ef3f1a2c85c10d82df0b1d4f1c09e317bd28ccb78fb29da8"
+  },
+  "apiEnablementAttempt": {
+    "projectId": "coincard-prod",
+    "projectNumber": "194920757523",
+    "explicitAuthorizedStoredAccountUsed": true,
+    "requestedServices": [
+      "dns.googleapis.com",
+      "compute.googleapis.com",
+      "certificatemanager.googleapis.com"
+    ],
+    "result": "FAILED_PRECONDITION",
+    "reason": "PROJECT_BILLING_NOT_FOUND",
+    "servicesEnabledByAttempt": []
+  },
+  "billingReadback": {
+    "billingEnabled": false,
+    "billingAccountAttached": false,
+    "visibleBillingAccountCount": 1,
+    "visibleOpenBillingAccountCount": 0,
+    "billingMutationPerformed": false,
+    "decisionRequired": "Open or create an approved billing account and explicitly authorize linking coincard-prod before Step 2B can continue."
+  },
+  "postAttemptServiceState": {
+    "dns.googleapis.com": "DISABLED",
+    "compute.googleapis.com": "DISABLED",
+    "certificatemanager.googleapis.com": "DISABLED"
+  },
+  "boundary": {
+    "cloudDnsZoneCreated": false,
+    "firebaseDeploymentPerformed": false,
+    "firebaseHostingSiteCreated": false,
+    "firebaseCustomDomainCreated": false,
+    "certificateManagerResourceCreated": false,
+    "loadBalancerResourceCreated": false,
+    "publicDnsChanged": false,
+    "registrarDelegationChanged": false,
+    "dnssecChanged": false,
+    "currentHeadChanged": false,
+    "usernamePublicationChanged": false,
+    "identityLifecycleChanged": false
+  },
+  "worktree": {
+    "preexistingDirtyWorktreePreserved": true,
+    "unrelatedChangesModified": false,
+    "thisEvidenceFileUncommitted": true
+  }
+}

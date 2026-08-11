@@ -1,0 +1,415 @@
+{
+  "schemaVersion": "implicitex-coin-card-step-2b-generated-value-freeze.v1",
+  "recordedAt": "2026-08-11T07:36:39Z",
+  "status": "INFRASTRUCTURE_CREATED_VALUES_FROZEN_PUBLIC_DNS_UNCHANGED_TLS_AUTHORIZATION_PENDING",
+  "releaseBaseline": {
+    "localReleaseCommit": "f7c6e50631c372561f1e4dc5ed76459d3e2a4cb8",
+    "deploymentSourceCommit": "34260026a7de2366c07b6e92d263eb5491582dfc",
+    "manifestHash": "sha256:fc4d5bbfe85ae197ef3f1a2c85c10d82df0b1d4f1c09e317bd28ccb78fb29da8",
+    "protectedAssetCount": 17,
+    "cleanCloneReleaseGate": "PASS",
+    "cleanCloneReleaseGateVerifiedAt": "2026-08-11T07:36:39Z"
+  },
+  "administration": {
+    "canonicalAccount": "adenmediagroup@gmail.com",
+    "explicitAccountUsed": true,
+    "explicitProject": "coincard-prod",
+    "globalGcloudDefaultsChanged": false,
+    "iamChanged": false,
+    "billingAccountDisplayName": "Aden Media Group LLC",
+    "billingActive": true,
+    "firebaseBlaze": true,
+    "ownerAttestedBudget": {
+      "currencyCode": "USD",
+      "units": 25,
+      "purpose": "EARLY_COST_WARNING",
+      "hardCap": false,
+      "releaseGate": false
+    }
+  },
+  "services": {
+    "billingbudgets.googleapis.com": "DISABLED_BY_DECISION",
+    "dns.googleapis.com": "ENABLED",
+    "compute.googleapis.com": "ENABLED",
+    "certificatemanager.googleapis.com": "ENABLED",
+    "postEnableInventory": {
+      "unexpectedResourcesFound": false,
+      "dnsZonesBeforeCreation": 0,
+      "globalAddressesBeforeCreation": 0,
+      "networkEndpointGroupsBeforeCreation": 0,
+      "backendServicesBeforeCreation": 0,
+      "urlMapsBeforeCreation": 0,
+      "targetHttpsProxiesBeforeCreation": 0,
+      "targetHttpProxiesBeforeCreation": 0,
+      "globalForwardingRulesBeforeCreation": 0,
+      "sslPoliciesBeforeCreation": 0,
+      "certificateManagerDnsAuthorizationsBeforeCreation": 0,
+      "certificateManagerCertificatesBeforeCreation": 0,
+      "certificateManagerMapsBeforeCreation": 0,
+      "firebaseHostingSitesBeforeCreation": [
+        "coincard-prod"
+      ],
+      "firebaseCustomDomainsBeforeCreation": []
+    }
+  },
+  "cloudDns": {
+    "projectId": "coincard-prod",
+    "managedZoneName": "coincard-click-authoritative",
+    "managedZoneId": "4609516287502566617",
+    "dnsName": "coincard.click.",
+    "visibility": "public",
+    "dnssecState": "off",
+    "nameServers": [
+      "ns-cloud-a1.googledomains.com.",
+      "ns-cloud-a2.googledomains.com.",
+      "ns-cloud-a3.googledomains.com.",
+      "ns-cloud-a4.googledomains.com."
+    ],
+    "recordSetDigest": {
+      "algorithm": "sorted-record-fields-json-v1",
+      "recordSetCount": 11,
+      "canonicalByteCount": 1358,
+      "sha256": "sha256:40adb943cb605737fa1c97bd26e7c4ddf57a68b1e4a50175c9a7a8a682eb6600"
+    },
+    "records": [
+      {
+        "name": "coincard.click.",
+        "type": "A",
+        "ttl": 300,
+        "rrdatas": [
+          "199.36.158.100"
+        ]
+      },
+      {
+        "name": "coincard.click.",
+        "type": "NS",
+        "ttl": 21600,
+        "rrdatas": [
+          "ns-cloud-a1.googledomains.com.",
+          "ns-cloud-a2.googledomains.com.",
+          "ns-cloud-a3.googledomains.com.",
+          "ns-cloud-a4.googledomains.com."
+        ]
+      },
+      {
+        "name": "coincard.click.",
+        "type": "SOA",
+        "ttl": 21600,
+        "rrdatas": [
+          "ns-cloud-a1.googledomains.com. cloud-dns-hostmaster.google.com. 1 21600 3600 259200 300"
+        ]
+      },
+      {
+        "name": "coincard.click.",
+        "type": "TXT",
+        "ttl": 300,
+        "rrdatas": [
+          "\"hosting-site=coincard-prod\"",
+          "\"v=spf1 -all\""
+        ]
+      },
+      {
+        "name": "*.coincard.click.",
+        "type": "A",
+        "ttl": 300,
+        "rrdatas": [
+          "8.233.95.58"
+        ]
+      },
+      {
+        "name": "_acme-challenge.coincard.click.",
+        "type": "TXT",
+        "ttl": 300,
+        "rrdatas": [
+          "\"ZDW1FEfMH_rk70GzpFMEZHErzBFzVMsMCqj5TujHhjo\""
+        ]
+      },
+      {
+        "name": "_acme-challenge_gy2mupcijdyt3tw5.coincard.click.",
+        "type": "CNAME",
+        "ttl": 300,
+        "rrdatas": [
+          "ff358a09-90d6-4591-897b-85f639df88fa.3.authorize.certificatemanager.goog."
+        ]
+      },
+      {
+        "name": "_dmarc.coincard.click.",
+        "type": "TXT",
+        "ttl": 14400,
+        "rrdatas": [
+          "\"v=DMARC1; p=reject; sp=reject; adkim=s; aspf=s\""
+        ]
+      },
+      {
+        "name": "_domainkey.coincard.click.",
+        "type": "TXT",
+        "ttl": 14400,
+        "rrdatas": [
+          "\"v=DKIM1; p=\""
+        ]
+      },
+      {
+        "name": "app.coincard.click.",
+        "type": "CNAME",
+        "ttl": 300,
+        "rrdatas": [
+          "coincard-app.web.app."
+        ]
+      },
+      {
+        "name": "_acme-challenge.app.coincard.click.",
+        "type": "TXT",
+        "ttl": 300,
+        "rrdatas": [
+          "\"DvxsO3soVxnHG_izrE9yg1Rt56cwmGVsCxfsdZ8a1r4\""
+        ]
+      }
+    ],
+    "authoritativeQueryVerified": true,
+    "delegatedPublicly": false
+  },
+  "firebaseHosting": {
+    "rootSite": {
+      "resource": "projects/coincard-prod/sites/coincard-prod",
+      "defaultUrl": "https://coincard-prod.web.app",
+      "release": "projects/coincard-prod/sites/coincard-prod/releases/1786432606786000",
+      "version": "projects/coincard-prod/sites/coincard-prod/versions/0d9af068c24a1f04",
+      "versionStatus": "FINALIZED",
+      "releaseType": "DEPLOY",
+      "releasedAt": "2026-08-11T07:16:46.786Z",
+      "releaseUser": "adenmediagroup@gmail.com",
+      "versionFileCount": 7,
+      "versionBytes": 13417,
+      "publicReleaseManifestId": "coincard-early-access-2026-08-09",
+      "publicReleaseArtifactSha256": "sha256:5ea0b8865063041e18408567590029758f493781a2140d90ae31c302aa437db2",
+      "defaultUrlProbe": {
+        "status": 200,
+        "bodyBytes": 11531,
+        "bodySha256": "sha256:fc27c3ea9455b09e051729e55c5b6cb7d89907c56b3fbb7d72a31e51f2b5fb41"
+      }
+    },
+    "holderAppSite": {
+      "resource": "projects/coincard-prod/sites/coincard-app",
+      "defaultUrl": "https://coincard-app.web.app",
+      "releases": [],
+      "holderApplicationDeployed": false
+    },
+    "customDomains": {
+      "coincard.click": {
+        "resource": "projects/coincard-prod/sites/coincard-prod/customDomains/coincard.click",
+        "hostState": "HOST_MISMATCH",
+        "ownershipState": "OWNERSHIP_MISSING",
+        "certificateState": "CERT_VALIDATING",
+        "requiredRoutingRecords": [
+          {
+            "name": "coincard.click.",
+            "type": "A",
+            "value": "199.36.158.100"
+          },
+          {
+            "name": "coincard.click.",
+            "type": "TXT",
+            "value": "hosting-site=coincard-prod"
+          }
+        ],
+        "requiredCertificateRecord": {
+          "name": "_acme-challenge.coincard.click.",
+          "type": "TXT",
+          "value": "ZDW1FEfMH_rk70GzpFMEZHErzBFzVMsMCqj5TujHhjo"
+        },
+        "currentPublicConflict": "Squarespace apex A records"
+      },
+      "app.coincard.click": {
+        "resource": "projects/coincard-prod/sites/coincard-app/customDomains/app.coincard.click",
+        "hostState": "HOST_UNHOSTED",
+        "ownershipState": "OWNERSHIP_MISSING",
+        "certificateState": "CERT_VALIDATING",
+        "requiredRoutingRecord": {
+          "name": "app.coincard.click.",
+          "type": "CNAME",
+          "value": "coincard-app.web.app."
+        },
+        "requiredCertificateRecord": {
+          "name": "_acme-challenge.app.coincard.click.",
+          "type": "TXT",
+          "value": "DvxsO3soVxnHG_izrE9yg1Rt56cwmGVsCxfsdZ8a1r4"
+        }
+      }
+    }
+  },
+  "certificateManager": {
+    "dnsAuthorization": {
+      "resource": "projects/coincard-prod/locations/global/dnsAuthorizations/coincard-click-per-project-auth",
+      "type": "PER_PROJECT_RECORD",
+      "domain": "coincard.click",
+      "dnsResourceRecord": {
+        "name": "_acme-challenge_gy2mupcijdyt3tw5.coincard.click.",
+        "type": "CNAME",
+        "data": "ff358a09-90d6-4591-897b-85f639df88fa.3.authorize.certificatemanager.goog."
+      }
+    },
+    "certificate": {
+      "resource": "projects/coincard-prod/locations/global/certificates/coincard-wildcard-cert",
+      "domains": [
+        "*.coincard.click"
+      ],
+      "state": "PROVISIONING",
+      "authorizationState": "AUTHORIZING",
+      "pendingReason": "The generated authorization CNAME is frozen in the nondelegated target zone but is intentionally absent from the current public Squarespace authority."
+    },
+    "certificateMap": {
+      "resource": "projects/coincard-prod/locations/global/certificateMaps/coincard-edge-cert-map",
+      "entry": "projects/coincard-prod/locations/global/certificateMaps/coincard-edge-cert-map/certificateMapEntries/coincard-wildcard-entry",
+      "hostname": "*.coincard.click",
+      "entryState": "ACTIVE",
+      "edgeIp": "8.233.95.58",
+      "edgePort": 443
+    }
+  },
+  "loadBalancer": {
+    "mode": "GLOBAL_EXTERNAL_APPLICATION_LOAD_BALANCER",
+    "loadBalancingScheme": "EXTERNAL_MANAGED",
+    "networkTier": "PREMIUM",
+    "reservedAddress": {
+      "name": "coincard-wildcard-ipv4",
+      "id": "7928091232915911603",
+      "ipv4": "8.233.95.58",
+      "status": "IN_USE"
+    },
+    "internetNeg": {
+      "name": "coincard-firebase-origin-neg",
+      "id": "4913847970146250908",
+      "type": "INTERNET_FQDN_PORT",
+      "defaultPort": 443,
+      "endpoint": {
+        "fqdn": "coincard-prod.web.app",
+        "port": 443
+      }
+    },
+    "backendService": {
+      "name": "coincard-firebase-origin-backend",
+      "id": "8389363977407656010",
+      "protocol": "HTTPS",
+      "originHostOverride": "coincard-prod.web.app",
+      "cloudCdnEnabled": false,
+      "timeoutSeconds": 30
+    },
+    "httpsUrlMap": {
+      "name": "coincard-wildcard-https-map",
+      "id": "6945353473791062477",
+      "defaultBackend": "coincard-firebase-origin-backend",
+      "wwwRedirect": {
+        "host": "www.coincard.click",
+        "destinationHost": "coincard.click",
+        "https": true,
+        "response": 301,
+        "preserveQuery": true
+      }
+    },
+    "httpRedirectUrlMap": {
+      "name": "coincard-wildcard-http-redirect",
+      "id": "755021890364862882",
+      "httpsRedirect": true,
+      "response": 301,
+      "preserveHostPathAndQuery": true
+    },
+    "tlsPolicy": {
+      "name": "coincard-edge-tls-policy",
+      "id": "7455500888821952944",
+      "profile": "MODERN",
+      "minimumTlsVersion": "TLS_1_2"
+    },
+    "httpsProxy": {
+      "name": "coincard-wildcard-https-proxy",
+      "id": "5322266082589241730",
+      "urlMap": "coincard-wildcard-https-map",
+      "certificateMap": "coincard-edge-cert-map",
+      "tlsPolicy": "coincard-edge-tls-policy"
+    },
+    "httpProxy": {
+      "name": "coincard-wildcard-http-proxy",
+      "id": "1709234791697052055",
+      "urlMap": "coincard-wildcard-http-redirect"
+    },
+    "httpsForwardingRule": {
+      "name": "coincard-wildcard-https-forwarding-rule",
+      "id": "3674833317810106743",
+      "ipv4": "8.233.95.58",
+      "port": 443
+    },
+    "httpForwardingRule": {
+      "name": "coincard-wildcard-http-forwarding-rule",
+      "id": "8715769530419736900",
+      "ipv4": "8.233.95.58",
+      "port": 80
+    }
+  },
+  "directEdgeVerification": {
+    "forcedHostname": "antoinedennison.coincard.click",
+    "forcedIpv4": "8.233.95.58",
+    "publicWildcardDnsPublished": false,
+    "http": {
+      "status": 301,
+      "location": "https://antoinedennison.coincard.click:443/test-path?edge=1",
+      "result": "PASS"
+    },
+    "https": {
+      "result": "EXPECTED_PENDING_PUBLIC_DNS_AUTHORIZATION",
+      "strictTlsVerified": false,
+      "insecureTlsRoutingVerified": false,
+      "observedHandshake": "TLS peer closed before certificate presentation",
+      "reason": "Certificate Manager wildcard certificate remains PROVISIONING until its authorization CNAME is visible in current public DNS. No temporary certificate or weakened proxy was introduced."
+    }
+  },
+  "publicAuthority": {
+    "provider": "Squarespace DNS",
+    "nameServers": [
+      "nsd1.squarespacedns.com.",
+      "nsd2.squarespacedns.com.",
+      "nsd3.squarespacedns.com.",
+      "nsd4.squarespacedns.com."
+    ],
+    "apexA": [
+      "198.185.159.144",
+      "198.185.159.145",
+      "198.49.23.144",
+      "198.49.23.145"
+    ],
+    "appRecordPresent": false,
+    "wildcardRecordPresent": false,
+    "certificateManagerAuthorizationRecordPresent": false,
+    "parentDsPresent": false,
+    "changedInStep2B": false
+  },
+  "nextBoundary": {
+    "status": "EXPLICIT_PUBLIC_DNS_AUTHORIZATION_REQUIRED",
+    "minimumValidationOnlyRecordsForReview": [
+      "Certificate Manager per-project authorization CNAME",
+      "Firebase apex ACME TXT",
+      "Firebase app ACME TXT",
+      "Firebase apex ownership TXT"
+    ],
+    "routingAndDelegationRemainSeparate": true,
+    "registrarDelegationAuthorized": false,
+    "dnssecAuthorized": false
+  },
+  "authorityBoundary": {
+    "publicDnsChanged": false,
+    "registrarNameServersChanged": false,
+    "squarespaceAuthorityRemoved": false,
+    "dnssecEnabled": false,
+    "parentDsCreated": false,
+    "currentHeadChanged": false,
+    "usernameSnapshotPublished": false,
+    "antoineIdentityPublished": false,
+    "lifecycleIdentityChanged": false,
+    "holderApplicationImplemented": false,
+    "billingSystemImplemented": false
+  },
+  "worktree": {
+    "preexistingDirtyWorktreePreserved": true,
+    "unrelatedChangesModified": false,
+    "deploymentPerformedFromCleanClone": true,
+    "evidenceFilesRemainUncommittedAtRecordTime": true
+  }
+}
