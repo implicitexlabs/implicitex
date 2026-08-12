@@ -22,7 +22,7 @@ No collection stores or writes a public username Current Head, executable-regist
 ## Transaction rules
 
 - Username reservation reads the account, username claim, and operation record in one transaction. A username-keyed document permits at most one live winner.
-- A live reservation is idempotent for its owning account. An expired, unallocated reservation can be replaced. Allocated, tombstoned, and permanently held claims never expire through the reservation API.
+- A reservation remains live for exactly 30 minutes under the current v1 product policy. The owning account may retry it idempotently during that window. At the expiration timestamp it is expired and an unallocated reservation can be replaced. Allocated, tombstoned, and permanently held claims never expire through the reservation API.
 - Identity allocation consumes the exact owned reservation and atomically writes the account, username claim, reservation, and opaque card record.
 - Presentation and route writes require expected prior revisions inside the transaction.
 - Route changes clear any attached wallet-evidence reference. Evidence must be freshly rebound to the exact new route revision.

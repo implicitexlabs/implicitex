@@ -281,6 +281,29 @@ test('transactional reservation has one winner and same-account live retry is id
   assert.equal(env.db.list(COLLECTIONS.reservations).length, 1);
 });
 
+test('reservation policy is 30 minutes with an exclusive expiration boundary', async () => {
+  assert.equal(RESERVATION_TTL_MS, 30 * 60 * 1000);
+  const env = makeEnvironment();
+  await Promise.all([initialize(env, ACCOUNT_A), initialize(env, ACCOUNT_B)]);
+  const first = await reserve(env, ACCOUNT_A, USERNAME, 'reserve_thirty_minute_boundary');
+  assert.equal(Date.parse(first.expiresAt) - START, RESERVATION_TTL_MS);
+
+  env.advance(RESERVATION_TTL_MS - 1);
+  const retry = await reserve(env, ACCOUNT_A, USERNAME, 'reserve_before_boundary_retry');
+  assert.equal(retry.reservationId, first.reservationId);
+  assert.equal(retry.idempotent, true);
+  await expectCode(
+    reserve(env, ACCOUNT_B, USERNAME, 'reserve_before_boundary_other'),
+    'USERNAME_RESERVED',
+  );
+
+  env.advance(1);
+  const acquired = await reserve(env, ACCOUNT_B, USERNAME, 'reserve_at_boundary_other');
+  assert.equal(acquired.accountId, ACCOUNT_B);
+  assert.notEqual(acquired.reservationId, first.reservationId);
+  assert.equal(env.db.list(COLLECTIONS.reservations).length, 2);
+});
+
 test('reservation expiry releases only unallocated names; tombstoned names remain unavailable', async () => {
   const env = makeEnvironment();
   await Promise.all([initialize(env, ACCOUNT_A), initialize(env, ACCOUNT_B)]);
