@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Coin Card Holder — Non-production</title>
+  <link rel="stylesheet" href="/app-web/holder-management/public/styles.css">
+</head>
+<body>
+  <div class="environment-bar" role="status">
+    <strong>NON-PRODUCTION</strong>
+    <span>Local holder-management fixture. No authoritative publication or payment execution.</span>
+  </div>
+
+  <div id="holderApp" class="app-shell" data-ready="false" data-execution-eligible="false">
+    <header class="app-header">
+      <a class="wordmark" href="#coin-card" aria-label="Coin Card holder home">
+        <span class="mark" aria-hidden="true">CC</span>
+        <span>Coin Card</span>
+      </a>
+      <div class="account-chip">
+        <span class="status-dot" aria-hidden="true"></span>
+        <span>Fixture account</span>
+      </div>
+    </header>
+
+    <div class="app-layout">
+      <nav class="side-nav" aria-label="Holder management">
+        <button type="button" class="nav-item is-active" data-section-target="coin-card">Coin Card</button>
+        <button type="button" class="nav-item" data-section-target="presentation">Presentation</button>
+        <button type="button" class="nav-item" data-section-target="routing">Routing</button>
+        <button type="button" class="nav-item" data-section-target="account">Account</button>
+      </nav>
+
+      <main class="main-content">
+        <div id="errorBanner" class="notice notice-error" role="alert" hidden></div>
+
+        <section id="coin-card" class="management-section is-active" data-section="coin-card">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Holder overview</p>
+              <h1>Your Coin Card</h1>
+              <p class="lede">Manage one public identity while authority and holder intent remain visibly separate.</p>
+            </div>
+            <span id="workflowBadge" class="state-badge">LOADING</span>
+          </div>
+
+          <div class="summary-grid">
+            <article class="panel identity-panel">
+              <div class="panel-label">Canonical identity</div>
+              <div id="summaryUsername" class="identity-name">Not selected</div>
+              <a id="summaryCanonicalUrl" class="technical-link" href="#" target="_blank" rel="noopener" hidden></a>
+              <dl class="facts">
+                <div><dt>Lifecycle</dt><dd id="summaryLifecycle">UNKNOWN</dd></div>
+                <div><dt>Entitlement</dt><dd id="summaryEntitlement">ENTITLEMENT_REQUIRED</dd></div>
+                <div><dt>Wallet control</dt><dd id="summaryWalletControl">WALLET_NOT_CONFIGURED</dd></div>
+                <div><dt>Write state</dt><dd id="summaryWriteState">LOCAL_NON_PRODUCTION_DRAFT</dd></div>
+              </dl>
+            </article>
+
+            <article class="panel route-panel">
+              <div class="panel-label">Current route view</div>
+              <dl class="facts facts-large">
+                <div><dt>Network</dt><dd id="summaryNetwork">Polygon</dd></div>
+                <div><dt>Asset</dt><dd id="summaryAsset">USDC</dd></div>
+                <div><dt>Recipient</dt><dd id="summaryWallet" class="mono">Not configured</dd></div>
+                <div><dt>Route revision</dt><dd id="summaryRevision" class="mono">—</dd></div>
+                <div><dt>Last authorized update</dt><dd id="summaryLastUpdate" class="mono">—</dd></div>
+              </dl>
+            </article>
+          </div>
+
+          <article class="panel activation-panel">
+            <div class="panel-header">
+              <div>
+                <div class="panel-label">First-card activation review</div>
+                <h2>Local intent, not production authority</h2>
+              </div>
+              <span class="state-badge state-badge-muted">executionEligible: false</span>
+            </div>
+
+            <ol id="activationSteps" class="activation-steps" aria-label="Activation steps"></ol>
+
+            <div class="activation-controls">
+              <label class="field field-grow">
+                <span>Canonical username</span>
+                <input id="usernameInput" value="antoinedennison" autocomplete="off" spellcheck="false">
+                <small>4–32 lowercase letters, digits, and internal hyphens.</small>
+              </label>
+              <div class="button-row">
+                <button type="button" class="button" data-action="select-username">Confirm username</button>
+                <button type="button" class="button button-secondary" data-action="reserve-username">Reserve</button>
+                <button type="button" class="button button-secondary" data-action="allocate-card">Create local identity</button>
+                <button type="button" class="button button-secondary" data-action="assess-entitlement">Check prerequisite</button>
+                <button type="button" class="button button-primary" data-action="review-activation">Review activation</button>
+              </div>
+            </div>
+          </article>
+
+          <article class="panel preview-panel">
+            <div class="panel-header">
+              <div>
+                <div class="panel-label">Public preview</div>
+                <h2>What a sender will actually see</h2>
+              </div>
+              <button type="button" class="button button-secondary" data-action="refresh-preview">Refresh authoritative preview</button>
+            </div>
+            <div id="publicPreview" class="preview-result" data-preview-state="NOT_LOADED">
+              <span class="preview-state">NOT_LOADED</span>
+              <p>The preview is loaded through the public read-only adapter, not from these form fields.</p>
+            </div>
+          </article>
+        </section>
+
+        <section id="presentation" class="management-section" data-section="presentation" hidden>
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Presentation</p>
+              <h1>Public profile fields</h1>
+              <p class="lede">A bounded identity profile. Presentation changes cannot change routing authority.</p>
+            </div>
+          </div>
+          <form id="presentationForm" class="panel form-panel">
+            <label class="field"><span>Avatar URL</span><input id="avatarUrl" type="url" value="https://example.test/antoine-avatar.png"></label>
+            <label class="field"><span>Banner URL</span><input id="bannerUrl" type="url" value="https://example.test/antoine-banner.png"></label>
+            <label class="field field-wide"><span>Short bio</span><textarea id="bio" maxlength="160" rows="4">Antoine's production-shaped, non-production Coin Card fixture.</textarea><small><span id="bioCount">0</span>/160</small></label>
+            <label class="field field-wide"><span>External link</span><input id="externalUrl" type="url" value="https://example.com/"></label>
+            <div class="form-footer field-wide">
+              <p>Saved locally only. No lifecycle, route, evidence, or Current Head is changed.</p>
+              <button class="button button-primary" type="submit" data-action="save-presentation">Save presentation draft</button>
+            </div>
+          </form>
+        </section>
+
+        <section id="routing" class="management-section" data-section="routing" hidden>
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Routing</p>
+              <h1>Polygon USDC destination</h1>
+              <p class="lede">V1 exposes one explicit supported route and one recipient wallet.</p>
+            </div>
+          </div>
+          <form id="routeForm" class="panel form-panel">
+            <label class="field"><span>Network</span><input id="network" value="Polygon" readonly></label>
+            <label class="field"><span>Chain ID</span><input id="chainId" value="137" readonly class="mono"></label>
+            <label class="field"><span>Asset</span><input id="asset" value="USDC" readonly></label>
+            <label class="field"><span>Token contract</span><input id="tokenContract" value="0x3c499c542cef5e3811e1192ce70d8cc03d5c3359" readonly class="mono"></label>
+            <label class="field field-wide"><span>Recipient wallet</span><input id="recipientAddress" value="0x2489587c9da6eab970a5479ba70273ba37961221" class="mono" autocomplete="off" spellcheck="false"></label>
+            <div class="form-footer field-wide">
+              <p>A change becomes local route intent and requires wallet-control evidence. It is never directly published.</p>
+              <button class="button button-primary" type="submit" data-action="save-route">Stage route intent</button>
+            </div>
+          </form>
+
+          <article class="panel evidence-panel">
+            <div class="panel-header">
+              <div>
+                <div class="panel-label">Wallet-control evidence</div>
+                <h2 id="evidenceHeading">Wallet not configured</h2>
+              </div>
+              <span id="evidenceBadge" class="state-badge">WALLET_NOT_CONFIGURED</span>
+            </div>
+            <p id="evidenceCopy">Configure a route before requesting a local fixture challenge.</p>
+            <div class="button-row">
+              <button type="button" class="button button-secondary" data-action="request-challenge">Request challenge</button>
+              <button type="button" class="button button-primary" data-action="verify-wallet">Verify fixture proof</button>
+            </div>
+          </article>
+        </section>
+
+        <section id="account" class="management-section" data-section="account" hidden>
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Account</p>
+              <h1>Holder boundary</h1>
+              <p class="lede">A deterministic local session isolated to the future holder-app origin.</p>
+            </div>
+          </div>
+          <article class="panel">
+            <dl class="facts facts-large">
+              <div><dt>Account ID</dt><dd id="accountId" class="mono">—</dd></div>
+              <div><dt>Session origin</dt><dd id="sessionOrigin" class="mono">—</dd></div>
+              <div><dt>Audience</dt><dd id="sessionAudience" class="mono">—</dd></div>
+              <div><dt>Cookie/session boundary</dt><dd id="sessionBoundary" class="mono">—</dd></div>
+              <div><dt>Coin Cards permitted</dt><dd>One</dd></div>
+            </dl>
+            <div class="notice notice-neutral">This fixture does not share an OAuth audience, cookie, permission set, or service-worker scope with ImplicitEx Transfer Portal.</div>
+          </article>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script src="/app-web/frontend/public/card/coin-card-canonical-username.js"></script>
+  <script src="/app-web/frontend/public/card/coin-card-readonly-browser.js"></script>
+  <script src="/app-web/holder-management/coin-card-holder-model.js"></script>
+  <script src="/app-web/holder-management/non-production/holder-runtime.js"></script>
+  <script src="/app-web/holder-management/public/app.js"></script>
+</body>
+</html>
