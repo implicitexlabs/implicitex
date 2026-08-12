@@ -23,6 +23,24 @@ service cloud.firestore {
     match /walletChallengeRateLimits/{document=**} {
       allow read, write: if false;
     }
+    match /coinCardHolderAccounts/{document=**} {
+      allow read, write: if false;
+    }
+    match /coinCardHolderUsernameClaims/{document=**} {
+      allow read, write: if false;
+    }
+    match /coinCardHolderReservations/{document=**} {
+      allow read, write: if false;
+    }
+    match /coinCardHolderCards/{document=**} {
+      allow read, write: if false;
+    }
+    match /coinCardHolderOperations/{document=**} {
+      allow read, write: if false;
+    }
+    match /coinCardHolderEvidenceUses/{document=**} {
+      allow read, write: if false;
+    }
     match /orders/{document=**} {
       allow read, write: if false;
     }

@@ -27,6 +27,7 @@ function createWalletChallengeService(options) {
   const clock = options.clock || defaultClock;
   const randomBytes = options.randomBytes || crypto.randomBytes;
   const randomUUID = options.randomUUID || crypto.randomUUID;
+  const verifiedProofResults = new WeakSet();
 
   async function issueChallenge(actor, input) {
     const account = normalizeActor(actor);
@@ -71,7 +72,7 @@ function createWalletChallengeService(options) {
         result.mismatchField ? { mismatchField: result.mismatchField } : null,
       );
     }
-    return Object.freeze({
+    const publicResult = Object.freeze({
       schemaVersion: result.proof.schemaVersion,
       verified: true,
       proofId: result.proof.proofId,
@@ -83,12 +84,20 @@ function createWalletChallengeService(options) {
       chainId: result.proof.chainId,
       purpose: result.proof.purpose,
       verifiedAt: result.proof.verifiedAt.toISOString(),
+      expiresAt: result.proof.expiresAt.toISOString(),
     });
+    verifiedProofResults.add(publicResult);
+    return publicResult;
+  }
+
+  function isVerifiedWalletProofResult(value) {
+    try { return verifiedProofResults.has(value); } catch (_) { return false; }
   }
 
   return Object.freeze({
     issueChallenge,
     verifyChallenge,
+    isVerifiedWalletProofResult,
   });
 }
 

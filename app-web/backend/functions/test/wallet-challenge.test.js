@@ -245,6 +245,9 @@ test('valid EIP-191 signature atomically creates one immutable wallet proof', as
   assert.equal(result.verified, true);
   assert.equal(result.proofId, challenge.challengeId);
   assert.equal(result.walletAddress, wallet.address);
+  assert.equal(result.expiresAt, challenge.expiresAt);
+  assert.equal(service.isVerifiedWalletProofResult(result), true);
+  assert.equal(service.isVerifiedWalletProofResult({ ...result }), false);
   const record = db.read(`walletChallenges/${challenge.challengeId}`);
   const proof = db.read(`walletProofs/${challenge.challengeId}`);
   assert.equal(record.status, 'VERIFIED');
@@ -431,6 +434,12 @@ test('authoritative Firestore rules deny every direct client read and write', ()
     'walletChallenges',
     'walletProofs',
     'walletChallengeRateLimits',
+    'coinCardHolderAccounts',
+    'coinCardHolderUsernameClaims',
+    'coinCardHolderReservations',
+    'coinCardHolderCards',
+    'coinCardHolderOperations',
+    'coinCardHolderEvidenceUses',
     'orders',
     'coinCards',
     'registry',
@@ -443,6 +452,10 @@ test('authoritative Firestore rules deny every direct client read and write', ()
       `${collection} must have an explicit deny rule`,
     );
   }
-  assert.equal((source.match(/allow read, write: if false;/g) || []).length, 11);
+  assert.equal(
+    (source.match(/allow read, write: if false;/g) || []).length,
+    collectionNames.length + 1,
+    'each named collection plus the catch-all must deny client access',
+  );
   assert.doesNotMatch(source, /allow\s+(read|write)[^;]*if\s+true/);
 });
