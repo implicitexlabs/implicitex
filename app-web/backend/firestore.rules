@@ -41,6 +41,15 @@ service cloud.firestore {
     match /coinCardHolderEvidenceUses/{document=**} {
       allow read, write: if false;
     }
+    match /coinCardHolderAuthSubjects/{document=**} {
+      allow read, write: if false;
+    }
+    match /coinCardHolderAccountBindings/{document=**} {
+      allow read, write: if false;
+    }
+    match /coinCardHolderSessions/{document=**} {
+      allow read, write: if false;
+    }
     match /orders/{document=**} {
       allow read, write: if false;
     }
