@@ -22,6 +22,7 @@
   var MODEL_SCHEMA = 'coin-card-holder-management-state.v1';
   var SESSION_SCHEMA = 'coin-card-holder-session.non-production.v1';
   var ACCOUNT_SOURCE_SCHEMA = 'coin-card-holder-account-source.non-production.v1';
+  var CONTROL_PLANE_DRAFT_SCHEMA = 'coin-card-holder-control-plane-draft.v1';
   var CANONICAL_HOST = 'coincard.click';
   var HOLDER_ORIGIN = 'https://app.coincard.click';
   var HOLDER_AUDIENCE = 'coin-card-holder';
@@ -102,7 +103,7 @@
   }
 
   function deriveWorkflow(raw) {
-    if (raw.account.cardId) {
+    if (raw.account.cardId && raw.account.identityAuthority === 'AUTHORITATIVE_READ_ONLY') {
       if (raw.lifecycleState === LIFECYCLE_STATES.ACTIVE && !raw.draft.route) {
         return 'ACTIVE_MANAGEMENT';
       }
@@ -116,8 +117,10 @@
       return 'LIFECYCLE_' + raw.lifecycleState;
     }
     if (!raw.draft.username) return 'ACCOUNT_READY';
-    if (!raw.draft.reservation) return 'USERNAME_SELECTED';
-    if (!raw.draft.cardId) return 'USERNAME_RESERVED';
+    if (!raw.draft.cardId) {
+      if (!raw.draft.reservation) return 'USERNAME_SELECTED';
+      return 'USERNAME_RESERVED';
+    }
     if (!raw.draft.presentation) return 'PRESENTATION_REQUIRED';
     if (!raw.draft.route) return 'ROUTING_REQUIRED';
     if (raw.walletControlState !== WALLET_CONTROL_STATES.WALLET_CONTROL_VERIFIED) {
@@ -146,7 +149,9 @@
       canonicalUrl: canonicalUrl(raw.account.username || raw.draft.username),
       writeDisposition: raw.authoritative.preview
         ? 'AUTHORITATIVE_READ_ONLY_WITH_LOCAL_DRAFTS'
-        : 'LOCAL_NON_PRODUCTION_DRAFT',
+        : raw.account.identityAuthority === 'DURABLE_CONTROL_PLANE_DRAFT'
+          ? 'DURABLE_NON_PRODUCTION_CONTROL_PLANE_DRAFT'
+          : 'LOCAL_NON_PRODUCTION_DRAFT',
       executionEligible: false,
       paymentControlEnabled: false,
       authoritativePublicationAdvanced: false,
@@ -216,7 +221,59 @@
     }
     if (hasCard && !CARD_ID_RE.test(record.cardId)) throw new Error('account card identity invalid');
     if (record.route !== null && !hasCard) throw new Error('route exists without Coin Card identity');
-    return clone(record);
+    var controlPlaneDraft = record.controlPlaneDraft || null;
+    var normalizedControlPlanePresentation = null;
+    if (controlPlaneDraft !== null) {
+      assertPlainObject(controlPlaneDraft, 'control-plane draft');
+      if (
+        controlPlaneDraft.schemaVersion !== CONTROL_PLANE_DRAFT_SCHEMA
+        || controlPlaneDraft.environment !== 'NON_PRODUCTION'
+        || controlPlaneDraft.authorityClaimed !== false
+        || controlPlaneDraft.accountId !== record.accountId
+        || controlPlaneDraft.username !== record.username
+        || controlPlaneDraft.cardId !== record.cardId
+        || controlPlaneDraft.executionEligible !== false
+        || controlPlaneDraft.paymentControlEnabled !== false
+        || controlPlaneDraft.authoritativeLifecycleState !== null
+        || controlPlaneDraft.authoritativeStateSource !== 'EXTERNAL_READ_ONLY_NOT_STORED'
+        || !hasUsername
+        || !hasCard
+        || !Number.isSafeInteger(controlPlaneDraft.presentationRevision)
+        || controlPlaneDraft.presentationRevision < 0
+        || !Number.isSafeInteger(controlPlaneDraft.routeRevision)
+        || controlPlaneDraft.routeRevision < 0
+        || ['ENTITLEMENT_REQUIRED', 'NON_PRODUCTION_ELIGIBLE'].indexOf(
+          controlPlaneDraft.entitlementState
+        ) === -1
+        || !Object.prototype.hasOwnProperty.call(
+          WALLET_CONTROL_STATES, controlPlaneDraft.walletControlState
+        )
+      ) throw new Error('control-plane draft authority boundary invalid');
+      if (record.route !== null) throw new Error('control-plane draft cannot supply authoritative route');
+      if (controlPlaneDraft.presentation !== null) {
+        normalizedControlPlanePresentation = validatePresentation(controlPlaneDraft.presentation);
+      }
+      if (controlPlaneDraft.route !== null) {
+        assertPlainObject(controlPlaneDraft.route, 'control-plane route');
+        if (
+          controlPlaneDraft.route.authoritative !== false
+          || controlPlaneDraft.route.chainId !== ROUTE_POLICY.chainId
+          || controlPlaneDraft.route.asset !== ROUTE_POLICY.asset
+          || typeof controlPlaneDraft.route.tokenContractAddress !== 'string'
+          || controlPlaneDraft.route.tokenContractAddress.toLowerCase()
+            !== ROUTE_POLICY.tokenContractAddress
+          || typeof controlPlaneDraft.route.recipientAddress !== 'string'
+          || !/^0x[0-9A-Fa-f]{40}$/.test(controlPlaneDraft.route.recipientAddress)
+          || String(controlPlaneDraft.route.revision) !== String(controlPlaneDraft.routeRevision)
+        ) throw new Error('control-plane route intent invalid');
+      }
+    }
+    var normalized = clone(record);
+    normalized.controlPlaneDraft = clone(controlPlaneDraft);
+    if (normalized.controlPlaneDraft && normalizedControlPlanePresentation) {
+      normalized.controlPlaneDraft.presentation = clone(normalizedControlPlanePresentation);
+    }
+    return normalized;
   }
 
   function normalizeOptionalUrl(value, maximum, label) {
@@ -288,6 +345,7 @@
         throw new Error('holder account authority unavailable');
       }
       var account = validateAccountRecord(accountResult, session, usernameApi);
+      var controlPlaneDraft = account.controlPlaneDraft || null;
       var route = account.route ? clone(account.route) : null;
       return sealState({
         session: session,
@@ -296,15 +354,20 @@
           username: account.username,
           cardId: account.cardId,
           originalHolder: account.originalHolder,
+          identityAuthority: controlPlaneDraft
+            ? 'DURABLE_CONTROL_PLANE_DRAFT'
+            : account.cardId
+              ? 'AUTHORITATIVE_READ_ONLY'
+              : 'UNASSIGNED',
         },
         draft: {
           username: account.username,
           reservation: null,
           cardId: account.cardId,
-          presentation: null,
-          route: null,
+          presentation: controlPlaneDraft ? clone(controlPlaneDraft.presentation) : null,
+          route: controlPlaneDraft ? clone(controlPlaneDraft.route) : null,
           walletChallenge: null,
-          walletEvidence: null,
+          walletEvidence: controlPlaneDraft ? clone(controlPlaneDraft.walletEvidence) : null,
         },
         authoritative: {
           preview: null,
@@ -313,11 +376,17 @@
           lastAuthorizedUpdate: route && route.lastAuthorizedUpdate || null,
         },
         lifecycleState: LIFECYCLE_STATES.UNKNOWN,
-        walletControlState: route
+        walletControlState: controlPlaneDraft
+          ? controlPlaneDraft.walletControlState
+          : route
           ? (route.walletControlState || WALLET_CONTROL_STATES.WALLET_CONTROL_UNVERIFIED)
           : WALLET_CONTROL_STATES.WALLET_NOT_CONFIGURED,
-        entitlementState: account.entitlementState || 'ENTITLEMENT_REQUIRED',
-        reviewed: false,
+        entitlementState: controlPlaneDraft
+          ? controlPlaneDraft.entitlementState
+          : account.entitlementState || 'ENTITLEMENT_REQUIRED',
+        reviewed: controlPlaneDraft
+          ? controlPlaneDraft.activationReadiness === 'ACTIVATION_READY'
+          : false,
       });
     }
 
@@ -398,6 +467,7 @@
     async function configureRoute(state, input) {
       assertState(state);
       if (!currentCardId(state) || !currentUsername(state)) throw new Error('Coin Card identity required');
+      var replacingExistingRoute = !!(state.draft.route || state.authoritative.route);
       assertPlainObject(input, 'route intent');
       if (
         input.chainId !== ROUTE_POLICY.chainId
@@ -440,7 +510,7 @@
       draft.walletEvidence = null;
       return replace(state, {
         draft: draft,
-        walletControlState: state.account.cardId
+        walletControlState: replacingExistingRoute
           ? WALLET_CONTROL_STATES.ROUTE_UPDATE_REQUIRES_EVIDENCE
           : WALLET_CONTROL_STATES.WALLET_CONTROL_UNVERIFIED,
         reviewed: false,
@@ -550,7 +620,7 @@
     function reviewActivation(state) {
       assertState(state);
       var ready = !!(
-        !state.account.cardId
+        state.account.identityAuthority !== 'AUTHORITATIVE_READ_ONLY'
         && state.draft.username
         && state.draft.reservation
         && state.draft.cardId
@@ -636,6 +706,7 @@
     MODEL_SCHEMA: MODEL_SCHEMA,
     SESSION_SCHEMA: SESSION_SCHEMA,
     ACCOUNT_SOURCE_SCHEMA: ACCOUNT_SOURCE_SCHEMA,
+    CONTROL_PLANE_DRAFT_SCHEMA: CONTROL_PLANE_DRAFT_SCHEMA,
     HOLDER_ORIGIN: HOLDER_ORIGIN,
     HOLDER_AUDIENCE: HOLDER_AUDIENCE,
     SESSION_BOUNDARY: SESSION_BOUNDARY,
