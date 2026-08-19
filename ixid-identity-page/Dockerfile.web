@@ -1,0 +1,32 @@
+# IX ID Public Web — Cloud Run static service
+# =============================================
+# Serves the frozen ixid-identity-page/public/ static application.
+# No Firestore/Datastore authority. No application logic.
+#
+# The runtime identity (ixid-web-runtime) holds zero database permissions.
+# This container serves static files and nothing else.
+#
+# Path contract (from Load Balancer):
+#   /* → this service
+#   /api/* → ixid-public-edge (routed by LB before this container is reached)
+#
+# Build:
+#   docker build -f Dockerfile.web -t ixid-public-web .
+
+FROM nginx:alpine
+
+# Remove default nginx config
+RUN rm /etc/nginx/conf.d/default.conf
+
+# nginx config: listen on $PORT (Cloud Run injects PORT=8080), serve /app
+COPY nginx.conf /etc/nginx/conf.d/app.conf.template
+
+# Copy the frozen static application
+COPY public/ /usr/share/nginx/html/
+
+EXPOSE 8080
+
+# Substitute $PORT into the nginx config at container start, then run nginx
+CMD ["/bin/sh", "-c", \
+  "envsubst '$PORT' < /etc/nginx/conf.d/app.conf.template > /etc/nginx/conf.d/app.conf && \
+   nginx -g 'daemon off;'"]

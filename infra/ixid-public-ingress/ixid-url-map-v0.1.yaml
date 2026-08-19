@@ -1,0 +1,40 @@
+# IX ID Wildcard Public Ingress — URL Map v0.1
+# ============================================
+# Deployed to: ixid-prod (project 551374626488)
+# Resource:    ixid-url-map (global)
+# Frozen:      2026-08-18
+#
+# Routing contract (frozen):
+#
+#   *.ixid.me /api/*  → ixid-edge-backend → ixid-public-edge
+#                        pathPrefixRewrite: /api/ → /
+#                        (edge receives /public/identity/{ix_id}, not /api/public/...)
+#
+#   *.ixid.me /*      → ixid-web-backend → ixid-public-web
+#                        (static identity page, no rewrite)
+#
+# The edge service contract (/public/identity/{ix_id}) is FROZEN.
+# This URL map adapts the public namespace (/api/...) to that frozen contract.
+# The service does not change to accommodate ingress; ingress adapts to the service.
+#
+# To re-import this configuration:
+#   gcloud compute url-maps import ixid-url-map \
+#     --source=infra/ixid-public-ingress/ixid-url-map-v0.1.yaml \
+#     --global --project=ixid-prod
+
+name: ixid-url-map
+defaultService: projects/ixid-prod/global/backendServices/ixid-web-backend
+hostRules:
+  - hosts:
+      - "*.ixid.me"
+    pathMatcher: ixid-paths
+pathMatchers:
+  - name: ixid-paths
+    defaultService: projects/ixid-prod/global/backendServices/ixid-web-backend
+    pathRules:
+      - paths:
+          - "/api/*"
+        service: projects/ixid-prod/global/backendServices/ixid-edge-backend
+        routeAction:
+          urlRewrite:
+            pathPrefixRewrite: "/"

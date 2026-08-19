@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>IX ID — Identity</title>
+  <meta name="description" content="Public identity record for this IX ID.">
+  <!--
+    Cache-Control: no-store is set by the hosting layer (Load Balancer or CDN
+    response policy). This page is not responsible for cache policy.
+
+    Same-origin API: identity.js fetches /api/public/identity/{ix_id}.
+    The External Application Load Balancer routes /api/* to ixid-public-edge
+    and /* to this static page, both under the *.ixid.me wildcard certificate.
+    No CORS configuration is required; page and API share the same origin.
+
+    That infrastructure slice (LB + wildcard cert + serverless NEGs) is not
+    yet deployed. Local development requires a proxy from /api/ to the public
+    edge's .run.app URL; production requires no such proxy.
+  -->
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self';
+             script-src 'self' 'unsafe-inline';
+             style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+             font-src 'self' https://fonts.gstatic.com;
+             img-src 'self' data:;
+             connect-src 'self';
+             object-src 'none';
+             base-uri 'self';">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="identity.css">
+</head>
+<body>
+
+  <header class="page-header">
+    <a href="https://ixid.me" class="wordmark">IX ID</a>
+    <span class="dot" aria-hidden="true"></span>
+    <span class="product-mark">Public Identity</span>
+  </header>
+
+  <main>
+    <div id="ix-root" data-page-state="loading">
+      <div class="identity-card">
+
+        <div class="ix-id-row">
+          <span class="ix-prefix">IX ID</span>
+          <span class="ix-id-value" data-ix="id"></span>
+        </div>
+
+        <div class="domain-block">
+          <div class="domain-block-header">
+            <span class="domain-block-title">Website</span>
+            <span class="status-badge" data-ix="status-badge" data-status=""></span>
+          </div>
+
+          <div class="domain-detail">
+            <div class="detail-row">
+              <span class="detail-label">Domain</span>
+              <span class="detail-value" data-ix="subject"></span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Verified since</span>
+              <span class="detail-value" data-ix="verified-since"></span>
+            </div>
+          </div>
+
+          <p class="not-found-message" aria-live="polite">
+            This IX ID has not been claimed or does not exist.
+          </p>
+        </div>
+
+        <div class="evaluated-at-row" aria-label="Evaluation timestamp">
+          <span class="evaluated-at-label">Evaluated</span>
+          <span data-ix="evaluated-at"></span>
+        </div>
+
+      </div><!-- .identity-card -->
+    </div><!-- #ix-root -->
+  </main>
+
+  <footer class="page-footer">
+    <span>IX ID</span>
+    <span aria-hidden="true">·</span>
+    <a href="https://implicitex.com">ImplicitEx</a>
+  </footer>
+
+  <script src="identity.js"></script>
+  <script>
+    // Same-origin API: /api/public/identity/{ix_id}
+    // The Load Balancer routes /api/* to ixid-public-edge on the same origin.
+    // No base URL constant is needed; the default '/api' path is used.
+    IxIdentity.bootstrap();
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,49 @@
+# .dockerignore — IX Scheduler Cloud Run image
+# Excludes development artifacts, credentials, and test infrastructure.
+# Only the four service .py files and requirements.txt enter the image.
+
+# Version control
+.git
+.gitignore
+.gitattributes
+
+# Python bytecode and caches
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+*.egg-info/
+dist/
+build/
+
+# Tests (not needed at runtime)
+tests/
+
+# Local development configuration
+pytest.ini
+.ruff_cache/
+.mypy_cache/
+
+# Firestore / Firebase emulator state
+firestore-debug.log
+firebase-debug.log
+
+# Credentials and secrets — must never enter the image
+*.key
+*-key.json
+*service-account*.json
+credentials*.json
+.env
+.env.*
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Editor and OS artifacts
+.DS_Store
+*.swp
+*.swo
+Thumbs.db

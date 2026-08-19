@@ -1,0 +1,12 @@
+{
+  "name": "ixid-identity-page",
+  "version": "0.1.0",
+  "description": "IX ID Public Identity Page — static frontend for *.ixid.me",
+  "private": true,
+  "scripts": {
+    "test": "node tests/identity.test.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

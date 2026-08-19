@@ -1,0 +1,18 @@
+# IX Scheduler Cloud Run service — Python runtime dependencies
+# Pin exact versions; update deliberately after testing.
+
+# HTTP server
+flask==3.1.3
+gunicorn==26.0.0
+
+# Flask transitive dependencies (pinned for reproducibility)
+werkzeug==3.1.8
+blinker==1.9.0
+click==8.4.2
+itsdangerous==2.2.0
+jinja2==3.1.6
+markupsafe==3.0.3
+
+# Firestore + Google API infrastructure
+google-cloud-firestore==2.28.1
+google-api-core==2.34.0

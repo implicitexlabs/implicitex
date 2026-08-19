@@ -1,0 +1,36 @@
+# IX ID Public Identity Projection — Cloud Run service
+# ======================================================
+# Read-only HTTP boundary for the frozen Presentation Kernel.
+# No Firestore writes. No Transition Service. No DNS.
+#
+# Authentication: this image is deployed as a PRIVATE Cloud Run service
+# (ixid-projection). The public edge (ixid-public-edge) holds the only
+# service-scoped roles/run.invoker binding on this service; allUsers is
+# NOT granted. The runtime identity (ixid-projection-runtime) holds only
+# roles/datastore.viewer — it literally cannot write Firestore.
+#
+# Build:
+#   docker build -f Dockerfile.projection -t ixid-projection .
+# Local test:
+#   docker run --rm -e PORT=8080 -p 8080:8080 ixid-projection
+
+FROM python:3.13-slim
+
+RUN adduser --disabled-password --gecos "" appuser
+
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Only the projection boundary and the kernel it wraps.
+# No scheduler, transition, or domain verification modules.
+COPY ixid_presentation_kernel.py .
+COPY ixid_projection_handler.py .
+
+USER appuser
+
+ENV PORT=8080
+EXPOSE 8080
+
+CMD ["sh", "-c", "exec gunicorn --bind 0.0.0.0:${PORT} --workers 1 --threads 8 --timeout 60 ixid_projection_handler:app"]

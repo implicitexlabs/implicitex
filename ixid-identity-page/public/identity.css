@@ -1,0 +1,308 @@
+/*
+ * IX ID Public Identity Page — v0.1
+ * Mobile-first. No framework.
+ */
+
+/* -------------------------------------------------------------------------
+   Reset + base
+------------------------------------------------------------------------- */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:            #0c0d0e;
+  --surface:       #131518;
+  --surface-mid:   #1c1f24;
+  --border:        rgba(255,255,255,0.08);
+  --text-primary:  #f2f2f0;
+  --text-secondary:#9ea3aa;
+  --text-muted:    #5a5f66;
+  --accent:        #3ecf8e;   /* VERIFIED green */
+  --amber:         #e8a838;   /* RECHECK_PENDING */
+  --red:           #e05252;   /* EXPIRED / NOT_CURRENT */
+  --neutral:       #5a5f66;   /* NONE / loading */
+  --radius:        12px;
+  --radius-sm:     6px;
+  font-size: 16px;
+}
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* -------------------------------------------------------------------------
+   Page layout
+------------------------------------------------------------------------- */
+
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100svh;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right)
+           env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.page-header .wordmark {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.page-header .dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--text-muted);
+}
+
+.page-header .product-mark {
+  font-size: 12px;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+}
+
+main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 20px 60px;
+}
+
+/* -------------------------------------------------------------------------
+   Identity card
+------------------------------------------------------------------------- */
+
+.identity-card {
+  width: 100%;
+  max-width: 480px;
+}
+
+/* IX ID header */
+.ix-id-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.ix-prefix {
+  font-size: 12px;
+  color: var(--text-muted);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+.ix-id-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+  word-break: break-all;
+}
+
+/* Domain block */
+.domain-block {
+  margin-top: 24px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+}
+
+.domain-block-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.domain-block-title {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* Status badge — color driven by data-status attribute */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+}
+
+.status-badge::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.status-badge[data-status="VERIFIED"] {
+  color: var(--accent);
+  background: rgba(62, 207, 142, 0.1);
+}
+
+.status-badge[data-status="RECHECK_PENDING"] {
+  color: var(--amber);
+  background: rgba(232, 168, 56, 0.1);
+}
+
+.status-badge[data-status="EXPIRED"],
+.status-badge[data-status="NOT_CURRENT"] {
+  color: var(--red);
+  background: rgba(224, 82, 82, 0.1);
+}
+
+.status-badge[data-status="NONE"],
+.status-badge:not([data-status]) {
+  color: var(--text-muted);
+  background: rgba(90, 95, 102, 0.15);
+}
+
+/* Domain detail rows */
+.domain-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.detail-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.detail-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+}
+
+.detail-value {
+  font-size: 14px;
+  color: var(--text-primary);
+  word-break: break-all;
+}
+
+.detail-value:empty::after {
+  content: '—';
+  color: var(--text-muted);
+}
+
+/* -------------------------------------------------------------------------
+   Page states
+------------------------------------------------------------------------- */
+
+/* Loading */
+#ix-root[data-page-state="loading"] .identity-card {
+  opacity: 0.4;
+}
+
+#ix-root[data-page-state="loading"] .domain-block {
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.4; }
+  50%       { opacity: 0.7; }
+}
+
+/* Not found */
+#ix-root[data-page-state="not-found"] .domain-block {
+  border-color: rgba(90, 95, 102, 0.3);
+}
+
+#ix-root[data-page-state="not-found"] .not-found-message {
+  display: block;
+}
+
+.not-found-message {
+  display: none;
+  margin-top: 8px;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+/* Error */
+#ix-root[data-page-state="error"] .domain-block {
+  border-color: rgba(224, 82, 82, 0.2);
+}
+
+/* -------------------------------------------------------------------------
+   Evaluation timestamp
+------------------------------------------------------------------------- */
+
+.evaluated-at-row {
+  margin-top: 16px;
+  font-size: 11px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.evaluated-at-row .evaluated-at-label {
+  letter-spacing: 0.04em;
+}
+
+/* -------------------------------------------------------------------------
+   Page footer
+------------------------------------------------------------------------- */
+
+.page-footer {
+  padding: 20px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.page-footer a {
+  color: var(--text-muted);
+  text-decoration: none;
+}
+
+.page-footer a:hover {
+  color: var(--text-secondary);
+}
+
+/* -------------------------------------------------------------------------
+   Desktop
+------------------------------------------------------------------------- */
+
+@media (min-width: 600px) {
+  main { padding: 64px 24px 80px; }
+  .ix-id-value { font-size: 32px; }
+  .domain-block { padding: 24px; }
+}
