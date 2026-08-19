@@ -1,8 +1,14 @@
 # IX ID Wildcard Public Ingress v0.1 — Production State Record
 
-Freeze date: 2026-08-19 (pending final public-DNS gate)  
+Record date:  2026-08-19  
+Freeze status: FROZEN  
 GCP project: `ixid-prod` (551374626488)  
 Region: `us-central1` (Cloud Run services); global (LB components)
+
+## Commit History
+
+- `44a6179` — Integration checkpoint: previously frozen identity-page + services + Wildcard Public Ingress v0.1 implementation. Pre-DNS-gate.
+- Closure commit — Public-DNS gate evidence, final test counts, freeze declaration.
 
 ## Architecture
 
@@ -148,27 +154,65 @@ ixid-public-edge direct URL → HTTP 404 (blocked)
 ingress=internal-and-cloud-load-balancing confirmed on both
 ```
 
-## Data-Plane Gate — Public DNS Evidence
+## Data-Plane Gate — Public DNS Evidence (2026-08-19)
 
-*Pending wildcard A record publication in Squarespace DNS.*
-
+Wildcard A record published in Squarespace DNS:
 ```
 Type:  A
 Host:  *
 Value: 8.232.10.66
 ```
 
-Once published:
-- Authoritative DNS verification: all four nsd*.squarespacedns.com return 8.232.10.66
-- Public DNS resolution: gate-test.ixid.me → 8.232.10.66
-- Normal-DNS web probe: HTTP 200, Cache-Control: no-store, identity page
-- Normal-DNS API probe: HTTP 404, Cache-Control: no-store, canonical edge response
-- Browser smoke: page derives gate-test from hostname, fetches /api/public/identity/gate-test same-origin, no CORS
+### Authoritative DNS — wildcard A record
+All four nsd*.squarespacedns.com return `8.232.10.66` for `gate-test.ixid.me`.
+
+### Public DNS resolution
+```
+dig gate-test.ixid.me A +short → 8.232.10.66
+```
+
+### Normal-DNS web probe
+```
+GET https://gate-test.ixid.me/
+HTTP/2 200
+cache-control: no-store
+server: Google Frontend
+body: identity page (IxIdentity.bootstrap confirmed)
+```
+
+### Normal-DNS API probe
+```
+GET https://gate-test.ixid.me/api/public/identity/ix_nonexistent_probe
+HTTP/2 404
+cache-control: no-store
+body: {"error": "IX ID not found: 'ix_nonexistent_probe'"}
+```
+
+### verify-v0.1.sh (normal DNS, no --resolve)
+22/22 PASS
+
+### Browser smoke
+`https://gate-test.ixid.me/` — page derives `gate-test` from hostname via `parseIxId`;
+issues same-origin request to `/api/public/identity/gate-test`; no CORS;
+no `.run.app` dependency; renders not-found state for unclaimed IX ID.
 
 ## Test Gates
 
+### Integration checkpoint (44a6179) — forced-host mode
+
 | Gate | Count | Result |
 |---|---|---|
-| Identity page tests (`npm test`) | 37 | PASS |
-| Services tests (edge + projection) | 156 | PASS (55 skipped: emulator-only) |
-| verify-v0.1.sh --resolve | 17 | PASS |
+| Identity page tests (`npm test`) | 37/37 | PASS |
+| Services tests (unit, no emulator) | 156 passed / 55 skipped | INTERIM — emulator tests excluded |
+| `verify-v0.1.sh --resolve` | 17/17 | PASS |
+
+Note: The 55 skipped service tests require the Firestore emulator. The final freeze evidence must show the complete service gate with zero unexpected skips.
+
+### Final freeze gate — normal DNS (2026-08-19)
+
+| Gate | Count | Result |
+|---|---|---|
+| `verify-v0.1.sh` (no --resolve) | 22/22 | PASS |
+| Identity page tests (`npm test`) | 37/37 | PASS |
+| Services tests with Firestore emulator | 211/211, 0 skipped | PASS |
+| Browser smoke (`gate-test.ixid.me`) | hostname-derived, same-origin `/api/` | PASS |
