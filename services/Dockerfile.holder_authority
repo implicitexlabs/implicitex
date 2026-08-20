@@ -1,0 +1,37 @@
+# IX ID Holder Authority — Cloud Run service (private)
+# =====================================================
+# Write-authority boundary for all holder Firestore operations.
+# Ingress: all (IAM-private: only ixid-holder-edge-runtime holds run.invoker)
+# SA: ixid-holder-authority-runtime (roles/datastore.user)
+#
+# Authentication invariants:
+#   - Cloud Run IAM verifies X-Serverless-Authorization (OIDC from edge) before
+#     any application code executes.
+#   - Application verifies Authorization: Bearer <firebase-id-token> independently.
+#   - Neither bearer token is logged.
+#   - This image MUST NOT be deployed with allUsers → run.invoker.
+#
+# Build:
+#   docker build -f Dockerfile.holder_authority -t ixid-holder-authority .
+# Local test:
+#   docker run --rm -e PORT=8080 -p 8080:8080 ixid-holder-authority
+
+FROM python:3.13-slim
+
+RUN adduser --disabled-password --gecos "" appuser
+
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Only the authority boundary modules. No scheduler, edge proxy, or kernel.
+COPY ixid_holder_authority_service.py .
+COPY ixid_holder_authority_handler.py .
+
+USER appuser
+
+ENV PORT=8080
+EXPOSE 8080
+
+CMD ["sh", "-c", "exec gunicorn --bind 0.0.0.0:${PORT} --workers 1 --threads 8 --timeout 60 ixid_holder_authority_handler:app"]

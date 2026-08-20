@@ -1,4 +1,4 @@
-# IX Scheduler Cloud Run service — Python runtime dependencies
+# IX ID Cloud Run services — Python runtime dependencies
 # Pin exact versions; update deliberately after testing.
 
 # HTTP server
@@ -16,3 +16,8 @@ markupsafe==3.0.3
 # Firestore + Google API infrastructure
 google-cloud-firestore==2.28.1
 google-api-core==2.34.0
+
+# Firebase Admin SDK — required by ixid-holder-authority for Firebase ID token verification.
+# The holder-edge and other services install this package but do not use it at runtime.
+# firebase-admin.auth.verify_id_token() verifies aud against the initialized app project.
+firebase-admin==6.6.0

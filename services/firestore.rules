@@ -1,0 +1,79 @@
+// IX ID Firestore Security Rules — v0.1
+// ======================================
+// Contract: docs/architecture/ixid-holder-authority-v0.1.md §5.8
+//
+// Direct-Firestore authority invariant (frozen):
+//
+//   Browser and Firebase-authenticated clients must not be able to read or write
+//   any Holder Authority collection directly. All holder reads and writes must
+//   flow through ixid-holder-edge → authenticated ixid-holder-authority.
+//
+//   The following authority collections are denied to all direct client access
+//   (both unauthenticated and Firebase-authenticated):
+//
+//     accounts/{accountId}
+//     accounts/{accountId}/account_events/*
+//     auth_identities/{identityKey}
+//     holder_operation_receipts/{operationId}
+//     ix_ids/{ixId}
+//     ix_ids/{ixId}/ix_id_state_events/*
+//
+//   Server-side SAs (ixid-holder-authority-runtime with roles/datastore.user,
+//   ixid-projection-runtime with roles/datastore.viewer) access Firestore via
+//   the google-cloud-firestore server SDK, which bypasses these Security Rules.
+//   These rules apply to Firebase client SDK access only.
+//
+// Emulator gate requirement:
+//   Tests must prove BOTH read AND write denial for:
+//     - unauthenticated clients
+//     - Firebase-authenticated clients (any authenticated user)
+//   Write-only tests are insufficient. See exit gate loop 20 and F-10.
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Holder Authority Collections — deny all direct client access ──────────
+
+    match /accounts/{accountId} {
+      allow read, write: if false;
+
+      match /account_events/{eventId} {
+        allow read, write: if false;
+      }
+    }
+
+    match /auth_identities/{identityKey} {
+      allow read, write: if false;
+    }
+
+    match /holder_operation_receipts/{operationId} {
+      allow read, write: if false;
+    }
+
+    match /ix_ids/{ixId} {
+      allow read, write: if false;
+
+      match /ix_id_state_events/{eventId} {
+        allow read, write: if false;
+      }
+
+      // Verification claims and their subcollections (frozen from prior milestones)
+      match /verification_claims/{claimId} {
+        allow read, write: if false;
+
+        match /events/{eventId} {
+          allow read, write: if false;
+        }
+      }
+    }
+
+    // ── Catch-all: deny everything else ──────────────────────────────────────
+    // No collection grants client SDK access. All IX ID data is server-only.
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

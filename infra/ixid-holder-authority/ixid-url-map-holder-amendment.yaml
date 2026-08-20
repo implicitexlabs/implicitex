@@ -1,0 +1,62 @@
+# IX ID URL Map — Holder Authority Amendment
+# ============================================
+# This file records the ADDITIVE change to ixid-url-map required by
+# Holder Authority v0.1. The existing v0.1 routing is FROZEN and unchanged.
+#
+# M1 amendment: add /api/holder/* path rule before deployment.
+#
+# The longer prefix /api/holder/* takes precedence over /api/* in GCP URL
+# map longest-prefix matching. The existing /api/* → ixid-edge-backend rule
+# and its pathPrefixRewrite are NOT modified.
+#
+# Amended pathMatchers[0].pathRules (full block after amendment):
+#
+#   pathRules:
+#     - paths:
+#         - "/api/holder/*"                        ← NEW (longer prefix first)
+#       service: projects/ixid-prod/global/backendServices/ixid-holder-backend
+#       routeAction:
+#         urlRewrite:
+#           pathPrefixRewrite: "/"
+#       # Edge receives: /holder/v0.1/account, /holder/v0.1/ix-id, /holder/v0.1/workspace
+#
+#     - paths:
+#         - "/api/*"                               ← UNCHANGED (frozen v0.1)
+#       service: projects/ixid-prod/global/backendServices/ixid-edge-backend
+#       routeAction:
+#         urlRewrite:
+#           pathPrefixRewrite: "/"
+#
+# To import after ixid-holder-backend is created and ixid-holder-edge NEG is wired:
+#
+#   gcloud compute url-maps import ixid-url-map \
+#     --source=infra/ixid-public-ingress/ixid-url-map-v0.1.yaml \
+#     --global --project=ixid-prod
+#
+# CAUTION: import replaces the full URL map. Export first to confirm current
+# state matches the v0.1 file before importing the amended version.
+#
+# Full amended URL map (ixid-url-map-v0.1.yaml updated with holder rule):
+
+name: ixid-url-map
+defaultService: projects/ixid-prod/global/backendServices/ixid-web-backend
+hostRules:
+  - hosts:
+      - "*.ixid.me"
+    pathMatcher: ixid-paths
+pathMatchers:
+  - name: ixid-paths
+    defaultService: projects/ixid-prod/global/backendServices/ixid-web-backend
+    pathRules:
+      - paths:
+          - "/api/holder/*"
+        service: projects/ixid-prod/global/backendServices/ixid-holder-backend
+        routeAction:
+          urlRewrite:
+            pathPrefixRewrite: "/"
+      - paths:
+          - "/api/*"
+        service: projects/ixid-prod/global/backendServices/ixid-edge-backend
+        routeAction:
+          urlRewrite:
+            pathPrefixRewrite: "/"

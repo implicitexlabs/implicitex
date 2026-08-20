@@ -1,0 +1,36 @@
+# IX ID Holder Edge — Cloud Run service (public proxy)
+# =====================================================
+# Public-facing traffic handler for /api/holder/* LB routes.
+# Ingress: internal-and-cloud-load-balancing
+# IAM: allUsers → run.invoker
+# SA: ixid-holder-edge-runtime (zero Firestore roles)
+#
+# This image holds no data authority. It:
+#   - Strips inbound X-Serverless-Authorization and X-Ix-* headers
+#   - Fetches an OIDC token from the GCE metadata server
+#   - Forwards the client Authorization header unchanged
+#   - Proxies to the private ixid-holder-authority service
+#
+# Build:
+#   docker build -f Dockerfile.holder_edge -t ixid-holder-edge .
+# Local test:
+#   docker run --rm -e PORT=8080 -e AUTHORITY_SERVICE_URL=... -p 8080:8080 ixid-holder-edge
+
+FROM python:3.13-slim
+
+RUN adduser --disabled-password --gecos "" appuser
+
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Only the edge proxy module. No Firestore client, no firebase-admin usage.
+COPY ixid_holder_edge_handler.py .
+
+USER appuser
+
+ENV PORT=8080
+EXPOSE 8080
+
+CMD ["sh", "-c", "exec gunicorn --bind 0.0.0.0:${PORT} --workers 1 --threads 8 --timeout 30 ixid_holder_edge_handler:app"]
