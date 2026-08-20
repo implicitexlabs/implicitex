@@ -11,12 +11,14 @@ for all holder Firestore collections. It is reachable only from
 ``ixid-holder-edge-runtime`` holds ``roles/run.invoker`` on this service).
 
 Authentication invariants:
-  - Cloud Run runtime verifies ``Authorization: Bearer <Google-signed OIDC token>``
-    before any application code executes. Only ``ixid-holder-edge-runtime``
-    holds ``run.invoker`` on this service, so no other caller reaches Flask.
-  - This handler independently verifies the ``X-Firebase-Authorization: Bearer <firebase-id-token>``
+  - Cloud Run runtime verifies ``X-Serverless-Authorization: Bearer <Google-signed
+    OIDC token>`` before any application code executes. Only
+    ``ixid-holder-edge-runtime`` holds ``run.invoker`` on this service, so no
+    other caller reaches Flask.
+  - This handler independently verifies the ``Authorization: Bearer <firebase-id-token>``
     header using the Firebase Admin SDK. It does NOT trust any application-level
     header as a pre-verified identity claim.
+  - ``X-Firebase-Authorization`` has no authority in this service.
   - Neither bearer token is logged.
 
 Cache invariant:
@@ -159,7 +161,7 @@ def handle_create_account() -> Response:
     CREATE_ACCOUNT operation (§5.4.1).
 
     Request:
-        X-Firebase-Authorization: Bearer <firebase-id-token>
+        Authorization: Bearer <firebase-id-token>
         Content-Type: application/json
         {"operation_id": "<uuid>"}
 
@@ -169,7 +171,7 @@ def handle_create_account() -> Response:
     Response 200 (account already existed — idempotent):
         {"account_id": "...", "account_state": "ACTIVE", ...}
     """
-    raw_token = _extract_bearer(request.headers.get("X-Firebase-Authorization"))
+    raw_token = _extract_bearer(request.headers.get("Authorization"))
     if not raw_token:
         return _err("UNAUTHENTICATED", 401)
 
@@ -215,7 +217,7 @@ def handle_register_ix_id() -> Response:
     REGISTER_IX_ID operation (§5.4.2).
 
     Request:
-        X-Firebase-Authorization: Bearer <firebase-id-token>
+        Authorization: Bearer <firebase-id-token>
         Content-Type: application/json
         {"operation_id": "<uuid>", "handle": "<desired-handle>"}
 
@@ -225,7 +227,7 @@ def handle_register_ix_id() -> Response:
     Response 200 (idempotent replay — IX ID was already registered):
         {"ix_id": "...", "ix_id_state": "ACTIVE", ...}
     """
-    raw_token = _extract_bearer(request.headers.get("X-Firebase-Authorization"))
+    raw_token = _extract_bearer(request.headers.get("Authorization"))
     if not raw_token:
         return _err("UNAUTHENTICATED", 401)
 
@@ -274,7 +276,7 @@ def handle_get_workspace() -> Response:
     Authenticated holder workspace read (§5.3).
 
     Request:
-        X-Firebase-Authorization: Bearer <firebase-id-token>
+        Authorization: Bearer <firebase-id-token>
 
     Response 200 (ACTIVE or SUSPENDED account):
         {"account_id": "...", "account_state": "...", "ix_ids": [...]}
@@ -282,7 +284,7 @@ def handle_get_workspace() -> Response:
     Response 403 (DISABLED or CLOSED account):
         {"error": "ACCESS_DENIED"}
     """
-    raw_token = _extract_bearer(request.headers.get("X-Firebase-Authorization"))
+    raw_token = _extract_bearer(request.headers.get("Authorization"))
     if not raw_token:
         return _err("UNAUTHENTICATED", 401)
 
