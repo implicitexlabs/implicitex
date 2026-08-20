@@ -1,9 +1,9 @@
 # IX ID Onboarding v0.1
-## M2 Reconnaissance and Contract Design — Revision 3
+## M2 Reconnaissance and Contract Design — Revision 4
 
-Status: **DRAFT — awaiting independent review**
+Status: **DRAFT — awaiting independent freeze review**
 Milestone: M2 — IX ID Registration / Onboarding v0.1
-Revision: 3 (Revision 1: `7cd4c44`; Revision 2: `3e380eb`; 2026-08-20)
+Revision: 4 (R1: `7cd4c44`; R2: `3e380eb`; R3: `152ec44`; 2026-08-20)
 
 Prerequisites: M1 — Holder Authority v0.1 (CLOSED at `d5841d1`, 2026-08-20)
 
@@ -78,9 +78,9 @@ M2 is the document that makes the production authentication decision.
 Rationale:
 - Named in the frozen M1 authority contract (§3.1) as the v0.1 auth mechanism.
 - Firebase email/password produces a Firebase ID token that the M1 authority verifies
-  via the Admin SDK — no additional authority verification changes required beyond §1.4.
+  via the Admin SDK — no additional authority verification changes required beyond §1.5.
 - Email verification is natively supported and yields the `email_verified` claim in
-  the Firebase ID token that the authority can enforce server-side (§1.4).
+  the Firebase ID token that the authority can enforce server-side (§1.5).
 
 **Anonymous sign-in: remains disabled.** Anonymous accounts cannot serve as the
 stable auth anchor for a persistent economic identity.
@@ -98,10 +98,65 @@ When email/password is enabled in ixid-prod, these configuration decisions apply
 |---|---|
 | Password minimum length | 12 characters |
 | Email enumeration protection | Enabled (callers cannot determine whether an email is registered from error messages) |
-| Action code / continue URL domain | `app.ixid.me` (see §1.5) |
+| Action code / continue URL domain | `app.ixid.me` (see §1.6) |
 | Dynamic Links | Not used (shut down 2025-08-25) |
 
-### 1.4 M2 authority admission rule: server-side `email_verified` enforcement
+### 1.4 Production onboarding-web topology
+
+`app.ixid.me/register` and `app.ixid.me/auth/action` require an explicit serving
+authority. The existing wildcard public identity implementation (`ixid-public-web`
+behind the frozen wildcard path matcher) must not be modified to serve these paths.
+
+**M2 web service:** A dedicated web service named `ixid-onboarding-web` (Cloud Run
+or equivalent static-hosting backend) serves the M2 onboarding UI and the Firebase
+custom email action handler. This service:
+- Has zero Firestore / Datastore roles.
+- Performs no server-side Holder Authority mutations.
+- Serves only static assets and the client-side JavaScript that drives the onboarding
+  state machine (Part 4).
+
+**URL map amendment — `app.ixid.me` host matcher (new):**
+
+```yaml
+hostRules:
+  - hosts:
+      - "app.ixid.me"
+    pathMatcher: ixid-app-paths    ← new host-specific matcher
+
+pathMatchers:
+  - name: ixid-app-paths
+    defaultService: ixid-onboarding-web-backend  ← new backend
+    pathRules:
+      - paths:
+          - "/api/holder/*"
+        service: ixid-holder-backend             ← unchanged from M1
+        routeAction:
+          urlRewrite:
+            pathPrefixRewrite: "/holder/"        ← frozen M1 rewrite
+      - paths:
+          - "/api/*"
+        service: ixid-edge-backend               ← unchanged from M1
+        routeAction:
+          urlRewrite:
+            pathPrefixRewrite: "/"               ← frozen M1 rewrite
+```
+
+The existing wildcard `*.ixid.me` path matcher (`ixid-paths`) is unchanged.
+Every `*.ixid.me` hostname other than `app.ixid.me` continues to use the frozen
+public identity web backend as its default. Host-specific matchers in GCP URL maps
+take precedence over wildcard host rules; `app.ixid.me` traffic goes to
+`ixid-app-paths` and no other hostname is affected.
+
+**Firebase authorized domains:** `app.ixid.me` must be added to the Firebase
+Authentication authorized-domain list before the email action handler is deployed.
+The custom email action handler URL must be configured in Firebase console
+(Authentication → Templates → Action URL) as `https://app.ixid.me/auth/action`.
+
+**The `ixid-onboarding-web` service is in scope for M2 deployment. It is a static
+web asset host; it is not an authority service and requires no independent review
+beyond this contract.**
+
+### 1.5 M2 authority admission rule: server-side `email_verified` enforcement
 
 **This is the M2 authority behavior change.**
 
@@ -149,7 +204,7 @@ only for its smoke gate.** The M2 contract adds it as a downstream admission pol
 the same authority service. The M1 ownership model, state machine, schema, idempotency
 contracts, and security rules are unchanged.
 
-### 1.5 Firebase action code flow (email verification and password reset)
+### 1.6 Firebase action code flow (email verification and password reset)
 
 Firebase sends email verification and password-reset links. Two distinct URLs are
 involved; they must not be conflated.
@@ -180,18 +235,29 @@ page that processes the action code.
 as a plain HTTPS redirect. No Dynamic Links dependency. No requirement for the
 verification to complete in the same browser tab or device as sign-up.
 
-After the user returns to onboarding (via the continue URL or by navigating back):
-1. Client calls `user.reload()` to refresh the Firebase user object.
-2. Client calls `user.getIdToken(forceRefresh: true)` to obtain a fresh ID token
+After the user returns to onboarding (via the continue URL or by navigating back),
+the client must handle two cases:
+
+**Case A — Firebase session exists in this browser:**
+1. Call `user.reload()` to refresh the Firebase user object.
+2. Call `user.getIdToken(forceRefresh: true)` to obtain a fresh ID token
    containing the updated `email_verified: true` claim.
-3. Client evaluates the current onboarding state from the fresh token.
+3. Evaluate the current onboarding state from the fresh token.
 
-The flow must remain correct when verification is completed on a different device
-or browser than the one used to sign up.
+**Case B — No Firebase session in this browser** (verification completed on a
+different device or browser; user navigated to the continue URL without a session):
+1. Show sign-in form. Do not attempt `user.reload()` — `currentUser` is null.
+2. After successful sign-in, `getIdToken(forceRefresh: false)` will include
+   `email_verified: true` if the action code was processed by Firebase.
+3. Reconstruct onboarding state normally (§6.1).
 
-### 1.6 Password reset
+**Never assume `currentUser` is non-null** merely because the continue URL was
+reached. The action code completion page must check `auth.currentUser` before
+calling `reload()` and fall back to the sign-in form if null.
 
-Firebase's `sendPasswordResetEmail()` (with the same `ActionCodeSettings` as §1.5)
+### 1.7 Password reset
+
+Firebase's `sendPasswordResetEmail()` (with the same `ActionCodeSettings` as §1.6)
 supports password reset for the same Firebase principal. This is:
 - In scope for M2 as a standard account-security feature.
 - Distinct from Holder Authority identity-link recovery, which adds a new auth
@@ -202,24 +268,41 @@ supports password reset for the same Firebase principal. This is:
 The onboarding surface must include a "Forgot password?" link on the sign-in form
 that initiates `sendPasswordResetEmail()`.
 
-### 1.7 Provider enablement gate
+### 1.8 Provider enablement gate — final activation switch
 
-Firebase email/password may only be enabled in ixid-prod when:
+Firebase email/password is the final activation switch. It must not be enabled
+until every preceding item is deployed, tested, and verified in production.
 
-1. This Revision 3 M2 contract has completed independent review and is accepted.
-2. The M2 authority `email_verified` check (§1.4) is implemented and gate-tested.
-3. The Cloud Armor rate limiting policy (§8.2) is attached to the load balancer
-   and verified active — **before** Firebase email/password is enabled in ixid-prod.
-4. The `/api/holder/*` URL map rule is confirmed live in the production URL map.
-   (Note: the holder route is already live from closed M1. This condition is a
-   pre-activation verification step, not a deployment step.)
+**Required activation sequence (all steps must complete in order):**
 
-**The provider must not be enabled before all four conditions are met.**
+```
+1. M2 authority email_verified admission check (§1.5) implemented and
+   M2 gate tests (Part 13) passing locally.
 
-Note on ordering: Cloud Armor must be confirmed before provider enablement because
-enabling the provider opens the registration surface. The holder route was live before
-M2 work began (closed M1); "before the route is live" is not a valid activation
-condition for M2. The correct gate is "before the provider is enabled."
+2. M2 onboarding web service (ixid-onboarding-web) deployed to Cloud Run.
+
+3. URL map app.ixid.me host matcher deployed and verified:
+   - https://app.ixid.me/register serves the onboarding UI.
+   - https://app.ixid.me/auth/action serves the action handler.
+   - /api/holder/* and /api/* routes pass through correctly.
+   - Other *.ixid.me hostnames unaffected.
+
+4. Firebase authorized-domain configuration updated:
+   - app.ixid.me added to Authentication → Authorized domains.
+   - Custom action URL set to https://app.ixid.me/auth/action.
+
+5. Cloud Armor rate-limiting policy attached to the load balancer
+   and verified active on /api/holder/* paths.
+
+6. Full regression gate passes: all M1 gate tests + M2 gate tests green.
+
+7. ← ENABLE Firebase email/password here (the registration surface opens)
+
+8. Immediately execute the authorized production smoke (§12.1).
+```
+
+This Revision 4 M2 contract must be independently accepted before step 1 begins.
+Anonymous Firebase sign-in remains disabled throughout and after M2.
 
 ---
 
@@ -305,7 +388,7 @@ Visitor arrives at onboarding surface (https://app.ixid.me/register or equivalen
 [EMAIL_UNVERIFIED]
     Firebase session established; email_verified = false.
     No Holder Authority calls made.
-    Client calls Firebase sendEmailVerification() with ActionCodeSettings (§1.5).
+    Client calls Firebase sendEmailVerification() with ActionCodeSettings (§1.6).
     Client shows: "Check your email to verify your address."
     User clicks verification link → Firebase processes action code.
     Client: user.reload() + user.getIdToken(forceRefresh: true)
@@ -350,7 +433,7 @@ Visitor arrives at onboarding surface (https://app.ixid.me/register or equivalen
 ### 3.1 Strict invariant: no Holder Authority calls before email_verified = true
 
 No call to `CREATE_ACCOUNT` or `REGISTER_IX_ID` is made while the Firebase session
-has `email_verified = false`. The authority will deny these calls (§1.4), but the
+has `email_verified = false`. The authority will deny these calls (§1.5), but the
 client must not attempt them — unverified/bot Firebase signups must not produce any
 Holder Authority state. The client gate is defense-in-depth; the authority gate is
 the security boundary.
@@ -582,19 +665,27 @@ GET /workspace result
     │
     ├─ 401 → follow §6.2 protocol (force-refresh + retry + CREATE_ACCOUNT attempt)
     │
-    └─ 200 → evaluate account_state:
+    └─ 200 → evaluate account_state FIRST:
           │
           ├─ SUSPENDED → suspended workspace view (§6.4)
-          │              regardless of ix_ids content; no HANDLE_SELECTION
+          │              regardless of ix_ids content or email_verified; no mutations
           │
           └─ ACTIVE → evaluate ix_ids:
-                ├─ non-empty → ACTIVE workspace
-                └─ empty     → HANDLE_SELECTION
+                ├─ non-empty → ACTIVE workspace (regardless of email_verified;
+                │              GET /workspace does not enforce email_verified)
+                │
+                └─ empty → check current email_verified (force-refresh if stale):
+                      ├─ email_verified = true  → HANDLE_SELECTION
+                      └─ email_verified = false → EMAIL_UNVERIFIED
+                                                  (do not auto-send; re-entry rules
+                                                   apply per §4.2; no mutation attempt)
 ```
 
-A SUSPENDED account with `ix_ids` empty must never reach HANDLE_SELECTION.
-The authority already returns 403 for REGISTER_IX_ID on SUSPENDED accounts;
-the client precedence rule is defense-in-depth and also the correct UX.
+A SUSPENDED account must never reach HANDLE_SELECTION regardless of `ix_ids` or
+`email_verified`. An ACTIVE account with an established IX ID reaches the workspace
+regardless of `email_verified` — the workspace is a read operation. An ACTIVE account
+with no IX ID can only reach HANDLE_SELECTION with a verified email, because the
+authority will deny `REGISTER_IX_ID` for unverified identities (§1.5).
 
 ### 6.4 Suspended account
 
@@ -639,7 +730,7 @@ manage raw ID tokens. Firebase ID tokens must not be written to localStorage.
 
 ### 8.1 email_verified as namespace admission gate
 
-The M2 authority check (§1.4) requires a verified Firebase email before any account
+The M2 authority check (§1.5) requires a verified Firebase email before any account
 or IX ID is created. This raises the cost of namespace claiming to the cost of
 receiving a verified email, while keeping unverified signups entirely out of the
 Holder Authority.
@@ -686,7 +777,7 @@ The draft R1 advisory blocklist is removed from M2 v0.1.
 **Rationale:** The blocklist is explicitly bypassable (the draft acknowledged this),
 adds maintenance overhead, creates false-positive risk for legitimate users with
 domains that appear on blocklists, and does not provide a meaningful security
-guarantee. The email verification requirement (§1.4) is the correct barrier; the
+guarantee. The email verification requirement (§1.5) is the correct barrier; the
 blocklist added complexity without proportionate benefit.
 
 ---
@@ -769,7 +860,7 @@ Revision 1 carried five open questions. All are resolved by Revision 2 and Revis
 | OQ-2 Firebase email/password configuration | Resolved: 12-char minimum, email-enumeration protection enabled, `app.ixid.me` action URL (§1.3). |
 | OQ-3 Rate limit enforcement mechanism | Resolved: Cloud Armor per-IP/path only. Per-UID edge limiting contradicts frozen M1 (§8.2). |
 | OQ-4 Disposable email blocklist | Resolved: Not in M2 v0.1. email_verified is the admission gate (§8.4). |
-| OQ-5 Email verification link behavior | Resolved: Custom action handler at `app.ixid.me/auth/action` processes `applyActionCode`/`confirmPasswordReset`; `ActionCodeSettings.url` is the separate continue URL (`app.ixid.me/register`); `handleCodeInApp: false`; no Dynamic Links; `user.reload()` + `getIdToken(forceRefresh: true)` after return (§1.5). |
+| OQ-5 Email verification link behavior | Resolved: Custom action handler at `app.ixid.me/auth/action` processes `applyActionCode`/`confirmPasswordReset`; `ActionCodeSettings.url` is the separate continue URL (`app.ixid.me/register`); `handleCodeInApp: false`; no Dynamic Links; `user.reload()` + `getIdToken(forceRefresh: true)` after return (§1.6). |
 
 ---
 
@@ -777,44 +868,85 @@ Revision 1 carried five open questions. All are resolved by Revision 2 and Revis
 
 M2 is complete when:
 
-1. The authority `email_verified` admission check (§1.4) is implemented as a separate
+1. The authority `email_verified` admission check (§1.5) is implemented as a separate
    function (`require_verified_email` or equivalent parameter) and gate-tested.
 2. The client-side state machine (Part 4, eight states) is implemented.
-3. The Firebase action-code flow (§1.5) is configured: custom handler at
+3. The Firebase action-code flow (§1.6) is configured: custom handler at
    `app.ixid.me/auth/action`; `ActionCodeSettings.url` set to `app.ixid.me/register`.
-4. Password reset (§1.6) is implemented on the sign-in form.
+4. Password reset (§1.7) is implemented on the sign-in form.
 5. Cloud Armor rate limiting policy (§8.2) is attached to the load balancer and
    verified active before Firebase email/password is enabled in ixid-prod.
    (The holder route `/api/holder/*` is already live from closed M1; this step
    confirms Cloud Armor is in place before the registration surface opens.)
 6. The M2 gate tests pass (§13).
-7. Firebase email/password provider is enabled in ixid-prod under the conditions in §1.7.
-8. A human-observed production smoke demonstrates the complete forward path
-   (sign-up → verification → CREATE_ACCOUNT → REGISTER_IX_ID → workspace),
-   the key returning-user path (sign-in to existing account → workspace), and
-   the handle-unavailable denial path (409 on a known-taken handle).
+7. Firebase email/password provider is enabled in ixid-prod under the conditions in §1.8.
+8. A human-observed production smoke (§12.1) passes all smoke probes.
 
-### 12.1 M2 production smoke identity (pre-authorized)
+### 12.1 M2 production smoke (pre-authorized)
 
-The M2 production smoke explicitly authorizes the creation of one Firebase identity
-and one permanent IX ID handle:
+#### 12.1.1 Smoke identity and handle
+
+The M2 production smoke explicitly authorizes exactly one Firebase identity and one
+permanent IX ID handle:
 
 ```
 Firebase identity: m2-smoke@ixid.me
 IX ID handle:      m2-smoke
 ```
 
-The Firestore authority records for this identity and handle are preserved permanently
-as M2 smoke evidence, consistent with M1 precedent. The handle `m2-smoke` is never
-recycled or deleted. The Firebase user `m2-smoke@ixid.me` is disabled and its refresh
-token revoked after the smoke session, following the same protocol as M1 smoke
-neutralization.
+**Pre-activation requirement:** Before enabling Firebase email/password in ixid-prod
+(§1.8 step 7), the deploying agent must confirm that `m2-smoke@ixid.me` is a
+controlled mailbox or alias capable of receiving Firebase verification email from
+`noreply@ixid-prod.firebaseapp.com` (or the configured sender domain). If it is not
+a controlled, deliverable address, stop and amend this contract with a correct
+address. Do not substitute a different identity silently.
 
-**This authorization is the only M2 smoke registration permitted.** Additional account
-or IX ID creations during the M2 smoke session must be explicitly authorized by a
-separate decision. The deploying agent must not create additional IX IDs to test
-handle-unavailable behavior — a handle from a prior smoke session or a known-reserved
-handle serves that purpose.
+The Firestore authority records for the smoke identity and handle are preserved
+permanently as M2 smoke evidence. The handle `m2-smoke` is never recycled or deleted.
+The Firebase user `m2-smoke@ixid.me` is disabled and its refresh token revoked after
+the smoke session, consistent with M1 protocol.
+
+#### 12.1.2 Required smoke probes
+
+```
+S2-1. Unverified sign-up denial:
+      Register m2-smoke@ixid.me → before email verification,
+      attempt CREATE_ACCOUNT → must receive 401 (email_verified check).
+      Confirm zero Firestore writes.
+
+S2-2. Full forward path:
+      Verify m2-smoke@ixid.me email (action handler at app.ixid.me/auth/action).
+      reload() + getIdToken(forceRefresh: true) → email_verified = true confirmed.
+      CREATE_ACCOUNT → 201.
+      REGISTER_IX_ID "m2-smoke" → 201.
+      GET /workspace → 200 with account ACTIVE, ix_ids containing "m2-smoke".
+      Cache-Control: no-store confirmed on all three responses.
+
+S2-3. 409 handle-unavailable:
+      Attempt REGISTER_IX_ID for an already-existing IX ID handle.
+      Use the preserved M1 smoke handle "m1-smoke-authority" (committed at d5841d1).
+      Must receive 409 HANDLE_UNAVAILABLE.
+      Zero Firestore writes.
+      NOTE: A server-reserved handle returns 422 HANDLE_RESERVED, which is a
+      distinct code path and does not satisfy this probe.
+
+S2-4. Returning-user path:
+      Sign out. Sign in as m2-smoke@ixid.me.
+      GET /workspace → 200 with owned IX ID populated (no handle selection).
+
+S2-5. email_verified still enforced:
+      (Verification already complete; this probe tests GET /workspace is still
+      accessible without re-verifying.)
+      GET /workspace with force-refreshed token → 200. Workspace readable.
+```
+
+#### 12.1.3 Post-smoke neutralization
+
+After all smoke probes pass:
+1. Disable Firebase user `m2-smoke@ixid.me` (`disabled: true`).
+2. Set `validSince` to the current Unix timestamp (revokes refresh tokens).
+3. Confirm both via re-query.
+4. Record smoke evidence following M1 evidence document format.
 
 ---
 
@@ -867,7 +999,7 @@ M2-11. Cloud Armor rate limit: 11th POST /api/holder/v0.1/account from same IP
 
 ## Part 14: M2 Authorized Deliverables
 
-When this Revision 3 contract is accepted by independent review, the following
+When this Revision 4 contract is accepted by independent review, the following
 work is authorized:
 
 1. **Authority `email_verified` admission check** as a separate function
@@ -875,20 +1007,22 @@ work is authorized:
    parameter), called only before `CREATE_ACCOUNT` and `REGISTER_IX_ID`, not before
    `GET /workspace`.
 2. **M2 gate tests** (Part 13) added to the test suite.
-3. **Firebase email/password provider enablement** in ixid-prod, subject to §1.7.
+3. **Firebase email/password provider enablement** in ixid-prod, subject to §1.8.
 4. **Firebase action-code configuration**: custom handler at `app.ixid.me/auth/action`
-   and `ActionCodeSettings.url` set to `app.ixid.me/register` (§1.5).
-5. **Client onboarding state machine** implementing Part 4, consuming frozen M1 API.
-6. **Handle selection UI** with client-side validation (§5.1).
-7. **Password reset UI** (§1.6).
-8. **Cloud Armor rate limiting policy** (§8.2).
-9. **GET /workspace** returning-user resolution (Part 6).
+   and `ActionCodeSettings.url` set to `app.ixid.me/register` (§1.6).
+5. **M2 onboarding web service** (`ixid-onboarding-web`) and `app.ixid.me` URL map
+   host matcher, per §1.4.
+6. **Client onboarding state machine** implementing Part 4, consuming frozen M1 API.
+7. **Handle selection UI** with client-side validation (§5.1).
+8. **Password reset UI** (§1.7).
+9. **Cloud Armor rate limiting policy** (§8.2).
+10. **GET /workspace** returning-user resolution (Part 6).
 
 The following work is **NOT authorized** by M2, even after independent review:
 
 - Changes to `ixid-holder-authority-v0.1.md`
 - Changes to M1 API routes or response contracts beyond the `email_verified` admission
-  check defined in §1.4
+  check defined in §1.5
 - Payment Route implementation (M3)
 - Wallet binding (M4)
 - Profile management (M5)
@@ -902,7 +1036,7 @@ The following work is **NOT authorized** by M2, even after independent review:
 ```
 M1 — Holder Authority v0.1          CLOSED (d5841d1, 2026-08-20)
     ↓
-M2 — IX ID Registration / Onboarding v0.1   THIS DOCUMENT (DRAFT R3)
+M2 — IX ID Registration / Onboarding v0.1   THIS DOCUMENT (DRAFT R4)
     ↓
 M3 — Payment Route Management v0.1
     ↓
@@ -918,4 +1052,4 @@ M6 — ImplicitEx sender/payment integration
 *Reconnaissance and contract design only. Implementation does not begin before this
 document is accepted by independent review. The accepted contract is the authority.*
 
-*Revision 3 — Antoine Dennison / ImplicitEx — 2026-08-20*
+*Revision 4 — Antoine Dennison / ImplicitEx — 2026-08-20*
