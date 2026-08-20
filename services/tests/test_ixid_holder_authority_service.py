@@ -21,6 +21,7 @@ Token convention for emulator tests:
 """
 
 import os
+import subprocess
 import threading
 import time
 import uuid
@@ -936,28 +937,54 @@ class TestLoop18SequentialReplayAfterLostResponse:
 class TestLoop20DirectFirestoreDenied:
     """Loop 20 / F-10: Direct Firestore Security Rules tests.
 
-    These tests use the Firestore emulator with the rules file loaded.
-    They prove that even an authenticated Firebase client cannot bypass
-    the authority boundary.
+    Delegates to the Node.js @firebase/rules-unit-testing suite in
+    services/security-rules-tests/, which creates real client SDK contexts
+    subject to Firestore Security Rules (the Python server SDK bypasses rules).
 
-    Note: emulator Security Rules tests require the emulator to be started
-    with the rules file: firebase emulator:exec --only firestore ...
-    If Security Rules are not loaded in the emulator, these tests are skipped.
+    Proves READ and WRITE denial for both unauthenticated and
+    Firebase-authenticated clients against all authority collections.
     """
 
-    def test_placeholder_security_rules_test(self, db):
-        """
-        Placeholder: Security Rules tests require a separate firebase-admin
-        client SDK test or the Firestore emulator REST API.
+    def test_security_rules_via_node_suite(self):
+        """Run the Node.js security-rules-tests suite as a subprocess.
 
-        Full Security Rules emulator tests are implemented in:
-            tests/test_ixid_holder_security_rules.py
-        (Uses firebase-admin client SDK with emulator, not the server SDK.)
+        Requires:
+          - FIRESTORE_EMULATOR_HOST env var (already set for this session)
+          - node_modules installed in services/security-rules-tests/
+
+        Fails this Python test if any Node.js test fails, so zero unexpected
+        skips appear in the full gate output.
         """
-        pytest.skip(
-            "Security Rules tests require client SDK emulator test harness. "
-            "See tests/test_ixid_holder_security_rules.py."
+        emulator_host = os.environ.get("FIRESTORE_EMULATOR_HOST")
+        if not emulator_host:
+            pytest.skip("FIRESTORE_EMULATOR_HOST not set — Security Rules tests require emulator")
+
+        suite_dir = os.path.join(os.path.dirname(__file__), "..", "security-rules-tests")
+        suite_dir = os.path.normpath(suite_dir)
+
+        node_modules = os.path.join(suite_dir, "node_modules")
+        if not os.path.isdir(node_modules):
+            pytest.skip(
+                f"Node modules not installed in {suite_dir}. "
+                "Run: cd services/security-rules-tests && npm install"
+            )
+
+        result = subprocess.run(
+            ["npm", "test", "--", "--forceExit"],
+            cwd=suite_dir,
+            env={**os.environ, "FIRESTORE_EMULATOR_HOST": emulator_host},
+            capture_output=True,
+            text=True,
+            timeout=120,
         )
+
+        if result.returncode != 0:
+            # Surface the full Jest output so failures are actionable
+            raise AssertionError(
+                f"Node.js Security Rules tests FAILED (exit {result.returncode}).\n"
+                f"--- stdout ---\n{result.stdout}\n"
+                f"--- stderr ---\n{result.stderr}"
+            )
 
 
 class TestLoop21AuditTrailReconstruction:
