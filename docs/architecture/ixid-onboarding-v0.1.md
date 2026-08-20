@@ -1,9 +1,9 @@
 # IX ID Onboarding v0.1
-## M2 Reconnaissance and Contract Design — Revision 2
+## M2 Reconnaissance and Contract Design — Revision 3
 
 Status: **DRAFT — awaiting independent review**
 Milestone: M2 — IX ID Registration / Onboarding v0.1
-Revision: 2 (Revision 1 checkpoint: `7cd4c44`, 2026-08-20)
+Revision: 3 (Revision 1: `7cd4c44`; Revision 2: `3e380eb`; 2026-08-20)
 
 Prerequisites: M1 — Holder Authority v0.1 (CLOSED at `d5841d1`, 2026-08-20)
 
@@ -105,20 +105,36 @@ When email/password is enabled in ixid-prod, these configuration decisions apply
 
 **This is the M2 authority behavior change.**
 
-For M2 email/password identities, after the authority has verified the Firebase ID
-token (existing M1 behavior), the authority must additionally confirm that the
-verified token's `email_verified` claim is `true`. An unverified credential must be
-denied before any `CREATE_ACCOUNT` or `REGISTER_IX_ID` operation proceeds.
+For M2 email/password identities, the authority enforces a two-step check before
+`CREATE_ACCOUNT` and `REGISTER_IX_ID` may proceed:
 
-**Implementation:** `verify_firebase_id_token()` in the authority service must be
-extended to inspect `email_verified` after successful token verification. If
-`email_verified != true`, raise `AuthenticationError` with an internal reason code
-of `EMAIL_NOT_VERIFIED`.
+**Step 1 — Token authenticity (existing M1 behavior, unchanged):**
+`verify_firebase_id_token(token)` verifies the Firebase ID token via the Admin SDK,
+confirming signature, audience (`ixid-prod`), and expiry. It returns the decoded
+token claims. This function is also called by `GET /workspace` and must remain
+usable there without triggering the email check.
 
-**External behavior:** 401 with error code `UNAUTHENTICATED`. The external response
-is identical to any other authentication failure; the caller learns only that
-authentication failed. The internal reason code is emitted as a structured log field
-only; it is never returned to the client and never written to Firestore.
+**Step 2 — Mutation admission (M2 addition; mutations only):**
+A separate `require_verified_email(decoded_token)` function inspects the decoded
+token's `email_verified` claim. If `email_verified != true`, it raises
+`AuthenticationError` with internal reason code `EMAIL_NOT_VERIFIED`. This function
+is called only in the `CREATE_ACCOUNT` and `REGISTER_IX_ID` route handlers, after
+the token is successfully verified by Step 1.
+
+`GET /workspace` calls Step 1 only. It does not call `require_verified_email`.
+A returning user with an established account must be able to read their workspace
+even if their email verification status has changed.
+
+Alternatively, `verify_firebase_id_token()` may accept an explicit
+`require_verified_email: bool` parameter (default `False`), set to `True` only for
+mutation routes. Either implementation is acceptable; the contract requirement is
+that the verified-email check runs only before mutations, not before workspace reads.
+
+**External behavior of EMAIL_NOT_VERIFIED denial:** 401 with error code
+`UNAUTHENTICATED`. Identical to any other authentication failure externally; the
+caller cannot distinguish the denial reason. The internal reason code is emitted as
+a structured log field only; it is never returned to the client and never written to
+Firestore.
 
 **Firestore writes on denial:** Zero. Same as all other `AuthenticationError` paths
 in M1 (§5.5 denial evidence invariant).
@@ -128,12 +144,6 @@ in M1 (§5.5 denial evidence invariant).
 `email_verified` (a JWT claim). The authority reads the decoded token claim; it does
 not trust the client-SDK property.
 
-**Scope:** This check applies to `CREATE_ACCOUNT` and `REGISTER_IX_ID`. It does NOT
-apply to `GET /workspace` — a returning user with an established account must be able
-to read their workspace even if their email verification status has somehow changed.
-`GET /workspace` retains M1's existing authentication gate (valid token, account found,
-account not DISABLED/CLOSED).
-
 **This check is not in the frozen M1 document because M1 used Firebase email/password
 only for its smoke gate.** The M2 contract adds it as a downstream admission policy in
 the same authority service. The M1 ownership model, state machine, schema, idempotency
@@ -141,23 +151,36 @@ contracts, and security rules are unchanged.
 
 ### 1.5 Firebase action code flow (email verification and password reset)
 
-Firebase sends email verification and password-reset links. The link behavior is
-governed by `ActionCodeSettings`:
+Firebase sends email verification and password-reset links. Two distinct URLs are
+involved; they must not be conflated.
 
+**Custom email action handler** (configured in Firebase console email templates):
+```
+https://app.ixid.me/auth/action
+```
+This page receives the Firebase action code parameters (`mode`, `oobCode`, `apiKey`,
+and optionally `continueUrl`) and performs the appropriate Firebase SDK call:
+- Email verification: `applyActionCode(auth, oobCode)`
+- Password reset: `confirmPasswordReset(auth, oobCode, newPassword)`
+
+On success, this page prompts the user to continue and redirects to the continue URL.
+
+**Continue / state URL** (passed via `ActionCodeSettings.url` when sending the email):
 ```
 ActionCodeSettings:
-  url: "https://app.ixid.me/auth/action"   ← continue URL (app.ixid.me domain)
-  handleCodeInApp: false                    ← verification handled in browser
-                                              (no Dynamic Links; no app deeplink)
+  url: "https://app.ixid.me/register"    ← where user returns after action completes
+  handleCodeInApp: false                  ← no Dynamic Links; no app deeplink
 ```
 
-`handleCodeInApp: false` means Firebase opens a hosted page (served from
-`app.ixid.me`) that processes the action code. The hosted page:
-- Calls Firebase `applyActionCode()` or `confirmPasswordReset()` depending on mode.
-- On success, prompts the user to continue to the onboarding flow.
-- Does not depend on the verification being completed in the same browser tab or session.
+`ActionCodeSettings.url` becomes the `continueUrl` query parameter received by the
+custom handler. It is where the user lands after the action succeeds. It is not the
+page that processes the action code.
 
-After returning to the onboarding flow in any browser tab/session:
+`handleCodeInApp: false` means Firebase opens the custom handler page in the browser
+as a plain HTTPS redirect. No Dynamic Links dependency. No requirement for the
+verification to complete in the same browser tab or device as sign-up.
+
+After the user returns to onboarding (via the continue URL or by navigating back):
 1. Client calls `user.reload()` to refresh the Firebase user object.
 2. Client calls `user.getIdToken(forceRefresh: true)` to obtain a fresh ID token
    containing the updated `email_verified: true` claim.
@@ -183,12 +206,20 @@ that initiates `sendPasswordResetEmail()`.
 
 Firebase email/password may only be enabled in ixid-prod when:
 
-1. This Revision 2 M2 contract has completed independent review and is accepted.
+1. This Revision 3 M2 contract has completed independent review and is accepted.
 2. The M2 authority `email_verified` check (§1.4) is implemented and gate-tested.
-3. The Cloud Armor rate limiting policy (§8.2) is deployed before the route is live.
+3. The Cloud Armor rate limiting policy (§8.2) is attached to the load balancer
+   and verified active — **before** Firebase email/password is enabled in ixid-prod.
 4. The `/api/holder/*` URL map rule is confirmed live in the production URL map.
+   (Note: the holder route is already live from closed M1. This condition is a
+   pre-activation verification step, not a deployment step.)
 
 **The provider must not be enabled before all four conditions are met.**
+
+Note on ordering: Cloud Armor must be confirmed before provider enablement because
+enabling the provider opens the registration surface. The holder route was live before
+M2 work began (closed M1); "before the route is live" is not a valid activation
+condition for M2. The correct gate is "before the provider is enabled."
 
 ---
 
@@ -202,8 +233,10 @@ POST /api/holder/v0.1/account
     Body: {"operation_id": "<uuid>"}
     Auth: Authorization: Bearer <firebase-id-token>
     201: {"account_id": "...", "account_state": "ACTIVE", "account_state_version": 0, "owned_ix_id": null}
-    200: idempotent replay (account existed and is ACTIVE)
-    401: token invalid | no account for identity | email_verified != true (M2 addition)
+    200: idempotent replay (account already existed and is ACTIVE)
+    401: token invalid or unauthenticated | email_verified != true (M2 admission check)
+         NOTE: "no account for this identity" is NOT a 401 cause here — CREATE_ACCOUNT
+         is precisely the operation that handles the no-account case.
     422: MISSING_OPERATION_ID | IDEMPOTENCY_CONFLICT
     403: account SUSPENDED | DISABLED | CLOSED
 
@@ -212,9 +245,9 @@ POST /api/holder/v0.1/ix-id
     Auth: Authorization: Bearer <firebase-id-token>
     201: {"ix_id": "...", "ix_id_state": "ACTIVE", "ix_id_state_version": 0, "owner_account_id": "..."}
     200: idempotent replay (IX ID already registered)
-    401: token invalid | no account for identity | email_verified != true (M2 addition)
+    401: token invalid | no account exists for this identity | email_verified != true (M2 admission check)
     409: HANDLE_UNAVAILABLE — handle taken or permanently reserved; caller cannot distinguish
-    422: MISSING_OPERATION_ID | MISSING_HANDLE | HANDLE_INVALID | HANDLE_RESERVED
+    422: MISSING_OPERATION_ID | MISSING_HANDLE | HANDLE_INVALID | HANDLE_RESERVED | IDEMPOTENCY_CONFLICT
     403: account SUSPENDED | DISABLED | CLOSED
 
 GET /api/holder/v0.1/workspace
@@ -301,7 +334,9 @@ Visitor arrives at onboarding surface (https://app.ixid.me/register or equivalen
     User submits: client generates new operation_id UUID.
     Client calls POST /api/holder/v0.1/ix-id.
     │
-    ├─ 201 or 200 → REGISTER_PENDING → success → ACTIVE
+    ├─ call in flight → [REGISTER_IX_ID_PENDING] (loading; §4.6)
+    │       ↓
+    │   201 or 200 → ACTIVE
     ├─ 409 HANDLE_UNAVAILABLE → return to HANDLE_SELECTION (try another handle)
     └─ 422 HANDLE_RESERVED → return to HANDLE_SELECTION (reserved message)
     │
@@ -329,7 +364,7 @@ leave no Holder Authority records.
 
 ## Part 4: Onboarding State Machine
 
-Seven discrete states. Every named state in the machine is reachable and has an
+Eight discrete states. Every named state in the machine is reachable and has an
 unambiguous next required action.
 
 ### 4.1 UNAUTHENTICATED
@@ -348,11 +383,17 @@ unambiguous next required action.
 **User sees:** "Check your email to verify your address. [email@example.com] [Resend]"
 **Next action:** Find the verification email and click the link.
 **Client actions:**
-- Call `sendEmailVerification()` once on entering this state.
+- Call `sendEmailVerification()` **only on first entry** — immediately after a new
+  Firebase registration (`createUserWithEmailAndPassword` success). This is a one-time
+  send; the email is already in flight.
+- **Do not auto-send on re-entry.** If the user returns to EMAIL_UNVERIFIED via a page
+  refresh, a later sign-in to the same unverified account, or a force-refresh cycle,
+  the client must NOT call `sendEmailVerification()` again. Re-entry shows the same
+  prompt with only the user-initiated Resend option available.
 - Listen for Firebase auth state changes.
 - On auth state change: call `user.reload()` then `user.getIdToken(forceRefresh: true)`.
 - If `email_verified = true`: transition to EMAIL_VERIFIED.
-- Offer one resend per 60 seconds (client-side throttle).
+- Offer Resend action: one send per 60 seconds (client-side throttle on explicit user action).
 **No Holder Authority calls in this state.**
 **Exits to:** `EMAIL_VERIFIED`, `UNAUTHENTICATED` (user signs out).
 
@@ -388,15 +429,23 @@ This state exists to make the machine explicit; it is visually transparent to th
 - Apply client-side format validation (§5.1) inline.
 - Show canonicalized form (lowercase) live as the user types.
 - On submit: generate new `operation_id` UUID; call `REGISTER_IX_ID`.
-**On 201 or 200:** → `ACTIVE`.
-**On 409 HANDLE_UNAVAILABLE:** Stay in `HANDLE_SELECTION`; show "That handle is not available."
-**On 422 HANDLE_RESERVED:** Stay in `HANDLE_SELECTION`; show "That handle is reserved."
-**On 422 HANDLE_INVALID or MISSING_HANDLE:** Format error (client-side check missed it); show specific message.
-**On 403:** → `ACCESS_DENIED_ERROR`.
-**On network error / timeout:** Retry with the same `operation_id` and same handle (§10.3).
-**Exits to:** `ACTIVE`, `ACCESS_DENIED_ERROR`.
+**On submit:** → `REGISTER_IX_ID_PENDING` (§4.6) while call is in flight.
+**Exits to:** `REGISTER_IX_ID_PENDING`.
 
-### 4.6 ACCESS_DENIED_ERROR
+### 4.6 REGISTER_IX_ID_PENDING
+
+**Condition:** `REGISTER_IX_ID` call in flight after handle submission.
+**User sees:** Loading indicator ("Claiming your IX ID…").
+**Next action:** None visible — awaiting authority response.
+**On 201 or 200:** → `ACTIVE`.
+**On 409 HANDLE_UNAVAILABLE:** → `HANDLE_SELECTION` (show unavailable message; clear loading).
+**On 422 HANDLE_RESERVED:** → `HANDLE_SELECTION` (show reserved message; clear loading).
+**On 403:** → `ACCESS_DENIED_ERROR`.
+**On network error / timeout:** Retry with same `operation_id` and same handle (§10.3);
+remain in REGISTER_IX_ID_PENDING during retry.
+**Exits to:** `ACTIVE`, `HANDLE_SELECTION`, `ACCESS_DENIED_ERROR`.
+
+### 4.7 ACCESS_DENIED_ERROR
 
 **Condition:** 403 from `CREATE_ACCOUNT` or `REGISTER_IX_ID`.
 **User sees:** "Your account is not currently available. Contact support."
@@ -404,7 +453,7 @@ This state exists to make the machine explicit; it is visually transparent to th
 **Note:** 403 at `CREATE_ACCOUNT` for a newly registered user indicates an administrative
 action (account pre-seeded as SUSPENDED/DISABLED). Not a normal path; do not suggest retry.
 
-### 4.7 ACTIVE (Holder Workspace)
+### 4.8 ACTIVE (Holder Workspace)
 
 **Condition:** Account ACTIVE; IX ID ACTIVE (owned_ix_id non-null).
 **User sees:** Holder workspace (§7).
@@ -501,26 +550,51 @@ Protocol on 401 from GET /workspace:
 1. Call user.getIdToken(forceRefresh: true).
 2. Retry GET /api/holder/v0.1/workspace with fresh token.
 
-   On 200: Resolve state from response (§6.1).
+   On 200: Resolve state from response (§6.3).
 
-   On 401 again: No account exists for this verified identity.
-       email_verified = true: → EMAIL_VERIFIED (will call CREATE_ACCOUNT)
-       email_verified = false: → EMAIL_UNVERIFIED
-       (Note: if user is signed in and email is not verified, re-enter email verification flow)
+   On 401 again: Account absence is the working hypothesis — the token is fresh
+       and valid, so the remaining cause is that no auth_identities record exists.
+       Resolve authoritatively by attempting CREATE_ACCOUNT:
+
+       email_verified = true:
+           → Call CREATE_ACCOUNT with a new operation_id.
+           → 201: account created → continue to HANDLE_SELECTION.
+           → 200: account already existed (race or prior session) → check owned_ix_id.
+           → 401: authentication failure (not a missing-account case) → UNAUTHENTICATED.
+           → 403: ACCESS_DENIED_ERROR.
+
+       email_verified = false:
+           → EMAIL_UNVERIFIED (do not auto-send verification email on re-entry; §4.2).
 ```
 
-**Do not encode "workspace 401 = no account" as an invariant.** The token-refresh
-retry is mandatory.
+**The second workspace 401 does not prove account absence.** It authorizes a
+`CREATE_ACCOUNT` attempt to resolve the ambiguity. The authority's idempotent response
+to CREATE_ACCOUNT (201 or 200) is the only authoritative answer.
 
-### 6.3 Account state on return
+### 6.3 Account state on return — precedence rules
 
-| GET /workspace result | Action |
-|---|---|
-| 200, `ix_ids` non-empty | → ACTIVE (workspace) |
-| 200, `ix_ids` empty | → HANDLE_SELECTION |
-| 200, `account_state = SUSPENDED` | → Suspended workspace view (§6.4) |
-| 401 (after retry) | → EMAIL_VERIFIED or EMAIL_UNVERIFIED per §6.2 |
-| 403 | → ACCESS_DENIED_ERROR |
+`account_state` is evaluated first. Only ACTIVE accounts branch on `ix_ids`.
+
+```
+GET /workspace result
+    │
+    ├─ 403 → ACCESS_DENIED_ERROR (account DISABLED or CLOSED)
+    │
+    ├─ 401 → follow §6.2 protocol (force-refresh + retry + CREATE_ACCOUNT attempt)
+    │
+    └─ 200 → evaluate account_state:
+          │
+          ├─ SUSPENDED → suspended workspace view (§6.4)
+          │              regardless of ix_ids content; no HANDLE_SELECTION
+          │
+          └─ ACTIVE → evaluate ix_ids:
+                ├─ non-empty → ACTIVE workspace
+                └─ empty     → HANDLE_SELECTION
+```
+
+A SUSPENDED account with `ix_ids` empty must never reach HANDLE_SELECTION.
+The authority already returns 403 for REGISTER_IX_ID on SUSPENDED accounts;
+the client precedence rule is defense-in-depth and also the correct UX.
 
 ### 6.4 Suspended account
 
@@ -687,7 +761,7 @@ not persist onboarding progress across sessions.
 
 ## Part 11: Open Questions — All Resolved
 
-Revision 1 carried five open questions. All are resolved by Revision 2.
+Revision 1 carried five open questions. All are resolved by Revision 2 and Revision 3.
 
 | OQ | Resolution |
 |---|---|
@@ -695,7 +769,7 @@ Revision 1 carried five open questions. All are resolved by Revision 2.
 | OQ-2 Firebase email/password configuration | Resolved: 12-char minimum, email-enumeration protection enabled, `app.ixid.me` action URL (§1.3). |
 | OQ-3 Rate limit enforcement mechanism | Resolved: Cloud Armor per-IP/path only. Per-UID edge limiting contradicts frozen M1 (§8.2). |
 | OQ-4 Disposable email blocklist | Resolved: Not in M2 v0.1. email_verified is the admission gate (§8.4). |
-| OQ-5 Email verification link behavior | Resolved: Firebase Hosting action-link flow, `app.ixid.me` continue URL, no Dynamic Links. `user.reload()` + `getIdToken(forceRefresh: true)` after return (§1.5). |
+| OQ-5 Email verification link behavior | Resolved: Custom action handler at `app.ixid.me/auth/action` processes `applyActionCode`/`confirmPasswordReset`; `ActionCodeSettings.url` is the separate continue URL (`app.ixid.me/register`); `handleCodeInApp: false`; no Dynamic Links; `user.reload()` + `getIdToken(forceRefresh: true)` after return (§1.5). |
 
 ---
 
@@ -703,18 +777,44 @@ Revision 1 carried five open questions. All are resolved by Revision 2.
 
 M2 is complete when:
 
-1. The authority `email_verified` check (§1.4) is implemented in `verify_firebase_id_token()`.
-2. The client-side state machine (Part 4) is implemented.
-3. The Firebase action-code flow (§1.5) is configured with `app.ixid.me` continue URL.
+1. The authority `email_verified` admission check (§1.4) is implemented as a separate
+   function (`require_verified_email` or equivalent parameter) and gate-tested.
+2. The client-side state machine (Part 4, eight states) is implemented.
+3. The Firebase action-code flow (§1.5) is configured: custom handler at
+   `app.ixid.me/auth/action`; `ActionCodeSettings.url` set to `app.ixid.me/register`.
 4. Password reset (§1.6) is implemented on the sign-in form.
-5. Cloud Armor rate limiting policy (§8.2) is deployed.
+5. Cloud Armor rate limiting policy (§8.2) is attached to the load balancer and
+   verified active before Firebase email/password is enabled in ixid-prod.
+   (The holder route `/api/holder/*` is already live from closed M1; this step
+   confirms Cloud Armor is in place before the registration surface opens.)
 6. The M2 gate tests pass (§13).
 7. Firebase email/password provider is enabled in ixid-prod under the conditions in §1.7.
 8. A human-observed production smoke demonstrates the complete forward path
-   (sign-up → verification → CREATE_ACCOUNT → REGISTER_IX_ID → workspace) and
-   the key returning-user path (sign-in → workspace) and the handle-unavailable
-   denial path. No production IX IDs are left as smoke artifacts unless explicitly
-   authorized.
+   (sign-up → verification → CREATE_ACCOUNT → REGISTER_IX_ID → workspace),
+   the key returning-user path (sign-in to existing account → workspace), and
+   the handle-unavailable denial path (409 on a known-taken handle).
+
+### 12.1 M2 production smoke identity (pre-authorized)
+
+The M2 production smoke explicitly authorizes the creation of one Firebase identity
+and one permanent IX ID handle:
+
+```
+Firebase identity: m2-smoke@ixid.me
+IX ID handle:      m2-smoke
+```
+
+The Firestore authority records for this identity and handle are preserved permanently
+as M2 smoke evidence, consistent with M1 precedent. The handle `m2-smoke` is never
+recycled or deleted. The Firebase user `m2-smoke@ixid.me` is disabled and its refresh
+token revoked after the smoke session, following the same protocol as M1 smoke
+neutralization.
+
+**This authorization is the only M2 smoke registration permitted.** Additional account
+or IX ID creations during the M2 smoke session must be explicitly authorized by a
+separate decision. The deploying agent must not create additional IX IDs to test
+handle-unavailable behavior — a handle from a prior smoke session or a known-reserved
+handle serves that purpose.
 
 ---
 
@@ -767,13 +867,17 @@ M2-11. Cloud Armor rate limit: 11th POST /api/holder/v0.1/account from same IP
 
 ## Part 14: M2 Authorized Deliverables
 
-When this Revision 2 contract is accepted by independent review, the following
+When this Revision 3 contract is accepted by independent review, the following
 work is authorized:
 
-1. **Authority `email_verified` check** in `verify_firebase_id_token()`.
+1. **Authority `email_verified` admission check** as a separate function
+   `require_verified_email(decoded_token)` (or equivalent `require_verified_email`
+   parameter), called only before `CREATE_ACCOUNT` and `REGISTER_IX_ID`, not before
+   `GET /workspace`.
 2. **M2 gate tests** (Part 13) added to the test suite.
 3. **Firebase email/password provider enablement** in ixid-prod, subject to §1.7.
-4. **Firebase action-code configuration** with `app.ixid.me` continue URL.
+4. **Firebase action-code configuration**: custom handler at `app.ixid.me/auth/action`
+   and `ActionCodeSettings.url` set to `app.ixid.me/register` (§1.5).
 5. **Client onboarding state machine** implementing Part 4, consuming frozen M1 API.
 6. **Handle selection UI** with client-side validation (§5.1).
 7. **Password reset UI** (§1.6).
@@ -798,7 +902,7 @@ The following work is **NOT authorized** by M2, even after independent review:
 ```
 M1 — Holder Authority v0.1          CLOSED (d5841d1, 2026-08-20)
     ↓
-M2 — IX ID Registration / Onboarding v0.1   THIS DOCUMENT (DRAFT R2)
+M2 — IX ID Registration / Onboarding v0.1   THIS DOCUMENT (DRAFT R3)
     ↓
 M3 — Payment Route Management v0.1
     ↓
@@ -814,4 +918,4 @@ M6 — ImplicitEx sender/payment integration
 *Reconnaissance and contract design only. Implementation does not begin before this
 document is accepted by independent review. The accepted contract is the authority.*
 
-*Revision 2 — Antoine Dennison / ImplicitEx — 2026-08-20*
+*Revision 3 — Antoine Dennison / ImplicitEx — 2026-08-20*
