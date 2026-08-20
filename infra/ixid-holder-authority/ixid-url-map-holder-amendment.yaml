@@ -17,9 +17,9 @@
 #       service: projects/ixid-prod/global/backendServices/ixid-holder-backend
 #       routeAction:
 #         urlRewrite:
-#           pathPrefixRewrite: "/holder"
+#           pathPrefixRewrite: "/holder/"
 #       # Edge receives: /holder/v0.1/account, /holder/v0.1/ix-id, /holder/v0.1/workspace
-#       # "/api/holder" prefix is replaced with "/holder" → strips only "/api"
+#       # "/api/holder/" prefix is replaced with "/holder/" → strips only "/api"
 #
 #     - paths:
 #         - "/api/*"                               ← UNCHANGED (frozen v0.1)
@@ -54,7 +54,7 @@ pathMatchers:
         service: projects/ixid-prod/global/backendServices/ixid-holder-backend
         routeAction:
           urlRewrite:
-            pathPrefixRewrite: "/holder"
+            pathPrefixRewrite: "/holder/"
       - paths:
           - "/api/*"
         service: projects/ixid-prod/global/backendServices/ixid-edge-backend
