@@ -22,16 +22,19 @@ Architecture:
        ▼
     ixid-holder-authority  (private; Cloud Run IAM-gated)
 
-Two-token protocol (frozen, §5.1):
+Two-token protocol (§5.1 — corrected for Cloud Run IAM):
   - Client sends: ``Authorization: Bearer <firebase-id-token>``
-  - This edge strips all inbound ``X-Serverless-Authorization`` and
-    ``X-Ix-*`` headers. Attacker-forged trust headers cannot reach
-    the authority service.
+  - This edge strips all inbound ``X-Serverless-Authorization``,
+    ``X-Firebase-Authorization``, and ``X-Ix-*`` headers. Attacker-forged
+    trust headers cannot reach the authority service.
   - Edge generates its own OIDC token with ``aud = authority service URL``
-    from the GCE metadata server.
-  - Edge forwards the client's ``Authorization`` header unchanged.
-  - Authority verifies ``X-Serverless-Authorization`` (Cloud Run runtime)
-    and ``Authorization`` (Firebase Admin SDK) independently.
+    from the GCE metadata server. Placed in ``Authorization: Bearer <oidc-token>``
+    so Cloud Run IAM can validate it before any application code executes.
+  - Edge remaps the client's ``Authorization: Bearer <firebase-id-token>``
+    to ``X-Firebase-Authorization: Bearer <firebase-id-token>`` for
+    independent validation by the authority application layer.
+  - Authority verifies ``Authorization`` (Cloud Run IAM — OIDC) and
+    ``X-Firebase-Authorization`` (Flask — Firebase Admin SDK) independently.
   - Neither bearer token is logged.
 
 Invariants:
@@ -71,7 +74,8 @@ _METADATA_TOKEN_URL = (
 )
 
 # Headers this edge strips from inbound requests before forwarding (§5.1)
-_STRIP_PREFIXES = ("x-serverless-authorization", "x-ix-")
+# Prevents clients from pre-injecting any trust header the authority would accept.
+_STRIP_PREFIXES = ("x-serverless-authorization", "x-firebase-authorization", "x-ix-")
 
 # ---------------------------------------------------------------------------
 # Cache-Control invariant
@@ -108,26 +112,48 @@ def _fetch_oidc_token(audience: str) -> str:
 
 def _build_forwarded_headers() -> dict[str, str]:
     """
-    Build the forwarded header set:
-      1. Strip all inbound X-Serverless-Authorization and X-Ix-* headers.
-      2. Forward the client Authorization header unchanged.
-      3. Add X-Serverless-Authorization with a fresh OIDC token.
+    Build the forwarded header set for the edge → authority call:
+
+      1. Strip all inbound X-Serverless-Authorization, X-Firebase-Authorization,
+         and X-Ix-* headers so clients cannot inject pre-authorized trust headers.
+      2. Remap the client's Authorization (Firebase ID token) to
+         X-Firebase-Authorization for the authority application layer.
+      3. Add Authorization: Bearer <oidc-token> for Cloud Run IAM validation.
+
+    Cloud Run IAM checks Authorization: Bearer <Google-signed OIDC token>
+    before any application code executes. The OIDC token audience is the
+    canonical authority service URL.
 
     Raises on metadata server failure.
     """
     forwarded: dict[str, str] = {}
 
-    # Forward Authorization (Firebase ID token) unchanged; strip trust headers
+    # Forward all headers except the ones the authority cannot trust from clients,
+    # hop-by-hop headers that must not be forwarded (RFC 7230 §6.1), and the
+    # Host header (must be the authority's hostname, not app.ixid.me).
+    # Also exclude Authorization — we will write it ourselves with the OIDC token.
+    _HOP_BY_HOP = frozenset({"host", "connection", "keep-alive", "transfer-encoding",
+                              "te", "trailer", "proxy-authorization", "upgrade"})
+    firebase_token_value: str | None = None
     for key, value in request.headers:
         lower = key.lower()
-        # Strip all inbound X-Serverless-Authorization and X-Ix-* headers
+        if lower in _HOP_BY_HOP:
+            continue
         if any(lower.startswith(p) for p in _STRIP_PREFIXES):
+            continue
+        if lower == "authorization":
+            # Capture the Firebase ID token; remap to X-Firebase-Authorization below.
+            firebase_token_value = value
             continue
         forwarded[key] = value
 
-    # Add edge-generated OIDC token for Cloud Run invocation
+    # Remap Firebase token to application-layer header for authority to verify.
+    if firebase_token_value:
+        forwarded["X-Firebase-Authorization"] = firebase_token_value
+
+    # Add edge OIDC token in Authorization for Cloud Run IAM.
     oidc_token = _fetch_oidc_token(_AUTHORITY_URL)
-    forwarded["X-Serverless-Authorization"] = f"Bearer {oidc_token}"
+    forwarded["Authorization"] = f"Bearer {oidc_token}"
 
     return forwarded
 
