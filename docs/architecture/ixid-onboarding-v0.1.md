@@ -1,9 +1,9 @@
 # IX ID Onboarding v0.1
-## M2 Reconnaissance and Contract Design — Revision 4
+## M2 Reconnaissance and Contract Design — Revision 5
 
 Status: **DRAFT — awaiting independent freeze review**
 Milestone: M2 — IX ID Registration / Onboarding v0.1
-Revision: 4 (R1: `7cd4c44`; R2: `3e380eb`; R3: `152ec44`; 2026-08-20)
+Revision: 5 (R1: `7cd4c44`; R2: `3e380eb`; R3: `152ec44`; R4: `2a783fa`; 2026-08-20)
 
 Prerequisites: M1 — Holder Authority v0.1 (CLOSED at `d5841d1`, 2026-08-20)
 
@@ -107,13 +107,28 @@ When email/password is enabled in ixid-prod, these configuration decisions apply
 authority. The existing wildcard public identity implementation (`ixid-public-web`
 behind the frozen wildcard path matcher) must not be modified to serve these paths.
 
-**M2 web service:** A dedicated web service named `ixid-onboarding-web` (Cloud Run
-or equivalent static-hosting backend) serves the M2 onboarding UI and the Firebase
-custom email action handler. This service:
-- Has zero Firestore / Datastore roles.
-- Performs no server-side Holder Authority mutations.
+**M2 web service — pinned to Cloud Run:**
+
+| Component | Name |
+|---|---|
+| Cloud Run service | `ixid-onboarding-web` |
+| Runtime service account | `ixid-onboarding-web-runtime@ixid-prod.iam.gserviceaccount.com` |
+| Serverless NEG | `ixid-onboarding-web-neg` |
+| Backend service | `ixid-onboarding-web-backend` |
+
+Runtime SA invariants:
+- Zero Firestore / Datastore roles.
+- Zero unrelated project-level roles.
+
+Cloud Run configuration:
+- Ingress: `internal-and-cloud-load-balancing` (direct `.run.app` bypass blocked).
+- LB invocation: permitted as required by the existing `EXTERNAL_MANAGED` ingress model.
 - Serves only static assets and the client-side JavaScript that drives the onboarding
-  state machine (Part 4).
+  state machine (Part 4). Performs no server-side Holder Authority mutations.
+
+No separate architecture milestone is required for `ixid-onboarding-web` — it is a
+static web asset host, not an authority service. Deployment and evidence remain
+subject to the normal M2 independent closure review (§12.1).
 
 **URL map amendment — `app.ixid.me` host matcher (new):**
 
@@ -147,14 +162,25 @@ public identity web backend as its default. Host-specific matchers in GCP URL ma
 take precedence over wildcard host rules; `app.ixid.me` traffic goes to
 `ixid-app-paths` and no other hostname is affected.
 
-**Firebase authorized domains:** `app.ixid.me` must be added to the Firebase
-Authentication authorized-domain list before the email action handler is deployed.
-The custom email action handler URL must be configured in Firebase console
-(Authentication → Templates → Action URL) as `https://app.ixid.me/auth/action`.
+**URL map validation gate:** Before importing the amended map:
+1. Export the current live URL map and confirm it matches the expected pre-import shape.
+2. Verify the amended map against the contract shape above before import.
 
-**The `ixid-onboarding-web` service is in scope for M2 deployment. It is a static
-web asset host; it is not an authority service and requires no independent review
-beyond this contract.**
+After import, verify all of the following pass before proceeding:
+- `https://app.ixid.me/register` — serves onboarding UI (200).
+- `https://app.ixid.me/auth/action` — serves action handler page (200).
+- `https://app.ixid.me/api/holder/v0.1/workspace` — reaches `ixid-holder-backend`
+  (401 unauthenticated; confirms holder route active on `app.ixid.me`).
+- `https://app.ixid.me/api/v0.1/ix/<handle>` — reaches `ixid-edge-backend`
+  (expected projection response).
+- `https://<normal-ix-id-hostname>.ixid.me/` — frozen public identity web backend
+  unaffected (200 or expected IX ID state).
+
+**Firebase authorized domains:** `app.ixid.me` must be added to the Firebase
+Authentication authorized-domain list and the custom action URL configured as
+`https://app.ixid.me/auth/action` before Firebase email/password is enabled and
+before any email action links are sent. These steps need not precede deployment of
+the inert static `ixid-onboarding-web` service itself.
 
 ### 1.5 M2 authority admission rule: server-side `email_verified` enforcement
 
@@ -255,6 +281,42 @@ different device or browser; user navigated to the continue URL without a sessio
 reached. The action code completion page must check `auth.currentUser` before
 calling `reload()` and fall back to the sign-in form if null.
 
+**`/auth/action` security contract:**
+
+The Firebase `oobCode` is a one-time secret delivered in the URL. The action handler
+is an authentication-facing surface and must enforce the following invariants:
+
+- **Mode allowlist.** Accept only `emailVerification` and `resetPassword` for M2.
+  Any other `mode` value — absent, empty, or unrecognised — must fail closed with
+  an error page. No redirect and no Firebase SDK call on an unknown mode.
+
+- **`oobCode` presence check.** If `oobCode` is missing or syntactically invalid,
+  fail closed. Do not pass a missing or malformed `oobCode` to any Firebase SDK
+  function.
+
+- **Password-reset pre-verification.** For `mode=resetPassword`, call
+  `verifyPasswordResetCode(auth, oobCode)` before displaying the new-password form
+  and before calling `confirmPasswordReset()`. A code that has already been used or
+  has expired must fail closed before any password form is shown.
+
+- **`continueUrl` allowlist.** After a successful action, redirect only to
+  `https://app.ixid.me/register`. Validate any caller-supplied `continueUrl` against
+  this exact allowlisted destination before following it. A `continueUrl` that does
+  not match is silently ignored; the user is redirected to
+  `https://app.ixid.me/register` regardless.
+
+- **No secret logging.** `oobCode`, raw Firebase ID tokens, passwords, and
+  password-reset confirmation values must never appear in logs, console output,
+  error pages, or structured log fields.
+
+- **Response headers.** The action handler page returns:
+  - `Cache-Control: no-store`
+  - `Referrer-Policy: no-referrer`
+
+- **No third-party resources.** The `/auth/action` page loads no third-party
+  scripts, analytics, fonts, images, or other external resources. All assets are
+  served from `app.ixid.me` only.
+
 ### 1.7 Password reset
 
 Firebase's `sendPasswordResetEmail()` (with the same `ActionCodeSettings` as §1.6)
@@ -301,7 +363,20 @@ until every preceding item is deployed, tested, and verified in production.
 8. Immediately execute the authorized production smoke (§12.1).
 ```
 
-This Revision 4 M2 contract must be independently accepted before step 1 begins.
+**Fail-closed rule — applies if any smoke probe fails at step 8:**
+
+If any of S2-1 through S2-4 fails:
+- Immediately disable Firebase email/password again.
+- Anonymous Firebase sign-in remains disabled.
+- Preserve all authority records and evidence already written to Firestore.
+  Do not attempt compensating Firestore deletion.
+- Capture the failed production state as an evidence document.
+- STOP. No further deployment steps. Review required before re-enabling.
+
+Only a completely passing production smoke (all probes S2-1 through S2-4 observed
+PASS) permits Firebase email/password to remain enabled.
+
+This Revision 5 M2 contract must be independently accepted before step 1 begins.
 Anonymous Firebase sign-in remains disabled throughout and after M2.
 
 ---
@@ -914,27 +989,32 @@ S2-1. Unverified sign-up denial:
       attempt CREATE_ACCOUNT → must receive 401 (email_verified check).
       Confirm zero Firestore writes.
 
-S2-2. Full forward path:
+S2-2. Full forward path including 409 probe:
       Verify m2-smoke@ixid.me email (action handler at app.ixid.me/auth/action).
       reload() + getIdToken(forceRefresh: true) → email_verified = true confirmed.
       CREATE_ACCOUNT → 201.
+
+      ← 409 probe here, before m2-smoke is claimed →
+      Attempt REGISTER_IX_ID "m1-smoke-test" (preserved M1 smoke IX ID, committed
+      at d5841d1, production Firestore record permanent).
+      Must receive 409 HANDLE_UNAVAILABLE. Confirm zero Firestore writes.
+      NOTE: This probe must occur before "m2-smoke" is claimed. An account that
+      already owns "m2-smoke" receives 409 on any second IX ID registration attempt
+      (F-12 one-ID sentinel), which would make a post-claim black-box probe
+      ambiguous — it could be confirming F-12 rather than the taken-handle path.
+      NOTE: A server-reserved handle returns 422 HANDLE_RESERVED, not 409.
+      Only an existing Firestore IX ID record satisfies this probe.
+      Use a fresh operation_id for the next call.
+
       REGISTER_IX_ID "m2-smoke" → 201.
       GET /workspace → 200 with account ACTIVE, ix_ids containing "m2-smoke".
       Cache-Control: no-store confirmed on all three responses.
 
-S2-3. 409 handle-unavailable:
-      Attempt REGISTER_IX_ID for an already-existing IX ID handle.
-      Use the preserved M1 smoke handle "m1-smoke-authority" (committed at d5841d1).
-      Must receive 409 HANDLE_UNAVAILABLE.
-      Zero Firestore writes.
-      NOTE: A server-reserved handle returns 422 HANDLE_RESERVED, which is a
-      distinct code path and does not satisfy this probe.
-
-S2-4. Returning-user path:
+S2-3. Returning-user path:
       Sign out. Sign in as m2-smoke@ixid.me.
       GET /workspace → 200 with owned IX ID populated (no handle selection).
 
-S2-5. email_verified still enforced:
+S2-4. Workspace readable after verification:
       (Verification already complete; this probe tests GET /workspace is still
       accessible without re-verifying.)
       GET /workspace with force-refreshed token → 200. Workspace readable.
@@ -999,7 +1079,7 @@ M2-11. Cloud Armor rate limit: 11th POST /api/holder/v0.1/account from same IP
 
 ## Part 14: M2 Authorized Deliverables
 
-When this Revision 4 contract is accepted by independent review, the following
+When this Revision 5 contract is accepted by independent review, the following
 work is authorized:
 
 1. **Authority `email_verified` admission check** as a separate function
@@ -1036,7 +1116,7 @@ The following work is **NOT authorized** by M2, even after independent review:
 ```
 M1 — Holder Authority v0.1          CLOSED (d5841d1, 2026-08-20)
     ↓
-M2 — IX ID Registration / Onboarding v0.1   THIS DOCUMENT (DRAFT R4)
+M2 — IX ID Registration / Onboarding v0.1   THIS DOCUMENT (DRAFT R5)
     ↓
 M3 — Payment Route Management v0.1
     ↓
@@ -1052,4 +1132,4 @@ M6 — ImplicitEx sender/payment integration
 *Reconnaissance and contract design only. Implementation does not begin before this
 document is accepted by independent review. The accepted contract is the authority.*
 
-*Revision 4 — Antoine Dennison / ImplicitEx — 2026-08-20*
+*Revision 5 — Antoine Dennison / ImplicitEx — 2026-08-20*
