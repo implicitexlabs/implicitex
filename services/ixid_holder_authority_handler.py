@@ -129,7 +129,9 @@ def _extract_operation_id(body: dict) -> str | None:
 
 def _handle_service_error(exc: Exception) -> Response:
     if isinstance(exc, AuthenticationError):
-        logger.info("Authentication error: %s", exc)
+        logger.info(
+            "Authentication error: %s internal_code=%s", exc, exc.internal_code
+        )
         return _err("UNAUTHENTICATED", 401)
     if isinstance(exc, AuthorizationError):
         logger.info("Authorization error: %s (code=%s)", exc, exc.internal_code)
@@ -185,7 +187,9 @@ def handle_create_account() -> Response:
         return _err("MISSING_OPERATION_ID", 422)
 
     try:
-        identity_key, verified_iss, verified_sub = verify_firebase_id_token(raw_token)
+        identity_key, verified_iss, verified_sub = verify_firebase_id_token(
+            raw_token, require_email_verified=True
+        )
     except AuthenticationError as exc:
         return _handle_service_error(exc)
 
@@ -245,7 +249,9 @@ def handle_register_ix_id() -> Response:
         return _err("MISSING_HANDLE", 422)
 
     try:
-        identity_key, _iss, _sub = verify_firebase_id_token(raw_token)
+        identity_key, _iss, _sub = verify_firebase_id_token(
+            raw_token, require_email_verified=True
+        )
     except AuthenticationError as exc:
         return _handle_service_error(exc)
 

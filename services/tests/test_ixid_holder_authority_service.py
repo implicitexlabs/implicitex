@@ -1158,3 +1158,195 @@ class TestF13DirectAuthorityInvocation:
             "Cloud Run IAM verification is tested by the production smoke gate, "
             "not the Firestore emulator."
         )
+
+
+# ===========================================================================
+# M2 Gate Tests (§13) — emulator integration
+# ===========================================================================
+#
+# The email_verified admission check (M2-1, M2-2) is handler-level and tested
+# in test_ixid_holder_handlers.py. The tests below verify the downstream
+# service behaviors that the M2 contract requires after admission passes.
+#
+# M2-11 (Cloud Armor rate limit) is not testable in the emulator; skipped.
+# ===========================================================================
+
+
+class TestM2FullForwardPath:
+    """M2-3: email_verified=true → full forward path through the service."""
+
+    def test_m2_3_full_forward_path(self, service, db):
+        """
+        After admission check passes (email_verified=true, simulated by reaching
+        the service layer): GET workspace → 401 (no account) → CREATE_ACCOUNT 201
+        → REGISTER_IX_ID 201 → GET workspace 200 with ix_ids populated.
+        """
+        key, iss, sub = _make_identity()
+        handle = _fresh_handle()
+
+        # No account yet — workspace raises AuthenticationError (auth identity absent)
+        with pytest.raises(AuthenticationError):
+            service.get_workspace(key)
+
+        # CREATE_ACCOUNT → new account, 201
+        ca = service.create_account(
+            operation_id=_fresh_op(),
+            identity_key=key,
+            verified_iss=iss,
+            verified_sub=sub,
+        )
+        assert ca.created_new is True
+        assert ca.account_state == AccountState.ACTIVE
+
+        # REGISTER_IX_ID → new IX ID, 201
+        ri = service.register_ix_id(
+            operation_id=_fresh_op(),
+            identity_key=key,
+            handle_input=handle,
+        )
+        assert ri.is_replay is False
+        assert ri.ix_id == handle
+        assert ri.ix_id_state == IxIdState.ACTIVE
+
+        # GET workspace → 200, account ACTIVE, ix_ids populated
+        ws = service.get_workspace(key)
+        assert ws.account_state == AccountState.ACTIVE
+        assert any(ix["ix_id"] == handle for ix in ws.ix_ids)
+
+
+class TestM2ReturningUser:
+    """M2-4 and M2-5: returning user workspace behavior."""
+
+    def test_m2_4_returning_user_with_ix_id(self, service, db):
+        """M2-4: ACTIVE account with IX ID → workspace 200, ix_ids non-empty."""
+        handle = _fresh_handle()
+        account_id, key = _seed_account(db, AccountState.ACTIVE, owned_ix_id=handle)
+        _seed_ix_id(db, handle, account_id, IxIdState.ACTIVE)
+
+        ws = service.get_workspace(key)
+        assert ws.account_state == AccountState.ACTIVE
+        assert len(ws.ix_ids) == 1
+        assert ws.ix_ids[0]["ix_id"] == handle
+
+    def test_m2_5_returning_user_no_ix_id(self, service, db):
+        """M2-5: ACTIVE account with no IX ID → workspace 200, ix_ids empty."""
+        account_id, key = _seed_account(db, AccountState.ACTIVE, owned_ix_id=None)
+
+        ws = service.get_workspace(key)
+        assert ws.account_state == AccountState.ACTIVE
+        assert ws.ix_ids == []
+
+
+class TestM2HandleUnavailable:
+    """M2-6 and M2-7: 409/422 on handle conflicts."""
+
+    def test_m2_6_409_handle_unavailable_then_different_handle_succeeds(self, service, db):
+        """M2-6: 409 HANDLE_UNAVAILABLE → retry with different handle → 201."""
+        taken_handle = _fresh_handle()
+        # Seed the taken handle under a different account
+        other_account_id, _ = _seed_account(db, AccountState.ACTIVE, owned_ix_id=taken_handle)
+        _seed_ix_id(db, taken_handle, other_account_id, IxIdState.ACTIVE)
+
+        # Create a fresh account to attempt registration
+        key, iss, sub = _make_identity()
+        service.create_account(
+            operation_id=_fresh_op(), identity_key=key,
+            verified_iss=iss, verified_sub=sub,
+        )
+
+        # Attempt the taken handle → 409
+        with pytest.raises(HandleUnavailableError):
+            service.register_ix_id(
+                operation_id=_fresh_op(), identity_key=key, handle_input=taken_handle
+            )
+
+        # Use a different handle → 201
+        fresh = _fresh_handle()
+        ri = service.register_ix_id(
+            operation_id=_fresh_op(), identity_key=key, handle_input=fresh
+        )
+        assert ri.is_replay is False
+        assert ri.ix_id == fresh
+
+    def test_m2_7_422_handle_reserved(self, service, db):
+        """M2-7: reserved handle → 422 ValidationError(RESERVED_HANDLE)."""
+        key, iss, sub = _make_identity()
+        service.create_account(
+            operation_id=_fresh_op(), identity_key=key,
+            verified_iss=iss, verified_sub=sub,
+        )
+        with pytest.raises(ValidationError) as exc:
+            service.register_ix_id(
+                operation_id=_fresh_op(), identity_key=key, handle_input="admin"
+            )
+        assert exc.value.code == "RESERVED_HANDLE"
+
+
+class TestM2IdempotencyReplay:
+    """M2-8: response lost → retry with same operation_id → 200 (not 409)."""
+
+    def test_m2_8_register_ix_id_retry_returns_200(self, service, db):
+        """
+        M2-8: REGISTER_IX_ID committed; retry with same operation_id → 200 (is_replay=True).
+        Tests revision 7 idempotency ordering: receipt check precedes handle-existence check.
+        """
+        key, iss, sub = _make_identity()
+        service.create_account(
+            operation_id=_fresh_op(), identity_key=key,
+            verified_iss=iss, verified_sub=sub,
+        )
+        handle = _fresh_handle()
+        op = _fresh_op()
+
+        r1 = service.register_ix_id(operation_id=op, identity_key=key, handle_input=handle)
+        r2 = service.register_ix_id(operation_id=op, identity_key=key, handle_input=handle)
+
+        assert r1.is_replay is False
+        assert r2.is_replay is True
+        assert r1.ix_id == r2.ix_id == handle
+
+
+class TestM2SuspendedAccount:
+    """M2-9: SUSPENDED account → GET workspace 200 with SUSPENDED state."""
+
+    def test_m2_9_suspended_account_workspace_readable(self, service, db):
+        """M2-9: SUSPENDED account reads workspace; REGISTER_IX_ID is denied (not tested here)."""
+        account_id, key = _seed_account(db, AccountState.SUSPENDED)
+
+        ws = service.get_workspace(key)
+        assert ws.account_state == AccountState.SUSPENDED
+        assert ws.ix_ids == []
+
+    def test_m2_9_suspended_account_register_ix_id_denied(self, service, db):
+        """SUSPENDED accounts cannot register IX IDs (mutation denied)."""
+        account_id, key = _seed_account(db, AccountState.SUSPENDED)
+        with pytest.raises(AuthorizationError):
+            service.register_ix_id(
+                operation_id=_fresh_op(), identity_key=key, handle_input=_fresh_handle()
+            )
+
+
+class TestM2DisabledClosedAccount:
+    """M2-10: DISABLED or CLOSED account → GET workspace 403."""
+
+    def test_m2_10_disabled_account_workspace_denied(self, service, db):
+        """M2-10: DISABLED account → get_workspace raises AuthorizationError."""
+        account_id, key = _seed_account(db, AccountState.DISABLED)
+        with pytest.raises(AuthorizationError):
+            service.get_workspace(key)
+
+    def test_m2_10_closed_account_workspace_denied(self, service, db):
+        """M2-10: CLOSED account → get_workspace raises AuthorizationError."""
+        account_id, key = _seed_account(db, AccountState.CLOSED)
+        with pytest.raises(AuthorizationError):
+            service.get_workspace(key)
+
+
+class TestM2CloudArmorRateLimit:
+    """M2-11: Cloud Armor per-IP rate limit — infrastructure-level, not testable in emulator."""
+
+    def test_m2_11_cloud_armor_not_testable_in_emulator(self):
+        pytest.skip(
+            "Cloud Armor rate-limit enforcement is verified by the production activation "
+            "gate (§1.8 step 5), not the Firestore emulator."
+        )

@@ -24,6 +24,7 @@ Authority (ixid_holder_authority_handler):
 """
 
 import json
+import uuid
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -325,7 +326,11 @@ def _mock_service(monkeypatch, method_name, return_value=None, side_effect=None)
     monkeypatch.setattr(
         authority,
         "verify_firebase_id_token",
-        lambda token: ("identity-key-hex", "https://securetoken.google.com/ixid-prod", "uid123"),
+        lambda token, require_email_verified=False: (
+            "identity-key-hex",
+            "https://securetoken.google.com/ixid-prod",
+            "uid123",
+        ),
     )
     svc = MagicMock()
     if side_effect is not None:
@@ -474,7 +479,7 @@ class TestAuthorityCacheControl:
         monkeypatch.setattr(
             authority,
             "verify_firebase_id_token",
-            lambda token: ("identity-key", "iss", "sub"),
+            lambda token, require_email_verified=False: ("identity-key", "iss", "sub"),
         )
         resp = auth_client.post(
             "/holder/v0.1/account",
@@ -510,4 +515,122 @@ class TestAuthorityCacheControl:
             headers={"Authorization": "Bearer firebase-token"},
         )
         assert resp.status_code == 200
+
+
+# ---------------------------------------------------------------------------
+# M. M2 gate tests — email_verified admission rule (§1.5)
+# ---------------------------------------------------------------------------
+
+
+from ixid_holder_authority_service import AuthenticationError as _AuthErr  # noqa: E402
+
+
+def _unverified_email_mock(monkeypatch):
+    """
+    Simulate a Firebase token with email_verified=False.
+    verify_firebase_id_token raises EMAIL_NOT_VERIFIED when require_email_verified=True.
+    GET /workspace (require_email_verified=False) passes through normally.
+    """
+
+    def _verify(token, require_email_verified=False):
+        if require_email_verified:
+            raise _AuthErr("Email not verified", internal_code="EMAIL_NOT_VERIFIED")
+        return ("identity-key-hex", "https://securetoken.google.com/ixid-prod", "uid123")
+
+    monkeypatch.setattr(authority, "verify_firebase_id_token", _verify)
+
+
+class TestM2EmailVerifiedAdmission:
+    """
+    M — M2 gate tests M2-1 and M2-2: server-side email_verified admission.
+
+    Contract: §1.5. require_email_verified=True is passed only to CREATE_ACCOUNT
+    and REGISTER_IX_ID. GET /workspace uses the default (False).
+    """
+
+    def test_m2_1_unverified_email_create_account_denied(self, auth_client, monkeypatch):
+        """M2-1: email_verified=false → CREATE_ACCOUNT → 401 UNAUTHENTICATED (zero writes)."""
+        _unverified_email_mock(monkeypatch)
+        resp = auth_client.post(
+            "/holder/v0.1/account",
+            headers={
+                "Authorization": "Bearer unverified-token",
+                "Content-Type": "application/json",
+            },
+            data=json.dumps({"operation_id": str(uuid.uuid4())}),
+        )
+        assert resp.status_code == 401
+        assert json.loads(resp.data)["error"] == "UNAUTHENTICATED"
+
+    def test_m2_2_unverified_email_register_ix_id_denied(self, auth_client, monkeypatch):
+        """M2-2: email_verified=false → REGISTER_IX_ID → 401 UNAUTHENTICATED (zero writes)."""
+        _unverified_email_mock(monkeypatch)
+        resp = auth_client.post(
+            "/holder/v0.1/ix-id",
+            headers={
+                "Authorization": "Bearer unverified-token",
+                "Content-Type": "application/json",
+            },
+            data=json.dumps({"operation_id": str(uuid.uuid4()), "handle": "myhandle"}),
+        )
+        assert resp.status_code == 401
+        assert json.loads(resp.data)["error"] == "UNAUTHENTICATED"
+
+    def test_m2_workspace_not_subject_to_email_admission_check(self, auth_client, monkeypatch):
+        """
+        GET /workspace must NOT be denied by the email_verified admission check.
+        verify_firebase_id_token is called with require_email_verified=False for workspace reads.
+        """
+        calls: list[bool] = []
+
+        def _track(token, require_email_verified=False):
+            calls.append(require_email_verified)
+            return ("identity-key-hex", "https://securetoken.google.com/ixid-prod", "uid123")
+
+        monkeypatch.setattr(authority, "verify_firebase_id_token", _track)
+
+        svc = MagicMock()
+        svc.get_workspace.side_effect = _AuthErr("auth identity not found")
+        monkeypatch.setattr(authority, "_get_service", lambda: svc)
+
+        resp = auth_client.get(
+            "/holder/v0.1/workspace",
+            headers={"Authorization": "Bearer firebase-token"},
+        )
+        assert resp.status_code == 401
+        assert calls == [False], (
+            "GET /workspace must call verify_firebase_id_token with require_email_verified=False"
+        )
+
+    def test_m2_verified_email_create_account_reaches_service(self, auth_client, monkeypatch):
+        """Verified email → admission check passes → CREATE_ACCOUNT reaches service."""
+        monkeypatch.setattr(
+            authority,
+            "verify_firebase_id_token",
+            lambda token, require_email_verified=False: (
+                "identity-key-hex",
+                "https://securetoken.google.com/ixid-prod",
+                "uid123",
+            ),
+        )
+        result = MagicMock()
+        result.created_new = True
+        result.account_id = "acct-1"
+        result.account_state = "ACTIVE"
+        result.account_state_version = 0
+        result.owned_ix_id = None
+        svc = MagicMock()
+        svc.create_account.return_value = result
+        monkeypatch.setattr(authority, "_get_service", lambda: svc)
+
+        resp = auth_client.post(
+            "/holder/v0.1/account",
+            headers={
+                "Authorization": "Bearer verified-token",
+                "Content-Type": "application/json",
+            },
+            data=json.dumps({"operation_id": str(uuid.uuid4())}),
+        )
+        assert resp.status_code == 201
+        assert svc.create_account.called
         assert resp.headers.get("Cache-Control") == "no-store"

@@ -328,7 +328,9 @@ def payload_fingerprint_register_ix_id(canonical_handle: str) -> str:
 # ---------------------------------------------------------------------------
 
 
-def verify_firebase_id_token(token: str) -> tuple[str, str, str]:
+def verify_firebase_id_token(
+    token: str, *, require_email_verified: bool = False
+) -> tuple[str, str, str]:
     """
     Verify a Firebase ID token using the Firebase Admin SDK.
 
@@ -342,6 +344,15 @@ def verify_firebase_id_token(token: str) -> tuple[str, str, str]:
 
     The verified_sub is used exactly as returned by the Firebase Admin SDK.
     No case transformation is applied.
+
+    require_email_verified (M2 §1.5):
+      When True, raises AuthenticationError(internal_code="EMAIL_NOT_VERIFIED")
+      if the decoded token's email_verified claim is not True.
+      Called with True only for CREATE_ACCOUNT and REGISTER_IX_ID.
+      GET /workspace calls this function with the default (False) so that
+      a returning user with an established account can always read their workspace.
+      The denial reason is emitted as a structured log field only; it is never
+      returned to the client and never written to Firestore (§5.5 invariant).
     """
     _init_firebase()
     try:
@@ -356,6 +367,12 @@ def verify_firebase_id_token(token: str) -> tuple[str, str, str]:
     verified_sub = decoded.get("sub", "")
     if not verified_iss or not verified_sub:
         raise AuthenticationError("Firebase token missing iss or sub claim")
+
+    if require_email_verified and not decoded.get("email_verified"):
+        raise AuthenticationError(
+            "Email not verified",
+            internal_code="EMAIL_NOT_VERIFIED",
+        )
 
     identity_key = compute_identity_key(verified_iss, verified_sub)
     return identity_key, verified_iss, verified_sub
