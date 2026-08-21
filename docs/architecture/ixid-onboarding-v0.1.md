@@ -1,9 +1,10 @@
 # IX ID Onboarding v0.1
 ## M2 Reconnaissance and Contract Design — Revision 6
 
-Status: **DRAFT — awaiting independent freeze review**
+Status: **FROZEN — accepted by independent review 2026-08-20**
+Freeze: Revision 6, contract checkpoint `1a9fbf2`
 Milestone: M2 — IX ID Registration / Onboarding v0.1
-Revision: 6 (R1: `7cd4c44`; R2: `3e380eb`; R3: `152ec44`; R4: `2a783fa`; R5: `8c51158`; 2026-08-20)
+Revision: 6 (R1: `7cd4c44`; R2: `3e380eb`; R3: `152ec44`; R4: `2a783fa`; R5: `8c51158`; R6: `1a9fbf2`; frozen 2026-08-20)
 
 Prerequisites: M1 — Holder Authority v0.1 (CLOSED at `d5841d1`, 2026-08-20)
 
@@ -1119,7 +1120,7 @@ The following work is **NOT authorized** by M2, even after independent review:
 ```
 M1 — Holder Authority v0.1          CLOSED (d5841d1, 2026-08-20)
     ↓
-M2 — IX ID Registration / Onboarding v0.1   THIS DOCUMENT (DRAFT R6)
+M2 — IX ID Registration / Onboarding v0.1   THIS DOCUMENT — FROZEN (1a9fbf2, 2026-08-20)
     ↓
 M3 — Payment Route Management v0.1
     ↓
@@ -1132,7 +1133,9 @@ M6 — ImplicitEx sender/payment integration
 
 ---
 
-*Reconnaissance and contract design only. Implementation does not begin before this
-document is accepted by independent review. The accepted contract is the authority.*
+*This contract is frozen at Revision 6 (`1a9fbf2`). Implementation serves the frozen
+contract. The contract does not change merely to accommodate implementation. Absent a
+demonstrated contradiction, security defect, or production regression, the frozen
+document is the authority.*
 
 *Revision 6 — Antoine Dennison / ImplicitEx — 2026-08-20*
