@@ -1,9 +1,9 @@
 # IX ID Onboarding v0.1
-## M2 Reconnaissance and Contract Design — Revision 5
+## M2 Reconnaissance and Contract Design — Revision 6
 
 Status: **DRAFT — awaiting independent freeze review**
 Milestone: M2 — IX ID Registration / Onboarding v0.1
-Revision: 5 (R1: `7cd4c44`; R2: `3e380eb`; R3: `152ec44`; R4: `2a783fa`; 2026-08-20)
+Revision: 6 (R1: `7cd4c44`; R2: `3e380eb`; R3: `152ec44`; R4: `2a783fa`; R5: `8c51158`; 2026-08-20)
 
 Prerequisites: M1 — Holder Authority v0.1 (CLOSED at `d5841d1`, 2026-08-20)
 
@@ -286,13 +286,16 @@ calling `reload()` and fall back to the sign-in form if null.
 The Firebase `oobCode` is a one-time secret delivered in the URL. The action handler
 is an authentication-facing surface and must enforce the following invariants:
 
-- **Mode allowlist.** Accept only `emailVerification` and `resetPassword` for M2.
-  Any other `mode` value — absent, empty, or unrecognised — must fail closed with
-  an error page. No redirect and no Firebase SDK call on an unknown mode.
+- **Mode allowlist.** Accept only `verifyEmail` and `resetPassword` for M2
+  (Firebase's defined query-string values). `recoverEmail` and every other mode
+  remain out of scope and fail closed. Any `mode` value — absent, empty, or not
+  in this list — must produce an error page with no redirect and no Firebase SDK call.
 
-- **`oobCode` presence check.** If `oobCode` is missing or syntactically invalid,
-  fail closed. Do not pass a missing or malformed `oobCode` to any Firebase SDK
-  function.
+- **`oobCode` presence check.** If `oobCode` is missing or empty, fail closed
+  without calling any Firebase SDK function. Firebase is the authority for code
+  validity, expiry, and prior use; `applyActionCode()` and `verifyPasswordResetCode()`
+  return documented error codes for invalid, expired, or already-used codes. The
+  handler must surface these as a safe action-error UI with no redirect.
 
 - **Password-reset pre-verification.** For `mode=resetPassword`, call
   `verifyPasswordResetCode(auth, oobCode)` before displaying the new-password form
@@ -376,7 +379,7 @@ If any of S2-1 through S2-4 fails:
 Only a completely passing production smoke (all probes S2-1 through S2-4 observed
 PASS) permits Firebase email/password to remain enabled.
 
-This Revision 5 M2 contract must be independently accepted before step 1 begins.
+This Revision 6 M2 contract must be independently accepted before step 1 begins.
 Anonymous Firebase sign-in remains disabled throughout and after M2.
 
 ---
@@ -1079,7 +1082,7 @@ M2-11. Cloud Armor rate limit: 11th POST /api/holder/v0.1/account from same IP
 
 ## Part 14: M2 Authorized Deliverables
 
-When this Revision 5 contract is accepted by independent review, the following
+When this Revision 6 contract is accepted by independent review, the following
 work is authorized:
 
 1. **Authority `email_verified` admission check** as a separate function
@@ -1116,7 +1119,7 @@ The following work is **NOT authorized** by M2, even after independent review:
 ```
 M1 — Holder Authority v0.1          CLOSED (d5841d1, 2026-08-20)
     ↓
-M2 — IX ID Registration / Onboarding v0.1   THIS DOCUMENT (DRAFT R5)
+M2 — IX ID Registration / Onboarding v0.1   THIS DOCUMENT (DRAFT R6)
     ↓
 M3 — Payment Route Management v0.1
     ↓
@@ -1132,4 +1135,4 @@ M6 — ImplicitEx sender/payment integration
 *Reconnaissance and contract design only. Implementation does not begin before this
 document is accepted by independent review. The accepted contract is the authority.*
 
-*Revision 5 — Antoine Dennison / ImplicitEx — 2026-08-20*
+*Revision 6 — Antoine Dennison / ImplicitEx — 2026-08-20*
