@@ -364,6 +364,98 @@ class TestAccountIdGeneration:
 
 
 # ===========================================================================
+# verify_firebase_id_token — direct unit tests (no emulator, no Firebase network)
+# ===========================================================================
+#
+# These tests mock firebase_admin.auth.verify_id_token one level below the
+# public verify_firebase_id_token() function so that the real admission logic
+# (email_verified claim check, iss/sub extraction, identity_key derivation) is
+# exercised against concrete decoded-token payloads.
+# ===========================================================================
+
+
+def _make_decoded(
+    *,
+    iss: str = "https://securetoken.google.com/ixid-prod",
+    sub: str = "test-uid-123",
+    email_verified=True,
+    include_email_verified: bool = True,
+) -> dict:
+    """Build a minimal decoded Firebase ID token dict."""
+    d: dict = {"iss": iss, "sub": sub}
+    if include_email_verified:
+        d["email_verified"] = email_verified
+    return d
+
+
+class TestVerifyFirebaseIdTokenEmailVerifiedAdmission:
+    """
+    Direct unit tests for the M2 email_verified admission invariant inside
+    verify_firebase_id_token().
+
+    Firebase Admin SDK is mocked at verify_id_token(); the real claim-inspection
+    and error-raising logic runs against controlled decoded payloads.
+    """
+
+    def _patch_admin(self, monkeypatch, decoded: dict):
+        """Replace firebase_admin.auth.verify_id_token with a stub returning decoded."""
+        import importlib
+
+        # Ensure the lazy-import path sees our stub regardless of import order.
+        firebase_admin_auth = importlib.import_module("firebase_admin.auth")
+        monkeypatch.setattr(firebase_admin_auth, "verify_id_token", lambda token, **kw: decoded)
+        # Also patch _init_firebase so no real app initialization is attempted.
+        monkeypatch.setattr(svc, "_init_firebase", lambda: None)
+
+    def test_verified_email_admitted_when_required(self, monkeypatch):
+        """email_verified=True + require_email_verified=True → accepted; returns key/iss/sub."""
+        decoded = _make_decoded(email_verified=True)
+        self._patch_admin(monkeypatch, decoded)
+        key, iss, sub = svc.verify_firebase_id_token("fake-token", require_email_verified=True)
+        assert key == compute_identity_key(decoded["iss"], decoded["sub"])
+        assert iss == decoded["iss"]
+        assert sub == decoded["sub"]
+
+    def test_false_email_verified_denied_when_required(self, monkeypatch):
+        """email_verified=False → AuthenticationError / EMAIL_NOT_VERIFIED."""
+        self._patch_admin(monkeypatch, _make_decoded(email_verified=False))
+        with pytest.raises(AuthenticationError) as exc:
+            svc.verify_firebase_id_token("fake-token", require_email_verified=True)
+        assert exc.value.internal_code == "EMAIL_NOT_VERIFIED"
+
+    def test_missing_email_verified_denied_when_required(self, monkeypatch):
+        """Absent email_verified claim → AuthenticationError / EMAIL_NOT_VERIFIED."""
+        self._patch_admin(monkeypatch, _make_decoded(include_email_verified=False))
+        with pytest.raises(AuthenticationError) as exc:
+            svc.verify_firebase_id_token("fake-token", require_email_verified=True)
+        assert exc.value.internal_code == "EMAIL_NOT_VERIFIED"
+
+    def test_truthy_non_boolean_denied_when_required(self, monkeypatch):
+        """Non-Boolean truthy value (e.g. 1, 'true') → denied. Exact Boolean True required."""
+        for truthy_non_bool in (1, "true", "yes", 1.0, [True]):
+            self._patch_admin(monkeypatch, _make_decoded(email_verified=truthy_non_bool))
+            with pytest.raises(AuthenticationError) as exc:
+                svc.verify_firebase_id_token("fake-token", require_email_verified=True)
+            assert exc.value.internal_code == "EMAIL_NOT_VERIFIED", (
+                f"Expected EMAIL_NOT_VERIFIED for email_verified={truthy_non_bool!r}"
+            )
+
+    def test_not_required_passes_regardless_of_claim(self, monkeypatch):
+        """require_email_verified=False → authentication succeeds regardless of email state."""
+        for email_verified_value in (False, None, True, 0, ""):
+            decoded = _make_decoded(email_verified=email_verified_value)
+            self._patch_admin(monkeypatch, decoded)
+            key, iss, sub = svc.verify_firebase_id_token("fake-token", require_email_verified=False)
+            assert iss == decoded["iss"]
+
+    def test_not_required_missing_claim_passes(self, monkeypatch):
+        """require_email_verified=False → accepted even when claim is absent (workspace path)."""
+        self._patch_admin(monkeypatch, _make_decoded(include_email_verified=False))
+        key, iss, sub = svc.verify_firebase_id_token("fake-token", require_email_verified=False)
+        assert sub == "test-uid-123"
+
+
+# ===========================================================================
 # Emulator Integration Tests — 25-Loop Exit Gate + Falsification
 # ===========================================================================
 

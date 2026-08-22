@@ -549,8 +549,13 @@ class TestM2EmailVerifiedAdmission:
     """
 
     def test_m2_1_unverified_email_create_account_denied(self, auth_client, monkeypatch):
-        """M2-1: email_verified=false → CREATE_ACCOUNT → 401 UNAUTHENTICATED (zero writes)."""
+        """M2-1: email_verified=false → CREATE_ACCOUNT → 401 UNAUTHENTICATED (zero writes).
+        create_account() must not be called — the denial happens before the service boundary.
+        """
         _unverified_email_mock(monkeypatch)
+        svc = MagicMock()
+        monkeypatch.setattr(authority, "_get_service", lambda: svc)
+
         resp = auth_client.post(
             "/holder/v0.1/account",
             headers={
@@ -561,10 +566,16 @@ class TestM2EmailVerifiedAdmission:
         )
         assert resp.status_code == 401
         assert json.loads(resp.data)["error"] == "UNAUTHENTICATED"
+        svc.create_account.assert_not_called()
 
     def test_m2_2_unverified_email_register_ix_id_denied(self, auth_client, monkeypatch):
-        """M2-2: email_verified=false → REGISTER_IX_ID → 401 UNAUTHENTICATED (zero writes)."""
+        """M2-2: email_verified=false → REGISTER_IX_ID → 401 UNAUTHENTICATED (zero writes).
+        register_ix_id() must not be called — denial happens before the service boundary.
+        """
         _unverified_email_mock(monkeypatch)
+        svc = MagicMock()
+        monkeypatch.setattr(authority, "_get_service", lambda: svc)
+
         resp = auth_client.post(
             "/holder/v0.1/ix-id",
             headers={
@@ -575,6 +586,7 @@ class TestM2EmailVerifiedAdmission:
         )
         assert resp.status_code == 401
         assert json.loads(resp.data)["error"] == "UNAUTHENTICATED"
+        svc.register_ix_id.assert_not_called()
 
     def test_m2_workspace_not_subject_to_email_admission_check(self, auth_client, monkeypatch):
         """

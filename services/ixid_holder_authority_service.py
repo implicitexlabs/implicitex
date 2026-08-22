@@ -368,7 +368,7 @@ def verify_firebase_id_token(
     if not verified_iss or not verified_sub:
         raise AuthenticationError("Firebase token missing iss or sub claim")
 
-    if require_email_verified and not decoded.get("email_verified"):
+    if require_email_verified and decoded.get("email_verified") is not True:
         raise AuthenticationError(
             "Email not verified",
             internal_code="EMAIL_NOT_VERIFIED",
