@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>IX ID — Register</title>
+  <!--
+    Cache-Control: no-store is enforced by nginx (serving layer).
+    Referrer-Policy: no-referrer is enforced by nginx (serving layer).
+
+    This page is Slice A — an inert placeholder for the ixid-onboarding-web service.
+    The registration state machine (8 states, M2 contract Part 4) is implemented
+    in Slice E. This file establishes the correct serving structure so Slice E
+    can drop in register.js without nginx changes.
+
+    No external resources. No Firebase SDK. No analytics.
+    Serves same-origin /api/holder/* and /api/* via the Load Balancer (Slice B).
+  -->
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self';
+             script-src 'self';
+             style-src 'self' 'unsafe-inline';
+             img-src 'self' data:;
+             connect-src 'self';
+             object-src 'none';
+             base-uri 'self';">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #0a0a0a;
+      color: #e8e8e8;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    .wordmark {
+      font-size: 1.125rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      color: #e8e8e8;
+      text-decoration: none;
+      margin-bottom: 2rem;
+    }
+    .status {
+      font-size: 0.875rem;
+      color: #666;
+      letter-spacing: 0.03em;
+    }
+  </style>
+</head>
+<body>
+  <a class="wordmark" href="https://ixid.me">IX ID</a>
+  <p class="status">Registration — coming soon</p>
+  <script src="register.js"></script>
+</body>
+</html>

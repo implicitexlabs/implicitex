@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>IX ID — Action</title>
+  <!--
+    Cache-Control: no-store is enforced by nginx (serving layer).
+    Referrer-Policy: no-referrer is enforced by nginx (serving layer).
+    This page receives oobCode in the URL; it must never be cached or leak a referrer.
+
+    This page is Slice A — an inert placeholder for the /auth/action handler.
+    The real handler (Slice F) accepts mode=verifyEmail and mode=resetPassword,
+    calls applyActionCode() or verifyPasswordResetCode()/confirmPasswordReset(),
+    and redirects to https://app.ixid.me/register on success.
+
+    Security invariants (enforced by Slice F, declared here for review):
+    - Mode allowlist: only verifyEmail and resetPassword accepted.
+    - oobCode presence check: fail closed if absent or empty.
+    - continueUrl allowlist: only https://app.ixid.me/register is followed.
+    - No third-party resources loaded from this page.
+    - No secret values logged.
+
+    No external resources. No Firebase SDK. No analytics.
+  -->
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self';
+             script-src 'self';
+             style-src 'self' 'unsafe-inline';
+             img-src 'self' data:;
+             connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com;
+             object-src 'none';
+             base-uri 'self';">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #0a0a0a;
+      color: #e8e8e8;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    .wordmark {
+      font-size: 1.125rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      color: #e8e8e8;
+      text-decoration: none;
+      margin-bottom: 2rem;
+    }
+    .status {
+      font-size: 0.875rem;
+      color: #666;
+      letter-spacing: 0.03em;
+    }
+  </style>
+</head>
+<body>
+  <a class="wordmark" href="https://ixid.me">IX ID</a>
+  <p class="status" id="action-status">Processing…</p>
+  <script src="action.js"></script>
+</body>
+</html>
