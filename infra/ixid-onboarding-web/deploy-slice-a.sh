@@ -97,24 +97,28 @@ if [[ -n "${SLICE_A_STATUS}" ]]; then
   exit 1
 fi
 GIT_SHA=$(git rev-parse HEAD)
-IMAGE="us-central1-docker.pkg.dev/${PROJECT}/ixid/${SERVICE}:${GIT_SHA}"
+# Per-service Artifact Registry convention: one repo per service, named after the service.
+# Matches ixid-public-web, ixid-public-edge, ixid-projection, ixid-scheduler.
+IMAGE="us-central1-docker.pkg.dev/${PROJECT}/${SERVICE}/${SERVICE}:${GIT_SHA}"
 echo "  OK: Slice A is committed. Image tag: ${GIT_SHA}"
 
-# Verify Artifact Registry repository exists
+# Verify Artifact Registry repository exists.
+# Repository name matches the service name — one repo per service.
 echo "  Checking Artifact Registry repository..."
-gcloud artifacts repositories describe ixid \
+gcloud artifacts repositories describe "${SERVICE}" \
   --location="${REGION}" \
   --project="${PROJECT}" \
   --format="value(name)" > /dev/null 2>&1 || {
-    echo "  ERROR: Artifact Registry repository 'ixid' not found in ${REGION}/${PROJECT}."
+    echo "  ERROR: Artifact Registry repository '${SERVICE}' not found in ${REGION}/${PROJECT}."
     echo "  Create it first:"
-    echo "    gcloud artifacts repositories create ixid \\"
+    echo "    gcloud artifacts repositories create ${SERVICE} \\"
     echo "      --repository-format=docker \\"
     echo "      --location=${REGION} \\"
-    echo "      --project=${PROJECT}"
+    echo "      --project=${PROJECT} \\"
+    echo "      --description='IX Id onboarding web container images'"
     exit 1
   }
-echo "  OK: Artifact Registry repository 'ixid' exists."
+echo "  OK: Artifact Registry repository '${SERVICE}' exists."
 
 # Configure Docker credential helper for Artifact Registry.
 # This is required to push. Fail closed if configuration fails.
