@@ -1,0 +1,115 @@
+# IX ID URL Map — Post-B2 production baseline
+# =============================================
+# Exported: 2026-08-23 after M2 Slice B2 cutover
+# Source:   gcloud compute url-maps export ixid-url-map --global --project=ixid-prod
+#
+# This file is the authoritative post-B2 live state of ixid-url-map.
+# It is a read-only snapshot. Do not import this file to make changes;
+# use it only as the semantic reference for the next routing delta or rollback.
+#
+# Fingerprint at export: zbQgsLPSsRQ=
+# (Required for any future optimistic-lock update or rollback construction.)
+#
+# Historical chain:
+#   pre-B2 baseline  → fingerprint Ah3rpz12iqw=  (ixid-url-map-v0.1.yaml)
+#   B2 candidate     → committed e7d00f0          (infra/ixid-onboarding-web/ixid-url-map-slice-b-candidate.yaml)
+#   post-B2 baseline → fingerprint zbQgsLPSsRQ=   (this file)
+#
+# Active routing after B2:
+#   app.ixid.me     → ixid-app-paths  (IX ID onboarding application)
+#   *.ixid.me       → ixid-paths      (public identity pages — unchanged)
+#
+# ixid-app-paths (app.ixid.me only):
+#   /api/holder/*  → ixid-holder-backend  (pathPrefixRewrite: /holder/)  ← frozen M1
+#   /api/*         → ixid-edge-backend    (pathPrefixRewrite: /)          ← frozen M1
+#   /*  (default)  → ixid-onboarding-web-backend                         ← M2 Slice B
+#
+# ixid-paths (all other *.ixid.me — unchanged from pre-B2):
+#   /api/holder/*  → ixid-holder-backend  (pathPrefixRewrite: /holder/)  ← frozen M1
+#   /api/*         → ixid-edge-backend    (pathPrefixRewrite: /)          ← frozen M1
+#   /*  (default)  → ixid-web-backend     (public identity page)          ← frozen
+#
+# 8 live routing regression tests are persisted on the URL map (see tests: section).
+# These are enforced by GCP on any future url-maps import or edit.
+
+defaultService: https://www.googleapis.com/compute/v1/projects/ixid-prod/global/backendServices/ixid-web-backend
+fingerprint: zbQgsLPSsRQ=
+hostRules:
+- hosts:
+  - app.ixid.me
+  pathMatcher: ixid-app-paths
+- hosts:
+  - '*.ixid.me'
+  pathMatcher: ixid-paths
+name: ixid-url-map
+pathMatchers:
+- defaultService: https://www.googleapis.com/compute/v1/projects/ixid-prod/global/backendServices/ixid-onboarding-web-backend
+  name: ixid-app-paths
+  pathRules:
+  - paths:
+    - /api/holder/*
+    routeAction:
+      urlRewrite:
+        pathPrefixRewrite: /holder/
+    service: https://www.googleapis.com/compute/v1/projects/ixid-prod/global/backendServices/ixid-holder-backend
+  - paths:
+    - /api/*
+    routeAction:
+      urlRewrite:
+        pathPrefixRewrite: /
+    service: https://www.googleapis.com/compute/v1/projects/ixid-prod/global/backendServices/ixid-edge-backend
+- defaultService: https://www.googleapis.com/compute/v1/projects/ixid-prod/global/backendServices/ixid-web-backend
+  name: ixid-paths
+  pathRules:
+  - paths:
+    - /api/holder/*
+    routeAction:
+      urlRewrite:
+        pathPrefixRewrite: /holder/
+    service: https://www.googleapis.com/compute/v1/projects/ixid-prod/global/backendServices/ixid-holder-backend
+  - paths:
+    - /api/*
+    routeAction:
+      urlRewrite:
+        pathPrefixRewrite: /
+    service: https://www.googleapis.com/compute/v1/projects/ixid-prod/global/backendServices/ixid-edge-backend
+tests:
+- description: "app.ixid.me / \u2192 onboarding-web (SPA root, no rewrite)"
+  host: app.ixid.me
+  path: /
+  service: projects/ixid-prod/global/backendServices/ixid-onboarding-web-backend
+- description: "app.ixid.me /register \u2192 onboarding-web (SPA route, no rewrite)"
+  host: app.ixid.me
+  path: /register
+  service: projects/ixid-prod/global/backendServices/ixid-onboarding-web-backend
+- description: "app.ixid.me /auth/action \u2192 onboarding-web (email action handler,\
+    \ no rewrite)"
+  host: app.ixid.me
+  path: /auth/action
+  service: projects/ixid-prod/global/backendServices/ixid-onboarding-web-backend
+- description: "app.ixid.me /api/holder/test \u2192 holder-backend (longest path wins,\
+    \ rewrite)"
+  expectedOutputUrl: /holder/test
+  host: app.ixid.me
+  path: /api/holder/test
+  service: projects/ixid-prod/global/backendServices/ixid-holder-backend
+- description: "app.ixid.me /api/test \u2192 edge-backend (rewrite / prefix)"
+  expectedOutputUrl: /test
+  host: app.ixid.me
+  path: /api/test
+  service: projects/ixid-prod/global/backendServices/ixid-edge-backend
+- description: "example.ixid.me / \u2192 web-backend (public identity page, no rewrite)"
+  host: example.ixid.me
+  path: /
+  service: projects/ixid-prod/global/backendServices/ixid-web-backend
+- description: "example.ixid.me /api/holder/test \u2192 holder-backend (frozen M1,\
+    \ rewrite)"
+  expectedOutputUrl: /holder/test
+  host: example.ixid.me
+  path: /api/holder/test
+  service: projects/ixid-prod/global/backendServices/ixid-holder-backend
+- description: "example.ixid.me /api/test \u2192 edge-backend (frozen M1, rewrite)"
+  expectedOutputUrl: /test
+  host: example.ixid.me
+  path: /api/test
+  service: projects/ixid-prod/global/backendServices/ixid-edge-backend
