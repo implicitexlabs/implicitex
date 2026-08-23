@@ -722,7 +722,8 @@ Protocol on 401 from GET /workspace:
            → Call CREATE_ACCOUNT with a new operation_id.
            → 201: account created → continue to HANDLE_SELECTION.
            → 200: account already existed (race or prior session) → check owned_ix_id.
-           → 401: authentication failure (not a missing-account case) → UNAUTHENTICATED.
+           → 401: force-refresh the Firebase ID token and retry CREATE_ACCOUNT once
+             with the same operation_id; if the retry is also 401 → UNAUTHENTICATED.
            → 403: ACCESS_DENIED_ERROR.
 
        email_verified = false:

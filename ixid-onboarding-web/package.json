@@ -1,0 +1,13 @@
+{
+  "name": "ixid-onboarding-web",
+  "version": "0.1.0",
+  "private": true,
+  "description": "IX ID M2 onboarding client",
+  "scripts": {
+    "check": "node --check public/config.js && node --check public/onboarding-core.js && node --check public/holder-api-client.js && node --check public/firebase-auth-adapter.js && node --check public/register.js",
+    "test": "npm run check && node tests/onboarding-core.test.js && node tests/adapters.test.js && node tests/frontend-contract.test.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
