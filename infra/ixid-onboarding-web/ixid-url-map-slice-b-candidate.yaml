@@ -1,0 +1,157 @@
+# IX ID URL Map — Slice B candidate (NOT YET IMPORTED)
+# ======================================================
+# Baseline: ixid-url-map fingerprint Ah3rpz12iqw= (2026-08-23)
+#
+# Change from baseline:
+#   ADD  hostRules entry: app.ixid.me → ixid-app-paths
+#   ADD  pathMatchers entry: ixid-app-paths
+#   ADD  tests: section (8 route cases; validated by gcloud url-maps validate)
+#   KEEP ixid-paths unchanged (frozen)
+#   KEEP defaultService unchanged
+#   KEEP fingerprint field for optimistic-lock validation on import
+#
+# GCP URL map host-rule precedence (confirmed):
+#   Exact hostname rules take priority over wildcard rules.
+#   app.ixid.me → ixid-app-paths (this file)
+#   *.ixid.me   → ixid-paths     (all other subdomains, unchanged)
+#
+# GCP path-rule matching:
+#   Simple pathRules use longest-path-first matching regardless of declaration order.
+#   /api/holder/* (13 prefix chars) beats /api/* (5 prefix chars).
+#
+# ixid-app-paths routing (app.ixid.me only):
+#   /api/holder/*  → ixid-holder-backend  (pathPrefixRewrite: /holder/)  ← frozen M1
+#   /api/*         → ixid-edge-backend    (pathPrefixRewrite: /)          ← frozen M1
+#   /*  (default)  → ixid-onboarding-web-backend                         ← new
+#
+# ixid-paths routing (all other *.ixid.me — UNCHANGED):
+#   /api/holder/*  → ixid-holder-backend  (pathPrefixRewrite: /holder/)  ← frozen M1
+#   /api/*         → ixid-edge-backend    (pathPrefixRewrite: /)          ← frozen M1
+#   /*  (default)  → ixid-web-backend     (public identity page)          ← frozen
+#
+# Serverless NEG notes:
+#   - Health checks are NOT supported for serverless NEG backend services.
+#   - balancingMode, capacityScaler, and timeoutSec are NOT configurable for
+#     serverless NEG backends. Fields may appear in describe output as defaults;
+#     they must not be set explicitly during creation.
+#
+# Prerequisite before import (B1 — not yet created):
+#   - Serverless NEG:       ixid-onboarding-web-neg  (us-central1)
+#   - Backend service:      ixid-onboarding-web-backend
+#   Without these, GCP rejects both validate and import with INVALID_ARGUMENT.
+#
+# Rollback (if any B2 closure gate fails):
+#   Semantic source of truth: infra/ixid-public-ingress/ixid-url-map-slice-b-baseline.yaml
+#   Do NOT re-import baseline YAML verbatim — its frozen fingerprint (Ah3rpz12iqw=) will
+#   be stale by rollback time. Instead:
+#     1. Export the live URL map to capture the current fingerprint.
+#     2. Restore baseline routing semantics into a new file using the live fingerprint.
+#     3. Import that file.
+#   Command to export current state:
+#     gcloud compute url-maps export ixid-url-map \
+#       --destination=/tmp/ixid-url-map-rollback-live.yaml \
+#       --global --project=ixid-prod
+
+name: ixid-url-map
+fingerprint: Ah3rpz12iqw=
+defaultService: projects/ixid-prod/global/backendServices/ixid-web-backend
+hostRules:
+  - hosts:
+      - "app.ixid.me"
+    pathMatcher: ixid-app-paths
+  - hosts:
+      - "*.ixid.me"
+    pathMatcher: ixid-paths
+pathMatchers:
+  - name: ixid-app-paths
+    defaultService: projects/ixid-prod/global/backendServices/ixid-onboarding-web-backend
+    pathRules:
+      - paths:
+          - "/api/holder/*"
+        service: projects/ixid-prod/global/backendServices/ixid-holder-backend
+        routeAction:
+          urlRewrite:
+            pathPrefixRewrite: "/holder/"
+      - paths:
+          - "/api/*"
+        service: projects/ixid-prod/global/backendServices/ixid-edge-backend
+        routeAction:
+          urlRewrite:
+            pathPrefixRewrite: "/"
+  - name: ixid-paths
+    defaultService: projects/ixid-prod/global/backendServices/ixid-web-backend
+    pathRules:
+      - paths:
+          - "/api/holder/*"
+        service: projects/ixid-prod/global/backendServices/ixid-holder-backend
+        routeAction:
+          urlRewrite:
+            pathPrefixRewrite: "/holder/"
+      - paths:
+          - "/api/*"
+        service: projects/ixid-prod/global/backendServices/ixid-edge-backend
+        routeAction:
+          urlRewrite:
+            pathPrefixRewrite: "/"
+
+# Route test matrix — 8 cases.
+# Validated non-destructively by:
+#   gcloud compute url-maps validate \
+#     --source=infra/ixid-onboarding-web/ixid-url-map-slice-b-candidate.yaml \
+#     --load-balancing-scheme=EXTERNAL_MANAGED \
+#     --global --project=ixid-prod
+# This command runs structural validation + all tests below without updating the URL map.
+#
+# expectedOutputUrl reflects the URL as rewritten before delivery to the backend.
+# For pathPrefixRewrite: /api/holder/ → /holder/, /api/ → /.
+# Paths without urlRewrite: output URL equals input URL.
+tests:
+  # expectedOutputUrl format (confirmed from GCP validation engine output):
+  #   - Routes WITH urlRewrite: path only (e.g. "/holder/test"), no scheme or host.
+  #   - Routes WITHOUT urlRewrite: omit expectedOutputUrl entirely; GCP returns '' for these.
+  #
+  # ── app.ixid.me (ixid-app-paths matcher) ──────────────────────────────────
+  - description: "app.ixid.me / → onboarding-web (SPA root, no rewrite)"
+    host: "app.ixid.me"
+    path: "/"
+    service: projects/ixid-prod/global/backendServices/ixid-onboarding-web-backend
+
+  - description: "app.ixid.me /register → onboarding-web (SPA route, no rewrite)"
+    host: "app.ixid.me"
+    path: "/register"
+    service: projects/ixid-prod/global/backendServices/ixid-onboarding-web-backend
+
+  - description: "app.ixid.me /auth/action → onboarding-web (email action handler, no rewrite)"
+    host: "app.ixid.me"
+    path: "/auth/action"
+    service: projects/ixid-prod/global/backendServices/ixid-onboarding-web-backend
+
+  - description: "app.ixid.me /api/holder/test → holder-backend (longest path wins, rewrite)"
+    host: "app.ixid.me"
+    path: "/api/holder/test"
+    service: projects/ixid-prod/global/backendServices/ixid-holder-backend
+    expectedOutputUrl: "/holder/test"
+
+  - description: "app.ixid.me /api/test → edge-backend (rewrite / prefix)"
+    host: "app.ixid.me"
+    path: "/api/test"
+    service: projects/ixid-prod/global/backendServices/ixid-edge-backend
+    expectedOutputUrl: "/test"
+
+  # ── example.ixid.me (ixid-paths matcher — frozen, unchanged) ──────────────
+  - description: "example.ixid.me / → web-backend (public identity page, no rewrite)"
+    host: "example.ixid.me"
+    path: "/"
+    service: projects/ixid-prod/global/backendServices/ixid-web-backend
+
+  - description: "example.ixid.me /api/holder/test → holder-backend (frozen M1, rewrite)"
+    host: "example.ixid.me"
+    path: "/api/holder/test"
+    service: projects/ixid-prod/global/backendServices/ixid-holder-backend
+    expectedOutputUrl: "/holder/test"
+
+  - description: "example.ixid.me /api/test → edge-backend (frozen M1, rewrite)"
+    host: "example.ixid.me"
+    path: "/api/test"
+    service: projects/ixid-prod/global/backendServices/ixid-edge-backend
+    expectedOutputUrl: "/test"
