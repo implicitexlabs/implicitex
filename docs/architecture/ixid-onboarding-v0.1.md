@@ -836,7 +836,12 @@ Recommended Cloud Armor limits:
 | `POST /api/holder/v0.1/account` | 10 requests | 1 hour |
 | `POST /api/holder/v0.1/ix-id` | 20 requests | 1 hour |
 | `GET /api/holder/v0.1/workspace` | 120 requests | 1 hour |
-| `/api/holder/*` (global) | 200 requests | 1 hour |
+| `/api/holder/*` (other holder traffic) | 200 requests | 1 hour |
+
+The fourth rule is a residual catch-all: it applies only when none of rules 1–3 match.
+Cloud Armor evaluates rules by priority and stops at the first match; a request
+consumed by rule 1, 2, or 3 does not accumulate against rule 4's counter. This is
+not a cumulative 200/hr cap across all holder traffic.
 
 These limits are recommendations subject to operational adjustment. Cloud Armor
 policies are configurable without a code deploy.
@@ -1075,8 +1080,12 @@ M2-9. email_verified = true; account SUSPENDED
 M2-10. email_verified = true; account DISABLED or CLOSED
        → GET /workspace 403 → ACCESS_DENIED_ERROR shown
 
-M2-11. Cloud Armor rate limit: 11th POST /api/holder/v0.1/account from same IP
-       within 1 hour → 429; client shows rate-limit message
+M2-11. Cloud Armor rate limit: from one controlled source IP, exceed the configured
+       10 requests/hour threshold for POST /api/holder/v0.1/account. Confirm that
+       Cloud Armor begins returning HTTP 429 under sustained above-threshold traffic,
+       confirm attribution to the account rate-limit rule, and confirm the client
+       displays the rate-limit message. (Cloud Armor rate-limit enforcement is
+       approximate; no exact request number is required.)
 ```
 
 ---
