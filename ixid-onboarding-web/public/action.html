@@ -3,25 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="robots" content="noindex">
+  <meta name="referrer" content="no-referrer">
   <title>IX ID — Action</title>
   <!--
-    Cache-Control: no-store is enforced by nginx (serving layer).
-    Referrer-Policy: no-referrer is enforced by nginx (serving layer).
-    This page receives oobCode in the URL; it must never be cached or leak a referrer.
+    Cache-Control: no-store and Referrer-Policy: no-referrer are enforced by
+    the serving layer. The meta policy above provides an additional browser
+    boundary. No action data is rendered or persisted by this page.
 
-    This page is Slice A — an inert placeholder for the /auth/action handler.
-    The real handler (Slice F) accepts mode=verifyEmail and mode=resetPassword,
-    calls applyActionCode() or verifyPasswordResetCode()/confirmPasswordReset(),
-    and redirects to https://app.ixid.me/register on success.
-
-    Security invariants (enforced by Slice F, declared here for review):
-    - Mode allowlist: only verifyEmail and resetPassword accepted.
-    - oobCode presence check: fail closed if absent or empty.
-    - continueUrl allowlist: only https://app.ixid.me/register is followed.
-    - No third-party resources loaded from this page.
-    - No secret values logged.
-
-    No external resources. No Firebase SDK. No analytics.
+    Slice F accepts only verifyEmail and resetPassword with a valid action code
+    and the exact continuation URL https://app.ixid.me/register. Its action
+    adapter is injected; this local surface contains no production Firebase
+    action-adapter integration, analytics, or third-party resource.
   -->
   <meta http-equiv="Content-Security-Policy"
     content="default-src 'self';
@@ -32,36 +25,101 @@
              object-src 'none';
              base-uri 'self';">
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { height: 100%; }
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { min-height: 100%; }
     body {
+      margin: 0;
+      min-width: 320px;
+      min-height: 100vh;
+      padding: 1rem;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       background: #0a0a0a;
       color: #e8e8e8;
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
-      min-height: 100vh;
     }
+    .shell { width: min(100%, 30rem); }
     .wordmark {
+      display: inline-flex;
+      align-items: center;
+      min-width: 44px;
+      min-height: 44px;
+      margin-bottom: 2rem;
+      color: #e8e8e8;
       font-size: 1.125rem;
       font-weight: 600;
       letter-spacing: 0.05em;
-      color: #e8e8e8;
       text-decoration: none;
-      margin-bottom: 2rem;
     }
-    .status {
-      font-size: 0.875rem;
-      color: #666;
-      letter-spacing: 0.03em;
+    .panel {
+      padding: clamp(1.25rem, 5vw, 2rem);
+      border: 1px solid #303030;
+      border-radius: 1rem;
+      background: #121212;
+    }
+    [hidden] { display: none !important; }
+    h1 { margin: 0 0 1rem; font-size: clamp(1.5rem, 7vw, 2rem); line-height: 1.2; }
+    p { line-height: 1.6; }
+    .status { min-height: 1.5rem; color: #aaa; }
+    .error { min-height: 1.5rem; color: #ffb0b0; }
+    .field { margin: 1.25rem 0; }
+    label { display: block; margin-bottom: 0.5rem; font-weight: 650; }
+    input {
+      width: 100%;
+      min-height: 44px;
+      padding: 0.7rem 0.8rem;
+      border: 1px solid #555;
+      border-radius: 0.5rem;
+      background: #080808;
+      color: #fff;
+      font: inherit;
+    }
+    .hint { margin: 0.4rem 0 0; color: #aaa; font-size: 0.875rem; }
+    .actions { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+    button {
+      min-width: 44px;
+      min-height: 44px;
+      padding: 0.7rem 1rem;
+      border: 1px solid #f2f2f2;
+      border-radius: 0.5rem;
+      background: #f2f2f2;
+      color: #111;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    button.secondary { background: transparent; color: #f2f2f2; }
+    button:disabled { cursor: not-allowed; opacity: 0.5; }
+    button:focus-visible, input:focus-visible, a:focus-visible, h1:focus-visible {
+      outline: 3px solid #7cc7ff;
+      outline-offset: 3px;
     }
   </style>
 </head>
 <body>
-  <a class="wordmark" href="https://ixid.me">IX ID</a>
-  <p class="status" id="action-status">Processing…</p>
+  <main class="shell">
+    <a class="wordmark" href="https://ixid.me" aria-label="IX ID home">IX ID</a>
+    <section class="panel" aria-labelledby="action-heading">
+      <h1 id="action-heading" tabindex="-1">Completing your account action</h1>
+      <p class="status" id="action-status" role="status" aria-live="polite">Processing…</p>
+      <p class="error" id="action-error" role="alert" aria-live="assertive"></p>
+
+      <form id="reset-password-form" hidden novalidate>
+        <div class="field">
+          <label for="reset-password">New password</label>
+          <input id="reset-password" name="password" type="password" autocomplete="new-password"
+            minlength="12" required aria-describedby="reset-password-hint action-error">
+          <p class="hint" id="reset-password-hint">Use at least 12 characters.</p>
+        </div>
+        <div class="actions">
+          <button id="reset-submit" type="submit">Reset password</button>
+          <button id="reset-cancel" class="secondary" type="button">Cancel</button>
+        </div>
+      </form>
+    </section>
+  </main>
+  <script src="config.js"></script>
   <script src="action.js"></script>
 </body>
 </html>
