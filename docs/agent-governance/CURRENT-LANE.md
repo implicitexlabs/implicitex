@@ -1,13 +1,16 @@
 lane_id: m2-slice-g-action-adapter-integration
 status: ACTIVE
-amendment: 2
+amendment: 3
 
 # CURRENT-LANE.md — Authoritative execution boundary
 # ====================================================
-# Amendment 2 (2026-08-24): resolves local-resource dependency gate —
-# human-selected Path A (Firebase Auth REST API via fetch). Records
-# corrected REST endpoint contract. No new paths, origins, or CSP changes
-# required. Amendment 1 commit: ea0cf5c; this amendment parent: ea0cf5c.
+# Amendment 3 (2026-08-24): formalizes handling of pre-existing outside
+# dirty-work manifest. Classifies 10 modified tracked files and 56
+# untracked files as PRE-EXISTING / provenance-only. These paths predate
+# the Slice G lane (mechanically verified: zero Slice G commits touch any
+# outside path between aaf8347..HEAD). No outside path is authorized,
+# adopted, read, staged, cleaned, restored, or attributed to Slice G.
+# Amendment 2 commit: 3438b27; this amendment parent: 3438b27.
 #
 # Authorizes production Firebase action-adapter integration for the
 # ixid-onboarding-web action page, local-only. No Firebase mutation,
@@ -50,7 +53,8 @@ objective: >
 
 authoritative_baseline_commit: 97fcada
 lane_amendment_1: aaf8347
-lane_amendment_2_parent: ea0cf5c
+lane_amendment_2: ea0cf5c
+lane_amendment_3_parent: 3438b27
 
 contract_clarification:
   status: RESOLVED — NO AMENDMENT REQUIRED
@@ -171,10 +175,97 @@ required_test_matrix:
     its own explicit test case proving the password form is never shown and no
     confirmPasswordReset call is attempted.
 
+pre_existing_outside_manifest:
+  classification: PRE-EXISTING / provenance-only
+  predation_evidence: >
+    Mechanically verified: git log aaf8347..HEAD with explicit pathspecs
+    covering every outside path returned zero results. No Slice G governance
+    commit (aaf8347, ea0cf5c, 3438b27) or implementation action touched
+    any outside path. These entries were present and stable at PRE-WORK
+    (confirmed by Amendment 2 PRE-WORK sentinel report) and remained
+    stable through implementation.
+  authority: >
+    These paths grant zero read authority. Their contents remain unopened
+    unless independently required and separately authorized by a future lane.
+    They may not be staged, cleaned, restored, deleted, modified, or included
+    in the Slice G commit under any circumstances.
+  stability_requirement: >
+    POST-WORK review must confirm the outside path/status set exactly matches
+    the manifest below. If any outside path has appeared, disappeared, changed
+    status, or been staged since PRE-WORK, return BLOCKER — OUTSIDE MANIFEST
+    UNSTABLE rather than treating the change as harmless.
+  modified_tracked_files:
+    - " M app-web/backend/functions/index.js"
+    - " M app-web/docs/product/coin-card/COIN_CARD_ARCHITECTURE_INDEX.md"
+    - " M app-web/docs/product/coin-card/COIN_CARD_SIGNED_MANIFEST_ENVELOPE_AND_LIFECYCLE_CONTRACT_V1.md"
+    - " M app-web/docs/product/coin-card/README.md"
+    - " M app-web/package.json"
+    - " M coincard/public/claim/index.html"
+    - " M docs/product/coin-card/COIN_CARD_INVARIANT_CONTRACT.md"
+    - " M docs/product/coin-card/COIN_CARD_SIGNED_MANIFEST_ENVELOPE_CONTRACT_V1.md"
+    - " M docs/product/coin-card/README.md"
+    - " M firebase.json"
+  untracked_files:
+    - "?? app-web/backend/functions/scripts/deploy-gate1a-staging.js"
+    - "?? app-web/backend/functions/src/spikes/SPIKES_ARE_DISPOSABLE.md"
+    - "?? app-web/backend/functions/src/spikes/coincard-registry-read-spike.js"
+    - "?? app-web/backend/functions/test/staging-deploy-wrapper.test.js"
+    - "?? app-web/backend/scripts/spikes/hosting-rewrite/HOSTING_REWRITE_EVIDENCE.md"
+    - "?? app-web/backend/scripts/spikes/hosting-rewrite/emulator-firestore.rules"
+    - "?? app-web/backend/scripts/spikes/hosting-rewrite/emulator-storage.rules"
+    - "?? app-web/backend/scripts/spikes/hosting-rewrite/package-lock.json"
+    - "?? app-web/backend/scripts/spikes/hosting-rewrite/package.json"
+    - "?? app-web/backend/scripts/spikes/hosting-rewrite/seed-fixtures.js"
+    - "?? app-web/backend/scripts/spikes/hosting-rewrite/verify.js"
+    - "?? app-web/backend/scripts/spikes/kms-p256-compatibility/KMS_COMPATIBILITY_EVIDENCE.md"
+    - "?? app-web/backend/scripts/spikes/kms-p256-compatibility/spike.test.js"
+    - "?? app-web/docs/product/coin-card/COIN_CARD_ARTIFACT_V1.md"
+    - "?? app-web/docs/product/coin-card/COIN_CARD_BACKEND_ARCHITECTURE_V1.md"
+    - "?? app-web/docs/product/coin-card/COIN_CARD_COMMERCIAL_SPEC_V1.md"
+    - "?? app-web/docs/product/coin-card/COIN_CARD_ENGINEERING_IMPLEMENTATION_RULES_V1.md"
+    - "?? app-web/docs/product/coin-card/COIN_CARD_PURCHASE_PROVISIONING_ARCHITECTURE_V1.md"
+    - "?? app-web/docs/product/coin-card/legal/PRIVACY_POLICY_UPDATES.md"
+    - "?? app-web/docs/product/coin-card/legal/PURCHASE_TERMS.md"
+    - "?? app-web/docs/product/coin-card/legal/REFUND_POLICY.md"
+    - "?? app-web/docs/product/coin-card/legal/TERMS_OF_SERVICE_UPDATES.md"
+    - "?? app-web/tests/frontend/coin-card-artifact-builder.test.js"
+    - "?? app-web/tests/frontend/coin-card-artifact-publication.test.js"
+    - "?? app-web/tests/frontend/coin-card-artifact-validation.test.js"
+    - "?? app-web/tests/frontend/coin-card-production-identity-migration.test.js"
+    - "?? docs/blockaid-review-packet/ImplicitEx_Architecture_and_Security_Overview_v0.1.md"
+    - "?? docs/operations/evidence/coin-card-antoine-migration-transport-preflight-2026-08-09.json"
+    - "?? docs/operations/evidence/coin-card-antoine-production-identity-allocation-2026-08-09.json"
+    - "?? docs/operations/evidence/coin-card-iron-fiat-routing/README.md"
+    - "?? docs/operations/evidence/coin-card-rail-unit-economics/README.md"
+    - "?? docs/product/coin-card/COIN_CARD_IRON_FIAT_ROUTING_ARCHITECTURE_V1.md"
+    - "?? docs/product/coin-card/COIN_CARD_PUBLIC_IDENTITY_AND_LEGACY_MIGRATION_V1.md"
+    - "?? docs/product/coin-card/COIN_CARD_PUBLIC_REGISTRY_SOURCE_CONTRACT_V1.md"
+    - "?? docs/product/coin-card/COIN_CARD_PUBLIC_USERNAME_REGISTRY_CONTRACT_V1.md"
+    - "?? docs/product/coin-card/COIN_CARD_PUBLIC_USERNAME_REGISTRY_CURRENT_HEAD_CONTRACT_V1.md"
+    - "?? docs/product/coin-card/coin-card.artifact.fixtures.v1.json"
+    - "?? docs/product/coin-card/coin-card.artifact.negative-corpus.v1.json"
+    - "?? docs/product/coin-card/coin-card.artifact.schema.v1.json"
+    - "?? docs/product/coin-card/fiat-routing/COIN_CARD_MULTI_RAIL_PRODUCT_AND_ECONOMICS_STRATEGY_2026-08-08.md"
+    - "?? docs/product/coin-card/fiat-routing/COIN_CARD_RAIL_UNIT_ECONOMICS_MATRIX_V1.md"
+    - "?? docs/product/coin-card/fiat-routing/IRON_COIN_CARD_FIAT_RAIL_DILIGENCE_MASTER_V1.md"
+    - "?? docs/product/coin-card/fiat-routing/IRON_PROVIDER_DILIGENCE_QUESTIONNAIRE_V1.md"
+    - "?? docs/product/coin-card/fiat-routing/IRON_PROVIDER_VALIDATION_MATRIX_V1.md"
+    - "?? docs/product/coin-card/fiat-routing/MOONPAY_AND_IRON_PROVIDER_EVALUATION_2026-08-08.md"
+    - "?? firebase.routing-spike.json"
+    - "?? tools/coin-card-artifact/build-and-publish-artifact.js"
+    - "?? tools/coin-card-artifact/build-artifact.js"
+    - "?? tools/coin-card-artifact/canonicalize.js"
+    - "?? tools/coin-card-artifact/generate-fixtures.js"
+    - "?? tools/coin-card-artifact/in-memory-publication-store.js"
+    - "?? tools/coin-card-artifact/publication-operation-fingerprint.js"
+    - "?? tools/coin-card-artifact/publish-artifact.js"
+    - "?? tools/coin-card-artifact/validate-artifact.js"
+    - "?? tools/coin-card-artifact/validate-lineage.js"
+
 acceptance_gates:
   - authoritative_baseline_commit (97fcada) is reachable; the original lane
-    transition (aaf8347) and this amendment are both in its ancestry; this
-    amendment is the direct parent of any implementation work
+    transition (aaf8347) and all amendments are in its ancestry; this
+    amendment (Amendment 3) is the direct parent of any Slice G commit
   - doctrine_freshness passes at PRE-WORK, POST-WORK, and pre-commit review
   - contract_clarification status is RESOLVED — NO AMENDMENT REQUIRED
     (established in prior PRE-WORK; confirmed in this PRE-WORK review)
