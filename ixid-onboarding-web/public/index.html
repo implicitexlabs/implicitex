@@ -20,6 +20,7 @@
   <script src="onboarding-core.js" defer></script>
   <script src="holder-api-client.js" defer></script>
   <script src="firebase-auth-adapter.js" defer></script>
+  <script src="wallet-connector.js" defer></script>
   <script src="register.js" defer></script>
 </head>
 <body>
@@ -132,6 +133,16 @@
       <h1 id="workspace-heading" tabindex="-1">Your IX ID workspace</h1>
       <p class="banner" id="suspended-banner" hidden>Your account is under review. Handle registration is unavailable.</p>
       <p id="workspace-identity"></p>
+
+      <div class="wallet-section" aria-label="Wallet connection">
+        <h2>Wallet</h2>
+        <p id="wallet-address" class="wallet-address" hidden aria-live="polite"></p>
+        <div class="actions">
+          <button id="connect-wallet" type="button">Connect Wallet</button>
+          <button id="disconnect-wallet" type="button" class="secondary" hidden>Disconnect</button>
+        </div>
+      </div>
+
       <button id="workspace-signout" type="button" class="secondary">Sign out</button>
     </section>
 

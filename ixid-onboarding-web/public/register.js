@@ -41,7 +41,9 @@
         || snapshot.state === states.REGISTER_IX_ID_PENDING) showOnly('pending');
     else if (snapshot.state === states.HANDLE_SELECTION) showOnly('handle');
     else if (snapshot.state === states.ACCESS_DENIED_ERROR) showOnly('denied');
-    else if (snapshot.state === states.ACTIVE) showOnly('workspace');
+    else if (snapshot.state === states.ACTIVE
+        || snapshot.state === states.WALLET_PENDING
+        || snapshot.state === states.WALLET_CONNECTED) showOnly('workspace');
 
     document.getElementById('verification-email').textContent = snapshot.email || '';
 
@@ -64,6 +66,17 @@
     document.getElementById('workspace-identity').textContent = ixId
       ? 'Your IX ID: @' + ixId
       : (snapshot.suspended ? 'No active IX ID is available.' : 'Your account is active.');
+
+    // Wallet section — only rendered when workspace panel is visible.
+    const walletPending = snapshot.state === states.WALLET_PENDING;
+    const walletConnected = snapshot.state === states.WALLET_CONNECTED;
+    document.getElementById('connect-wallet').hidden = walletConnected || walletPending;
+    document.getElementById('connect-wallet').disabled = walletPending;
+    document.getElementById('wallet-address').hidden = !walletConnected;
+    document.getElementById('wallet-address').textContent = walletConnected
+      ? snapshot.walletAddress || ''
+      : '';
+    document.getElementById('disconnect-wallet').hidden = !walletConnected;
 
     if (lastState !== snapshot.state) {
       lastState = snapshot.state;
@@ -130,6 +143,13 @@
       event.preventDefault();
       void controller.submitHandle(handleInput.value);
     });
+
+    document.getElementById('connect-wallet').addEventListener('click', function connectWallet() {
+      void controller.connectWallet();
+    });
+    document.getElementById('disconnect-wallet').addEventListener('click', function disconnectWallet() {
+      controller.disconnectWallet();
+    });
   }
 
   async function bootstrap() {
@@ -143,10 +163,14 @@
     try {
       const auth = await root.IXIDFirebaseAuth.createFirebaseAuthAdapter(config);
       const api = root.IXIDHolderApi.createHolderApiClient({ baseUrl: config.holderApiBase });
+      const wallet = root.IXIDWalletConnector
+        ? root.IXIDWalletConnector.createWalletConnector()
+        : null;
       controller = root.IXIDOnboardingCore.createOnboardingController({
         auth: auth,
         api: api,
         render: render,
+        wallet: wallet,
       });
       bindEvents();
       controller.start();

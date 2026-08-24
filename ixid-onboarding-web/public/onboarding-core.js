@@ -15,6 +15,8 @@
     REGISTER_IX_ID_PENDING: 'REGISTER_IX_ID_PENDING',
     ACCESS_DENIED_ERROR: 'ACCESS_DENIED_ERROR',
     ACTIVE: 'ACTIVE',
+    WALLET_PENDING: 'WALLET_PENDING',
+    WALLET_CONNECTED: 'WALLET_CONNECTED',
   });
 
   const HANDLE_ERRORS = Object.freeze({
@@ -67,6 +69,7 @@
       this.auth = deps.auth;
       this.api = deps.api;
       this.render = deps.render;
+      this.wallet = deps.wallet || null;
       this.makeOperationId = deps.makeOperationId || defaultOperationId;
       this.now = deps.now || Date.now;
       this.currentUser = null;
@@ -84,6 +87,7 @@
         handleError: '',
         workspace: null,
         suspended: false,
+        walletAddress: null,
       });
       this.render(this.snapshot);
     }
@@ -170,6 +174,7 @@
       await this.auth.signOut();
       return this.transition(STATES.UNAUTHENTICATED, {
         email: '', handle: '', handleError: '', workspace: null, suspended: false,
+        walletAddress: null,
       });
     }
 
@@ -185,6 +190,7 @@
       }
       return this.transition(STATES.UNAUTHENTICATED, {
         email: '', handle: '', handleError: '', workspace: null, suspended: false,
+        walletAddress: null,
         message: 'Session expired. Please sign in again.',
       });
     }
@@ -553,6 +559,43 @@
         busy: true, message: 'Claiming your IX ID…',
       });
       return this.performRegisterIxId(token);
+    }
+
+    // Connect an EIP-1193 injected wallet. Transitions:
+    //   ACTIVE → WALLET_PENDING → WALLET_CONNECTED (success)
+    //   ACTIVE → WALLET_PENDING → ACTIVE (any rejection)
+    // Zero Holder Authority calls. Wallet address stored in client snapshot only.
+    async connectWallet() {
+      if (!this.wallet || !this.wallet.isAvailable()) {
+        return this.transition(STATES.ACTIVE, {
+          message: this.wallet
+            ? 'No wallet provider detected. Install MetaMask or a compatible wallet.'
+            : 'Wallet connection is not available.',
+        });
+      }
+      this.transition(STATES.WALLET_PENDING, { busy: true, message: 'Connecting wallet…' });
+      let result;
+      try {
+        result = await this.wallet.connect();
+      } catch (_error) {
+        return this.transition(STATES.ACTIVE, {
+          message: 'Wallet connection could not be completed. Try again.',
+        });
+      }
+      if (result.rejected) {
+        const message = result.reason === 'wrong_chain'
+          ? 'Switch your wallet to Polygon and try again.'
+          : result.reason === 'user_rejected'
+            ? 'Wallet connection was declined.'
+            : 'Wallet connection was not completed.';
+        return this.transition(STATES.ACTIVE, { message });
+      }
+      return this.transition(STATES.WALLET_CONNECTED, { walletAddress: result.address });
+    }
+
+    // Clear wallet connection and return to ACTIVE.
+    disconnectWallet() {
+      return this.transition(STATES.ACTIVE, { walletAddress: null });
     }
 
   }
