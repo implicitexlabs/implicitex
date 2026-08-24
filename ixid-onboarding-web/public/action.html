@@ -12,9 +12,10 @@
     boundary. No action data is rendered or persisted by this page.
 
     Slice F accepts only verifyEmail and resetPassword with a valid action code
-    and the exact continuation URL https://app.ixid.me/register. Its action
-    adapter is injected; this local surface contains no production Firebase
-    action-adapter integration, analytics, or third-party resource.
+    and the exact continuation URL https://app.ixid.me/register. Slice G wires
+    the local action-adapter.js resource between config.js and action.js using
+    the existing Firebase Identity Toolkit endpoint. No analytics, third-party
+    script, or CSP widening is introduced.
   -->
   <meta http-equiv="Content-Security-Policy"
     content="default-src 'self';
@@ -120,6 +121,7 @@
     </section>
   </main>
   <script src="config.js"></script>
+  <script src="action-adapter.js"></script>
   <script src="action.js"></script>
 </body>
 </html>
