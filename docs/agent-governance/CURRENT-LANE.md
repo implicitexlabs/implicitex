@@ -1,12 +1,13 @@
 lane_id: m2-slice-g-action-adapter-integration
 status: ACTIVE
-amendment: 1
+amendment: 2
 
 # CURRENT-LANE.md — Authoritative execution boundary
 # ====================================================
-# Amendment 1 (2026-08-24): adds action-adapter.js as third writable path,
-# adds local-resource dependency gate, expands adapter test matrix.
-# Original lane authorized at aaf8347; this amendment is its direct child.
+# Amendment 2 (2026-08-24): resolves local-resource dependency gate —
+# human-selected Path A (Firebase Auth REST API via fetch). Records
+# corrected REST endpoint contract. No new paths, origins, or CSP changes
+# required. Amendment 1 commit: ea0cf5c; this amendment parent: ea0cf5c.
 #
 # Authorizes production Firebase action-adapter integration for the
 # ixid-onboarding-web action page, local-only. No Firebase mutation,
@@ -48,7 +49,8 @@ objective: >
   human commit approval before committing.
 
 authoritative_baseline_commit: 97fcada
-lane_amendment_parent: aaf8347
+lane_amendment_1: aaf8347
+lane_amendment_2_parent: ea0cf5c
 
 contract_clarification:
   status: RESOLVED — NO AMENDMENT REQUIRED
@@ -62,30 +64,50 @@ contract_clarification:
     conformant security posture. No §1.6 amendment required.
 
 local_resource_dependency_gate:
-  required_before_implementation: true
-  question: >
-    Before writing action-adapter.js, mechanically establish:
-    (a) What Firebase SDK or API surface do applyActionCode, verifyPasswordResetCode,
-        and confirmPasswordReset require? Read firebase-auth-adapter.js to determine
-        what Firebase object it receives and how it calls Firebase methods.
-    (b) Can action-adapter.js obtain or receive the same Firebase Auth instance
-        through the existing permitted resource model — i.e., via a script tag
-        pointing to a file already served from app.ixid.me/self, or via a shared
-        module already loaded in the same page context — without adding a new
-        remote origin, CDN load, CSP change, package install, or additional
-        writable path?
-    (c) Will action.html be able to inject the Firebase Auth instance into
-        action-adapter.js without modifying action.js?
+  status: RESOLVED — PATH A SELECTED (human authorization 2026-08-24)
   resolution: >
-    Document the exact dependency chain (what action-adapter.js requires and
-    how it will receive it) in the PRE-WORK scope-sentinel report before
-    any implementation edit. If any dependency falls outside the permitted
-    resource model, the report must state BLOCKER and stop.
+    action-adapter.js implements the three methods using the Firebase Auth
+    REST API via fetch(). No Firebase SDK instance, no new remote script
+    origin, no CSP change, no package install required.
+    identitytoolkit.googleapis.com is already in action.html connect-src.
+    The Web API key is read from the IXID_ONBOARDING_CONFIG already
+    exposed by config.js (loaded before action-adapter.js in action.html).
+    Tests mock fetch() — zero real network calls during test execution.
+  authorized_rest_contract:
+    base_url: https://identitytoolkit.googleapis.com/v1
+    key_source: IXID_ONBOARDING_CONFIG.firebase.options.apiKey (from config.js)
+    endpoints:
+      applyActionCode:
+        method: POST
+        path: /accounts:update
+        request_body: '{ "oobCode": "<oobCode>" }'
+      verifyPasswordResetCode:
+        method: POST
+        path: /accounts:resetPassword
+        request_body: '{ "oobCode": "<oobCode>" }'
+        note: >
+          Do not add requestType field. Response contains requestType in
+          the success body; action-adapter.js need only confirm HTTP 200.
+      confirmPasswordReset:
+        method: POST
+        path: /accounts:resetPassword
+        request_body: '{ "oobCode": "<oobCode>", "newPassword": "<newPassword>" }'
+    error_normalization: >
+      Normalize all Firebase REST failures to a thrown Error with a safe
+      message. Do not expose raw response bodies, API URLs containing the
+      key, oobCode, passwords, or backend error payloads to logs, console
+      output, or user-visible diagnostics. The adapter surface throws on
+      failure; callers (action.js) observe only a thrown Error.
+    secret_boundary: >
+      The API key is a configuration value, not a secret, and may appear
+      in the query string per Firebase's documented usage pattern. However,
+      it must not be logged or surfaced in error output. The oobCode and
+      newPassword must never appear in fetch URLs, logged output, error
+      messages, or DOM content.
   failure_rule: >
-    If the dependency chain cannot be established within the existing permitted
-    resource model, or if it requires any path, origin, or resource not in
-    allowed_write_paths or the existing action.html permitted model, return
-    BLOCKER and stop. Do not implement first and discover this later.
+    If implementation discovers that fetch(), IXID_ONBOARDING_CONFIG, or
+    the existing connect-src cannot satisfy any of the three methods, return
+    BLOCKER and stop for another amendment.
 
 allowed_write_paths:
   - ixid-onboarding-web/public/action-adapter.js
@@ -156,8 +178,9 @@ acceptance_gates:
   - doctrine_freshness passes at PRE-WORK, POST-WORK, and pre-commit review
   - contract_clarification status is RESOLVED — NO AMENDMENT REQUIRED
     (established in prior PRE-WORK; confirmed in this PRE-WORK review)
-  - local_resource_dependency_gate resolution is documented in PRE-WORK
-    report with a concrete dependency chain before any implementation edit
+  - local_resource_dependency_gate status is RESOLVED (Path A, REST API,
+    human-authorized 2026-08-24); PRE-WORK confirms dependency chain is
+    within existing permitted resource model
   - independent PRE-WORK scope-sentinel returns GO with no BLOCKER
   - action-adapter.js and action-adapter.test.js are absent from the repo
     at PRE-WORK (will be created); action.html is tracked
