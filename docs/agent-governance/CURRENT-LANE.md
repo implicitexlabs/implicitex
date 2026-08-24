@@ -1,9 +1,12 @@
-# CURRENT-LANE.md — Authoritative execution boundary
-# =====================================================
-# This file grants permission to begin work in the declared lane.
-# If it is missing, malformed, internally contradictory, or does not
-# authorize the requested work, scope-sentinel must return BLOCKED.
-# No best-effort interpretation is permitted.
+# CURRENT-LANE.md — Authoritative POST-WORK recovery/review boundary
+# ==================================================================
+# This file grants permission to review and close only the interrupted Slice F
+# implementation described below. It grants no authority to make a new product
+# implementation edit.
+#
+# If this file is missing, malformed, internally contradictory, or does not
+# authorize the requested work, scope-sentinel must return BLOCKED. No
+# best-effort interpretation is permitted.
 #
 # STALENESS POLICY
 # ────────────────
@@ -12,125 +15,212 @@
 # This lane is stale if:
 #
 #   - status is not ACTIVE
-#   - authoritative_baseline_commit is unavailable or no longer belongs
-#     to the ancestry of the work being evaluated
+#   - authoritative_baseline_commit is unavailable or no longer belongs to the
+#     ancestry of the work being evaluated
 #   - any doctrine path declared under doctrine_freshness fails mechanical
 #     comparison with its tracked blob at authoritative_baseline_commit
 #   - lane-transition authority cannot be established mechanically under
 #     lane_authorization
+#   - the carried Slice F diff cannot be attributed under recovery_provenance
 #   - any declared stop_condition has been satisfied
 #   - all acceptance_gates required for lane completion have been satisfied
 #     while status still claims ACTIVE
-#     (individual acceptance gates may pass while the lane remains ACTIVE —
-#      completing an individual acceptance gate is normal progress, not
-#      staleness)
 #   - a human-authorized lane transition has superseded this lane
 #
 # If freshness or lane-transition authority cannot be established from
-# mechanical repository evidence:
-#   BLOCKER — LANE AUTHORITY AMBIGUOUS
+# mechanical repository evidence, or recovery provenance cannot be established
+# from the mechanical repository evidence plus the explicitly authorized
+# session-local recovery evidence declared under recovery_provenance:
+#   BLOCKER — RECOVERY AUTHORITY OR PROVENANCE AMBIGUOUS
 #
 # Never use last_human_review as freshness proof.
 #
-# LOCAL IMPLEMENTATION INTERPRETATION
-# ───────────────────────────────────
-# allowed_paths is the complete product mutation boundary. It grants modify
-# authority only when paired with the matching allowed_operations below.
-# read_only_dependency_paths is a separate, exact content-read boundary. It
-# grants no create, modify, delete, rename, stage, or commit authority.
-# Doctrine reads and narrowly bounded Git metadata reads required to establish
-# authority, provenance, review, staging, and commit integrity do not grant
-# doctrine or product mutation authority.
+# RECOVERY INTERPRETATION
+# ───────────────────────
+# This is a POST-WORK recovery/review lane, not a new implementation lane.
+# allowed_paths identifies the exact three existing dirty Slice F files whose
+# already-created contents and diff may be read, tested, reviewed, staged after
+# POST-WORK GO, and committed after explicit human approval. It grants no
+# authority to edit, replace, regenerate, format, or otherwise change their
+# existing content.
 #
-# Existing dirty-worktree entries outside the planned paths are PRE-EXISTING
-# for provenance and outside the task mutation boundary. Their contents may
-# not be opened. They may not be changed, staged, cleaned, restored, deleted,
-# concealed, or attributed to Slice F. Provenance does not determine scope
-# classification. If any such path is later discovered to be necessary,
-# classify that dependency under the normal exclusive taxonomy; because it is
-# unauthorized, it is BLOCKER and work stops for human lane amendment.
+# read_only_dependency_paths is a separate exact seven-file content-read
+# boundary available only after every entry gate passes and only if required
+# by the authorized direct test. It grants no create, modify, delete, rename,
+# stage, or commit authority.
+#
+# The original immutable pre-work manifest and original independent PRE-WORK
+# GO may be reused solely as session-local provenance evidence for the
+# interrupted implementation anchored at
+# f6ed76dcac52ab400faa82ffc5df692162dea090. They grant no authority for new
+# implementation work.
+#
+# Existing dirty-worktree entries outside allowed_paths remain PRE-EXISTING
+# provenance context. Their contents may not be opened. They may not be
+# changed, staged, cleaned, restored, deleted, concealed, or attributed to
+# Slice F. Provenance and scope classification remain separate dimensions.
+# Outside manifest entries remain provenance/status evidence only unless
+# independently discovered to be relevant to the task.
 
-lane_id: m2-slice-f-local-implementation
+lane_id: m2-slice-f-post-work-recovery-review
 status: ACTIVE
 
 objective: >
-  Implement and locally test the bounded M2 Slice F browser action surface
-  using only the product paths in allowed_paths and, after every entry and
-  PRE-WORK gate passes, the exact content-read-only dependencies in
-  read_only_dependency_paths. Accept only the exact case-sensitive modes
-  verifyEmail and resetPassword with a non-empty oobCode; fail closed when a
-  caller-controlled Firebase apiKey does not exactly match the trusted local
-  value; perform email verification through an injected action adapter;
-  verify password-reset codes before exposing the password form and confirm
-  the reset afterward; and permit continuation only to the exact URL
-  https://app.ixid.me/register. Immediately after synchronous capture, remove
-  action query data and any fragment from browser history before validation,
-  adapter invocation, rendering of sensitive state, or other asynchronous
-  work. Never log, display raw errors, or persist action codes, passwords,
-  tokens, URL parameters, or raw Firebase errors. Clear password material
-  after use. Preserve same-origin assets, no-store, no-referrer,
-  accessibility, and existing CSP and security boundaries. Produce no
-  production Firebase action-adapter integration and perform no deployment,
-  provider activation, GCP mutation, or other external mutation.
+  Preserve exactly the existing three-file Slice F implementation diff,
+  mechanically attribute it to the interrupted implementation against
+  f6ed76dcac52ab400faa82ffc5df692162dea090, rerun only the direct authorized
+  nonnetworked frontend contract test, perform exact-path whitespace and
+  integrity checks, capture and compare a fresh optional-lock-free POST-WORK
+  manifest, and obtain a fresh independent POST-WORK scope-sentinel verdict.
+  After POST-WORK GO, stage only the exact reviewed Slice F paths, verify the
+  complete staged path set, blobs, diff, and cached whitespace check, and stop
+  for explicit human commit approval. After that approval only, create one
+  local non-merge Slice F implementation commit containing exactly the
+  reviewed task paths and having the dedicated recovery-lane transition commit
+  as its first parent. Make no new implementation edit, open no new repository
+  content path, mutate no dependency or unrelated path, and perform no
+  deployment, networked integration, Firebase mutation, GCP mutation, or other
+  external-state mutation.
 
 entry_condition: >
-  A human-controlled session explicitly authorized this lane transition,
+  A human-controlled session explicitly authorized this recovery lane,
   applied this exact human-approved CURRENT-LANE.md replacement, and committed
-  it as the unique dedicated one-file governance lane-transition commit
+  it as the unique dedicated one-file governance recovery-lane transition
   required by lane_authorization. Commit
-  145e8dd562c6a607dbdb0aa7437dd8e3a305d980 is available locally and is an
-  ancestor of the derived lane-transition commit. At the beginning of
-  pre-work, current HEAD is exactly the derived lane-transition commit, and
-  the transition commit, index, and worktree contain the same approved
-  CURRENT-LANE.md blob. Every path declared under doctrine_freshness
-  mechanically matches its tracked baseline blob. Before any authorized
-  product or read-only dependency content is opened or any implementation
-  begins, the session has recorded all lane-authority and doctrine-freshness
-  evidence, confirmed that every allowed path and every read-only dependency
-  path is an existing tracked regular file, captured a complete immutable
-  pre-work worktree manifest with Git optional locks disabled, confirmed every
-  planned path and every read-only dependency path is clean in that manifest,
-  and obtained an independent PRE-WORK scope-sentinel verdict of GO for the
-  exact planned paths, modify operations, read-only dependencies, and proposed
-  approach. Because this replacement changes both the authoritative baseline
-  and the read-only dependency scope, no authority evidence, immutable
-  manifest, or PRE-WORK GO from the prior attempt may be reused. Fresh
-  authority evidence, a fresh immutable manifest, and a fresh independent
-  PRE-WORK GO are mandatory after the new derived lane-transition commit and
-  before any product or read-only dependency content is opened. Any missing,
-  unknown, ambiguous, or failed check is BLOCKER.
+  f6ed76dcac52ab400faa82ffc5df692162dea090 is available locally and is the
+  direct first parent of the derived recovery-lane transition commit. Current
+  HEAD is exactly that derived transition commit. The transition commit,
+  index, and worktree contain the same exact human-approved CURRENT-LANE.md
+  blob, and no later commit changes CURRENT-LANE.md. The index is empty after
+  the transition commit. Every doctrine-freshness comparison passes. Before
+  any product or dependency content is opened, the session verifies from Git
+  metadata that every allowed path and every read-only dependency path is an
+  existing tracked regular file; mechanically verifies the original immutable
+  pre-work manifest against its declared digest; verifies the availability and
+  exact declared facts of the explicitly authorized original PRE-WORK GO
+  session evidence under recovery_provenance; captures the fresh
+  optional-lock-free POST-WORK manifest; proves the exact manifest relationship
+  required by recovery_provenance; and captures immutable identities for the
+  carried three-file diff and resulting worktree blobs. Any missing, unknown,
+  ambiguous, or failed check is BLOCKER.
 
 lane_authorization:
   mechanism: >
-    Derive the authorization commit mechanically; do not embed a
-    self-referential commit SHA in this file.
+    Derive the recovery authorization commit mechanically; do not embed a
+    self-referential transition-commit SHA in this file.
   derivation: >
     Examine commits reachable from current HEAD after
-    145e8dd562c6a607dbdb0aa7437dd8e3a305d980 that change
+    f6ed76dcac52ab400faa82ffc5df692162dea090 that change
     docs/agent-governance/CURRENT-LANE.md. Exactly one such commit must exist.
-    That commit is the derived lane-transition commit.
+    That commit is the derived recovery-lane transition commit.
   required_commit_properties:
-    - it is a non-merge commit with 145e8dd562c6a607dbdb0aa7437dd8e3a305d980 in its ancestry
+    - it is a non-merge commit whose first parent is exactly f6ed76dcac52ab400faa82ffc5df692162dea090
     - its first-parent changed-path set is exactly docs/agent-governance/CURRENT-LANE.md
     - its tracked CURRENT-LANE.md blob is the exact human-approved replacement represented by this file
-    - it is an ancestor of current HEAD
+    - every tracked path other than docs/agent-governance/CURRENT-LANE.md has the same tree entry as at f6ed76dcac52ab400faa82ffc5df692162dea090
+    - it is current HEAD when recovery work begins
     - no later commit through current HEAD changes docs/agent-governance/CURRENT-LANE.md
-    - current HEAD, the index, and the worktree contain that same CURRENT-LANE.md blob
-  pre_work_head_rule: >
-    When the fresh immutable pre-work manifest is captured, current HEAD must
-    equal the derived lane-transition commit. Record that commit as
-    pre_work_head and require HEAD to remain unchanged through implementation,
-    local testing, POST-WORK scope review, staging review, and human commit
-    approval.
+    - current HEAD, the index, and the worktree contain the transition commit's exact CURRENT-LANE.md blob
+  recovery_head_rule: >
+    Record the derived recovery-lane transition commit as recovery_head.
+    Require HEAD to remain exactly recovery_head through POST-WORK review,
+    testing, staging review, and explicit human commit approval. The only
+    permitted later HEAD change is creation of the explicitly approved local
+    implementation commit whose first parent is recovery_head.
   failure_rule: >
-    If the transition commit is absent, non-unique, not dedicated, not
-    ancestral, superseded, differs from this approved lane blob at HEAD,
-    index, or worktree, or is not current HEAD when pre-work begins, return
-    BLOCKER — LANE AUTHORITY AMBIGUOUS. Product and read-only dependency
-    content may not be opened and implementation may not begin.
+    If the recovery transition is absent, non-unique, not dedicated, not a
+    direct child of f6ed76dcac52ab400faa82ffc5df692162dea090, superseded,
+    different from this approved lane blob, not current HEAD, or differs at
+    HEAD, index, or worktree, return BLOCKER — LANE AUTHORITY AMBIGUOUS. Do not
+    open product or dependency content, run tests, stage, or commit.
+
+known_external_governance_event:
+  event_type: >
+    KNOWN EXTERNAL GOVERNANCE EVENT. This records provenance; it grants no
+    product scope, doctrine authority, or permission to tolerate future drift.
+  event: >
+    During the interrupted authorized Slice F implementation, unauthorized
+    concurrent worktree and index drift appeared at
+    docs/agent-governance/CURRENT-LANE.md. Implementation stopped without
+    staging or committing the product diff.
+  human_recovery_evidence:
+    restored_head: f6ed76dcac52ab400faa82ffc5df692162dea090
+    restored_current_lane_git_blob: 4218b378c36c59a3dcd862a12d5c8d95d3e46c52
+    restored_current_lane_sha256: 3d67a7546ce7b3fabd50e5cdff27806136dda52382102c994d7d3b43a8249a8e
+    stability_observations: 5
+    stability_interval: 40 seconds
+    inotify_watch: 45 seconds with no writes
+    active_agent_or_editor_holder_found: false
+    restored_index_state: empty
+  interpretation: >
+    Before this human-authorized recovery transition was applied, the human
+    restored both index and worktree CURRENT-LANE.md to the exact tracked
+    f6ed76dcac52ab400faa82ffc5df692162dea090 blob and established the recorded
+    stability evidence. The dedicated recovery transition deliberately
+    replaces that restored blob. Unauthorized drift content, including any
+    purported or ratified reconnaissance-lane content, carries zero authority
+    and may not be reused, staged, or committed.
+  recurrence_rule: >
+    The restoration evidence describes only the completed past recovery
+    checkpoint. It does not authorize ignoring, repairing, or working through
+    any later drift. Any unapproved recurrence of CURRENT-LANE.md worktree,
+    index, blob, or history drift is BLOCKER — CONCURRENT DOCTRINE CHANGE.
+    Stop immediately without restoring or otherwise mutating the path.
+
+recovery_provenance:
+  authoritative_product_baseline: f6ed76dcac52ab400faa82ffc5df692162dea090
+  original_pre_work_head: f6ed76dcac52ab400faa82ffc5df692162dea090
+  original_pre_work_manifest_sha256: 112a881461d2d31d566589f17b2a068b33f4a12fdc8aab710199b0ccd4556d9a
+  original_pre_work_facts:
+    - the original immutable manifest was captured with Git optional locks disabled
+    - all three allowed_paths were clean
+    - all seven read_only_dependency_paths were clean
+    - the index was empty
+    - the explicitly authorized original independent PRE-WORK scope-sentinel verdict was GO
+  reuse_limit: >
+    The exact original recorded immutable manifest and the explicitly
+    authorized original PRE-WORK GO session evidence may be supplied and reused
+    only to establish provenance for the already interrupted Slice F
+    implementation. Mechanically verify the exact manifest bytes against the
+    declared SHA-256. Separately verify the availability and exact declared
+    facts of the PRE-WORK GO session evidence. Do not imply that the historical
+    sentinel verdict is mechanically derivable from Git, and do not reinterpret
+    either artifact as authority to begin or alter implementation.
+  fresh_post_work_manifest_rule: >
+    After lane authority and doctrine freshness pass, capture verbatim a fresh
+    complete git status --short --untracked-files=all manifest with Git
+    optional locks disabled and before product or dependency content is
+    opened, tests run, or staging occurs. The index must be empty. Relative to
+    the exact original immutable manifest, the only permitted worktree-status
+    additions or changes are unstaged modifications of all three and only the
+    three exact allowed_paths. Every outside path-and-status entry must match
+    the original manifest exactly. No read_only_dependency_path or doctrine
+    path may appear. The dedicated recovery-lane transition is accounted for
+    only as the exact committed one-file history transition under
+    lane_authorization and must not appear as index or worktree drift.
+  carried_diff_rule: >
+    Mechanically derive the complete existing task-attributable diff for all
+    three and only the three allowed_paths against
+    f6ed76dcac52ab400faa82ffc5df692162dea090. Before opening product content,
+    record an immutable digest of that complete diff and the canonicalized
+    worktree blob identity for each allowed path without changing any file or
+    writing a Git object. Require the same complete diff and blob identities
+    through testing, POST-WORK review, staging verification, and human commit
+    approval. The transition commit changes no product tree entry, so the
+    product diff against recovery_head must be identical to the product diff
+    against the authoritative product baseline.
+  failure_rule: >
+    If the original manifest cannot be mechanically verified against its
+    declared digest; if the explicitly authorized original PRE-WORK GO session
+    evidence is unavailable or inconsistent with its exact declared facts; if
+    either artifact is used for any purpose beyond interrupted-work
+    provenance; if the fresh manifest comparison is not exact; if task
+    attribution is not exactly the three allowed paths; or if any carried diff
+    or blob identity changes, return BLOCKER — RECOVERY PROVENANCE AMBIGUOUS.
+    Do not edit, stage, or commit.
 
 doctrine_freshness:
-  reference_commit: 145e8dd562c6a607dbdb0aa7437dd8e3a305d980
+  reference_commit: f6ed76dcac52ab400faa82ffc5df692162dea090
   paths:
     - AGENTS.md
     - CLAUDE.md
@@ -143,16 +233,17 @@ doctrine_freshness:
     blob object ID to equal it. Canonicalize the current worktree file through
     Git's normal path filters without writing an object and require the
     resulting blob object ID to equal the same reference blob object ID.
-    Record the object IDs and PASS or FAIL for every path before product or
-    read-only dependency content is opened, again for PRE-WORK scope review,
-    and again for POST-WORK scope review and staged-integrity review.
-    CURRENT-LANE.md is intentionally excluded because lane_authorization
-    governs its deliberate replacement.
+    Record the object IDs and PASS or FAIL before product or dependency
+    content is opened, again for fresh POST-WORK scope review, and again for
+    staged-integrity and pre-commit review. CURRENT-LANE.md is intentionally
+    excluded because lane_authorization governs its exact human-authorized
+    recovery transition and known_external_governance_event governs the
+    restored earlier drift.
   failure_rule: >
     A missing path, unreadable object, object-ID mismatch, unmerged index
-    entry, inability to canonicalize worktree content, or unknown result is
-    BLOCKER — DOCTRINE FRESHNESS NOT ESTABLISHED. Do not open product or
-    read-only dependency content, implement, stage, or commit.
+    entry, inability to canonicalize worktree content, unknown result, or
+    later mismatch is BLOCKER — DOCTRINE FRESHNESS NOT ESTABLISHED. Do not
+    open product or dependency content, run tests, stage, or commit.
 
 allowed_paths:
   - ixid-onboarding-web/public/action.js
@@ -170,18 +261,18 @@ read_only_dependency_paths:
 
 allowed_read_boundaries:
   - current doctrine content limited to AGENTS.md, CLAUDE.md, .claude/agents/scope-sentinel.md, docs/agent-governance/CHARTER.md, docs/agent-governance/CURRENT-LANE.md, and docs/agent-governance/FROZEN-INVARIANTS.md
-  - current working-tree content of the exact paths in allowed_paths after every entry-condition and PRE-WORK gate passes
-  - current working-tree content of the exact seven paths in read_only_dependency_paths after every entry-condition and PRE-WORK gate passes, solely as required by the authorized implementation and local test execution
-  - commit, tree, ref, ancestry, blob-object-identity, index-entry, changed-path, name-status, worktree-status, and diff metadata required for lane authority, doctrine freshness, provenance, review, staging, and commit-integrity checks
-  - complete pre-work and post-work worktree manifests as path-and-status metadata only; a manifest entry outside allowed_paths and read_only_dependency_paths grants no authority to open that path
-  - diffs and staged blobs limited to task-attributable changes in allowed_paths
-  - output from authorized local tests, provided it contains no prohibited sensitive value or raw Firebase error
-  - session-local reasoning and reporting over authorized evidence
+  - the exact original immutable pre-work manifest and explicitly authorized original PRE-WORK scope-sentinel GO supplied as session-local recovery-provenance evidence
+  - current working-tree content and complete baseline/worktree diff of the exact paths in allowed_paths after every entry, authority, doctrine-freshness, manifest, and carried-diff identity gate passes
+  - current working-tree content of the exact paths in read_only_dependency_paths after every entry gate passes, solely if required by the authorized direct local test
+  - commit, tree, ref, ancestry, blob-object-identity, canonicalized-worktree-identity, index-entry, changed-path, name-status, worktree-status, diff, and digest metadata required for lane authority, doctrine freshness, provenance, review, staging, and commit-integrity checks
+  - complete original and fresh worktree manifests as path-and-status metadata only; an outside manifest entry grants no authority to open its content or infer its scope
+  - unstaged, combined, and staged diffs and blobs limited to the exact task-attributable changes in allowed_paths
+  - output from the exact authorized direct local test, provided it contains no prohibited sensitive value or raw Firebase error
+  - session-local reasoning, scope-sentinel review, and reporting over authorized evidence
 
 prohibited_paths:
-  - every Slice E path except the content-read-only authority for the exact files in read_only_dependency_paths
   - every product, implementation, test, configuration, documentation, operations, architecture, infrastructure, service, contract, or application path not listed in allowed_paths or read_only_dependency_paths
-  - contents of untracked, ignored, or unrelated dirty-worktree files
+  - contents of untracked, ignored, or outside dirty-worktree files
   - direct filesystem reads of .git/**
   - credential, secret, service-account, private-key, token, and .env paths
   - ixid-onboarding-web/public/config.js for every create, modify, delete, rename, stage, or commit operation
@@ -195,43 +286,59 @@ prohibited_paths:
   - CLAUDE.md for every create, modify, delete, rename, stage, or commit operation
   - .claude/agents/** for every create, modify, delete, rename, stage, or commit operation
   - docs/agent-governance/CHARTER.md for every create, modify, delete, rename, stage, or commit operation
-  - docs/agent-governance/CURRENT-LANE.md for every agent-initiated create, modify, delete, rename, stage, or commit operation
+  - docs/agent-governance/CURRENT-LANE.md for every change other than the exact human-applied dedicated recovery-lane transition governed by lane_authorization
   - docs/agent-governance/FROZEN-INVARIANTS.md for every create, modify, delete, rename, stage, or commit operation
 
 allowed_operations:
   - read and parse the six doctrine files declared in allowed_read_boundaries
-  - obtain current HEAD and verify baseline availability and ancestry using non-mutating Git commands
-  - derive and verify the dedicated lane-transition commit under lane_authorization
+  - obtain current HEAD and verify baseline availability, direct parentage, and ancestry using non-mutating Git commands
+  - derive and verify the dedicated one-file recovery-lane transition commit under lane_authorization
   - mechanically compare doctrine blob identities under doctrine_freshness without writing Git objects
-  - verify from Git metadata that every allowed path and every read-only dependency path exists as a tracked regular file
-  - capture and preserve verbatim a fresh complete immutable pre-work worktree manifest using git status --short --untracked-files=all with Git optional locks disabled
-  - declare the exact planned path set as all paths in allowed_paths and the planned operation as modify for each path
-  - declare the exact seven-file read-only dependency set as all paths in read_only_dependency_paths with no mutation operation
-  - obtain a fresh independent PRE-WORK scope-sentinel review of the exact requested task, planned paths, planned operations, read-only dependencies, proposed approach, repository-authority evidence, doctrine-freshness evidence, and fresh immutable pre-work manifest
-  - read the exact paths in allowed_paths after PRE-WORK scope-sentinel returns GO
-  - read the exact paths in read_only_dependency_paths after PRE-WORK scope-sentinel returns GO, solely as required by the authorized implementation and local test execution
-  - modify ixid-onboarding-web/public/action.js only for the authorized local Slice F action handling
-  - modify ixid-onboarding-web/public/action.html only for the authorized local Slice F UI and preserved security, privacy, and accessibility contract
-  - modify ixid-onboarding-web/tests/frontend-contract.test.js only for applicable local Slice F/frontend behavior and focused security tests
-  - run already-available, non-networked local tests targeted to the authorized Slice F/frontend test path, permitting runtime content reads only from allowed_paths and read_only_dependency_paths and provided the command does not install dependencies or create repository artifacts
-  - inspect local test output only for pass/fail diagnosis within the authorized paths and redact or stop if prohibited sensitive data appears
-  - capture a complete post-work worktree manifest using git status --short --untracked-files=all with Git optional locks disabled
-  - derive task-attributable changed paths mechanically from the immutable pre-work and post-work manifests and derive their actual diff mechanically against the unchanged pre_work_head
-  - obtain an independent POST-WORK scope-sentinel review before staging, supplying the exact evidence required by scope-sentinel
-  - after POST-WORK scope-sentinel returns GO, stage only task-attributable changed paths from allowed_paths using explicit pathspecs
-  - inspect staged path names, staged blobs, and the complete staged diff for only those authorized task-attributable paths
+  - verify from Git metadata that every allowed path and every read-only dependency path is an existing tracked regular file
+  - mechanically verify the original immutable pre-work manifest against its declared digest and verify the availability and exact declared facts of the explicitly authorized original PRE-WORK GO session evidence, then reuse both solely under recovery_provenance
+  - capture and preserve verbatim the fresh complete optional-lock-free POST-WORK manifest
+  - compare the fresh POST-WORK manifest mechanically with the exact original immutable manifest under recovery_provenance
+  - derive mechanically the exact three-file task-attributable carried diff against f6ed76dcac52ab400faa82ffc5df692162dea090
+  - record and reverify immutable digests and canonicalized worktree blob identities for the exact carried diff without changing files or writing Git objects
+  - recognize the existing modify operations on all three allowed_paths as carried IN-LANE implementation changes only when every recovery-provenance gate passes
+  - read the existing dirty contents and diff of the exact three allowed_paths after every entry and recovery-provenance gate passes
+  - read the exact seven read_only_dependency_paths after every entry gate passes, solely if required by the exact authorized direct test
+  - run only node ixid-onboarding-web/tests/frontend-contract.test.js as the already-authorized direct nonnetworked frontend contract test, provided it installs nothing, writes no repository artifact, and content-reads no repository file outside allowed_paths and read_only_dependency_paths
+  - inspect that direct test's output only for pass/fail diagnosis and redact or stop if prohibited sensitive data appears
+  - run git diff --check scoped with explicit pathspecs to all three and only the three allowed_paths and require PASS
+  - obtain a fresh independent POST-WORK scope-sentinel review before staging, supplying the exact requested task, original immutable pre-work manifest and digest, explicitly authorized original PRE-WORK GO session evidence, fresh POST-WORK manifest, mechanical manifest comparison, mechanically derived task-attributable path set, complete actual diff against f6ed76dcac52ab400faa82ffc5df692162dea090, carried-diff and blob identities, repository-authority evidence, doctrine-freshness evidence, direct-test result, whitespace-check result, known external governance event, and frozen invariants
+  - after fresh independent POST-WORK GO, stage all three and only the three exact reviewed allowed_paths using explicit pathspecs
+  - inspect the exact staged name-status, staged blob identities, complete staged diff, remaining unstaged diff, and complete index
   - run git diff --cached --check and require PASS
+  - verify that staged blobs and complete staged diff exactly match the immutable carried worktree blobs and carried diff reviewed by the independent POST-WORK scope-sentinel
   - request explicit human approval to commit the exact reviewed staged diff
-  - after explicit human approval, create one local non-merge implementation commit whose changed-path set is limited to the task-attributable changed paths in allowed_paths and whose first parent is pre_work_head
-  - classify every proposed change and discovered dependency as exactly IN-LANE, BLOCKER, FOLLOW-ON, or UNRELATED
-  - propose a clearly labeled doctrine change if a required scope expansion is discovered, then stop without applying it
+  - after explicit human approval, create one local non-merge Slice F implementation commit whose changed-path set is exactly allowed_paths and whose first parent is recovery_head
+  - verify non-mutating implementation-commit metadata and a final optional-lock-free worktree manifest
+  - classify every proposed change, carried change, and discovered dependency as exactly IN-LANE, BLOCKER, FOLLOW-ON, or UNRELATED
+  - treat outside manifest entries as provenance/status evidence only unless independently discovered to be relevant to the task
+  - if an outside manifest entry becomes an actual discovered dependency, classify it under the exclusive taxonomy and stop as BLOCKER because it is outside the authorized lane
+  - propose a clearly labeled doctrine change if any further implementation or scope expansion is required, then stop without applying it
+
+prohibited_operations:
+  - any edit, replacement, formatting, regeneration, or other content change to an allowed path
+  - any new Slice F implementation work before or after POST-WORK review
+  - any attempt to repair a concrete defect found by testing or review under this recovery lane
+  - any create, modify, delete, rename, stage, or commit operation on a read-only dependency path
+  - reading any repository content path outside allowed_paths, read_only_dependency_paths, and the exact doctrine boundary
+  - reuse, restoration, staging, commit, or ratification of unauthorized reconnaissance-lane or other concurrent-drift content
+  - broad staging, staging before fresh independent POST-WORK GO, or staging any path not in allowed_paths
+  - any doctrine change other than the exact human-applied dedicated recovery-lane transition
+  - any unrelated cleanup, restoration, deletion, staging, reconciliation, or attribution
+  - any network access, dependency installation, generated artifact, cache creation, migration, deployment, activation, publication, or external mutation
 
 explicitly_out_of_scope:
+  - new or corrective Slice F implementation edits
   - production Firebase action-adapter integration, classified FOLLOW-ON
-  - creation, modification, deletion, rename, staging, or commit of any path in read_only_dependency_paths or any other Slice E file
-  - content reads of repository files other than the exact doctrine paths, allowed_paths, read_only_dependency_paths, and narrowly bounded Git metadata expressly authorized by this lane
-  - Slice C remediation
   - live Firebase browser end-to-end testing
+  - creation, modification, deletion, rename, staging, or commit of any path in read_only_dependency_paths
+  - any repository dependency or content read outside the exact authorized doctrine, allowed_paths, and read_only_dependency_paths boundaries
+  - unauthorized ratified reconnaissance-lane content or any artifact derived from it
+  - Slice C remediation
   - Firebase provider activation or Firebase project mutation
   - deployment, release, publication, or environment activation
   - networked tests or calls to Firebase, GCP, or any other external service
@@ -240,100 +347,97 @@ explicitly_out_of_scope:
   - M3 planning, reconnaissance, implementation, or remediation
   - package installation, dependency updates, generators, migrations, or commands that create caches or repository artifacts
   - architecture redesign
-  - changes to routes, adapters, assets, configuration, headers, build systems, test harnesses, documentation, or dependencies outside allowed_paths
+  - changes to routes, adapters, assets, configuration, headers, build systems, test harnesses, documentation, or dependencies
   - broad product, architecture, operations, infrastructure, service, contract, or application inspection
-  - opening the contents of unrelated dirty-worktree paths
-  - unrelated worktree cleanup, restoration, deletion, staging, reconciliation, or attribution
+  - opening the contents of outside dirty-worktree paths
   - altering or concealing pre-existing user changes
-  - staging with broad pathspecs or staging any pre-existing dirty-worktree entry
-  - committing without explicit human approval of the exact reviewed staged diff
-  - amending, rebasing, merging, tagging, pushing, fetching, changing refs other than creation of the authorized local implementation commit, or rewriting history
+  - amending, rebasing, merging, tagging, pushing, fetching, changing refs other than creation of the explicitly approved local implementation commit, or rewriting history
   - automatic or agent-initiated doctrine mutation
 
 acceptance_gates:
-  - the authoritative baseline commit is available and ancestral to the derived lane-transition commit
-  - lane-transition authority is established mechanically under lane_authorization, including uniqueness, the dedicated changed-path set, ancestry, and exact CURRENT-LANE.md blob checks
-  - no authority evidence, immutable manifest, or PRE-WORK GO from the prior attempt is reused; all are obtained fresh after the new derived lane-transition commit
-  - current HEAD equals the derived lane-transition commit when pre-work begins and is recorded immutably as pre_work_head
-  - every path declared under doctrine_freshness has recorded matching reference, HEAD, index, and canonicalized worktree blob identities at every required review point
-  - last_human_review is treated only as metadata and is never used as freshness evidence
+  - f6ed76dcac52ab400faa82ffc5df692162dea090 is available and is the direct first parent of the derived recovery-lane transition commit
+  - lane-transition authority is established mechanically under lane_authorization, including uniqueness, exact direct parentage, non-merge status, exact one-file changed-path set, exact approved CURRENT-LANE.md blob, and current-HEAD checks
+  - current HEAD is recorded as recovery_head and remains unchanged through POST-WORK review, testing, staging review, and explicit human commit approval
+  - every doctrine_freshness path has matching reference, HEAD, index, and canonicalized worktree blob identities at every required review point
+  - the known interrupted CURRENT-LANE.md drift is treated only as a restored external governance event and no unauthorized drift content is reused, staged, committed, or treated as authority
+  - no CURRENT-LANE.md or other doctrine drift recurs after the dedicated recovery transition
+  - the exact original immutable pre-work manifest is available verbatim and mechanically hashes to 112a881461d2d31d566589f17b2a068b33f4a12fdc8aab710199b0ccd4556d9a
+  - the explicitly authorized original independent PRE-WORK GO session evidence is available, its exact declared facts match the interrupted implementation anchored at f6ed76dcac52ab400faa82ffc5df692162dea090, and it is reused solely as provenance evidence
   - every allowed path and all seven read-only dependency paths are mechanically confirmed to be existing tracked regular files
-  - a fresh complete immutable pre-work manifest is captured verbatim with Git optional locks disabled before product or read-only dependency content is opened or implementation begins
-  - every planned path and all seven read-only dependency paths are clean in the pre-work manifest; any such path appearing dirty is BLOCKER — WORKTREE COLLISION
-  - pre-existing dirty-worktree entries outside planned paths and read-only dependency paths remain PRE-EXISTING provenance context only, their contents are not opened, and they are not changed, staged, cleaned, restored, deleted, concealed, or attributed to Slice F
-  - no scope classification is inferred from PRE-EXISTING provenance
-  - a fresh independent scope-sentinel that did not produce the implementation returns PRE-WORK GO for the exact requested task, all allowed paths as planned paths, modify operations, the exact seven read-only dependencies, proposed approach, fresh repository-authority evidence, fresh doctrine-freshness evidence, and fresh immutable pre-work manifest
-  - mode parsing accepts only the exact case-sensitive values verifyEmail and resetPassword and rejects a missing, empty, whitespace-only, malformed, or differently cased mode
-  - action handling requires a non-empty, non-whitespace oobCode and rejects missing, empty, whitespace-only, or malformed action-code input
-  - a caller-controlled Firebase apiKey is never used to select or initialize a backend and is rejected fail-closed before adapter invocation when it does not exactly match the trusted local value
-  - rejected mode, oobCode, apiKey, or continuation input causes zero action-adapter calls and exposes no sensitive input
-  - email verification is performed only through an injected action adapter after all input checks pass, with focused success and failure coverage
-  - resetPassword verifies the reset code through the injected action adapter before the password form is exposed, never exposes that form after failed preverification, and confirms the reset through the injected adapter only after valid submission
-  - the only permitted continuation destination is the exact URL https://app.ixid.me/register; attacker-controlled alternative schemes, origins, ports, paths, credentials, query strings, fragments, encodings, or lookalike hosts are rejected before adapter invocation or navigation
-  - action query data and any fragment are removed from the visible history entry immediately after synchronous capture and before validation, adapter invocation, sensitive rendering, or asynchronous work
-  - action codes, passwords, tokens, URL parameters, and raw Firebase errors are never written to console output, logs, browser storage, cookies, IndexedDB, Cache Storage, DOM diagnostics, URLs, or persisted application state
-  - raw adapter or Firebase errors are neither logged nor rendered; failure paths expose only generic safe user-facing errors
-  - password input values and transient application references to password material are cleared immediately after the confirmation attempt settles on success or failure and whenever the form is abandoned or reset
-  - same-origin asset loading, no-store behavior, no-referrer behavior, existing CSP restrictions, and existing security boundaries are preserved without weakening, including no new unsafe inline or remote-content allowance
-  - the resulting UI preserves accessible names, associated labels, keyboard operation, understandable status/error announcement, and appropriate focus behavior
-  - applicable local Slice F/frontend tests and focused security tests pass without network access, external mutation, dependency installation, or repository artifact creation
-  - authorized test execution content-reads no repository dependency outside allowed_paths and the exact seven paths in read_only_dependency_paths
-  - focused tests cover rejected modes and codes, zero adapter calls for rejected input, email-verification success and failure, reset preverification and confirmation, malicious continuation rejection, apiKey mismatch, password clearing, generic safe errors, and absence of logging or storage
-  - the complete optional-lock-free post-work manifest is captured before staging and the task-attributable path set is derived mechanically from its difference with the immutable pre-work manifest
-  - every task-attributable change is a modify operation on a path in allowed_paths, no outside path is task-attributable, and the actual diff is derived mechanically against the unchanged pre_work_head
-  - all seven read_only_dependency_paths remain clean and unchanged from the fresh pre-work manifest through local testing, POST-WORK review, staging, and closure
-  - an independent scope-sentinel that did not produce the implementation returns POST-WORK GO with no BLOCKER and no UNRELATED task-attributable change after reviewing both manifests, the mechanically derived task-attributable path set, actual diff, repository-authority evidence, and frozen invariants
-  - staging occurs only after POST-WORK GO and the exact staged path set contains only task-attributable changed paths from allowed_paths; an allowed path that did not change need not be staged
+  - a fresh complete optional-lock-free POST-WORK manifest is captured before product or dependency content is opened, tests run, or staging occurs
+  - the fresh POST-WORK manifest has an empty index and differs from the exact original manifest only by unstaged modifications of all three and only the three exact allowed_paths
+  - every outside manifest path-and-status entry matches the original immutable manifest exactly after accounting only for the committed dedicated recovery-lane transition and the exact three product modifications
+  - outside manifest entries remain provenance/status evidence only unless independently discovered to be relevant to the task
+  - all seven read_only_dependency_paths remain clean and mechanically unchanged from f6ed76dcac52ab400faa82ffc5df692162dea090
+  - the recovery transition commit preserves the f6ed76dcac52ab400faa82ffc5df692162dea090 tree entry for every product and dependency path
+  - the task-attributable path set is derived mechanically as all three and only the three allowed_paths, each with an existing modify operation
+  - the complete carried product diff is derived mechanically against f6ed76dcac52ab400faa82ffc5df692162dea090 and is identical against recovery_head
+  - the complete carried-diff digest and each canonicalized worktree blob identity are recorded before content review and remain unchanged through testing, POST-WORK review, staging verification, and human commit approval
+  - no new implementation edit or other product-content mutation occurs
+  - node ixid-onboarding-web/tests/frontend-contract.test.js passes all 20 tests without network access, external mutation, dependency installation, repository artifact creation, or a content read outside allowed_paths and read_only_dependency_paths
+  - git diff --check scoped to all three and only the three task paths passes
+  - a fresh independent scope-sentinel that did not produce the implementation returns POST-WORK GO with no BLOCKER and no UNRELATED task-attributable change after reviewing every item required by allowed_operations
+  - staging occurs only after fresh independent POST-WORK GO and uses explicit pathspecs for all three and only the three exact reviewed allowed_paths
+  - after staging, the exact staged path set is all three allowed_paths, no other index entry exists, no task-path content remains unstaged, and every outside worktree status remains unchanged
   - git diff --cached --check passes
-  - staged blobs, staged path names, and the complete staged diff correspond exactly to the task-attributable changes reviewed by the independent POST-WORK scope-sentinel
-  - no implementation content changes after POST-WORK review; any later change invalidates the review and requires a fresh optional-lock-free post-work manifest, mechanical derivation, tests, and independent POST-WORK GO
+  - staged blob identities and the complete staged diff exactly match the immutable carried blobs and carried diff reviewed by the independent POST-WORK scope-sentinel
+  - doctrine freshness, recovery_head, dependency cleanliness, carried-diff identity, staged integrity, and outside-manifest stability are reverified immediately before requesting human commit approval
   - explicit human approval identifies and authorizes committing the exact reviewed staged diff before any implementation commit is created
-  - any implementation commit is local, non-merge, has pre_work_head as its first parent, and changes only the task-attributable changed paths from allowed_paths
+  - the implementation commit is local and non-merge, has recovery_head as its first parent, and changes exactly the three allowed_paths
+  - final non-mutating verification confirms the implementation commit's parent and changed-path set, an empty index, no dependency or doctrine drift, and outside worktree statuses identical to the original manifest
   - no deployment, provider activation, network call, Firebase mutation, GCP mutation, or other external-state mutation occurred
-  - no doctrine file, read-only dependency path, or unrelated worktree path was changed, staged, committed, cleaned, restored, deleted, concealed, or attributed to Slice F
+  - no read-only dependency, doctrine path other than the exact human transition, or unrelated worktree path was changed, staged, committed, cleaned, restored, deleted, concealed, or attributed to Slice F
+  - last_human_review is treated only as metadata and never as freshness evidence
 
 stop_conditions:
-  - the authoritative baseline commit is missing, unreadable, or not ancestral to the derived lane-transition commit
-  - lane-transition authority is missing, non-unique, ambiguous, not dedicated, not ancestral, superseded, or fails an exact CURRENT-LANE.md blob check
-  - authority evidence, an immutable manifest, or a PRE-WORK GO from the prior attempt is reused instead of being obtained fresh after the new derived lane-transition commit
-  - current HEAD is not exactly the derived lane-transition commit when pre-work begins
-  - HEAD changes after pre_work_head is recorded and before the human-approved implementation commit is created
-  - any path declared under doctrine_freshness is missing, unreadable, unmerged, cannot be compared mechanically, or has any reference, HEAD, index, or canonicalized worktree blob mismatch
-  - last_human_review would have to be relied upon to establish freshness
-  - an allowed path or any of the seven read-only dependency paths is missing, untracked, not a regular tracked file, or dirty in the pre-work manifest
-  - the fresh complete immutable pre-work manifest was not captured verbatim with Git optional locks disabled before product or read-only dependency content was opened or implementation began
-  - PRE-WORK scope-sentinel evidence is incomplete, stale, reused from the prior attempt, or the fresh independent verdict is not GO
-  - implementation requires creating, deleting, or renaming an allowed path instead of modifying it
-  - implementation requires creating, modifying, deleting, renaming, staging, or committing any read_only_dependency_path, modifying any other Slice E file, or any path or operation not expressly authorized by this lane
-  - frontend-contract.test.js, implementation, or test execution proves that an eighth repository dependency must be content-read, or that any path outside allowed_paths must be mutated; classify it BLOCKER and stop for human lane amendment without automatic broadening
-  - a discovered required dependency is outside the exact authorized content-read or mutation boundaries; classify it under the normal exclusive taxonomy and, because it is unauthorized, treat it as BLOCKER and stop for human lane amendment
-  - production Firebase action-adapter integration, Slice C remediation, live Firebase browser E2E, provider activation, deployment, GCP mutation, Cloud Armor, D0, Slice D, or M3 work is proposed or begun
-  - a PRE-EXISTING dirty-worktree path outside planned paths and read-only dependency paths is opened, changed, staged, cleaned, restored, deleted, concealed, or attributed to Slice F
-  - scope classification is inferred from PRE-EXISTING provenance
+  - f6ed76dcac52ab400faa82ffc5df692162dea090 is missing, unreadable, not the direct first parent of the recovery transition, or not ancestral to current HEAD
+  - lane-transition authority is absent, non-unique, ambiguous, non-dedicated, a merge, superseded, not current HEAD, or fails an exact CURRENT-LANE.md blob or changed-path check
+  - HEAD changes from recovery_head before creation of the explicitly approved implementation commit
+  - any CURRENT-LANE.md worktree, index, blob, or history drift recurs after the exact human-applied recovery transition
+  - any doctrine_freshness path is missing, unreadable, unmerged, cannot be compared mechanically, or has any reference, HEAD, index, or canonicalized worktree mismatch
+  - the restored external-governance-event evidence is treated as permission to ignore, repair, or work through later doctrine drift
+  - unauthorized reconnaissance-lane or concurrent-drift content is reused, restored, staged, committed, or treated as authority
+  - the original immutable pre-work manifest is unavailable, altered, or hashes to anything other than 112a881461d2d31d566589f17b2a068b33f4a12fdc8aab710199b0ccd4556d9a
+  - the explicitly authorized original PRE-WORK GO session evidence is unavailable, inconsistent with its exact declared facts, or treated as mechanically derivable from Git
+  - either original recovery artifact is used for anything beyond interrupted-work provenance
+  - an allowed path or read-only dependency path is missing, untracked, or not a regular tracked file
+  - the fresh complete optional-lock-free POST-WORK manifest is absent, incomplete, altered, captured after content review or test execution, or cannot be compared mechanically with the original manifest
+  - the recovery index is not empty before POST-WORK review
+  - the fresh POST-WORK manifest differs from the original manifest by anything other than unstaged modifications of all three exact allowed_paths
+  - any outside manifest entry has a different path or status, appears, or disappears
+  - scope classification is inferred for an outside manifest entry solely from its provenance/status
+  - any outside manifest entry is treated as relevant without being independently discovered as a task dependency
+  - any independently discovered outside dependency is not classified under the exclusive taxonomy and treated as BLOCKER
+  - any read_only_dependency_path differs from f6ed76dcac52ab400faa82ffc5df692162dea090, becomes dirty, is staged, or is included in a contemplated commit
+  - the task-attributable path set cannot be derived mechanically as exactly all three allowed_paths with modify operations
+  - the carried diff is not identical against f6ed76dcac52ab400faa82ffc5df692162dea090 and recovery_head
+  - the complete carried-diff digest or any canonicalized allowed-path worktree blob identity changes after its initial recovery capture
+  - any allowed-path content is edited, replaced, formatted, regenerated, or otherwise changed
+  - the direct frontend contract test fails, does not report 20 passing tests, cannot run safely, requires network access, creates a repository artifact, or reads a repository content path outside allowed_paths and read_only_dependency_paths
+  - git diff --check scoped to the exact three task paths fails
+  - testing or review finds a concrete defect or any correction is required; stop without editing and obtain new explicit human authorization and a lane amendment
+  - any eighth dependency, new content-read path, outside mutation, or operation beyond this exact recovery boundary is required
+  - PRE-EXISTING outside content is opened, changed, staged, cleaned, restored, deleted, concealed, or attributed to Slice F
   - a command would install dependencies, use the network, create an unauthorized repository artifact, or mutate Firebase, GCP, deployment, or other external state
   - sensitive action data, password material, tokens, URL parameters, or raw Firebase errors appear in logs, test output, persisted storage, URLs, DOM diagnostics, or repository artifacts
-  - an authorized security, privacy, behavior, accessibility, or test acceptance gate cannot be met within the exact mutation and read-only dependency boundaries
-  - the optional-lock-free post-work manifest is absent, incomplete, altered, or cannot be compared mechanically with the immutable pre-work manifest
-  - task-attributable changes cannot be derived mechanically or include a path or operation outside the exact authorization boundary
-  - any outside manifest entry changes status during the task or provenance becomes ambiguous
-  - a read-only dependency path changes, is staged, or is included in a contemplated commit
-  - applicable local tests fail, cannot be run safely, require network access, or require a repository content read or operation outside this lane
-  - POST-WORK scope-sentinel evidence is incomplete, the reviewer is not independent, or the verdict is not GO
+  - fresh POST-WORK scope-sentinel evidence is incomplete, the reviewer is not independent, or the verdict is not GO
   - POST-WORK scope-sentinel identifies any BLOCKER or UNRELATED task-attributable change
-  - staging contains any path not both task-attributable and listed in allowed_paths
+  - staging occurs before POST-WORK GO, uses a broad pathspec, omits a task path, or includes any path outside allowed_paths
+  - the index after staging contains any path other than all three exact allowed_paths
+  - any task-path content remains unstaged after staging
   - git diff --cached --check fails
-  - staged path names, blobs, or diff do not correspond exactly to the independently reviewed task-attributable changes
-  - implementation content changes after POST-WORK review without a fresh manifest, mechanical derivation, test run, and independent POST-WORK GO
-  - explicit human approval of the exact reviewed staged diff is absent, ambiguous, or withdrawn; stop before commit
-  - a contemplated commit would be a merge, would not have pre_work_head as its first parent, or would include any path outside the reviewed staged boundary
+  - staged blob identities, staged path names, or the complete staged diff do not exactly match the independently reviewed immutable carried changes
+  - implementation content changes after POST-WORK review or staging; do not refresh the review under this lane—stop for new human authorization and lane amendment
+  - doctrine freshness, recovery_head, dependency cleanliness, carried-diff identity, staged integrity, or outside-manifest stability fails immediately before human approval
+  - explicit human approval of the exact reviewed staged diff is absent, ambiguous, withdrawn, or does not identify the exact reviewed content
+  - a contemplated implementation commit would be a merge, would not have recovery_head as its first parent, or would change anything other than all three exact allowed_paths
   - any deployment, activation, Firebase mutation, GCP mutation, networked integration, or external-state mutation is attempted
   - any frozen invariant would be violated
   - all acceptance_gates have been satisfied while status still claims ACTIVE
 
-authoritative_baseline_commit: 145e8dd562c6a607dbdb0aa7437dd8e3a305d980
-  # Human-reviewed tracked baseline after the prior local implementation
-  # attempt stopped before product mutation.
-  # The mechanically derived next dedicated lane-transition commit is distinct
-  # from this baseline and may change only CURRENT-LANE.md.
-last_human_review: "2026-08-23"
-  # Metadata only. Not freshness proof and not lane-transition authority.
+authoritative_baseline_commit: f6ed76dcac52ab400faa82ffc5df692162dea090
+  # This is the authoritative product and interrupted-work provenance baseline.
+  # The mechanically derived dedicated recovery-lane transition commit must be
+  # its direct child and may change only CURRENT-LANE.md.
+last_human_review: "2026-08-24"
+  # Metadata only. Not freshness proof, recovery provenance, or lane authority.
