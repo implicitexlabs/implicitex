@@ -1,5 +1,5 @@
 lane_id: m2-activation-smoke-runbook-authoring
-status: ACTIVE
+status: CLOSED
 amendment: 0
 
 # CURRENT-LANE.md — Authoritative execution boundary
@@ -329,3 +329,21 @@ explicitly_out_of_scope:
 
 last_human_review: "2026-08-24"
   # Metadata only. Not freshness proof or authorization.
+
+# ── CLOSURE RECORD ────────────────────────────────────────────────────────────
+
+closure:
+  closed: "2026-08-24"
+  closed_by: "human authorization — 'close the lane'"
+  deliverable: docs/operations/ixid-m2-activation-smoke-runbook.md
+  deliverable_commit: 19cbeb6
+  acceptance_gates_satisfied:
+    - PRE-WORK scope-sentinel GO (10/10 checks)
+    - POST-WORK scope-sentinel GO (14/14 checks)
+    - Explicit human review and commit approval
+  open_items:
+    - 9 CONTRACT_GAP items deferred to execution lane (B-3, B-4, C-1, C-2,
+      C-3, E-token, F-1, F-2, F-3) — must be resolved before any production
+      activation step proceeds
+    - A-1 (Cloud Armor) remains BLOCKED on Slice D GCP quota — prerequisite
+      for the execution lane to open
