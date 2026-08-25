@@ -1,88 +1,133 @@
-# CURRENT-LANE.md — Reconciled governance CAS doctrine repair
-# ============================================================
-# This is a new human-authorized control-plane replacement for the malformed
-# governance-lane-transition-cas-repair record committed at 2af7101.
-# The replacement transition derives from the 82d77a6 Charter's human lane-
-# reconciliation and doctrine-amendment authority. It does not derive from the
-# malformed prior lane and does not claim that I-6/CAS governs this transition.
+# CURRENT-LANE.md — M2-to-M3 contract design sequence amendment
+# ================================================================
+# Human-authorized governance transition. Replaces the satisfied
+# governance-cas-doctrine-repair-reconciled lane. Authority derives from
+# explicit human authorization in a human-controlled primary session, dated
+# 2026-08-25, specifically authorizing this lane transition.
 
-lane_id: governance-cas-doctrine-repair-reconciled
+lane_id: m2-m3-contract-design-sequence-amendment
 status: ACTIVE
 
 objective: >
-  Repair the governance CAS doctrine by reconstructing only
-  docs/agent-governance/FROZEN-INVARIANTS.md and
-  .claude/agents/scope-sentinel.md from the known-good 82d77a6 baseline plus
-  the previously human-approved I-6/CAS semantics, without changing product
-  code, CHARTER, CURRENT-LANE, external state, or unrelated repository work.
+  Authorize a later narrowly bounded amendment to
+  docs/architecture/ixid-onboarding-v0.1.md — consisting of a short normative
+  milestone-sequence exception and necessary milestone annotation only — enabling
+  separately authorized M3 contract recovery/design work to proceed while M2
+  remains formally OPEN/BLOCKED and its existing closure requirements remain
+  fully intact. This transition installs the lane only. The amendment itself
+  does not begin until the human reviews this installed lane and provides a
+  separate explicit instruction to begin.
 
 transition_authority:
   mechanism: >
-    Explicit human authorization in a human-controlled primary session under
-    the known-good 82d77a6 Charter's human lane-reconciliation and doctrine-
-    amendment authority.
-  known_good_doctrine_commit: 82d77a6d042fd71d931d4c9f276ec371cf680153
-  expected_parent_commit: 2af710162d0056ef5a69253280cfb1b71fc56f32
-  prior_lane_id: governance-lane-transition-cas-repair
-  prior_lane_authority: MALFORMED / NON-AUTHORITATIVE
-  transition_scope: >
-    A dedicated non-merge commit changing only
-    docs/agent-governance/CURRENT-LANE.md to install this exact human-approved
-    replacement record.
-  cas_status: >
-    I-6/CAS is not governing authority for this replacement transition. CAS
-    doctrine is the subject of the subsequent two-file repair.
+    Explicit human authorization in a human-controlled primary session,
+    2026-08-25. Derives from the CHARTER's human lane-reconciliation and
+    doctrine-amendment authority. Does not derive from any prior lane.
+  prior_lane_id: governance-cas-doctrine-repair-reconciled
+  prior_lane_satisfaction_commit: 158f1dc8f0061cc03b24ad25eb7b87d5abdcead4
+  prior_lane_status: >
+    SATISFIED — repair of docs/agent-governance/FROZEN-INVARIANTS.md and
+    .claude/agents/scope-sentinel.md completed under the repair lane and
+    committed at 158f1dc8f0061cc03b24ad25eb7b87d5abdcead4 (2026-08-25).
 
-authoritative_baseline_commit: 82d77a6d042fd71d931d4c9f276ec371cf680153
+authoritative_baseline_commit: 158f1dc8f0061cc03b24ad25eb7b87d5abdcead4
 
-bootstrap_review_authority:
-  governing_sentinel: 82d77a6d042fd71d931d4c9f276ec371cf680153:.claude/agents/scope-sentinel.md
-  governing_invariants: 82d77a6d042fd71d931d4c9f276ec371cf680153:docs/agent-governance/FROZEN-INVARIANTS.md
-  governing_charter: 82d77a6d042fd71d931d4c9f276ec371cf680153:docs/agent-governance/CHARTER.md
-  tainted_head_versions_role: FORENSIC ONLY
-  approved_amendment_rule: >
-    Use only the exact I-6/CAS semantics previously approved by the human.
-    This lane neither restates nor alters those semantics. If the exact
-    approved semantics cannot be established, stop without modifying either
-    allowed path.
+m2_state:
+  status: OPEN / BLOCKED
+  statement: >
+    M2 remains formally OPEN/BLOCKED. No existing M2 completion gate,
+    acceptance requirement, production activation requirement, or smoke
+    requirement is waived, weakened, satisfied by implication, or reclassified
+    as complete. M2 cannot presently close because of outstanding production
+    configuration, activation-authority, operational-procedure, or
+    human-observed acceptance work. No new M2 implementation defect requiring
+    correction is known. This lane does not alter, waive, or narrow any M2
+    closure requirement.
+
+m3_authorization_semantics:
+  statement: >
+    While M2 is OPEN/BLOCKED due to outstanding production configuration,
+    activation-authority, operational-procedure, or human-observed acceptance
+    work — and while no new M2 implementation defect requires correction —
+    separately authorized M3 contract recovery/design work may proceed.
+    Such contract work does not commence M3 implementation. No M3 code, API,
+    persistence, wallet integration, product implementation, deployment,
+    Firebase, GCP, production configuration, network operation, or
+    external-state mutation is authorized by this lane. Formal M3 implementation
+    remains unavailable until M2 satisfies its existing closure requirements.
+
+execution_hold:
+  status: ACTIVE
+  target: docs/architecture/ixid-onboarding-v0.1.md
+  condition: >
+    docs/architecture/ixid-onboarding-v0.1.md must not be read for amendment
+    purposes, modified, staged, or committed until the human reviews this
+    installed lane and provides a new explicit instruction to begin the
+    amendment. The amendment, when authorized, must be minimal: a short
+    normative milestone-sequence exception and necessary milestone annotation
+    only, with no restructuring of the document.
+
+quarantine:
+  path: docs/architecture/ixid-payment-route-v0.1.md
+  classification: PRESERVED UNAUTHORIZED RESIDUE / ZERO AUTHORITY
+  sha256_carried: 02ccc1e5c1e5a16072378b90df7c3b7090dbf06b37f561d0b7712bf94cba9f9e
+  sha256_note: >
+    Carried from prior verification session. Not directly read or hashed in
+    this session per quarantine terms below.
+  prohibition: >
+    Absolutely prohibited during both this transition and the amendment phase:
+    reading, hashing, editing, moving, deleting, restoring, staging, committing,
+    or otherwise touching docs/architecture/ixid-payment-route-v0.1.md in any way.
+    This prohibition applies to all agents and all sessions operating under this lane.
 
 allowed_paths:
-  - docs/agent-governance/FROZEN-INVARIANTS.md
-  - .claude/agents/scope-sentinel.md
+  - docs/agent-governance/CURRENT-LANE.md
+  - docs/architecture/ixid-onboarding-v0.1.md
 
 allowed_operations:
-  - read-only inspection of governance doctrine, repository metadata, and historical blobs needed to reconstruct and validate the two allowed paths
-  - reconstruct each allowed path from its exact 82d77a6 version plus only the exact previously human-approved I-6/CAS amendment
-  - modify: docs/agent-governance/FROZEN-INVARIANTS.md
-  - modify: .claude/agents/scope-sentinel.md
-  - stage: docs/agent-governance/FROZEN-INVARIANTS.md
-  - stage: .claude/agents/scope-sentinel.md
-  - run read-only governance validation, diff checks, and tests relevant to the two allowed paths
-  - after independent POST-WORK validation and explicit human commit approval, create one repair commit whose changed-path set is exactly the two allowed paths
+  - read-only inspection of governance doctrine, repository metadata, and committed repository files
+  - write: docs/agent-governance/CURRENT-LANE.md (this transition only — installs this lane; no further writes to CURRENT-LANE.md under this lane)
+  - stage: docs/agent-governance/CURRENT-LANE.md (this transition only)
+  - create one non-amend transition commit whose changed-path set is exactly docs/agent-governance/CURRENT-LANE.md
+  - run read-only governance validation and integrity checks relevant to this transition
+  - AFTER execution hold explicitly lifted by human instruction only — read docs/architecture/ixid-onboarding-v0.1.md for amendment purposes
+  - AFTER execution hold explicitly lifted by human instruction only — minimally amend docs/architecture/ixid-onboarding-v0.1.md (short normative milestone-sequence exception and necessary milestone annotation; no restructuring)
+  - AFTER execution hold explicitly lifted by human instruction only — stage and commit docs/architecture/ixid-onboarding-v0.1.md in one repair commit
 
 explicitly_out_of_scope:
-  - docs/agent-governance/CURRENT-LANE.md after this transition commit
+  - any modification to, or amendment-purpose read of, docs/architecture/ixid-onboarding-v0.1.md before the execution hold is explicitly lifted by human instruction
+  - any interaction with docs/architecture/ixid-payment-route-v0.1.md of any kind (quarantine — zero authority)
+  - any waiver, weakening, satisfaction-by-implication, or reclassification of any M2 completion gate, acceptance requirement, production activation requirement, or smoke requirement
+  - any M3 implementation: code, API, persistence, wallet integration, product or product-contract implementation beyond the single narrow allowed amendment, deployment
+  - any Firebase, GCP, production configuration, network operation, or external-state mutation
   - docs/agent-governance/CHARTER.md
+  - docs/agent-governance/FROZEN-INVARIANTS.md
   - AGENTS.md
   - CLAUDE.md
-  - every doctrine change other than the approved I-6/CAS amendment to the two allowed paths
-  - all product, application, service, contract, test, and architecture implementation
-  - all infrastructure, Firebase, GCP, deployment, release, provider, network, and external-state operations
-  - alteration, cleanup, deletion, restoration, staging, or incorporation of any pre-existing dirty or untracked worktree path
+  - ".claude/agents/*"
   - any path outside allowed_paths
-  - using 699e5ab, 2af7101, or stale worktree residue as reconstruction authority
-  - treating I-6/CAS as governing authority for the transition that installs this lane
+  - any product, application, service, test, or architecture implementation other than the single allowed amendment
+  - any infrastructure, deployment, release, provider, or network operation
+  - alteration, cleanup, deletion, restoration, staging, or incorporation of any pre-existing dirty or untracked worktree path
   - amending, rebasing, squashing, or rewriting any existing commit
+  - restructuring, expanding, or otherwise modifying docs/architecture/ixid-onboarding-v0.1.md beyond the narrow allowed amendment
+  - further writes to docs/agent-governance/CURRENT-LANE.md after this transition commit
 
 pre_existing_outside_manifest:
   classification: PRE-EXISTING / PROVENANCE-ONLY / ZERO AUTHORITY
   status_sha256: 59d9f154afedff2f56b3c94c7e4a5cfb00addba72493e489da61da3470f2a2d5
   modified_tracked_count: 10
   untracked_count: 56
+  note: >
+    Carried forward from governance-cas-doctrine-repair-reconciled lane.
+    SHA-256 matches live manifest computed immediately before this transition
+    write. The comparison for POST-TRANSITION verification mechanically
+    excludes docs/agent-governance/CURRENT-LANE.md (the transition path).
   comparison_rule: >
-    PRE-WORK and POST-WORK must compare the complete path/status set exactly.
-    During repair, mechanically exclude only the two allowed paths before
-    comparison. Matching status class without matching path is not sufficient.
+    PRE-TRANSITION and POST-TRANSITION must compare the complete outside
+    path/status set exactly, mechanically excluding only
+    docs/agent-governance/CURRENT-LANE.md. Matching status class without
+    matching path is not sufficient.
   modified_tracked_paths:
     - " M app-web/backend/functions/index.js"
     - " M app-web/docs/product/coin-card/COIN_CARD_ARCHITECTURE_INDEX.md"
@@ -153,31 +198,37 @@ pre_existing_outside_manifest:
     - "?? tools/coin-card-artifact/validate-lineage.js"
 
 acceptance_gates:
-  - independent PRE-WORK review under the 82d77a6 scope-sentinel and frozen-invariants baseline returns GO before either allowed path is modified
-  - both repaired files are reconstructed from their exact 82d77a6 versions plus only the exact previously human-approved I-6/CAS amendment
-  - neither 699e5ab nor 2af7101 content is used as reconstruction authority; any comparison with those commits is forensic and occurs only after reconstruction
-  - the repaired scope-sentinel retains the exact baseline required-field schema and remains fail-closed for missing, malformed, contradictory, stale, or unauthorized lanes
-  - no governance semantic changes occur beyond the exact approved I-6/CAS amendment
-  - exact diffs against both 82d77a6 baseline files are presented for human review before staging or committing
-  - governance validation, schema checks, behavior checks, and diff checks relevant to the two allowed paths pass
-  - independent POST-WORK review under the 82d77a6 bootstrap authority returns GO before staging or committing
-  - the complete outside-manifest path/status set remains exactly unchanged after mechanically excluding only the two allowed paths
-  - the staged and committed changed-path set is exactly both allowed paths and no others
-  - explicit human commit approval is received after review of the final diff and before the repair commit
-  - no repository path outside allowed_paths and no external state is changed
+  transition_phase:
+    - independent PRE-TRANSITION scope-sentinel review using committed sentinel at 158f1dc returns GO before CURRENT-LANE.md is written
+    - I-6 baseline guard passes with fresh HEAD and committed lane blob pair recorded immediately before first write
+    - I-6 commit guard passes immediately before staging: expected HEAD and committed lane blob still match, worktree hash equals reviewed candidate hash, index state is expected
+    - staged changed-path set is exactly docs/agent-governance/CURRENT-LANE.md and no others
+    - one non-amend transition commit with message "chore(governance): authorize M2-M3 contract design sequence amendment"
+    - POST-TRANSITION verification confirms: committed lane blob in new HEAD equals independently reviewed candidate; committed path set is exactly docs/agent-governance/CURRENT-LANE.md; prior lane commit (158f1dc) is parent; index clean; outside manifest unchanged (10 modified + 56 untracked)
+    - docs/architecture/ixid-onboarding-v0.1.md was not modified during transition
+    - no product, M3, Firebase, GCP, deployment, network, provider, or external-state action occurred
+    - quarantine metadata carried forward correctly; docs/architecture/ixid-payment-route-v0.1.md was not touched
+  amendment_phase:
+    - execution hold: no amendment begins until human reviews installed lane and provides explicit instruction
+    - amendment is minimal — short normative milestone-sequence exception and necessary milestone annotation only, no restructuring
+    - independent PRE-WORK and POST-WORK sentinel reviews return GO for the amendment
+    - no M2 gate, requirement, or acceptance criterion is weakened or reclassified
+    - outside manifest unchanged after mechanically excluding docs/architecture/ixid-onboarding-v0.1.md
 
 stop_conditions:
-  - any repository path/status drift outside the declared pre-existing boundary
-  - either allowed path is dirty before PRE-WORK begins
-  - uncertainty about the exact previously human-approved I-6/CAS semantics
-  - any need to modify, create, delete, restore, stage, or commit a path outside allowed_paths
-  - any validation, schema, behavior, test, or diff-check failure that cannot be resolved within the two allowed paths
-  - discovery that the proposed repair would alter governance semantics beyond the exact approved I-6/CAS amendment
-  - any attempt to use 699e5ab, 2af7101, or stale worktree residue as reconstruction authority
-  - any change to docs/agent-governance/CURRENT-LANE.md after this transition commit
-  - any product, application, infrastructure, deployment, Firebase, GCP, provider, network, or external-state operation
-  - any staging or commit before independent POST-WORK review and explicit human commit approval
-  - any frozen invariant would be violated
+  - any interaction with docs/architecture/ixid-payment-route-v0.1.md (quarantine violation — stop immediately)
+  - docs/architecture/ixid-onboarding-v0.1.md is modified, staged, or committed before execution hold is explicitly lifted by human instruction
+  - any M2 gate, acceptance requirement, or smoke requirement is weakened, waived, satisfied by implication, or reclassified
+  - any M3 implementation action: code, API, Firebase, GCP, wallet, deployment, network, external state
+  - any repository path/status drift outside the declared pre-existing boundary during transition
+  - docs/agent-governance/CURRENT-LANE.md is dirty before transition write (I-6 violation)
+  - I-6 baseline or commit guard fails (BLOCKED — LANE MUTEX VIOLATED)
+  - committed path set after transition commit contains any path other than docs/agent-governance/CURRENT-LANE.md
+  - POST-TRANSITION verification of committed lane blob fails
+  - any frozen invariant is violated
+  - any attempt to amend, rebase, squash, or rewrite any existing commit
+  - any path outside allowed_paths is modified
+  - amendment restructures or expands docs/architecture/ixid-onboarding-v0.1.md beyond the narrow normative exception and annotation
 
-last_human_review: "2026-08-24"
+last_human_review: "2026-08-25"
   # Metadata only. Not freshness proof or authorization.
