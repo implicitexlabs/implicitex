@@ -1130,7 +1130,7 @@ The following work is **NOT authorized** by M2, even after independent review:
 ```
 M1 — Holder Authority v0.1          CLOSED (d5841d1, 2026-08-20)
     ↓
-M2 — IX ID Registration / Onboarding v0.1   THIS DOCUMENT — FROZEN (1a9fbf2, 2026-08-20)
+M2 — IX ID Registration / Onboarding v0.1   THIS DOCUMENT — FROZEN (1a9fbf2, 2026-08-20) [OPEN/BLOCKED — see §15.1]
     ↓
 M3 — Payment Route Management v0.1
     ↓
@@ -1140,6 +1140,34 @@ M5 — Holder Profile Management
     ↓
 M6 — ImplicitEx sender/payment integration
 ```
+
+### 15.1 M2 status and M3 contract-design exception (2026-08-25)
+
+**M2 is OPEN/BLOCKED.** No M2 completion gate, acceptance requirement,
+production-activation requirement, operational requirement, or human-observed
+smoke-test requirement listed in this document (including Part 12, Part 13,
+§1.8, and §12.1) is waived, weakened, satisfied by implication, reclassified
+as complete, or bypassed by this subsection or by any activity taken under it.
+
+M2 cannot presently close because outstanding work remains in production
+configuration, activation authority, operational procedure, or human-observed
+acceptance. No newly identified M2 implementation defect requires correction.
+
+While M2 remains OPEN/BLOCKED on this basis, a separately authorized lane MAY
+perform M3 contract recovery/design work. This permission:
+
+- does not constitute commencement, partial commencement, or implicit
+  authorization of M3 implementation;
+- does not authorize any M3 code, API implementation, persistence
+  implementation, wallet integration, UI implementation, production integration,
+  deployment, Firebase operation, GCP operation, network operation, production
+  configuration, or external-state mutation;
+- does not waive, defer, or narrow any M2 closure requirement; and
+- does not enable formal M3 implementation, which remains unavailable until M2
+  satisfies its existing closure requirements in full.
+
+Any M3 contract recovery/design activity requires its own valid governance lane
+and does not inherit execution authority from this amendment.
 
 ---
 
