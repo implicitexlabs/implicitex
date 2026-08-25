@@ -130,50 +130,58 @@ to IN-LANE.
 
 ---
 
-## I-6 — Governance transition compare-and-swap
+## I-6 — Lane transitions use compare-and-swap guards
 
-This invariant applies exclusively to **governance transitions**: sessions
-whose active lane's authorized write paths include
-`docs/agent-governance/CURRENT-LANE.md`. It does not apply to authorized
-implementation commits within an already-active lane.
+I-6 applies whenever any operation proposes to create, replace, amend, close,
+supersede, restore, or otherwise write
+`docs/agent-governance/CURRENT-LANE.md`. The trigger is the proposed operation,
+not the presence of `CURRENT-LANE.md` in an allowed-path list.
 
-A session authorized to write `CURRENT-LANE.md` must perform a
-compare-and-swap (CAS) check immediately before the first write:
+I-6 governs lane transitions only. It does not apply to implementation commits
+performed within an already-active lane.
 
-**(a) Reconciliation-time recording.** At the moment the session begins
-planning the lane transition, it must record:
-- `expected_head`: the current HEAD SHA
-- `expected_cas_blob_hash`: the current git blob hash of
-  `docs/agent-governance/CURRENT-LANE.md`
+I-6 takes effect with the commit that adds this invariant. It does not
+retroactively invalidate earlier lane transitions. Every transition after that
+effective commit must comply, including any close, amendment, or supersession
+of a lane created before I-6 took effect.
 
-**(b) Pre-write re-verification.** Immediately before any write to
-`CURRENT-LANE.md`, the session must re-read the current HEAD SHA and the
-current blob hash of `CURRENT-LANE.md` and compare them against the recorded
-values.
+### Baseline guard — immediately before the first transition write
 
-**(c) Mismatch is BLOCKED.** If either value has changed since
-reconciliation-time recording, the session must stop and report:
+Before the first write to `CURRENT-LANE.md`, the transition session must:
 
-    BLOCKED — LANE MUTEX VIOLATED
+1. verify that `CURRENT-LANE.md` has no pre-existing staged or unstaged change
+   attributable to another transition;
+2. record the expected repository `HEAD` with `git rev-parse HEAD`;
+3. record the expected committed `CURRENT-LANE.md` blob at that `HEAD` with
+   `git rev-parse HEAD:docs/agent-governance/CURRENT-LANE.md`; and
+4. immediately before the first write, re-read both `HEAD` and the committed
+   lane blob and compare them with the recorded expected pair.
 
-    Expected HEAD:                 <expected_head>
-    Observed HEAD:                 <current_head>
+The baseline guard passes only when no conflicting transition change exists and
+both values match. A mismatch is:
 
-    Expected CURRENT-LANE.md blob: <expected_cas_blob_hash>
-    Observed CURRENT-LANE.md blob: <current_blob_hash>
+`BLOCKED — LANE MUTEX VIOLATED`
 
-    A concurrent session has modified the repository or CURRENT-LANE.md
-    since this session recorded its CAS baseline. This lane transition
-    is prohibited. Human reconciliation required.
+### Commit guard — immediately before staging or committing
 
-**(d) No subsequent writes after mismatch.** After a CAS mismatch, all
-subsequent write, stage, commit, reset, checkout, or restore operations
-targeting `CURRENT-LANE.md` are prohibited in that session.
+Immediately before staging or committing the transition, the session must:
 
-**(e) Scope restriction.** This invariant applies only to governance
-transitions — sessions authorized to write `CURRENT-LANE.md`. It does not
-apply to implementation commits made within an already-active lane.
+1. re-read the expected `HEAD` and committed lane blob pair;
+2. verify that the worktree hash of `CURRENT-LANE.md` equals the hash of the
+   reviewed transition candidate; and
+3. verify that the index contains no unexpected state.
 
-**(f) No freshness rule.** This invariant introduces no TTL, timestamp
-freshness rule, or session-age rule. The only check is hash equality between
-reconciliation-time recording and pre-write re-verification.
+The commit guard passes only when the expected `HEAD` and committed lane blob
+still match, the worktree contains the reviewed candidate, and the index state
+is expected. A mismatch is:
+
+`BLOCKED — LANE MUTEX VIOLATED`
+
+After either guard reports that blocker, the session must not write, stage,
+commit, reset, check out, restore, or automatically reconcile
+`CURRENT-LANE.md`. The session must inspect the intervening commits, reconcile
+authority, and obtain any newly required human authorization before recording
+a new expected `HEAD` and committed lane blob pair.
+
+I-6 has no time-to-live, wall-clock, or session-age rule. Freshness is
+established only by the required repository-state comparisons.

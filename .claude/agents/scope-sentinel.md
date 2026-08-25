@@ -209,60 +209,96 @@ agent's assertion alone.
 
 Do not proceed.
 ```
-### Governance transition CAS evidence (required when CURRENT-LANE.md is in allowed_write_paths)
 
-This block applies **if and only if** the active lane's authorized write paths
-include `docs/agent-governance/CURRENT-LANE.md`. Skip entirely otherwise.
+### Lane-transition CAS evidence
 
-The invoking session must supply:
+This check is required whenever an operation proposes to create, replace,
+amend, close, supersede, restore, or otherwise write
+`docs/agent-governance/CURRENT-LANE.md`. The proposed operation triggers the
+check; whether `CURRENT-LANE.md` appears in an allowed-path list does not.
 
-```
-cas_baseline_head:        <HEAD SHA recorded at reconciliation time>
-cas_baseline_blob_hash:   <git blob hash of CURRENT-LANE.md at reconciliation time>
-cas_reverify_head:        <HEAD SHA re-read immediately before first write>
-cas_reverify_blob_hash:   <git blob hash of CURRENT-LANE.md re-read immediately before first write>
-cas_match:                PASS | FAIL
-  evidence: cas_baseline_head == cas_reverify_head
-            AND cas_baseline_blob_hash == cas_reverify_blob_hash
-```
+This check applies to lane transitions performed after I-6's effective commit.
+It does not retroactively evaluate earlier transitions, but it does apply to
+every later transition, including closure, amendment, or supersession of a lane
+created before I-6 took effect. It does not apply to implementation commits
+within an already-active lane.
 
-If CAS evidence is absent:
+Evaluate CAS at two mandatory boundaries:
+
+#### Baseline guard — immediately before the first transition write
+
+Require:
+
+- `cas_preexisting_transition_change`: `NO` only when the lane file has no
+  staged or unstaged change attributable to another transition; otherwise
+  `YES` or `UNKNOWN`;
+- `cas_expected_head`: repository `HEAD` recorded for the transition;
+- `cas_expected_committed_blob`: committed `CURRENT-LANE.md` blob recorded at
+  that `HEAD`;
+- `cas_observed_head_before_write`: `HEAD` re-read immediately before the first
+  transition write;
+- `cas_observed_committed_blob_before_write`: committed lane blob re-read
+  immediately before the first transition write; and
+- `cas_baseline_match`: `PASS` only if there is no pre-existing transition
+  change and both observed values equal the expected pair; otherwise `FAIL`.
+
+The first transition write may proceed only after this guard passes.
+
+#### Commit guard — immediately before staging or committing the transition
+
+Require:
+
+- the same `cas_expected_head` and `cas_expected_committed_blob` recorded by
+  the baseline guard;
+- `cas_observed_head_before_commit`: `HEAD` re-read immediately before staging
+  or committing;
+- `cas_observed_committed_blob_before_commit`: the committed lane blob re-read
+  at that boundary;
+- `cas_reviewed_candidate_hash`: the content hash of the reviewed lane
+  candidate;
+- `cas_observed_worktree_lane_hash`: the worktree lane-file content hash
+  observed at that boundary;
+- `cas_expected_index_state`: the index state expected for the transition;
+- `cas_observed_index_state`: the index state observed at that boundary; and
+- `cas_commit_match`: `PASS` only if the expected `HEAD` and committed lane blob
+  still match, the worktree hash equals the reviewed candidate hash, and the
+  index contains no unexpected state; otherwise `FAIL`.
+
+The applicable guard's inputs must be present when that boundary is evaluated.
+In PRE-WORK before the first write, the baseline guard is applicable and the
+commit guard remains mandatory before any later staging or commit. At the
+commit boundary, both the recorded baseline evidence and the commit-guard
+evidence are required. A missing applicable input is:
 
 ```
 BLOCKER — INSUFFICIENT CAS EVIDENCE
 
-The active lane authorizes writing docs/agent-governance/CURRENT-LANE.md,
-but CAS baseline and re-verification evidence has not been supplied.
+Required I-6 compare-and-swap evidence is incomplete.
+Missing: <list what is absent>
 
-I-6 requires the session to record expected HEAD and CURRENT-LANE.md blob
-hash at reconciliation time, then re-verify both immediately before the
-first write.
-
-Do not proceed.
+Do not infer repository-state freshness.
+Do not proceed with the lane transition.
 ```
 
-If `cas_match: FAIL`:
+If `cas_baseline_match` or `cas_commit_match` is `FAIL`, report:
 
 ```
 BLOCKED — LANE MUTEX VIOLATED
 
-Expected HEAD:                 <cas_baseline_head>
-Observed HEAD:                 <cas_reverify_head>
+The recorded lane-transition baseline no longer matches repository state,
+the worktree no longer matches the reviewed candidate, or the index contains
+unexpected state.
 
-Expected CURRENT-LANE.md blob: <cas_baseline_blob_hash>
-Observed CURRENT-LANE.md blob: <cas_reverify_blob_hash>
-
-A concurrent session has modified the repository or CURRENT-LANE.md
-since this session recorded its CAS baseline. This lane transition
-is prohibited. All subsequent write, stage, commit, reset, checkout,
-or restore operations targeting CURRENT-LANE.md are prohibited in
-this session.
-
-Human reconciliation required.
+Do not write, stage, commit, reset, check out, restore, or automatically
+reconcile CURRENT-LANE.md.
 ```
 
-This check applies only to governance transitions. It does not apply to
-implementation commits within an already-active lane.
+After this blocker, the session must inspect intervening commits, reconcile
+authority, and obtain any newly required human authorization before recording a
+new expected `HEAD` and committed lane blob pair.
+
+I-6 has no time-to-live, wall-clock, or session-age rule. CAS freshness depends
+only on the required repository-state comparisons.
 
 ### Phase 0 Genesis Provenance Exception
 
@@ -384,13 +420,13 @@ DISCOVERED DEPENDENCIES
 
 FROZEN INVARIANT CHECKS
 ──────────────────────────────────────────────────────────
-  I-1 (CURRENT-LANE.md fail-closed):         PASS / FAIL
-  I-2 (doctrine read-only):                  PASS / FAIL
-  I-3 (necessity ≠ authorization):           PASS / FAIL
-  I-4 (cross-platform read-only):            PASS / FAIL
-  I-5 (taxonomy complete and exclusive):     PASS / FAIL
-  I-6 (governance transition CAS):           PASS / FAIL / N/A
-    (N/A when CURRENT-LANE.md is not in allowed_write_paths)
+  I-1 (CURRENT-LANE.md fail-closed):    PASS / FAIL
+  I-2 (doctrine read-only):             PASS / FAIL
+  I-3 (necessity ≠ authorization):      PASS / FAIL
+  I-4 (cross-platform read-only):       PASS / FAIL
+  I-5 (taxonomy complete and exclusive): PASS / FAIL
+  I-6 (lane-transition CAS):            PASS / FAIL / N/A
+  Note: I-6 is N/A only when no CURRENT-LANE.md write is proposed or evaluated.
 
 LANE QUESTIONS
 ──────────────────────────────────────────────────────────
