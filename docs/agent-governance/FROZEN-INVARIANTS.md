@@ -127,3 +127,53 @@ If a classification is genuinely ambiguous, that ambiguity must be surfaced
 explicitly in the LANE QUESTIONS section of the sentinel report. The human
 reviewer resolves ambiguity; scope-sentinel does not resolve it by defaulting
 to IN-LANE.
+
+---
+
+## I-6 — Governance transition compare-and-swap
+
+This invariant applies exclusively to **governance transitions**: sessions
+whose active lane's authorized write paths include
+`docs/agent-governance/CURRENT-LANE.md`. It does not apply to authorized
+implementation commits within an already-active lane.
+
+A session authorized to write `CURRENT-LANE.md` must perform a
+compare-and-swap (CAS) check immediately before the first write:
+
+**(a) Reconciliation-time recording.** At the moment the session begins
+planning the lane transition, it must record:
+- `expected_head`: the current HEAD SHA
+- `expected_cas_blob_hash`: the current git blob hash of
+  `docs/agent-governance/CURRENT-LANE.md`
+
+**(b) Pre-write re-verification.** Immediately before any write to
+`CURRENT-LANE.md`, the session must re-read the current HEAD SHA and the
+current blob hash of `CURRENT-LANE.md` and compare them against the recorded
+values.
+
+**(c) Mismatch is BLOCKED.** If either value has changed since
+reconciliation-time recording, the session must stop and report:
+
+    BLOCKED — LANE MUTEX VIOLATED
+
+    Expected HEAD:                 <expected_head>
+    Observed HEAD:                 <current_head>
+
+    Expected CURRENT-LANE.md blob: <expected_cas_blob_hash>
+    Observed CURRENT-LANE.md blob: <current_blob_hash>
+
+    A concurrent session has modified the repository or CURRENT-LANE.md
+    since this session recorded its CAS baseline. This lane transition
+    is prohibited. Human reconciliation required.
+
+**(d) No subsequent writes after mismatch.** After a CAS mismatch, all
+subsequent write, stage, commit, reset, checkout, or restore operations
+targeting `CURRENT-LANE.md` are prohibited in that session.
+
+**(e) Scope restriction.** This invariant applies only to governance
+transitions — sessions authorized to write `CURRENT-LANE.md`. It does not
+apply to implementation commits made within an already-active lane.
+
+**(f) No freshness rule.** This invariant introduces no TTL, timestamp
+freshness rule, or session-age rule. The only check is hash equality between
+reconciliation-time recording and pre-write re-verification.

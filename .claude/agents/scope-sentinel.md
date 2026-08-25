@@ -209,6 +209,61 @@ agent's assertion alone.
 
 Do not proceed.
 ```
+### Governance transition CAS evidence (required when CURRENT-LANE.md is in allowed_write_paths)
+
+This block applies **if and only if** the active lane's authorized write paths
+include `docs/agent-governance/CURRENT-LANE.md`. Skip entirely otherwise.
+
+The invoking session must supply:
+
+```
+cas_baseline_head:        <HEAD SHA recorded at reconciliation time>
+cas_baseline_blob_hash:   <git blob hash of CURRENT-LANE.md at reconciliation time>
+cas_reverify_head:        <HEAD SHA re-read immediately before first write>
+cas_reverify_blob_hash:   <git blob hash of CURRENT-LANE.md re-read immediately before first write>
+cas_match:                PASS | FAIL
+  evidence: cas_baseline_head == cas_reverify_head
+            AND cas_baseline_blob_hash == cas_reverify_blob_hash
+```
+
+If CAS evidence is absent:
+
+```
+BLOCKER — INSUFFICIENT CAS EVIDENCE
+
+The active lane authorizes writing docs/agent-governance/CURRENT-LANE.md,
+but CAS baseline and re-verification evidence has not been supplied.
+
+I-6 requires the session to record expected HEAD and CURRENT-LANE.md blob
+hash at reconciliation time, then re-verify both immediately before the
+first write.
+
+Do not proceed.
+```
+
+If `cas_match: FAIL`:
+
+```
+BLOCKED — LANE MUTEX VIOLATED
+
+Expected HEAD:                 <cas_baseline_head>
+Observed HEAD:                 <cas_reverify_head>
+
+Expected CURRENT-LANE.md blob: <cas_baseline_blob_hash>
+Observed CURRENT-LANE.md blob: <cas_reverify_blob_hash>
+
+A concurrent session has modified the repository or CURRENT-LANE.md
+since this session recorded its CAS baseline. This lane transition
+is prohibited. All subsequent write, stage, commit, reset, checkout,
+or restore operations targeting CURRENT-LANE.md are prohibited in
+this session.
+
+Human reconciliation required.
+```
+
+This check applies only to governance transitions. It does not apply to
+implementation commits within an already-active lane.
+
 ### Phase 0 Genesis Provenance Exception
 
 This exception applies only to closure of the initial Phase 0 governance lane.
@@ -329,11 +384,13 @@ DISCOVERED DEPENDENCIES
 
 FROZEN INVARIANT CHECKS
 ──────────────────────────────────────────────────────────
-  I-1 (CURRENT-LANE.md fail-closed):    PASS / FAIL
-  I-2 (doctrine read-only):             PASS / FAIL
-  I-3 (necessity ≠ authorization):      PASS / FAIL
-  I-4 (cross-platform read-only):       PASS / FAIL
-  I-5 (taxonomy complete and exclusive): PASS / FAIL
+  I-1 (CURRENT-LANE.md fail-closed):         PASS / FAIL
+  I-2 (doctrine read-only):                  PASS / FAIL
+  I-3 (necessity ≠ authorization):           PASS / FAIL
+  I-4 (cross-platform read-only):            PASS / FAIL
+  I-5 (taxonomy complete and exclusive):     PASS / FAIL
+  I-6 (governance transition CAS):           PASS / FAIL / N/A
+    (N/A when CURRENT-LANE.md is not in allowed_write_paths)
 
 LANE QUESTIONS
 ──────────────────────────────────────────────────────────
