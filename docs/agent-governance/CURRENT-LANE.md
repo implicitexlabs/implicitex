@@ -1,53 +1,46 @@
-# CURRENT-LANE.md — M2 authority-admission implementation
+# CURRENT-LANE.md — M2 action-handler correction
 
-lane_id: m2-authority-admission-implementation
+lane_id: m2-action-handler-correction
 status: ACTIVE
 
 objective: >
-  Authorize local implementation and tests for the already-specified M2
-  authority-admission backend slice: enforce verified Firebase email admission
-  before CREATE_ACCOUNT and REGISTER_IX_ID while preserving all frozen M1/M2
-  authority, ownership, idempotency, CAS, and no-write-on-denial behavior.
-  M2 remains OPEN/BLOCKED; this lane does not authorize M2 closure, production
-  activation, or any M3 implementation.
+  Authorize a later local correction and directly applicable tests for the
+  already-frozen M2 §1.6 continueUrl behavior: absent or mismatched caller
+  continueUrl values are silently ignored and the canonical
+  https://app.ixid.me/register destination is used. This lane does not redesign
+  M2 or authorize implementation during this transition.
 
 transition_authority:
   mechanism: >
-    Explicit human authorization in this instruction, terminator
-    IXID-M2-AUTHORITY-ADMISSION-LANE-TRANSITION-12, replacing the satisfied
-    m3-payment-route-contract-hardening-d1 lane after D-1 commit
-    550265a3b2f30399b3c5c560ff0fd73c36998cf9.
-  prior_lane_id: m3-payment-route-contract-hardening-d1
-  prior_lane_satisfaction_commit: 550265a3b2f30399b3c5c560ff0fd73c36998cf9
-  expected_transition_parent: 550265a3b2f30399b3c5c560ff0fd73c36998cf9
-  expected_prior_lane_blob: c92b1681276716ed40de033bfdbfb8c04a925915
+    Explicit human authorization under terminator
+    IXID-M2-ACTION-HANDLER-LANE-TRANSITION-14, replacing the satisfied
+    m2-authority-admission-implementation lane.
+  prior_lane_id: m2-authority-admission-implementation
+  prior_lane_satisfaction_commit: e8c374b6008a29d94080c9665207134112d25597
+  expected_transition_parent: e8e820a0e1902d0028e9b3868a3f6df853bb794a
+  expected_prior_lane_blob: d1e47099302178357af11537da10940d34bdf200
 
-authoritative_baseline_commit: 550265a3b2f30399b3c5c560ff0fd73c36998cf9
-starting_head_parent_commit: acb3f5f1152b795ebfe329ff105e2143873f1db2
+authoritative_baseline_commit: e8e820a0e1902d0028e9b3868a3f6df853bb794a
+starting_head_parent_commit: 550265a3b2f30399b3c5c560ff0fd73c36998cf9
 
 m2_state:
   status: OPEN / BLOCKED
-  authority: docs/architecture/ixid-onboarding-v0.1.md §§1.5, 12-15.1
+  authority: docs/architecture/ixid-onboarding-v0.1.md §§1.6, 12-15.1
   contract_sha256: 658d3b928e16f99a04a1de5b815084f66fef70a72599ed42442313b7cd3207fa
   statement: >
-    Every M2 closure, production-activation, operational, acceptance, and
-    human-observed smoke requirement remains in force. None is waived, weakened,
-    bypassed, inferred complete, reclassified, or satisfied by this lane.
-  blocker_containment: >
-    Local authority-service implementation and tests may proceed independently.
-    Cloud Armor, Firebase/external configuration, deployment, production
-    activation, and human-observed acceptance remain blockers only for the
-    closure/activation gates that depend on them.
+    All M2 closure, acceptance, production-activation, operational, and
+    human-observed smoke requirements remain intact. Cloud Armor, Firebase,
+    deployment, and external configuration remain blockers only for dependent
+    closure gates.
 
 implementation_scope:
   product_write_paths:
-    - services/ixid_holder_authority_service.py
-    - services/ixid_holder_authority_handler.py
-    - services/tests/test_ixid_holder_authority_service.py
-    - services/tests/test_ixid_holder_handlers.py
+    - ixid-onboarding-web/public/action.js
+    - ixid-onboarding-web/tests/action-adapter.test.js
+    - ixid-onboarding-web/tests/frontend-contract.test.js
   write_operations: >
-    Create or modify only the four listed paths for M2 authority admission and
-    directly applicable tests. No speculative files or redesign are authorized.
+    Modify only these three existing paths to correct continueUrl handling and
+    directly applicable tests. No speculative files or redesign.
   read_only_references:
     - CLAUDE.md
     - AGENTS.md
@@ -56,11 +49,9 @@ implementation_scope:
     - docs/agent-governance/FROZEN-INVARIANTS.md
     - .claude/agents/scope-sentinel.md
     - docs/architecture/ixid-onboarding-v0.1.md
-    - docs/architecture/ixid-holder-authority-v0.1.md
-    - services/ixid_holder_authority_service.py
-    - services/ixid_holder_authority_handler.py
-    - services/tests/test_ixid_holder_authority_service.py
-    - services/tests/test_ixid_holder_handlers.py
+    - ixid-onboarding-web/public/action.js
+    - ixid-onboarding-web/tests/action-adapter.test.js
+    - ixid-onboarding-web/tests/frontend-contract.test.js
 
 allowed_paths:
   - docs/agent-governance/CURRENT-LANE.md
@@ -70,99 +61,82 @@ allowed_paths:
   - docs/agent-governance/FROZEN-INVARIANTS.md
   - .claude/agents/scope-sentinel.md
   - docs/architecture/ixid-onboarding-v0.1.md
-  - docs/architecture/ixid-holder-authority-v0.1.md
-  - services/ixid_holder_authority_service.py
-  - services/ixid_holder_authority_handler.py
-  - services/tests/test_ixid_holder_authority_service.py
-  - services/tests/test_ixid_holder_handlers.py
+  - ixid-onboarding-web/public/action.js
+  - ixid-onboarding-web/tests/action-adapter.test.js
+  - ixid-onboarding-web/tests/frontend-contract.test.js
 
 allowed_operations:
-  - read-only repository, contract, governance, and directly applicable implementation/test inspection
-  - write: docs/agent-governance/CURRENT-LANE.md (this transition only, solely to install this lane)
+  - read-only repository, contract, governance, implementation, and test inspection
+  - write: docs/agent-governance/CURRENT-LANE.md (this transition only)
   - stage: docs/agent-governance/CURRENT-LANE.md (this transition only)
   - create one non-amend transition commit whose changed-path set is exactly docs/agent-governance/CURRENT-LANE.md
-  - after a subsequent explicit execution-hold release and independent PRE-WORK GO, create or modify only the four implementation_scope.product_write_paths
-  - run directly applicable local unit/gate tests and static checks
-  - invoke independent PRE-WORK and POST-WORK scope-sentinel review
+  - after later explicit execution-hold release and independent PRE-WORK GO, modify only the three implementation_scope.product_write_paths
+  - run directly applicable action-handler tests and static checks
+  - invoke independent PRE-WORK and POST-WORK scope review
   - after POST-WORK GO and separate human approval, stage/commit only reviewed product paths
 
 acceptance_gates:
-  - fresh authority/CAS baseline confirms starting HEAD 550265a3b2f30399b3c5c560ff0fd73c36998cf9 and prior committed lane blob c92b1681276716ed40de033bfdbfb8c04a925915 before the transition write
-  - independent PRE-TRANSITION review of this exact candidate returns GO before the first write
-  - email_verified=false causes CREATE_ACCOUNT and REGISTER_IX_ID denial with 401 and zero authority writes
-  - email_verified=true preserves existing M1 authentication, account, ownership, idempotency, revision/CAS, and error semantics
-  - directly applicable M2-1 through M2-10 tests pass locally; M2-11 Cloud Armor remains an external closure blocker
-  - no direct browser/Firebase client authority is introduced
-  - complete diff, path set, tests, and independent POST-WORK review pass
-  - I-6 baseline and commit guards pass immediately before transition write/staging
-  - staged transition path set is exactly docs/agent-governance/CURRENT-LANE.md
-  - post-transition verification confirms sole-path commit and clean index
-  - separate human approval is required before staging or commit of implementation paths
+  - fresh HEAD, prior lane blob, index, and outside manifest pass CAS validation
+  - independent PRE-TRANSITION review returns GO before the transition write
+  - M2 §1.6 lines 306-310 are preserved as the governing behavior
+  - absent continueUrl is not rejected solely for being absent
+  - mismatched continueUrl is ignored, not followed, and canonical registration destination is used
+  - valid action behavior remains intact and tests are updated accordingly
+  - only the three authorized product paths may change during future implementation
+  - staged transition path set is exactly CURRENT-LANE.md and post-transition verification passes
 
 execution_hold:
   status: ACTIVE
   release_condition: >
     A subsequent explicit human instruction must identify this lane, the exact
-    authorized product paths, the M2 authority-admission objective, and
-    authorization through independent POST-WORK review. That instruction may
-    release implementation work only; staging and commit still require separate
-    explicit human approval after POST-WORK GO.
+    three product paths, the M2 continueUrl correction, and authorization through
+    independent PRE-WORK and POST-WORK review. Staging and commit still require
+    separate human approval after POST-WORK GO.
   transition_boundary: >
-    Installing this lane does not release the hold and does not begin
-    implementation.
+    Installing this lane does not release the hold or begin implementation.
 
 quarantine:
   path: docs/architecture/ixid-payment-route-v0.1.md
   classification: PRESERVED UNAUTHORIZED RESIDUE / ZERO AUTHORITY
   statement: >
-    The quarantined historical payment-route residue is not implementation or
-    architectural input for this lane. Do not read, modify, stage, commit, move,
-    delete, restore, or use its propositions; preserve its status entry and bytes.
+    Preserve the quarantined source status and bytes. Do not read, modify, move,
+    delete, restore, stage, commit, or use it as authority.
 
 explicitly_out_of_scope:
-  - modification of CURRENT-LANE.md after this transition
-  - modification of any doctrine or governance file
-  - M2 closure or alteration of M2 completion requirements
-  - production activation, Cloud Armor, Firebase, GCP, deployment, or human smoke execution
-  - M3 implementation or payment-route work
-  - D-1, D-2, D-3, D-4, or D-5 work
-  - M4 or M6 work
-  - API, persistence, Firestore, frontend, wallet, resolver, signing, KMS, or payment implementation
-  - architectural redesign or opportunistic refactoring
-  - unrelated product, roadmap, cleanup, or infrastructure work
-  - external-state mutation, RPC, provider, network, blockchain, or production operation
+  - modification of CURRENT-LANE.md after this transition or any doctrine file
+  - M2 closure changes or production activation
+  - D-1 through D-5, M3, M4, or M6 work
+  - unrelated frontend/backend work, redesign, or refactoring
+  - deployment, Firebase/GCP/Cloud Armor/provider/network/RPC/blockchain mutation
+  - external-state mutation or production operation
 
 builder_boundary: >
-  Implementation-generated architectural questions are BLOCKERs to be reported
-  for new authority. The builder must not independently redesign adjacent
-  contracts or governance.
+  The builder corrects the existing contract discrepancy only. Any need to
+  change the frozen contract or a fourth path is a BLOCKER requiring new authority.
 
 stop_conditions:
-  - HEAD, parent, lane identity/blob, index, or authority drift
-  - outside-manifest drift or planned-path collision
-  - M2 contract identity or OPEN/BLOCKED semantics drift
-  - required change outside the four authorized product paths
-  - a new M2 implementation defect requiring unplanned contract change
-  - implementation requires production, external configuration, deployment, RPC, or external mutation
-  - frozen invariant conflict or independent reviewer ambiguity/non-GO
+  - repository, lane, index, HEAD, CAS, or outside-manifest drift
+  - planned-path collision or required change outside the three paths
+  - M2 semantic drift or frozen-invariant conflict
+  - implementation/deployment/external dependency
+  - reviewer ambiguity or non-GO
 
 pre_existing_outside_manifest:
   modified_tracked_count: 10
   untracked_count: 56
   status_sha256: 59d9f154afedff2f56b3c94c7e4a5cfb00addba72493e489da61da3470f2a2d5
   comparison_rule: >
-    Compare complete porcelain-v1 path/status manifests mechanically before and
-    after transition, excluding only CURRENT-LANE.md; all other entries remain
-    byte-for-byte identical.
+    Compare complete porcelain-v1 manifests mechanically before and after this
+    transition, excluding only CURRENT-LANE.md; all other entries remain identical.
 
 independent_review_requirements:
   - PRE-TRANSITION scope review of this exact candidate returns GO
-  - I-6 baseline and commit guards pass immediately before write/stage
-  - POST-TRANSITION verification confirms sole CURRENT-LANE.md commit and clean index
-  - future implementation requires independent PRE-WORK and POST-WORK scope review
+  - I-6 baseline and commit guards pass immediately before write and staging
+  - post-transition verification confirms sole-path commit and clean index
+  - future implementation requires independent PRE-WORK and POST-WORK review
 
 stop_boundary: >
-  After the transition commit, stop. Do not implement, stage product paths,
-  transition lanes, alter doctrine, close M2, begin M3, or mutate external state.
+  After the transition commit, stop. Do not implement the action handler, modify
+  product paths, release the hold, transition lanes, or perform external mutation.
 
-last_human_review: "2026-08-25"
+last_human_review: "2026-08-26"
