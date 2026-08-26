@@ -137,21 +137,84 @@ The only M3 v0.1 asset is Circle-issued native USDC on `chain_id = 137`. The
 authoritative asset identity MUST include all of:
 
 ```
+network_id = eip155:137
 chain_id = 137
 token_standard = ERC20
-token_contract_address = one exact human-reviewed 20-byte address
+issuer = Circle
+asset_class = CIRCLE_NATIVE_USDC
+token_contract_address = 0x3c499c542cef5e3811e1192ce70d8cc03d5c3359
 asset_symbol = USDC (display metadata only; never sufficient identity)
-asset_binding_version = immutable policy identifier
+asset_binding_version = polygon-pos-native-usdc-v1
 ```
+
+The lowercase token address above is the canonical byte-identity form of Circle's
+checksummed publication
+`0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359`. Letter case is presentation only;
+the exact 20 bytes are authority. Every other field in the tuple is also required.
+No single field, including address without chain identity, is sufficient alone.
 
 USDC.e, bridged USDC, wrapped assets, symbol-only matches, and contracts on any
 other network MUST be rejected. No fallback or automatic substitution is
 permitted.
 
-The exact token contract address and the repository authority that supplies it
-are deferred in D-1. M3 implementation cannot begin until that value is adopted
-under authorized review and mechanically pinned. Runtime discovery, RPC probing,
-or a mutable provider response MUST NOT silently choose the asset.
+#### 3.2.1 D-1 evidence and source agreement
+
+The binding was reviewed on 2026-08-25 against these public sources:
+
+| Role | Organization and source | Asserted identity | Review result |
+|---|---|---|---|
+| Issuer-primary | Circle, [USDC contract addresses](https://developers.circle.com/stablecoins/usdc-contract-addresses), retrieved 2026-08-25 | Mainnet `Polygon PoS`; USDC address `0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359` | Authoritative issuer-controlled deployment table |
+| Issuer distinction | Circle, [What you need to know: Native USDC on Polygon PoS](https://www.circle.com/blog/what-you-need-to-know-native-usdc-on-polygon-pos), published 2023-09-28 and retrieved 2026-08-25 | Circle-issued native USDC at `0x3c499c542cef5e3811e1192ce70d8cc03d5c3359`; bridged USDC.e at `0x2791bca1f2de4661ed88a30c99a7a9449aa84174` | Establishes native-versus-bridged issuer terminology and non-equivalence |
+| Corroborative asset evidence | Polygon Labs, [USDC](https://docs.polygon.technology/pos/payments/transfers/transfer-usdc), retrieved 2026-08-25 | Native USDC on Polygon Chain, explicitly not old bridged USDC.e, at `0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359` | Exact 20-byte agreement with Circle |
+| Corroborative network evidence | Polygon Labs, [RPC endpoints](https://docs.polygon.technology/pos/reference/rpc-endpoints), retrieved 2026-08-25 | Polygon mainnet; parent Ethereum; `chain_id = 137` | Agrees with the frozen Polygon PoS network binding; no RPC call was used |
+
+Case-normalized comparison yields the same 20-byte native-USDC contract in all
+address-bearing sources. There is no material disagreement. Circle remains the
+issuer-primary authority; Polygon evidence is corroborative only. Any future
+material disagreement between issuer-primary and corroborative sources blocks a
+new binding decision. Source-page drift does not mutate this reviewed binding.
+
+#### 3.2.2 Binding-version immutability and support disposition
+
+`asset_binding_version` is an opaque immutable policy identity, not a display
+label, token symbol, provider alias, or ordering shortcut. The identifier
+`polygon-pos-native-usdc-v1` permanently denotes exactly the tuple in §3.2 plus
+the reviewed provenance in §3.2.1. Its meaning MUST NOT change in place, even if
+Circle, Polygon, a provider, or a future implementation changes terminology or
+defaults.
+
+Each recognized binding version has a separately governed, monotonic support
+disposition:
+
+| Disposition | New declarations | Existing-route payability |
+|---|---|---|
+| `CURRENT` | Allowed | Potentially payable if every §8.2 predicate passes |
+| `LEGACY` | Denied | Potentially payable only under the exact old tuple and every §8.2 predicate |
+| `RETIRED` | Denied | Not payable |
+
+`polygon-pos-native-usdc-v1` has disposition `CURRENT` at this D-1 adoption.
+At most one binding version may be `CURRENT`. A disposition may move only
+`CURRENT` → `LEGACY` → `RETIRED`, or directly `CURRENT` → `RETIRED`, under a
+separately human-reviewed contract/policy decision with issuer-primary and
+corroborative evidence. A version MUST NOT be reactivated or rebound to another
+tuple. A successor's adoption MUST explicitly state the predecessor's resulting
+disposition; omission is fail-closed and the successor is not adopted.
+
+A future authoritative binding change requires a fresh version identifier and a
+new immutable tuple. Existing routes retain their original
+`asset_binding_version` and MUST NOT be relabeled, rewritten, or interpreted
+under the successor. New declarations MUST use the sole `CURRENT` version. A
+`LEGACY` route may remain payable only while that exact version is explicitly
+payment-supported. A `RETIRED`, unknown, mismatched, or unsupported version
+resolves as `NOT_PAYABLE` and cannot be used for a new declaration. A stale
+request or resolution is one whose asserted version or support disposition no
+longer equals current route/policy authority; it also fails closed. An explicitly
+payment-supported `LEGACY` route is not stale merely because a successor exists.
+Migration, route replacement, proof, and cutover require separate authority;
+this rule specifies no physical persistence or D-5 procedure.
+
+There is no fallback to a symbol, prior or successor token, USDC.e, another
+network, runtime discovery, RPC result, or mutable provider metadata.
 
 ### 3.3 Destination canonicalization
 
@@ -206,7 +269,7 @@ Immutable facts established at declaration:
 | `declared_by_account_id` | Server-resolved stable account; never client-supplied |
 | `route_generation` | Prior aggregate generation + 1 |
 | `network_id` | Canonical binding for `chain_id = 137` |
-| `asset_binding_id` | Immutable versioned native-USDC binding |
+| `asset_binding_id` | Exact immutable `asset_binding_version` defined by §3.2 |
 | `destination_address` | Canonical lowercase address |
 | `declared_at` | Authoritative commit time |
 | `creation_operation_id` | Idempotency operation identifier |
@@ -498,9 +561,13 @@ A public resolution is `PAYABLE` only if one atomic/consistent read establishes:
 5. the referenced claim exists, is `PAYMENT_ROUTE`, and is ACTIVE;
 6. exactly one route record is ACTIVE and linked to that claim;
 7. route destination equals the normalized claim subject;
-8. route/wallet evidence network equals `chain_id = 137`;
-9. route asset binding equals the currently authorized native-USDC binding; and
-10. all cross-references and versions are internally consistent.
+8. route/wallet evidence network equals `network_id = eip155:137` and
+   `chain_id = 137`;
+9. route `asset_binding_version` is recognized and its immutable tuple exactly
+   equals the route/claim network and token facts;
+10. that binding's support disposition permits payment for the route (either
+    `CURRENT`, or explicitly payment-supported `LEGACY`); and
+11. all cross-references and versions are internally consistent.
 
 Failure of any predicate returns `NOT_PAYABLE`. No partial tuple is returned.
 
@@ -518,6 +585,7 @@ destination_address
 chain_id = 137
 token_contract_address
 asset_binding_version
+asset_binding_support_disposition
 resolved_at
 resolver_policy_version
 resolution_fingerprint
@@ -644,7 +712,9 @@ The following are contract requirements:
 
 - identity/account continuity;
 - fresh route identity on destination change;
-- chain 137 and exact native-USDC contract binding;
+- chain 137, exact native-USDC contract binding, and immutable
+  `polygon-pos-native-usdc-v1` authority;
+- successor-version and fail-closed binding-support semantics;
 - pending-first lifecycle and M4-only activation;
 - `routing_suspended` fail-closed replacement/disable behavior;
 - frozen global revision CAS and N→N+1 transition;
@@ -655,14 +725,24 @@ The following are contract requirements:
 - full resolver tuple and stale-handoff rejection; and
 - no custody, signing, payment execution, or implementation authority.
 
-### 11.2 Deferred implementation choices
+### 11.2 D-1 resolved contract authority
+
+D-1 is resolved for contract design by §3.2. The reviewed v0.1 binding is
+`network_id = eip155:137`, `chain_id = 137`, ERC-20 Circle-issued native USDC at
+`0x3c499c542cef5e3811e1192ce70d8cc03d5c3359`, with immutable
+`asset_binding_version = polygon-pos-native-usdc-v1`. Its source provenance,
+successor rules, and fail-closed support dispositions are normative.
+
+This resolution does not authorize implementation and does not resolve physical
+storage or migration questions.
+
+### 11.3 Deferred implementation choices
 
 The following require later explicit authority and MUST NOT be inferred from this
 candidate:
 
 | ID | Deferred question | Required before |
 |---|---|---|
-| D-1 | Exact full Polygon native-USDC token contract address, authoritative repository source, and immutable asset-binding policy version | M3 implementation contract/freeze |
 | D-2 | M4 proof protocol, challenge/signature policy, physical claim/route linkage, and atomic activation/cutover procedure | M4 contract/freeze |
 | D-3 | API/transport names, resolver freshness window, cache policy, and payment-time revalidation handshake | Relevant M3 transport and M6 handoff contracts |
 | D-4 | Mutation rate-limit values and enforcement mechanism | Production implementation/operations review |
@@ -717,8 +797,9 @@ implementation while M2 remains OPEN/BLOCKED.
 ### 12.4 Binding and resolver tests
 
 16. Malformed, zero, or invalid mixed-case addresses are rejected before mutation.
-17. A chain other than 137, wrong token contract, USDC.e, symbol-only identity, or
-    missing asset authority fails closed.
+17. A chain other than 137, wrong token contract, USDC.e, symbol-only identity,
+    unknown/mismatched binding version, or non-payment-supported binding fails
+    closed.
 18. Pending, disabled, superseded, revoked, suspended, missing, or inconsistent state
     resolves only as generic `NOT_PAYABLE`, with no destination leakage.
 19. A payable response contains the full §8.3 tuple and a fingerprint covering it.
@@ -739,7 +820,8 @@ implementation while M2 remains OPEN/BLOCKED.
 
 ### 12.6 Contract/governance gates
 
-26. D-1 and D-5 are resolved by authorized contract/implementation design before M3
+26. A future implementation pins the exact D-1 tuple and version from §3.2, and D-5
+    is separately resolved by authorized implementation design, before M3
     implementation begins.
 27. M2 satisfies every existing closure requirement before formal M3 implementation.
 28. M4 and M6 behaviors remain unavailable until their own contracts and lanes exist.
@@ -786,7 +868,7 @@ source. “Result” points to this candidate.
 | P-03 | §1.1 route concept | ADOPT WITH MODIFICATION | Trust I-1 makes IX ID stable; a fresh immutable `route_id` is required for each destination. | §§2.1–2.2 |
 | P-04 | §1.2 one active route | ADOPT WITH MODIFICATION | One route head and one payable route are distinct invariants and must not be conflated. | §2.3 |
 | P-05 | §1.3 M3 fail-closed | ADOPT | Pending declarations cannot be public/payable without verified-claim authority. | §§2.4, 8.2 |
-| P-06 | Part 2 network/asset invariant | ADOPT WITH MODIFICATION | Chain 137/native USDC are fixed; client selection and runtime discovery are rejected; exact contract authority is D-1. | §3, D-1 |
+| P-06 | Part 2 network/asset invariant | ADOPT WITH MODIFICATION | Chain 137/native USDC are fixed; client selection and runtime discovery are rejected; D-1 now supplies the exact immutable binding and provenance. | §3.2 |
 | P-07 | §3.1 route states | ADOPT WITH MODIFICATION | States are useful, but ACTIVE/admin transitions are reserved to later authorities and routing eligibility is separate. | §5.1 |
 | P-08 | §3.2 state machine | ADOPT WITH MODIFICATION | Legal transitions are retained with atomic suspension and explicit M4/admin boundaries. | §§5.2–5.5 |
 | P-09 | §3.3 deletion policy | ADOPT | Frozen evidence invariants require permanent append-only history. | §§4.2–4.3, 10.3 |
