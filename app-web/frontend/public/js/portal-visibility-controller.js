@@ -14,7 +14,7 @@
   var PRIMARY_DESTINATIONS = ['TRANSFER', 'RECIPIENTS', 'ACTIVITY'];
 
   var REQUIRED_PRIMARY = {
-    TRANSFER: ['ccIntake', 'companion', 'transferMod'],
+    TRANSFER: ['ccIntake', 'companion', 'ixidIntake', 'transferMod'],
     RECIPIENTS: ['recipientsMod'],
     ACTIVITY: ['activityMod'],
   };
