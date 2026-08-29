@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>IX ID — Identity</title>
-  <meta name="description" content="Public identity record for this IX ID.">
+  <title>IX ID — Your permanent payment identity</title>
+  <meta name="description" content="IX ID gives you a permanent identity for receiving payments. Share your handle, change wallets without changing what you share.">
   <!--
     Cache-Control: no-store is set by the hosting layer (Load Balancer or CDN
     response policy). This page is not responsible for cache policy.
@@ -42,11 +42,57 @@
 
   <main>
     <div id="ix-root" data-page-state="loading">
+
+      <!-- Home page — shown only when hostname is ixid.me -->
+      <div class="home-page" aria-label="IX ID product home">
+        <div class="home-hero">
+          <h1>Your permanent payment identity</h1>
+          <p class="home-lede">One identity. Change wallets without changing what you share.</p>
+          <a href="https://app.ixid.me/register" class="home-cta">Get your IX ID</a>
+        </div>
+
+        <div class="home-example">
+          <p class="home-example-label">Your IX ID looks like</p>
+          <p class="home-example-handle">maria.ixid.me</p>
+          <p class="home-example-sub">Anyone who knows your handle can pay you directly.</p>
+        </div>
+
+        <div class="home-section home-how">
+          <h2>How it works</h2>
+          <ol class="home-steps">
+            <li><strong>Create an IX ID.</strong> Choose a handle. It becomes the identity you share — not a wallet address.</li>
+            <li><strong>Connect your wallet.</strong> Link any Polygon-compatible wallet as your current payment destination. You stay in full control of it.</li>
+            <li><strong>Get paid.</strong> Visitors open your IX ID page, enter an amount, and confirm in their own wallet. USDC arrives directly in yours — IX ID never touches it.</li>
+          </ol>
+        </div>
+
+        <div class="home-section home-trust">
+          <h2>IX ID does not hold your money</h2>
+          <p>IX ID is a permanent identity layer, not a bank. When someone pays you, the transaction goes directly from their wallet to yours on the Polygon network. IX ID resolves the destination — it does not touch the funds.</p>
+          <p>Your wallet stays yours at all times. IX ID cannot move money on your behalf.</p>
+        </div>
+
+        <div class="home-footer-cta">
+          <a href="https://app.ixid.me/register" class="home-cta">Create your IX ID free</a>
+          <p class="home-cta-sub">Takes about two minutes. Free to claim.</p>
+        </div>
+      </div><!-- .home-page -->
+
+      <!-- Identity card — shown for *.ixid.me subdomains -->
       <div class="identity-card">
 
         <div class="ix-id-row">
           <span class="ix-prefix">IX ID</span>
           <span class="ix-id-value" data-ix="id"></span>
+        </div>
+
+        <!-- Profile block — hidden when all fields absent -->
+        <div class="profile-block" data-ix-block="profile" hidden>
+          <p class="profile-display-name" data-ix="profile-display-name"></p>
+          <p class="profile-bio" data-ix="profile-bio"></p>
+          <div class="profile-website-row" data-ix-row="profile-website" hidden>
+            <a class="profile-website-link" data-ix="profile-website" href="#" rel="noopener noreferrer" target="_blank"></a>
+          </div>
         </div>
 
         <div class="domain-block">
@@ -69,6 +115,9 @@
           <p class="not-found-message" aria-live="polite">
             This IX ID has not been claimed or does not exist.
           </p>
+          <p class="not-found-cta">
+            Want this handle? <a href="https://app.ixid.me/register">Get your IX ID →</a>
+          </p>
         </div>
 
         <div class="evaluated-at-row" aria-label="Evaluation timestamp">
@@ -76,22 +125,219 @@
           <span data-ix="evaluated-at"></span>
         </div>
 
+        <!-- Payment section — hidden until route API confirms payable state -->
+        <section class="payment-section" data-ix-section="payment" hidden aria-label="Send USDC payment">
+
+          <!-- Payable state: amount input and handoff button -->
+          <div data-ix="payment-form" hidden>
+            <h2 class="payment-heading">Send USDC</h2>
+            <p class="payment-network">Polygon &middot; Native USDC</p>
+
+            <div class="payment-field">
+              <label class="payment-label" for="pay-amount">Amount (USDC)</label>
+              <div class="payment-amount-control">
+                <input
+                  id="pay-amount"
+                  class="payment-input"
+                  type="number"
+                  inputmode="decimal"
+                  min="1"
+                  max="250"
+                  step="0.000001"
+                  placeholder="1 – 250"
+                  autocomplete="off"
+                  aria-describedby="pay-amount-hint pay-amount-error"
+                >
+                <span class="payment-token" aria-hidden="true">USDC</span>
+              </div>
+              <p class="payment-hint" id="pay-amount-hint">Minimum 1 USDC &middot; Maximum 250 USDC &middot; 1% fee applies</p>
+              <p class="payment-error" id="pay-amount-error" role="alert" aria-live="polite"></p>
+            </div>
+
+            <div class="payment-preview" id="pay-preview" hidden aria-live="polite">
+              <div class="payment-preview-row">
+                <span class="payment-preview-label">You send</span>
+                <span class="payment-preview-value" id="pay-total-display"></span>
+              </div>
+              <div class="payment-preview-row">
+                <span class="payment-preview-label">Recipient gets</span>
+                <span class="payment-preview-value" id="pay-amount-display"></span>
+              </div>
+              <div class="payment-preview-row payment-preview-row--fee">
+                <span class="payment-preview-label">ImplicitEx fee (1%)</span>
+                <span class="payment-preview-value" id="pay-fee-display"></span>
+              </div>
+            </div>
+
+            <button id="pay-btn" class="payment-btn" type="button" disabled>
+              Pay via ImplicitEx
+            </button>
+            <p class="payment-status" id="pay-status" aria-live="polite"></p>
+          </div><!-- [data-ix="payment-form"] -->
+
+          <!-- Not-payable state -->
+          <div data-ix="payment-not-payable" hidden>
+            <p class="payment-not-payable">This IX ID is not currently accepting payments.</p>
+          </div>
+
+          <p class="payment-attribution">
+            Transfers powered by <a href="https://implicitex.com" target="_blank" rel="noopener noreferrer">ImplicitEx</a>.
+            USDC on Polygon. Non-custodial &mdash; IX ID never holds your funds.
+          </p>
+        </section><!-- [data-ix-section="payment"] -->
+
       </div><!-- .identity-card -->
     </div><!-- #ix-root -->
   </main>
 
   <footer class="page-footer">
-    <span>IX ID</span>
-    <span aria-hidden="true">·</span>
+    <a href="https://ixid.me">IX ID</a>
+    <a href="https://app.ixid.me/register">Register</a>
+    <a href="/about">About</a>
+    <a href="/help">Help</a>
+    <a href="/privacy">Privacy</a>
+    <a href="/terms">Terms</a>
     <a href="https://implicitex.com">ImplicitEx</a>
   </footer>
 
   <script src="identity.js"></script>
+  <script src="payment-intent.js"></script>
   <script>
-    // Same-origin API: /api/public/identity/{ix_id}
+    // Same-origin API: /api/public/identity/{ix_id} and /api/public/route/{ix_id}
     // The Load Balancer routes /api/* to ixid-public-edge on the same origin.
     // No base URL constant is needed; the default '/api' path is used.
-    IxIdentity.bootstrap();
+    var _IX_API_BASE = '/api';
+    IxIdentity.bootstrap(_IX_API_BASE);
+  </script>
+  <script>
+    // Payment form event wiring.
+    // Depends on: identity.js (IxIdentity), payment-intent.js (IxidPaymentIntent).
+    // The payment section is populated by IxIdentity.bootstrap() after the route
+    // API resolves, so this script may run before the section is visible.
+    (function () {
+      'use strict';
+
+      var PI = window.IxidPaymentIntent;
+      if (!PI) return; // payment-intent.js not loaded
+
+      var root = document.getElementById('ix-root');
+      if (!root) return;
+
+      // Retrieve the IX ID from the page (set by identity.js)
+      function getIxId() {
+        var el = root.querySelector('[data-ix="id"]');
+        return el ? el.textContent.trim() : null;
+      }
+
+      // Retrieve the payment section once it becomes visible
+      function getPaySection() {
+        return root.querySelector('[data-ix-section="payment"]');
+      }
+
+      // Update the fee preview below the amount input.
+      // Called on every valid input event.
+      function updatePreview(amountStr) {
+        var previewEl   = document.getElementById('pay-preview');
+        var amtDisplay  = document.getElementById('pay-amount-display');
+        var feeDisplay  = document.getElementById('pay-fee-display');
+        var totalDisplay = document.getElementById('pay-total-display');
+        if (!previewEl) return;
+
+        var v = PI.validateAmount(amountStr);
+        if (!v.ok) {
+          previewEl.hidden = true;
+          return;
+        }
+        var f = PI.calculateFee(v.atomic);
+        if (amtDisplay)   amtDisplay.textContent   = PI.atomicToDisplay(v.atomic) + ' USDC';
+        if (feeDisplay)   feeDisplay.textContent    = PI.atomicToDisplay(f.feeAtomic) + ' USDC';
+        if (totalDisplay) totalDisplay.textContent  = PI.atomicToDisplay(f.totalAtomic) + ' USDC';
+        previewEl.hidden = false;
+      }
+
+      // Wire up inputs once the section is ready.
+      function wirePaymentForm() {
+        var paySection = getPaySection();
+        if (!paySection || paySection.dataset.payable !== 'true') return;
+
+        var amountInput = document.getElementById('pay-amount');
+        var payBtn      = document.getElementById('pay-btn');
+        var errorEl     = document.getElementById('pay-amount-error');
+        var statusEl    = document.getElementById('pay-status');
+        if (!amountInput || !payBtn) return;
+
+        amountInput.addEventListener('input', function () {
+          var v = PI.validateAmount(amountInput.value);
+          if (errorEl) errorEl.textContent = v.ok ? '' : v.message;
+          payBtn.disabled = !v.ok;
+          updatePreview(amountInput.value);
+        });
+
+        payBtn.addEventListener('click', async function () {
+          var ixId    = getIxId();
+          var section = getPaySection();
+          if (!ixId || !section) return;
+
+          var amountStr      = amountInput.value;
+          var capturedClaimId = section.dataset.claimId;
+
+          // Validate amount
+          var amountResult = PI.validateAmount(amountStr);
+          if (!amountResult.ok) {
+            if (errorEl) errorEl.textContent = amountResult.message;
+            return;
+          }
+
+          // Disable button during stale check
+          payBtn.disabled = true;
+          if (statusEl) statusEl.textContent = 'Checking route…';
+
+          try {
+            // Stale-route protection: re-verify claim_id before handoff.
+            var staleResult = await PI.checkStaleRoute(ixId, capturedClaimId, _IX_API_BASE);
+            if (!staleResult.ok) {
+              if (statusEl) statusEl.textContent = staleResult.message || 'Route has changed — please refresh.';
+              payBtn.disabled = false;
+              return;
+            }
+
+            // Build the intent from the verified route.
+            var intent = PI.buildIntent(ixId, staleResult.route, amountStr);
+            if (!intent) {
+              if (statusEl) statusEl.textContent = 'Could not build payment intent. Please try again.';
+              payBtn.disabled = false;
+              return;
+            }
+
+            // Navigate to ImplicitEx Transfer Portal with the intent.
+            if (statusEl) statusEl.textContent = 'Redirecting to ImplicitEx…';
+            window.location.href = PI.buildHandoffUrl(intent);
+          } catch (err) {
+            if (statusEl) statusEl.textContent = 'Network error. Please check your connection and try again.';
+            payBtn.disabled = false;
+          }
+        });
+      }
+
+      // The payment section may not be populated when this script first runs.
+      // Use MutationObserver to detect when data-payable is set by identity.js.
+      var observer = new MutationObserver(function (mutations) {
+        for (var i = 0; i < mutations.length; i++) {
+          var section = getPaySection();
+          if (section && section.dataset.payable === 'true') {
+            wirePaymentForm();
+            observer.disconnect();
+            return;
+          }
+        }
+      });
+
+      // Watch for data attribute changes on #ix-root and its subtree
+      observer.observe(root, { subtree: true, attributes: true, attributeFilter: ['data-payable'] });
+
+      // Also try immediately in case the section is already populated
+      wirePaymentForm();
+    }());
   </script>
 
 </body>

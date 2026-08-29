@@ -4,7 +4,7 @@
   "description": "IX ID Public Identity Page — static frontend for *.ixid.me",
   "private": true,
   "scripts": {
-    "test": "node tests/identity.test.js"
+    "test": "node tests/identity.test.js && node tests/identity_pages.test.js && node tests/payment-intent.test.js"
   },
   "engines": {
     "node": ">=18"

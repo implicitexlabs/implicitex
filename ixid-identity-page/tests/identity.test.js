@@ -279,6 +279,46 @@ for (const status of ['VERIFIED', 'RECHECK_PENDING', 'EXPIRED', 'NOT_CURRENT', '
 }
 
 // ---------------------------------------------------------------------------
+// buildDisplayModel — profile fields
+// ---------------------------------------------------------------------------
+
+test('buildDisplayModel with profile fields — FOUND state carries profile', () => {
+  const resp = apiOk({});
+  resp.profile = { display_name: 'Alice', bio: 'Short bio.', website_url: 'https://alice.example.com' };
+  const m = buildDisplayModel(resp, 200);
+  assert.equal(m.state, 'FOUND');
+  assert.equal(m.profileDisplayName, 'Alice');
+  assert.equal(m.profileBio, 'Short bio.');
+  assert.equal(m.profileWebsiteUrl, 'https://alice.example.com');
+});
+
+test('buildDisplayModel with absent profile — FOUND state has null profile fields', () => {
+  const resp = apiOk({});
+  // No profile key on response
+  const m = buildDisplayModel(resp, 200);
+  assert.equal(m.state, 'FOUND');
+  assert.equal(m.profileDisplayName, null);
+  assert.equal(m.profileBio, null);
+  assert.equal(m.profileWebsiteUrl, null);
+});
+
+test('buildDisplayModel NOT_FOUND — profile fields are null', () => {
+  const m = buildDisplayModel({ error: 'IX ID not found' }, 404);
+  assert.equal(m.state, 'NOT_FOUND');
+  assert.equal(m.profileDisplayName, null);
+  assert.equal(m.profileBio, null);
+  assert.equal(m.profileWebsiteUrl, null);
+});
+
+test('buildDisplayModel ERROR — profile fields are null', () => {
+  const m = buildDisplayModel(null, 503);
+  assert.equal(m.state, 'ERROR');
+  assert.equal(m.profileDisplayName, null);
+  assert.equal(m.profileBio, null);
+  assert.equal(m.profileWebsiteUrl, null);
+});
+
+// ---------------------------------------------------------------------------
 // Run
 // ---------------------------------------------------------------------------
 

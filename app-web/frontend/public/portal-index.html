@@ -1212,6 +1212,15 @@
       </div>
     </div>
 
+    <!-- IX ID intake banner — shown when opened via IX ID payment handoff -->
+    <div class="cc-intake" id="ixidIntake" hidden aria-live="polite" aria-label="IX ID payment handoff status" data-portal-primary-surface="TRANSFER">
+      <div class="cc-intake-inner">
+        <span class="cc-intake-badge" aria-hidden="true">IX ID</span>
+        <p class="cc-intake-label" id="ixidIntakeLabel">—</p>
+        <span class="cc-intake-status" id="ixidIntakeStatus" data-verify-state="pending">VALIDATING ROUTE</span>
+      </div>
+    </div>
+
     <!-- Transfer -->
     <div class="mod" id="transferMod" data-portal-primary-surface="TRANSFER"
       data-agent-step="1"
@@ -1237,6 +1246,11 @@
             aria-describedby="recipientError"
           >
           <p class="tx-recipient-error" id="recipientError" aria-live="assertive"></p>
+          <!-- IX ID recipient context — shown when recipient is locked from IX ID handoff -->
+          <div class="ixid-recipient-context" id="ixidRecipientContext" hidden aria-label="IX ID payment source">
+            <p class="ixid-recipient-handle" id="ixidRecipientHandle"></p>
+            <p class="ixid-recipient-meta" id="ixidRecipientMeta"></p>
+          </div>
           <div class="intel-panel" id="recipientIntel" aria-live="polite" hidden>
             <p class="intel-label">Recipient</p>
             <ul class="intel-list" id="recipientIntelList"></ul>
@@ -1803,6 +1817,7 @@
   <script src="js/telemetry.js"></script>
   <script src="js/rehydrate.js"></script>
   <script src="js/coincard-handoff.js"></script>
+  <script src="js/ixid-handoff.js"></script>
 
   <!-- Footer install button — handled by portal-install.js (portalFooterInstallBtn) -->
 

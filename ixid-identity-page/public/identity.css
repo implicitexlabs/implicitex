@@ -118,6 +118,43 @@ main {
   word-break: break-all;
 }
 
+/* -------------------------------------------------------------------------
+   Profile block
+------------------------------------------------------------------------- */
+
+.profile-block {
+  padding: 16px 0 4px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 16px;
+}
+
+.profile-display-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+
+.profile-bio {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 8px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.profile-website-link {
+  font-size: 0.875rem;
+  color: var(--accent);
+  text-decoration: none;
+  word-break: break-all;
+}
+
+.profile-website-link:hover {
+  text-decoration: underline;
+}
+
 /* Domain block */
 .domain-block {
   margin-top: 24px;
@@ -278,12 +315,13 @@ main {
 ------------------------------------------------------------------------- */
 
 .page-footer {
-  padding: 20px;
+  padding: 20px 24px;
   border-top: 1px solid var(--border);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  flex-wrap: wrap;
+  gap: 6px 16px;
   font-size: 11px;
   color: var(--text-muted);
 }
@@ -297,6 +335,205 @@ main {
   color: var(--text-secondary);
 }
 
+.page-footer a:focus-visible {
+  outline: 2px solid #7cc7ff;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* -------------------------------------------------------------------------
+   Home page state
+------------------------------------------------------------------------- */
+
+/* Hide identity card when showing home page */
+#ix-root[data-page-state="home"] .identity-card { display: none; }
+
+/* Show home content only when home state is active */
+.home-page { display: none; }
+#ix-root[data-page-state="home"] .home-page {
+  display: block;
+  width: 100%;
+  max-width: 560px;
+}
+
+/* Hero */
+.home-hero {
+  margin-bottom: 3rem;
+}
+
+.home-hero h1 {
+  font-size: clamp(2rem, 8vw, 3rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+}
+
+.home-lede {
+  font-size: 1.125rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 1.75rem;
+}
+
+/* CTA button */
+.home-cta {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0.7rem 1.5rem;
+  background: #f2f2f2;
+  color: #111;
+  font-weight: 700;
+  font-size: 0.9375rem;
+  text-decoration: none;
+  border-radius: 8px;
+  letter-spacing: 0.01em;
+  transition: background 0.15s;
+}
+
+.home-cta:hover { background: #e0e0e0; }
+.home-cta:focus-visible {
+  outline: 3px solid #7cc7ff;
+  outline-offset: 3px;
+}
+
+/* Example handle display */
+.home-example {
+  margin-bottom: 3rem;
+  padding: 1.5rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.home-example-label {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+
+.home-example-handle {
+  font-size: clamp(1.25rem, 5vw, 1.75rem);
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: -0.01em;
+  margin-bottom: 0.5rem;
+  word-break: break-all;
+}
+
+.home-example-sub {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+/* Content sections */
+.home-section {
+  margin-bottom: 2.5rem;
+}
+
+.home-section h2 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.875rem;
+}
+
+/* How it works steps */
+.home-steps {
+  list-style: none;
+  counter-reset: step-counter;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.home-steps li {
+  counter-increment: step-counter;
+  display: flex;
+  gap: 0.875rem;
+  font-size: 0.9375rem;
+  color: var(--text-secondary);
+  line-height: 1.55;
+}
+
+.home-steps li::before {
+  content: counter(step-counter);
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--surface-mid);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.home-steps li strong {
+  color: var(--text-primary);
+}
+
+/* Trust section */
+.home-trust {
+  padding: 1.25rem 1.5rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.home-trust p {
+  font-size: 0.9375rem;
+  color: var(--text-secondary);
+  line-height: 1.65;
+}
+
+.home-trust p + p {
+  margin-top: 0.75rem;
+}
+
+/* Footer CTA */
+.home-footer-cta {
+  margin-top: 3rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.home-cta-sub {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+/* Not-found CTA (shown on unclaimed *.ixid.me pages) */
+.not-found-cta {
+  display: none;
+  margin-top: 12px;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.not-found-cta a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.not-found-cta a:hover {
+  text-decoration: underline;
+}
+
+#ix-root[data-page-state="not-found"] .not-found-cta {
+  display: block;
+}
+
 /* -------------------------------------------------------------------------
    Desktop
 ------------------------------------------------------------------------- */
@@ -305,4 +542,5 @@ main {
   main { padding: 64px 24px 80px; }
   .ix-id-value { font-size: 32px; }
   .domain-block { padding: 24px; }
+  .home-steps { gap: 1.25rem; }
 }

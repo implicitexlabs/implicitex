@@ -3987,6 +3987,21 @@
     // --- Allowance check / approve ---
     const needsApproval = allowance < totalDebit;
 
+    // IX ID handoffs are time-sensitive: the recipient may replace or disable
+    // a route while the payer is reviewing it. Revalidate immediately before
+    // crossing the existing execution boundary. A failed check invalidates the
+    // review; it never substitutes a refreshed destination automatically.
+    if (window.IXID_HANDOFF &&
+        typeof window.IXID_HANDOFF.revalidateBeforeExecution === 'function') {
+      const handoffCheck = await window.IXID_HANDOFF.revalidateBeforeExecution();
+      if (!handoffCheck || !handoffCheck.ok) {
+        clearTransferDraftPreservingStatus();
+        setStatus((handoffCheck && handoffCheck.message) ||
+          "The recipient's IX ID payment route changed. Re-resolve the IX ID and review the transfer again.");
+        return;
+      }
+    }
+
     {
       let executionPhase = needsApproval ? 'authorization' : 'transfer';
       const totalDebitHuman = ethers.formatUnits(totalDebit, 6);

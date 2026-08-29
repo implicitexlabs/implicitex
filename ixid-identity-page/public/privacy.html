@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Privacy Policy — IX ID</title>
+  <meta name="description" content="IX ID privacy policy — what we collect, why, and how it is used.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="identity.css">
+  <style>
+    .doc-shell {
+      width: min(100%, 600px);
+      margin: 0 auto;
+      padding: 40px 20px 80px;
+    }
+    .doc-shell h1 {
+      font-size: clamp(1.75rem, 6vw, 2.5rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.5rem;
+    }
+    .doc-shell h2 {
+      font-size: 1.125rem;
+      font-weight: 600;
+      margin-top: 2.5rem;
+      margin-bottom: 0.75rem;
+      color: var(--text-primary);
+    }
+    .doc-shell p {
+      color: var(--text-secondary);
+      line-height: 1.7;
+      margin-bottom: 1rem;
+    }
+    .doc-shell ul {
+      margin: 0 0 1rem 1.5rem;
+      color: var(--text-secondary);
+      line-height: 1.75;
+    }
+    .doc-shell a { color: var(--accent); text-decoration: none; }
+    .doc-shell a:hover { text-decoration: underline; }
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      text-decoration: none;
+      margin-bottom: 2rem;
+    }
+    .back-link:hover { color: var(--text-secondary); }
+    .meta { font-size: 0.875rem; color: var(--text-muted); margin-bottom: 2.5rem; }
+    .doc-footer {
+      margin-top: 3rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      font-size: 0.8125rem;
+    }
+    .doc-footer a { color: var(--text-muted); text-decoration: none; }
+    .doc-footer a:hover { color: var(--text-secondary); }
+  </style>
+</head>
+<body>
+  <header class="page-header">
+    <a href="https://ixid.me" class="wordmark">IX ID</a>
+    <span class="dot" aria-hidden="true"></span>
+    <span class="product-mark">Privacy</span>
+  </header>
+
+  <main>
+    <div class="doc-shell">
+      <a href="https://ixid.me" class="back-link">← IX ID home</a>
+      <h1>Privacy Policy</h1>
+      <p class="meta">Last updated: August 2026</p>
+
+      <p>This policy describes what information IX ID collects, why, and how it is used. IX ID is operated by ImplicitEx. Where a claim requires legal or regulatory determination, it is flagged rather than assumed.</p>
+
+      <h2>Information we collect</h2>
+      <p>When you create an IX ID account:</p>
+      <ul>
+        <li><strong>Email address</strong> — used to create and identify your account. Firebase Authentication (Google) stores and verifies it.</li>
+        <li><strong>Password</strong> — hashed and stored by Firebase Authentication. IX ID never sees your plaintext password.</li>
+        <li><strong>IX ID handle</strong> — the handle you choose becomes your public identity address.</li>
+        <li><strong>Account and operation records</strong> — we store account state, handle ownership, and cryptographic receipts for account creation and handle registration. These are stored in Google Cloud Firestore.</li>
+        <li><strong>Wallet address</strong> — when you connect a wallet, your public wallet address is associated with your account and becomes publicly visible as your payment destination.</li>
+      </ul>
+
+      <h2>What is public</h2>
+      <p>Your IX ID handle and any information associated with it — including your wallet address, verified domain, and future public profile fields — is visible to anyone who visits your IX ID page. Do not put private information in public profile fields.</p>
+      <p>Blockchain transactions involving your wallet address are permanently and publicly recorded on the Polygon network. IX ID cannot erase that data.</p>
+
+      <h2>What is not collected</h2>
+      <ul>
+        <li>We do not use behavioral analytics, advertising trackers, pixel trackers, or session-recording tools.</li>
+        <li>We do not share data with advertising platforms.</li>
+        <li>The IX ID registration application (<code>app.ixid.me</code>) uses in-memory session storage only — your authenticated session does not persist across browser restarts or new tabs.</li>
+      </ul>
+
+      <h2>Third-party services</h2>
+      <p><strong>Firebase / Google Authentication.</strong> Account creation and login are handled by Firebase Authentication. Your email address and hashed password are stored in Google's infrastructure, subject to Google's privacy policy.</p>
+      <p><strong>Google Fonts.</strong> The IX ID public identity pages at <code>ixid.me</code> load font files from Google Fonts (<code>fonts.googleapis.com</code>, <code>fonts.gstatic.com</code>). This means Google may receive the IP address and browser information of anyone who visits an IX ID page. Google's privacy policy applies to this data.</p>
+      <p><strong>Google Cloud.</strong> Account records and IX ID registrations are stored in Google Cloud Firestore, in the IX ID GCP project. Google's data processing terms apply.</p>
+      <p><strong>Polygon network.</strong> Payments made through IX ID are processed on the Polygon blockchain. Transaction data is permanently and publicly recorded there.</p>
+      <p><strong>ImplicitEx.</strong> Where IX ID directs you to ImplicitEx payment services, the ImplicitEx privacy policy also applies to that interaction.</p>
+
+      <h2>Server and infrastructure logs</h2>
+      <p>Our Cloud Run services and Firebase Authentication record IP addresses, timestamps, HTTP request metadata, and security-relevant events as part of normal infrastructure operation. These logs are used to operate and secure the service, not for advertising or profiling, and are not sold to third parties.</p>
+
+      <h2>Data retention</h2>
+      <p>We retain account data for as long as your account is active. On account closure, personal information is removed from active systems, subject to legal hold requirements and data already recorded on public blockchains. IX ID handles registered to a closed account remain reserved in the registry to prevent squatting; that record contains no personal information beyond the handle string.</p>
+
+      <h2>Your rights</h2>
+      <p>Depending on your jurisdiction, you may have rights to access, correct, or delete personal information we hold. Contact us at the address below. Note that data recorded on public blockchains is outside our control and cannot be deleted.</p>
+
+      <h2>Children</h2>
+      <p>IX ID is not directed at children under 18. We do not knowingly collect information from children.</p>
+
+      <h2>Changes to this policy</h2>
+      <p>We may update this policy as the product evolves. Material changes will be communicated through the IX ID interface or by email.</p>
+
+      <h2>Contact</h2>
+      <p><a href="mailto:privacy@implicitex.com">privacy@implicitex.com</a></p>
+
+      <nav class="doc-footer" aria-label="Site navigation">
+        <a href="https://ixid.me">Home</a>
+        <a href="/about">About</a>
+        <a href="/help">Help</a>
+        <a href="/terms">Terms</a>
+        <a href="https://implicitex.com">ImplicitEx</a>
+      </nav>
+    </div>
+  </main>
+</body>
+</html>

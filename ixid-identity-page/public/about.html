@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>About — IX ID</title>
+  <meta name="description" content="IX ID is a permanent payment identity for the Polygon network, built by ImplicitEx.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="identity.css">
+  <style>
+    .doc-shell {
+      width: min(100%, 600px);
+      margin: 0 auto;
+      padding: 40px 20px 80px;
+    }
+    .doc-shell h1 {
+      font-size: clamp(1.75rem, 6vw, 2.5rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.75rem;
+    }
+    .doc-shell h2 {
+      font-size: 1.125rem;
+      font-weight: 600;
+      margin-top: 2.5rem;
+      margin-bottom: 0.75rem;
+      color: var(--text-primary);
+    }
+    .doc-shell p {
+      color: var(--text-secondary);
+      line-height: 1.7;
+      margin-bottom: 1rem;
+    }
+    .doc-shell a { color: var(--accent); text-decoration: none; }
+    .doc-shell a:hover { text-decoration: underline; }
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      text-decoration: none;
+      margin-bottom: 2rem;
+    }
+    .back-link:hover { color: var(--text-secondary); }
+    .doc-footer {
+      margin-top: 3rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      font-size: 0.8125rem;
+    }
+    .doc-footer a { color: var(--text-muted); text-decoration: none; }
+    .doc-footer a:hover { color: var(--text-secondary); }
+    .highlight-box {
+      padding: 1.25rem 1.5rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin: 1.5rem 0;
+    }
+    .highlight-box p { margin-bottom: 0; }
+    .highlight-box p + p { margin-top: 0.75rem; }
+  </style>
+</head>
+<body>
+  <header class="page-header">
+    <a href="https://ixid.me" class="wordmark">IX ID</a>
+    <span class="dot" aria-hidden="true"></span>
+    <span class="product-mark">About</span>
+  </header>
+
+  <main>
+    <div class="doc-shell">
+      <a href="https://ixid.me" class="back-link">← IX ID home</a>
+      <h1>About IX ID</h1>
+
+      <h2>What IX ID is</h2>
+      <p>IX ID is a payment identity layer for the Polygon network. It gives you a handle — like <code>maria.ixid.me</code> — that you can share instead of a wallet address. Anyone with your handle can find your current payment destination and send you USDC directly.</p>
+
+      <div class="highlight-box">
+        <p><strong>The identity is permanent. The wallet is replaceable.</strong></p>
+        <p>You can change which wallet you receive payments at without asking everyone who already has your IX ID to update anything. Your handle stays the same. The route it points to changes.</p>
+      </div>
+
+      <h2>What IX ID is not</h2>
+      <p>IX ID does not hold money. It does not execute transactions. It does not have access to your wallet or your private keys.</p>
+      <p>When someone pays you through your IX ID, the transaction goes directly from their wallet to yours on the Polygon blockchain. IX ID resolves the destination. The user's wallet software authorizes and submits the transaction.</p>
+
+      <h2>Why we built it</h2>
+      <p>Blockchain wallet addresses are unreadable and unforgiving. Copy one character wrong and the payment is gone. IX ID replaces that with a human-readable identity that anyone can type, share, or link to.</p>
+      <p>It is also the layer that makes it possible to change your wallet without losing your payment identity — something that wallet addresses cannot do on their own.</p>
+
+      <h2>Who builds IX ID</h2>
+      <p>IX ID is built by <a href="https://implicitex.com">ImplicitEx</a>. ImplicitEx builds infrastructure for verifiable on-chain payments. IX ID is the identity layer that sits above the payment execution layer.</p>
+
+      <h2>The relationship between IX ID and ImplicitEx</h2>
+      <p>IX ID resolves your identity to a payment destination. Where that destination is reached through the ImplicitEx Transfer Portal, the ImplicitEx protocol handles the execution — including fees, receipt generation, and on-chain record-keeping.</p>
+      <p>IX ID and ImplicitEx are separate products with different responsibilities. You can hold an IX ID without ever using ImplicitEx directly, and ImplicitEx can process payments that did not originate from an IX ID.</p>
+
+      <h2>Current state</h2>
+      <p>IX ID is in active development. The current release supports:</p>
+      <p>Account creation, email verification, and IX ID handle registration. The public identity page at <code>handle.ixid.me</code> is live, showing domain verification claims where present.</p>
+      <p>Wallet connection and payment route publication are in development. The full payment flow — where a visitor can open an IX ID page, enter an amount, and send directly — will be available in an upcoming release.</p>
+
+      <nav class="doc-footer" aria-label="Site navigation">
+        <a href="https://ixid.me">Home</a>
+        <a href="https://app.ixid.me/register">Register</a>
+        <a href="/help">Help</a>
+        <a href="/privacy">Privacy</a>
+        <a href="/terms">Terms</a>
+        <a href="https://implicitex.com">ImplicitEx</a>
+      </nav>
+    </div>
+  </main>
+</body>
+</html>

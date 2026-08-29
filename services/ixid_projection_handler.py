@@ -106,73 +106,39 @@ def _get_db() -> firestore.Client:
 # ---------------------------------------------------------------------------
 
 
-def _load_public_facts(db: firestore.Client, ix_id: str) -> PublicIdentityFacts | None:
+def _load_public_facts(db: firestore.Client, ix_id: str) -> tuple[PublicIdentityFacts | None, dict]:
     """
-    Load the public identity facts for ``ix_id`` from Firestore.
+    Load public identity facts and profile fields for ``ix_id`` from Firestore.
 
-    Returns ``None`` when the ix_id has no claim documents (404 condition).
-    Returns ``PublicIdentityFacts(domain=None)`` when the ix_id has claims
-    of other types but no DOMAIN claim.
+    Returns (None, {}) when the ix_id document does not exist (404 condition).
+    Returns (PublicIdentityFacts, profile_dict) when the ix_id exists.
+    profile_dict keys: display_name, bio, website_url (all may be None).
 
-    The caller must not make trust decisions from this data; that is the
-    kernel's responsibility.
-
-    No Firestore writes are performed.
-
-    Authoritative claim selection — v0.1 canonical-domain rule
-    -----------------------------------------------------------
-    An IX ID may accumulate multiple DOMAIN claims over its lifetime. The
-    frozen architecture specification (ixid-identity-trust-architecture-v0.1)
-    does not guarantee exactly one DOMAIN subject per IX ID; §6.1 DOMAIN_CONFLICT
-    guards against two different IX IDs holding the same domain, not against
-    one IX ID holding claims for multiple distinct domains.
-
-    The following selection rule is therefore an explicit v0.1 product decision,
-    not a derivation from the lifecycle contract alone:
-
-    Step 1 — Exclude chain predecessors.
-      A SUPERSEDED claim always has ``superseded_by`` set to its successor's
-      claim_id. Exclude these; they are not current authority.
-      EXPIRED terminal claims retain ``superseded_by = None`` (EXPIRED has no
-      outbound transitions and cannot be succeeded via the SUPERSEDED path).
-      Defensive fallback: if all DOMAIN claims have ``superseded_by`` set
-      (should not occur in practice), treat all as candidates.
-
-    Step 2 — Enforce single-subject invariant.
-      ``superseded_by = None`` establishes only that a claim is a chain tip.
-      It does not establish that the claim is *the* canonical public domain.
-      If non-superseded tips have more than one distinct subject, the canonical
-      domain is ambiguous under the v0.1 rule. Fail closed: present no DOMAIN
-      claim rather than silently elect one domain over another by recency.
-      Log an error for operational investigation.
-
-    Step 3 — Select most recently verified among same-subject candidates.
-      Within a single domain subject, multiple non-superseded tips can exist
-      (e.g., EXPIRED then re-verified for the same domain; EXPIRED is terminal
-      and retains ``superseded_by = None`` while the successor's ``supersedes``
-      points back at it). Among these, the most recently verified is the
-      authoritative claim for that subject.
-
-    This rule is deterministic and fails closed on internally inconsistent
-    states rather than guessing.
+    The caller must not make trust decisions from this data.
     """
-    claims_ref = (
-        db.collection("ix_ids").document(ix_id).collection("verification_claims")
-    )
+    ix_ref = db.collection("ix_ids").document(ix_id)
+    ix_snap = ix_ref.get()
 
-    # Load all claims for this ix_id. Expected to be a small set (O(1–5)).
-    # Fetching all in one round-trip avoids a composite index requirement
-    # and distinguishes "ix_id not found" from "no DOMAIN claim present".
+    if not ix_snap.exists:
+        return None, {}
+
+    ix = ix_snap.to_dict()
+    profile = {
+        "display_name": ix.get("display_name"),
+        "bio": ix.get("bio"),
+        "website_url": ix.get("website_url"),
+    }
+
+    claims_ref = ix_ref.collection("verification_claims")
     all_claims = list(claims_ref.stream())
 
     if not all_claims:
-        # ix_id has no claims — treat as not found
-        return None
+        return PublicIdentityFacts(domain=None), profile
 
     domain_docs = [d for d in all_claims if d.to_dict().get("claim_type") == "DOMAIN"]
 
     if not domain_docs:
-        return PublicIdentityFacts(domain=None)
+        return PublicIdentityFacts(domain=None), profile
 
     # Step 1: exclude chain predecessors.
     non_superseded = [d for d in domain_docs if not d.to_dict().get("superseded_by")]
@@ -181,8 +147,6 @@ def _load_public_facts(db: firestore.Client, ix_id: str) -> PublicIdentityFacts 
     # Step 2: single-subject invariant.
     subjects = {d.to_dict()["subject"] for d in candidates}
     if len(subjects) > 1:
-        # Multiple distinct domain subjects without a canonical reference.
-        # Ambiguous in v0.1 — fail closed rather than silently elect by recency.
         logger.error(
             "ix_id=%s has %d non-superseded DOMAIN claims with %d distinct subjects %r; "
             "canonical domain is ambiguous under v0.1 rule; presenting no DOMAIN claim",
@@ -191,13 +155,12 @@ def _load_public_facts(db: firestore.Client, ix_id: str) -> PublicIdentityFacts 
             len(subjects),
             subjects,
         )
-        return PublicIdentityFacts(domain=None)
+        return PublicIdentityFacts(domain=None), profile
 
     # Step 3: most recently verified among same-subject candidates.
     authoritative = max(candidates, key=lambda d: d.to_dict()["verified_at"])
     data = authoritative.to_dict()
 
-    # Firestore returns timezone-aware datetimes; the kernel validates this.
     return PublicIdentityFacts(
         domain=DomainClaimFacts(
             status=data["status"],
@@ -205,7 +168,7 @@ def _load_public_facts(db: firestore.Client, ix_id: str) -> PublicIdentityFacts 
             verified_at=data["verified_at"],
             subject=data["subject"],
         )
-    )
+    ), profile
 
 
 # ---------------------------------------------------------------------------
@@ -219,13 +182,18 @@ def _iso(dt: datetime | None) -> str | None:
     return dt.strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
-def _serialize_view(ix_id: str, view: PublicIdentityView) -> dict:
+def _serialize_view(ix_id: str, view: PublicIdentityView, profile: dict) -> dict:
     d = view.domain
     return {
         "ix_id": ix_id,
         "evaluated_at": _iso(view.evaluated_at),
         "policy_version": view.policy_version,
         "snapshot_id": view.snapshot.snapshot_id,
+        "profile": {
+            "display_name": profile.get("display_name"),
+            "bio": profile.get("bio"),
+            "website_url": profile.get("website_url"),
+        },
         "domain": {
             "status": d.presentation_status.value,
             "label": d.display_label,
@@ -276,8 +244,8 @@ def _server_error(message: str) -> Response:
     )
 
 
-def _identity_response(ix_id: str, view: PublicIdentityView) -> Response:
-    body = _serialize_view(ix_id, view)
+def _identity_response(ix_id: str, view: PublicIdentityView, profile: dict) -> Response:
+    body = _serialize_view(ix_id, view, profile)
     return Response(
         json.dumps(body),
         status=200,
@@ -306,7 +274,7 @@ def handle_get_identity(ix_id: str) -> Response:
     evaluated_at = datetime.now(timezone.utc)
 
     try:
-        facts = _load_public_facts(_get_db(), ix_id)
+        facts, profile = _load_public_facts(_get_db(), ix_id)
     except Exception as exc:  # noqa: BLE001
         return _server_error(f"Failed to load identity facts: {exc}")
 
@@ -329,7 +297,70 @@ def handle_get_identity(ix_id: str) -> Response:
         _iso(evaluated_at),
     )
 
-    return _identity_response(ix_id, view)
+    return _identity_response(ix_id, view, profile)
+
+
+@app.route("/public/route/<ix_id>", methods=["GET", "OPTIONS"])
+def handle_get_payment_route(ix_id: str) -> Response:
+    """
+    Return the current payment route for the given IX ID.
+
+    Reads only the public routing fields from ix_ids/{ix_id}.
+    No private signature, challenge, or ownership evidence exposed.
+
+    - IX ID not found → 404
+    - IX ID exists, no active route → 200 {ix_id, payable: false}
+    - IX ID exists, active route → 200 {ix_id, payable: true, destination_address, chain_id, asset, claim_id}
+
+    CORS
+    ----
+    Access-Control-Allow-Origin: * is intentional and safe for this endpoint.
+    This is a read-only, public, unauthenticated endpoint. No credentials are
+    read, no state is mutated, and no private data is exposed. The ImplicitEx
+    Transfer Portal (portal.implicitex.com) fetches this endpoint cross-origin
+    to independently validate the destination_address and claim_id carried in
+    an IX ID payment handoff URL.
+    """
+    # Preflight — browsers send OPTIONS before cross-origin GET requests.
+    if request.method == "OPTIONS":
+        resp = Response("", status=204)
+        resp.headers["Access-Control-Allow-Origin"] = "*"
+        resp.headers["Access-Control-Allow-Methods"] = "GET"
+        resp.headers["Access-Control-Max-Age"] = "86400"
+        return resp
+
+    try:
+        ix_snap = _get_db().collection("ix_ids").document(ix_id).get()
+    except Exception as exc:
+        return _server_error(f"Failed to load route: {exc}")
+
+    if not ix_snap.exists:
+        return _not_found(ix_id)
+
+    ix = ix_snap.to_dict()
+    active_address = ix.get("active_payment_route_address")
+    active_claim_id = ix.get("active_payment_route_claim_id")
+    routing_suspended = ix.get("routing_suspended", False)
+
+    if not active_address or not active_claim_id or routing_suspended:
+        body = {"ix_id": ix_id, "payable": False}
+    else:
+        body = {
+            "ix_id": ix_id,
+            "payable": True,
+            "destination_address": active_address,
+            "chain_id": 137,
+            "asset": {
+                "symbol": "USDC",
+                "contract": "0x3c499c542cef5e3811e1192ce70d8cc03d5c3359",
+                "asset_binding_version": "polygon-pos-native-usdc-v1",
+            },
+            "claim_id": active_claim_id,
+        }
+
+    resp = Response(json.dumps(body), status=200, content_type="application/json")
+    resp.headers["Access-Control-Allow-Origin"] = "*"
+    return resp
 
 
 # ---------------------------------------------------------------------------

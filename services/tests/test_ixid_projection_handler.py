@@ -88,11 +88,17 @@ def _write_claim(
     subject: str = "implicitex.com",
     superseded_by: str | None = None,
 ) -> str:
-    """Write a minimal verification_claim document directly to the emulator."""
+    """Write a minimal verification_claim document directly to the emulator.
+
+    Also writes the root ix_ids/{ix_id} document if it does not exist, because
+    _load_public_facts checks root document existence for 404 determination.
+    """
+    ix_root = db.collection("ix_ids").document(ix_id)
+    if not ix_root.get().exists:
+        ix_root.set({"ix_id": ix_id})
+
     claim_id = f"claim_{uuid.uuid4().hex[:8]}"
-    db.collection("ix_ids").document(ix_id).collection("verification_claims").document(
-        claim_id
-    ).set(
+    ix_root.collection("verification_claims").document(claim_id).set(
         {
             "claim_id": claim_id,
             "claim_type": "DOMAIN",
@@ -136,13 +142,13 @@ class TestMethodEnforcement:
 
 class TestNotFound:
     def test_unknown_ix_id_returns_404(self, client, monkeypatch):
-        monkeypatch.setattr(handler, "_load_public_facts", lambda db, ix_id: None)
+        monkeypatch.setattr(handler, "_load_public_facts", lambda db, ix_id: (None, {}))
         monkeypatch.setattr(handler, "_get_db", lambda: MagicMock())
         resp = client.get("/public/identity/nobody")
         assert resp.status_code == 404
 
     def test_404_body_has_error_key(self, client, monkeypatch):
-        monkeypatch.setattr(handler, "_load_public_facts", lambda db, ix_id: None)
+        monkeypatch.setattr(handler, "_load_public_facts", lambda db, ix_id: (None, {}))
         monkeypatch.setattr(handler, "_get_db", lambda: MagicMock())
         resp = client.get("/public/identity/nobody")
         body = json.loads(resp.data)
@@ -150,7 +156,7 @@ class TestNotFound:
 
     def test_404_does_not_call_kernel(self, client, monkeypatch):
         """Kernel must not be called when ix_id is not found."""
-        monkeypatch.setattr(handler, "_load_public_facts", lambda db, ix_id: None)
+        monkeypatch.setattr(handler, "_load_public_facts", lambda db, ix_id: (None, {}))
         monkeypatch.setattr(handler, "_get_db", lambda: MagicMock())
         kernel_mock = MagicMock()
         monkeypatch.setattr(handler, "derive_public_identity_view", kernel_mock)
@@ -180,7 +186,7 @@ class TestExpiryInvariant:
         """
         past_expiry_facts = _active_facts(expires_at=_PAST_EXPIRES)
         monkeypatch.setattr(
-            handler, "_load_public_facts", lambda db, ix_id: past_expiry_facts
+            handler, "_load_public_facts", lambda db, ix_id: (past_expiry_facts, {})
         )
         monkeypatch.setattr(handler, "_get_db", lambda: MagicMock())
 
@@ -194,7 +200,7 @@ class TestExpiryInvariant:
     ):
         """Control: status=ACTIVE + future expires_at → VERIFIED."""
         monkeypatch.setattr(
-            handler, "_load_public_facts", lambda db, ix_id: _active_facts()
+            handler, "_load_public_facts", lambda db, ix_id: (_active_facts(), {})
         )
         monkeypatch.setattr(handler, "_get_db", lambda: MagicMock())
         resp = client.get("/public/identity/alice")
@@ -213,7 +219,7 @@ class TestExpiryInvariant:
             )
         )
         monkeypatch.setattr(
-            handler, "_load_public_facts", lambda db, ix_id: expired_facts
+            handler, "_load_public_facts", lambda db, ix_id: (expired_facts, {})
         )
         monkeypatch.setattr(handler, "_get_db", lambda: MagicMock())
         resp = client.get("/public/identity/alice")
@@ -225,7 +231,7 @@ class TestExpiryInvariant:
         """When expired by time gate, verified_since must not appear in the response."""
         past_expiry_facts = _active_facts(expires_at=_PAST_EXPIRES)
         monkeypatch.setattr(
-            handler, "_load_public_facts", lambda db, ix_id: past_expiry_facts
+            handler, "_load_public_facts", lambda db, ix_id: (past_expiry_facts, {})
         )
         monkeypatch.setattr(handler, "_get_db", lambda: MagicMock())
         resp = client.get("/public/identity/alice")
@@ -241,7 +247,7 @@ class TestExpiryInvariant:
 class TestResponseStructure:
     def _get_alice(self, client, monkeypatch) -> dict:
         monkeypatch.setattr(
-            handler, "_load_public_facts", lambda db, ix_id: _active_facts()
+            handler, "_load_public_facts", lambda db, ix_id: (_active_facts(), {})
         )
         monkeypatch.setattr(handler, "_get_db", lambda: MagicMock())
         return json.loads(client.get("/public/identity/alice").data)
@@ -284,7 +290,7 @@ class TestResponseStructure:
 
     def test_content_type_is_json(self, client, monkeypatch):
         monkeypatch.setattr(
-            handler, "_load_public_facts", lambda db, ix_id: _active_facts()
+            handler, "_load_public_facts", lambda db, ix_id: (_active_facts(), {})
         )
         monkeypatch.setattr(handler, "_get_db", lambda: MagicMock())
         resp = client.get("/public/identity/alice")
@@ -293,7 +299,7 @@ class TestResponseStructure:
     def test_cache_control_is_no_store(self, client, monkeypatch):
         """Cache-Control: no-store must be present to enforce the cache invariant."""
         monkeypatch.setattr(
-            handler, "_load_public_facts", lambda db, ix_id: _active_facts()
+            handler, "_load_public_facts", lambda db, ix_id: (_active_facts(), {})
         )
         monkeypatch.setattr(handler, "_get_db", lambda: MagicMock())
         resp = client.get("/public/identity/alice")
@@ -312,7 +318,7 @@ class TestCacheControlGlobalInvariant:
 
     def test_cache_control_on_404(self, client, monkeypatch):
         monkeypatch.setattr(
-            handler, "_load_public_facts", lambda db, ix_id: None
+            handler, "_load_public_facts", lambda db, ix_id: (None, {})
         )
         monkeypatch.setattr(handler, "_get_db", lambda: MagicMock())
         resp = client.get("/public/identity/does_not_exist")
@@ -338,7 +344,7 @@ class TestCacheControlGlobalInvariant:
     def test_cache_control_on_200(self, client, monkeypatch):
         """Regression guard: after_request hook must not drop header on 200."""
         monkeypatch.setattr(
-            handler, "_load_public_facts", lambda db, ix_id: _active_facts()
+            handler, "_load_public_facts", lambda db, ix_id: (_active_facts(), {})
         )
         monkeypatch.setattr(handler, "_get_db", lambda: MagicMock())
         resp = client.get("/public/identity/alice")
@@ -356,7 +362,7 @@ class TestNoDomainClaim:
         monkeypatch.setattr(
             handler,
             "_load_public_facts",
-            lambda db, ix_id: PublicIdentityFacts(domain=None),
+            lambda db, ix_id: (PublicIdentityFacts(domain=None), {}),
         )
         monkeypatch.setattr(handler, "_get_db", lambda: MagicMock())
         resp = client.get("/public/identity/alice")
@@ -368,7 +374,7 @@ class TestNoDomainClaim:
         monkeypatch.setattr(
             handler,
             "_load_public_facts",
-            lambda db, ix_id: PublicIdentityFacts(domain=None),
+            lambda db, ix_id: (PublicIdentityFacts(domain=None), {}),
         )
         monkeypatch.setattr(handler, "_get_db", lambda: MagicMock())
         resp = client.get("/public/identity/alice")
@@ -379,7 +385,7 @@ class TestNoDomainClaim:
         monkeypatch.setattr(
             handler,
             "_load_public_facts",
-            lambda db, ix_id: PublicIdentityFacts(domain=None),
+            lambda db, ix_id: (PublicIdentityFacts(domain=None), {}),
         )
         monkeypatch.setattr(handler, "_get_db", lambda: MagicMock())
         resp = client.get("/public/identity/alice")
@@ -402,7 +408,7 @@ class TestBusinessIdentityAbsence:
         self, client, monkeypatch
     ):
         monkeypatch.setattr(
-            handler, "_load_public_facts", lambda db, ix_id: _active_facts()
+            handler, "_load_public_facts", lambda db, ix_id: (_active_facts(), {})
         )
         monkeypatch.setattr(handler, "_get_db", lambda: MagicMock())
         body = json.loads(client.get("/public/identity/alice").data)
@@ -414,7 +420,7 @@ class TestBusinessIdentityAbsence:
     ):
         """'Official Website Verified' must not become 'Business Verified' or similar."""
         monkeypatch.setattr(
-            handler, "_load_public_facts", lambda db, ix_id: _active_facts()
+            handler, "_load_public_facts", lambda db, ix_id: (_active_facts(), {})
         )
         monkeypatch.setattr(handler, "_get_db", lambda: MagicMock())
         body = json.loads(client.get("/public/identity/alice").data)
@@ -818,6 +824,9 @@ class TestResponseFieldContainment:
         ix_id = _fresh_ix_id()
         claim_id = f"claim_{uuid.uuid4().hex[:8]}"
 
+        # Write root ix_ids document first — _load_public_facts checks existence.
+        db.collection("ix_ids").document(ix_id).set({"ix_id": ix_id})
+
         # Write a claim with many internal/evidence fields
         db.collection("ix_ids").document(ix_id).collection(
             "verification_claims"
@@ -898,6 +907,7 @@ class TestResponseFieldContainment:
             "evaluated_at",
             "policy_version",
             "snapshot_id",
+            "profile",
             "domain",
         }
         expected_domain_keys = {"status", "label", "subject", "verified_since"}

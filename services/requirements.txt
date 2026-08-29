@@ -21,3 +21,7 @@ google-api-core==2.34.0
 # The holder-edge and other services install this package but do not use it at runtime.
 # firebase-admin.auth.verify_id_token() verifies aud against the initialized app project.
 firebase-admin==6.6.0
+
+# Ethereum wallet signature verification — required by ixid-holder-authority for M3
+# payment route wallet binding (personal_sign / EIP-191 challenge-response).
+eth-account==0.14.0

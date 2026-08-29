@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Terms of Service — IX ID</title>
+  <meta name="description" content="IX ID terms of service — what IX ID does, what it does not do, and the rules for using it.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="identity.css">
+  <style>
+    .doc-shell {
+      width: min(100%, 600px);
+      margin: 0 auto;
+      padding: 40px 20px 80px;
+    }
+    .doc-shell h1 {
+      font-size: clamp(1.75rem, 6vw, 2.5rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.5rem;
+    }
+    .doc-shell h2 {
+      font-size: 1.125rem;
+      font-weight: 600;
+      margin-top: 2.5rem;
+      margin-bottom: 0.75rem;
+      color: var(--text-primary);
+    }
+    .doc-shell p {
+      color: var(--text-secondary);
+      line-height: 1.7;
+      margin-bottom: 1rem;
+    }
+    .doc-shell ul {
+      margin: 0 0 1rem 1.5rem;
+      color: var(--text-secondary);
+      line-height: 1.75;
+    }
+    .doc-shell a { color: var(--accent); text-decoration: none; }
+    .doc-shell a:hover { text-decoration: underline; }
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      text-decoration: none;
+      margin-bottom: 2rem;
+    }
+    .back-link:hover { color: var(--text-secondary); }
+    .meta { font-size: 0.875rem; color: var(--text-muted); margin-bottom: 2.5rem; }
+    .notice {
+      padding: 1rem 1.25rem;
+      border-left: 3px solid #e8a838;
+      background: rgba(232, 168, 56, 0.06);
+      border-radius: 0 8px 8px 0;
+      margin-bottom: 2rem;
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+    .doc-footer {
+      margin-top: 3rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      font-size: 0.8125rem;
+    }
+    .doc-footer a { color: var(--text-muted); text-decoration: none; }
+    .doc-footer a:hover { color: var(--text-secondary); }
+  </style>
+</head>
+<body>
+  <header class="page-header">
+    <a href="https://ixid.me" class="wordmark">IX ID</a>
+    <span class="dot" aria-hidden="true"></span>
+    <span class="product-mark">Terms</span>
+  </header>
+
+  <main>
+    <div class="doc-shell">
+      <a href="https://ixid.me" class="back-link">← IX ID home</a>
+      <h1>Terms of Service</h1>
+      <p class="meta">Last updated: August 2026</p>
+
+      <div class="notice">
+        <strong>Attorney review pending.</strong> These terms reflect IX ID's current practices and intent. Sections requiring jurisdiction-specific legal determination are flagged. Binding terms will be finalized after attorney review. Using IX ID constitutes agreement with these terms as stated.
+      </div>
+
+      <h2>What IX ID does</h2>
+      <p>IX ID is a payment identity service. It gives you a permanent, human-readable handle that others can use to find your current payment destination on the Polygon network. IX ID resolves your handle to your registered wallet address and constructs payment requests. It does not process, hold, or transfer funds.</p>
+
+      <h2>What IX ID does not do</h2>
+      <ul>
+        <li>IX ID is not a bank and does not hold money.</li>
+        <li>IX ID is not a custodial wallet. We do not have access to your funds or private keys.</li>
+        <li>IX ID does not execute blockchain transactions. Transactions are authorized and submitted by the user's own wallet software.</li>
+        <li>IX ID does not guarantee that registered wallet addresses are correct. You are solely responsible for verifying that the wallet address you register is one you control.</li>
+      </ul>
+
+      <h2>Accounts and handles</h2>
+      <p>You must provide a valid email address to create an account. Handles are 3–30 characters, lowercase letters, numbers, and hyphens only. Certain handles are reserved. One handle is issued per verified email address at this time.</p>
+      <p>Your handle is your public payment identity and is visible to anyone. Choose a handle you are comfortable sharing publicly. Handles cannot be changed after registration.</p>
+
+      <h2>Your wallet and payment route</h2>
+      <p>The wallet address you connect becomes your registered payment destination, visible to anyone who visits your IX ID page. The wallet itself remains entirely under your control — IX ID has no access to it.</p>
+      <p>You may update the wallet that receives payments. When you do, the previous route is deactivated and the new one becomes active. Payments directed to your IX ID after the change go to the new wallet.</p>
+      <p>You are solely responsible for verifying that you control any wallet address you register. IX ID does not verify wallet ownership beyond your declaration at this time. If you register an address you do not control, payments directed to your IX ID will go to the wrong destination and cannot be recovered.</p>
+
+      <h2>Sending payments through IX ID</h2>
+      <p>When you initiate a payment from an IX ID page, you are constructing a transaction submitted through your own wallet software. You are responsible for confirming the correct handle, wallet address, amount, and network (Polygon) before approving the transaction in your wallet.</p>
+      <p>Blockchain transactions are generally irreversible once submitted. IX ID cannot reverse, cancel, or recover a completed transaction.</p>
+
+      <h2>Transaction fees</h2>
+      <p>IX ID itself does not charge a fee for registrations or identity lookups. Payment services accessed when completing a transaction through IX ID may display their own fees before you authorize the transaction. Review the fee disclosure shown to you at the time of payment before confirming.</p>
+      <p>Network gas fees are separate, paid in POL (the Polygon network token), and are not collected by IX ID.</p>
+
+      <h2>Prohibited conduct</h2>
+      <p>You may not use IX ID to impersonate another person or organization, infringe on trademarks you do not own, receive payment for illegal goods or services, circumvent sanctions or financial regulations, conduct fraud, or register handles in bulk for squatting or resale.</p>
+
+      <h2>Handle suspension and account termination</h2>
+      <p>We may suspend or terminate your handle or account for violations of these terms, valid legal process, or evidence of fraud or abuse. We will notify you where permitted by law. Suspended handles remain reserved during review.</p>
+
+      <h2>Availability</h2>
+      <p>IX ID is provided on an "as is" basis. We may modify, suspend, or discontinue any feature at any time without liability for resulting losses.</p>
+
+      <h2>Limitation of liability</h2>
+      <p>To the extent permitted by applicable law, IX ID and ImplicitEx are not liable for indirect, incidental, consequential, or punitive damages arising from your use of IX ID, including losses from blockchain transactions, incorrect wallet addresses, or service interruptions.</p>
+      <p><em>Attorney review required before finalizing this provision.</em></p>
+
+      <h2>Governing law</h2>
+      <p><em>To be determined after attorney review.</em></p>
+
+      <h2>Changes</h2>
+      <p>We may update these terms as the product evolves. Continued use after changes are posted constitutes agreement to the updated terms.</p>
+
+      <h2>Contact</h2>
+      <p><a href="mailto:legal@implicitex.com">legal@implicitex.com</a></p>
+
+      <nav class="doc-footer" aria-label="Site navigation">
+        <a href="https://ixid.me">Home</a>
+        <a href="/about">About</a>
+        <a href="/help">Help</a>
+        <a href="/privacy">Privacy</a>
+        <a href="https://implicitex.com">ImplicitEx</a>
+      </nav>
+    </div>
+  </main>
+</body>
+</html>

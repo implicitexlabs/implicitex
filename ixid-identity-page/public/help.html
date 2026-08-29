@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Help — IX ID</title>
+  <meta name="description" content="Getting started with IX ID — creating an account, verifying email, claiming a handle, and troubleshooting.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="identity.css">
+  <style>
+    .doc-shell {
+      width: min(100%, 640px);
+      margin: 0 auto;
+      padding: 40px 20px 80px;
+    }
+    .doc-shell h1 {
+      font-size: clamp(1.75rem, 6vw, 2.5rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.5rem;
+    }
+    .doc-shell h2 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-top: 3rem;
+      margin-bottom: 0.5rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .doc-shell h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-top: 1.75rem;
+      margin-bottom: 0.4rem;
+      color: var(--text-primary);
+    }
+    .doc-shell p {
+      color: var(--text-secondary);
+      line-height: 1.7;
+      margin-bottom: 0.875rem;
+    }
+    .doc-shell ul, .doc-shell ol {
+      margin: 0 0 1rem 1.5rem;
+      color: var(--text-secondary);
+      line-height: 1.75;
+    }
+    .doc-shell a { color: var(--accent); text-decoration: none; }
+    .doc-shell a:hover { text-decoration: underline; }
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      text-decoration: none;
+      margin-bottom: 2rem;
+    }
+    .back-link:hover { color: var(--text-secondary); }
+    .toc {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 2.5rem;
+    }
+    .toc p { margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--text-muted); }
+    .toc ul { list-style: none; margin: 0; padding: 0; }
+    .toc li { margin: 0.3rem 0; }
+    .toc a { font-size: 0.9rem; color: var(--text-secondary); text-decoration: none; }
+    .toc a:hover { color: var(--text-primary); }
+    .coming-soon {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      color: var(--amber);
+      background: rgba(232, 168, 56, 0.1);
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-left: 6px;
+      vertical-align: middle;
+      text-transform: uppercase;
+    }
+    code {
+      font-family: monospace;
+      background: var(--surface-mid);
+      padding: 0.1em 0.4em;
+      border-radius: 3px;
+      font-size: 0.9em;
+      color: var(--text-primary);
+    }
+    .doc-footer {
+      margin-top: 3rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      font-size: 0.8125rem;
+    }
+    .doc-footer a { color: var(--text-muted); text-decoration: none; }
+    .doc-footer a:hover { color: var(--text-secondary); }
+  </style>
+</head>
+<body>
+  <header class="page-header">
+    <a href="https://ixid.me" class="wordmark">IX ID</a>
+    <span class="dot" aria-hidden="true"></span>
+    <span class="product-mark">Help</span>
+  </header>
+
+  <main>
+    <div class="doc-shell">
+      <a href="https://ixid.me" class="back-link">← IX ID home</a>
+      <h1>Help</h1>
+
+      <nav class="toc" aria-label="Table of contents">
+        <p>Jump to</p>
+        <ul>
+          <li><a href="#getting-started">Getting started</a></li>
+          <li><a href="#using-your-id">Using your IX ID</a></li>
+          <li><a href="#troubleshooting">Troubleshooting</a></li>
+        </ul>
+      </nav>
+
+      <!-- ─── Getting started ──────────────────────────────────────────────── -->
+      <section id="getting-started">
+        <h2>Getting started</h2>
+
+        <h3>What is IX ID?</h3>
+        <p>IX ID gives you a permanent identity for receiving payments on the Polygon network. Instead of sharing a long wallet address, you share a handle — like <code>maria.ixid.me</code>. The handle stays the same even if you change which wallet you receive payments at.</p>
+        <p>IX ID is not a wallet and does not hold money. It is an identity layer — it tells others where to send funds, and you can update that destination without anyone needing to update the address they have for you.</p>
+
+        <h3>Creating an IX ID</h3>
+        <ol>
+          <li>Go to <a href="https://app.ixid.me/register">app.ixid.me/register</a>.</li>
+          <li>Enter your email address and a password (at least 12 characters).</li>
+          <li>Click <strong>Create account</strong>. A verification email will be sent.</li>
+          <li>Open the email and click the verification link. You will return to IX ID automatically.</li>
+          <li>Choose your IX ID handle (3–30 lowercase letters, numbers, or hyphens).</li>
+          <li>Click <strong>Claim IX ID</strong>. Your handle is now registered.</li>
+        </ol>
+
+        <h3>Verifying your email</h3>
+        <p>After creating an account, IX ID sends a verification link to your email. Click it to confirm ownership. If the link expires, return to <a href="https://app.ixid.me/register">app.ixid.me/register</a>, sign in, and click <strong>Resend email</strong>.</p>
+
+        <h3>Choosing a handle</h3>
+        <p>Your handle must be 3–30 characters, lowercase letters, numbers, and single hyphens only. It cannot start or end with a hyphen. Certain common words are reserved.</p>
+        <p>Your handle is permanent and cannot be changed after registration. Choose something you are comfortable using as your public identity.</p>
+
+        <h3>Connecting a wallet <span class="coming-soon">In development</span></h3>
+        <p>After claiming your handle, you will be able to connect a Polygon-compatible wallet to publish your payment destination. Wallet connection is in the current workspace, and publishing routes to the public identity page is in development.</p>
+      </section>
+
+      <!-- ─── Using your IX ID ──────────────────────────────────────────────── -->
+      <section id="using-your-id">
+        <h2>Using your IX ID</h2>
+
+        <h3>Sharing your IX ID</h3>
+        <p>Your public IX ID address is <code>yourhandle.ixid.me</code>. Share it wherever you want to be findable for payments — your email signature, website, or social profiles.</p>
+
+        <h3>Your public identity page</h3>
+        <p>Anyone can visit <code>yourhandle.ixid.me</code> and see your registered identity information. Currently the page shows verified domain information where present. Payment functionality will be shown there once your payment route is published.</p>
+
+        <h3>Receiving payments <span class="coming-soon">In development</span></h3>
+        <p>Once payment routes are live, USDC sent to your IX ID will arrive directly in your registered wallet. IX ID does not hold or forward the funds — they travel directly from the sender's wallet to yours on the Polygon network.</p>
+
+        <h3>Updating your payment wallet <span class="coming-soon">In development</span></h3>
+        <p>When the payment route feature is live, you will be able to update the wallet your IX ID points to. Your handle stays the same; only the destination changes. Anyone who already has your handle will automatically reach your new wallet.</p>
+
+        <h3>Profile fields <span class="coming-soon">In development</span></h3>
+        <p>Display name, bio, website, avatar, and banner are planned for a future update.</p>
+
+        <h3>Signing out</h3>
+        <p>Click <strong>Sign out</strong> in your workspace. Because IX ID uses in-memory session storage, you are also signed out automatically when you close the browser tab.</p>
+      </section>
+
+      <!-- ─── Troubleshooting ───────────────────────────────────────────────── -->
+      <section id="troubleshooting">
+        <h2>Troubleshooting</h2>
+
+        <h3>Verification link expired</h3>
+        <p>Return to <a href="https://app.ixid.me/register">app.ixid.me/register</a>, sign in, and click <strong>Resend email</strong>. Wait at least 60 seconds between resend attempts.</p>
+
+        <h3>Verification email not received</h3>
+        <p>Check your spam or junk folder. If it does not arrive within a few minutes, request a resend. Make sure your email address was entered correctly.</p>
+
+        <h3>Handle unavailable</h3>
+        <p>The handle is either already taken or reserved. Try a different one. Handles that are taken are not disclosed — the claim is simply rejected.</p>
+
+        <h3>Wallet won't connect</h3>
+        <p>Make sure your browser wallet extension (such as MetaMask) is installed and unlocked. Approve the connection request when prompted. If it fails, refresh the page and try again.</p>
+
+        <h3>Wrong network</h3>
+        <p>IX ID uses the Polygon network (Chain ID 137). If your wallet is on a different network, switch to Polygon and try again.</p>
+
+        <h3>Need more help?</h3>
+        <p>Email <a href="mailto:support@implicitex.com">support@implicitex.com</a>.</p>
+      </section>
+
+      <nav class="doc-footer" aria-label="Site navigation">
+        <a href="https://ixid.me">Home</a>
+        <a href="/about">About</a>
+        <a href="/privacy">Privacy</a>
+        <a href="/terms">Terms</a>
+        <a href="https://implicitex.com">ImplicitEx</a>
+      </nav>
+    </div>
+  </main>
+</body>
+</html>

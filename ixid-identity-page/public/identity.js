@@ -130,6 +130,9 @@
         domainSubject: null,
         verifiedSince: null,
         evaluatedAt: null,
+        profileDisplayName: null,
+        profileBio: null,
+        profileWebsiteUrl: null,
       };
     }
 
@@ -143,6 +146,9 @@
         domainSubject: null,
         verifiedSince: null,
         evaluatedAt: null,
+        profileDisplayName: null,
+        profileBio: null,
+        profileWebsiteUrl: null,
       };
     }
 
@@ -159,12 +165,55 @@
       domainSubject: domain.subject,      // the domain string, e.g. "mariastacos.com"; null if NONE
       verifiedSince: formatVerifiedSince(domain.verified_since),
       evaluatedAt: apiResponse.evaluated_at,
+      // Profile fields — passed through from API; may be null
+      profileDisplayName: (apiResponse.profile && apiResponse.profile.display_name) || null,
+      profileBio: (apiResponse.profile && apiResponse.profile.bio) || null,
+      profileWebsiteUrl: (apiResponse.profile && apiResponse.profile.website_url) || null,
     };
   }
 
   // -------------------------------------------------------------------------
   // Layer 3: DOM mutations
   // -------------------------------------------------------------------------
+
+  /**
+   * Apply payment route state to the payment section of the page.
+   *
+   * When payable is true: show the payment form, store claim_id and destination
+   * on the section element so the inline payment script can read them without
+   * coupling to identity.js internals.
+   *
+   * When payable is false (or routeBody is absent/errored): hide the form,
+   * show the not-payable notice.
+   *
+   * @param {Element} rootEl
+   * @param {object|null} routeBody — body from /public/route/{ix_id}, or null
+   */
+  function applyPaymentState(rootEl, routeBody) {
+    var paySection = rootEl.querySelector('[data-ix-section="payment"]');
+    if (!paySection) return;
+
+    var formEl      = paySection.querySelector('[data-ix="payment-form"]');
+    var notPayEl    = paySection.querySelector('[data-ix="payment-not-payable"]');
+
+    paySection.removeAttribute('hidden');
+
+    var payable = routeBody && routeBody.payable;
+
+    if (payable) {
+      paySection.dataset.payable    = 'true';
+      paySection.dataset.claimId    = routeBody.claim_id || '';
+      paySection.dataset.destination = routeBody.destination_address || '';
+      if (formEl)   formEl.removeAttribute('hidden');
+      if (notPayEl) notPayEl.setAttribute('hidden', '');
+    } else {
+      paySection.dataset.payable    = 'false';
+      paySection.dataset.claimId    = '';
+      paySection.dataset.destination = '';
+      if (formEl)   formEl.setAttribute('hidden', '');
+      if (notPayEl) notPayEl.removeAttribute('hidden');
+    }
+  }
 
   /**
    * Apply a display model to the page DOM.
@@ -217,6 +266,35 @@
     // Status badge: text from API, data-status attribute for CSS
     set('status-badge', model.domainLabel || model.domainStatus || '');
     setAttr('status-badge', 'data-status', model.domainStatus);
+
+    // Profile fields
+    set('profile-display-name', model.profileDisplayName);
+    set('profile-bio', model.profileBio);
+
+    // Website: set both text and href
+    const websiteEl = rootEl.querySelector('[data-ix="profile-website"]');
+    if (websiteEl) {
+      if (model.profileWebsiteUrl) {
+        websiteEl.textContent = model.profileWebsiteUrl
+          .replace(/^https?:\/\//, '')
+          .replace(/\/$/, '');
+        websiteEl.setAttribute('href', model.profileWebsiteUrl);
+        const websiteRow = websiteEl.closest('[data-ix-row="profile-website"]');
+        if (websiteRow) websiteRow.removeAttribute('hidden');
+      } else {
+        websiteEl.textContent = '';
+        websiteEl.removeAttribute('href');
+        const websiteRow = websiteEl.closest('[data-ix-row="profile-website"]');
+        if (websiteRow) websiteRow.setAttribute('hidden', '');
+      }
+    }
+
+    // Show/hide profile block
+    const profileBlock = rootEl.querySelector('[data-ix-block="profile"]');
+    if (profileBlock) {
+      const hasAnyProfile = model.profileDisplayName || model.profileBio || model.profileWebsiteUrl;
+      profileBlock.hidden = !hasAnyProfile;
+    }
   }
 
   // -------------------------------------------------------------------------
@@ -244,6 +322,14 @@
 
     root.dataset.pageState = 'loading';
 
+    // Bare domain: ixid.me has no subdomain — show the product home page
+    // rather than a not-found identity card.
+    if (window.location.hostname === 'ixid.me') {
+      document.title = 'IX ID — Your permanent payment identity';
+      root.dataset.pageState = 'home';
+      return;
+    }
+
     var ixId = parseIxId(window.location.hostname, window.location.search);
     if (!ixId) {
       applyDisplayModel(root, buildDisplayModel(null, 404));
@@ -262,6 +348,21 @@
       .then(function (result) {
         var model = buildDisplayModel(result.body, result.httpStatus);
         applyDisplayModel(root, model);
+
+        // Load payment route only for found identities.
+        // The payment section stays hidden (default) on NOT_FOUND / ERROR.
+        if (model.state === 'FOUND') {
+          fetch(base + '/public/route/' + encodeURIComponent(ixId))
+            .then(function (r) {
+              return r.json().then(function (b) { return { status: r.status, body: b }; });
+            })
+            .then(function (r) {
+              if (r.status === 200) applyPaymentState(root, r.body);
+            })
+            .catch(function () {
+              // Route API unavailable — payment section remains hidden.
+            });
+        }
       })
       .catch(function () {
         applyDisplayModel(root, buildDisplayModel(null, 503));
@@ -273,14 +374,15 @@
   // -------------------------------------------------------------------------
 
   if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { parseIxId, buildDisplayModel, formatVerifiedSince };
+    module.exports = { parseIxId, buildDisplayModel, formatVerifiedSince, applyPaymentState };
   } else {
     global.IxIdentity = {
-      parseIxId: parseIxId,
+      parseIxId:         parseIxId,
       buildDisplayModel: buildDisplayModel,
       formatVerifiedSince: formatVerifiedSince,
       applyDisplayModel: applyDisplayModel,
-      bootstrap: bootstrap,
+      applyPaymentState: applyPaymentState,
+      bootstrap:         bootstrap,
     };
   }
 }(typeof globalThis !== 'undefined' ? globalThis : this));
