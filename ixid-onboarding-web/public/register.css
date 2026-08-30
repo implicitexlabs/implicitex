@@ -123,6 +123,69 @@ a:focus-visible {
 .handle-control span { font-size: 1.25rem; }
 .banner { padding: 0.8rem; border-left: 4px solid #f1c75b; background: #251f0f; }
 
+/* Workspace IX ID display */
+.ix-id-block {
+  margin-bottom: 2rem;
+  padding: 1rem 1.25rem;
+  background: #0d0d0d;
+  border: 1px solid #303030;
+  border-radius: 0.75rem;
+}
+
+.ix-id-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #888;
+  margin-bottom: 0.25rem;
+}
+
+.ix-id-display {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin-bottom: 0.5rem;
+}
+
+.view-link {
+  font-size: 0.875rem;
+  color: #3ecf8e;
+  text-decoration: none;
+}
+
+.view-link:hover { text-decoration: underline; }
+
+.wallet-section { margin-top: 2rem; }
+
+.wallet-address {
+  font-family: monospace;
+  font-size: 0.85rem;
+  word-break: break-all;
+  margin-bottom: 0.75rem;
+  color: #aaa;
+}
+
+/* Site footer */
+.site-footer {
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #282828;
+}
+
+.site-footer nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+}
+
+.site-footer a {
+  font-size: 0.8125rem;
+  color: #666;
+  text-decoration: none;
+}
+
+.site-footer a:hover { color: #aaa; }
+
 @media (max-width: 620px) {
   .shell { width: min(100% - 1rem, 48rem); padding-top: 1rem; }
   .panel { border-radius: 0.75rem; }

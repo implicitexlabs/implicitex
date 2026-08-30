@@ -21,6 +21,7 @@
   <script src="holder-api-client.js" defer></script>
   <script src="firebase-auth-adapter.js" defer></script>
   <script src="wallet-connector.js" defer></script>
+  <script src="payment-route-flow.js" defer></script>
   <script src="register.js" defer></script>
 </head>
 <body>
@@ -89,8 +90,8 @@
 
     <section class="panel" id="verification-panel" hidden aria-labelledby="verification-heading">
       <h1 id="verification-heading" tabindex="-1">Check your email</h1>
-      <p>Verify <strong id="verification-email"></strong> before creating an IX ID account.</p>
-      <p>No holder account or handle is created until verification succeeds.</p>
+      <p>We sent a verification link to <strong id="verification-email"></strong>. Click the link in the email to continue.</p>
+      <p>No account or handle is created until your email is verified.</p>
       <div class="actions">
         <button id="check-verification" type="button">I’ve verified my email</button>
         <button id="resend-verification" type="button" class="secondary">Resend email</button>
@@ -106,7 +107,7 @@
 
     <section class="panel" id="handle-panel" hidden aria-labelledby="handle-heading">
       <h1 id="handle-heading" tabindex="-1">Choose your IX ID</h1>
-      <p>Format feedback is local. The claim operation is the availability decision.</p>
+      <p>Your handle is your permanent identity. The wallet you receive payments at can be changed anytime — your handle stays the same. Availability is confirmed when you claim.</p>
       <form id="handle-form" novalidate>
         <div class="field">
           <label for="handle-input">IX ID handle</label>
@@ -125,18 +126,126 @@
 
     <section class="panel" id="denied-panel" hidden aria-labelledby="denied-heading">
       <h1 id="denied-heading" tabindex="-1">Account unavailable</h1>
-      <p>Your account is not currently available. Contact support.</p>
-      <button id="denied-signout" type="button" class="secondary">Sign out</button>
+      <p>Your account is not currently available. Email <a href="mailto:support@implicitex.com" style="color:#3ecf8e;">support@implicitex.com</a> if you believe this is a mistake.</p>
+      <div class="actions" style="margin-top:1.5rem;">
+        <button id="denied-signout" type="button" class="secondary">Sign out</button>
+      </div>
     </section>
 
     <section class="panel" id="workspace-panel" hidden aria-labelledby="workspace-heading">
       <h1 id="workspace-heading" tabindex="-1">Your IX ID workspace</h1>
-      <p class="banner" id="suspended-banner" hidden>Your account is under review. Handle registration is unavailable.</p>
-      <p id="workspace-identity"></p>
+      <p class="banner" id="suspended-banner" role="alert" hidden>Your account is under review. Some features may be unavailable. Email <a href="mailto:support@implicitex.com" style="color:#f1c75b;">support@implicitex.com</a> with questions.</p>
+
+      <div class="ix-id-block" id="ix-id-block" hidden>
+        <p class="ix-id-label">Your IX ID</p>
+        <p class="ix-id-display" id="workspace-identity"></p>
+        <a id="view-ix-id" href="#" class="view-link" target="_blank" rel="noopener noreferrer">
+          View your public page →
+        </a>
+      </div>
+      <p id="workspace-no-id" hidden>Your account is active. No IX ID registered yet.</p>
+
+      <div class="profile-section" id="profile-section" hidden>
+        <h2>Profile</h2>
+        <p class="hint" id="profile-status" aria-live="polite"></p>
+        <form id="profile-form" novalidate>
+          <div class="field">
+            <label for="profile-display-name">Display name</label>
+            <input id="profile-display-name" name="display_name" type="text" maxlength="100"
+              autocomplete="name" aria-describedby="profile-display-name-hint">
+            <p class="hint" id="profile-display-name-hint">Your public name. Up to 100 characters.</p>
+          </div>
+          <div class="field">
+            <label for="profile-bio">Bio</label>
+            <textarea id="profile-bio" name="bio" maxlength="500" rows="3"
+              aria-describedby="profile-bio-hint"></textarea>
+            <p class="hint" id="profile-bio-hint">A short description. Up to 500 characters.</p>
+          </div>
+          <div class="field">
+            <label for="profile-website">Website</label>
+            <input id="profile-website" name="website_url" type="url"
+              autocomplete="url" placeholder="https://example.com"
+              aria-describedby="profile-website-hint profile-website-error">
+            <p class="hint" id="profile-website-hint">Must start with https:// or http://</p>
+            <p class="form-error" id="profile-website-error" role="alert" aria-live="polite"></p>
+          </div>
+          <div class="actions">
+            <button id="profile-save" type="submit">Save profile</button>
+            <button id="profile-cancel" type="button" class="secondary">Cancel</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="domain-section" id="domain-section" hidden>
+        <h2>Website verification</h2>
+        <div id="domain-verified-block" hidden>
+          <p class="domain-verified-label">Verified</p>
+          <p id="domain-verified-subject" class="domain-verified-subject"></p>
+          <p class="hint" id="domain-verified-expires"></p>
+        </div>
+        <div id="domain-challenge-block" hidden>
+          <p>Add this TXT record to your domain's DNS to verify ownership.</p>
+          <div class="challenge-record">
+            <p class="challenge-label">DNS TXT record value</p>
+            <code id="domain-txt-value" class="challenge-value"></code>
+            <button id="domain-copy-txt" type="button" class="secondary">Copy</button>
+          </div>
+          <p class="hint">Add it at the root of <strong id="domain-challenge-domain"></strong> and click Verify.</p>
+          <div class="actions">
+            <button id="domain-verify-btn" type="button">Verify now</button>
+            <button id="domain-cancel-challenge" type="button" class="secondary">Cancel</button>
+          </div>
+          <p id="domain-verify-status" aria-live="polite" class="hint"></p>
+        </div>
+        <div id="domain-start-block">
+          <p class="hint">Verify that you control a website domain to show it on your public page.</p>
+          <form id="domain-start-form" novalidate>
+            <div class="field">
+              <label for="domain-input">Your domain</label>
+              <input id="domain-input" name="domain" type="text"
+                placeholder="example.com" autocomplete="off" autocapitalize="none"
+                aria-describedby="domain-input-hint domain-start-error">
+              <p class="hint" id="domain-input-hint">Enter your domain name, e.g. example.com</p>
+              <p class="form-error" id="domain-start-error" role="alert" aria-live="polite"></p>
+            </div>
+            <button id="domain-start-btn" type="submit">Start verification</button>
+          </form>
+        </div>
+      </div>
+
+      <section id="payment-route-section" class="workspace-section" hidden>
+        <h2>Payment Route</h2>
+        <p class="hint">
+          Publish your connected wallet as your USDC payment destination on Polygon.
+          Your IX ID identity and public URL are not affected by route changes.
+        </p>
+
+        <!-- Active route state -->
+        <div id="route-active-block" hidden>
+          <div class="route-display">
+            <p><strong>Active destination:</strong> <span id="route-address"></span></p>
+            <p><strong>Network:</strong> Polygon (Chain ID 137) &mdash; Native USDC</p>
+          </div>
+          <div class="actions">
+            <button type="button" id="route-replace-btn">Sign and replace</button>
+            <button type="button" id="route-disable-btn" class="secondary">Remove route</button>
+          </div>
+        </div>
+
+        <!-- No route state -->
+        <div id="route-none-block" hidden>
+          <p>No payment route published. Connect your wallet then sign to publish.</p>
+          <button type="button" id="route-sign-btn">Sign and publish</button>
+        </div>
+
+        <p id="route-sign-error" class="form-error" role="alert" aria-live="polite" hidden></p>
+        <p id="route-status-msg" class="hint" aria-live="polite" hidden></p>
+      </section>
 
       <div class="wallet-section" aria-label="Wallet connection">
         <h2>Wallet</h2>
-        <p id="wallet-address" class="wallet-address" hidden aria-live="polite"></p>
+        <p class="hint">Connect the Polygon wallet you want to receive payments at.</p>
+        <p id="wallet-address" class="wallet-address" hidden aria-live="polite" aria-label="Connected wallet address on Polygon"></p>
         <div class="actions">
           <button id="connect-wallet" type="button">Connect Wallet</button>
           <button id="disconnect-wallet" type="button" class="secondary" hidden>Disconnect</button>
@@ -147,6 +256,16 @@
     </section>
 
     <p class="status" id="global-status" role="status" aria-live="polite"></p>
+
+    <footer class="site-footer">
+      <nav aria-label="Site links">
+        <a href="https://ixid.me/about">About IX ID</a>
+        <a href="https://ixid.me/help">Help</a>
+        <a href="https://ixid.me/privacy">Privacy</a>
+        <a href="https://ixid.me/terms">Terms</a>
+        <a href="https://implicitex.com">ImplicitEx</a>
+      </nav>
+    </footer>
   </main>
 </body>
 </html>

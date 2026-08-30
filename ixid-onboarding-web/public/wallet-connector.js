@@ -66,6 +66,85 @@
         return parseChainId(chainId) === expectedChainId;
       },
 
+      // Return the currently authorized accounts without triggering a new
+      // connection prompt. Uses eth_accounts (read-only; does not request access).
+      //
+      // Resolves with one of:
+      //   { rejected: false, accounts: string[] }  — normalised lowercase addresses
+      //   { rejected: true,  reason: string }       — any failure
+      //
+      // Never rejects — all failure paths return a resolved value.
+      getAccounts: function getAccounts() {
+        var provider = providerGetter();
+        if (!provider) {
+          return Promise.resolve({ rejected: true, reason: 'no_provider', accounts: [] });
+        }
+        return provider.request({ method: 'eth_accounts' }).then(
+          function onAccounts(accounts) {
+            if (!Array.isArray(accounts)) {
+              return { rejected: true, reason: 'invalid_response', accounts: [] };
+            }
+            var normalised = [];
+            for (var i = 0; i < accounts.length; i++) {
+              var a = accounts[i];
+              if (typeof a === 'string' && /^0x[0-9a-fA-F]{40}$/.test(a)) {
+                normalised.push(a.toLowerCase());
+              }
+            }
+            return { rejected: false, accounts: normalised };
+          },
+          function onError() {
+            return { rejected: true, reason: 'accounts_read_failed', accounts: [] };
+          }
+        );
+      },
+
+      // Sign arbitrary text using EIP-191 personal_sign via the connected wallet.
+      //
+      // text    — the challenge text string to sign (UTF-8)
+      // address — the lowercase hex address that must sign (0x...)
+      //
+      // Resolves with one of:
+      //   { rejected: false, signature: string }   — 0x-prefixed hex signature
+      //   { rejected: true,  reason: string }       — any failure
+      //
+      // Never rejects — all failure paths return a resolved value.
+      signMessage: function signMessage(text, address) {
+        var provider = providerGetter();
+        if (!provider) {
+          return Promise.resolve({ rejected: true, reason: 'no_provider' });
+        }
+        if (typeof text !== 'string' || !text) {
+          return Promise.resolve({ rejected: true, reason: 'invalid_message' });
+        }
+        if (!isHexAddress(address)) {
+          return Promise.resolve({ rejected: true, reason: 'invalid_address' });
+        }
+        // personal_sign params: [message_hex_or_utf8, account_address]
+        // Encode text as hex for unambiguous transport.
+        var msgHex = '0x' + Array.from(new TextEncoder().encode(text))
+          .map(function(b) { return b.toString(16).padStart(2, '0'); })
+          .join('');
+        return provider.request({
+          method: 'personal_sign',
+          params: [msgHex, address],
+        }).then(
+          function onSigned(sig) {
+            if (typeof sig !== 'string' || !sig.startsWith('0x')) {
+              return { rejected: true, reason: 'invalid_signature_response' };
+            }
+            return { rejected: false, signature: sig };
+          },
+          function onSignError(err) {
+            // EIP-1193 user-rejection code 4001.
+            if (err && err.code === 4001) {
+              return { rejected: true, reason: 'user_rejected', code: 4001 };
+            }
+            return { rejected: true, reason: 'sign_failed', code: err && err.code };
+          }
+        );
+      },
+
       // Request wallet connection via the injected EIP-1193 provider.
       //
       // Resolves with one of:

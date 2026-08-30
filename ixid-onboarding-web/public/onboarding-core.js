@@ -598,6 +598,15 @@
       return this.transition(STATES.ACTIVE, { walletAddress: null });
     }
 
+    async getToken() {
+      if (!this.currentUser) return null;
+      try {
+        return await this.auth.getIdToken(this.currentUser, false);
+      } catch (_error) {
+        return null;
+      }
+    }
+
   }
 
   function createOnboardingController(dependencies) {

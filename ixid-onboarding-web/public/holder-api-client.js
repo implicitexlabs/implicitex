@@ -76,6 +76,62 @@
           body: JSON.stringify({ operation_id: operationId, handle: handle }),
         });
       },
+
+      updateProfile: function updateProfile(token, fields) {
+        return request('/profile', token, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(fields),
+        });
+      },
+
+      issueDomainChallenge: function issueDomainChallenge(token, domain) {
+        return request('/domain-challenge', token, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ domain: domain }),
+        });
+      },
+
+      verifyDomain: function verifyDomain(token, challengeId) {
+        return request('/domain-verify', token, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ challenge_id: challengeId }),
+        });
+      },
+
+      getDomainStatus: function getDomainStatus(token) {
+        return request('/domain-status', token, { method: 'GET' });
+      },
+
+      issueWalletChallenge: function issueWalletChallenge(token, destinationAddress) {
+        return request('/wallet-challenge', token, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ destination_address: destinationAddress }),
+        });
+      },
+
+      verifyWallet: function verifyWallet(token, challengeId, signature) {
+        return request('/wallet-verify', token, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ challenge_id: challengeId, signature: signature }),
+        });
+      },
+
+      getPaymentRoute: function getPaymentRoute(token) {
+        return request('/payment-route', token, { method: 'GET' });
+      },
+
+      disablePaymentRoute: function disablePaymentRoute(token) {
+        return request('/payment-route/disable', token, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({}),
+        });
+      },
     });
   }
 
