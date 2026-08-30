@@ -251,6 +251,46 @@ def proxy_get_workspace() -> Response:
     return _handle_proxy("/holder/v0.1/workspace")
 
 
+@app.route("/holder/v0.1/profile", methods=["PATCH"])
+def proxy_update_profile() -> Response:
+    return _handle_proxy("/holder/v0.1/profile")
+
+
+@app.route("/holder/v0.1/domain-challenge", methods=["POST"])
+def proxy_issue_domain_challenge() -> Response:
+    return _handle_proxy("/holder/v0.1/domain-challenge")
+
+
+@app.route("/holder/v0.1/domain-verify", methods=["POST"])
+def proxy_verify_domain() -> Response:
+    return _handle_proxy("/holder/v0.1/domain-verify")
+
+
+@app.route("/holder/v0.1/domain-status", methods=["GET"])
+def proxy_get_domain_status() -> Response:
+    return _handle_proxy("/holder/v0.1/domain-status")
+
+
+@app.route("/holder/v0.1/wallet-challenge", methods=["POST"])
+def proxy_wallet_challenge() -> Response:
+    return _handle_proxy("/holder/v0.1/wallet-challenge")
+
+
+@app.route("/holder/v0.1/wallet-verify", methods=["POST"])
+def proxy_wallet_verify() -> Response:
+    return _handle_proxy("/holder/v0.1/wallet-verify")
+
+
+@app.route("/holder/v0.1/payment-route", methods=["GET"])
+def proxy_payment_route() -> Response:
+    return _handle_proxy("/holder/v0.1/payment-route")
+
+
+@app.route("/holder/v0.1/payment-route/disable", methods=["POST"])
+def proxy_disable_payment_route() -> Response:
+    return _handle_proxy("/holder/v0.1/payment-route/disable")
+
+
 # ---------------------------------------------------------------------------
 # Error handlers
 # ---------------------------------------------------------------------------

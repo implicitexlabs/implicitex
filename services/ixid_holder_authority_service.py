@@ -36,6 +36,7 @@ import re
 import secrets
 import base64
 import uuid
+import urllib.parse
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import Enum
@@ -120,6 +121,14 @@ class InternalConsistencyError(HolderAuthorityError):
     pass
 
 
+class RateLimitError(HolderAuthorityError):
+    """Maps to HTTP 429 Too Many Requests."""
+
+    def __init__(self, message: str = "Rate limit exceeded", retry_after: int = 60):
+        super().__init__(message)
+        self.retry_after = retry_after
+
+
 # ---------------------------------------------------------------------------
 # Enums
 # ---------------------------------------------------------------------------
@@ -173,6 +182,135 @@ class WorkspaceResult:
     account_state: str
     account_state_version: int
     ix_ids: list
+
+
+@dataclass(frozen=True)
+class ProfileResult:
+    display_name: str | None
+    bio: str | None
+    website_url: str | None
+
+
+@dataclass(frozen=True)
+class DomainChallengeResult:
+    challenge_id: str
+    domain: str
+    txt_record: str
+    expires_at: datetime
+
+
+@dataclass(frozen=True)
+class DomainVerifyResult:
+    verified: bool
+    claim_id: str | None
+    error_code: str | None
+
+
+@dataclass(frozen=True)
+class DomainStatusResult:
+    domain_status: str | None
+    domain_subject: str | None
+    domain_claim_id: str | None
+    domain_expires_at: datetime | None
+    pending_challenge_id: str | None
+    pending_challenge_domain: str | None
+    pending_txt_record: str | None
+    pending_challenge_expires_at: datetime | None
+
+
+# ---------------------------------------------------------------------------
+# Payment route constants
+# ---------------------------------------------------------------------------
+
+_POLYGON_CHAIN_ID = 137
+_POLYGON_USDC_CONTRACT = "0x3c499c542cef5e3811e1192ce70d8cc03d5c3359"
+# Immutable asset binding identifier (asset-route-registry.md polygon-pos-native-usdc-v1).
+# Used in the public route response so payers can identify the exact ERC-20 contract
+# without inferring it from the symbol. NOT USDC.e (0x2791...).
+_POLYGON_USDC_ASSET_BINDING = "polygon-pos-native-usdc-v1"
+_WALLET_ADDRESS_RE = re.compile(r"^0x[0-9a-fA-F]{40}$")
+_ZERO_ADDRESS = "0x" + "0" * 40
+_WALLET_CHALLENGE_TTL_SECONDS = 600  # 10 minutes
+# Spec §8.4: minimum 10 route mutations (verify + disable) per account per hour.
+_ROUTE_MUTATION_LIMIT_PER_HOUR = 10
+# Separate per-account limit for wallet challenge issuance. Challenge issuance
+# does not mutate the route (no active_payment_route_* fields change; any
+# existing PENDING challenge is merely cancelled). A separate counter prevents
+# unbounded challenge record accumulation without coupling issuance quota to the
+# route-mutation limit. Same window (1 hour) and same numeric limit for
+# consistency with §8.4.
+_CHALLENGE_ISSUANCE_LIMIT_PER_HOUR = 10
+
+
+# ---------------------------------------------------------------------------
+# Payment route result types
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class WalletChallengeResult:
+    challenge_id: str
+    ix_id: str
+    destination_address: str
+    chain_id: int
+    challenge_text: str
+    expires_at: datetime
+
+
+@dataclass(frozen=True)
+class WalletVerifyResult:
+    claim_id: str
+    ix_id: str
+    destination_address: str
+    chain_id: int
+    is_replacement: bool
+
+
+@dataclass(frozen=True)
+class PaymentRouteResult:
+    ix_id: str | None
+    destination_address: str | None
+    chain_id: int | None
+    # Structured asset identity; None when no route is active.
+    # Fields: symbol, contract (exact ERC-20 address), asset_binding_version.
+    # The contract field unambiguously identifies native Circle USDC on Polygon,
+    # not USDC.e (0x2791bca1f2de4661ed88a30c99a7a9449aa84174).
+    asset: dict | None
+    # claim_id is the immutable route revision identifier.
+    # A payment intent MUST capture claim_id at resolution time. Any replacement
+    # produces a new claim_id; the payer can detect a stale binding by comparing
+    # its captured claim_id against the current active_payment_route_claim_id.
+    # Integer counters are not used; claim_id provides the same guarantee as an
+    # opaque monotonically unique revision identifier.
+    claim_id: str | None
+    routing_suspended: bool
+
+
+# ---------------------------------------------------------------------------
+# Reserved handles (§4.2)
+# ---------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------
+# Wallet address validation
+# ---------------------------------------------------------------------------
+
+
+def _validate_wallet_address(address: str) -> str:
+    """Validate and normalize (lowercase) an EVM wallet address. Raises ValidationError."""
+    if not isinstance(address, str):
+        raise ValidationError("destination_address must be a string", code="INVALID_ADDRESS")
+    if not _WALLET_ADDRESS_RE.match(address):
+        raise ValidationError(
+            "destination_address must be a 0x-prefixed 40-hex-character address",
+            code="INVALID_ADDRESS",
+        )
+    normalized = address.lower()
+    if normalized == _ZERO_ADDRESS:
+        raise ValidationError(
+            "destination_address must not be the zero address",
+            code="INVALID_ADDRESS",
+        )
+    return normalized
 
 
 # ---------------------------------------------------------------------------
@@ -233,6 +371,20 @@ _RESERVED_HANDLES: frozenset[str] = frozenset(
 )
 
 # ---------------------------------------------------------------------------
+# Profile field limits
+# ---------------------------------------------------------------------------
+
+_DISPLAY_NAME_MAX = 100
+_BIO_MAX = 500
+_WEBSITE_URL_MAX = 2048
+
+_PROFILE_MUTATION_TYPES = {
+    "display_name": "DISPLAY_NAME",
+    "bio": "BIO",
+    "website_url": "WEBSITE_URL",
+}
+
+# ---------------------------------------------------------------------------
 # Handle canonicalization (§4.1)
 # ---------------------------------------------------------------------------
 
@@ -273,6 +425,40 @@ def check_reserved_handle(canonical_handle: str) -> None:
             f"Handle '{canonical_handle}' is reserved",
             code="RESERVED_HANDLE",
         )
+
+
+def _validate_text_field(value: object, max_len: int, field_name: str) -> str | None:
+    """Trim a string field; None or empty string clears it. Raises ValidationError on type or length error."""
+    if value is None:
+        return None
+    if not isinstance(value, str):
+        raise ValidationError(f"{field_name} must be a string", code="PROFILE_VALIDATION_ERROR")
+    trimmed = value.strip()
+    if trimmed == "":
+        return None
+    if len(trimmed) > max_len:
+        raise ValidationError(
+            f"{field_name} must be {max_len} characters or fewer",
+            code="PROFILE_VALIDATION_ERROR",
+        )
+    return trimmed
+
+
+def _validate_url_field(value: object, field_name: str) -> str | None:
+    """Validate and trim a URL field. Accepts http/https only. Empty string clears it."""
+    trimmed = _validate_text_field(value, _WEBSITE_URL_MAX, field_name)
+    if trimmed is None:
+        return None
+    try:
+        parsed = urllib.parse.urlparse(trimmed)
+    except Exception:
+        raise ValidationError(f"{field_name} must be a valid URL", code="PROFILE_VALIDATION_ERROR")
+    if parsed.scheme not in ("http", "https") or not parsed.netloc:
+        raise ValidationError(
+            f"{field_name} must be an http or https URL",
+            code="PROFILE_VALIDATION_ERROR",
+        )
+    return trimmed
 
 
 # ---------------------------------------------------------------------------
@@ -427,6 +613,26 @@ def _assert_register_ix_id_binding(
         raise IdempotencyConflictError(
             "operation_id conflict: receipt fields do not match current request"
         )
+
+
+# ---------------------------------------------------------------------------
+# Asset identity helper
+# ---------------------------------------------------------------------------
+
+
+def _polygon_usdc_asset_identity() -> dict:
+    """
+    Immutable asset binding for native Circle USDC on Polygon (polygon-pos-native-usdc-v1).
+
+    Returns the canonical dict included in public payment-route responses.
+    The 'contract' field unambiguously identifies the ERC-20 contract so payers
+    do not have to infer it from the symbol. USDC.e (0x2791...) is NOT supported.
+    """
+    return {
+        "symbol": "USDC",
+        "contract": _POLYGON_USDC_CONTRACT,
+        "asset_binding_version": _POLYGON_USDC_ASSET_BINDING,
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -962,6 +1168,11 @@ class HolderAuthorityService:
                         "ix_id_state": ix.get("ix_id_state"),
                         "ix_id_state_version": ix.get("ix_id_state_version"),
                         "owner_account_id": account_id,
+                        "profile": {
+                            "display_name": ix.get("display_name"),
+                            "bio": ix.get("bio"),
+                            "website_url": ix.get("website_url"),
+                        },
                     }
                 )
 
@@ -1011,3 +1222,857 @@ class HolderAuthorityService:
             )
 
         return account_id, state
+
+    # ── UPDATE_PROFILE ───────────────────────────────────────────────────────
+
+    def update_profile(
+        self,
+        identity_key: str,
+        updates: dict,
+    ) -> ProfileResult:
+        """
+        Update profile fields on the owner's IX ID document.
+
+        Only fields present in ``updates`` are modified. Omitted fields
+        are left unchanged. An empty string in ``updates`` clears a field.
+
+        Supported fields: display_name, bio, website_url.
+        All text fields are trimmed before validation.
+        Writes identity_mutations events for every changed field.
+        """
+        db = self._db
+
+        # Resolve account — ACTIVE only
+        account_id, _state = self._resolve_account_for_mutation(identity_key)
+
+        # Look up owned IX ID
+        acct_ref = db.collection("accounts").document(account_id)
+        acct_snap = acct_ref.get()
+        if not acct_snap.exists:
+            raise InternalConsistencyError("account document absent after resolution")
+        owned_ix_id = acct_snap.to_dict().get("owned_ix_id")
+        if not owned_ix_id:
+            raise ValidationError(
+                "no IX ID registered; claim a handle before editing your profile",
+                code="NO_IX_ID",
+            )
+
+        # Validate supplied fields
+        validated: dict[str, str | None] = {}
+        if "display_name" in updates:
+            validated["display_name"] = _validate_text_field(
+                updates["display_name"], _DISPLAY_NAME_MAX, "display_name"
+            )
+        if "bio" in updates:
+            validated["bio"] = _validate_text_field(updates["bio"], _BIO_MAX, "bio")
+        if "website_url" in updates:
+            validated["website_url"] = _validate_url_field(updates["website_url"], "website_url")
+
+        # Reject unrecognised fields
+        unknown = set(updates.keys()) - set(_PROFILE_MUTATION_TYPES.keys())
+        if unknown:
+            raise ValidationError(
+                f"unrecognised profile field(s): {', '.join(sorted(unknown))}",
+                code="PROFILE_VALIDATION_ERROR",
+            )
+
+        if not validated:
+            # No recognised fields in request — nothing to do
+            ix_ref = db.collection("ix_ids").document(owned_ix_id)
+            ix_snap = ix_ref.get()
+            ix = ix_snap.to_dict() if ix_snap.exists else {}
+            return ProfileResult(
+                display_name=ix.get("display_name"),
+                bio=ix.get("bio"),
+                website_url=ix.get("website_url"),
+            )
+
+        now = datetime.now(timezone.utc)
+        ix_ref = db.collection("ix_ids").document(owned_ix_id)
+        mutations_ref = ix_ref.collection("identity_mutations")
+
+        # Build mutation events and field updates
+        mutation_docs = []
+        field_updates: dict[str, object] = {}
+        for field_name, new_val in validated.items():
+            event_id = str(uuid.uuid4())
+            new_hash = (
+                hashlib.sha256(new_val.encode("utf-8")).hexdigest()
+                if new_val is not None
+                else None
+            )
+            mutation_docs.append(
+                (
+                    mutations_ref.document(event_id),
+                    {
+                        "event_id": event_id,
+                        "mutation_type": _PROFILE_MUTATION_TYPES[field_name],
+                        "prior_value_ref": None,
+                        "new_value_hash": new_hash,
+                        "mutated_at": now,
+                        "session_event_id": event_id,
+                    },
+                )
+            )
+            field_updates[field_name] = new_val
+
+        # Write mutation events + field updates in a transaction
+        transaction = db.transaction()
+
+        @firestore.transactional
+        def _run(transaction: firestore.Transaction) -> None:  # noqa: WPS430
+            for ref, doc in mutation_docs:
+                transaction.set(ref, doc)
+            transaction.update(ix_ref, field_updates)
+
+        _run(transaction)
+
+        # Read back to return authoritative values
+        ix_snap = ix_ref.get()
+        ix = ix_snap.to_dict() if ix_snap.exists else {}
+
+        logger.info(
+            "UPDATE_PROFILE committed: account_id=%s ix_id=%s fields=%s",
+            account_id,
+            owned_ix_id,
+            list(validated.keys()),
+        )
+
+        return ProfileResult(
+            display_name=ix.get("display_name"),
+            bio=ix.get("bio"),
+            website_url=ix.get("website_url"),
+        )
+
+    # ── DOMAIN CHALLENGE ─────────────────────────────────────────────────────
+
+    def issue_domain_challenge(
+        self,
+        identity_key: str,
+        domain_input: str,
+    ) -> DomainChallengeResult:
+        """
+        Issue a DNS TXT challenge for domain verification.
+        Owner must have a registered IX ID.
+        """
+        from ixid_domain_verification_service import issue_challenge  # noqa: PLC0415
+
+        db = self._db
+
+        account_id, _state = self._resolve_account_for_mutation(identity_key)
+
+        acct_ref = db.collection("accounts").document(account_id)
+        acct_snap = acct_ref.get()
+        if not acct_snap.exists:
+            raise InternalConsistencyError("account document absent after resolution")
+        owned_ix_id = acct_snap.to_dict().get("owned_ix_id")
+        if not owned_ix_id:
+            raise ValidationError(
+                "no IX ID registered; claim a handle before verifying a domain",
+                code="NO_IX_ID",
+            )
+
+        if not isinstance(domain_input, str) or not domain_input.strip():
+            raise ValidationError("domain must be a non-empty string", code="PROFILE_VALIDATION_ERROR")
+        domain = domain_input.strip().lower().lstrip("http://").lstrip("https://").rstrip("/")
+        if not domain or "." not in domain:
+            raise ValidationError("domain must be a valid domain name (e.g. example.com)", code="PROFILE_VALIDATION_ERROR")
+
+        issuance = issue_challenge(db, owned_ix_id, domain, account_id)
+
+        return DomainChallengeResult(
+            challenge_id=issuance.challenge_id,
+            domain=issuance.domain,
+            txt_record=issuance.txt_record_value,
+            expires_at=issuance.expires_at,
+        )
+
+    # ── DOMAIN VERIFY ────────────────────────────────────────────────────────
+
+    def verify_domain_challenge(
+        self,
+        identity_key: str,
+        challenge_id_input: str,
+    ) -> DomainVerifyResult:
+        """
+        Attempt to verify a DNS TXT challenge. Returns success/failure.
+        The challenge must be owned by this account's IX ID.
+        """
+        from ixid_domain_verification_service import verify_domain  # noqa: PLC0415
+
+        db = self._db
+
+        account_id, _state = self._resolve_account_for_mutation(identity_key)
+
+        acct_ref = db.collection("accounts").document(account_id)
+        acct_snap = acct_ref.get()
+        if not acct_snap.exists:
+            raise InternalConsistencyError("account document absent after resolution")
+        owned_ix_id = acct_snap.to_dict().get("owned_ix_id")
+        if not owned_ix_id:
+            raise ValidationError("no IX ID registered", code="NO_IX_ID")
+
+        if not isinstance(challenge_id_input, str) or not challenge_id_input.strip():
+            raise ValidationError("challenge_id must be a non-empty string", code="PROFILE_VALIDATION_ERROR")
+
+        outcome = verify_domain(db, owned_ix_id, challenge_id_input.strip(), account_id)
+
+        return DomainVerifyResult(
+            verified=outcome.success,
+            claim_id=outcome.claim_id,
+            error_code=outcome.error_code,
+        )
+
+    # ── DOMAIN STATUS ────────────────────────────────────────────────────────
+
+    def get_domain_status(self, identity_key: str) -> DomainStatusResult:
+        """
+        Return the current domain verification status and any pending challenge
+        for the authenticated owner's IX ID.
+        """
+        db = self._db
+
+        # Use workspace-style resolution (read-only — no email-verified requirement)
+        auth_ref = db.collection("auth_identities").document(identity_key)
+        auth_snap = auth_ref.get()
+        if not auth_snap.exists:
+            raise AuthenticationError("auth identity not found")
+        auth = auth_snap.to_dict()
+        if auth.get("auth_identity_state") == AuthIdentityState.REVOKED:
+            raise AuthenticationError("auth identity revoked")
+
+        account_id = auth["account_id"]
+        acct_ref = db.collection("accounts").document(account_id)
+        acct_snap = acct_ref.get()
+        if not acct_snap.exists:
+            raise InternalConsistencyError("auth mapping points to non-existent account")
+        acct = acct_snap.to_dict()
+        state = acct.get("account_state")
+        if state in (AccountState.DISABLED, AccountState.CLOSED):
+            raise AuthorizationError(f"account {state}", internal_code="ACCOUNT_NOT_READABLE")
+
+        owned_ix_id = acct.get("owned_ix_id")
+        if not owned_ix_id:
+            return DomainStatusResult(
+                domain_status=None,
+                domain_subject=None,
+                domain_claim_id=None,
+                domain_expires_at=None,
+                pending_challenge_id=None,
+                pending_challenge_domain=None,
+                pending_txt_record=None,
+                pending_challenge_expires_at=None,
+            )
+
+        ix_ref = db.collection("ix_ids").document(owned_ix_id)
+
+        # Load domain claims
+        claims = list(ix_ref.collection("verification_claims").stream())
+        domain_claims = [c for c in claims if c.to_dict().get("claim_type") == "DOMAIN"]
+
+        domain_status = None
+        domain_subject = None
+        domain_claim_id = None
+        domain_expires_at = None
+
+        if domain_claims:
+            # Find the active/most-recent non-superseded claim
+            non_superseded = [c for c in domain_claims if not c.to_dict().get("superseded_by")]
+            candidates = non_superseded if non_superseded else domain_claims
+            best = max(candidates, key=lambda c: c.to_dict().get("verified_at", datetime.min.replace(tzinfo=timezone.utc)))
+            d = best.to_dict()
+            domain_status = d.get("status")
+            domain_subject = d.get("subject")
+            domain_claim_id = best.id
+            domain_expires_at = d.get("expires_at")
+
+        # Load most recent PENDING challenge
+        from ixid_domain_verification_service import ChallengeStatus  # noqa: PLC0415
+        challenges = list(
+            ix_ref.collection("domain_challenges")
+            .where("status", "==", ChallengeStatus.PENDING.value)
+            .stream()
+        )
+        pending_challenge_id = None
+        pending_challenge_domain = None
+        pending_txt_record = None
+        pending_challenge_expires_at = None
+
+        if challenges:
+            now = datetime.now(timezone.utc)
+            # Filter to non-expired (wall-clock)
+            valid = [
+                c for c in challenges
+                if c.to_dict().get("expires_at") is None
+                or (
+                    isinstance(c.to_dict().get("expires_at"), datetime)
+                    and c.to_dict()["expires_at"].replace(tzinfo=timezone.utc)
+                    if c.to_dict()["expires_at"].tzinfo is None
+                    else c.to_dict()["expires_at"]
+                ) > now
+            ]
+            if valid:
+                latest = max(valid, key=lambda c: c.to_dict().get("issued_at", datetime.min.replace(tzinfo=timezone.utc)))
+                p = latest.to_dict()
+                pending_challenge_id = latest.id
+                pending_challenge_domain = p.get("domain")
+                pending_txt_record = p.get("txt_record_value")
+                pending_challenge_expires_at = p.get("expires_at")
+
+        return DomainStatusResult(
+            domain_status=domain_status,
+            domain_subject=domain_subject,
+            domain_claim_id=domain_claim_id,
+            domain_expires_at=domain_expires_at,
+            pending_challenge_id=pending_challenge_id,
+            pending_challenge_domain=pending_challenge_domain,
+            pending_txt_record=pending_txt_record,
+            pending_challenge_expires_at=pending_challenge_expires_at,
+        )
+
+    # ── ISSUE_WALLET_CHALLENGE ────────────────────────────────────────────────
+
+    def issue_wallet_challenge(
+        self,
+        identity_key: str,
+        destination_address: str,
+    ) -> WalletChallengeResult:
+        """
+        Issue a personal_sign challenge for wallet binding.
+
+        Cancels any existing PENDING wallet_challenges for this ix_id before
+        writing the new one. The challenge_text contains everything the holder
+        must sign; the service verifies the recovered signer matches
+        destination_address in verify_wallet_challenge.
+        """
+        db = self._db
+
+        account_id, _state = self._resolve_account_for_mutation(identity_key)
+
+        # Enforce challenge issuance rate limit before any Firestore writes.
+        # Uses a separate counter from the route-mutation limit so that the
+        # full 10/hour mutation budget is preserved even if challenges are
+        # issued but not verified.
+        self._check_challenge_issuance_rate_limit(account_id)
+
+        # Resolve owned IX ID
+        acct_ref = db.collection("accounts").document(account_id)
+        acct_snap = acct_ref.get()
+        if not acct_snap.exists:
+            raise InternalConsistencyError("account document absent after resolution")
+        owned_ix_id = acct_snap.to_dict().get("owned_ix_id")
+        if not owned_ix_id:
+            raise ValidationError(
+                "no IX ID registered; claim a handle before setting a payment route",
+                code="NO_IX_ID",
+            )
+
+        normalized_address = _validate_wallet_address(destination_address)
+
+        # Cancel any existing PENDING challenges for this ix_id
+        ix_ref = db.collection("ix_ids").document(owned_ix_id)
+        pending_challenges = list(
+            ix_ref.collection("wallet_challenges")
+            .where("status", "==", "PENDING")
+            .stream()
+        )
+        for c in pending_challenges:
+            c.reference.update({"status": "CANCELLED"})
+
+        # Generate challenge
+        challenge_id = str(uuid.uuid4())
+        now = datetime.now(timezone.utc)
+        from datetime import timedelta  # noqa: PLC0415
+        expires_at = now + timedelta(seconds=_WALLET_CHALLENGE_TTL_SECONDS)
+        issued_at_iso = now.strftime("%Y-%m-%dT%H:%M:%SZ")
+        expires_at_iso = expires_at.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+        challenge_text = (
+            "IX ID Payment Route Authorization\n"
+            "\n"
+            "I authorize this wallet as my USDC payment destination on Polygon.\n"
+            "\n"
+            f"IX ID: {owned_ix_id}\n"
+            f"Wallet: {normalized_address}\n"
+            f"Network: Polygon (Chain ID: 137)\n"
+            f"Asset: USDC (0x3c499c542cef5e3811e1192ce70d8cc03d5c3359)\n"
+            f"Challenge: {challenge_id}\n"
+            f"Issued: {issued_at_iso}\n"
+            f"Expires: {expires_at_iso}\n"
+            "\n"
+            "This signature proves I control this wallet.\n"
+            "It does not transfer funds or grant other permissions."
+        )
+
+        ix_ref.collection("wallet_challenges").document(challenge_id).set({
+            "challenge_id": challenge_id,
+            "ix_id": owned_ix_id,
+            "account_id": account_id,
+            "destination_address": normalized_address,
+            "chain_id": _POLYGON_CHAIN_ID,
+            "challenge_text": challenge_text,
+            "status": "PENDING",
+            "issued_at": now,
+            "expires_at": expires_at,
+        })
+
+        logger.info(
+            "WALLET_CHALLENGE issued: account_id=%s ix_id=%s challenge_id=%s",
+            account_id,
+            owned_ix_id,
+            challenge_id,
+        )
+
+        return WalletChallengeResult(
+            challenge_id=challenge_id,
+            ix_id=owned_ix_id,
+            destination_address=normalized_address,
+            chain_id=_POLYGON_CHAIN_ID,
+            challenge_text=challenge_text,
+            expires_at=expires_at,
+        )
+
+    # ── VERIFY_WALLET_CHALLENGE ───────────────────────────────────────────────
+
+    def verify_wallet_challenge(
+        self,
+        identity_key: str,
+        challenge_id: str,
+        signature: str,
+    ) -> WalletVerifyResult:
+        """
+        Verify a personal_sign signature against a previously issued challenge.
+
+        Atomically:
+          - Marks challenge CONSUMED
+          - Supersedes any prior PAYMENT_ROUTE claim
+          - Writes wallet_binding_events (append-only)
+          - Writes new verification_claims/{claim_id}
+          - Updates ix_ids root doc with active route pointers
+        """
+        from eth_account import Account  # noqa: PLC0415
+        from eth_account.messages import encode_defunct  # noqa: PLC0415
+
+        db = self._db
+
+        account_id, _state = self._resolve_account_for_mutation(identity_key)
+
+        # Enforce route mutation rate limit (§8.4) before any further reads.
+        # Rejection produces zero Firestore writes to authoritative collections.
+        self._check_route_mutation_rate_limit(account_id)
+
+        # Resolve owned IX ID
+        acct_ref = db.collection("accounts").document(account_id)
+        acct_snap = acct_ref.get()
+        if not acct_snap.exists:
+            raise InternalConsistencyError("account document absent after resolution")
+        owned_ix_id = acct_snap.to_dict().get("owned_ix_id")
+        if not owned_ix_id:
+            raise ValidationError("no IX ID registered", code="NO_IX_ID")
+
+        # Load challenge
+        ix_ref = db.collection("ix_ids").document(owned_ix_id)
+        challenge_ref = ix_ref.collection("wallet_challenges").document(challenge_id)
+        challenge_snap = challenge_ref.get()
+        if not challenge_snap.exists:
+            raise ValidationError("challenge not found", code="CHALLENGE_NOT_FOUND")
+
+        challenge = challenge_snap.to_dict()
+
+        # Ownership and consistency checks (pre-transaction)
+        if challenge.get("account_id") != account_id:
+            raise AuthorizationError(
+                "challenge belongs to a different account",
+                internal_code="CHALLENGE_WRONG_ACCOUNT",
+            )
+        if challenge.get("ix_id") != owned_ix_id:
+            raise InternalConsistencyError(
+                "challenge ix_id disagrees with account owned_ix_id"
+            )
+        if challenge.get("status") != "PENDING":
+            raise ValidationError(
+                "challenge has already been used or cancelled",
+                code="CHALLENGE_ALREADY_USED",
+            )
+
+        now = datetime.now(timezone.utc)
+        challenge_expires_at = challenge.get("expires_at")
+        if challenge_expires_at is not None:
+            # Normalize tz-awareness
+            if isinstance(challenge_expires_at, datetime) and challenge_expires_at.tzinfo is None:
+                challenge_expires_at = challenge_expires_at.replace(tzinfo=timezone.utc)
+            if now >= challenge_expires_at:
+                raise ValidationError("challenge has expired", code="CHALLENGE_EXPIRED")
+
+        if challenge.get("chain_id") != _POLYGON_CHAIN_ID:
+            raise InternalConsistencyError(
+                f"challenge chain_id={challenge.get('chain_id')} is not {_POLYGON_CHAIN_ID}"
+            )
+
+        # Verify signature
+        challenge_text = challenge["challenge_text"]
+        normalized_address = challenge["destination_address"]
+        message = encode_defunct(text=challenge_text)
+        try:
+            recovered = Account.recover_message(message, signature=signature)
+        except Exception:
+            raise ValidationError("Malformed signature", code="INVALID_SIGNATURE")
+        if recovered.lower() != normalized_address:
+            raise ValidationError(
+                "Signature does not match proposed wallet",
+                code="WRONG_SIGNER",
+            )
+
+        # Atomically commit
+        transaction = db.transaction()
+
+        @firestore.transactional
+        def _run(txn: firestore.Transaction) -> WalletVerifyResult:  # noqa: WPS430
+            # ── ALL READS FIRST (Firestore: no reads after writes) ────────────
+
+            # Re-read challenge inside transaction (TOCTOU guard)
+            c_snap = challenge_ref.get(transaction=txn)
+            if not c_snap.exists:
+                raise ValidationError("challenge not found", code="CHALLENGE_NOT_FOUND")
+            c = c_snap.to_dict()
+            if c.get("status") != "PENDING":
+                raise ValidationError(
+                    "challenge has already been used or cancelled",
+                    code="CHALLENGE_ALREADY_USED",
+                )
+
+            # Re-check expiry
+            txn_now = datetime.now(timezone.utc)
+            c_expires = c.get("expires_at")
+            if c_expires is not None:
+                if isinstance(c_expires, datetime) and c_expires.tzinfo is None:
+                    c_expires = c_expires.replace(tzinfo=timezone.utc)
+                if txn_now >= c_expires:
+                    raise ValidationError("challenge has expired", code="CHALLENGE_EXPIRED")
+
+            # Read current route state from ix_ids root (before any writes)
+            ix_snap = ix_ref.get(transaction=txn)
+            ix_data = ix_snap.to_dict() if ix_snap.exists else {}
+            prior_claim_id = ix_data.get("active_payment_route_claim_id")
+            prior_address = ix_data.get("active_payment_route_address")
+
+            # ── GENERATE IDs ──────────────────────────────────────────────────
+
+            event_id = str(uuid.uuid4())
+            new_claim_id = str(uuid.uuid4())
+            commit_now = datetime.now(timezone.utc)
+
+            # ── ALL WRITES ────────────────────────────────────────────────────
+
+            # Mark challenge CONSUMED
+            txn.update(challenge_ref, {"status": "CONSUMED"})
+
+            # Supersede prior claim if present
+            if prior_claim_id:
+                prior_claim_ref = ix_ref.collection("verification_claims").document(prior_claim_id)
+                txn.update(prior_claim_ref, {
+                    "status": "SUPERSEDED",
+                    "superseded_by": new_claim_id,
+                })
+
+            # Write wallet_binding_event (append-only)
+            event_ref = ix_ref.collection("wallet_binding_events").document(event_id)
+            txn.set(event_ref, {
+                "event_id": event_id,
+                "ix_id": owned_ix_id,
+                "account_uid": account_id,
+                "wallet_address": normalized_address,
+                "network": "polygon",
+                "chain_id": _POLYGON_CHAIN_ID,
+                "challenge_nonce": challenge_id,
+                "challenge_issued_at": c.get("issued_at"),
+                "challenge_expires_at": c.get("expires_at"),
+                "signature": signature,
+                "signature_verified": True,
+                "binding_committed_at": commit_now,
+                "prior_wallet_address": prior_address,
+                "prior_claim_id": prior_claim_id,
+                "method": "ETH_SIGN_CHALLENGE",
+            })
+
+            # Write new verification_claims entry
+            claim_ref = ix_ref.collection("verification_claims").document(new_claim_id)
+            txn.set(claim_ref, {
+                "claim_id": new_claim_id,
+                "claim_type": "PAYMENT_ROUTE",
+                "status": "ACTIVE",
+                "subject": normalized_address,
+                "evidence_type": "ETH_SIGN_CHALLENGE",
+                "evidence_ref": event_id,
+                "verified_at": commit_now,
+                "expires_at": None,
+                "supersedes": prior_claim_id,
+                "superseded_by": None,
+                "state_version": 0,
+                "chain_id": _POLYGON_CHAIN_ID,
+                "asset_contract": _POLYGON_USDC_CONTRACT,
+                "created_at": commit_now,
+            })
+
+            # Update ix_ids root doc
+            txn.update(ix_ref, {
+                "active_payment_route_claim_id": new_claim_id,
+                "active_payment_route_address": normalized_address,
+                "routing_suspended": False,
+            })
+
+            return WalletVerifyResult(
+                claim_id=new_claim_id,
+                ix_id=owned_ix_id,
+                destination_address=normalized_address,
+                chain_id=_POLYGON_CHAIN_ID,
+                is_replacement=(prior_claim_id is not None),
+            )
+
+        result = _run(transaction)
+
+        logger.info(
+            "WALLET_VERIFY committed: account_id=%s ix_id=%s claim_id=%s is_replacement=%s",
+            account_id,
+            owned_ix_id,
+            result.claim_id,
+            result.is_replacement,
+        )
+
+        return result
+
+    # ── GET_PAYMENT_ROUTE ────────────────────────────────────────────────────
+
+    def get_payment_route(self, identity_key: str) -> PaymentRouteResult:
+        """
+        Return the current payment route for the authenticated holder.
+
+        Uses _resolve_account_for_mutation (ACTIVE only) for consistency with
+        other route operations. If the account has no owned IX ID, returns
+        a null PaymentRouteResult.
+        """
+        db = self._db
+
+        account_id, _state = self._resolve_account_for_mutation(identity_key)
+
+        acct_ref = db.collection("accounts").document(account_id)
+        acct_snap = acct_ref.get()
+        if not acct_snap.exists:
+            raise InternalConsistencyError("account document absent after resolution")
+        owned_ix_id = acct_snap.to_dict().get("owned_ix_id")
+
+        if not owned_ix_id:
+            return PaymentRouteResult(
+                ix_id=None,
+                destination_address=None,
+                chain_id=None,
+                asset=None,
+                claim_id=None,
+                routing_suspended=False,
+            )
+
+        ix_ref = db.collection("ix_ids").document(owned_ix_id)
+        ix_snap = ix_ref.get()
+        if not ix_snap.exists:
+            return PaymentRouteResult(
+                ix_id=owned_ix_id,
+                destination_address=None,
+                chain_id=None,
+                asset=None,
+                claim_id=None,
+                routing_suspended=False,
+            )
+
+        ix = ix_snap.to_dict()
+        active_address = ix.get("active_payment_route_address")
+        active_claim_id = ix.get("active_payment_route_claim_id")
+        routing_suspended = ix.get("routing_suspended", False)
+
+        return PaymentRouteResult(
+            ix_id=owned_ix_id,
+            destination_address=active_address,
+            chain_id=_POLYGON_CHAIN_ID if active_address else None,
+            asset=_polygon_usdc_asset_identity() if active_address else None,
+            claim_id=active_claim_id,
+            routing_suspended=routing_suspended,
+        )
+
+    # ── DISABLE_PAYMENT_ROUTE ─────────────────────────────────────────────────
+
+    def disable_payment_route(self, identity_key: str) -> PaymentRouteResult:
+        """
+        Revoke the active payment route.
+
+        Sets claim status=REVOKED, clears active route pointers, and sets
+        routing_suspended=True on the ix_ids root doc.
+        """
+        db = self._db
+
+        account_id, _state = self._resolve_account_for_mutation(identity_key)
+
+        # Enforce route mutation rate limit (§8.4).
+        self._check_route_mutation_rate_limit(account_id)
+
+        acct_ref = db.collection("accounts").document(account_id)
+        acct_snap = acct_ref.get()
+        if not acct_snap.exists:
+            raise InternalConsistencyError("account document absent after resolution")
+        owned_ix_id = acct_snap.to_dict().get("owned_ix_id")
+        if not owned_ix_id:
+            raise ValidationError("no IX ID registered", code="NO_IX_ID")
+
+        ix_ref = db.collection("ix_ids").document(owned_ix_id)
+        ix_snap = ix_ref.get()
+        ix_data = ix_snap.to_dict() if ix_snap.exists else {}
+        active_claim_id = ix_data.get("active_payment_route_claim_id")
+
+        if not active_claim_id:
+            raise ValidationError("no active payment route to disable", code="NO_ACTIVE_ROUTE")
+
+        transaction = db.transaction()
+
+        @firestore.transactional
+        def _run(txn: firestore.Transaction) -> None:  # noqa: WPS430
+            # Revoke the active claim
+            claim_ref = ix_ref.collection("verification_claims").document(active_claim_id)
+            txn.update(claim_ref, {"status": "REVOKED"})
+
+            # Clear active route pointers, set routing_suspended
+            txn.update(ix_ref, {
+                "active_payment_route_claim_id": None,
+                "active_payment_route_address": None,
+                "routing_suspended": True,
+            })
+
+        _run(transaction)
+
+        logger.info(
+            "DISABLE_PAYMENT_ROUTE committed: account_id=%s ix_id=%s prior_claim_id=%s",
+            account_id,
+            owned_ix_id,
+            active_claim_id,
+        )
+
+        return PaymentRouteResult(
+            ix_id=owned_ix_id,
+            destination_address=None,
+            chain_id=None,
+            asset=None,
+            claim_id=None,
+            routing_suspended=True,
+        )
+
+    # ── ROUTE MUTATION RATE LIMIT (§8.4) ─────────────────────────────────────
+
+    def _check_route_mutation_rate_limit(self, account_id: str) -> None:
+        """
+        Enforce per-account rate limit for route mutations (verify + disable).
+
+        Spec §8.4: at minimum 10 mutations per account per hour.
+        Raises RateLimitError with retry_after seconds if the limit is exceeded.
+
+        State is maintained server-side in route_mutation_rate_limits/{account_id}.
+        Uses a Firestore transaction so concurrent requests on different Cloud Run
+        instances are serialized correctly.
+        """
+        from datetime import timedelta  # noqa: PLC0415
+
+        db = self._db
+        now = datetime.now(timezone.utc)
+        limit_ref = db.collection("route_mutation_rate_limits").document(account_id)
+        transaction = db.transaction()
+
+        @firestore.transactional
+        def _check(txn: firestore.Transaction) -> None:
+            snap = limit_ref.get(transaction=txn)
+            if snap.exists:
+                data = snap.to_dict()
+                window_end = data.get("window_end")
+                if isinstance(window_end, datetime) and window_end.tzinfo is None:
+                    window_end = window_end.replace(tzinfo=timezone.utc)
+                if window_end and now < window_end:
+                    # Within the existing window
+                    count = data.get("count", 0)
+                    if count >= _ROUTE_MUTATION_LIMIT_PER_HOUR:
+                        retry_after = max(1, int((window_end - now).total_seconds()) + 1)
+                        raise RateLimitError(
+                            "Route mutation rate limit exceeded",
+                            retry_after=retry_after,
+                        )
+                    txn.update(limit_ref, {"count": count + 1})
+                else:
+                    # Window expired — start fresh
+                    window_end_new = now + timedelta(hours=1)
+                    txn.set(limit_ref, {
+                        "count": 1,
+                        "window_start": now,
+                        "window_end": window_end_new,
+                    })
+            else:
+                # First mutation for this account
+                window_end_new = now + timedelta(hours=1)
+                txn.set(limit_ref, {
+                    "count": 1,
+                    "window_start": now,
+                    "window_end": window_end_new,
+                })
+
+        _check(transaction)
+
+    # ── CHALLENGE ISSUANCE RATE LIMIT ─────────────────────────────────────────
+
+    def _check_challenge_issuance_rate_limit(self, account_id: str) -> None:
+        """
+        Enforce per-account rate limit for wallet challenge issuance.
+
+        Challenge issuance is semantically distinct from route mutation:
+        it creates a PENDING record and cancels any prior PENDING challenge,
+        but does not change active_payment_route_* fields. A separate counter
+        prevents unbounded challenge record accumulation while preserving the
+        full 10/hour budget for route mutations (verify + disable).
+
+        Same window (1 hour) and limit as §8.4 route mutations for consistency.
+        Raises RateLimitError with retry_after seconds if the limit is exceeded.
+
+        State is maintained in challenge_issuance_rate_limits/{account_id}.
+        """
+        from datetime import timedelta  # noqa: PLC0415
+
+        db = self._db
+        now = datetime.now(timezone.utc)
+        limit_ref = db.collection("challenge_issuance_rate_limits").document(account_id)
+        transaction = db.transaction()
+
+        @firestore.transactional
+        def _check(txn: firestore.Transaction) -> None:
+            snap = limit_ref.get(transaction=txn)
+            if snap.exists:
+                data = snap.to_dict()
+                window_end = data.get("window_end")
+                if isinstance(window_end, datetime) and window_end.tzinfo is None:
+                    window_end = window_end.replace(tzinfo=timezone.utc)
+                if window_end and now < window_end:
+                    count = data.get("count", 0)
+                    if count >= _CHALLENGE_ISSUANCE_LIMIT_PER_HOUR:
+                        retry_after = max(1, int((window_end - now).total_seconds()) + 1)
+                        raise RateLimitError(
+                            "Challenge issuance rate limit exceeded",
+                            retry_after=retry_after,
+                        )
+                    txn.update(limit_ref, {"count": count + 1})
+                else:
+                    window_end_new = now + timedelta(hours=1)
+                    txn.set(limit_ref, {
+                        "count": 1,
+                        "window_start": now,
+                        "window_end": window_end_new,
+                    })
+            else:
+                window_end_new = now + timedelta(hours=1)
+                txn.set(limit_ref, {
+                    "count": 1,
+                    "window_start": now,
+                    "window_end": window_end_new,
+                })
+
+        _check(transaction)
