@@ -11,7 +11,7 @@
   //   (EMAIL_TEMPLATE_UPDATE_NOT_ALLOWED blocks programmatic update for
   //   Identity Platform projects via the Admin v2 API)
   root.IXID_ONBOARDING_CONFIG = Object.freeze({
-    enabled: false,
+    enabled: true,
     holderApiBase: '/api/holder/v0.1',
     actionContinueUrl: 'https://app.ixid.me/register',
     firebase: Object.freeze({
