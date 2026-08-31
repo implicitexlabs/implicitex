@@ -182,6 +182,58 @@ def handle_get_identity(ix_id: str) -> Response:
     )
 
 
+@app.route("/public/route/<ix_id>", methods=["GET", "OPTIONS"])
+def handle_get_route(ix_id: str) -> Response:
+    """
+    Proxy a public payment-route request to the private projection service.
+
+    Called cross-origin from portal.implicitex.com (IX ID handoff).
+    CORS Access-Control-Allow-Origin: * is required and applied here.
+
+    This handler does not read Firestore or make trust decisions.
+    It forwards the upstream response body exactly.
+    """
+    if request.method == "OPTIONS":
+        resp = Response("", status=204, content_type="application/json")
+        resp.headers["Access-Control-Allow-Origin"] = "*"
+        resp.headers["Access-Control-Allow-Methods"] = "GET"
+        resp.headers["Access-Control-Max-Age"] = "86400"
+        return resp
+
+    upstream_url = f"{_PROJECTION_URL}/public/route/{ix_id}"
+    token = _fetch_oidc_token(_PROJECTION_URL)
+    req = urllib.request.Request(
+        upstream_url,
+        headers={"Authorization": f"Bearer {token}"},
+        method="GET",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            body = json.loads(resp.read().decode("utf-8"))
+            status = resp.status
+    except urllib.error.HTTPError as exc:
+        body_bytes = exc.read()
+        try:
+            body = json.loads(body_bytes.decode("utf-8"))
+        except Exception:  # noqa: BLE001
+            body = {"error": f"upstream error {exc.code}"}
+        status = exc.code
+    except Exception as exc:  # noqa: BLE001
+        logger.error("Route edge proxy error for ix_id=%s: %s", ix_id, exc)
+        resp = Response(
+            json.dumps({"error": "Route service temporarily unavailable"}),
+            status=503,
+            content_type="application/json",
+        )
+        resp.headers["Access-Control-Allow-Origin"] = "*"
+        return resp
+
+    logger.info("proxied route: ix_id=%s upstream_status=%d", ix_id, status)
+    resp = Response(json.dumps(body), status=status, content_type="application/json")
+    resp.headers["Access-Control-Allow-Origin"] = "*"
+    return resp
+
+
 # ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------
