@@ -310,26 +310,36 @@ test('oobCode with whitespace: action fails closed before adapter is invoked', a
   assert.equal(navigateEvents(env).length, 0);
 });
 
-// 10. Missing continueUrl — adapter never called
-test('missing continueUrl: action fails closed before adapter is invoked', async () => {
-  const adapter = createIxIdActionAdapter(TEST_CONFIG, neverFetch);
+// 10. Missing continueUrl — action proceeds; ALLOWED_CONTINUE_URL used regardless
+test('missing continueUrl: action proceeds and navigates to ALLOWED_CONTINUE_URL', async () => {
+  const fetchMock = makeFetch([{ ok: true }]);
+  const adapter = createIxIdActionAdapter(TEST_CONFIG, fetchMock);
   const env = createEnv(actionUrl('verifyEmail', { continueUrl: null }), adapter);
 
   const result = await actionApi.startActionPage(env.settings);
 
-  assert.equal(result.status, 'rejected');
-  assert.equal(navigateEvents(env).length, 0);
+  assert.equal(result.status, 'success');
+  assert.equal(fetchMock.calls.length, 1, 'adapter was invoked');
+  assert.equal(navigateEvents(env).length, 1, 'one navigation');
+  assert.equal(navigateEvents(env)[0].destination, actionApi.ALLOWED_CONTINUE_URL,
+    'navigates to ALLOWED_CONTINUE_URL even when continueUrl parameter absent');
 });
 
-// 11. Mismatched continueUrl — adapter never called
-test('mismatched continueUrl: action fails closed before adapter is invoked', async () => {
-  const adapter = createIxIdActionAdapter(TEST_CONFIG, neverFetch);
+// 11. Mismatched continueUrl — action proceeds; attacker URL is never used
+test('mismatched continueUrl: action proceeds and navigates to ALLOWED_CONTINUE_URL, not attacker URL', async () => {
+  const fetchMock = makeFetch([{ ok: true }]);
+  const adapter = createIxIdActionAdapter(TEST_CONFIG, fetchMock);
   const env = createEnv(actionUrl('verifyEmail', { continueUrl: 'https://attacker.example.com' }), adapter);
 
   const result = await actionApi.startActionPage(env.settings);
 
-  assert.equal(result.status, 'rejected');
-  assert.equal(navigateEvents(env).length, 0);
+  assert.equal(result.status, 'success');
+  assert.equal(fetchMock.calls.length, 1, 'adapter was invoked');
+  assert.equal(navigateEvents(env).length, 1, 'one navigation');
+  assert.equal(navigateEvents(env)[0].destination, actionApi.ALLOWED_CONTINUE_URL,
+    'navigation destination is always ALLOWED_CONTINUE_URL regardless of continueUrl parameter');
+  const destinations = navigateEvents(env).map(function(e) { return e.destination; });
+  assert.ok(!destinations.includes('https://attacker.example.com'), 'attacker URL never used');
 });
 
 // 12. No secret leakage — source audit and runtime error content

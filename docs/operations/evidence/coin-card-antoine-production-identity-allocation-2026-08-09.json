@@ -1,0 +1,84 @@
+{
+  "schemaVersion": "implicitex-coin-card-production-identity-allocation.v1",
+  "status": "IDENTITY_FROZEN_NOT_PUBLISHED",
+  "ceremonyPhase": "PHASE_A_COMPLETE",
+  "allocatedAt": "2026-08-09T08:34:14.079Z",
+  "allocationMethod": {
+    "identifierProfile": "prefix + ULID",
+    "timestampSource": "allocatedAt UTC milliseconds",
+    "randomSource": "node:crypto.randomBytes CSPRNG, independent 80-bit randomness per identifier",
+    "encoding": "26-character uppercase Crockford Base32 ULID",
+    "workspaceUniquenessCheck": "no pre-existing exact accountId or cardId match"
+  },
+  "identity": {
+    "username": "antoinedennison",
+    "accountId": "acct_01KZJTH0XZWTSVXNAJ23Z1QYR8",
+    "cardId": "cc_01KZJTH0XZ1QJG9A1K9T5GJAWE",
+    "canonicalUrl": "https://antoinedennison.coincard.click/",
+    "equivalentUrl": "https://coincard.click/antoinedennison",
+    "legacyUsernameLookup": "https://coincard.click/antoine",
+    "legacyUsernameExpectedOutcome": "NOT_FOUND"
+  },
+  "identityFreeze": {
+    "status": "PERMANENT",
+    "frozenAt": "2026-08-09T08:34:14.079Z",
+    "regenerationPermitted": false,
+    "reassignmentPermitted": false,
+    "reusePermitted": false,
+    "pauseOrDelayChangesIdentity": false,
+    "declaration": "The allocated account ID and Coin Card ID permanently identify Antoine's production Coin Card even while unpublished."
+  },
+  "intendedRoute": {
+    "chainId": 137,
+    "chainName": "Polygon",
+    "token": "USDC",
+    "tokenContract": "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359",
+    "recipient": "0x2489587C9da6EaB970a5479BA70273BA37961221",
+    "amountMode": "sender_input"
+  },
+  "legacyEvidenceAtAllocation": {
+    "legacyCardId": "antoine",
+    "legacyRegistryRecordSha256": "cadd4eaa610f19131d117f2c17210cb3d82f62ad62a27ce1e03665660e19416c",
+    "lifecycleBundleSha256": "3e6cfac56da42e9ac7e3b40c557b5c1985e296c4fb26892a928acb8fdfe95f2f",
+    "manifestSha256": "96f4ab0be4c792596cd7268a01007b9b6703913bdc29741c2e0a1ec198aa024b",
+    "trustedKeysSha256": "ac20bace012ddf724eda6d53c775a44efd4bb865d845fdf1351b9146e24b96b7",
+    "manifestId": "sha256:37c2fe0456434d728dcb9580d27a8c96aba6b7ef1304f57947c48e2da93c5c52",
+    "lifecycleKeyId": "ix-lifecycle-pub-v2"
+  },
+  "signingCustody": {
+    "status": "REQUIRED_KEYS_NOT_AVAILABLE_IN_WORKSPACE_OR_ENVIRONMENT",
+    "manifestKeyId": "ix-coin-card-manifest-v2",
+    "manifestPublicFingerprint": "JSDPJ1Uswec6WebK4SUmqqOIVsatE_ScgosFAk5xy5I",
+    "lifecycleKeyId": "ix-lifecycle-pub-v2",
+    "lifecyclePublicFingerprint": "j7VW9paMH3fu_bZ-a3WMVcg4a54W3bXitLjE6Eoqy84",
+    "rotationAuthorized": false,
+    "replacementKeyGenerationAuthorized": false
+  },
+  "publicationState": {
+    "lifecycleIdentityCreated": false,
+    "usernameSnapshotBuilt": false,
+    "usernameSnapshotSigned": false,
+    "usernameSnapshotPublished": false,
+    "liveSnapshotTransportGatePassed": false,
+    "currentHeadBuilt": false,
+    "currentHeadSigned": false,
+    "currentHeadAdvanced": false,
+    "protectedManifestRegenerated": false,
+    "deployed": false
+  },
+  "hardGate": "CURRENT_HEAD_ADVANCE_FORBIDDEN_UNTIL_LIVE_SNAPSHOT_TRANSPORT_AND_AUTHENTICATION_GATES_PASS",
+  "operationalDeclarations": {
+    "productionIdentifiersAllocated": true,
+    "productionIdentifiersPermanentlyFrozen": true,
+    "productionIdentifiersPublished": false,
+    "privateKeyMaterialRead": false,
+    "privateKeyMaterialGenerated": false,
+    "signatureCreated": false,
+    "endpointObjectCreated": false,
+    "deploymentOccurred": false,
+    "dnsChanged": false,
+    "currentHeadChanged": false,
+    "walletActionTaken": false,
+    "transactionBroadcast": false
+  }
+}

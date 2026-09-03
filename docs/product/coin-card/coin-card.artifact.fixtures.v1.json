@@ -1,0 +1,215 @@
+{
+  "schema": "implicitex.coin-card.artifact.fixtures.v1",
+  "status": "canonical",
+  "date": "2026-08-07",
+  "artifactSchema": "docs/product/coin-card/coin-card.artifact.schema.v1.json",
+  "description": "Three-artifact lineage for card cc_01JFXTST0000000000000000AB. ACTIVE → SUSPENDED → REVOKED. Same card_id, handle, created_at, and route across all three. Demonstrates immutable identity, historical lifecycle snapshots, monotonically increasing artifact_version, and hash-chain supersession.",
+  "hashAlgorithm": "SHA-256(coin-card-canonical-json.v1(artifact excluding integrity.artifact_hash and verification.value))",
+  "fingerprintVersion": 1,
+  "fixtures": [
+    {
+      "id": "lineage-v1-active",
+      "artifact_version": 1,
+      "description": "Version 1. Card is ACTIVE. No prior version; supersedes is null.",
+      "assert": [
+        "schema=implicitex.coincard.artifact.v1",
+        "artifact_version=1",
+        "card_status_at_issue=ACTIVE",
+        "can_receive_transfers=true",
+        "can_display_route=true",
+        "supersedes=null",
+        "artifact_hash_verifiable"
+      ],
+      "artifact": {
+        "schema": "implicitex.coincard.artifact.v1",
+        "artifact_version": 1,
+        "identity": {
+          "card_id": "cc_01JFXTST0000000000000000AB",
+          "handle": "antoinedennison",
+          "issuer": "coincard.click",
+          "public_url": "https://antoinedennison.coincard.click/",
+          "created_at": "2026-08-07T10:00:00.000000Z",
+          "issued_at": "2026-08-07T12:00:00.000000Z"
+        },
+        "routes": [
+          {
+            "route_id": "route_01JRTE000000000000000000AB",
+            "route_sequence": 1,
+            "recipient_address": "0x2489587C9da6EaB970a5479BA70273BA37961221",
+            "chain_id": 137,
+            "token": "USDC",
+            "token_address": "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359",
+            "amount_mode": "sender_input",
+            "locked_amount_units": null,
+            "suggested_amount_units": null
+          }
+        ],
+        "lifecycle_snapshot": {
+          "card_status_at_issue": "ACTIVE",
+          "status_as_of": "2026-08-07T12:00:00.000000Z",
+          "refresh_after": "2026-08-14T12:00:00.000000Z"
+        },
+        "presentation": {
+          "presentation_version": 1,
+          "display_name": "Antoine Dennison",
+          "theme": null
+        },
+        "capabilities": {
+          "can_receive_transfers": true,
+          "can_be_embedded": true,
+          "can_display_route": true
+        },
+        "integrity": {
+          "fingerprint_version": 1,
+          "artifact_hash": "sha256:ca46c33277427c90517d23762d22590ab14600eb2849d321ae5183ba72cbfa83",
+          "supersedes": null
+        },
+        "verification": {
+          "algorithm": "unsigned-dev",
+          "key_id": null,
+          "signer_domain": "coincard.click",
+          "signed_at": "2026-08-07T12:00:00.000000Z",
+          "value": null
+        }
+      }
+    },
+    {
+      "id": "lineage-v2-suspended",
+      "artifact_version": 2,
+      "description": "Version 2. Card is SUSPENDED. Same card_id, handle, route as V1. supersedes points to V1 artifact_hash. All capabilities non-interactive.",
+      "assert": [
+        "card_status_at_issue=SUSPENDED",
+        "can_receive_transfers=false",
+        "can_display_route=false",
+        "can_be_embedded=true",
+        "supersedes=v1.artifact_hash",
+        "artifact_hash_verifiable",
+        "identity.card_id=v1.identity.card_id",
+        "identity.handle=v1.identity.handle",
+        "identity.created_at=v1.identity.created_at",
+        "routes[0].route_id=v1.routes[0].route_id"
+      ],
+      "artifact": {
+        "schema": "implicitex.coincard.artifact.v1",
+        "artifact_version": 2,
+        "identity": {
+          "card_id": "cc_01JFXTST0000000000000000AB",
+          "handle": "antoinedennison",
+          "issuer": "coincard.click",
+          "public_url": "https://antoinedennison.coincard.click/",
+          "created_at": "2026-08-07T10:00:00.000000Z",
+          "issued_at": "2026-08-14T09:00:00.000000Z"
+        },
+        "routes": [
+          {
+            "route_id": "route_01JRTE000000000000000000AB",
+            "route_sequence": 1,
+            "recipient_address": "0x2489587C9da6EaB970a5479BA70273BA37961221",
+            "chain_id": 137,
+            "token": "USDC",
+            "token_address": "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359",
+            "amount_mode": "sender_input",
+            "locked_amount_units": null,
+            "suggested_amount_units": null
+          }
+        ],
+        "lifecycle_snapshot": {
+          "card_status_at_issue": "SUSPENDED",
+          "status_as_of": "2026-08-14T09:00:00.000000Z",
+          "refresh_after": "2026-08-21T09:00:00.000000Z"
+        },
+        "presentation": {
+          "presentation_version": 1,
+          "display_name": "Antoine Dennison",
+          "theme": null
+        },
+        "capabilities": {
+          "can_receive_transfers": false,
+          "can_be_embedded": true,
+          "can_display_route": false
+        },
+        "integrity": {
+          "fingerprint_version": 1,
+          "artifact_hash": "sha256:834123cd3521d27e5ef7171a42d52751456883968e4318f9eb773d4711c4f270",
+          "supersedes": "sha256:ca46c33277427c90517d23762d22590ab14600eb2849d321ae5183ba72cbfa83"
+        },
+        "verification": {
+          "algorithm": "unsigned-dev",
+          "key_id": null,
+          "signer_domain": "coincard.click",
+          "signed_at": "2026-08-14T09:00:00.000000Z",
+          "value": null
+        }
+      }
+    },
+    {
+      "id": "lineage-v3-revoked",
+      "artifact_version": 3,
+      "description": "Version 3. Card is REVOKED. Terminal state. supersedes points to V2 artifact_hash. can_be_embedded remains true: revoked cards must render a revoked state, not silently disappear.",
+      "assert": [
+        "card_status_at_issue=REVOKED",
+        "can_receive_transfers=false",
+        "can_display_route=false",
+        "can_be_embedded=true",
+        "supersedes=v2.artifact_hash",
+        "artifact_hash_verifiable",
+        "identity.card_id=v1.identity.card_id",
+        "identity.handle=v1.identity.handle",
+        "identity.created_at=v1.identity.created_at",
+        "routes[0].route_id=v1.routes[0].route_id"
+      ],
+      "artifact": {
+        "schema": "implicitex.coincard.artifact.v1",
+        "artifact_version": 3,
+        "identity": {
+          "card_id": "cc_01JFXTST0000000000000000AB",
+          "handle": "antoinedennison",
+          "issuer": "coincard.click",
+          "public_url": "https://antoinedennison.coincard.click/",
+          "created_at": "2026-08-07T10:00:00.000000Z",
+          "issued_at": "2026-08-21T15:30:00.000000Z"
+        },
+        "routes": [
+          {
+            "route_id": "route_01JRTE000000000000000000AB",
+            "route_sequence": 1,
+            "recipient_address": "0x2489587C9da6EaB970a5479BA70273BA37961221",
+            "chain_id": 137,
+            "token": "USDC",
+            "token_address": "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359",
+            "amount_mode": "sender_input",
+            "locked_amount_units": null,
+            "suggested_amount_units": null
+          }
+        ],
+        "lifecycle_snapshot": {
+          "card_status_at_issue": "REVOKED",
+          "status_as_of": "2026-08-21T15:30:00.000000Z",
+          "refresh_after": "2026-08-28T15:30:00.000000Z"
+        },
+        "presentation": {
+          "presentation_version": 1,
+          "display_name": "Antoine Dennison",
+          "theme": null
+        },
+        "capabilities": {
+          "can_receive_transfers": false,
+          "can_be_embedded": true,
+          "can_display_route": false
+        },
+        "integrity": {
+          "fingerprint_version": 1,
+          "artifact_hash": "sha256:727fedbac2282082604d506acbcd9b1246b48577a6cd72886b77c8095ea4ae42",
+          "supersedes": "sha256:834123cd3521d27e5ef7171a42d52751456883968e4318f9eb773d4711c4f270"
+        },
+        "verification": {
+          "algorithm": "unsigned-dev",
+          "key_id": null,
+          "signer_domain": "coincard.click",
+          "signed_at": "2026-08-21T15:30:00.000000Z",
+          "value": null
+        }
+      }
+    }
+  ]
+}

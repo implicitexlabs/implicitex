@@ -73,7 +73,9 @@ Layer 2 — Legal (derives from Layer 1; governs customer commitments)
 
 Layer 3 — Architecture (derives from Layer 1)
     ├── COIN_CARD_PURCHASE_PROVISIONING_ARCHITECTURE_V1.md  (purchase/provisioning)
-    └── COIN_CARD_BACKEND_ARCHITECTURE_V1.md               (runtime topology)
+    ├── COIN_CARD_BACKEND_ARCHITECTURE_V1.md               (runtime topology)
+    └── canonical COIN_CARD_IRON_FIAT_ROUTING_ARCHITECTURE_V1.md
+                                                            (optional fiat receiving rail)
 
 Layer 4 — Engineering Rules (derives from Layer 3)
     COIN_CARD_ENGINEERING_IMPLEMENTATION_RULES_V1.md
@@ -198,6 +200,37 @@ Owns:
 
 These remaining items are proof obligations against the implementation, not open
 design questions. The architectural questions are resolved.
+
+### Canonical `COIN_CARD_IRON_FIAT_ROUTING_ARCHITECTURE_V1.md`
+
+**Location:** `../../../../docs/product/coin-card/COIN_CARD_IRON_FIAT_ROUTING_ARCHITECTURE_V1.md`
+**Status:** FROZEN 2026-08-08 — NOT IMPLEMENTED; NOT APPROVED FOR PRODUCTION
+**Authority:** Defines the optional Iron Virtual Account fiat-receiving rail. It does
+not modify the ordinary Coin Card wallet-transfer architecture or authorize launch.
+The Layer 1 Commercial Specification must be amended before implementation or any
+customer-facing publication of this capability.
+
+Owns:
+- The recipient-as-Iron-customer role assignment for third-party USD deposits
+- Virtual Accounts as replaceable routes beneath permanent Coin Card identity
+- Optional provider KYC capability boundary and beneficiary-name privacy boundary
+- Immutable PBR Autoramp and fiat-route versioning
+- `ACTIVE`, `RETIRING`, `DISABLED`, and `SUSPENDED` route lifecycle
+- Normalized execution fingerprints and all-control-plane drift suspension
+- Pinned Iron API version, idempotency, webhook, and `autoramp_id` correlation rules
+- `IRON_COMPLETED` through `SETTLEMENT_VERIFIED` settlement lifecycle
+- Independent Polygon native-USDC transfer-log verification
+- Seven launch gates covering security, provider behavior, PBR bank reliability,
+  production schema, approved use, return/fraud risk, and economics/liability
+
+Supporting diligence and evidence plans:
+- `../../../../docs/product/coin-card/fiat-routing/IRON_COIN_CARD_FIAT_RAIL_DILIGENCE_MASTER_V1.md`
+- `../../../../docs/product/coin-card/fiat-routing/IRON_PROVIDER_DILIGENCE_QUESTIONNAIRE_V1.md`
+- `../../../../docs/product/coin-card/fiat-routing/IRON_PROVIDER_VALIDATION_MATRIX_V1.md`
+- `../../../../docs/product/coin-card/fiat-routing/MOONPAY_AND_IRON_PROVIDER_EVALUATION_2026-08-08.md`
+
+This architecture may be reopened only if diligence or empirical validation identifies
+a concrete security, implementation, or contractual contradiction.
 
 ---
 
@@ -359,6 +392,9 @@ in Layers 1–5. Do not amend other layers based on these.
 | `COIN_CARD_SIGNED_MANIFEST_ENVELOPE_AND_LIFECYCLE_CONTRACT_V1.md` | **Superseded.** Split into `COIN_CARD_SIGNED_MANIFEST_ENVELOPE_CONTRACT_V1.md` and the lifecycle contracts. Do not implement from this file. |
 | `PUBLISHER_SPEC.md` | Early publisher specification |
 | `COIN_CARD_VERIFICATION_LANGUAGE.md` | Verification language notes |
+| `../../../../docs/product/coin-card/fiat-routing/MOONPAY_AND_IRON_PROVIDER_EVALUATION_2026-08-08.md` | Dated MoonPay/Iron provider findings and blocked/candidate decision record |
+| `../../../../docs/product/coin-card/fiat-routing/COIN_CARD_MULTI_RAIL_PRODUCT_AND_ECONOMICS_STRATEGY_2026-08-08.md` | Exploratory switchboard product thesis, public fee benchmarks, and proposed economic/security disciplines; no implementation authority |
+| `../../../../docs/product/coin-card/fiat-routing/COIN_CARD_RAIL_UNIT_ECONOMICS_MATRIX_V1.md` | Working evidence tracker for route quotes, friction, financial exposure, and amount-level viability |
 
 ---
 

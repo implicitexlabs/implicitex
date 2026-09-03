@@ -262,6 +262,155 @@ test('POLYGON_MAINNET_CHAIN_ID is 137', function () {
   assert.equal(POLYGON_MAINNET_CHAIN_ID, 137);
 });
 
+// ─── getAccounts ─────────────────────────────────────────────────────────────
+// getAccounts reads current authorized accounts without prompting the user.
+// Used by the payment route flow to detect account changes before and after
+// challenge issuance.
+
+function makeGetAccountsProvider(options) {
+  var opts = options || {};
+  return {
+    request: function request(args) {
+      if (args.method === 'eth_accounts') {
+        if (opts.rejectAccounts) {
+          return Promise.reject(new Error('accounts read failed'));
+        }
+        return Promise.resolve(opts.accounts || []);
+      }
+      return Promise.reject(new Error('unsupported method: ' + args.method));
+    },
+  };
+}
+
+test('getAccounts resolves rejected=true reason=no_provider when no provider', async function () {
+  const c = connector(null);
+  const result = await c.getAccounts();
+  assert.equal(result.rejected, true);
+  assert.equal(result.reason, 'no_provider');
+  assert.deepEqual(result.accounts, []);
+});
+
+test('getAccounts returns normalised lowercase addresses', async function () {
+  const provider = makeGetAccountsProvider({ accounts: ['0xAb16A96D359eC26a11e2C2b3d8f8B8942d5Bfcdb'] });
+  const c = connector(provider);
+  const result = await c.getAccounts();
+  assert.equal(result.rejected, false);
+  assert.deepEqual(result.accounts, ['0xab16a96d359ec26a11e2c2b3d8f8b8942d5bfcdb']);
+});
+
+test('getAccounts returns empty array when provider has no accounts', async function () {
+  const provider = makeGetAccountsProvider({ accounts: [] });
+  const c = connector(provider);
+  const result = await c.getAccounts();
+  assert.equal(result.rejected, false);
+  assert.deepEqual(result.accounts, []);
+});
+
+test('getAccounts resolves rejected=true when provider rejects eth_accounts', async function () {
+  const provider = makeGetAccountsProvider({ rejectAccounts: true });
+  const c = connector(provider);
+  const result = await c.getAccounts();
+  assert.equal(result.rejected, true);
+  assert.equal(result.reason, 'accounts_read_failed');
+});
+
+// ─── signMessage ─────────────────────────────────────────────────────────────
+
+// Minimal provider that handles personal_sign.
+function makeSigningProvider(options) {
+  const opts = options || {};
+  // signResult: the 0x-prefixed hex string to return on success
+  // rejectSign: if true, reject with error code 4001 (user rejection)
+  // rejectSignOther: if true, reject with a non-4001 error
+  // returnBadSig: if true, return a non-0x string instead of a signature
+  return {
+    request: function request(args) {
+      if (args.method === 'eth_requestAccounts') {
+        return Promise.resolve(opts.accounts || ['0xab16a96d359ec26a11e2c2b3d8f8b8942d5bfcdb']);
+      }
+      if (args.method === 'eth_chainId') {
+        return Promise.resolve(opts.chainId || 137);
+      }
+      if (args.method === 'personal_sign') {
+        if (opts.rejectSign) {
+          const err = new Error('User rejected');
+          err.code = 4001;
+          return Promise.reject(err);
+        }
+        if (opts.rejectSignOther) {
+          const err = new Error('Signing failed');
+          err.code = -32603;
+          return Promise.reject(err);
+        }
+        if (opts.returnBadSig) {
+          return Promise.resolve('not-a-hex-signature');
+        }
+        return Promise.resolve(opts.signResult || '0xdeadbeef1234');
+      }
+      return Promise.reject(new Error('unsupported method: ' + args.method));
+    },
+  };
+}
+
+const _TEST_ADDR = '0xab16a96d359ec26a11e2c2b3d8f8b8942d5bfcdb';
+const _TEST_TEXT = 'IX ID payment-route challenge: test message';
+
+test('signMessage resolves rejected=true reason=no_provider when no provider', async function () {
+  const c = connector(null);
+  const result = await c.signMessage(_TEST_TEXT, _TEST_ADDR);
+  assert.equal(result.rejected, true);
+  assert.equal(result.reason, 'no_provider');
+});
+
+test('signMessage resolves with signature on success', async function () {
+  const provider = makeSigningProvider({ signResult: '0xaabbccdd' });
+  const c = connector(provider);
+  const result = await c.signMessage(_TEST_TEXT, _TEST_ADDR);
+  assert.equal(result.rejected, false);
+  assert.equal(result.signature, '0xaabbccdd');
+});
+
+test('signMessage resolves rejected=true reason=user_rejected when wallet rejects (code 4001)', async function () {
+  const provider = makeSigningProvider({ rejectSign: true });
+  const c = connector(provider);
+  const result = await c.signMessage(_TEST_TEXT, _TEST_ADDR);
+  assert.equal(result.rejected, true);
+  assert.equal(result.reason, 'user_rejected');
+  assert.equal(result.code, 4001);
+});
+
+test('signMessage resolves rejected=true reason=sign_failed on non-4001 error', async function () {
+  const provider = makeSigningProvider({ rejectSignOther: true });
+  const c = connector(provider);
+  const result = await c.signMessage(_TEST_TEXT, _TEST_ADDR);
+  assert.equal(result.rejected, true);
+  assert.equal(result.reason, 'sign_failed');
+});
+
+test('signMessage resolves rejected=true reason=invalid_address for non-hex address', async function () {
+  const provider = makeSigningProvider();
+  const c = connector(provider);
+  const result = await c.signMessage(_TEST_TEXT, 'not-an-address');
+  assert.equal(result.rejected, true);
+  assert.equal(result.reason, 'invalid_address');
+});
+
+test('signMessage resolves rejected=true reason=invalid_message for empty text', async function () {
+  const provider = makeSigningProvider();
+  const c = connector(provider);
+  const result = await c.signMessage('', _TEST_ADDR);
+  assert.equal(result.rejected, true);
+  assert.equal(result.reason, 'invalid_message');
+});
+
+test('signMessage resolves rejected=true for non-0x signature response', async function () {
+  const provider = makeSigningProvider({ returnBadSig: true });
+  const c = connector(provider);
+  const result = await c.signMessage(_TEST_TEXT, _TEST_ADDR);
+  assert.equal(result.rejected, true);
+  assert.equal(result.reason, 'invalid_signature_response');
+});
+
 // ─── runner ───────────────────────────────────────────────────────────────────
 
 (async function run() {

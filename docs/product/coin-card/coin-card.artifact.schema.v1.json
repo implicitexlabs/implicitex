@@ -1,0 +1,311 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://coincard.click/schemas/coin-card.artifact.v1.schema.json",
+  "title": "CoinCardArtifact V1",
+  "description": "An immutable, signed assertion about a Coin Card at a specific issuance point. Establishes provenance and historical state. Does not independently authorize execution. Any privileged action requires authoritative lifecycle and route resolution under the Coin Card execution contracts.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "artifact_version",
+    "identity",
+    "routes",
+    "lifecycle_snapshot",
+    "presentation",
+    "capabilities",
+    "integrity",
+    "verification"
+  ],
+  "properties": {
+
+    "schema": {
+      "const": "implicitex.coincard.artifact.v1",
+      "description": "Identifies the artifact format. A renderer must reject artifacts with unknown schema values."
+    },
+
+    "artifact_version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Monotonically increasing per card. Version 1 is the first issued artifact. A route change or status change creates a new version. Never decremented or reset."
+    },
+
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "card_id",
+        "handle",
+        "issuer",
+        "public_url",
+        "created_at",
+        "issued_at"
+      ],
+      "description": "Permanent identity of the Coin Card. All fields are immutable once set on the card; issued_at reflects this artifact version.",
+      "properties": {
+        "card_id": {
+          "type": "string",
+          "pattern": "^cc_[0-9A-HJKMNP-TV-Z]{26}$",
+          "description": "Opaque, immutable machine identity of the Coin Card. A ULID prefixed with 'cc_'. It is never a username or an alternate public route."
+        },
+        "handle": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]{1,28}[a-z0-9]$",
+          "description": "Normalized unique public username for the owning account. The V1 wire name is handle. 3–30 characters, lowercase alphanumeric and hyphens, with no leading or trailing hyphen. Direct routes resolve this value by exact match only."
+        },
+        "issuer": {
+          "const": "coincard.click",
+          "description": "Domain of the issuing authority. Always 'coincard.click' in V1."
+        },
+        "public_url": {
+          "type": "string",
+          "pattern": "^https://[a-z0-9][a-z0-9-]{1,28}[a-z0-9]\\.coincard\\.click/$",
+          "description": "Canonical public URL for the username. The equivalent coincard.click/username form redirects here; neither URL is payment authority."
+        },
+        "created_at": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{6}Z$",
+          "description": "When the card identity was created. ISO 8601 UTC, microsecond precision. Immutable across artifact versions."
+        },
+        "issued_at": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{6}Z$",
+          "description": "When this specific artifact version was signed and published. Changes with each new artifact version. Must equal lifecycle_snapshot.status_as_of and verification.signed_at."
+        }
+      }
+    },
+
+    "routes": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1,
+      "description": "Payment routes active at the time of issuance. V1 enforces exactly one route. Array structure preserves schema compatibility with future multi-route versions; a future multi-route schema will define explicit selection semantics.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "route_id",
+          "route_sequence",
+          "recipient_address",
+          "chain_id",
+          "token",
+          "token_address",
+          "amount_mode",
+          "locked_amount_units",
+          "suggested_amount_units"
+        ],
+        "properties": {
+          "route_id": {
+            "type": "string",
+            "pattern": "^route_[0-9A-HJKMNP-TV-Z]{26}$",
+            "description": "Stable identity of this route record. A ULID prefixed with 'route_'. Corresponds to WalletRoute.route_id in the data model."
+          },
+          "route_sequence": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4,
+            "description": "1-based counter of route changes within the governing entitlement. The V1 entitlement permits 4 route changes; route_sequence must not exceed the entitlement's route_changes_allowed."
+          },
+          "recipient_address": {
+            "type": "string",
+            "pattern": "^0x[0-9a-fA-F]{40}$",
+            "description": "EIP-55 checksummed Polygon USDC recipient address. Validators should apply EIP-55 checksum verification beyond this pattern."
+          },
+          "chain_id": {
+            "type": "integer",
+            "enum": [137, 80002],
+            "description": "EVM chain identifier. 137 = Polygon mainnet (production). 80002 = Polygon Amoy (testnet). Artifacts with chain_id=80002 must not be presented as production-authorized."
+          },
+          "token": {
+            "const": "USDC",
+            "description": "Token symbol. 'USDC' in V1. Explicit; not inferred from chain_id or token_address."
+          },
+          "token_address": {
+            "type": "string",
+            "pattern": "^0x[0-9a-fA-F]{40}$",
+            "description": "On-chain token contract address. Explicit rather than derived from token symbol, so a compromised token contract cannot substitute silently."
+          },
+          "amount_mode": {
+            "type": "string",
+            "enum": ["sender_input", "locked", "suggested"],
+            "description": "sender_input: the sender chooses the amount within product limits. locked: the amount is fixed by the card holder; sender_input is not permitted. suggested: the card holder nominates a default; the sender may override."
+          },
+          "locked_amount_units": {
+            "oneOf": [
+              { "type": "integer", "minimum": 1 },
+              { "type": "null" }
+            ],
+            "description": "Required when amount_mode is 'locked'. Integer atomic units in the token's base denomination (USDC: 6 decimals). Must be null when amount_mode is 'sender_input' or 'suggested'."
+          },
+          "suggested_amount_units": {
+            "oneOf": [
+              { "type": "integer", "minimum": 1 },
+              { "type": "null" }
+            ],
+            "description": "The card holder's suggested default amount. Integer atomic units. May be present when amount_mode is 'suggested'; must be null when amount_mode is 'locked' or 'sender_input'."
+          }
+        }
+      }
+    },
+
+    "lifecycle_snapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "card_status_at_issue",
+        "status_as_of",
+        "refresh_after"
+      ],
+      "description": "The card's identity lifecycle status as asserted by the issuer at the moment of signing. This is a historical snapshot, not live state. The registry determines current authoritative status.",
+      "properties": {
+        "card_status_at_issue": {
+          "type": "string",
+          "enum": ["DRAFT", "ACTIVE", "SUSPENDED", "REVOKED"],
+          "description": "The card's identity lifecycle status at the moment this artifact was signed. DRAFT: card exists but has not been activated. ACTIVE: card has an active entitlement and may receive transfers. SUSPENDED: card is under review; execution is blocked. REVOKED: permanent terminal state; cryptographic compromise, fraud, or holder-requested destruction. Commercial entitlement status (billing) is never encoded here."
+        },
+        "status_as_of": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{6}Z$",
+          "description": "When this lifecycle status was computed. Must equal identity.issued_at and verification.signed_at."
+        },
+        "refresh_after": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{6}Z$",
+          "description": "Protocol-level cache hint. After this timestamp, any system using this artifact for display or non-execution decisions should re-fetch a fresh artifact from the registry. This is not a subscription expiration date. For execution, live registry resolution is always required regardless of this value."
+        }
+      }
+    },
+
+    "presentation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "presentation_version",
+        "display_name",
+        "theme"
+      ],
+      "description": "Presentation parameters for rendering this artifact. The presentation_version selects which visual specification the renderer must implement.",
+      "properties": {
+        "presentation_version": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Which presentation specification governs rendering. A renderer that implements only version 1 must refuse to render an artifact with a higher presentation_version. This preserves the ability to correctly render 2026 artifacts in 2036 — the version is in the artifact, not only in the renderer."
+        },
+        "display_name": {
+          "oneOf": [
+            { "type": "string", "minLength": 1, "maxLength": 100 },
+            { "type": "null" }
+          ],
+          "description": "Human-readable name shown on the card face. Optional. Must not be used as an authorization identity."
+        },
+        "theme": {
+          "oneOf": [
+            { "type": "string", "enum": ["light", "dark"] },
+            { "type": "null" }
+          ],
+          "description": "Card holder's preferred rendering theme. null means the embedding context chooses. The renderer may override for accessibility reasons."
+        }
+      }
+    },
+
+    "capabilities": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "can_receive_transfers",
+        "can_be_embedded",
+        "can_display_route"
+      ],
+      "description": "Renderer hints derived by the issuer at signing time. These do not independently authorize execution and carry no more trust than the signed artifact itself. A verifier must independently resolve execution authority from the registry; it must not rely solely on these fields.",
+      "properties": {
+        "can_receive_transfers": {
+          "type": "boolean",
+          "description": "True when card_status_at_issue is ACTIVE and the commercial entitlement was active at signing. False for DRAFT, SUSPENDED, or REVOKED cards. This is a snapshot hint; use live registry resolution before authorizing any transfer."
+        },
+        "can_be_embedded": {
+          "type": "boolean",
+          "description": "True when the card may be embedded on a third-party surface. False for REVOKED cards. Renderers should display a revoked state rather than silently hiding revoked artifacts."
+        },
+        "can_display_route": {
+          "type": "boolean",
+          "description": "True when the route may be shown to prospective senders. False for REVOKED or SUSPENDED cards where the route should not be presented as active."
+        }
+      }
+    },
+
+    "integrity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "fingerprint_version",
+        "artifact_hash",
+        "supersedes"
+      ],
+      "description": "Cryptographic self-reference. artifact_hash covers every semantic field in the artifact except itself and verification.value.",
+      "properties": {
+        "fingerprint_version": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Which canonicalization algorithm was used to compute artifact_hash. Version 1 uses coin-card-canonical-json.v1: UTF-8, no insignificant whitespace, object keys sorted by Unicode code point, NFC string normalization, domain-separated SHA-256."
+        },
+        "artifact_hash": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "description": "SHA-256 of the canonical serialization of this artifact, prefixed 'sha256:'. Covers all fields except integrity.artifact_hash and verification.value. Computed last. Verification.value is a signature over this hash."
+        },
+        "supersedes": {
+          "oneOf": [
+            { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+            { "type": "null" }
+          ],
+          "description": "The artifact_hash of the prior artifact version for this card. null when artifact_version is 1. Creates a verifiable chain: every version can be traced to the original issuance."
+        }
+      }
+    },
+
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "algorithm",
+        "key_id",
+        "signer_domain",
+        "signed_at",
+        "value"
+      ],
+      "description": "Signature envelope. All fields except value participate in the artifact_hash computation. value is a signature over artifact_hash and is excluded from the hash to avoid circularity.",
+      "properties": {
+        "algorithm": {
+          "type": "string",
+          "enum": ["unsigned-dev", "Ed25519"],
+          "description": "Signing algorithm. 'unsigned-dev' is permitted only in development and test environments; production artifacts must use 'Ed25519'. Validators must reject 'unsigned-dev' artifacts in any execution-authorization context."
+        },
+        "key_id": {
+          "oneOf": [
+            { "type": "string", "minLength": 1 },
+            { "type": "null" }
+          ],
+          "description": "Identifies the specific trusted key that signed this artifact. References a record in the trusted key population (coin-card-trusted-keys.js). null only when algorithm is 'unsigned-dev'."
+        },
+        "signer_domain": {
+          "const": "coincard.click",
+          "description": "The authority that signed this artifact. Always 'coincard.click' in V1."
+        },
+        "signed_at": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{6}Z$",
+          "description": "When the signature was computed. Must equal identity.issued_at and lifecycle_snapshot.status_as_of."
+        },
+        "value": {
+          "oneOf": [
+            { "type": "string", "minLength": 1 },
+            { "type": "null" }
+          ],
+          "description": "Base64-encoded signature over integrity.artifact_hash. null only when algorithm is 'unsigned-dev'. This field is excluded from the artifact_hash computation."
+        }
+      }
+    }
+
+  },
+
+  "$comment": "Signing rule: artifact_hash = SHA-256(canonical(all fields except integrity.artifact_hash and verification.value)). verification.value = Sign(artifact_hash). Every other field — including schema, artifact_version, verification.algorithm, verification.key_id, verification.signer_domain, and verification.signed_at — is integrity-protected. Timestamp consistency rule: identity.issued_at == lifecycle_snapshot.status_as_of == verification.signed_at. These three must be identical in any valid artifact."
+}

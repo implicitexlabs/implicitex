@@ -18,6 +18,10 @@ Implementation-local checkpoint notes may exist under `app-web/docs/product/coin
 
 - `coin-card-spec-v1.md` — product-level Coin Card specification.
 - `COIN_CARD_INVARIANT_CONTRACT.md` — non-negotiable product and architecture invariants.
+- `COIN_CARD_PUBLIC_IDENTITY_AND_LEGACY_MIGRATION_V1.md` — exact-match username identity, opaque account/card IDs, canonical public routes, and the governed migration boundary for the legacy `antoine` card ID.
+- `COIN_CARD_PUBLIC_USERNAME_REGISTRY_CONTRACT_V1.md` — signed exact-match username snapshot schema, opaque identity uniqueness, trusted-key authentication, bounded currentness, private result branding, and production-publication boundary.
+- `COIN_CARD_PUBLIC_USERNAME_REGISTRY_CURRENT_HEAD_CONTRACT_V1.md` — fixed no-store Current Head source, signed revision/hash pointer, snapshot conjunction, atomic publication, and rollback failure rules.
+- `COIN_CARD_PUBLIC_REGISTRY_SOURCE_CONTRACT_V1.md` — fixed cross-origin Current Head delivery, content-addressed immutable snapshot delivery, CORS/cache/CSP/service-worker rules, and publish-before-advance ordering.
 - `COIN_CARD_STATE_MATRIX.md` — allowed state transitions and user-visible state behavior.
 - `coin-card.state.v1.json` — machine-readable state contract.
 - `coin-card.artifact.json` — artifact graph for generated and validated Coin Card outputs.
@@ -47,6 +51,13 @@ Implementation-local checkpoint notes may exist under `app-web/docs/product/coin
 - `coin-card.transaction-evidence-signature.fixtures.v2.json` — deterministic public signing-time, trusted-key policy, revocation, signature, and repinned-head vectors.
 - `COIN_CARD_EXECUTION_INTERFACE_DESCRIPTOR_CONTRACT_V1.md` — content-addressed evidence-bound EVM interface, deployed-code identity, atomic policy commitment, calldata, revert, and event-decoding contract.
 - `coin-card.execution-interface-descriptor.fixtures.v1.json` — deterministic descriptor, policy-commitment, calldata, replay-binding, and event-decoding vectors.
+- `COIN_CARD_IRON_FIAT_ROUTING_ARCHITECTURE_V1.md` — frozen architecture for optional third-party USD ACH/Wire receipt through Iron Virtual Accounts, immutable PBR Autoramps, provider-configuration reconciliation, transaction correlation, and independent Polygon USDC settlement verification.
+- `fiat-routing/IRON_COIN_CARD_FIAT_RAIL_DILIGENCE_MASTER_V1.md` — master pre-launch go/no-go authority, including the decision standard, frozen lifecycle summary, V01–V45 launch criteria, required evidence package, and final decision rules.
+- `fiat-routing/IRON_PROVIDER_DILIGENCE_QUESTIONNAIRE_V1.md` — written provider, compliance, security, commercial, and liability questions that must pass before production use.
+- `fiat-routing/IRON_PROVIDER_VALIDATION_MATRIX_V1.md` — auditable V01–V45 master gate tracker plus granular sandbox, approved-production, contract, and settlement-evidence execution tracker.
+- `fiat-routing/MOONPAY_AND_IRON_PROVIDER_EVALUATION_2026-08-08.md` — dated provider evaluation preserving the MoonPay Platform technical findings, wallet-ownership blocker, Iron Virtual Account findings, and two-track decision.
+- `fiat-routing/COIN_CARD_MULTI_RAIL_PRODUCT_AND_ECONOMICS_STRATEGY_2026-08-08.md` — informative multi-rail switchboard thesis, current public MoonPay/Commerce/Iron fee benchmarks, no-silent-subsidy proposal, and provider-isolation direction; not implementation or commercial authority.
+- `fiat-routing/COIN_CARD_RAIL_UNIT_ECONOMICS_MATRIX_V1.md` — working quote, friction, exposure, and amount-grid evidence tracker for direct Polygon USDC, MoonPay Ramps, MoonPay Commerce, and Iron; all test cells begin `NOT_RUN`.
 - `COIN_CARD_LIFECYCLE_AND_EXECUTABLE_REGISTRY_IDENTITY_CONTRACT_V1.md` — Phase 1C lifecycle-record identity, executable Registry V2 schema, extraction equality, and legacy migration boundary.
 - `coin-card.lifecycle-and-registry-identity.fixtures.v1.json` — deterministic authenticated lifecycle, executable Registry V2, identity mutation, and migration vectors.
 - `COIN_CARD_LIFECYCLE_REGISTRY_CONTRACT_V1.md` — lifecycle registry authority, publication evidence, card status, manifest status, supersession, and rollback rules.

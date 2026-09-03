@@ -6,6 +6,17 @@ Purpose: define the canonical signed Coin Card payment-instruction claim. This
 contract builds on trusted-key resolution; it does not decide card lifecycle,
 presentation eligibility, or execution authority.
 
+Compatibility notice: under the proposed
+`COIN_CARD_TRANSACTION_EVIDENCE_CONTRACT_V1.md` authority hierarchy, this
+payment-bearing envelope is a legacy compatibility source. The signed runtime
+manifest remains authoritative for runtime code and artifact integrity.
+Transaction Evidence is the sole normative source of evidence-bound execution
+route and policy. Overlapping authenticated fields in this envelope are
+veto-only compatibility constraints: they must equal Transaction Evidence and
+can block execution, but they cannot authorize execution or override a
+Transaction Evidence value. A future payment-free runtime-manifest schema may
+remove these fields.
+
 ## Authority Boundary
 
 The signed envelope answers:
@@ -229,3 +240,15 @@ The signed envelope alone cannot prove that the predecessor is registry-current,
 that the revision was accepted, that no competing revision exists, or that a
 rollback did not occur. The lifecycle registry independently determines whether
 the revision claim is acceptable and current.
+
+## Transaction Evidence Compatibility Rule
+
+When this legacy envelope is present on a `transaction-evidence.v1` execution
+path, its authenticated `manifestId`, `cardId`, `issuerId`, `environment`,
+recipient, network, asset contract, and amount-policy constraints must reconcile
+exactly as defined by sections 3.3 through 3.5 of
+`COIN_CARD_TRANSACTION_EVIDENCE_CONTRACT_V1.md`.
+
+A mismatch is fatal. The runtime must not select one signed value, merge the two
+objects, or silently ignore this envelope. A valid legacy envelope without valid
+Transaction Evidence cannot authorize the evidence-bound path.

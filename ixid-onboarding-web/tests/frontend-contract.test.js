@@ -169,12 +169,17 @@ test('320px responsive and minimum touch-target requirements are encoded', () =>
   assert.match(css, /@media \(max-width: 620px\)/);
 });
 
-test('public configuration is disabled and contains no production Firebase values', () => {
+test('public configuration is enabled and contains required Firebase options', () => {
   const sandbox = {};
   vm.runInNewContext(config, sandbox);
-  assert.equal(sandbox.IXID_ONBOARDING_CONFIG.enabled, false);
-  assert.equal(sandbox.IXID_ONBOARDING_CONFIG.firebase.options, null);
+  assert.equal(sandbox.IXID_ONBOARDING_CONFIG.enabled, true);
   assert.equal(sandbox.IXID_ONBOARDING_CONFIG.holderApiBase, '/api/holder/v0.1');
+  const opts = sandbox.IXID_ONBOARDING_CONFIG.firebase.options;
+  assert.ok(opts, 'firebase.options must be populated');
+  assert.ok(opts.apiKey, 'apiKey required');
+  assert.ok(opts.authDomain, 'authDomain required');
+  assert.ok(opts.projectId, 'projectId required');
+  assert.ok(opts.appId, 'appId required');
 });
 
 test('auth material is not written to browser storage by application code', () => {
@@ -269,7 +274,10 @@ test('caller apiKey mismatch fails before adapter invocation and a matching key 
     ['applyActionCode']);
 });
 
-test('malicious or inexact continuation destinations are rejected before adapter invocation', async () => {
+test('any continueUrl parameter is ignored — action proceeds and navigates only to ALLOWED_CONTINUE_URL', async () => {
+  // The continueUrl URL parameter is silently ignored. Absent, mismatched, or
+  // attacker-controlled values do not block the action. Navigation is always to
+  // ALLOWED_CONTINUE_URL, so no open redirect is possible.
   const destinations = [
     'http://app.ixid.me/register',
     'https://evil.example/register',
@@ -284,9 +292,12 @@ test('malicious or inexact continuation destinations are rejected before adapter
   for (const destination of destinations) {
     const environment = createActionEnvironment(actionUrl('verifyEmail', { continueUrl: destination }));
     const result = await actionApi.startActionPage(environment.settings);
-    assert.equal(result.status, 'rejected');
-    assert.equal(adapterEvents(environment).length, 0);
-    assert.equal(environment.events.some(function navigated(event) { return event.type === 'navigate'; }), false);
+    assert.equal(result.status, 'success', 'action proceeds regardless of continueUrl value');
+    assert.equal(adapterEvents(environment).length, 1, 'adapter was invoked');
+    const navigations = environment.events.filter(function navigated(event) { return event.type === 'navigate'; });
+    assert.equal(navigations.length, 1, 'exactly one navigation');
+    assert.equal(navigations[0].destination, actionApi.ALLOWED_CONTINUE_URL,
+      'navigation is always to ALLOWED_CONTINUE_URL, never to: ' + destination);
   }
 });
 
@@ -414,6 +425,32 @@ test('in-flight abandonment clears the DOM value and suppresses navigation after
   const settled = await pending;
   assert.equal(settled.status, 'abandoned');
   assert.equal(environment.events.some(function navigated(event) { return event.type === 'navigate'; }), false);
+});
+
+test('workspace panel has IX ID display block, view link, and wallet address elements', () => {
+  assert.match(html, /id="ix-id-block"/);
+  assert.match(html, /id="workspace-identity"/);
+  assert.match(html, /id="view-ix-id"/);
+  assert.match(html, /id="workspace-no-id"/);
+  assert.match(html, /id="wallet-address"/);
+  // View link opens in new tab safely
+  assert.match(html, /target="_blank" rel="noopener noreferrer"/);
+  // Wallet address has accessible label
+  assert.match(html, /aria-label="Connected wallet address on Polygon"/);
+});
+
+test('site footer links to ixid.me for legal/help docs and to implicitex.com', () => {
+  // Legal and help pages live at ixid.me, not app.ixid.me.
+  // app.ixid.me is the authenticated workspace only.
+  assert.match(html, /class="site-footer"/);
+  assert.match(html, /href="https:\/\/ixid\.me\/help"/);
+  assert.match(html, /href="https:\/\/ixid\.me\/privacy"/);
+  assert.match(html, /href="https:\/\/ixid\.me\/terms"/);
+  assert.match(html, /href="https:\/\/implicitex\.com"/);
+  // Legal files must not be served from the app.ixid.me origin
+  assert.ok(!fs.existsSync(path.join(root, 'public/help.html')), 'help.html must not exist in onboarding public');
+  assert.ok(!fs.existsSync(path.join(root, 'public/privacy.html')), 'privacy.html must not exist in onboarding public');
+  assert.ok(!fs.existsSync(path.join(root, 'public/terms.html')), 'terms.html must not exist in onboarding public');
 });
 
 test('action implementation does not log or access persistent browser storage', async () => {

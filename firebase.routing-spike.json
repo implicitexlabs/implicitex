@@ -1,0 +1,54 @@
+{
+  "_comment": "Spike-only Firebase config. Does NOT modify the production firebase.json.",
+  "_comment_run": "firebase emulators:start --config firebase.routing-spike.json --project demo-spike",
+  "functions": [
+    {
+      "source": "app-web/backend/functions",
+      "codebase": "coincard-spike",
+      "ignore": ["node_modules", "**/.git/**"]
+    }
+  ],
+  "hosting": [
+    {
+      "target": "main",
+      "public": "app-web/frontend/public",
+      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+      "rewrites": [
+        {
+          "source": "/card/**",
+          "destination": "/card/index.html"
+        },
+        {
+          "source": "/registry/coincards/**",
+          "function": "spikeRegistryRead",
+          "region": "us-central1"
+        }
+      ]
+    }
+  ],
+  "firestore": {
+    "rules": "app-web/backend/scripts/spikes/hosting-rewrite/emulator-firestore.rules"
+  },
+  "storage": {
+    "rules": "app-web/backend/scripts/spikes/hosting-rewrite/emulator-storage.rules"
+  },
+  "emulators": {
+    "functions": {
+      "port": 5001
+    },
+    "hosting": {
+      "port": 5000
+    },
+    "firestore": {
+      "port": 8080
+    },
+    "storage": {
+      "port": 9199
+    },
+    "ui": {
+      "enabled": true,
+      "port": 4000
+    },
+    "singleProjectMode": true
+  }
+}

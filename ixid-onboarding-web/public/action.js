@@ -53,19 +53,20 @@
 
   function validateCaptured(captured, config) {
     if (!captured || captured.modes.length !== 1 || captured.oobCodes.length !== 1
-        || captured.continueUrls.length !== 1 || captured.apiKeys.length > 1) {
+        || captured.continueUrls.length > 1 || captured.apiKeys.length > 1) {
       return { ok: false };
     }
 
     const mode = captured.modes[0];
     const oobCode = captured.oobCodes[0];
-    const continueUrl = captured.continueUrls[0];
     if (mode !== 'verifyEmail' && mode !== 'resetPassword') return { ok: false };
     if (!oobCode || oobCode.length > 4096 || oobCode !== oobCode.trim() || /\s/.test(oobCode)) {
       return { ok: false };
     }
-    if (continueUrl !== ALLOWED_CONTINUE_URL
-        || !config || config.actionContinueUrl !== ALLOWED_CONTINUE_URL) {
+    // continueUrl from the URL parameter is ignored — navigation destination is
+    // always ALLOWED_CONTINUE_URL. Absent or mismatched values are silently
+    // replaced. Only the server-side config value is checked.
+    if (!config || config.actionContinueUrl !== ALLOWED_CONTINUE_URL) {
       return { ok: false };
     }
     if (captured.apiKeys.length === 1) {

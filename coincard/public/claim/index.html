@@ -6,28 +6,45 @@
   <title>Claim your Coin Card — ImplicitEx</title>
   <meta name="description" content="Connect your wallet and claim your Coin Card address.">
   <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#fffaf5">
   <link rel="canonical" href="https://coincard.click/claim/">
+  <link rel="icon" href="/components/images/coincard-mark.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/site.css">
   <link rel="stylesheet" href="/css/coincard.css">
+  <link rel="stylesheet" href="/css/claim-theme.css">
 </head>
 <body>
 
-<nav class="cc-nav">
-  <div class="cc-nav-inner">
-    <a href="/" class="cc-nav-logo" aria-label="Coin Card home">
-      <img class="cc-nav-coincard-logo" src="/components/images/coincard-logo.svg" alt="COIN CARD">
-      <span class="cc-nav-powered">Powered by ImplicitEx</span>
-    </a>
-  </div>
-</nav>
+<a class="skip-link" href="#claim-main">Skip to claim form</a>
 
-<main>
+<header class="site-header" data-site-header>
+  <div class="site-shell site-nav">
+    <a class="brand-lockup" href="/" aria-label="Coin Card home">
+      <img src="/components/images/coincard-mark.svg" alt="" width="42" height="42">
+      <span>coincard.click</span>
+    </a>
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="primary-nav" data-nav-toggle>
+      <span class="sr-only">Open navigation</span><span aria-hidden="true"></span><span aria-hidden="true"></span>
+    </button>
+    <nav class="nav-links" id="primary-nav" aria-label="Primary navigation" data-nav-links>
+      <a href="/#how-it-works">How it works</a>
+      <a href="/#trust">Trust model</a>
+      <a href="/send/">Open a card</a>
+    </nav>
+    <a class="button button-secondary nav-cta" href="/">Product home</a>
+  </div>
+</header>
+
+<main id="claim-main">
   <div class="cc-claim-wrap">
 
     <a href="/" class="cc-claim-back" aria-label="Back to Coin Card home">
       <span aria-hidden="true">←</span> Back
     </a>
 
+    <p class="eyebrow">Create your payment identity.</p>
     <h1 class="cc-claim-heading">Claim your Coin Card.</h1>
+    <p class="cc-claim-sub">Choose the Polygon wallet that will receive USDC, then reserve a memorable Coin Card handle.</p>
 
     <!-- ── Section 1: Wallet ──────────────────────────────────── -->
     <!-- Always visible. All other sections unlock after this one. -->
@@ -295,19 +312,14 @@
   </div>
 </main>
 
-<footer class="cc-footer">
-  <div class="cc-site-wrap" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;width:100%">
-    <p class="cc-footer-brand">
-      &copy; 2026 <a href="https://implicitex.com" target="_blank" rel="noopener">ImplicitEx</a>
-      &middot; Coin Card
-    </p>
-    <nav class="cc-footer-links" aria-label="Footer links">
-      <a href="https://implicitex.com/privacy.html" target="_blank" rel="noopener">Privacy</a>
-      <a href="https://implicitex.com/terms.html" target="_blank" rel="noopener">Terms</a>
-    </nav>
+<footer class="site-footer">
+  <div class="site-shell footer-bottom" style="margin-top:0;border-top:0">
+    <span>&copy; 2026 Coin Card · A product of <a href="https://implicitex.com" target="_blank" rel="noopener">ImplicitEx</a></span>
+    <span><a href="https://implicitex.com/privacy.html" target="_blank" rel="noopener">Privacy</a> · <a href="https://implicitex.com/terms.html" target="_blank" rel="noopener">Terms</a></span>
   </div>
 </footer>
 
 <script src="/js/claim.js"></script>
+<script src="/js/site.js"></script>
 </body>
 </html>

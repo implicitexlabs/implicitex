@@ -30,6 +30,13 @@ Canonical docs:
 - `../../../../docs/product/coin-card/COIN_CARD_LIFECYCLE_RESOLUTION_CONTRACT_V1.md` — selected evidence interpretation, temporal resolution, and non-operational lifecycle facts.
 - `../../../../docs/product/coin-card/COIN_CARD_LIFECYCLE_PRESENTATION_PROMOTION_CONTRACT_V1.md` — presentation-promotion policy: exclusive promotion rule, blocked outcome classification, private proof predicate, and scope boundary.
 - `../../../../docs/product/coin-card/COIN_CARD_EXECUTION_AUTHORIZATION_CONTRACT_V1.md` — Coin Card-specific execution authorization: three-input gate, exclusive authorization rule, execution plan, pinned transaction facts, one-shot consumption doctrine, and TOCTOU guard.
+- `../../../../docs/product/coin-card/COIN_CARD_IRON_FIAT_ROUTING_ARCHITECTURE_V1.md` — frozen Iron Virtual Account fiat-receiving rail architecture, including immutable PBR route versions, provider drift detection, transaction correlation, and independent Polygon USDC settlement verification.
+- `../../../../docs/product/coin-card/fiat-routing/IRON_COIN_CARD_FIAT_RAIL_DILIGENCE_MASTER_V1.md` — master pre-launch diligence and go/no-go authority for the proposed Iron rail.
+- `../../../../docs/product/coin-card/fiat-routing/IRON_PROVIDER_DILIGENCE_QUESTIONNAIRE_V1.md` — provider diligence and launch-blocking questions for the proposed Iron rail.
+- `../../../../docs/product/coin-card/fiat-routing/IRON_PROVIDER_VALIDATION_MATRIX_V1.md` — auditable master-gate and granular retained-evidence working tracker.
+- `../../../../docs/product/coin-card/fiat-routing/MOONPAY_AND_IRON_PROVIDER_EVALUATION_2026-08-08.md` — dated record of the MoonPay Platform evaluation, third-party-wallet blocker, and Iron Virtual Account track selection.
+- `../../../../docs/product/coin-card/fiat-routing/COIN_CARD_MULTI_RAIL_PRODUCT_AND_ECONOMICS_STRATEGY_2026-08-08.md` — informative multi-rail product and economics thesis; records public fee benchmarks and proposed cost discipline without authorizing implementation or changing frozen architecture.
+- `../../../../docs/product/coin-card/fiat-routing/COIN_CARD_RAIL_UNIT_ECONOMICS_MATRIX_V1.md` — working route-by-amount quote, friction, financial-exposure, and gross-margin evidence tracker.
 - `../../../../docs/product/coin-card/COIN_CARD_LIFECYCLE_REGISTRY_CONTRACT_V1.md` — lifecycle registry authority, publication evidence, card status, manifest status, supersession, and rollback rules.
 - `../../../../docs/product/coin-card/COIN_CARD_VERIFICATION_STATE_COPY_V1.md` — user-facing copy contract for manifest verification states.
 - `../../../../tools/coin-card-integrity/README.md` — proof tooling usage for generating, verifying, and tamper-checking Coin Card manifests.

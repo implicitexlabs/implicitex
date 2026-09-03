@@ -1,0 +1,80 @@
+{
+  "schemaVersion": "implicitex-coin-card-migration-transport-preflight.v1",
+  "status": "LIVE_TRANSPORT_GATE_BLOCKED",
+  "observedAt": "2026-08-09T08:52:57Z",
+  "identityAllocationEvidence": "docs/operations/evidence/coin-card-antoine-production-identity-allocation-2026-08-09.json",
+  "identity": {
+    "username": "antoinedennison",
+    "accountId": "acct_01KZJTH0XZWTSVXNAJ23Z1QYR8",
+    "cardId": "cc_01KZJTH0XZ1QJG9A1K9T5GJAWE"
+  },
+  "checks": {
+    "apexOrigin": {
+      "url": "https://coincard.click/",
+      "method": "HTTPS HEAD without credentials",
+      "result": "RESPONDED_FROM_UNEXPECTED_ORIGIN",
+      "httpStatus": 200,
+      "observedServer": "Squarespace",
+      "observedContentType": "text/html;charset=utf-8",
+      "observedAgeSeconds": 2176,
+      "requiredRegistryOriginAvailable": false,
+      "notes": "The public apex is serving the existing Squarespace site, not the repository's Firebase Hosting .well-known source configuration."
+    },
+    "currentHeadEndpoint": {
+      "url": "https://coincard.click/.well-known/coin-card-public-username-registry-head.v1.json",
+      "method": "HTTPS HEAD without credentials",
+      "result": "TRANSPORT_CONTRACT_VIOLATED",
+      "httpStatus": 200,
+      "observedServer": "Squarespace",
+      "observedContentType": "text/html;charset=utf-8",
+      "observedCacheControl": null,
+      "observedAccessControlAllowOrigin": null,
+      "requiredContentTypePassed": false,
+      "requiredNoStorePassed": false,
+      "requiredCorsPassed": false,
+      "notes": "The exact fixed endpoint returns a Squarespace HTML response rather than a Current Head JSON artifact."
+    },
+    "canonicalUsernameOrigin": {
+      "url": "https://antoinedennison.coincard.click/",
+      "method": "HTTPS HEAD without credentials",
+      "result": "DNS_RESOLUTION_FAILED",
+      "httpStatus": null,
+      "requiredCardOriginAvailable": false
+    },
+    "firebaseHostingControlPlane": {
+      "command": "firebase hosting:sites:list --project implicitex",
+      "result": "AUTHENTICATION_EXPIRED",
+      "readOnlyInspectionCompleted": false,
+      "deploymentAttempted": false
+    }
+  },
+  "gateEvaluation": {
+    "immutableSnapshotBuilt": false,
+    "immutableSnapshotSigned": false,
+    "immutableSnapshotPublished": false,
+    "snapshotExactUrlReturned200": false,
+    "snapshotTransportContractPassed": false,
+    "snapshotSignatureAndHashPassed": false,
+    "currentHeadAdvanceAuthorized": false,
+    "currentHeadAdvanceForbiddenReason": "No signed immutable production snapshot exists, the exact fixed Current Head endpoint violates the transport contract, and the canonical username host does not resolve."
+  },
+  "requiredExternalRemediation": [
+    "Restore authenticated access to the approved production hosting control plane.",
+    "Choose and configure an origin path for the fixed coincard.click .well-known registry endpoints without weakening the fixed-origin contract.",
+    "Configure and verify DNS and TLS for antoinedennison.coincard.click and the intended wildcard username-host model.",
+    "Restore the existing production manifest and lifecycle signing keys through the approved custody procedure, or separately authorize a governed signer rotation only after custody recovery is ruled out."
+  ],
+  "operationalDeclarations": {
+    "privateKeyMaterialRead": false,
+    "privateKeyMaterialGenerated": false,
+    "signatureCreated": false,
+    "snapshotCreated": false,
+    "endpointObjectCreated": false,
+    "deploymentOccurred": false,
+    "dnsChanged": false,
+    "currentHeadCreated": false,
+    "currentHeadChanged": false,
+    "walletActionTaken": false,
+    "transactionBroadcast": false
+  }
+}

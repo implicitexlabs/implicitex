@@ -1,8 +1,48 @@
 # Coin Card Invariant Contract
 
-Status: tightened draft execution contract
+Status: active
 Date: 2026-07-07
-Scope: Coin Card structure, state, visibility, math, and execution presentation
+Amended: 2026-08-09 — public username identity invariant added (Invariant 3)
+Scope: Coin Card product identity, artifact authority, structure, state, visibility, math, and execution presentation
+
+---
+
+## Foundational Product Invariants
+
+These three invariants govern what Coin Card is, how its public identity resolves,
+and what an artifact is authorized to do.
+They are unconditional. No implementation decision overrides them.
+
+### Invariant 1 — Coin Card Identity
+
+A Coin Card is a product object, not a URL, webpage, account, wallet, or payment
+transaction. URLs and interfaces locate, render, manage, verify, or interact with
+Coin Cards.
+
+### Invariant 2 — Artifact Authority Boundary
+
+A CoinCardArtifact is an immutable, signed assertion about a Coin Card at a specific
+issuance point. It establishes provenance and historical state. It does not
+independently authorize execution. Any privileged action against a Coin Card requires
+authoritative lifecycle and route resolution under the Coin Card execution contracts.
+
+**Consequence:** A CoinCardArtifact may be copied, cached, downloaded, embedded, or
+archived without becoming a bearer credential capable of authorizing a payment. The
+registry — not the artifact — determines what is true now.
+
+### Invariant 3 — One Exact Public Username
+
+A Coin Card account has exactly one active username. The normalized username
+resolves by exact match through both `username.coincard.click` and
+`coincard.click/username`; the path form redirects to the canonical subdomain.
+Internal account and Coin Card IDs are opaque and are never public usernames or
+alternate routing aliases. Search may discover a username from partial input,
+but search results never substitute for exact route resolution.
+
+For the legacy identity boundary and governed migration sequence, see
+`COIN_CARD_PUBLIC_IDENTITY_AND_LEGACY_MIGRATION_V1.md`.
+
+---
 
 This document defines the rules the Coin Card runtime must satisfy before further runtime refactoring. It treats Coin Card as a fixed-dimension payment instrument, not a responsive content component.
 
